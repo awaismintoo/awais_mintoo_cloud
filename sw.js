@@ -13,7 +13,7 @@ self.addEventListener('message', (event) => {
             icon: 'icon-192.png',
             badge: 'icon-192.png',
             vibrate: [300, 100, 300, 100, 300],
-            tag: 'quantum-sovereign-alert',
+            tag: 'quantum-sovereign-master-alert',
             renotify: true,
             requireInteraction: true
         });

@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#0d1117">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace; }
-        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 60px; width: 100%; min-height: 100vh; overflow-y: auto; }
+        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 70px; width: 100%; min-height: 100vh; overflow-y: auto; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
         .title { color: #f0883e; font-size: 15px; font-weight: bold; text-shadow: 0 0 6px rgba(240, 136, 62, 0.4); }
@@ -22,7 +22,7 @@
         .card-value.green { color: #3fb950; text-shadow: 0 0 6px rgba(63, 185, 80, 0.4); }
         .card-value.red { color: #f85149; text-shadow: 0 0 6px rgba(248, 81, 73, 0.4); }
         
-        /* 3D Neon Hero Banner */
+        /* 3D Neon Hero Carousel Banner */
         .hero-banner { background: #161b22; border: 2px solid #238636; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 12px rgba(35, 134, 54, 0.3); position: relative; }
         .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .hero-signal { font-size: 15px; font-weight: bold; color: #3fb950; margin: 6px 0; text-shadow: 0 0 8px rgba(63, 185, 80, 0.4); display: flex; justify-content: space-between; align-items: center; }
@@ -49,7 +49,6 @@
         .log-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 120px; overflow-y: auto; }
         .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: bold; text-transform: uppercase; }
         
-        /* Scrollable Active Valid Signals Ledger */
         .signals-scroll-box { max-height: 160px; overflow-y: auto; padding-right: 2px; }
         .signal-card { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #3fb950; padding: 6px; border-radius: 4px; margin-bottom: 4px; font-size: 10px; }
         .signal-card.red { border-left-color: #f85149; }
@@ -59,7 +58,6 @@
         .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 10px; }
         .macro-card { background: #0d1117; border: 1px solid #30363d; padding: 6px; border-radius: 4px; }
 
-        /* Interactive Info Badge & Tooltip Popups */
         .info-btn { background: #21262d; color: #58a6ff; border: 1px solid #30363d; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; vertical-align: middle; }
         .tooltip-card { display: none; position: fixed; bottom: 20px; left: 10px; right: 10px; background: #161b22; border: 2px solid #1f6feb; padding: 10px; border-radius: 6px; color: #c9d1d9; font-size: 11px; z-index: 999; box-shadow: 0 0 15px rgba(31, 111, 235, 0.5); }
     </style>
@@ -78,7 +76,7 @@
         <div class="card">
             <div class="card-title">
                 <span>EXNESS GOLD (XAU/USD)</span>
-                <span class="info-btn" onclick="showHelp('Exness Gold real-time market price feed in USD per ounce.')">?</span>
+                <span class="info-btn" onclick="showHelp('Exness Gold real-time spot pricing feed in USD per ounce.')">?</span>
             </div>
             <div class="card-value green" id="goldPrice">2674.11</div>
         </div>
@@ -91,13 +89,13 @@
         </div>
     </div>
 
-    <!-- Multi-Asset Carousel Top Hero Banner -->
+    <!-- Multi-Asset Carousel Hero Banner -->
     <div class="hero-banner" id="heroBanner">
         <div class="hero-title">
-            <span>🤖 MASTER BOT RECOMMENDATION CAROUSEL</span>
+            <span>🤖 MASTER BOT INSTITUTIONAL CAROUSEL</span>
             <div>
                 <span style="color: #3fb950; margin-right: 6px;" id="heroAssetTag">EXNESS GOLD</span>
-                <span class="info-btn" onclick="showHelp('Top Hero Carousel: Use < > arrows to browse 5M/10M candle recommendations for all coins.')">?</span>
+                <span class="info-btn" onclick="showHelp('Top Hero Carousel: Use < > arrows to browse 5M/10M candle recommendations for all monitored coins.')">?</span>
             </div>
         </div>
         <div class="hero-signal">
@@ -116,14 +114,14 @@
         <div class="card">
             <div class="card-title">
                 <span>3M CANDLE TIMER</span>
-                <span class="info-btn" onclick="showHelp('Countdown timer to the next 3M candle close and signal dispatch.')">?</span>
+                <span class="info-btn" onclick="showHelp('Countdown timer to the next 3M candle close and automated push signal dispatch.')">?</span>
             </div>
             <div class="card-value" id="timerDisplay">03:00</div>
         </div>
         <div class="card">
             <div class="card-title">
                 <span>BACKGROUND PUSH</span>
-                <span class="info-btn" onclick="showHelp('Persistent Service Worker mode: Alerts remain active in background.')">?</span>
+                <span class="info-btn" onclick="showHelp('Persistent Service Worker mode: Alerts remain active in background even when app is closed.')">?</span>
             </div>
             <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">PERSISTENT ACTIVE</div>
         </div>
@@ -133,7 +131,7 @@
         <div class="panel-title">
             <span>
                 <span id="chartTitle">CHART MATRIX</span>
-                <span class="info-btn" onclick="showHelp('Interactive Candlestick Matrix. Tap buttons below to switch active asset view.')">?</span>
+                <span class="info-btn" onclick="showHelp('Interactive Candlestick Matrix. Tap buttons below to switch active asset view permanently.')">?</span>
             </span>
             <span style="color: #3fb950;">● LIVE STREAM</span>
         </div>
@@ -151,7 +149,7 @@
         <div class="panel-title">
             <span>
                 ⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER
-                <span class="info-btn" onclick="showHelp('Scrollable Ledger of active recommended trade setups across all coins with expiry countdowns.')">?</span>
+                <span class="info-btn" onclick="showHelp('Scrollable ledger of active recommended trade setups across all coins with expiry countdowns.')">?</span>
             </span>
         </div>
         <div class="signals-scroll-box" id="validSignalsContainer">
@@ -164,7 +162,7 @@
         <div class="panel-title">
             <span>
                 📈 MACRO INDEX CORRELATION (US500 & DXY)
-                <span class="info-btn" onclick="showHelp('Monitors US Dollar Index (DXY) and S&P 500 (US500) to predict Exness Gold impact.')">?</span>
+                <span class="info-btn" onclick="showHelp('Monitors US Dollar Index (DXY) and S&P 500 (US500) to predict Exness Gold directional impact.')">?</span>
             </span>
         </div>
         <div class="macro-grid">
@@ -185,7 +183,7 @@
         <div class="panel-title">
             <span>
                 🤖 MASTER BOT REAL-TIME SCANNER FEED
-                <span class="info-btn" onclick="showHelp('Micro-second scanner logs showing 5M/10M candle analysis across all coins.')">?</span>
+                <span class="info-btn" onclick="showHelp('Micro-second scanner logs showing 5M/10M candle analysis across all coins round-the-clock.')">?</span>
             </span>
         </div>
         <div class="log-box" id="masterBotFeed">
@@ -193,12 +191,12 @@
         </div>
     </div>
 
-    <!-- Master Notification Panel with Saved Button States -->
+    <!-- Master Notification Panel with Saved States -->
     <div class="panel">
         <div class="panel-title">
             <span>
                 🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS
-                <span class="info-btn" onclick="showHelp('Manage push notification permissions and individual asset push channels.')">?</span>
+                <span class="info-btn" onclick="showHelp('Manage push notification permissions and individual asset push channels with state persistence.')">?</span>
             </span>
             <span style="color: #3fb950;" id="pushStatusText">PUSH READY</span>
         </div>
@@ -225,7 +223,7 @@
             navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Error:', err));
         }
 
-        // Restore Persistent Settings from localStorage
+        // Persistent Settings from localStorage
         let currentAsset = localStorage.getItem('mintoosuite_asset') || 'gold'; 
         let goldPushState = localStorage.getItem('mintoosuite_gold_push') !== 'off';
         let cryptoPushState = localStorage.getItem('mintoosuite_crypto_push') !== 'off';
@@ -251,7 +249,6 @@
         let activeValidSignals = {};
 
         function restoreSavedUIState() {
-            // Restore Push Toggle States
             const gBtn = document.getElementById('goldPushBtn');
             gBtn.className = goldPushState ? 'btn-active-green' : 'btn-inactive';
             gBtn.innerText = `EXNESS GOLD PUSH: ${goldPushState ? 'ON' : 'OFF'}`;
@@ -283,7 +280,6 @@
             } else {
                 document.getElementById('chartTitle').innerText = 'CHART MATRIX: COMBINED GOLD & BINANCE FEED';
             }
-            updateHeroBanner();
         }
 
         function prevHero() {
@@ -391,7 +387,6 @@
             btcHistory.shift(); btcHistory.push(btcVal);
             document.getElementById('btcPrice').innerText = btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-            // Fluctuate Macro Indices
             dxyVal += (Math.random() - 0.51) * 0.04;
             document.getElementById('dxyVal').innerText = `${dxyVal.toFixed(2)} ${dxyVal < 103.40 ? '▼' : '▲'}`;
             document.getElementById('dxyImpact').innerText = dxyVal < 103.40 ? "Gold Impact: BULLISH (DXY Drop)" : "Gold Impact: BEARISH PRESSURE";
@@ -420,7 +415,6 @@
                 isBullish: isBullish
             };
 
-            // Render Scrollable Valid Active Signal Cards
             let container = document.getElementById('validSignalsContainer');
             container.innerHTML = '';
             Object.keys(activeValidSignals).forEach(key => {
@@ -444,7 +438,6 @@
             const feed = document.getElementById('masterBotFeed');
             feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] 5M/10M Signal: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
 
-            // Persistent Background Push Trigger
             if (tickCount % 8 === 0 && Notification.permission === "granted") {
                 let goldOn = localStorage.getItem('mintoosuite_gold_push') !== 'off';
                 let cryptoOn = localStorage.getItem('mintoosuite_crypto_push') !== 'off';
@@ -498,6 +491,7 @@
         // Initialize UI State
         restoreSavedUIState();
         switchAsset(currentAsset);
+        updateHeroBanner();
     </script>
 </body>
 </html>
