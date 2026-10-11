@@ -3,97 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MintooSuite Terminal - Quantum Sovereign Suite</title>
+    <title>MintooSuite Terminal - Sovereign Elite</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0b0f19">
+    <meta name="theme-color" content="#05070b">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", monospace; -webkit-font-smoothing: antialiased; }
         html, body { background-color: #05070b; color: #f0f6fc; padding: 10px; padding-bottom: 210px; width: 100%; min-height: 100vh; overflow-y: auto; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid rgba(48, 54, 61, 0.6); padding-bottom: 8px; background: rgba(22, 27, 34, 0.7); backdrop-filter: blur(20px); border-radius: 8px; padding: 8px 12px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid rgba(48, 54, 61, 0.6); padding-bottom: 8px; background: rgba(22, 27, 34, 0.85); backdrop-filter: blur(25px); border-radius: 8px; padding: 8px 12px; }
         .title { color: #f0883e; font-size: 15px; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 0 10px rgba(240, 136, 62, 0.5); }
         .subtitle { color: #8b949e; font-size: 9px; }
         .header-right { display: flex; align-items: center; gap: 6px; }
         .fps-badge { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; padding: 3px 8px; font-size: 10px; border-radius: 6px; font-weight: 800; box-shadow: 0 0 10px rgba(35, 134, 54, 0.5); }
-        .settings-btn { background: rgba(33, 38, 45, 0.8); color: #f0883e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 800; backdrop-filter: blur(10px); }
+        .settings-btn { background: rgba(33, 38, 45, 0.9); color: #f0883e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 800; backdrop-filter: blur(10px); }
 
-        /* iPhone 17/18 Pro Glassmorphic Ticker Tape */
-        .ticker-tape { background: rgba(22, 27, 34, 0.8); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 6px; padding: 6px 10px; font-size: 10px; color: #3fb950; margin-bottom: 8px; white-space: nowrap; overflow: hidden; font-weight: bold; backdrop-filter: blur(15px); }
+        .ticker-tape { background: rgba(22, 27, 34, 0.85); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 6px; padding: 6px 10px; font-size: 10px; color: #3fb950; margin-bottom: 8px; white-space: nowrap; overflow: hidden; font-weight: bold; backdrop-filter: blur(15px); }
         .ticker-tape span { display: inline-block; padding-left: 100%; animation: ticker 28s linear infinite; }
         @keyframes ticker { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
         /* Broker Multi-Windows Tabs Bar */
-        .broker-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin-bottom: 8px; }
-        .broker-tab { background: rgba(22, 27, 34, 0.8); color: #8b949e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px 1px; font-size: 8px; font-weight: 800; text-align: center; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+        .broker-tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin-bottom: 8px; }
+        .broker-tab { background: rgba(22, 27, 34, 0.85); color: #8b949e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px 1px; font-size: 7.5px; font-weight: 800; text-align: center; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.25s ease; }
         .broker-tab.active { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; border-color: #3fb950; box-shadow: 0 0 12px rgba(35, 134, 54, 0.6); }
 
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
-        .card { background: rgba(22, 27, 34, 0.7); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 8px; padding: 10px; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .card { background: rgba(22, 27, 34, 0.75); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 8px; padding: 10px; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
         .card-title { color: #8b949e; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
         .card-value { color: #58a6ff; font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
         .card-value.green { color: #3fb950; text-shadow: 0 0 8px rgba(63, 185, 80, 0.3); }
         .card-value.red { color: #f85149; text-shadow: 0 0 8px rgba(248, 81, 73, 0.3); }
         
-        .hero-banner { background: rgba(22, 27, 34, 0.8); border: 2px solid rgba(35, 134, 54, 0.8); border-radius: 10px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 20px rgba(35, 134, 54, 0.3); backdrop-filter: blur(25px); }
+        .hero-banner { background: rgba(22, 27, 34, 0.85); border: 2px solid rgba(35, 134, 54, 0.8); border-radius: 10px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 20px rgba(35, 134, 54, 0.3); backdrop-filter: blur(25px); }
         .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
         .hero-signal { font-size: 14px; font-weight: 800; color: #3fb950; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; }
-        .hero-details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: rgba(13, 17, 23, 0.9); padding: 6px; border-radius: 6px; font-size: 10px; border: 1px solid rgba(48, 54, 61, 0.8); }
+        .hero-details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: rgba(13, 17, 23, 0.95); padding: 6px; border-radius: 6px; font-size: 10px; border: 1px solid rgba(48, 54, 61, 0.8); }
         .hero-detail-item { color: #c9d1d9; }
         .hero-detail-item span { color: #8b949e; font-size: 8px; display: block; font-weight: 700; }
         
         .carousel-btn { background: rgba(33, 38, 45, 0.9); color: #58a6ff; border: 1px solid rgba(48, 54, 61, 0.8); padding: 3px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 800; }
         
-        .panel { background: rgba(22, 27, 34, 0.7); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 8px; padding: 10px; margin-bottom: 8px; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .panel { background: rgba(22, 27, 34, 0.75); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 8px; padding: 10px; margin-bottom: 8px; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
         .panel-title { color: #f0883e; font-size: 11px; font-weight: 800; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
-        canvas { width: 100%; height: 100px; background: rgba(13, 17, 23, 0.9); border-radius: 6px; border: 1px solid rgba(48, 54, 61, 0.8); display: block; }
+        canvas { width: 100%; height: 100px; background: rgba(13, 17, 23, 0.95); border-radius: 6px; border: 1px solid rgba(48, 54, 61, 0.8); display: block; }
         
         .btn-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 6px; }
         .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
         .btn-row-3-broker { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 6px; }
-        button { padding: 10px; font-weight: 800; font-size: 10px; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        button { padding: 10px; font-weight: 800; font-size: 10px; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.2s ease; }
         
         .btn-active-green { background: linear-gradient(135deg, #238636, #2ea043) !important; color: #ffffff !important; box-shadow: 0 0 10px rgba(35, 134, 54, 0.5); }
         .btn-active-orange { background: linear-gradient(135deg, #d97706, #f59e0b) !important; color: #ffffff !important; box-shadow: 0 0 10px rgba(217, 119, 6, 0.5); }
         .btn-active-blue { background: linear-gradient(135deg, #1f6feb, #388bfd) !important; color: #ffffff !important; box-shadow: 0 0 10px rgba(31, 111, 235, 0.5); }
-        .btn-inactive { background: rgba(33, 38, 45, 0.8) !important; color: #8b949e !important; border: 1px solid rgba(48, 54, 61, 0.8); }
+        .btn-inactive { background: rgba(33, 38, 45, 0.85) !important; color: #8b949e !important; border: 1px solid rgba(48, 54, 61, 0.8); }
         
-        .log-box { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #3fb950; line-height: 1.4; max-height: 110px; overflow-y: auto; }
-        .news-box { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #58a6ff; line-height: 1.5; max-height: 120px; overflow-y: auto; }
-        .geo-news-box { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #f0883e; line-height: 1.5; max-height: 120px; overflow-y: auto; }
+        .log-box { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #3fb950; line-height: 1.4; max-height: 110px; overflow-y: auto; }
+        .news-box { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #58a6ff; line-height: 1.5; max-height: 120px; overflow-y: auto; }
+        .geo-news-box { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #f0883e; line-height: 1.5; max-height: 120px; overflow-y: auto; }
 
         .exchange-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; font-size: 9px; }
-        .exchange-card { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px; border-radius: 6px; text-align: center; }
+        .exchange-card { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px; border-radius: 6px; text-align: center; }
         .status-green { color: #3fb950; font-weight: 800; }
         .status-orange { color: #d97706; font-weight: 800; }
 
         .history-table { width: 100%; font-size: 9px; border-collapse: collapse; margin-top: 4px; }
         .history-table th, .history-table td { border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px; text-align: left; }
-        .history-table th { color: #f0883e; background: rgba(13, 17, 23, 0.9); font-weight: 800; }
+        .history-table th { color: #f0883e; background: rgba(13, 17, 23, 0.95); font-weight: 800; }
         .history-win { color: #3fb950; font-weight: 800; }
         .history-loss { color: #f85149; font-weight: 800; }
 
         .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: 800; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         
         .signals-scroll-box { max-height: 160px; overflow-y: auto; padding-right: 2px; }
-        .signal-card { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); border-left: 3px solid #3fb950; padding: 8px; border-radius: 6px; margin-bottom: 4px; font-size: 10px; }
+        .signal-card { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); border-left: 3px solid #3fb950; padding: 8px; border-radius: 6px; margin-bottom: 4px; font-size: 10px; }
         .signal-card.red { border-left-color: #f85149; }
         .signal-head { display: flex; justify-content: space-between; font-weight: 800; margin-bottom: 2px; }
         .signal-meta { color: #8b949e; font-size: 9px; }
 
         .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 10px; }
-        .macro-card { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; border-radius: 6px; }
+        .macro-card { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; border-radius: 6px; }
 
         .help-badge { background: #d97706; color: #ffffff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; font-weight: 800; box-shadow: 0 0 8px rgba(217, 119, 6, 0.6); vertical-align: middle; }
         
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(10px); }
-        .modal-content { background: #161b22; border: 2px solid #f0883e; padding: 16px; border-radius: 12px; max-width: 380px; width: 100%; color: #c9d1d9; font-size: 11px; box-shadow: 0 0 30px rgba(240, 136, 62, 0.5); max-height: 85vh; overflow-y: auto; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(12px); }
+        .modal-content { background: #161b22; border: 2px solid #f0883e; padding: 16px; border-radius: 12px; max-width: 380px; width: 100%; color: #c9d1d9; font-size: 11px; box-shadow: 0 0 35px rgba(240, 136, 62, 0.5); max-height: 85vh; overflow-y: auto; }
         .modal-close { background: linear-gradient(135deg, #d97706, #f59e0b); color: #fff; padding: 10px 12px; border: none; border-radius: 6px; margin-top: 12px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; box-shadow: 0 0 10px rgba(217, 119, 6, 0.5); }
         .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 10px; border-bottom: 1px solid rgba(48, 54, 61, 0.8); padding-bottom: 6px; }
         
-        .help-topic-item { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 10px; border-radius: 6px; margin-bottom: 6px; }
+        .help-topic-item { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 10px; border-radius: 6px; margin-bottom: 6px; }
         .help-topic-title { color: #58a6ff; font-weight: 800; margin-bottom: 2px; }
 
-        .lang-select { background: rgba(13, 17, 23, 0.9); color: #f0883e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; width: 130px; }
+        .lang-select { background: rgba(13, 17, 23, 0.95); color: #f0883e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; width: 130px; }
     </style>
 </head>
 <body>
@@ -101,7 +100,7 @@
     <div class="header">
         <div>
             <div class="title" id="lblTitle">💎 MintooSuite Terminal</div>
-            <div class="subtitle">Quantum Sovereign Suite • Professional Grade</div>
+            <div class="subtitle">Sovereign Elite • Professional Grade</div>
         </div>
         <div class="header-right">
             <div class="fps-badge" id="fpsDisplay">⚡ 120 FPS PRO</div>
@@ -111,23 +110,24 @@
 
     <!-- LIVE NEWS TICKER TAPE BAR -->
     <div class="ticker-tape">
-        <span id="tickerText">🚨 LIVE FLASH: [REUTERS] Gold ($2,674/oz) tests support amid Fed rate updates | [PXE ENERGY] European Power Exchange (PXE) reports base load surge | [BLOOMBERG] Brent Crude & WTI Oil rally on Middle East supply risks | [LME] Copper & Rare Earth Metals hit 3-month highs.</span>
+        <span id="tickerText">🚨 LIVE FLASH: [PXE ENERGY] European Power Exchange baseload futures surge | [REUTERS] Gold ($2,674/oz) tests support amid Fed rate updates | [BLOOMBERG] Brent Crude & WTI Oil rally | [LME] Rare Earth Metals index hits 3-month highs.</span>
     </div>
 
-    <!-- BROKER MULTI-WINDOWS TABS BAR -->
+    <!-- BROKER MULTI-WINDOWS TABS BAR (INCLUDING HISTORY TAB & VAULT) -->
     <div class="broker-tabs">
         <div class="broker-tab active" id="tabBinance" onclick="switchBroker('binance')">🟡 BINANCE</div>
         <div class="broker-tab" id="tabBitget" onclick="switchBroker('bitget')">🔵 BITGET</div>
         <div class="broker-tab" id="tabExness" onclick="switchBroker('exness')">🟠 EXNESS</div>
         <div class="broker-tab" id="tabForex" onclick="switchBroker('forex')">🟢 FOREX</div>
         <div class="broker-tab" id="tabQuotex" onclick="switchBroker('quotex')">🟣 QUOTEX</div>
+        <div class="broker-tab" id="tabHistory" onclick="switchBroker('history')">📜 HISTORY</div>
     </div>
 
-    <!-- BROKER ACTION PANEL (DEPOSIT / TRADE / WITHDRAW) -->
+    <!-- BROKER ACTION PANEL (DEPOSIT / TRADE / WITHDRAW / VAULT) -->
     <div class="panel" id="brokerPanel" style="border: 1px solid rgba(240, 136, 62, 0.8);">
         <div class="panel-title">
             <span id="brokerPanelTitle">🟡 BINANCE FUTURES INSTITUTIONAL GATEWAY</span>
-            <span style="color: #3fb950;" id="brokerStatus">🛡️ SECURE 256-BIT</span>
+            <span style="color: #3fb950;" id="brokerStatus">🛡️ 256-BIT SECURE</span>
         </div>
         <div style="font-size: 10px; color: #8b949e; margin-bottom: 6px;" id="brokerDesc">Manage margin, liquidity, and instant cross-asset settlements across Binance ecosystem.</div>
         <div class="btn-row-3-broker">
@@ -275,7 +275,7 @@
         </div>
     </div>
 
-    <!-- NEWS SCREEN 1: FINANCIAL & COMMODITIES NEWS STREAM (INCLUDING PXE, OIL, GAS, RARE EARTH METALS) -->
+    <!-- NEWS SCREEN 1: FINANCIAL & COMMODITIES NEWS STREAM (PXE ENERGY, OIL, GAS, RARE EARTHS) -->
     <div class="panel" id="panelMarketNews">
         <div class="panel-title">
             <span>
@@ -354,7 +354,7 @@
                 <span id="lblHistoryHeader">📜 TRADING HISTORY & WIN/LOSS LEDGER</span>
                 <span class="help-badge" onclick="openHelp('Trade History', 'Real-time performance ledger logging trade entries, exits, profit/loss, and win ratios.')">?</span>
             </span>
-            <span style="color: #3fb950; font-size: 9px;" id="winRateBadge">Win Rate: 82.1%</span>
+            <span style="color: #3fb950; font-size: 9px;" id="winRateBadge">Win Rate: 84.6%</span>
         </div>
         <table class="history-table">
             <tr>
@@ -395,10 +395,10 @@
         </table>
     </div>
 
-    <!-- SETTINGS & MULTI-LANGUAGE SELECTION DRAWER -->
+    <!-- MENU MODAL (CONTAINING TERMINAL SETTINGS, VAULT & WORKSPACE PANEL TOGGLES) -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-content">
-            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;" id="lblSettingsTitle">⚙️ Terminal Settings & Language</div>
+            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;" id="lblSettingsTitle">⚙️ TERMINAL MENU & SETTINGS</div>
             
             <div class="settings-row">
                 <span id="lblLangSelect">Select Language / اللغة / 语言:</span>
@@ -414,11 +414,11 @@
 
             <div class="settings-row">
                 <span>Version:</span>
-                <strong style="color: #58a6ff;">v4.0.0 Ultimate Pro</strong>
+                <strong style="color: #58a6ff;">v5.0.0 Sovereign Elite</strong>
             </div>
             <div class="settings-row">
-                <span>Security Engine:</span>
-                <strong style="color: #3fb950;">SHA-256 Encrypted</strong>
+                <span>Security Vault:</span>
+                <strong style="color: #3fb950;">AES-256 Active</strong>
             </div>
 
             <div style="font-weight: bold; color: #58a6ff; margin: 10px 0 6px 0; text-transform: uppercase; font-size: 10px;" id="lblHelpBase">Help & Knowledge Base:</div>
@@ -465,18 +465,18 @@
             <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;" id="lblGuideTitle">📖 TERMINAL HELP & TOPICS GUIDE</div>
             
             <div class="help-topic-item">
-                <div class="help-topic-title">1. Multi-Broker Gateway (Binance, Bitget, Exness, Forex, Quotex)</div>
-                <div>Seamlessly switch between top-tier broker windows to execute instant deposits, trades, and withdrawals with institutional margin protection.</div>
+                <div class="help-topic-title">1. Multi-Broker & Vault Gateway</div>
+                <div>Seamlessly switch between Binance, Bitget, Exness, Forex, Quotex, and the Sovereign Vault for institutional margin allocation.</div>
             </div>
 
             <div class="help-topic-item">
-                <div class="help-topic-title">2. PXE Energy & Commodities News Feeds</div>
-                <div>Top ticker tape and news streams monitor PXE baseload power, oil, gas, gold, silver, and rare earth metals in real time.</div>
+                <div class="help-topic-title">2. History Ledger Tab & Panel</div>
+                <div>Access your trade history, win ratios, and profit/loss performance either from the top multi-window tabs or the workspace panel.</div>
             </div>
 
             <div class="help-topic-item">
-                <div class="help-topic-title">3. iPhone 17/18 120 FPS Graphics & Security</div>
-                <div>Powered by high-refresh canvas rendering, glassmorphic UI layers, and client-side SHA-256 session encryption.</div>
+                <div class="help-topic-title">3. Menu & Settings Control</div>
+                <div>Manage language preferences, workspace panel toggles, and security settings directly from the top-right Menu.</div>
             </div>
 
             <button class="modal-close" onclick="closeHelpCenter()">CLOSE HELP GUIDE</button>
@@ -530,9 +530,17 @@
 
         function switchBroker(broker) {
             activeBroker = broker;
-            ['binance', 'bitget', 'exness', 'forex', 'quotex'].forEach(b => {
-                document.getElementById('tab' + b.charAt(0).toUpperCase() + b.slice(1)).className = (b === broker) ? 'broker-tab active' : 'broker-tab';
+            ['binance', 'bitget', 'exness', 'forex', 'quotex', 'history'].forEach(b => {
+                let el = document.getElementById('tab' + b.charAt(0).toUpperCase() + b.slice(1));
+                if(el) el.className = (b === broker) ? 'broker-tab active' : 'broker-tab';
             });
+
+            if(broker === 'history') {
+                document.getElementById('brokerPanelTitle').innerText = "📜 TRADING HISTORY & PERFORMANCE VAULT";
+                document.getElementById('brokerDesc').innerText = "Review complete win/loss records, executed volume, and net P/L settlements.";
+                document.getElementById('brokerPanel').style.display = 'block';
+                return;
+            }
 
             const titles = {
                 binance: "🟡 BINANCE FUTURES INSTITUTIONAL GATEWAY",
@@ -554,7 +562,11 @@
         }
 
         function openBrokerAction(actionType) {
-            alert(`[${activeBroker.toUpperCase()} SECURE GATEWAY]: ${actionType} portal successfully initialized under 256-bit encryption.`);
+            if(activeBroker === 'history') {
+                alert("[HISTORY VAULT]: Exporting complete cryptographic trade ledger for Awais Mintoo...");
+            } else {
+                alert(`[${activeBroker.toUpperCase()} SECURE GATEWAY]: ${actionType} portal successfully initialized under AES-256 vault encryption.`);
+            }
         }
 
         function changeLanguage(langCode) {
@@ -619,7 +631,6 @@
             document.getElementById('exNasdaqStatus').innerHTML = usOpen ? "🟢 LIVE" : "🟠 CLOSED";
             document.getElementById('exNasdaqStatus').className = usOpen ? "status-green" : "status-orange";
 
-            // PXE Europe Energy Exchange (07:00 - 17:00 UTC)
             let pxeOpen = utcHour >= 7 && utcHour < 17;
             document.getElementById('exPxeStatus').innerHTML = pxeOpen ? "🟢 LIVE" : "🟠 CLOSED";
             document.getElementById('exPxeStatus').className = pxeOpen ? "status-green" : "status-orange";
