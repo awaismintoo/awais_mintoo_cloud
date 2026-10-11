@@ -13,7 +13,9 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
         .title { color: #f0883e; font-size: 15px; font-weight: bold; text-shadow: 0 0 6px rgba(240, 136, 62, 0.4); }
         .subtitle { color: #8b949e; font-size: 9px; }
+        .header-right { display: flex; align-items: center; gap: 6px; }
         .fps-badge { background: #1f6feb; color: #fff; padding: 3px 6px; font-size: 10px; border-radius: 4px; font-weight: bold; }
+        .settings-btn { background: #21262d; color: #f0883e; border: 1px solid #30363d; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
         .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; }
@@ -22,7 +24,6 @@
         .card-value.green { color: #3fb950; }
         .card-value.red { color: #f85149; }
         
-        /* 3D Neon Hero Carousel Banner */
         .hero-banner { background: #161b22; border: 2px solid #238636; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 12px rgba(35, 134, 54, 0.3); }
         .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .hero-signal { font-size: 15px; font-weight: bold; color: #3fb950; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; }
@@ -57,13 +58,12 @@
         .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 10px; }
         .macro-card { background: #0d1117; border: 1px solid #30363d; padding: 6px; border-radius: 4px; }
 
-        /* Small Orange Question Mark Help Balloons */
         .help-badge { background: #d97706; color: #ffffff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; font-weight: bold; box-shadow: 0 0 6px rgba(217, 119, 6, 0.5); vertical-align: middle; }
         
-        /* Modal Help Popup */
-        .help-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; padding: 20px; }
-        .help-content { background: #161b22; border: 2px solid #f0883e; padding: 15px; border-radius: 8px; max-width: 320px; width: 100%; color: #c9d1d9; font-size: 11px; box-shadow: 0 0 20px rgba(240, 136, 62, 0.4); text-align: center; }
-        .help-close { background: #d97706; color: #fff; padding: 6px 12px; border: none; border-radius: 4px; margin-top: 10px; font-weight: bold; cursor: pointer; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: #161b22; border: 2px solid #f0883e; padding: 15px; border-radius: 8px; max-width: 340px; width: 100%; color: #c9d1d9; font-size: 11px; box-shadow: 0 0 20px rgba(240, 136, 62, 0.4); }
+        .modal-close { background: #d97706; color: #fff; padding: 6px 12px; border: none; border-radius: 4px; margin-top: 12px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 11px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
     </style>
 </head>
 <body>
@@ -71,9 +71,12 @@
     <div class="header">
         <div>
             <div class="title">MintooSuite Terminal</div>
-            <div class="subtitle">Quantum Sovereign Suite • Awais Mintoo & Co.</div>
+            <div class="subtitle">Quantum Sovereign Suite • Awais Mintoo</div>
         </div>
-        <div class="fps-badge" id="fpsDisplay">61 FPS LIVE</div>
+        <div class="header-right">
+            <div class="fps-badge" id="fpsDisplay">61 FPS</div>
+            <button class="settings-btn" onclick="openSettings()">⚙️ MENU</button>
+        </div>
     </div>
 
     <div class="grid-2">
@@ -93,7 +96,6 @@
         </div>
     </div>
 
-    <!-- Multi-Asset Carousel Hero Banner -->
     <div class="hero-banner" id="heroBanner">
         <div class="hero-title">
             <span>🤖 MASTER BOT INSTITUTIONAL CAROUSEL</span>
@@ -125,7 +127,7 @@
         <div class="card">
             <div class="card-title">
                 <span>BACKGROUND PUSH</span>
-                <span class="help-badge" onclick="openHelp('Background Worker', 'Service worker engine keeping push alerts active 24/7.')">?</span>
+                <span class="help-badge" onclick="openHelp('Background Worker', 'Service worker engine keeping push alerts active 24/7 in background.')">?</span>
             </div>
             <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">PERSISTENT ACTIVE</div>
         </div>
@@ -148,21 +150,17 @@
         </div>
     </div>
 
-    <!-- Scrollable Valid Active Signals Ledger -->
-    <div class="panel">
+    <div class="panel" id="panelSignals">
         <div class="panel-title">
             <span>
                 ⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER
                 <span class="help-badge" onclick="openHelp('Signals Ledger', 'Scrollable list of active recommended trade setups with expiry countdowns.')">?</span>
             </span>
         </div>
-        <div class="signals-scroll-box" id="validSignalsContainer">
-            <!-- Dynamic Cards -->
-        </div>
+        <div class="signals-scroll-box" id="validSignalsContainer"></div>
     </div>
 
-    <!-- Macro Correlation Panel (US500 & DXY Impact on Gold) -->
-    <div class="panel">
+    <div class="panel" id="panelMacro">
         <div class="panel-title">
             <span>
                 📈 MACRO INDEX CORRELATION (US500 & DXY)
@@ -183,7 +181,7 @@
         </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="panelScanner">
         <div class="panel-title">
             <span>
                 🤖 MASTER BOT REAL-TIME SCANNER FEED
@@ -195,7 +193,6 @@
         </div>
     </div>
 
-    <!-- Master Notification Panel with Persistent Button States -->
     <div class="panel">
         <div class="panel-title">
             <span>
@@ -220,12 +217,47 @@
         </div>
     </div>
 
-    <!-- Help Modal Popup -->
-    <div class="help-modal" id="helpModal">
-        <div class="help-content">
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">⚙️ Terminal Settings & About</div>
+            
+            <div class="settings-row">
+                <span>Version:</span>
+                <strong style="color: #58a6ff;">v3.8.1 Institutional Pro</strong>
+            </div>
+            <div class="settings-row">
+                <span>Author / Architect:</span>
+                <strong style="color: #3fb950;">Awais Mintoo</strong>
+            </div>
+            <div class="settings-row">
+                <span>Official Contact:</span>
+                <strong style="color: #f0883e; font-size: 10px;">awaisrajpoot2@yahoo.com</strong>
+            </div>
+
+            <div style="font-weight: bold; color: #58a6ff; margin: 10px 0 6px 0; text-transform: uppercase; font-size: 10px;">Workspace Panel Toggles:</div>
+            
+            <div class="settings-row">
+                <span>Show Signals Ledger:</span>
+                <button class="btn-active-green" id="togglePanelSignals" onclick="toggleWorkspacePanel('Signals')">ON</button>
+            </div>
+            <div class="settings-row">
+                <span>Show Macro Matrix:</span>
+                <button class="btn-active-green" id="togglePanelMacro" onclick="toggleWorkspacePanel('Macro')">ON</button>
+            </div>
+            <div class="settings-row">
+                <span>Show Scanner Feed:</span>
+                <button class="btn-active-green" id="togglePanelScanner" onclick="toggleWorkspacePanel('Scanner')">ON</button>
+            </div>
+
+            <button class="modal-close" onclick="closeSettings()">CLOSE SETTINGS</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-content" style="text-align: center;">
             <div id="helpTitle" style="font-weight: bold; color: #f0883e; margin-bottom: 6px;">HELP</div>
             <div id="helpBody" style="margin-bottom: 12px; line-height: 1.4;">Help description...</div>
-            <button class="help-close" onclick="closeHelp()">GOT IT</button>
+            <button class="modal-close" onclick="closeHelp()">GOT IT</button>
         </div>
     </div>
 
@@ -234,11 +266,14 @@
             navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Error:', err));
         }
 
-        // Restore Persistent Settings from localStorage
         let currentAsset = localStorage.getItem('mintoosuite_asset') || 'gold'; 
         let goldPushState = localStorage.getItem('mintoosuite_gold_push') !== 'off';
         let cryptoPushState = localStorage.getItem('mintoosuite_crypto_push') !== 'off';
         let sysPushGranted = localStorage.getItem('mintoosuite_sys_push') === 'granted';
+
+        let showSignals = localStorage.getItem('mintoosuite_show_signals') !== 'off';
+        let showMacro = localStorage.getItem('mintoosuite_show_macro') !== 'off';
+        let showScanner = localStorage.getItem('mintoosuite_show_scanner') !== 'off';
 
         let goldVal = 2674.11;
         let btcVal = 94106.50;
@@ -274,6 +309,40 @@
                 eBtn.innerText = '1. PUSH ENABLED & ACTIVE';
                 document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
             }
+
+            applyPanelVisibility();
+        }
+
+        function applyPanelVisibility() {
+            document.getElementById('panelSignals').style.display = showSignals ? 'block' : 'none';
+            document.getElementById('panelMacro').style.display = showMacro ? 'block' : 'none';
+            document.getElementById('panelScanner').style.display = showScanner ? 'block' : 'none';
+
+            setToggleBtnState('togglePanelSignals', showSignals);
+            setToggleBtnState('togglePanelMacro', showMacro);
+            setToggleBtnState('togglePanelScanner', showScanner);
+        }
+
+        function setToggleBtnState(btnId, state) {
+            let btn = document.getElementById(btnId);
+            if(btn) {
+                btn.className = state ? 'btn-active-green' : 'btn-inactive';
+                btn.innerText = state ? 'ON' : 'OFF';
+            }
+        }
+
+        function toggleWorkspacePanel(name) {
+            if(name === 'Signals') {
+                showSignals = !showSignals;
+                localStorage.setItem('mintoosuite_show_signals', showSignals ? 'on' : 'off');
+            } else if(name === 'Macro') {
+                showMacro = !showMacro;
+                localStorage.setItem('mintoosuite_show_macro', showMacro ? 'on' : 'off');
+            } else if(name === 'Scanner') {
+                showScanner = !showScanner;
+                localStorage.setItem('mintoosuite_show_scanner', showScanner ? 'on' : 'off');
+            }
+            applyPanelVisibility();
         }
 
         function switchAsset(mode) {
@@ -336,17 +405,15 @@
             }
         }
 
+        function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
         function openHelp(title, desc) {
             document.getElementById('helpTitle').innerText = title;
             document.getElementById('helpBody').innerText = desc;
             document.getElementById('helpModal').style.display = 'flex';
         }
+        function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
 
-        function closeHelp() {
-            document.getElementById('helpModal').style.display = 'none';
-        }
-
-        // Canvas Chart Rendering
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         function resizeCanvas() {
@@ -386,7 +453,6 @@
         }
         requestAnimationFrame(renderChart);
 
-        // Ticker & Micro-Second Engine
         let tickCount = 0;
         setInterval(() => {
             tickCount++;
@@ -430,27 +496,31 @@
             };
 
             let container = document.getElementById('validSignalsContainer');
-            container.innerHTML = '';
-            Object.keys(activeValidSignals).forEach(key => {
-                let sig = activeValidSignals[key];
-                let remSec = Math.max(0, Math.floor((sig.expires - new Date()) / 1000));
-                let m = String(Math.floor(remSec / 60)).padStart(2, '0');
-                let s = String(remSec % 60).padStart(2, '0');
-                
-                let cardHTML = `
-                    <div class="signal-card ${sig.isBullish ? '' : 'red'}">
-                        <div class="signal-head">
-                            <span>${key} - ${sig.signal} (${sig.leverage})</span>
-                            <span style="color: #f0883e;">EXP: ${m}:${s}</span>
+            if(container) {
+                container.innerHTML = '';
+                Object.keys(activeValidSignals).forEach(key => {
+                    let sig = activeValidSignals[key];
+                    let remSec = Math.max(0, Math.floor((sig.expires - new Date()) / 1000));
+                    let m = String(Math.floor(remSec / 60)).padStart(2, '0');
+                    let s = String(remSec % 60).padStart(2, '0');
+                    
+                    let cardHTML = `
+                        <div class="signal-card ${sig.isBullish ? '' : 'red'}">
+                            <div class="signal-head">
+                                <span>${key} - ${sig.signal} (${sig.leverage})</span>
+                                <span style="color: #f0883e;">EXP: ${m}:${s}</span>
+                            </div>
+                            <div class="signal-meta">Entry: $${sig.price} | SL: $${sig.sl} | TP: $${sig.tp}</div>
                         </div>
-                        <div class="signal-meta">Entry: $${sig.price} | SL: $${sig.sl} | TP: $${sig.tp}</div>
-                    </div>
-                `;
-                container.innerHTML += cardHTML;
-            });
+                    `;
+                    container.innerHTML += cardHTML;
+                });
+            }
 
             const feed = document.getElementById('masterBotFeed');
-            feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] 5M/10M Signal: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
+            if(feed) {
+                feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] 5M/10M Signal: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
+            }
 
             if (tickCount % 8 === 0 && Notification.permission === "granted") {
                 let goldOn = localStorage.getItem('mintoosuite_gold_push') !== 'off';
@@ -467,7 +537,6 @@
             }
         }, 600);
 
-        // 3M Timer
         let timeLeft = 180;
         setInterval(() => {
             timeLeft--;
@@ -502,7 +571,6 @@
             }
         }
 
-        // Initialize UI State
         restoreSavedUIState();
         switchAsset(currentAsset);
         updateHeroBanner();
