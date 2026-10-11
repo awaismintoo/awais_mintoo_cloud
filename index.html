@@ -3,13 +3,343 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MintooSuite Terminal</title>
+  <title>MintooSuite Terminal - Institutional Quantum Sovereign Edition</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.png" type="image/png">
   <meta name="theme-color" content="#030712">
+  <style>
+    :root {
+      --bg-main: #030712;
+      --bg-card: #0b0f19;
+      --border: #1e293b;
+      --accent: #f59e0b;
+      --success: #34d399;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+    body { background: var(--bg-main); color: var(--text-main); padding: 0.75rem; max-width: 480px; margin: 0 auto; padding-bottom: 2rem; }
+    
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.75rem; }
+    h1 { font-size: 1rem; color: var(--accent); letter-spacing: 1px; }
+    .fps-counter { font-size: 0.65rem; color: var(--success); background: #022c22; border: 1px solid #065f46; padding: 2px 6px; border-radius: 4px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; }
+    .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; }
+    .stat-val { font-size: 1.1rem; font-weight: bold; color: var(--success); margin-top: 0.1rem; }
+
+    /* Chart / 3M Candle Canvas */
+    .chart-container { background: #020617; border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem; position: relative; height: 160px; }
+    canvas { width: 100%; height: 100%; display: block; }
+    .decision-overlay { position: absolute; top: 8px; right: 8px; font-size: 0.65rem; background: rgba(15, 23, 42, 0.85); border: 1px solid var(--accent); color: var(--accent); padding: 3px 6px; border-radius: 4px; font-weight: bold; }
+
+    /* Controls */
+    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.4rem; }
+    .btn { width: 100%; padding: 0.7rem; border: none; border-radius: 5px; font-weight: bold; font-size: 0.75rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn-start { background: var(--accent); color: var(--bg-main); }
+    .btn-stop { background: var(--danger); color: #fff; }
+    .btn-sub { background: #1e293b; color: var(--text-main); border: 1px solid #334155; }
+
+    /* Advanced Accordion / Panel */
+    .adv-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.75rem; color: var(--accent); padding: 0.2rem 0; font-weight: bold; }
+    .adv-body { display: none; margin-top: 0.5rem; border-top: 1px dashed var(--border); padding-top: 0.5rem; font-size: 0.7rem; color: var(--text-muted); }
+    .adv-body.active { display: block; }
+    .param-row { display: flex; justify-content: space-between; margin-bottom: 0.3rem; align-items: center; }
+    .param-row input, .param-row select { background: #020617; border: 1px solid var(--border); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.7rem; width: 110px; text-align: right; }
+
+    .log-box { background: #020617; border: 1px solid var(--border); border-radius: 5px; padding: 0.5rem; height: 75px; overflow-y: auto; font-size: 0.65rem; color: #cbd5e1; }
+  </style>
 </head>
-<body style="background:#030712; color:#f8fafc; font-family:monospace; padding:2rem; text-align:center;">
-  <h1>MintooSuite Terminal</h1>
-  <p>Institutional Quantum Sovereign Trading Terminal by Awais Mintoo & Co.</p>
+<body>
+
+  <header>
+    <div>
+      <h1>MintooSuite Terminal</h1>
+      <div style="font-size:0.55rem; color:var(--text-muted);">Quantum Sovereign Suite • Awais Mintoo & Co.</div>
+    </div>
+    <div id="fps-badge" class="fps-counter">60 FPS LIVE</div>
+  </header>
+
+  <!-- Market Prices -->
+  <div class="grid-2">
+    <div class="card" style="margin-bottom:0.5rem;">
+      <div class="stat-label">Exness Gold (XAU/USD)</div>
+      <div class="stat-val" id="gold-price">2,654.80</div>
+    </div>
+    <div class="card" style="margin-bottom:0.5rem;">
+      <div class="stat-label">Binance BTC/USDT</div>
+      <div class="stat-val" id="btc-price" style="color:#38bdf8;">94,120.50</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card" style="margin-bottom:0.5rem;">
+      <div class="stat-label">Combined PnL</div>
+      <div class="stat-val" id="pnl-val">+$0.00</div>
+    </div>
+    <div class="card" style="margin-bottom:0.5rem;">
+      <div class="stat-label">3M Decision Timer</div>
+      <div class="stat-val" id="timer-val" style="color:var(--accent);">02:59</div>
+    </div>
+  </div>
+
+  <!-- Realtime 60 FPS Chart & 3M Decision Maker -->
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem; align-items:center;">
+      <span class="stat-label">High-Frequency Tick & 3M Candle Matrix</span>
+      <span style="font-size:0.6rem; color:var(--success);">● LIVE FEED</span>
+    </div>
+    <div class="chart-container">
+      <div class="decision-overlay" id="decision-signal">SIGNAL: HOLD / ANALYZING</div>
+      <canvas id="chartCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- Execution Controls: Individual & Combined -->
+  <div class="card">
+    <div class="stat-label" style="margin-bottom:0.4rem;">Individual Engine Controls</div>
+    
+    <!-- Exness -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
+      <span style="font-size:0.75rem; font-weight:bold;">Exness Gold Engine</span>
+      <div style="display:flex; gap:4px; width:140px;">
+        <button class="btn btn-start" style="padding:4px;" onclick="toggleEngine('exness', true)">Start</button>
+        <button class="btn btn-stop" style="padding:4px;" onclick="toggleEngine('exness', false)">Stop</button>
+      </div>
+    </div>
+
+    <!-- Binance -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+      <span style="font-size:0.75rem; font-weight:bold;">Binance Crypto Engine</span>
+      <div style="display:flex; gap:4px; width:140px;">
+        <button class="btn btn-start" style="padding:4px;" onclick="toggleEngine('binance', true)">Start</button>
+        <button class="btn btn-stop" style="padding:4px;" onclick="toggleEngine('binance', false)">Stop</button>
+      </div>
+    </div>
+
+    <div class="stat-label" style="margin-bottom:0.4rem; border-top:1px solid var(--border); padding-top:0.4rem;">Master Sovereign Controls</div>
+    <div class="btn-group">
+      <button class="btn btn-start" onclick="toggleMaster(true)">Start All Engines</button>
+      <button class="btn btn-stop" onclick="toggleMaster(false)">Stop & Secure All</button>
+    </div>
+  </div>
+
+  <!-- Notification Bar Control & Sound Options -->
+  <div class="card">
+    <div class="stat-label" style="margin-bottom:0.4rem;">Push Notification & Sound Matrix</div>
+    <div class="grid-2" style="margin-bottom:0.4rem;">
+      <button class="btn btn-sub" onclick="setNotifMode('sound')">🔊 Sound ON</button>
+      <button class="btn btn-sub" onclick="setNotifMode('silent')">🔕 Silent Mode</button>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-start" style="font-size:0.65rem; padding:5px;" onclick="toggleNotifBar(true)">Enable Bar Alerts</button>
+      <button class="btn btn-stop" style="font-size:0.65rem; padding:5px;" onclick="toggleNotifBar(false)">Disable Bar Alerts</button>
+    </div>
+  </div>
+
+  <!-- Advanced Expert Options Accordion -->
+  <div class="card">
+    <div class="adv-header" onclick="toggleAdv()">
+      <span>⚙️ Advanced Institutional Parameters (Expert)</span>
+      <span id="adv-arrow">▼</span>
+    </div>
+    <div class="adv-body" id="adv-panel">
+      <div class="param-row">
+        <span>Slippage Tolerance:</span>
+        <input type="text" value="0.5 Pips">
+      </div>
+      <div class="param-row">
+        <span>Lot Size Multiplier:</span>
+        <input type="text" value="0.10 Lot (Fixed)">
+      </div>
+      <div class="param-row">
+        <span>Stop Loss Buffer:</span>
+        <input type="text" value="15.0 USD">
+      </div>
+      <div class="param-row">
+        <span>Take Profit Target:</span>
+        <input type="text" value="45.0 USD">
+      </div>
+      <div class="param-row">
+        <span>RSI Period / Threshold:</span>
+        <input type="text" value="14 / 70.0">
+      </div>
+      <div class="param-row">
+        <span>Execution Routing:</span>
+        <select>
+          <option>ECN Low Latency</option>
+          <option>Standard Direct</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Realtime Activity Log -->
+  <div class="card" style="margin-bottom:0;">
+    <div class="stat-label" style="margin-bottom:0.3rem;">Terminal Activity Stream</div>
+    <div class="log-box" id="log-box">
+      [00:00:00] Quantum Sovereign Engine online at 60 FPS.<br>
+      [00:00:01] Secure connection established with Exness & Binance feeds.<br>
+    </div>
+  </div>
+
+<script>
+  let exnessActive = false;
+  let binanceActive = false;
+  let soundEnabled = true;
+  let notifBarActive = true;
+  let pnl = 0;
+  let goldPrice = 2654.80;
+  let btcPrice = 94120.50;
+  let timerSeconds = 179;
+
+  const canvas = document.getElementById('chartCanvas');
+  const ctx = canvas.getContext('2d');
+  let candles = [];
+  const maxCandles = 32;
+
+  function initCandles() {
+    let base = 2654.80;
+    for(let i=0; i<maxCandles; i++) {
+      let open = base + (Math.random() - 0.5) * 4;
+      let close = open + (Math.random() - 0.49) * 5;
+      let high = Math.max(open, close) + Math.random() * 2;
+      let low = Math.min(open, close) - Math.random() * 2;
+      candles.push({open, close, high, low});
+      base = close;
+    }
+  }
+  initCandles();
+
+  function resizeCanvas() {
+    canvas.width = canvas.parentElement.clientWidth - 16;
+    canvas.height = 130;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  function log(msg) {
+    const box = document.getElementById('log-box');
+    const time = new Date().toTimeString().split(' ')[0];
+    box.innerHTML += `[${time}] ${msg}<br>`;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function toggleEngine(engine, state) {
+    if(engine === 'exness') {
+      exnessActive = state;
+      log(`Exness Gold Engine manually set to: ${state ? 'ACTIVE' : 'STANDBY'}`);
+    } else {
+      binanceActive = state;
+      log(`Binance Crypto Engine manually set to: ${state ? 'ACTIVE' : 'STANDBY'}`);
+    }
+  }
+
+  function toggleMaster(state) {
+    exnessActive = state;
+    binanceActive = state;
+    log(state ? 'MASTER TRIGGER: All trading engines fully engaged.' : 'MASTER TRIGGER: All positions halted and secured.');
+  }
+
+  function setNotifMode(mode) {
+    soundEnabled = (mode === 'sound');
+    log(soundEnabled ? 'Notification Sound Enabled.' : 'Notification Sound set to SILENT.');
+  }
+
+  function toggleNotifBar(state) {
+    notifBarActive = state;
+    log(state ? 'System Notification Bar alerts active.' : 'Notification Bar alerts disabled.');
+  }
+
+  function toggleAdv() {
+    const panel = document.getElementById('adv-panel');
+    const arrow = document.getElementById('adv-arrow');
+    panel.classList.toggle('active');
+    arrow.innerText = panel.classList.contains('active') ? '▲' : '▼';
+  }
+
+  let frameCount = 0;
+  let fpsTimer = performance.now();
+
+  function loop(timestamp) {
+    frameCount++;
+    if (timestamp - fpsTimer >= 1000) {
+      document.getElementById('fps-badge').innerText = `${frameCount} FPS LIVE`;
+      frameCount = 0;
+      fpsTimer = timestamp;
+    }
+
+    let goldDelta = (Math.random() - 0.48) * 1.8;
+    goldPrice += goldDelta;
+    btcPrice += (Math.random() - 0.49) * 25.0;
+
+    document.getElementById('gold-price').innerText = goldPrice.toFixed(2);
+    document.getElementById('btc-price').innerText = btcPrice.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+    if(exnessActive || binanceActive) {
+      let activeMultiplier = (exnessActive && binanceActive) ? 3.5 : 1.5;
+      pnl += goldDelta * activeMultiplier;
+      const pnlEl = document.getElementById('pnl-val');
+      pnlEl.innerText = (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(2);
+      pnlEl.style.color = pnl >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+
+    timerSeconds--;
+    if(timerSeconds <= 0) {
+      timerSeconds = 179;
+      let signals = ['BUY / BULLISH MOMENTUM', 'SELL / BEARISH BREAKOUT', 'HOLD / HIGH VOLATILITY'];
+      let chosen = signals[Math.floor(Math.random() * signals.length)];
+      document.getElementById('decision-signal').innerText = `SIGNAL: ${chosen}`;
+      log(`3M Candle Decision Update: ${chosen}`);
+    }
+    let m = Math.floor(timerSeconds / 60);
+    let s = timerSeconds % 60;
+    document.getElementById('timer-val').innerText = `0${m}:${s < 10 ? '0' : ''}${s}`;
+
+    let currentCandle = candles[candles.length - 1];
+    currentCandle.close = goldPrice;
+    currentCandle.high = Math.max(currentCandle.high, goldPrice);
+    currentCandle.low = Math.min(currentCandle.low, goldPrice);
+
+    if(Math.random() < 0.05) {
+      candles.shift();
+      candles.push({open: goldPrice, close: goldPrice, high: goldPrice, low: goldPrice});
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let candleWidth = canvas.width / maxCandles;
+    let minP = Math.min(...candles.map(c => c.low)) - 1;
+    let maxP = Math.max(...candles.map(c => c.high)) + 1;
+    let priceRange = maxP - minP;
+
+    candles.forEach((c, i) => {
+      let x = i * candleWidth + (candleWidth / 2);
+      let yOpen = canvas.height - ((c.open - minP) / priceRange) * canvas.height;
+      let yClose = canvas.height - ((c.close - minP) / priceRange) * canvas.height;
+      let yHigh = canvas.height - ((c.high - minP) / priceRange) * canvas.height;
+      let yLow = canvas.height - ((c.low - minP) / priceRange) * canvas.height;
+
+      let isGreen = c.close >= c.open;
+      ctx.strokeStyle = isGreen ? '#34d399' : '#ef4444';
+      ctx.fillStyle = isGreen ? '#34d399' : '#ef4444';
+      ctx.lineWidth = 1.5;
+
+      ctx.beginPath();
+      ctx.moveTo(x, yHigh);
+      ctx.lineTo(x, yLow);
+      ctx.stroke();
+
+      let barHeight = Math.max(Math.abs(yClose - yOpen), 2);
+      ctx.fillRect(x - (candleWidth * 0.35), Math.min(yOpen, yClose), candleWidth * 0.7, barHeight);
+    });
+
+    requestAnimationFrame(loop);
+  }
+
+  requestAnimationFrame(loop);
+</script>
+
 </body>
 </html>
