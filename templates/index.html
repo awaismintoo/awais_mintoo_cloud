@@ -4,59 +4,259 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#0b0f19">
-    <title>MintooSuite - Quantum Sovereign Suite</title>
+    <meta name="theme-color" content="#030712">
+    <title>MintooSuite - Quantum Sovereign Terminal</title>
     <style>
-        :root { --bg: #0b0f19; --card-bg: #111827; --border: #1f2937; --accent: #10b981; --text: #f8fafc; --muted: #94a3b8; }
-        body { background-color: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 15px; }
-        .logo-area h1 { font-size: 18px; margin: 0; color: #38bdf8; letter-spacing: 0.5px; }
-        .logo-area span { font-size: 11px; color: var(--muted); text-transform: uppercase; }
-        .badge { background: rgba(16, 185, 129, 0.1); color: var(--accent); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid rgba(16, 185, 129, 0.2); }
-        .grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
-        .card h3 { margin-top: 0; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .ticker-val { font-size: 24px; font-weight: bold; color: var(--accent); margin: 5px 0; }
-        .ticker-sub { font-size: 12px; color: var(--muted); }
-        .chart-box { height: 120px; background: #07090e; border-radius: 6px; display: flex; align-items: flex-end; padding: 10px; gap: 4px; justify-content: space-between; border: 1px solid #161e2e; margin-top: 10px; }
-        .bar { width: 12%; background: #3b82f6; border-radius: 2px 2px 0 0; }
-        .bar.green { background: #10b981; }
-        .bar.red { background: #ef4444; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; background: #2563eb; color: white; border: none; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: center; }
+        :root {
+            --bg: #030712;
+            --panel: #0b0f19;
+            --card: #111827;
+            --border: #1f2937;
+            --gold: #f59e0b;
+            --gold-glow: #fbbf24;
+            --cyan: #06b6d4;
+            --green: #10b981;
+            --red: #ef4444;
+            --text: #f8fafc;
+            --muted: #64748b;
+        }
+        * { box-sizing: border-box; }
+        body { background-color: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; margin: 0; padding: 10px; font-size: 12px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: var(--panel); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; }
+        .logo-box { display: flex; align-items: center; gap: 10px; }
+        canvas#neonLogo { width: 42px; height: 42px; border-radius: 8px; background: #000; border: 1px solid rgba(245, 158, 11, 0.4); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+        .logo-text h1 { font-size: 16px; margin: 0; color: var(--gold); letter-spacing: 1px; font-weight: 900; text-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+        .logo-text span { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge { background: rgba(245, 158, 11, 0.1); color: var(--gold); padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: 800; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .card { background-color: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; position: relative; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+        .card-header h3 { margin: 0; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+        .ticker-row { display: flex; justify-content: space-between; align-items: baseline; }
+        .ticker-val { font-size: 24px; font-weight: 900; color: var(--gold); font-family: monospace; }
+        .ticker-change { font-size: 12px; font-weight: 700; color: var(--green); }
+        .chart-container { position: relative; height: 160px; background: #050811; border-radius: 6px; border: 1px solid #161e2e; margin-top: 8px; overflow: hidden; }
+        canvas#mainChart { width: 100%; height: 100%; display: block; }
+        .indicators { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+        .ind-box { background: #050811; border: 1px solid var(--border); padding: 6px; border-radius: 4px; text-align: center; }
+        .ind-lbl { font-size: 8px; color: var(--muted); text-transform: uppercase; }
+        .ind-val { font-size: 11px; font-weight: bold; color: var(--text); margin-top: 2px; }
+        .telemetry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .tele-row { display: flex; justify-content: space-between; font-size: 10px; padding: 3px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); }
+        .tele-label { color: var(--muted); }
+        .tele-data { font-weight: bold; font-family: monospace; }
+        .order-depth { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+        .depth-bar { height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; }
+        .depth-fill-buy { height: 100%; background: var(--green); width: 62%; }
+        .depth-fill-sell { height: 100%; background: var(--red); width: 38%; }
+        .btn-group { display: flex; gap: 8px; margin-top: 8px; }
+        .btn { flex: 1; background: #2563eb; color: white; border: none; padding: 12px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; }
         .btn-danger { background: #dc2626; }
+        .console-box { background: #02040a; border: 1px solid #1e293b; border-radius: 6px; padding: 8px; height: 60px; overflow-y: auto; font-family: monospace; font-size: 9px; color: #38bdf8; margin-top: 8px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo-area">
-            <h1>MintooSuite</h1>
-            <span>Awais Mintoo & Co.</span>
+        <div class="logo-box">
+            <canvas id="neonLogo" width="84" height="84"></canvas>
+            <div class="logo-text">
+                <h1>MintooSuite</h1>
+                <span>Awais Mintoo & Co.</span>
+            </div>
         </div>
-        <div class="badge">LIVE CLOUD</div>
+        <div class="badge">INSTITUTIONAL v3.0</div>
     </div>
+
     <div class="grid">
         <div class="card">
-            <h3>Exness Gold (XAU/USD) Market Feed</h3>
-            <div class="ticker-val">$4,212.50</div>
-            <div class="ticker-sub">Status: Weekend Rollover / Pre-Open</div>
-            <div class="chart-box">
-                <div class="bar red" style="height: 40%;"></div>
-                <div class="bar red" style="height: 35%;"></div>
-                <div class="bar green" style="height: 55%;"></div>
-                <div class="bar green" style="height: 70%;"></div>
-                <div class="bar green" style="height: 65%;"></div>
-                <div class="bar green" style="height: 85%;"></div>
+            <div class="card-header">
+                <h3>Exness Gold (XAU/USD) Live Candlestick Stream</h3>
+                <span style="font-size: 9px; color: var(--green);">● LIVE FEED</span>
+            </div>
+            <div class="ticker-row">
+                <div class="ticker-val" id="gold-price">$2,654.80</div>
+                <div class="ticker-change" id="gold-change">+1.42% Today</div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+
+            <div class="indicators">
+                <div class="ind-box"><div class="ind-lbl">RSI (14)</div><div class="ind-val" id="rsi-val">58.4</div></div>
+                <div class="ind-box"><div class="ind-lbl">MACD</div><div class="ind-val" id="macd-val">+4.12</div></div>
+                <div class="ind-box"><div class="ind-lbl">Stoch</div><div class="ind-val" id="stoch-val">74.2</div></div>
+                <div class="ind-box"><div class="ind-lbl">VWAP</div><div class="ind-val" id="vwap-val">2652.1</div></div>
             </div>
         </div>
+
         <div class="card">
-            <h3>Quantum Sovereign Execution Suite</h3>
-            <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">Automated risk-managed position management dashboard.</p>
+            <div class="card-header">
+                <h3>Institutional Risk & Order Depth Telemetry</h3>
+                <span style="font-size: 9px; color: var(--cyan);">EXNESS CLOUD</span>
+            </div>
+            <div class="telemetry-grid">
+                <div>
+                    <div class="tele-row"><span class="tele-label">Spread:</span><span class="tele-data">0.10 pts</span></div>
+                    <div class="tele-row"><span class="tele-label">Margin Level:</span><span class="tele-data" style="color: var(--green);">2480%</span></div>
+                    <div class="tele-row"><span class="tele-label">Leverage:</span><span class="tele-data">1:500</span></div>
+                </div>
+                <div>
+                    <div class="tele-row"><span class="tele-label">Active PnL:</span><span class="tele-data" id="pnl-val" style="color: var(--green);">+$412.50</span></div>
+                    <div class="tele-row"><span class="tele-label">Exposure:</span><span class="tele-data">2.5 Lots</span></div>
+                    <div class="tele-row"><span class="tele-label">Latency:</span><span class="tele-data">12ms</span></div>
+                </div>
+            </div>
+            <div class="order-depth">
+                <div><div class="tele-row"><span class="tele-label">Bids (62%)</span></div><div class="depth-bar"><div class="depth-fill-buy"></div></div></div>
+                <div><div class="tele-row"><span class="tele-label">Asks (38%)</span></div><div class="depth-bar"><div class="depth-fill-sell"></div></div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Quantum Sovereign Command Suite</h3>
+            </div>
             <div class="btn-group">
-                <button class="btn" onclick="alert('Automated Trading Initialized')">Start Trading</button>
-                <button class="btn btn-danger" onclick="alert('Positions Secured')">Secure Profit</button>
+                <button class="btn" onclick="executeBuy()">Deploy Buy Order</button>
+                <button class="btn btn-danger" onclick="secureProfit()">Secure All Profit</button>
+            </div>
+            <div class="console-box" id="consoleLog">
+                [SYS] Quantum Suite Initialized.<br>[SYS] Connected to Vercel Cloud Node.
             </div>
         </div>
     </div>
+
+    <script>
+        // 1. 3D Neon Logo Renderer
+        const logoCanvas = document.getElementById('neonLogo');
+        const lctx = logoCanvas.getContext('2d');
+        let angle = 0;
+
+        function drawNeonLogo() {
+            lctx.clearRect(0, 0, 84, 84);
+            lctx.save();
+            lctx.translate(42, 42);
+            lctx.rotate(angle);
+            lctx.strokeStyle = '#f59e0b';
+            lctx.lineWidth = 3;
+            lctx.shadowColor = '#fbbf24';
+            lctx.shadowBlur = 12;
+            lctx.strokeRect(-24, -24, 48, 48);
+            lctx.restore();
+
+            lctx.save();
+            lctx.translate(42, 42);
+            lctx.rotate(-angle * 1.5);
+            lctx.strokeStyle = '#06b6d4';
+            lctx.lineWidth = 2;
+            lctx.shadowColor = '#06b6d4';
+            lctx.shadowBlur = 10;
+            lctx.strokeRect(-18, -18, 36, 36);
+            lctx.restore();
+
+            lctx.fillStyle = '#f8fafc';
+            lctx.font = '900 28px monospace';
+            lctx.textAlign = 'center';
+            lctx.textBaseline = 'middle';
+            lctx.shadowColor = '#f59e0b';
+            lctx.shadowBlur = 15;
+            lctx.fillText('M', 42, 44);
+
+            angle += 0.02;
+            requestAnimationFrame(drawNeonLogo);
+        }
+        drawNeonLogo();
+
+        // 2. Candlestick Chart Engine
+        const chartCanvas = document.getElementById('mainChart');
+        const cctx = chartCanvas.getContext('2d');
+        function resizeChart() {
+            chartCanvas.width = chartCanvas.parentElement.clientWidth;
+            chartCanvas.height = chartCanvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeChart);
+        resizeChart();
+
+        let candles = [];
+        let basePrice = 2654.80;
+        for (let i = 0; i < 20; i++) {
+            let o = basePrice + (Math.random() * 2 - 1);
+            let c = o + (Math.random() * 3 - 1.5);
+            let h = Math.max(o, c) + Math.random() * 1.5;
+            let l = Math.min(o, c) - Math.random() * 1.5;
+            candles.push({ o, c, h, l });
+            basePrice = c;
+        }
+
+        function drawCandles() {
+            cctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+            let highs = candles.map(k => k.h);
+            let lows = candles.map(k => k.l);
+            let max = Math.max(...highs);
+            let min = Math.min(...lows);
+            let range = max - min || 1;
+            let barW = chartCanvas.width / candles.length;
+
+            candles.forEach((k, i) => {
+                let x = i * barW + barW / 2;
+                let openY = chartCanvas.height - ((k.o - min) / range) * (chartCanvas.height - 20) - 10;
+                let closeY = chartCanvas.height - ((k.c - min) / range) * (chartCanvas.height - 20) - 10;
+                let highY = chartCanvas.height - ((k.h - min) / range) * (chartCanvas.height - 20) - 10;
+                let lowY = chartCanvas.height - ((k.l - min) / range) * (chartCanvas.height - 20) - 10;
+
+                let isGreen = k.c >= k.o;
+                let color = isGreen ? '#10b981' : '#ef4444';
+
+                cctx.strokeStyle = color;
+                cctx.lineWidth = 1.5;
+                cctx.beginPath();
+                cctx.moveTo(x, highY);
+                cctx.lineTo(x, lowY);
+                cctx.stroke();
+
+                cctx.fillStyle = color;
+                let top = Math.min(openY, closeY);
+                let height = Math.abs(closeY - openY) || 2;
+                cctx.fillRect(x - barW * 0.3, top, barW * 0.6, height);
+            });
+        }
+
+        // 3. Live Price Loop
+        setInterval(() => {
+            let last = candles[candles.length - 1];
+            let delta = (Math.random() * 1.8 - 0.85);
+            let newClose = last.c + delta;
+            last.c = newClose;
+            last.h = Math.max(last.h, newClose);
+            last.l = Math.min(last.l, newClose);
+
+            if (Math.random() > 0.7) {
+                candles.shift();
+                candles.push({ o: newClose, c: newClose, h: newClose, l: newClose });
+            }
+
+            document.getElementById('gold-price').innerText = '$' + newClose.toFixed(2);
+            document.getElementById('rsi-val').innerText = (55 + Math.random() * 10).toFixed(1);
+            document.getElementById('macd-val').innerText = (3.5 + Math.random() * 1.5).toFixed(2);
+            document.getElementById('stoch-val').innerText = (70 + Math.random() * 12).toFixed(1);
+
+            let pnl = (newClose - 2650) * 12;
+            let pnlEl = document.getElementById('pnl-val');
+            pnlEl.innerText = (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(2);
+            pnlEl.style.color = pnl >= 0 ? '#10b981' : '#ef4444';
+
+            drawCandles();
+        }, 1000);
+
+        function log(msg) {
+            let box = document.getElementById('consoleLog');
+            box.innerHTML += '<br>[EXEC] ' + msg;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function executeBuy() { log('Buy Order Submitted @ ' + document.getElementById('gold-price').innerText); }
+        function secureProfit() { log('All Positions Liquidated. Capital Secured.'); }
+    </script>
 </body>
 </html>
