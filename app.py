@@ -8,6 +8,7 @@ CLOUD_UI = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="google-site-verification" content="_xIb98t7daOeEIngaxR0jEUcGENU2HS8WIjrsiq4-ic" />
     <title>Awais Mintoo & Co. | Quantum Sovereign Suite</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
