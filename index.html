@@ -8,51 +8,60 @@
     <meta name="theme-color" content="#0d1117">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace; }
-        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; width: 100%; min-height: 100vh; overflow-y: auto; }
+        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 60px; width: 100%; min-height: 100vh; overflow-y: auto; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
-        .title { color: #f0883e; font-size: 15px; font-weight: bold; }
+        .title { color: #f0883e; font-size: 15px; font-weight: bold; text-shadow: 0 0 6px rgba(240, 136, 62, 0.4); }
         .subtitle { color: #8b949e; font-size: 9px; }
-        .fps-badge { background: #1f6feb; color: #fff; padding: 3px 6px; font-size: 10px; border-radius: 4px; font-weight: bold; }
+        .fps-badge { background: #1f6feb; color: #fff; padding: 3px 6px; font-size: 10px; border-radius: 4px; font-weight: bold; box-shadow: 0 0 8px rgba(31, 111, 235, 0.4); }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
-        .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; }
-        .card-title { color: #8b949e; font-size: 9px; margin-bottom: 3px; text-transform: uppercase; }
-        .card-value { color: #58a6ff; font-size: 16px; font-weight: bold; }
-        .card-value.green { color: #3fb950; }
-        .card-value.red { color: #f85149; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; box-shadow: inset 0 0 8px rgba(255,255,255,0.02); }
+        .card-title { color: #8b949e; font-size: 9px; margin-bottom: 3px; text-transform: uppercase; display: flex; justify-content: space-between; }
+        .card-value { color: #58a6ff; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px rgba(88, 166, 255, 0.3); }
+        .card-value.green { color: #3fb950; text-shadow: 0 0 6px rgba(63, 185, 80, 0.4); }
+        .card-value.red { color: #f85149; text-shadow: 0 0 6px rgba(248, 81, 73, 0.4); }
         
-        /* Prominent Hero Banner */
-        .hero-banner { background: #161b22; border: 2px solid #238636; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 10px rgba(35, 134, 54, 0.25); }
-        .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: bold; display: flex; justify-content: space-between; }
-        .hero-signal { font-size: 16px; font-weight: bold; color: #3fb950; margin: 4px 0; }
+        /* 3D Neon Hero Banner */
+        .hero-banner { background: #161b22; border: 2px solid #238636; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 12px rgba(35, 134, 54, 0.3); position: relative; }
+        .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .hero-signal { font-size: 15px; font-weight: bold; color: #3fb950; margin: 6px 0; text-shadow: 0 0 8px rgba(63, 185, 80, 0.4); display: flex; justify-content: space-between; align-items: center; }
         .hero-details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: #0d1117; padding: 6px; border-radius: 4px; font-size: 10px; border: 1px solid #30363d; }
         .hero-detail-item { color: #c9d1d9; }
         .hero-detail-item span { color: #8b949e; font-size: 8px; display: block; }
         
-        .panel { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; margin-bottom: 8px; }
-        .panel-title { color: #f0883e; font-size: 11px; font-weight: bold; margin-bottom: 6px; display: flex; justify-content: space-between; }
-        canvas { width: 100%; height: 110px; background: #0d1117; border-radius: 4px; border: 1px solid #30363d; display: block; }
+        .carousel-btn { background: #21262d; color: #58a6ff; border: 1px solid #30363d; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .carousel-btn:active { background: #30363d; }
+
+        .panel { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; margin-bottom: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.3); }
+        .panel-title { color: #f0883e; font-size: 11px; font-weight: bold; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        canvas { width: 100%; height: 100px; background: #0d1117; border-radius: 4px; border: 1px solid #30363d; display: block; }
+        
         .btn-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 6px; }
         .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
         button { padding: 10px; font-weight: bold; font-size: 10px; border: none; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.2s ease; }
         
-        .btn-active-green { background: #238636 !important; color: #ffffff !important; box-shadow: 0 0 6px rgba(35, 134, 54, 0.4); }
-        .btn-active-orange { background: #d97706 !important; color: #ffffff !important; }
+        .btn-active-green { background: #238636 !important; color: #ffffff !important; box-shadow: 0 0 8px rgba(35, 134, 54, 0.4); }
+        .btn-active-orange { background: #d97706 !important; color: #ffffff !important; box-shadow: 0 0 8px rgba(217, 119, 6, 0.4); }
         .btn-active-red { background: #da3633 !important; color: #ffffff !important; }
         .btn-inactive { background: #21262d !important; color: #8b949e !important; border: 1px solid #30363d; }
         
-        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 140px; overflow-y: auto; }
+        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 120px; overflow-y: auto; }
         .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: bold; text-transform: uppercase; }
         
+        /* Scrollable Active Valid Signals Ledger */
+        .signals-scroll-box { max-height: 160px; overflow-y: auto; padding-right: 2px; }
         .signal-card { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #3fb950; padding: 6px; border-radius: 4px; margin-bottom: 4px; font-size: 10px; }
         .signal-card.red { border-left-color: #f85149; }
         .signal-head { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px; }
         .signal-meta { color: #8b949e; font-size: 9px; }
 
-        .expert-table { width: 100%; font-size: 10px; border-collapse: collapse; margin-top: 4px; }
-        .expert-table th, .expert-table td { border: 1px solid #30363d; padding: 5px; text-align: left; }
-        .expert-table th { color: #f0883e; background: #0d1117; }
+        .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 10px; }
+        .macro-card { background: #0d1117; border: 1px solid #30363d; padding: 6px; border-radius: 4px; }
+
+        /* Interactive Info Badge & Tooltip Popups */
+        .info-btn { background: #21262d; color: #58a6ff; border: 1px solid #30363d; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; vertical-align: middle; }
+        .tooltip-card { display: none; position: fixed; bottom: 20px; left: 10px; right: 10px; background: #161b22; border: 2px solid #1f6feb; padding: 10px; border-radius: 6px; color: #c9d1d9; font-size: 11px; z-index: 999; box-shadow: 0 0 15px rgba(31, 111, 235, 0.5); }
     </style>
 </head>
 <body>
@@ -67,43 +76,65 @@
 
     <div class="grid-2">
         <div class="card">
-            <div class="card-title">EXNESS GOLD (XAU/USD)</div>
+            <div class="card-title">
+                <span>EXNESS GOLD (XAU/USD)</span>
+                <span class="info-btn" onclick="showHelp('Exness Gold real-time market price feed in USD per ounce.')">?</span>
+            </div>
             <div class="card-value green" id="goldPrice">2674.11</div>
         </div>
         <div class="card">
-            <div class="card-title">BINANCE BTC/USDT FUTURES</div>
+            <div class="card-title">
+                <span>BINANCE BTC/USDT</span>
+                <span class="info-btn" onclick="showHelp('Binance Perpetual Futures Bitcoin pricing feed in USDT.')">?</span>
+            </div>
             <div class="card-value" id="btcPrice">94,106.50</div>
         </div>
     </div>
 
-    <!-- Synchronized Top Hero Banner -->
+    <!-- Multi-Asset Carousel Top Hero Banner -->
     <div class="hero-banner" id="heroBanner">
         <div class="hero-title">
-            <span>🤖 MASTER BOT 5M/10M HERO</span>
-            <span style="color: #3fb950;" id="heroAssetTag">ACTIVE VIEW</span>
+            <span>🤖 MASTER BOT RECOMMENDATION CAROUSEL</span>
+            <div>
+                <span style="color: #3fb950; margin-right: 6px;" id="heroAssetTag">EXNESS GOLD</span>
+                <span class="info-btn" onclick="showHelp('Top Hero Carousel: Use < > arrows to browse 5M/10M candle recommendations for all coins.')">?</span>
+            </div>
         </div>
-        <div class="hero-signal" id="heroSignalText">SELECT ASSET VIEW BELOW</div>
+        <div class="hero-signal">
+            <button class="carousel-btn" onclick="prevHero()">&lt;</button>
+            <span id="heroSignalText">EXNESS GOLD: HIGH-CONFIDENCE LONG</span>
+            <button class="carousel-btn" onclick="nextHero()">&gt;</button>
+        </div>
         <div class="hero-details">
-            <div class="hero-detail-item"><span>REC. LEVERAGE</span><strong id="heroLeverage" style="color:#f0883e;">--</strong></div>
-            <div class="hero-detail-item"><span>STOP LOSS (SL)</span><strong id="heroSL" style="color:#f85149;">--</strong></div>
-            <div class="hero-detail-item"><span>TARGET TP1 / TP2</span><strong id="heroTP" style="color:#3fb950;">--</strong></div>
+            <div class="hero-detail-item"><span>REC. LEVERAGE</span><strong id="heroLeverage" style="color:#f0883e;">10x - 20x</strong></div>
+            <div class="hero-detail-item"><span>STOP LOSS (SL)</span><strong id="heroSL" style="color:#f85149;">2668.50</strong></div>
+            <div class="hero-detail-item"><span>TARGET TP1 / TP2</span><strong id="heroTP" style="color:#3fb950;">2682 / 2690</strong></div>
         </div>
     </div>
 
     <div class="grid-2">
         <div class="card">
-            <div class="card-title">3M CANDLE TIMER</div>
+            <div class="card-title">
+                <span>3M CANDLE TIMER</span>
+                <span class="info-btn" onclick="showHelp('Countdown timer to the next 3M candle close and signal dispatch.')">?</span>
+            </div>
             <div class="card-value" id="timerDisplay">03:00</div>
         </div>
         <div class="card">
-            <div class="card-title">PERSISTENT ENGINE</div>
-            <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">LOCKED & SYNCED</div>
+            <div class="card-title">
+                <span>BACKGROUND PUSH</span>
+                <span class="info-btn" onclick="showHelp('Persistent Service Worker mode: Alerts remain active in background.')">?</span>
+            </div>
+            <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">PERSISTENT ACTIVE</div>
         </div>
     </div>
 
     <div class="panel">
         <div class="panel-title">
-            <span id="chartTitle">CHART MATRIX</span>
+            <span>
+                <span id="chartTitle">CHART MATRIX</span>
+                <span class="info-btn" onclick="showHelp('Interactive Candlestick Matrix. Tap buttons below to switch active asset view.')">?</span>
+            </span>
             <span style="color: #3fb950;">● LIVE STREAM</span>
         </div>
         <canvas id="matrixCanvas"></canvas>
@@ -115,24 +146,60 @@
         </div>
     </div>
 
-    <!-- Active Valid Signals Panel with Expiry Timers -->
+    <!-- Scrollable Valid Active Signals Ledger -->
     <div class="panel">
-        <div class="panel-title">⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER</div>
-        <div id="validSignalsContainer">
-            <!-- Dynamic Active Signal Cards -->
+        <div class="panel-title">
+            <span>
+                ⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER
+                <span class="info-btn" onclick="showHelp('Scrollable Ledger of active recommended trade setups across all coins with expiry countdowns.')">?</span>
+            </span>
+        </div>
+        <div class="signals-scroll-box" id="validSignalsContainer">
+            <!-- Dynamic Cards -->
         </div>
     </div>
 
+    <!-- Real-time Macro Correlation Panel (US500 & DXY Impact on Gold) -->
     <div class="panel">
-        <div class="panel-title">🤖 MASTER BOT REAL-TIME SCANNER FEED</div>
-        <div class="log-box" id="masterBotFeed">
-            [00:00:00.000] Multi-asset micro-second scanner active...<br>
+        <div class="panel-title">
+            <span>
+                📈 MACRO INDEX CORRELATION (US500 & DXY)
+                <span class="info-btn" onclick="showHelp('Monitors US Dollar Index (DXY) and S&P 500 (US500) to predict Exness Gold impact.')">?</span>
+            </span>
+        </div>
+        <div class="macro-grid">
+            <div class="macro-card">
+                <div style="color: #8b949e;">US DOLLAR INDEX (DXY)</div>
+                <div style="font-size: 14px; font-weight: bold; color: #f85149;" id="dxyVal">103.42 ▼</div>
+                <div style="font-size: 9px; color: #3fb950; margin-top: 2px;" id="dxyImpact">Gold Impact: BULLISH (Inverse)</div>
+            </div>
+            <div class="macro-card">
+                <div style="color: #8b949e;">US500 (S&P 500 INDEX)</div>
+                <div style="font-size: 14px; font-weight: bold; color: #3fb950;" id="us500Val">5815.20 ▲</div>
+                <div style="font-size: 9px; color: #58a6ff; margin-top: 2px;" id="us500Impact">Gold Impact: STABLE CONFLUENCE</div>
+            </div>
         </div>
     </div>
 
     <div class="panel">
         <div class="panel-title">
-            <span>🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS</span>
+            <span>
+                🤖 MASTER BOT REAL-TIME SCANNER FEED
+                <span class="info-btn" onclick="showHelp('Micro-second scanner logs showing 5M/10M candle analysis across all coins.')">?</span>
+            </span>
+        </div>
+        <div class="log-box" id="masterBotFeed">
+            [00:00:00.000] Multi-asset micro-second scanner active...<br>
+        </div>
+    </div>
+
+    <!-- Master Notification Panel with Saved Button States -->
+    <div class="panel">
+        <div class="panel-title">
+            <span>
+                🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS
+                <span class="info-btn" onclick="showHelp('Manage push notification permissions and individual asset push channels.')">?</span>
+            </span>
             <span style="color: #3fb950;" id="pushStatusText">PUSH READY</span>
         </div>
         
@@ -143,56 +210,14 @@
 
         <div class="section-header">3M Multi-Asset Push Toggles:</div>
         <div class="btn-row">
-            <button class="btn-active-green" id="goldPushBtn" onclick="togglePushBtn(this, 'EXNESS GOLD PUSH')">EXNESS GOLD PUSH: ON</button>
-            <button class="btn-active-green" id="cryptoPushBtn" onclick="togglePushBtn(this, 'ALL COINS PUSH')">ALL COINS PUSH: ON</button>
+            <button class="btn-active-green" id="goldPushBtn" onclick="togglePushSetting('goldPushBtn', 'EXNESS GOLD PUSH')">EXNESS GOLD PUSH: ON</button>
+            <button class="btn-active-green" id="cryptoPushBtn" onclick="togglePushSetting('cryptoPushBtn', 'ALL COINS PUSH')">ALL COINS PUSH: ON</button>
         </div>
     </div>
 
-    <!-- RESTORED & EXPANDED MASTER-LEVEL EXPERT TRADER SUITE -->
-    <div class="panel">
-        <div class="panel-title">👑 MASTER TRADER INSTITUTIONAL MATRIX</div>
-        <table class="expert-table">
-            <tr>
-                <th>ASSET</th>
-                <th>CONFLUENCE</th>
-                <th>DRAWDOWN CAP</th>
-                <th>DEPTH LIQUIDITY</th>
-            </tr>
-            <tr>
-                <td>EXNESS GOLD</td>
-                <td style="color: #3fb950;">5M/10M LONG</td>
-                <td>1.2% (Max Risk)</td>
-                <td style="color: #3fb950;">HIGH DEPTH</td>
-            </tr>
-            <tr>
-                <td>BTC/USDT</td>
-                <td style="color: #3fb950;">BREAKOUT LONG</td>
-                <td>1.5% (Safe)</td>
-                <td style="color: #3fb950;">HIGH DEPTH</td>
-            </tr>
-            <tr>
-                <td>ETH/USDT</td>
-                <td style="color: #f85149;">CORRECTION SHORT</td>
-                <td>0.8% (Low)</td>
-                <td style="color: #f0883e;">MODERATE</td>
-            </tr>
-            <tr>
-                <td>SOL/USDT</td>
-                <td style="color: #3fb950;">VOL SURGE LONG</td>
-                <td>2.0% (Cap)</td>
-                <td style="color: #3fb950;">HIGH DEPTH</td>
-            </tr>
-        </table>
-
-        <div class="section-header">Institutional Execution & Safety Shields:</div>
-        <div class="btn-row">
-            <button class="btn-active-green" onclick="alert('Master Risk Calculator: Position risk capped at 1.5% drawdown across 2x-20x leverage.')">Risk Calculator: Active</button>
-            <button class="btn-active-orange" onclick="alert('Liquidity Trap Heatmap: Scan verified zero trap zones.')">Trap Shield: Clean</button>
-        </div>
-        <div class="btn-row" style="margin-top: 6px;">
-            <button class="btn-inactive" onclick="alert('Auto-Hedge Protocol: Standing by for high-frequency volatility spikes.')">Auto-Hedge: Armed</button>
-            <button class="btn-active-red" onclick="alert('Emergency Margin Protect: Account liquidation shield engaged.')">Margin Shield: ON</button>
-        </div>
+    <!-- Explanation Tooltip Popups -->
+    <div class="tooltip-card" id="tooltipCard">
+        <div id="tooltipText">Tooltip explanation...</div>
     </div>
 
     <script>
@@ -200,9 +225,17 @@
             navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Error:', err));
         }
 
+        // Restore Persistent Settings from localStorage
         let currentAsset = localStorage.getItem('mintoosuite_asset') || 'gold'; 
+        let goldPushState = localStorage.getItem('mintoosuite_gold_push') !== 'off';
+        let cryptoPushState = localStorage.getItem('mintoosuite_crypto_push') !== 'off';
+        let sysPushGranted = localStorage.getItem('mintoosuite_sys_push') === 'granted';
+
         let goldVal = 2674.11;
         let btcVal = 94106.50;
+        let dxyVal = 103.42;
+        let us500Val = 5815.20;
+
         let goldHistory = Array(28).fill(2674.11);
         let btcHistory = Array(28).fill(94106.50);
 
@@ -214,7 +247,26 @@
             { name: "BINANCE XRP/USDT", price: 2.45, leverage: "3x - 10x", type: "crypto" }
         ];
 
+        let heroIndex = 0;
         let activeValidSignals = {};
+
+        function restoreSavedUIState() {
+            // Restore Push Toggle States
+            const gBtn = document.getElementById('goldPushBtn');
+            gBtn.className = goldPushState ? 'btn-active-green' : 'btn-inactive';
+            gBtn.innerText = `EXNESS GOLD PUSH: ${goldPushState ? 'ON' : 'OFF'}`;
+
+            const cBtn = document.getElementById('cryptoPushBtn');
+            cBtn.className = cryptoPushState ? 'btn-active-green' : 'btn-inactive';
+            cBtn.innerText = `ALL COINS PUSH: ${cryptoPushState ? 'ON' : 'OFF'}`;
+
+            const eBtn = document.getElementById('enableAlertsBtn');
+            if(sysPushGranted || (Notification.permission === "granted")) {
+                eBtn.className = 'btn-active-green';
+                eBtn.innerText = '1. PUSH ENABLED & ACTIVE';
+                document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
+            }
+        }
 
         function switchAsset(mode) {
             currentAsset = mode;
@@ -234,48 +286,62 @@
             updateHeroBanner();
         }
 
+        function prevHero() {
+            heroIndex = (heroIndex - 1 + marketPool.length) % marketPool.length;
+            updateHeroBanner();
+        }
+
+        function nextHero() {
+            heroIndex = (heroIndex + 1) % marketPool.length;
+            updateHeroBanner();
+        }
+
         function updateHeroBanner() {
-            let filteredAsset;
-            if (currentAsset === 'crypto') {
-                filteredAsset = marketPool.find(a => a.name.includes("BTC")) || marketPool[1];
-            } else if (currentAsset === 'gold') {
-                filteredAsset = marketPool.find(a => a.type === 'gold') || marketPool[0];
-            } else {
-                filteredAsset = marketPool[0];
-            }
-            
+            let asset = marketPool[heroIndex];
             let isBull = Math.random() > 0.45;
             let action = isBull ? "HIGH-CONFIDENCE LONG" : "HIGH-CONFIDENCE SHORT";
-            let curPrice = filteredAsset.price;
+            let curPrice = asset.price;
             let sl = isBull ? (curPrice * 0.994).toFixed(2) : (curPrice * 1.006).toFixed(2);
             let tp1 = isBull ? (curPrice * 1.008).toFixed(2) : (curPrice * 0.992).toFixed(2);
             let tp2 = isBull ? (curPrice * 1.015).toFixed(2) : (curPrice * 0.985).toFixed(2);
 
-            document.getElementById('heroAssetTag').innerText = filteredAsset.name;
-            document.getElementById('heroSignalText').innerText = `${filteredAsset.name}: ${action}`;
+            document.getElementById('heroAssetTag').innerText = asset.name;
+            document.getElementById('heroSignalText').innerText = `${asset.name}: ${action}`;
             document.getElementById('heroSignalText').style.color = isBull ? "#3fb950" : "#f85149";
-            document.getElementById('heroLeverage').innerText = filteredAsset.leverage;
+            document.getElementById('heroLeverage').innerText = asset.leverage;
             document.getElementById('heroSL').innerText = sl;
             document.getElementById('heroTP').innerText = `${tp1} / ${tp2}`;
         }
 
-        function togglePushBtn(element, label) {
-            let isON = element.className.includes('btn-active');
+        function togglePushSetting(btnId, label) {
+            let btn = document.getElementById(btnId);
+            let isON = btn.className.includes('btn-active');
             if (isON) {
-                element.className = 'btn-inactive';
-                element.innerText = label + ': OFF';
+                btn.className = 'btn-inactive';
+                btn.innerText = label + ': OFF';
+                if(btnId === 'goldPushBtn') localStorage.setItem('mintoosuite_gold_push', 'off');
+                if(btnId === 'cryptoPushBtn') localStorage.setItem('mintoosuite_crypto_push', 'off');
             } else {
-                element.className = 'btn-active-green';
-                element.innerText = label + ': ON';
+                btn.className = 'btn-active-green';
+                btn.innerText = label + ': ON';
+                if(btnId === 'goldPushBtn') localStorage.setItem('mintoosuite_gold_push', 'on');
+                if(btnId === 'cryptoPushBtn') localStorage.setItem('mintoosuite_crypto_push', 'on');
             }
         }
 
-        // Canvas Chart
+        function showHelp(text) {
+            let card = document.getElementById('tooltipCard');
+            document.getElementById('tooltipText').innerText = text;
+            card.style.display = 'block';
+            setTimeout(() => { card.style.display = 'none'; }, 5000);
+        }
+
+        // Canvas Chart Rendering
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         function resizeCanvas() {
             canvas.width = canvas.parentElement.clientWidth - 16;
-            canvas.height = 110;
+            canvas.height = 100;
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
@@ -296,13 +362,13 @@
             let range = (maxP - minP) || 1;
 
             for(let i = 0; i < candles; i++) {
-                let normVal = ((data[i] - minP) / range) * 65 + 15;
-                let prevNorm = i > 0 ? ((data[i-1] - minP) / range) * 65 + 15 : normVal;
+                let normVal = ((data[i] - minP) / range) * 60 + 15;
+                let prevNorm = i > 0 ? ((data[i-1] - minP) / range) * 60 + 15 : normVal;
                 let isGreen = normVal >= prevNorm;
                 
                 ctx.fillStyle = isGreen ? '#3fb950' : '#f85149';
                 let cHeight = Math.max(Math.abs(normVal - prevNorm), 3);
-                let yPos = 95 - Math.max(normVal, prevNorm);
+                let yPos = 85 - Math.max(normVal, prevNorm);
                 
                 ctx.fillRect(i * w + 2, yPos, w - 4, cHeight);
             }
@@ -310,7 +376,7 @@
         }
         requestAnimationFrame(renderChart);
 
-        // Micro-second Ticker Engine
+        // Ticker & Micro-Second Engine
         let tickCount = 0;
         setInterval(() => {
             tickCount++;
@@ -324,6 +390,14 @@
             btcVal += (Math.random() - 0.49) * 14.0;
             btcHistory.shift(); btcHistory.push(btcVal);
             document.getElementById('btcPrice').innerText = btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            // Fluctuate Macro Indices
+            dxyVal += (Math.random() - 0.51) * 0.04;
+            document.getElementById('dxyVal').innerText = `${dxyVal.toFixed(2)} ${dxyVal < 103.40 ? '▼' : '▲'}`;
+            document.getElementById('dxyImpact').innerText = dxyVal < 103.40 ? "Gold Impact: BULLISH (DXY Drop)" : "Gold Impact: BEARISH PRESSURE";
+
+            us500Val += (Math.random() - 0.49) * 1.5;
+            document.getElementById('us500Val').innerText = `${us500Val.toFixed(2)} ▲`;
 
             marketPool[0].price = goldVal;
             marketPool[1].price = btcVal;
@@ -346,7 +420,7 @@
                 isBullish: isBullish
             };
 
-            // Render Active Signal Cards
+            // Render Scrollable Valid Active Signal Cards
             let container = document.getElementById('validSignalsContainer');
             container.innerHTML = '';
             Object.keys(activeValidSignals).forEach(key => {
@@ -367,18 +441,14 @@
                 container.innerHTML += cardHTML;
             });
 
-            if(tickCount % 10 === 0) {
-                updateHeroBanner();
-            }
-
             const feed = document.getElementById('masterBotFeed');
-            feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] Signal: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
+            feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] 5M/10M Signal: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
 
-            // Push notification trigger
+            // Persistent Background Push Trigger
             if (tickCount % 8 === 0 && Notification.permission === "granted") {
-                let goldPush = document.getElementById('goldPushBtn').className.includes('btn-active');
-                let cryptoPush = document.getElementById('cryptoPushBtn').className.includes('btn-active');
-                let shouldSend = (scannedAsset.type === 'gold' && goldPush) || (scannedAsset.type === 'crypto' && cryptoPush);
+                let goldOn = localStorage.getItem('mintoosuite_gold_push') !== 'off';
+                let cryptoOn = localStorage.getItem('mintoosuite_crypto_push') !== 'off';
+                let shouldSend = (scannedAsset.type === 'gold' && goldOn) || (scannedAsset.type === 'crypto' && cryptoOn);
                 
                 if (shouldSend && navigator.serviceWorker && navigator.serviceWorker.controller) {
                     navigator.serviceWorker.controller.postMessage({
@@ -408,7 +478,7 @@
                         btn.className = 'btn-active-green';
                         btn.innerText = '1. PUSH ENABLED & ACTIVE';
                         document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
-                        document.getElementById('pushStatusText').style.color = "#3fb950";
+                        localStorage.setItem('mintoosuite_sys_push', 'granted');
                         sendTestPush();
                     }
                 });
@@ -425,7 +495,8 @@
             }
         }
 
-        // Initialize state on page boot
+        // Initialize UI State
+        restoreSavedUIState();
         switchAsset(currentAsset);
     </script>
 </body>
