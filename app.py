@@ -15,5 +15,9 @@ def manifest():
 def service_worker():
     return send_from_directory('.', 'sw.js')
 
+@app.route('/icon-512.png')
+def icon():
+    return send_from_directory('.', 'icon-512.png')
+
 if __name__ == '__main__':
     app.run(debug=True)
