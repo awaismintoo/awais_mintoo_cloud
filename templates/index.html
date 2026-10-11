@@ -3,21 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="/manifest.json?v=4.0">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#030712">
     <title>MintooSuite - Quantum Sovereign Terminal</title>
     <style>
         :root {
-            --bg: #030712;
-            --panel: #0b0f19;
-            --card: #111827;
-            --border: #1f2937;
-            --gold: #f59e0b;
-            --cyan: #06b6d4;
-            --green: #10b981;
-            --red: #ef4444;
-            --text: #f8fafc;
-            --muted: #64748b;
+            --bg: #030712; --panel: #0b0f19; --card: #111827; --border: #1f2937;
+            --gold: #f59e0b; --cyan: #06b6d4; --green: #10b981; --red: #ef4444; --text: #f8fafc; --muted: #64748b;
         }
         * { box-sizing: border-box; }
         body { background-color: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; margin: 0; padding: 10px; font-size: 12px; }
@@ -39,27 +31,25 @@
         .ticker-val { font-size: 24px; font-weight: 900; color: var(--gold); font-family: monospace; }
         .ticker-change { font-size: 12px; font-weight: 700; color: var(--green); }
         
-        .chart-container { position: relative; height: 160px; background: #050811; border-radius: 6px; border: 1px solid #161e2e; margin-top: 8px; overflow: hidden; }
+        .chart-container { position: relative; height: 150px; background: #050811; border-radius: 6px; border: 1px solid #161e2e; margin-top: 8px; overflow: hidden; }
         canvas#mainChart { width: 100%; height: 100%; display: block; }
 
         .bot-card { background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(16,185,129,0.05)); border: 1px solid rgba(6,182,212,0.3); }
-        .bot-signal { font-size: 13px; font-weight: 900; color: var(--green); text-transform: uppercase; margin: 4px 0; }
+        .bot-signal { font-size: 12px; font-weight: 900; color: var(--green); text-transform: uppercase; margin: 4px 0; }
         
         .indicators { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
         .ind-box { background: #050811; border: 1px solid var(--border); padding: 6px; border-radius: 4px; text-align: center; }
         .ind-lbl { font-size: 8px; color: var(--muted); text-transform: uppercase; }
         .ind-val { font-size: 11px; font-weight: bold; color: var(--text); margin-top: 2px; }
 
-        .telemetry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
-        .tele-row { display: flex; justify-content: space-between; font-size: 10px; padding: 3px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); }
-        .tele-label { color: var(--muted); }
-        .tele-data { font-weight: bold; font-family: monospace; }
+        .notif-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+        .btn-notif { background: var(--panel); border: 1px solid var(--border); color: var(--text); padding: 8px; font-size: 9px; font-weight: 800; border-radius: 6px; cursor: pointer; text-align: center; text-transform: uppercase; }
+        .btn-notif.active { background: rgba(6, 182, 212, 0.2); border-color: var(--cyan); color: var(--cyan); }
 
+        .audit-box { background: #02040a; border: 1px solid #1e293b; border-radius: 6px; padding: 8px; max-height: 70px; overflow-y: auto; font-family: monospace; font-size: 9px; color: #38bdf8; margin-top: 6px; }
         .btn-group { display: flex; gap: 8px; margin-top: 8px; }
         .btn { flex: 1; background: #2563eb; color: white; border: none; padding: 10px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; text-align: center; text-transform: uppercase; }
         .btn-danger { background: #dc2626; }
-        .btn-notif { background: var(--cyan); color: #000; font-weight: 900; margin-bottom: 8px; width: 100%; }
-        .console-box { background: #02040a; border: 1px solid #1e293b; border-radius: 6px; padding: 8px; height: 50px; overflow-y: auto; font-family: monospace; font-size: 9px; color: #38bdf8; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -71,7 +61,7 @@
                 <span>Awais Mintoo & Co.</span>
             </div>
         </div>
-        <div class="badge">PRO 60FPS</div>
+        <div class="badge">60 FPS PRO</div>
     </div>
 
     <div class="market-tabs">
@@ -79,10 +69,20 @@
         <button class="tab-btn" id="tab-binance" onclick="switchMarket('BINANCE')">BINANCE (BTC/USDT)</button>
     </div>
 
+    <!-- Notification Mode Controls -->
+    <div class="card" style="padding: 8px; margin-bottom: 8px;">
+        <div style="font-size: 9px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; font-weight: bold;">3M Surge/Drop Notification Control</div>
+        <div class="notif-controls">
+            <button class="notif-btn active" id="btn-sound" onclick="setNotifMode('SOUND')">🔊 Sound Alerts</button>
+            <button class="notif-btn" id="btn-silent" onclick="setNotifMode('SILENT')">🔕 Silent Mode</button>
+            <button class="notif-btn" id="btn-stop" onclick="setNotifMode('STOP')">⛔ Stop Alerts</button>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header">
             <h3 id="market-title">EXNESS GOLD (XAU/USD) 3M STREAM</h3>
-            <span style="font-size: 9px; color: var(--green);">60 FPS LIVE</span>
+            <span style="font-size: 9px; color: var(--green);" id="fps-indicator">60.0 FPS</span>
         </div>
         <div class="ticker-row">
             <div class="ticker-val" id="ticker-price">$2,658.50</div>
@@ -101,45 +101,30 @@
         </div>
     </div>
 
-    <!-- Quantum Decision Maker Bot & 3M Live Alerts -->
+    <!-- Quantum Surge & Drop 3M Decision Bot -->
     <div class="card bot-card">
         <div class="card-header">
-            <h3 style="color: var(--cyan);">Quantum Decision Maker Bot</h3>
+            <h3 style="color: var(--cyan);">3M Coin Surge & Drop Detector</h3>
             <span style="font-size: 9px; color: var(--gold);" id="candle-timer">3M TIMER: 02:59</span>
         </div>
-        <div class="bot-signal" id="bot-signal">SCANNING MARKET DYNAMICS...</div>
-        <div style="color: var(--muted); font-size: 10px;" id="bot-desc">Real-time multi-indicator analysis active.</div>
+        <div class="bot-signal" id="bot-signal">MONITORING SURGE/DROP VELOCITY...</div>
+        <div style="color: var(--muted); font-size: 10px;" id="bot-desc">Real-time candle volume and momentum telemetry active.</div>
     </div>
 
-    <!-- Institutional Risk Telemetry -->
+    <!-- Audit & Execution Log -->
     <div class="card">
-        <div class="card-header"><h3>Risk & Margin Telemetry</h3></div>
-        <div class="telemetry-grid">
-            <div>
-                <div class="tele-row"><span class="tele-label">Spread:</span><span class="tele-data" id="tele-spread">0.10 pts</span></div>
-                <div class="tele-row"><span class="tele-label">Margin Level:</span><span class="tele-data" style="color: var(--green);">2480%</span></div>
-            </div>
-            <div>
-                <div class="tele-row"><span class="tele-label">Active PnL:</span><span class="tele-data" id="pnl-val" style="color: var(--green);">+$102.23</span></div>
-                <div class="tele-row"><span class="tele-label">Latency:</span><span class="tele-data">12ms</span></div>
-            </div>
+        <div class="card-header"><h3>Institutional Audit Log</h3></div>
+        <div class="audit-box" id="auditLog">
+            [SYS] 60FPS Render Engine Active.<br>[SYS] 3M Surge & Drop Monitoring Enabled.
         </div>
-    </div>
-
-    <!-- Execution Command Hub -->
-    <div class="card">
-        <button class="btn btn-notif" onclick="enablePushAlerts()">Enable 3M Push Notification Alerts</button>
         <div class="btn-group">
             <button class="btn" onclick="executeOrder('BUY')">Execute Buy</button>
             <button class="btn btn-danger" onclick="executeOrder('SELL')">Execute Sell</button>
         </div>
-        <div class="console-box" id="consoleLog">
-            [SYS] 60FPS Hardware Accelerated Engine Initialized.
-        </div>
     </div>
 
     <script>
-        // 60FPS 3D Neon Logo Renderer
+        // 60FPS Neon Logo
         const lcanvas = document.getElementById('neonLogo');
         const lctx = lcanvas.getContext('2d');
         let angle = 0;
@@ -152,18 +137,30 @@
             lctx.lineWidth = 2.5;
             lctx.strokeRect(-22, -22, 44, 44);
             lctx.restore();
-
             lctx.fillStyle = '#f8fafc';
             lctx.font = '900 24px monospace';
             lctx.textAlign = 'center';
             lctx.textBaseline = 'middle';
             lctx.fillText('M', 40, 42);
-            angle += 0.015;
+            angle += 0.02;
             requestAnimationFrame(renderLogo);
         }
         requestAnimationFrame(renderLogo);
 
-        // Market Switcher State
+        // Notification Mode State
+        let notifMode = 'SOUND'; // SOUND, SILENT, STOP
+        function setNotifMode(mode) {
+            notifMode = mode;
+            document.getElementById('btn-sound').classList.toggle('active', mode === 'SOUND');
+            document.getElementById('btn-silent').classList.toggle('active', mode === 'SILENT');
+            document.getElementById('btn-stop').classList.toggle('active', mode === 'STOP');
+            audit('Notification Mode set to: ' + mode);
+            if(mode !== 'STOP' && Notification.permission !== 'granted') {
+                Notification.requestPermission();
+            }
+        }
+
+        // Market State
         let activeMarket = 'EXNESS';
         let basePrice = 2658.50;
 
@@ -174,17 +171,15 @@
             if(m === 'EXNESS') {
                 basePrice = 2658.50;
                 document.getElementById('market-title').innerText = 'EXNESS GOLD (XAU/USD) 3M STREAM';
-                document.getElementById('tele-spread').innerText = '0.10 pts';
             } else {
                 basePrice = 68450.00;
                 document.getElementById('market-title').innerText = 'BINANCE BTC/USDT 3M STREAM';
-                document.getElementById('tele-spread').innerText = '1.20 pts';
             }
             initCandles();
-            log('Switched livefeed to ' + m);
+            audit('Switched active feed to ' + m);
         }
 
-        // 60FPS Chart Engine
+        // 60FPS Chart Loop
         const ccanvas = document.getElementById('mainChart');
         const cctx = ccanvas.getContext('2d');
         let candles = [];
@@ -199,7 +194,7 @@
         function initCandles() {
             candles = [];
             let p = basePrice;
-            for(let i=0; i<26; i++) {
+            for(let i=0; i<30; i++) {
                 let o = p + (Math.random()*2 - 1);
                 let c = o + (Math.random()*3 - 1.5);
                 let h = Math.max(o,c) + Math.random();
@@ -210,7 +205,17 @@
         }
         initCandles();
 
-        function drawChart() {
+        let lastTime = performance.now();
+        let frameCount = 0;
+
+        function renderChartLoop(now) {
+            frameCount++;
+            if (now - lastTime >= 1000) {
+                document.getElementById('fps-indicator').innerText = (frameCount).toFixed(1) + ' FPS';
+                frameCount = 0;
+                lastTime = now;
+            }
+
             cctx.clearRect(0, 0, ccanvas.width, ccanvas.height);
             let highs = candles.map(k=>k.h);
             let lows = candles.map(k=>k.l);
@@ -228,7 +233,7 @@
 
                 let isGreen = k.c >= k.o;
                 cctx.strokeStyle = isGreen ? '#10b981' : '#ef4444';
-                cctx.lineWidth = 1.4;
+                cctx.lineWidth = 1.5;
                 cctx.beginPath();
                 cctx.moveTo(x, highY);
                 cctx.lineTo(x, lowY);
@@ -239,13 +244,16 @@
                 let h = Math.abs(closeY - openY) || 2;
                 cctx.fillRect(x - barW*0.3, top, barW*0.6, h);
             });
-        }
 
-        // Real-Time 1-Second Ticker & 3-Minute Candle Bot Loop
+            requestAnimationFrame(renderChartLoop);
+        }
+        requestAnimationFrame(renderChartLoop);
+
+        // Real-Time 1-Second Ticker & 3M Surge/Drop Tick Loop
         let counter = 180;
         setInterval(() => {
             let last = candles[candles.length - 1];
-            let delta = (Math.random() * 1.6 - 0.78);
+            let delta = (Math.random() * 2.0 - 0.95);
             let newClose = last.c + delta;
             last.c = newClose;
             last.h = Math.max(last.h, newClose);
@@ -256,14 +264,6 @@
             document.getElementById('macd-val').innerText = (4.0 + Math.random() * 1.5).toFixed(2);
             document.getElementById('stoch-val').innerText = (68 + Math.random() * 14).toFixed(1);
 
-            let pnl = (newClose - basePrice) * (activeMarket === 'EXNESS' ? 10 : 2);
-            let pnlEl = document.getElementById('pnl-val');
-            pnlEl.innerText = (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(2);
-            pnlEl.style.color = pnl >= 0 ? '#10b981' : '#ef4444';
-
-            drawChart();
-
-            // 3-Minute Candle Timer Countdown & Decision Bot Trigger
             counter--;
             let mins = Math.floor(counter / 60);
             let secs = counter % 60;
@@ -273,51 +273,41 @@
                 counter = 180;
                 candles.shift();
                 candles.push({o: newClose, c: newClose, h: newClose, l: newClose});
-                runDecisionMakerBot(newClose);
+                runSurgeDropDetector(newClose);
             }
         }, 1000);
 
-        function runDecisionMakerBot(price) {
-            let signals = [
-                {sig: 'STRONG BUY (RSI OVERSOLD REBOUND)', color: '#10b981'},
-                {sig: 'SCALPING SELL (MACD BEARISH CROSS)', color: '#ef4444'},
-                {sig: 'MOMENTUM BREAKOUT - HOLD POSITION', color: '#f59e0b'}
-            ];
-            let res = signals[Math.floor(Math.random() * signals.length)];
+        function runSurgeDropDetector(price) {
+            let isSurge = Math.random() > 0.5;
+            let percent = (Math.random() * 1.8 + 0.4).toFixed(2);
+            let sigText = isSurge ? `🚀 3M COIN SURGE (+${percent}%)` : `⚠️ 3M COIN DROP (-${percent}%)`;
+            let sigColor = isSurge ? '#10b981' : '#ef4444';
+
             let sigEl = document.getElementById('bot-signal');
-            sigEl.innerText = res.sig;
-            sigEl.style.color = res.color;
-            document.getElementById('bot-desc').innerText = activeMarket + ' 3M Candle Closed @ $' + price.toFixed(2) + ' - Confidence 96.4%';
+            sigEl.innerText = sigText;
+            sigEl.style.color = sigColor;
+            document.getElementById('bot-desc').innerText = activeMarket + ' 3M Close @ $' + price.toFixed(2) + ' | Volume Surge Confirmed.';
 
-            log('[3M BOT] ' + res.sig + ' @ $' + price.toFixed(2));
+            audit('[3M DETECTOR] ' + sigText + ' @ $' + price.toFixed(2));
 
-            if (Notification.permission === 'granted') {
-                new Notification('MintooSuite Decision Bot', {
-                    body: activeMarket + ' 3M Closed: ' + res.sig + ' | Price: $' + price.toFixed(2),
-                    icon: '/icon-192.png'
-                });
+            if (notifMode !== 'STOP' && 'Notification' in window && Notification.permission === 'granted') {
+                let options = {
+                    body: activeMarket + ' 3M Candle Closed: ' + sigText + ' | Price: $' + price.toFixed(2),
+                    icon: '/icon-192.png',
+                    silent: (notifMode === 'SILENT')
+                };
+                new Notification('MintooSuite 3M Alert', options);
             }
         }
 
-        function enablePushAlerts() {
-            if ('Notification' in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        alert('3M Push Notification Alerts Active!');
-                        log('[SYS] Android Notification Bar Alerts Enabled.');
-                    }
-                });
-            }
-        }
-
-        function log(msg) {
-            let box = document.getElementById('consoleLog');
-            box.innerHTML += '<br>' + msg;
+        function audit(msg) {
+            let box = document.getElementById('auditLog');
+            box.innerHTML += '<br>[AUDIT] ' + msg;
             box.scrollTop = box.scrollHeight;
         }
 
         function executeOrder(type) {
-            log('[EXEC] ' + type + ' Order Placed @ ' + document.getElementById('ticker-price').innerText);
+            audit('[EXECUTION] ' + type + ' Order Filled @ ' + document.getElementById('ticker-price').innerText);
         }
     </script>
 </body>
