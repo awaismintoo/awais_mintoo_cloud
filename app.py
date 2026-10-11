@@ -11,5 +11,9 @@ def index():
 def manifest():
     return send_from_directory('.', 'manifest.json')
 
+@app.route('/sw.js')
+def service_worker():
+    return send_from_directory('.', 'sw.js')
+
 if __name__ == '__main__':
     app.run(debug=True)
