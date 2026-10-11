@@ -1,9 +1,9 @@
-const CACHE_NAME = 'mintoosuite-v7';
+const CACHE_NAME = 'mintoosuite-v9';
+const ASSETS = ['/', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(['/', '/manifest.json', '/icon-192.png', '/icon-512.png']);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
   self.skipWaiting();
 });

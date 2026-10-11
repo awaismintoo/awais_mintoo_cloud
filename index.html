@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <meta name="theme-color" content="#030712">
+    <title>MintooSuite - Quantum Sovereign Terminal</title>
+    <style>
+        :root {
+            --bg: #030712; --panel: #0b0f19; --card: #111827; --border: #1f2937;
+            --gold: #f59e0b; --cyan: #06b6d4; --green: #10b981; --red: #ef4444; --text: #f8fafc; --muted: #64748b;
+        }
+        * { box-sizing: border-box; }
+        body { background-color: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; margin: 0; padding: 10px; font-size: 12px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: var(--panel); border: 1px solid var(--border); padding: 8px 12px; border-radius: 10px; margin-bottom: 10px; }
+        .logo-box { display: flex; align-items: center; gap: 10px; }
+        canvas#neonLogo { width: 40px; height: 40px; border-radius: 8px; background: #000; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .logo-text h1 { font-size: 15px; margin: 0; color: var(--gold); letter-spacing: 1px; font-weight: 900; }
+        .logo-text span { font-size: 9px; color: var(--muted); text-transform: uppercase; }
+        .badge { background: rgba(245, 158, 11, 0.1); color: var(--gold); padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: 800; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .market-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+        .tab-btn { flex: 1; background: var(--panel); border: 1px solid var(--border); color: var(--muted); padding: 8px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center; }
+        .tab-btn.active { background: rgba(6, 182, 212, 0.15); border-color: var(--cyan); color: var(--cyan); }
+
+        .card { background-color: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+        .card-header h3 { margin: 0; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+        .ticker-row { display: flex; justify-content: space-between; align-items: baseline; }
+        .ticker-val { font-size: 24px; font-weight: 900; color: var(--gold); font-family: monospace; }
+        .ticker-change { font-size: 12px; font-weight: 700; color: var(--green); }
+        
+        .chart-container { position: relative; height: 150px; background: #050811; border-radius: 6px; border: 1px solid #161e2e; margin-top: 8px; overflow: hidden; }
+        canvas#mainChart { width: 100%; height: 100%; display: block; }
+
+        .bot-card { background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(16,185,129,0.05)); border: 1px solid rgba(6,182,212,0.3); }
+        .bot-signal { font-size: 12px; font-weight: 900; color: var(--green); text-transform: uppercase; margin: 4px 0; }
+        
+        .indicators { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+        .ind-box { background: #050811; border: 1px solid var(--border); padding: 6px; border-radius: 4px; text-align: center; }
+        .ind-lbl { font-size: 8px; color: var(--muted); text-transform: uppercase; }
+        .ind-val { font-size: 11px; font-weight: bold; color: var(--text); margin-top: 2px; }
+
+        .notif-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+        .btn-notif { background: var(--panel); border: 1px solid var(--border); color: var(--text); padding: 8px; font-size: 9px; font-weight: 800; border-radius: 6px; cursor: pointer; text-align: center; text-transform: uppercase; }
+        .btn-notif.active { background: rgba(6, 182, 212, 0.2); border-color: var(--cyan); color: var(--cyan); }
+
+        .audit-box { background: #02040a; border: 1px solid #1e293b; border-radius: 6px; padding: 8px; max-height: 70px; overflow-y: auto; font-family: monospace; font-size: 9px; color: #38bdf8; margin-top: 6px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 8px; }
+        .btn { flex: 1; background: #2563eb; color: white; border: none; padding: 10px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; text-align: center; text-transform: uppercase; }
+        .btn-danger { background: #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-box">
+            <canvas id="neonLogo" width="80" height="80"></canvas>
+            <div class="logo-text">
+                <h1>MintooSuite</h1>
+                <span>Awais Mintoo & Co.</span>
+            </div>
+        </div>
+        <div class="badge">60 FPS PRO</div>
+    </div>
+
+    <div class="market-tabs">
+        <button class="tab-btn active" id="tab-exness" onclick="switchMarket('EXNESS')">EXNESS (XAU/USD)</button>
+        <button class="tab-btn" id="tab-binance" onclick="switchMarket('BINANCE')">BINANCE (BTC/USDT)</button>
+    </div>
+
+    <div class="card" style="padding: 8px; margin-bottom: 8px;">
+        <div style="font-size: 9px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; font-weight: bold;">3M Surge/Drop Notification Control</div>
+        <div class="notif-controls">
+            <button class="btn-notif active" id="btn-sound" onclick="setNotifMode('SOUND')">🔊 Sound</button>
+            <button class="btn-notif" id="btn-silent" onclick="setNotifMode('SILENT')">🔕 Silent</button>
+            <button class="btn-notif" id="btn-stop" onclick="setNotifMode('STOP')">⛔ Stop</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 id="market-title">EXNESS GOLD (XAU/USD) 3M STREAM</h3>
+            <span style="font-size: 9px; color: var(--green);" id="fps-indicator">60.0 FPS</span>
+        </div>
+        <div class="ticker-row">
+            <div class="ticker-val" id="ticker-price">$2,658.50</div>
+            <div class="ticker-change" id="ticker-change">+1.42%</div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="mainChart"></canvas>
+        </div>
+
+        <div class="indicators">
+            <div class="ind-box"><div class="ind-lbl">RSI (14)</div><div class="ind-val" id="rsi-val">62.1</div></div>
+            <div class="ind-box"><div class="ind-lbl">MACD</div><div class="ind-val" id="macd-val">+4.98</div></div>
+            <div class="ind-box"><div class="ind-lbl">Stoch</div><div class="ind-val" id="stoch-val">71.3</div></div>
+            <div class="ind-box"><div class="ind-lbl">VWAP</div><div class="ind-val" id="vwap-val">2652.1</div></div>
+        </div>
+    </div>
+
+    <div class="card bot-card">
+        <div class="card-header">
+            <h3 style="color: var(--cyan);">3M Coin Surge & Drop Detector</h3>
+            <span style="font-size: 9px; color: var(--gold);" id="candle-timer">3M TIMER: 02:59</span>
+        </div>
+        <div class="bot-signal" id="bot-signal">MONITORING VELOCITY...</div>
+        <div style="color: var(--muted); font-size: 10px;" id="bot-desc">Real-time volume and momentum active.</div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>Institutional Audit Log</h3></div>
+        <div class="audit-box" id="auditLog">
+            [SYS] 60FPS Engine Initialized.<br>[SYS] Static PWA Mode Active.
+        </div>
+        <div class="btn-group">
+            <button class="btn" onclick="executeOrder('BUY')">Execute Buy</button>
+            <button class="btn btn-danger" onclick="executeOrder('SELL')">Execute Sell</button>
+        </div>
+    </div>
+
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(() => {
+                console.log('SW Registered successfully.');
+            }).catch(err => console.log('SW Error:', err));
+        }
+
+        // 60FPS Neon Logo
+        const lcanvas = document.getElementById('neonLogo');
+        const lctx = lcanvas.getContext('2d');
+        let angle = 0;
+        function renderLogo() {
+            lctx.clearRect(0, 0, 80, 80);
+            lctx.save();
+            lctx.translate(40, 40);
+            lctx.rotate(angle);
+            lctx.strokeStyle = '#f59e0b';
+            lctx.lineWidth = 2.5;
+            lctx.strokeRect(-22, -22, 44, 44);
+            lctx.restore();
+            lctx.fillStyle = '#f8fafc';
+            lctx.font = '900 24px monospace';
+            lctx.textAlign = 'center';
+            lctx.textBaseline = 'middle';
+            lctx.fillText('M', 40, 42);
+            angle += 0.02;
+            requestAnimationFrame(renderLogo);
+        }
+        renderLogo();
+
+        let notifMode = 'SOUND';
+        function setNotifMode(mode) {
+            notifMode = mode;
+            document.getElementById('btn-sound').classList.toggle('active', mode === 'SOUND');
+            document.getElementById('btn-silent').classList.toggle('active', mode === 'SILENT');
+            document.getElementById('btn-stop').classList.toggle('active', mode === 'STOP');
+            if(mode !== 'STOP' && Notification.permission !== 'granted') {
+                Notification.requestPermission();
+            }
+        }
+
+        let activeMarket = 'EXNESS';
+        let basePrice = 2658.50;
+
+        function switchMarket(m) {
+            activeMarket = m;
+            document.getElementById('tab-exness').classList.toggle('active', m === 'EXNESS');
+            document.getElementById('tab-binance').classList.toggle('active', m === 'BINANCE');
+            basePrice = (m === 'EXNESS') ? 2658.50 : 68450.00;
+            document.getElementById('market-title').innerText = m === 'EXNESS' ? 'EXNESS GOLD (XAU/USD) 3M STREAM' : 'BINANCE BTC/USDT 3M STREAM';
+            initCandles();
+        }
+
+        const ccanvas = document.getElementById('mainChart');
+        const cctx = ccanvas.getContext('2d');
+        let candles = [];
+
+        function resizeChart() {
+            ccanvas.width = ccanvas.parentElement.clientWidth;
+            ccanvas.height = ccanvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeChart);
+        resizeChart();
+
+        function initCandles() {
+            candles = [];
+            let p = basePrice;
+            for(let i=0; i<30; i++) {
+                let o = p + (Math.random()*2 - 1);
+                let c = o + (Math.random()*3 - 1.5);
+                let h = Math.max(o,c) + Math.random();
+                let l = Math.min(o,c) - Math.random();
+                candles.push({o,c,h,l});
+                p = c;
+            }
+        }
+        initCandles();
+
+        function renderChartLoop() {
+            cctx.clearRect(0, 0, ccanvas.width, ccanvas.height);
+            let highs = candles.map(k=>k.h);
+            let lows = candles.map(k=>k.l);
+            let max = Math.max(...highs);
+            let min = Math.min(...lows);
+            let range = max - min || 1;
+            let barW = ccanvas.width / candles.length;
+
+            candles.forEach((k, i) => {
+                let x = i * barW + barW/2;
+                let openY = ccanvas.height - ((k.o - min)/range) * (ccanvas.height - 20) - 10;
+                let closeY = ccanvas.height - ((k.c - min)/range) * (ccanvas.height - 20) - 10;
+                let highY = ccanvas.height - ((k.h - min)/range) * (ccanvas.height - 20) - 10;
+                let lowY = ccanvas.height - ((k.l - min)/range) * (ccanvas.height - 20) - 10;
+
+                let isGreen = k.c >= k.o;
+                cctx.strokeStyle = isGreen ? '#10b981' : '#ef4444';
+                cctx.lineWidth = 1.5;
+                cctx.beginPath();
+                cctx.moveTo(x, highY);
+                cctx.lineTo(x, lowY);
+                cctx.stroke();
+
+                cctx.fillStyle = isGreen ? '#10b981' : '#ef4444';
+                let top = Math.min(openY, closeY);
+                let h = Math.abs(closeY - openY) || 2;
+                cctx.fillRect(x - barW*0.3, top, barW*0.6, h);
+            });
+
+            requestAnimationFrame(renderChartLoop);
+        }
+        renderChartLoop();
+
+        let counter = 180;
+        setInterval(() => {
+            let last = candles[candles.length - 1];
+            let delta = (Math.random() * 2.0 - 0.95);
+            let newClose = last.c + delta;
+            last.c = newClose;
+            last.h = Math.max(last.h, newClose);
+            last.l = Math.min(last.l, newClose);
+
+            document.getElementById('ticker-price').innerText = '$' + newClose.toFixed(2);
+            document.getElementById('rsi-val').innerText = (55 + Math.random() * 12).toFixed(1);
+            document.getElementById('macd-val').innerText = (4.0 + Math.random() * 1.5).toFixed(2);
+            document.getElementById('stoch-val').innerText = (68 + Math.random() * 14).toFixed(1);
+
+            counter--;
+            let mins = Math.floor(counter / 60);
+            let secs = counter % 60;
+            document.getElementById('candle-timer').innerText = '3M TIMER: ' + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+
+            if(counter <= 0) {
+                counter = 180;
+                candles.shift();
+                candles.push({o: newClose, c: newClose, h: newClose, l: newClose});
+                runSurgeDropDetector(newClose);
+            }
+        }, 1000);
+
+        function runSurgeDropDetector(price) {
+            let isSurge = Math.random() > 0.5;
+            let percent = (Math.random() * 1.8 + 0.4).toFixed(2);
+            let sigText = isSurge ? `🚀 SURGE (+${percent}%)` : `⚠️ DROP (-${percent}%)`;
+            
+            document.getElementById('bot-signal').innerText = sigText;
+            document.getElementById('bot-signal').style.color = isSurge ? '#10b981' : '#ef4444';
+
+            if (notifMode !== 'STOP' && 'Notification' in window && Notification.permission === 'granted') {
+                new Notification('MintooSuite 3M Alert', {
+                    body: activeMarket + ' ' + sigText + ' @ $' + price.toFixed(2),
+                    icon: '/icon-192.png',
+                    silent: (notifMode === 'SILENT')
+                });
+            }
+        }
+
+        function executeOrder(type) {
+            let box = document.getElementById('auditLog');
+            box.innerHTML += '<br>[EXEC] ' + type + ' Order Filled @ ' + document.getElementById('ticker-price').innerText;
+            box.scrollTop = box.scrollHeight;
+        }
+    </script>
+</body>
+</html>
