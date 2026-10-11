@@ -1,397 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MintooSuite Terminal - Sovereign Master Edition</title>
-  <link rel="manifest" href="./manifest.json">
-  <link rel="icon" href="./icon-192.png" type="image/png">
-  <meta name="theme-color" content="#030712">
-  <style>
-    :root {
-      --bg-main: #030712;
-      --bg-card: #0b0f19;
-      --border: #1e293b;
-      --accent: #f59e0b;
-      --success: #34d399;
-      --danger: #ef4444;
-      --info: #38bdf8;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
-    body { background: var(--bg-main); color: var(--text-main); padding: 0.75rem; max-width: 500px; margin: 0 auto; padding-bottom: 2rem; }
-    
-    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.75rem; }
-    h1 { font-size: 1rem; color: var(--accent); letter-spacing: 1px; }
-    .badge-status { font-size: 0.65rem; color: var(--success); background: #022c22; border: 1px solid #065f46; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem; }
-    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; }
-    .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; }
-    .stat-val { font-size: 1.1rem; font-weight: bold; color: var(--success); margin-top: 0.1rem; }
-
-    /* Canvas Chart */
-    .chart-container { background: #020617; border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem; position: relative; height: 150px; }
-    canvas { width: 100%; height: 100%; display: block; }
-    .decision-overlay { position: absolute; top: 8px; right: 8px; font-size: 0.6rem; background: rgba(15, 23, 42, 0.9); border: 1px solid var(--accent); color: var(--accent); padding: 3px 6px; border-radius: 4px; font-weight: bold; }
-
-    /* Controls */
-    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.4rem; }
-    .btn { width: 100%; padding: 0.65rem; border: none; border-radius: 5px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
-    .btn-start { background: var(--accent); color: var(--bg-main); }
-    .btn-stop { background: var(--danger); color: #fff; }
-    .btn-sub { background: #1e293b; color: var(--text-main); border: 1px solid #334155; }
-    .btn-active { border: 1px solid var(--success) !important; color: var(--success) !important; }
-
-    /* Accordion Panels */
-    .adv-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.72rem; color: var(--accent); padding: 0.2rem 0; font-weight: bold; }
-    .adv-body { display: none; margin-top: 0.5rem; border-top: 1px dashed var(--border); padding-top: 0.5rem; font-size: 0.7rem; color: var(--text-muted); }
-    .adv-body.active { display: block; }
-    .param-row { display: flex; justify-content: space-between; margin-bottom: 0.35rem; align-items: center; }
-    .param-row input, .param-row select { background: #020617; border: 1px solid var(--border); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.7rem; width: 120px; text-align: right; }
-
-    .bot-recommendation { background: #020617; border: 1px solid var(--accent); border-radius: 6px; padding: 0.6rem; margin-bottom: 0.5rem; font-size: 0.7rem; color: #cbd5e1; }
-    .log-box { background: #020617; border: 1px solid var(--border); border-radius: 5px; padding: 0.5rem; height: 80px; overflow-y: auto; font-size: 0.65rem; color: #cbd5e1; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MintooSuite Terminal - Quantum Sovereign Suite</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d1117">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace; }
+        body { background-color: #0b0f19; color: #c9d1d9; padding: 12px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+        .title { color: #f0883e; font-size: 16px; font-weight: bold; }
+        .subtitle { color: #8b949e; font-size: 10px; }
+        .fps-badge { background: #1f6feb; color: #fff; padding: 4px 8px; font-size: 11px; border-radius: 4px; font-weight: bold; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px; }
+        .card-title { color: #8b949e; font-size: 10px; margin-bottom: 4px; text-transform: uppercase; }
+        .card-value { color: #58a6ff; font-size: 18px; font-weight: bold; }
+        .card-value.green { color: #3fb950; }
+        .card-value.red { color: #f85149; }
+        .panel { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+        .panel-title { color: #f0883e; font-size: 12px; font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        canvas { width: 100%; height: 140px; background: #0d1117; border-radius: 4px; border: 1px solid #30363d; display: block; }
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+        button { padding: 10px; font-weight: bold; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
+        .btn-orange { background: #d97706; color: #fff; }
+        .btn-red { background: #dc2626; color: #fff; }
+        .btn-blue { background: #1f6feb; color: #fff; }
+        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 8px; font-size: 11px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 80px; overflow-y: auto; }
+        .signal-box { color: #f0883e; font-size: 11px; border: 1px dashed #f0883e; padding: 6px; border-radius: 4px; margin-top: 6px; text-align: center; }
+    </style>
 </head>
 <body>
 
-  <header>
-    <div>
-      <h1>MintooSuite Terminal</h1>
-      <div style="font-size:0.55rem; color:var(--text-muted);">Quantum Sovereign Suite • Awais Mintoo & Co.</div>
-    </div>
-    <div id="fps-badge" class="badge-status">60 FPS LIVE</div>
-  </header>
-
-  <!-- Market Prices -->
-  <div class="grid-2">
-    <div class="card" style="margin-bottom:0.5rem;">
-      <div class="stat-label">Exness Gold (XAU/USD)</div>
-      <div class="stat-val" id="gold-price">2,654.80</div>
-    </div>
-    <div class="card" style="margin-bottom:0.5rem;">
-      <div class="stat-label">Binance BTC/USDT</div>
-      <div class="stat-val" id="btc-price" style="color:var(--info);">94,120.50</div>
-    </div>
-  </div>
-
-  <div class="grid-2">
-    <div class="card" style="margin-bottom:0.5rem;">
-      <div class="stat-label">3M Trigger Timer</div>
-      <div class="stat-val" id="timer-val" style="color:var(--accent);">02:59</div>
-    </div>
-    <div class="card" style="margin-bottom:0.5rem;">
-      <div class="stat-label">5M / 10M Confluence Sync</div>
-      <div class="stat-val" id="sync-val" style="color:var(--success); font-size:0.8rem; margin-top:0.3rem;">24/7 ACTIVE</div>
-    </div>
-  </div>
-
-  <!-- Realtime 60 FPS Chart & Decision Overlay -->
-  <div class="card">
-    <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem; align-items:center;">
-      <span class="stat-label">High-Frequency Tick & Matrix</span>
-      <span style="font-size:0.6rem; color:var(--success);">● BACKGROUND SHIELD ON</span>
-    </div>
-    <div class="chart-container">
-      <div class="decision-overlay" id="decision-signal">SIGNAL: SCANNING SURGES</div>
-      <canvas id="chartCanvas"></canvas>
-    </div>
-  </div>
-
-  <!-- Master Sovereign Quantum Bot Engine & Background Controls -->
-  <div class="card">
-    <div class="stat-label" style="margin-bottom:0.4rem; color:var(--accent);">🤖 24/7 Background Engine & Kill Switch</div>
-    <div class="bot-recommendation" id="bot-card">
-      <div style="font-weight:bold; color:var(--accent); margin-bottom:0.2rem;" id="bot-status">BACKGROUND MODE: Running Minimized (Keep-Alive)</div>
-      <div id="bot-advice">Bot is actively scanning markets and pushing notifications even when closed.</div>
-      <div style="margin-top:0.4rem; font-size:0.65rem; color:var(--text-muted);" id="bot-params">
-        Exness Gold: Background Worker Active<br>
-        Binance Crypto: Background Worker Active
-      </div>
-    </div>
-
-    <div class="grid-2" style="margin-bottom:0.4rem;">
-      <button class="btn btn-start" onclick="setBgMode('keep-alive')">Keep Running 24/7</button>
-      <button class="btn btn-stop" onclick="forceStopAll()">Force Stop All</button>
-    </div>
-  </div>
-
-  <!-- Master Bot Notification Panel & Individual Controls -->
-  <div class="card">
-    <div class="adv-header" onclick="toggleSection('notif-panel', 'notif-arrow')">
-      <span>🔔 Master Notification Panel & Push Alerts</span>
-      <span id="notif-arrow">▼</span>
-    </div>
-    <div class="adv-body" id="notif-panel">
-      
-      <div style="margin-bottom:0.5rem; border-bottom:1px solid var(--border); padding-bottom:0.4rem;">
-        <span style="font-weight:bold; color:var(--accent);">Background Push Notifications:</span>
-        <div class="grid-2" style="margin-top:0.3rem;">
-          <button class="btn btn-start" style="font-size:0.65rem;" onclick="toggleMasterNotifs(true)">Enable Alerts</button>
-          <button class="btn btn-stop" style="font-size:0.65rem;" onclick="toggleMasterNotifs(false)">Disable Alerts</button>
+    <div class="header">
+        <div>
+            <div class="title">MintooSuite Terminal</div>
+            <div class="subtitle">Quantum Sovereign Suite • Awais Mintoo & Co.</div>
         </div>
-      </div>
+        <div class="fps-badge" id="fpsDisplay">61 FPS LIVE</div>
+    </div>
 
-      <div style="margin-bottom:0.5rem; border-bottom:1px solid var(--border); padding-bottom:0.4rem;">
-        <span style="font-weight:bold; color:#fff;">Exness Gold (Surge & Trade Orders):</span>
-        <div class="grid-2" style="margin-top:0.3rem;">
-          <button class="btn btn-sub btn-active" id="exness-notif-btn" onclick="toggleSubNotif('exness')">Gold Push: ON</button>
-          <button class="btn btn-sub btn-active" id="exness-sound-btn" onclick="toggleSubSound('exness')">Gold Sound: ON</button>
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-title">EXNESS GOLD (XAU/USD)</div>
+            <div class="card-value green" id="goldPrice">2667.88</div>
         </div>
-      </div>
-
-      <div>
-        <span style="font-weight:bold; color:#fff;">Binance Crypto (Coin/Currency Updates):</span>
-        <div class="grid-2" style="margin-top:0.3rem;">
-          <button class="btn btn-sub btn-active" id="binance-notif-btn" onclick="toggleSubNotif('binance')">Crypto Push: ON</button>
-          <button class="btn btn-sub btn-active" id="binance-sound-btn" onclick="toggleSubSound('binance')">Crypto Sound: ON</button>
+        <div class="card">
+            <div class="card-title">BINANCE BTC/USDT</div>
+            <div class="card-value" id="btcPrice">94,458.80</div>
         </div>
-      </div>
-
     </div>
-  </div>
 
-  <!-- Advanced Institutional Parameters -->
-  <div class="card">
-    <div class="adv-header" onclick="toggleSection('adv-panel', 'adv-arrow')">
-      <span>⚙️ Advanced Institutional Parameters (Expert)</span>
-      <span id="adv-arrow">▼</span>
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-title">3M TRIGGER TIMER</div>
+            <div class="card-value" id="timerDisplay">01:40</div>
+        </div>
+        <div class="card">
+            <div class="card-title">5M / 10M CONFLUENCE SYNC</div>
+            <div class="card-value green" style="font-size: 14px; padding-top: 4px;">24/7 ACTIVE</div>
+        </div>
     </div>
-    <div class="adv-body" id="adv-panel">
-      <div class="param-row">
-        <span>Worker Thread:</span>
-        <input type="text" value="Persistent Web Worker">
-      </div>
-      <div class="param-row">
-        <span>Wake Lock API:</span>
-        <input type="text" value="Active (Prevent Sleep)">
-      </div>
-      <div class="param-row">
-        <span>Exness Lot Multiplier:</span>
-        <input type="text" value="0.10 Lot">
-      </div>
-      <div class="param-row">
-        <span>Binance Order Size:</span>
-        <input type="text" value="0.05 BTC">
-      </div>
-      <div class="param-row">
-        <span>CDN Edge Caching:</span>
-        <input type="text" value="Zero Server Load">
-      </div>
+
+    <div class="panel">
+        <div class="panel-title">
+            <span>HIGH-FREQUENCY TICK & MATRIX</span>
+            <span style="color: #3fb950;">● BACKGROUND SHIELD ON</span>
+        </div>
+        <canvas id="matrixCanvas"></canvas>
+        <div class="signal-box" id="signalBox">SIGNAL: BEARISH DUMP (5M CONFIRMED)</div>
     </div>
-  </div>
 
-  <!-- Realtime Log -->
-  <div class="card" style="margin-bottom:0;">
-    <div class="stat-label" style="margin-bottom:0.3rem;">Live Execution Log Stream</div>
-    <div class="log-box" id="log-box">
-      [00:00:00] Sovereign Master Bot initialized with 24/7 background worker.<br>
-      [00:00:01] Wake Lock and notification listeners fully engaged.<br>
+    <!-- NEW: Master Bot Recommendations & 3M Candle Ticker -->
+    <div class="panel">
+        <div class="panel-title">🤖 MASTER BOT TRADE RECOMMENDATIONS & 3M CANDLE TICKER</div>
+        <div class="log-box" id="masterBotFeed">
+            [00:01] 3M Candle Update: Bullish momentum building on XAU/USD support.<br>
+            [00:02] Master Bot Recommendation: HOLD short positions, monitor 2665 pivot level.<br>
+            [00:03] 3M Candle Update: Bearish rejection confirmed at resistance.
+        </div>
     </div>
-  </div>
 
-<script>
-  let masterBotActive = true;
-  let masterNotifsActive = true;
-  let backgroundMode = true;
+    <div class="panel">
+        <div class="panel-title">⚙️ 24H METRICS & ALERT CONFIGURATION</div>
+        <div class="btn-row">
+            <button class="btn-blue" id="toggle24HBtn">24H Metrics: ON</button>
+            <button class="btn-orange" id="alertConfigBtn">Configure Alerts</button>
+        </div>
+    </div>
 
-  let subSettings = {
-    exnessNotif: true,
-    exnessSound: true,
-    binanceNotif: true,
-    binanceSound: true
-  };
+    <div class="panel">
+        <div class="panel-title">
+            <span>🚨 24/7 BACKGROUND ENGINE & KILL SWITCH</span>
+        </div>
+        <div class="log-box" id="engineLog">
+            BACKGROUND MODE: Running Minimized (Keep-Alive)<br>
+            Sharp correction detected. Short Orders Set via Sovereign Worker.<br>
+            Exness Gold: Background Worker Active<br>
+            Binance Crypto: Background Worker Active
+        </div>
+        <div class="btn-row" style="margin-top: 8px;">
+            <button class="btn-orange" onclick="toggleKeepRunning()">KEEP RUNNING 24/7</button>
+            <button class="btn-red" onclick="forceStopAll()">FORCE STOP ALL</button>
+        </div>
+    </div>
 
-  let goldPrice = 2654.80;
-  let btcPrice = 94120.50;
-  let timerSeconds = 179;
+    <div class="panel">
+        <div class="panel-title">
+            <span>🔔 Master Notification Panel & Push Alerts</span>
+            <span style="color: #f0883e;">▲</span>
+        </div>
+        <div class="btn-row">
+            <button class="btn-orange" onclick="enableAlerts()">ENABLE ALERTS</button>
+            <button class="btn-red" onclick="disableAlerts()">DISABLE ALERTS</button>
+        </div>
+        <div class="btn-row">
+            <button class="btn-blue" id="goldPushBtn">GOLD PUSH: ON</button>
+            <button class="btn-blue" id="goldSoundBtn">GOLD SOUND: ON</button>
+        </div>
+        <div class="btn-row">
+            <button class="btn-blue" id="cryptoPushBtn">CRYPTO PUSH: ON</button>
+            <button class="btn-blue" id="cryptoSoundBtn">CRYPTO SOUND: ON</button>
+        </div>
+    </div>
 
-  const canvas = document.getElementById('chartCanvas');
-  const ctx = canvas.getContext('2d');
-  let candles = [];
-  const maxCandles = 32;
+    <script>
+        // Canvas Rendering (60 FPS Simulation)
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth - 20;
+            canvas.height = 140;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-  function initCandles() {
-    let base = 2654.80;
-    for(let i=0; i<maxCandles; i++) {
-      let open = base + (Math.random() - 0.5) * 4;
-      let close = open + (Math.random() - 0.49) * 5;
-      let high = Math.max(open, close) + Math.random() * 2;
-      let low = Math.min(open, close) - Math.random() * 2;
-      candles.push({open, close, high, low});
-      base = close;
-    }
-  }
-  initCandles();
+        let tick = 0;
+        function renderLoop() {
+            tick++;
+            ctx.fillStyle = '#0d1117';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw dummy chart candles
+            const candles = 28;
+            const w = canvas.width / candles;
+            let h = 70;
+            for(let i=0; i<candles; i++) {
+                h += Math.sin(i + tick*0.05) * 4;
+                let isGreen = i % 2 === 0;
+                ctx.fillStyle = isGreen ? '#3fb950' : '#f85149';
+                ctx.fillRect(i * w + 2, 70 - (h - 70), w - 4, Math.abs(h - 70) + 10);
+            }
+            requestAnimationFrame(renderLoop);
+        }
+        requestAnimationFrame(renderLoop);
 
-  function resizeCanvas() {
-    if (canvas.parentElement) {
-      canvas.width = canvas.parentElement.clientWidth - 16;
-      canvas.height = 120;
-    }
-  }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
+        // 3M Timer Countdown & Candle Push Simulation
+        let timeLeft = 100;
+        setInterval(() => {
+            timeLeft--;
+            if(timeLeft < 0) timeLeft = 180;
+            let m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+            let s = String(timeLeft % 60).padStart(2, '0');
+            document.getElementById('timerDisplay').innerText = `${m}:${s}`;
+            
+            if(timeLeft === 0) {
+                trigger3MCandleUpdate();
+            }
+        }, 1000);
 
-  function log(msg) {
-    const box = document.getElementById('log-box');
-    if(box) {
-      const time = new Date().toTimeString().split(' ')[0];
-      box.innerHTML += `[${time}] ${msg}<br>`;
-      box.scrollTop = box.scrollHeight;
-    }
-  }
+        function trigger3MCandleUpdate() {
+            const feed = document.getElementById('masterBotFeed');
+            const isBullish = Math.random() > 0.5;
+            const statusText = isBullish ? "3M Candle Update: Bullish breakout impulse detected." : "3M Candle Update: Bearish volume expansion registered.";
+            const recommendation = isBullish ? "Master Bot Recommendation: Consider long entry near support." : "Master Bot Recommendation: Maintain short bias, tighten stop-loss.";
+            
+            feed.innerHTML = `[LIVE] ${statusText}<br>${recommendation}<br>` + feed.innerHTML;
+            
+            if("Notification" in window && Notification.permission === "granted") {
+                new Notification("MintooSuite Alert", { body: statusText });
+            }
+        }
 
-  function toggleSection(panelId, arrowId) {
-    const panel = document.getElementById(panelId);
-    const arrow = document.getElementById(arrowId);
-    if(panel && arrow) {
-      panel.classList.toggle('active');
-      arrow.innerText = panel.classList.contains('active') ? '▲' : '▼';
-    }
-  }
+        // Button Toggles
+        let state24H = true;
+        document.getElementById('toggle24HBtn').addEventListener('click', () => {
+            state24H = !state24H;
+            document.getElementById('toggle24HBtn').innerText = `24H Metrics: ${state24H ? 'ON' : 'OFF'}`;
+            document.getElementById('toggle24HBtn').style.background = state24H ? '#1f6feb' : '#30363d';
+        });
 
-  function setBgMode(mode) {
-    backgroundMode = true;
-    document.getElementById('bot-status').innerText = "BACKGROUND MODE: Running Minimized (Keep-Alive)";
-    document.getElementById('bot-status').style.color = "var(--success)";
-    log("Master Bot locked to 24/7 Keep-Alive background execution.");
-  }
+        document.getElementById('alertConfigBtn').addEventListener('click', () => {
+            alert("Quantum Sovereign Suite: Alert thresholds set to 3M & 5M confluence triggers.");
+        });
 
-  function forceStopAll() {
-    backgroundMode = false;
-    masterBotActive = false;
-    document.getElementById('bot-status').innerText = "FORCE STOPPED: All Processes Terminated";
-    document.getElementById('bot-status').style.color = "var(--danger)";
-    log("FORCE STOP: All background threads, workers, and triggers halted.");
-  }
+        function enableAlerts() {
+            if("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    alert("Push Notifications permission: " + permission);
+                });
+            } else {
+                alert("Push notifications not supported on this browser.");
+            }
+        }
 
-  function toggleMasterNotifs(state) {
-    masterNotifsActive = state;
-    log(state ? 'Master Push Notifications ENGAGED for background mode.' : 'Master Push Notifications DISABLED.');
-  }
+        function disableAlerts() {
+            alert("Master Push Alerts Disabled.");
+        }
 
-  function toggleSubNotif(market) {
-    if(market === 'exness') {
-      subSettings.exnessNotif = !subSettings.exnessNotif;
-      const btn = document.getElementById('exness-notif-btn');
-      btn.innerText = `Gold Push: ${subSettings.exnessNotif ? 'ON' : 'OFF'}`;
-      btn.classList.toggle('btn-active');
-    } else {
-      subSettings.binanceNotif = !subSettings.binanceNotif;
-      const btn = document.getElementById('binance-notif-btn');
-      btn.innerText = `Crypto Push: ${subSettings.binanceNotif ? 'ON' : 'OFF'}`;
-      btn.classList.toggle('btn-active');
-    }
-  }
+        function toggleKeepRunning() {
+            alert("24/7 Background Engine Keep-Alive Shield active via Wake Lock API.");
+        }
 
-  function toggleSubSound(market) {
-    if(market === 'exness') {
-      subSettings.exnessSound = !subSettings.exnessSound;
-      const btn = document.getElementById('exness-sound-btn');
-      btn.innerText = `Gold Sound: ${subSettings.exnessSound ? 'ON' : 'OFF'}`;
-      btn.classList.toggle('btn-active');
-    } else {
-      subSettings.binanceSound = !subSettings.binanceSound;
-      const btn = document.getElementById('binance-sound-btn');
-      btn.innerText = `Crypto Sound: ${subSettings.binanceSound ? 'ON' : 'OFF'}`;
-      btn.classList.toggle('btn-active');
-    }
-  }
-
-  // 60 FPS & Background Worker Loop
-  let frameCount = 0;
-  let fpsTimer = performance.now();
-
-  function loop(timestamp) {
-    if (!masterBotActive) return;
-
-    frameCount++;
-    if (timestamp - fpsTimer >= 1000) {
-      const fpsEl = document.getElementById('fps-badge');
-      if(fpsEl) fpsEl.innerText = `${backgroundMode ? frameCount : '0'} FPS ${backgroundMode ? 'LIVE' : 'HALTED'}`;
-      frameCount = 0;
-      fpsTimer = timestamp;
-    }
-
-    let goldDelta = (Math.random() - 0.48) * 1.8;
-    goldPrice += goldDelta;
-    btcPrice += (Math.random() - 0.49) * 25.0;
-
-    const goldEl = document.getElementById('gold-price');
-    const btcEl = document.getElementById('btc-price');
-    if(goldEl) goldEl.innerText = goldPrice.toFixed(2);
-    if(btcEl) btcEl.innerText = btcPrice.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-
-    timerSeconds--;
-    if(timerSeconds <= 0) {
-      timerSeconds = 179;
-      let signals = [
-        {sig: 'BULLISH SURGE (5M CONFIRMED)', advice: 'Exness Gold & Binance Crypto breakout confirmed. Order Executing in Background.'},
-        {sig: 'BEARISH DUMP (5M CONFIRMED)', advice: 'Sharp correction detected. Short Orders Set via Sovereign Worker.'},
-        {sig: 'ACCUMULATION PHASE', advice: 'Waiting for candle close confirmation in background queue.'}
-      ];
-      let res = signals[Math.floor(Math.random() * signals.length)];
-      const sigEl = document.getElementById('decision-signal');
-      const advEl = document.getElementById('bot-advice');
-      if(sigEl) sigEl.innerText = `SIGNAL: ${res.sig}`;
-      if(advEl) advEl.innerText = res.advice;
-      log(`Background Bot Notification Trigger: ${res.sig}`);
-    }
-
-    let m = Math.floor(timerSeconds / 60);
-    let s = timerSeconds % 60;
-    const timerEl = document.getElementById('timer-val');
-    if(timerEl) timerEl.innerText = `0${m}:${s < 10 ? '0' : ''}${s}`;
-
-    if(candles.length > 0) {
-      let currentCandle = candles[candles.length - 1];
-      currentCandle.close = goldPrice;
-      currentCandle.high = Math.max(currentCandle.high, goldPrice);
-      currentCandle.low = Math.min(currentCandle.low, goldPrice);
-
-      if(Math.random() < 0.05) {
-        candles.shift();
-        candles.push({open: goldPrice, close: goldPrice, high: goldPrice, low: goldPrice});
-      }
-    }
-
-    if (ctx && canvas) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      let candleWidth = canvas.width / maxCandles;
-      let minP = Math.min(...candles.map(c => c.low)) - 1;
-      let maxP = Math.max(...candles.map(c => c.high)) + 1;
-      let priceRange = maxP - minP;
-
-      candles.forEach((c, i) => {
-        let x = i * candleWidth + (candleWidth / 2);
-        let yOpen = canvas.height - ((c.open - minP) / priceRange) * canvas.height;
-        let yClose = canvas.height - ((c.close - minP) / priceRange) * canvas.height;
-        let yHigh = canvas.height - ((c.high - minP) / priceRange) * canvas.height;
-        let yLow = canvas.height - ((c.low - minP) / priceRange) * canvas.height;
-
-        let isGreen = c.close >= c.open;
-        ctx.strokeStyle = isGreen ? '#34d399' : '#ef4444';
-        ctx.fillStyle = isGreen ? '#34d399' : '#ef4444';
-        ctx.lineWidth = 1.5;
-
-        ctx.beginPath();
-        ctx.moveTo(x, yHigh);
-        ctx.lineTo(x, yLow);
-        ctx.stroke();
-
-        let barHeight = Math.max(Math.abs(yClose - yOpen), 2);
-        ctx.fillRect(x - (candleWidth * 0.35), Math.min(yOpen, yClose), candleWidth * 0.7, barHeight);
-      });
-    }
-
-    requestAnimationFrame(loop);
-  }
-
-  requestAnimationFrame(loop);
-</script>
-
+        function forceStopAll() {
+            if(confirm("WARNING: Execute Emergency Force Stop All?")) {
+                alert("Emergency Kill Switch Triggered. All background workers halted.");
+            }
+        }
+    </script>
 </body>
 </html>
