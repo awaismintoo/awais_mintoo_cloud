@@ -12,9 +12,10 @@ self.addEventListener('message', (event) => {
             body: event.data.body,
             icon: 'icon-192.png',
             badge: 'icon-192.png',
-            vibrate: [200, 100, 200],
-            tag: 'mintoosuite-trade-alert',
-            renotify: true
+            vibrate: [300, 100, 300, 100, 300],
+            tag: 'quantum-sovereign-alert',
+            renotify: true,
+            requireInteraction: true
         });
     }
 });
