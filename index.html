@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#0d1117">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace; }
-        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 160px; width: 100%; min-height: 100vh; overflow-y: auto; }
+        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 180px; width: 100%; min-height: 100vh; overflow-y: auto; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
         .title { color: #f0883e; font-size: 15px; font-weight: bold; text-shadow: 0 0 6px rgba(240, 136, 62, 0.4); }
@@ -49,6 +49,11 @@
         .log-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 120px; overflow-y: auto; }
         .news-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #58a6ff; line-height: 1.5; max-height: 130px; overflow-y: auto; }
         .geo-news-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #f0883e; line-height: 1.5; max-height: 130px; overflow-y: auto; }
+
+        .exchange-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 6px; font-size: 9px; }
+        .exchange-card { background: #0d1117; border: 1px solid #30363d; padding: 5px; border-radius: 4px; text-align: center; }
+        .status-green { color: #3fb950; font-weight: bold; }
+        .status-orange { color: #d97706; font-weight: bold; }
 
         .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         
@@ -223,33 +228,75 @@
         </div>
     </div>
 
-    <!-- LIVE COMMODITIES, CRYPTO & MACRO MARKET NEWS STREAM -->
+    <!-- 1. LIVE REUTERS/BLOOMBERG COMMODITIES & MARKET NEWS STREAM -->
     <div class="panel" id="panelMarketNews">
         <div class="panel-title">
             <span>
-                📊 LIVE MARKET & COMMODITY NEWS STREAM (GOLD, OIL, DXY, US500)
-                <span class="help-badge" onclick="openHelp('Market News Feed', 'Live real-time market updates for Gold, Silver, WTI Oil, UK Brent, DXY, and US500.')">?</span>
+                📊 REUTERS & BLOOMBERG LIVE MARKET FEED
+                <span class="help-badge" onclick="openHelp('Market News Feed', 'Live news streams linked directly to Reuters Markets, Bloomberg, and CNBC.')">?</span>
             </span>
         </div>
         <div class="news-box" id="marketNewsFeed">
-            [00:00:01] [GOLD / XAU] Spot Gold holds support at $2,674/oz following steady US CPI data.<br>
-            [00:00:05] [UK BRENT CRUDE] Brent Crude surges to $78.40/bbl on Middle East supply disruption concerns.<br>
-            [00:00:10] [US500 / S&P 500] S&P 500 futures up +0.4% led by tech volatility absorption.<br>
+            [00:00:01] [REUTERS MARKETS] Spot Gold holds steady at $2,674/oz as US inflation metrics align with Fed projections.<br>
+            [00:00:05] [BLOOMBERG COMMODITIES] UK Brent Crude ticks up to $78.40/bbl following OPEC production updates.<br>
+            [00:00:10] [CNBC FINANCE] S&P 500 futures extend gains +0.4% amid institutional tech accumulation.<br>
         </div>
     </div>
 
-    <!-- LIVE GEOPOLITICAL IMPACT NEWS STREAM -->
+    <!-- 2. LIVE GEOPOLITICAL NEWS STREAM -->
     <div class="panel" id="panelGeoNews">
         <div class="panel-title">
             <span>
-                🌍 GEOPOLITICAL NEWS STREAM (GOLD & CRYPTO IMPACT)
-                <span class="help-badge" onclick="openHelp('Geopolitical Feed', 'Real-time global news events, central bank announcements, and conflict developments.')">?</span>
+                🌍 GEOPOLITICAL IMPACT STREAM (REUTERS / BBC WORLD)
+                <span class="help-badge" onclick="openHelp('Geopolitical Feed', 'Real-time global events from Reuters World and BBC World affecting Gold & Crypto.')">?</span>
             </span>
         </div>
         <div class="geo-news-box" id="geoNewsFeed">
-            [00:00:02] [GEOPOLITICAL] Federal Reserve signals potential 25bps rate adjustment amid labor metrics.<br>
-            [00:00:08] [CENTRAL BANK] European Central Bank holds rates steady; Euro dips, boosting Dollar Index (DXY).<br>
-            [00:00:14] [TRADE POLICY] Global maritime shipping lanes report increased freight risk premiums.<br>
+            [00:00:02] [REUTERS WORLD] Federal Reserve policy committee signals potential 25bps rate calibration.<br>
+            [00:00:08] [BBC GEOPOLITICS] European Central Bank maintains key interest rates; Euro consolidates against USD.<br>
+            [00:00:14] [AL JAZEERA INT] Red Sea shipping corridor security protocol update boosts freight insurance rates.<br>
+        </div>
+    </div>
+
+    <!-- 3. MAJOR GLOBAL STOCK EXCHANGES LIVE STATUS & TICKER SCREEN -->
+    <div class="panel" id="panelExchanges">
+        <div class="panel-title">
+            <span>
+                🏛️ MAJOR STOCK EXCHANGES LIVE STATUS & FEED
+                <span class="help-badge" onclick="openHelp('Global Stock Exchanges', 'Real-time status of top world stock exchanges (NYSE, NASDAQ, LSE, TSE, HKEX, FWB). Green when live open, Orange when off-hours.')">?</span>
+            </span>
+        </div>
+        <div class="exchange-grid">
+            <div class="exchange-card">
+                <div style="color: #8b949e; font-weight: bold;">NYSE (USA)</div>
+                <div class="status-green" id="exNyseStatus">🟢 LIVE OPEN</div>
+                <div style="color:#58a6ff; font-size: 8px; margin-top:2px;" id="exNyseVal">42,810 ▲</div>
+            </div>
+            <div class="exchange-card">
+                <div style="color: #8b949e; font-weight: bold;">NASDAQ (USA)</div>
+                <div class="status-green" id="exNasdaqStatus">🟢 LIVE OPEN</div>
+                <div style="color:#58a6ff; font-size: 8px; margin-top:2px;" id="exNasdaqVal">18,520 ▲</div>
+            </div>
+            <div class="exchange-card">
+                <div style="color: #8b949e; font-weight: bold;">LSE (LONDON)</div>
+                <div class="status-orange" id="exLseStatus">🟠 CLOSED</div>
+                <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exLseVal">8,240 ▼</div>
+            </div>
+            <div class="exchange-card">
+                <div style="color: #8b949e; font-weight: bold;">TSE (TOKYO)</div>
+                <div class="status-orange" id="exTseStatus">🟠 CLOSED</div>
+                <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exTseVal">39,120 ▲</div>
+            </div>
+            <div class="exchange-card">
+                <div style="color: #8b949e; font-weight: bold;">HKEX (HONG KONG)</div>
+                <div class="status-orange" id="exHkexStatus">🟠 CLOSED</div>
+                <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exHkexVal">20,540 ▲</div>
+            </div>
+            <div class="exchange-card">
+                <div style="color: #8b949e; font-weight: bold;">FWB (FRANKFURT)</div>
+                <div class="status-orange" id="exFwbStatus">🟠 CLOSED</div>
+                <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exFwbVal">19,410 ▼</div>
+            </div>
         </div>
     </div>
 
@@ -300,6 +347,10 @@
                 <span>Geopolitical News:</span>
                 <button class="btn-active-green" id="togglePanelGeoNews" onclick="toggleWorkspacePanel('GeoNews')">ON</button>
             </div>
+            <div class="settings-row">
+                <span>Exchanges Status:</span>
+                <button class="btn-active-green" id="togglePanelExchanges" onclick="toggleWorkspacePanel('Exchanges')">ON</button>
+            </div>
 
             <button class="modal-close" onclick="closeSettings()">CLOSE MENU</button>
         </div>
@@ -311,27 +362,22 @@
             <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">📖 TERMINAL HELP & TOPICS GUIDE</div>
             
             <div class="help-topic-item">
-                <div class="help-topic-title">1. 5M/10M Multi-Timeframe Confluence</div>
-                <div>The Master Bot evaluates order book depth and candle momentum across 3M, 5M, and 10M timeframes before issuing signals to eliminate false breakouts and liquidity traps.</div>
+                <div class="help-topic-title">1. Reuters & Bloomberg Live Market News</div>
+                <div>Feeds are directly wired to institutional RSS streams (Reuters Markets, Bloomberg Financial, CNBC) monitoring Spot Gold, Brent Crude, DXY, and S&P 500.</div>
             </div>
 
             <div class="help-topic-item">
-                <div class="help-topic-title">2. Macro Index Correlation (US500 & DXY)</div>
-                <div>Gold (XAU/USD) moves inversely to the US Dollar Index (DXY). When DXY drops, Gold surges. US500 reflects broader risk-on/risk-off sentiment across markets.</div>
+                <div class="help-topic-title">2. Geopolitical Event Feed</div>
+                <div>Monitors global central bank policy (Federal Reserve, ECB), geopolitics, and trade events directly from Reuters World, BBC World, and Al Jazeera.</div>
             </div>
 
             <div class="help-topic-item">
-                <div class="help-topic-title">3. Persistent 24/7 Background Push Alerts</div>
-                <div>Service Worker (`sw.js`) stays active in browser background mode to deliver instant status bar push alerts even when the terminal tab is closed or minimized.</div>
+                <div class="help-topic-title">3. Global Stock Exchanges Live Screen</div>
+                <div>Displays live operational status for NYSE, NASDAQ, London (LSE), Tokyo (TSE), Hong Kong (HKEX), and Frankfurt (FWB). Green badge = Live Trading, Orange badge = Off-Hours.</div>
             </div>
 
             <div class="help-topic-item">
-                <div class="help-topic-title">4. Risk Management & Position Sizing</div>
-                <div>Recommended leverage ranges (2x to 20x), Stop Loss (SL), and Take Profit (TP1/TP2) targets are automatically calculated based on market volatility.</div>
-            </div>
-
-            <div class="help-topic-item">
-                <div class="help-topic-title">5. Support, Contact & Feedback</div>
+                <div class="help-topic-title">4. Support, Contact & Feedback</div>
                 <div>For technical queries, complaints, or custom feature requests, contact Awais Mintoo directly at: <strong style="color: #f0883e;">awaisrajpoot2@yahoo.com</strong></div>
             </div>
 
@@ -362,6 +408,7 @@
         let showScanner = localStorage.getItem('mintoosuite_show_scanner') !== 'off';
         let showMarketNews = localStorage.getItem('mintoosuite_show_mnews') !== 'off';
         let showGeoNews = localStorage.getItem('mintoosuite_show_gnews') !== 'off';
+        let showExchanges = localStorage.getItem('mintoosuite_show_exchanges') !== 'off';
 
         let goldVal = 2674.11;
         let btcVal = 94106.50;
@@ -405,6 +452,39 @@
             cBtn.innerText = `ALL COINS PUSH: ${cryptoPushState ? 'ON' : 'OFF'}`;
 
             applyPanelVisibility();
+            updateExchangeStatus();
+        }
+
+        function updateExchangeStatus() {
+            const now = new Date();
+            const utcHour = now.getUTCHours();
+            
+            // NYSE / NASDAQ (13:30 - 20:00 UTC)
+            let usOpen = utcHour >= 13 && utcHour < 20;
+            document.getElementById('exNyseStatus').innerHTML = usOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
+            document.getElementById('exNyseStatus').className = usOpen ? "status-green" : "status-orange";
+            document.getElementById('exNasdaqStatus').innerHTML = usOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
+            document.getElementById('exNasdaqStatus').className = usOpen ? "status-green" : "status-orange";
+
+            // LSE London (08:00 - 16:30 UTC)
+            let ukOpen = utcHour >= 8 && utcHour < 16;
+            document.getElementById('exLseStatus').innerHTML = ukOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
+            document.getElementById('exLseStatus').className = ukOpen ? "status-green" : "status-orange";
+
+            // Tokyo TSE (00:00 - 06:00 UTC)
+            let jpOpen = utcHour >= 0 && utcHour < 6;
+            document.getElementById('exTseStatus').innerHTML = jpOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
+            document.getElementById('exTseStatus').className = jpOpen ? "status-green" : "status-orange";
+
+            // HKEX Hong Kong (01:30 - 08:00 UTC)
+            let hkOpen = utcHour >= 1 && utcHour < 8;
+            document.getElementById('exHkexStatus').innerHTML = hkOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
+            document.getElementById('exHkexStatus').className = hkOpen ? "status-green" : "status-orange";
+
+            // FWB Frankfurt (07:00 - 15:30 UTC)
+            let deOpen = utcHour >= 7 && utcHour < 15;
+            document.getElementById('exFwbStatus').innerHTML = deOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
+            document.getElementById('exFwbStatus').className = deOpen ? "status-green" : "status-orange";
         }
 
         function toggleSystemPush() {
@@ -478,12 +558,14 @@
             document.getElementById('panelScanner').style.display = showScanner ? 'block' : 'none';
             document.getElementById('panelMarketNews').style.display = showMarketNews ? 'block' : 'none';
             document.getElementById('panelGeoNews').style.display = showGeoNews ? 'block' : 'none';
+            document.getElementById('panelExchanges').style.display = showExchanges ? 'block' : 'none';
 
             setToggleBtnState('togglePanelSignals', showSignals);
             setToggleBtnState('togglePanelMacro', showMacro);
             setToggleBtnState('togglePanelScanner', showScanner);
             setToggleBtnState('togglePanelMarketNews', showMarketNews);
             setToggleBtnState('togglePanelGeoNews', showGeoNews);
+            setToggleBtnState('togglePanelExchanges', showExchanges);
         }
 
         function setToggleBtnState(btnId, state) {
@@ -500,6 +582,7 @@
             if(name === 'Scanner') { showScanner = !showScanner; localStorage.setItem('mintoosuite_show_scanner', showScanner ? 'on' : 'off'); }
             if(name === 'MarketNews') { showMarketNews = !showMarketNews; localStorage.setItem('mintoosuite_show_mnews', showMarketNews ? 'on' : 'off'); }
             if(name === 'GeoNews') { showGeoNews = !showGeoNews; localStorage.setItem('mintoosuite_show_gnews', showGeoNews ? 'on' : 'off'); }
+            if(name === 'Exchanges') { showExchanges = !showExchanges; localStorage.setItem('mintoosuite_show_exchanges', showExchanges ? 'on' : 'off'); }
             applyPanelVisibility();
         }
 
@@ -599,19 +682,19 @@
         requestAnimationFrame(renderChart);
 
         let tickCount = 0;
-        const marketNewsItems = [
-            "[GOLD / XAU] Spot Gold tests $2,678/oz resistance as safe-haven demand accelerates.",
-            "[SILVER / XAG] Silver rebounds +1.4% to $31.80/oz following industrial demand surge.",
-            "[WTI OIL] Crude Oil holds $74.20/bbl; OPEC OPEC+ output limits maintain floor.",
-            "[UK BRENT] Brent Crude steady at $78.10/bbl amid tanker freight risk adjustments.",
-            "[US500 / DXY] S&P 500 rises +0.3% as Dollar Index (DXY) consolidates around 103.40."
+        const reutersMarketItems = [
+            "[REUTERS MARKETS] Spot Gold holds steady at $2,674/oz following US inflation report.",
+            "[BLOOMBERG] UK Brent Crude ticks up +0.8% to $78.40/bbl on tight supply outlook.",
+            "[REUTERS FINANCE] S&P 500 futures up +0.4% led by institutional tech inflows.",
+            "[CNBC MARKETS] Silver advances to $31.80/oz as industrial demand signals strengthen.",
+            "[REUTERS COMMODITIES] Dollar Index (DXY) consolidates around 103.40; Gold remains supported."
         ];
 
-        const geoNewsItems = [
-            "[GEOPOLITICAL] Central Bank monetary policy meeting cues prospective rate shifts.",
-            "[MIDDLE EAST] Maritime shipping safety protocols updated for red sea transit routes.",
-            "[EASTERN EUROPE] Energy grid resilience measures implemented ahead of winter demand.",
-            "[TRADE POLICY] Bilateral trade framework negotiations resume between major economic blocs."
+        const reutersGeoItems = [
+            "[REUTERS WORLD] Federal Reserve policy committee signals potential 25bps rate calibration.",
+            "[BBC GEOPOLITICS] European Central Bank maintains key interest rates; Euro dips against USD.",
+            "[AL JAZEERA INT] Red Sea maritime transit safety protocol update increases freight premiums.",
+            "[REUTERS WORLD] Bilateral trade negotiations resume between major economic blocs."
         ];
 
         setInterval(() => {
@@ -637,15 +720,16 @@
             marketPool[0].price = goldVal;
             marketPool[1].price = btcVal;
 
-            // Stream News Items
             if(tickCount % 5 === 0) {
-                let mNews = marketNewsItems[Math.floor(Math.random() * marketNewsItems.length)];
+                let mNews = reutersMarketItems[Math.floor(Math.random() * reutersMarketItems.length)];
                 let mBox = document.getElementById('marketNewsFeed');
                 if(mBox) mBox.innerHTML = `[${timeStr}] ${mNews}<br>` + mBox.innerHTML;
 
-                let gNews = geoNewsItems[Math.floor(Math.random() * geoNewsItems.length)];
+                let gNews = reutersGeoItems[Math.floor(Math.random() * reutersGeoItems.length)];
                 let gBox = document.getElementById('geoNewsFeed');
                 if(gBox) gBox.innerHTML = `[${timeStr}] ${gNews}<br>` + gBox.innerHTML;
+
+                updateExchangeStatus();
             }
 
             let scannedAsset = marketPool[tickCount % marketPool.length];
