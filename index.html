@@ -20,7 +20,7 @@
         .card-value.green { color: #3fb950; }
         .card-value.red { color: #f85149; }
         
-        /* Dynamic Hero Banner */
+        /* Hero Banner */
         .hero-banner { background: #161b22; border: 2px solid #238636; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 10px rgba(35, 134, 54, 0.25); }
         .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: bold; display: flex; justify-content: space-between; }
         .hero-signal { font-size: 16px; font-weight: bold; color: #3fb950; margin: 4px 0; }
@@ -90,7 +90,7 @@
         </div>
         <div class="card">
             <div class="card-title">PERSISTENT ENGINE</div>
-            <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">SYNCED & LIVE</div>
+            <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">LOCKED & SYNCED</div>
         </div>
     </div>
 
@@ -101,7 +101,7 @@
         </div>
         <canvas id="matrixCanvas"></canvas>
         
-        <!-- Asset View Buttons with Persistent State -->
+        <!-- Asset View Buttons -->
         <div class="btn-row-3">
             <button class="btn-active-green" id="btnGoldAsset" onclick="switchAsset('gold')">EXNESS GOLD</button>
             <button class="btn-inactive" id="btnCryptoAsset" onclick="switchAsset('crypto')">BINANCE FUTURES</button>
@@ -109,11 +109,11 @@
         </div>
     </div>
 
-    <!-- Active Valid Signals Panel with Expiry Timers -->
+    <!-- Active Valid Signals Panel -->
     <div class="panel">
         <div class="panel-title">⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER</div>
         <div id="validSignalsContainer">
-            <!-- Dynamic Active Signal Cards -->
+            <!-- Dynamic Cards -->
         </div>
     </div>
 
@@ -147,7 +147,7 @@
             navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Error:', err));
         }
 
-        // Restore saved asset state or default to 'gold'
+        // Persistent Asset Mode across refreshes
         let currentAsset = localStorage.getItem('mintoosuite_asset') || 'gold'; 
         let goldVal = 2674.11;
         let btcVal = 94106.50;
@@ -183,8 +183,15 @@
         }
 
         function updateHeroBanner() {
-            let filteredAsset = marketPool.find(a => currentAsset === 'crypto' ? a.type === 'crypto' : a.type === 'gold');
-            if(!filteredAsset) filteredAsset = marketPool[0];
+            // Strictly filter by selected mode so Binance stays on Binance
+            let filteredAsset;
+            if (currentAsset === 'crypto') {
+                filteredAsset = marketPool.find(a => a.name.includes("BTC")) || marketPool[1];
+            } else if (currentAsset === 'gold') {
+                filteredAsset = marketPool.find(a => a.type === 'gold') || marketPool[0];
+            } else {
+                filteredAsset = marketPool[0]; // Combined Mode Default
+            }
             
             let isBull = Math.random() > 0.45;
             let action = isBull ? "HIGH-CONFIDENCE LONG" : "HIGH-CONFIDENCE SHORT";
@@ -252,7 +259,7 @@
         }
         requestAnimationFrame(renderChart);
 
-        // Micro-second Engine & Signal Ledger
+        // Ticker Engine
         let tickCount = 0;
         setInterval(() => {
             tickCount++;
@@ -288,7 +295,7 @@
                 isBullish: isBullish
             };
 
-            // Render Valid Signal Cards
+            // Render Signal Cards
             let container = document.getElementById('validSignalsContainer');
             container.innerHTML = '';
             Object.keys(activeValidSignals).forEach(key => {
@@ -309,14 +316,15 @@
                 container.innerHTML += cardHTML;
             });
 
-            if(tickCount % 6 === 0) {
+            // Periodically refresh current asset Hero details without overwriting user mode selection
+            if(tickCount % 10 === 0) {
                 updateHeroBanner();
             }
 
             const feed = document.getElementById('masterBotFeed');
             feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] Signal: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
 
-            // Service worker push alert trigger
+            // Service worker push trigger
             if (tickCount % 8 === 0 && Notification.permission === "granted") {
                 let goldPush = document.getElementById('goldPushBtn').className.includes('btn-active');
                 let cryptoPush = document.getElementById('cryptoPushBtn').className.includes('btn-active');
@@ -367,7 +375,7 @@
             }
         }
 
-        // Initialize saved asset selection on boot
+        // Initialize state on page load
         switchAsset(currentAsset);
     </script>
 </body>
