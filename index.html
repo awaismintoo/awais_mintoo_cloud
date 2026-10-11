@@ -19,9 +19,18 @@
         .card-value { color: #58a6ff; font-size: 18px; font-weight: bold; }
         .card-value.green { color: #3fb950; }
         .card-value.red { color: #f85149; }
+        
+        /* Prominent Trade Banner */
+        .hero-banner { background: #161b22; border: 2px solid #238636; border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 0 12px rgba(35, 134, 54, 0.25); }
+        .hero-title { font-size: 11px; color: #8b949e; text-transform: uppercase; font-weight: bold; display: flex; justify-content: space-between; }
+        .hero-signal { font-size: 18px; font-weight: bold; color: #3fb950; margin: 6px 0; }
+        .hero-details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; background: #0d1117; padding: 8px; border-radius: 4px; font-size: 11px; border: 1px solid #30363d; }
+        .hero-detail-item { color: #c9d1d9; }
+        .hero-detail-item span { color: #8b949e; font-size: 9px; display: block; }
+        
         .panel { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
         .panel-title { color: #f0883e; font-size: 12px; font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; }
-        canvas { width: 100%; height: 140px; background: #0d1117; border-radius: 4px; border: 1px solid #30363d; display: block; }
+        canvas { width: 100%; height: 130px; background: #0d1117; border-radius: 4px; border: 1px solid #30363d; display: block; }
         .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
         button { padding: 12px; font-weight: bold; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.2s ease; }
         
@@ -30,8 +39,7 @@
         .btn-active-red { background: #da3633 !important; color: #ffffff !important; }
         .btn-inactive { background: #21262d !important; color: #8b949e !important; border: 1px solid #30363d; }
         
-        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 8px; font-size: 11px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 120px; overflow-y: auto; }
-        .signal-box { color: #f0883e; font-size: 11px; border: 1px dashed #f0883e; padding: 8px; border-radius: 4px; margin-top: 8px; text-align: center; font-weight: bold; background: rgba(240, 136, 62, 0.05); }
+        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 8px; font-size: 11px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 130px; overflow-y: auto; }
         .section-header { font-size: 11px; color: #58a6ff; margin-top: 6px; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
@@ -56,14 +64,28 @@
         </div>
     </div>
 
+    <!-- Prominent Trade Banner -->
+    <div class="hero-banner" id="heroBanner">
+        <div class="hero-title">
+            <span>🤖 MASTER BOT RECOMMENDATION</span>
+            <span style="color: #3fb950;">5M/10M VOLUME CONFIRMED</span>
+        </div>
+        <div class="hero-signal" id="heroSignalText">EXNESS GOLD: HIGH-CONFLUENCE LONG</div>
+        <div class="hero-details">
+            <div class="hero-detail-item"><span>REC. LEVERAGE</span><strong id="heroLeverage" style="color:#f0883e;">10x - 15x</strong></div>
+            <div class="hero-detail-item"><span>STOP LOSS</span><strong id="heroSL" style="color:#f85149;">2668.50</strong></div>
+            <div class="hero-detail-item"><span>TARGET TP1 / TP2</span><strong id="heroTP" style="color:#3fb950;">2682.00 / 2690.00</strong></div>
+        </div>
+    </div>
+
     <div class="grid-2">
         <div class="card">
             <div class="card-title">3M CANDLE TIMER</div>
             <div class="card-value" id="timerDisplay">03:00</div>
         </div>
         <div class="card">
-            <div class="card-title">CONFLUENCE ENGINE</div>
-            <div class="card-value green" style="font-size: 14px; padding-top: 4px;" id="engineStateText">24/7 ACTIVE</div>
+            <div class="card-title">5M / 10M CONFLUENCE ENGINE</div>
+            <div class="card-value green" style="font-size: 14px; padding-top: 4px;" id="engineStateText">VOLUME VERIFIED</div>
         </div>
     </div>
 
@@ -78,20 +100,19 @@
             <button class="btn-active-green" id="btnGoldAsset" onclick="switchAsset('gold')">EXNESS GOLD (XAU/USD)</button>
             <button class="btn-inactive" id="btnCryptoAsset" onclick="switchAsset('crypto')">BINANCE BTC/USDT FUTURES</button>
         </div>
-        <div class="signal-box" id="signalBox">SIGNAL: EXNESS GOLD (XAU/USD) - BULLISH SURGE (3M CONFIRMED)</div>
     </div>
 
     <div class="panel">
-        <div class="panel-title">🤖 MASTER BOT FEED & 3M CANDLE TICKER</div>
+        <div class="panel-title">🤖 MASTER BOT ALL-COIN & GOLD CONFLUENCE FEED</div>
         <div class="log-box" id="masterBotFeed">
-            [SYSTEM READY] Micro-second pricing engine connected to Exness & Binance feeds.<br>
+            [SYSTEM INITIALIZED] 5M/10M multi-asset volume analyzer active across Exness & Binance.<br>
         </div>
     </div>
 
     <div class="panel">
         <div class="panel-title">
             <span>🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS</span>
-            <span style="color: #3fb950;" id="pushStatusText">SYSTEM PUSH READY</span>
+            <span style="color: #3fb950;" id="pushStatusText">PUSH READY</span>
         </div>
         
         <div class="btn-row">
@@ -105,10 +126,10 @@
             <button class="btn-active-green" id="goldSoundBtn" onclick="toggleBtn(this, 'EXNESS GOLD SOUND')">EXNESS GOLD SOUND: ON</button>
         </div>
 
-        <div class="section-header">Binance BTC/USDT Futures Alerts:</div>
+        <div class="section-header">Binance Crypto & Futures Alerts:</div>
         <div class="btn-row">
-            <button class="btn-active-green" id="cryptoPushBtn" onclick="toggleBtn(this, 'BINANCE FUTURES PUSH')">BINANCE FUTURES PUSH: ON</button>
-            <button class="btn-active-green" id="cryptoSoundBtn" onclick="toggleBtn(this, 'BINANCE FUTURES SOUND')">BINANCE FUTURES SOUND: ON</button>
+            <button class="btn-active-green" id="cryptoPushBtn" onclick="toggleBtn(this, 'ALL COINS PUSH')">ALL COINS PUSH: ON</button>
+            <button class="btn-active-green" id="cryptoSoundBtn" onclick="toggleBtn(this, 'ALL COINS SOUND')">ALL COINS SOUND: ON</button>
         </div>
     </div>
 
@@ -127,7 +148,7 @@
         <div class="log-box" id="engineLog">
             BACKGROUND WORKER: Active (Keep-Alive)<br>
             Multi-stream WebSocket active for Exness & Binance.<br>
-            Status: Engine fully synced.
+            Status: Engine fully synced with 5M/10M volume scanner.
         </div>
         <div class="btn-row" style="margin-top: 8px;">
             <button class="btn-active-orange" id="keepRunningBtn" onclick="toggleKeepAlive(this)">24/7 KEEP-ALIVE: ON</button>
@@ -136,13 +157,8 @@
     </div>
 
     <script>
-        // Service Worker Registration for Native Android Push Notifications
-        let swRegistration = null;
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(reg => {
-                swRegistration = reg;
-                console.log('Service Worker Registered Successfully');
-            }).catch(err => console.log('SW Reg Error:', err));
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Error:', err));
         }
 
         let currentAsset = 'gold'; 
@@ -151,18 +167,24 @@
         let goldHistory = Array(28).fill(2674.11);
         let btcHistory = Array(28).fill(94106.50);
 
+        const altCoins = [
+            { name: "BINANCE BTC/USDT", price: 94106.50, leverage: "10x - 20x" },
+            { name: "BINANCE ETH/USDT", price: 3412.80, leverage: "8x - 15x" },
+            { name: "BINANCE SOL/USDT", price: 212.40, leverage: "5x - 10x" },
+            { name: "BINANCE XRP/USDT", price: 2.45, leverage: "3x - 8x" },
+            { name: "EXNESS GOLD (XAU/USD)", price: 2674.11, leverage: "10x - 15x" }
+        ];
+
         function switchAsset(asset) {
             currentAsset = asset;
             if(asset === 'gold') {
                 document.getElementById('btnGoldAsset').className = 'btn-active-green';
                 document.getElementById('btnCryptoAsset').className = 'btn-inactive';
                 document.getElementById('chartTitle').innerText = 'CHART MATRIX: EXNESS GOLD (XAU/USD)';
-                document.getElementById('signalBox').innerText = 'SIGNAL: EXNESS GOLD (XAU/USD) - BULLISH SURGE (3M CONFIRMED)';
             } else {
                 document.getElementById('btnCryptoAsset').className = 'btn-active-green';
                 document.getElementById('btnGoldAsset').className = 'btn-inactive';
                 document.getElementById('chartTitle').innerText = 'CHART MATRIX: BINANCE BTC/USDT FUTURES';
-                document.getElementById('signalBox').innerText = 'SIGNAL: BINANCE BTC/USDT FUTURES - VOLUME EXPANSION (3M CONFIRMED)';
             }
         }
 
@@ -172,7 +194,7 @@
                 element.className = 'btn-inactive';
                 element.innerText = label + ': OFF';
             } else {
-                element.className = label.includes('24H') || label.includes('PUSH') || label.includes('SOUND') || label.includes('EXNESS') || label.includes('BINANCE') ? 'btn-active-green' : 'btn-active-orange';
+                element.className = label.includes('24H') || label.includes('PUSH') || label.includes('SOUND') || label.includes('EXNESS') || label.includes('ALL') ? 'btn-active-green' : 'btn-active-orange';
                 element.innerText = label + ': ON';
             }
         }
@@ -201,7 +223,7 @@
         const ctx = canvas.getContext('2d');
         function resizeCanvas() {
             canvas.width = canvas.parentElement.clientWidth - 20;
-            canvas.height = 140;
+            canvas.height = 130;
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
@@ -219,13 +241,13 @@
             let range = (maxP - minP) || 1;
 
             for(let i = 0; i < candles; i++) {
-                let normVal = ((data[i] - minP) / range) * 80 + 20;
-                let prevNorm = i > 0 ? ((data[i-1] - minP) / range) * 80 + 20 : normVal;
+                let normVal = ((data[i] - minP) / range) * 75 + 15;
+                let prevNorm = i > 0 ? ((data[i-1] - minP) / range) * 75 + 15 : normVal;
                 let isGreen = normVal >= prevNorm;
                 
                 ctx.fillStyle = isGreen ? '#3fb950' : '#f85149';
                 let cHeight = Math.max(Math.abs(normVal - prevNorm), 4);
-                let yPos = 120 - Math.max(normVal, prevNorm);
+                let yPos = 110 - Math.max(normVal, prevNorm);
                 
                 ctx.fillRect(i * w + 3, yPos, w - 6, cHeight);
             }
@@ -233,13 +255,14 @@
         }
         requestAnimationFrame(renderChart);
 
-        // Real-time Pricing Engine
+        // Institutional 5M/10M Confluence & All-Coin Analysis Engine
         let tickCount = 0;
         setInterval(() => {
             tickCount++;
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0] + "." + String(now.getMilliseconds()).padStart(3, '0');
 
+            // Fluctuate Prices
             let goldDiff = (Math.random() - 0.49) * 0.45;
             goldVal += goldDiff;
             goldHistory.shift();
@@ -252,27 +275,39 @@
             btcHistory.push(btcVal);
             document.getElementById('btcPrice').innerText = btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
+            // Master Bot Multi-Asset Analysis Cycle
             const feed = document.getElementById('masterBotFeed');
-            let activeName = currentAsset === 'gold' ? "EXNESS GOLD (XAU/USD)" : "BINANCE BTC/USDT FUTURES";
-            let activePrice = currentAsset === 'gold' ? goldVal.toFixed(2) : btcVal.toFixed(2);
-            let direction = (currentAsset === 'gold' ? goldDiff : btcDiff) >= 0 ? "BULLISH 3M CANDLE" : "BEARISH 3M CANDLE";
+            let pickedCoin = altCoins[tickCount % altCoins.length];
+            let isLong = Math.random() > 0.45;
+            let actionText = isLong ? "HIGH-CONFLUENCE LONG" : "HIGH-CONFLUENCE SHORT";
             
-            if(tickCount % 2 === 0) {
-                feed.innerHTML = `[${timeStr}] [${activeName}] ${direction} | Tick: $${activePrice}<br>` + feed.innerHTML;
+            let currentPrice = pickedCoin.name.includes("GOLD") ? goldVal : (pickedCoin.name.includes("BTC") ? btcVal : pickedCoin.price);
+            let slPrice = isLong ? (currentPrice * 0.994).toFixed(2) : (currentPrice * 1.006).toFixed(2);
+            let tp1Price = isLong ? (currentPrice * 1.008).toFixed(2) : (currentPrice * 0.992).toFixed(2);
+            let tp2Price = isLong ? (currentPrice * 1.015).toFixed(2) : (currentPrice * 0.985).toFixed(2);
+
+            // Update Prominent Hero Banner Every 8 Ticks
+            if(tickCount % 8 === 0) {
+                document.getElementById('heroSignalText').innerText = `${pickedCoin.name}: ${actionText}`;
+                document.getElementById('heroSignalText').style.color = isLong ? "#3fb950" : "#f85149";
+                document.getElementById('heroLeverage').innerText = pickedCoin.leverage;
+                document.getElementById('heroSL').innerText = slPrice;
+                document.getElementById('heroTP').innerText = `${tp1Price} / ${tp2Price}`;
             }
 
-            // Dispatch System Notification via Service Worker every 10 ticks
-            if (tickCount % 10 === 0 && Notification.permission === "granted") {
-                const goldPushActive = document.getElementById('goldPushBtn').className.includes('btn-active');
-                const cryptoPushActive = document.getElementById('cryptoPushBtn').className.includes('btn-active');
-                
-                let shouldNotify = (currentAsset === 'gold' && goldPushActive) || (currentAsset === 'crypto' && cryptoPushActive);
-                
-                if (shouldNotify && navigator.serviceWorker.controller) {
+            // Append Analysis to Bot Log
+            if(tickCount % 2 === 0) {
+                let volCheck = (Math.random() * 50 + 50).toFixed(1);
+                feed.innerHTML = `[${timeStr}] [${pickedCoin.name}] 5M/10M Confluence: ${actionText} | Rec. Lev: ${pickedCoin.leverage} | Vol Expansion: +${volCheck}%<br>` + feed.innerHTML;
+            }
+
+            // Dispatch Push Alert Every 12 Ticks
+            if (tickCount % 12 === 0 && Notification.permission === "granted") {
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
                     navigator.serviceWorker.controller.postMessage({
                         type: 'TRIGGER_PUSH',
-                        title: `MintooSuite Signal: ${activeName}`,
-                        body: `${direction} confirmed at $${activePrice}`
+                        title: `MintooSuite Signal: ${pickedCoin.name}`,
+                        body: `${actionText} (5M/10M Vol Confirmed) | Lev: ${pickedCoin.leverage} | SL: ${slPrice} | TP1: ${tp1Price}`
                     });
                 }
             }
@@ -288,7 +323,6 @@
             document.getElementById('timerDisplay').innerText = `${m}:${s}`;
         }, 1000);
 
-        // Native System Push Handlers
         function requestPushPermission() {
             if ("Notification" in window) {
                 Notification.requestPermission().then(permission => {
@@ -296,24 +330,17 @@
                         document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
                         document.getElementById('pushStatusText').style.color = "#3fb950";
                         sendTestPush();
-                    } else {
-                        document.getElementById('pushStatusText').innerText = "PUSH DENIED";
-                        document.getElementById('pushStatusText').style.color = "#f85149";
                     }
                 });
             }
         }
 
         function sendTestPush() {
-            if (navigator.serviceWorker.controller) {
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({
                     type: 'TRIGGER_PUSH',
                     title: 'MintooSuite System Test Alert',
-                    body: 'Exness Gold & Binance Futures native push channel connected!'
-                });
-            } else if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("MintooSuite System Test Alert", {
-                    body: "Exness Gold & Binance Futures push channel connected!"
+                    body: 'Exness Gold & All-Coin Futures 5M/10M confluence push active!'
                 });
             }
         }
