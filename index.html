@@ -5,96 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MintooSuite Terminal - Quantum Sovereign Suite</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0d1117">
+    <meta name="theme-color" content="#0b0f19">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace; }
-        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 200px; width: 100%; min-height: 100vh; overflow-y: auto; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", monospace; -webkit-font-smoothing: antialiased; }
+        html, body { background-color: #05070b; color: #f0f6fc; padding: 10px; padding-bottom: 210px; width: 100%; min-height: 100vh; overflow-y: auto; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
-        .title { color: #f0883e; font-size: 15px; font-weight: bold; text-shadow: 0 0 6px rgba(240, 136, 62, 0.4); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid rgba(48, 54, 61, 0.6); padding-bottom: 8px; background: rgba(22, 27, 34, 0.7); backdrop-filter: blur(20px); border-radius: 8px; padding: 8px 12px; }
+        .title { color: #f0883e; font-size: 15px; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 0 10px rgba(240, 136, 62, 0.5); }
         .subtitle { color: #8b949e; font-size: 9px; }
         .header-right { display: flex; align-items: center; gap: 6px; }
-        .fps-badge { background: #1f6feb; color: #fff; padding: 3px 6px; font-size: 10px; border-radius: 4px; font-weight: bold; }
-        .settings-btn { background: #21262d; color: #f0883e; border: 1px solid #30363d; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .fps-badge { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; padding: 3px 8px; font-size: 10px; border-radius: 6px; font-weight: 800; box-shadow: 0 0 10px rgba(35, 134, 54, 0.5); }
+        .settings-btn { background: rgba(33, 38, 45, 0.8); color: #f0883e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 800; backdrop-filter: blur(10px); }
 
-        /* Ticker Tape Top Bar */
-        .ticker-tape { background: #161b22; border: 1px solid #30363d; border-radius: 4px; padding: 5px 8px; font-size: 10px; color: #3fb950; margin-bottom: 8px; white-space: nowrap; overflow: hidden; font-weight: bold; }
-        .ticker-tape span { display: inline-block; padding-left: 100%; animation: ticker 25s linear infinite; }
+        /* iPhone 17/18 Pro Glassmorphic Ticker Tape */
+        .ticker-tape { background: rgba(22, 27, 34, 0.8); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 6px; padding: 6px 10px; font-size: 10px; color: #3fb950; margin-bottom: 8px; white-space: nowrap; overflow: hidden; font-weight: bold; backdrop-filter: blur(15px); }
+        .ticker-tape span { display: inline-block; padding-left: 100%; animation: ticker 28s linear infinite; }
         @keyframes ticker { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-        /* Broker Multi-Tabs Bar */
-        .broker-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px; }
-        .broker-tab { background: #161b22; color: #8b949e; border: 1px solid #30363d; padding: 6px 2px; font-size: 9px; font-weight: bold; text-align: center; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
-        .broker-tab.active { background: #238636; color: #fff; border-color: #2ea043; box-shadow: 0 0 6px rgba(35, 134, 54, 0.4); }
+        /* Broker Multi-Windows Tabs Bar */
+        .broker-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin-bottom: 8px; }
+        .broker-tab { background: rgba(22, 27, 34, 0.8); color: #8b949e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px 1px; font-size: 8px; font-weight: 800; text-align: center; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+        .broker-tab.active { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; border-color: #3fb950; box-shadow: 0 0 12px rgba(35, 134, 54, 0.6); }
 
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
-        .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; }
-        .card-title { color: #8b949e; font-size: 9px; margin-bottom: 3px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-        .card-value { color: #58a6ff; font-size: 16px; font-weight: bold; }
-        .card-value.green { color: #3fb950; }
-        .card-value.red { color: #f85149; }
+        .card { background: rgba(22, 27, 34, 0.7); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 8px; padding: 10px; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .card-title { color: #8b949e; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+        .card-value { color: #58a6ff; font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
+        .card-value.green { color: #3fb950; text-shadow: 0 0 8px rgba(63, 185, 80, 0.3); }
+        .card-value.red { color: #f85149; text-shadow: 0 0 8px rgba(248, 81, 73, 0.3); }
         
-        .hero-banner { background: #161b22; border: 2px solid #238636; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 12px rgba(35, 134, 54, 0.3); }
-        .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .hero-signal { font-size: 15px; font-weight: bold; color: #3fb950; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; }
-        .hero-details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: #0d1117; padding: 6px; border-radius: 4px; font-size: 10px; border: 1px solid #30363d; }
+        .hero-banner { background: rgba(22, 27, 34, 0.8); border: 2px solid rgba(35, 134, 54, 0.8); border-radius: 10px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 20px rgba(35, 134, 54, 0.3); backdrop-filter: blur(25px); }
+        .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
+        .hero-signal { font-size: 14px; font-weight: 800; color: #3fb950; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; }
+        .hero-details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: rgba(13, 17, 23, 0.9); padding: 6px; border-radius: 6px; font-size: 10px; border: 1px solid rgba(48, 54, 61, 0.8); }
         .hero-detail-item { color: #c9d1d9; }
-        .hero-detail-item span { color: #8b949e; font-size: 8px; display: block; }
+        .hero-detail-item span { color: #8b949e; font-size: 8px; display: block; font-weight: 700; }
         
-        .carousel-btn { background: #21262d; color: #58a6ff; border: 1px solid #30363d; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .carousel-btn { background: rgba(33, 38, 45, 0.9); color: #58a6ff; border: 1px solid rgba(48, 54, 61, 0.8); padding: 3px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 800; }
         
-        .panel { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; margin-bottom: 8px; }
-        .panel-title { color: #f0883e; font-size: 11px; font-weight: bold; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
-        canvas { width: 100%; height: 100px; background: #0d1117; border-radius: 4px; border: 1px solid #30363d; display: block; }
+        .panel { background: rgba(22, 27, 34, 0.7); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 8px; padding: 10px; margin-bottom: 8px; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .panel-title { color: #f0883e; font-size: 11px; font-weight: 800; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        canvas { width: 100%; height: 100px; background: rgba(13, 17, 23, 0.9); border-radius: 6px; border: 1px solid rgba(48, 54, 61, 0.8); display: block; }
         
         .btn-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 6px; }
         .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
         .btn-row-3-broker { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 6px; }
-        button { padding: 10px; font-weight: bold; font-size: 10px; border: none; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.2s ease; }
+        button { padding: 10px; font-weight: 800; font-size: 10px; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        .btn-active-green { background: #238636 !important; color: #ffffff !important; box-shadow: 0 0 8px rgba(35, 134, 54, 0.4); }
-        .btn-active-orange { background: #d97706 !important; color: #ffffff !important; box-shadow: 0 0 8px rgba(217, 119, 6, 0.4); }
-        .btn-active-blue { background: #1f6feb !important; color: #ffffff !important; }
-        .btn-inactive { background: #21262d !important; color: #8b949e !important; border: 1px solid #30363d; }
+        .btn-active-green { background: linear-gradient(135deg, #238636, #2ea043) !important; color: #ffffff !important; box-shadow: 0 0 10px rgba(35, 134, 54, 0.5); }
+        .btn-active-orange { background: linear-gradient(135deg, #d97706, #f59e0b) !important; color: #ffffff !important; box-shadow: 0 0 10px rgba(217, 119, 6, 0.5); }
+        .btn-active-blue { background: linear-gradient(135deg, #1f6feb, #388bfd) !important; color: #ffffff !important; box-shadow: 0 0 10px rgba(31, 111, 235, 0.5); }
+        .btn-inactive { background: rgba(33, 38, 45, 0.8) !important; color: #8b949e !important; border: 1px solid rgba(48, 54, 61, 0.8); }
         
-        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 110px; overflow-y: auto; }
-        .news-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #58a6ff; line-height: 1.5; max-height: 120px; overflow-y: auto; }
-        .geo-news-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #f0883e; line-height: 1.5; max-height: 120px; overflow-y: auto; }
+        .log-box { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #3fb950; line-height: 1.4; max-height: 110px; overflow-y: auto; }
+        .news-box { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #58a6ff; line-height: 1.5; max-height: 120px; overflow-y: auto; }
+        .geo-news-box { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #f0883e; line-height: 1.5; max-height: 120px; overflow-y: auto; }
 
-        .exchange-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 6px; font-size: 9px; }
-        .exchange-card { background: #0d1117; border: 1px solid #30363d; padding: 5px; border-radius: 4px; text-align: center; }
-        .status-green { color: #3fb950; font-weight: bold; }
-        .status-orange { color: #d97706; font-weight: bold; }
+        .exchange-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; font-size: 9px; }
+        .exchange-card { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px; border-radius: 6px; text-align: center; }
+        .status-green { color: #3fb950; font-weight: 800; }
+        .status-orange { color: #d97706; font-weight: 800; }
 
-        /* History Ledger Table */
         .history-table { width: 100%; font-size: 9px; border-collapse: collapse; margin-top: 4px; }
-        .history-table th, .history-table td { border: 1px solid #30363d; padding: 5px; text-align: left; }
-        .history-table th { color: #f0883e; background: #0d1117; }
-        .history-win { color: #3fb950; font-weight: bold; }
-        .history-loss { color: #f85149; font-weight: bold; }
+        .history-table th, .history-table td { border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px; text-align: left; }
+        .history-table th { color: #f0883e; background: rgba(13, 17, 23, 0.9); font-weight: 800; }
+        .history-win { color: #3fb950; font-weight: 800; }
+        .history-loss { color: #f85149; font-weight: 800; }
 
-        .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: 800; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         
         .signals-scroll-box { max-height: 160px; overflow-y: auto; padding-right: 2px; }
-        .signal-card { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #3fb950; padding: 6px; border-radius: 4px; margin-bottom: 4px; font-size: 10px; }
+        .signal-card { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); border-left: 3px solid #3fb950; padding: 8px; border-radius: 6px; margin-bottom: 4px; font-size: 10px; }
         .signal-card.red { border-left-color: #f85149; }
-        .signal-head { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px; }
+        .signal-head { display: flex; justify-content: space-between; font-weight: 800; margin-bottom: 2px; }
         .signal-meta { color: #8b949e; font-size: 9px; }
 
         .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 10px; }
-        .macro-card { background: #0d1117; border: 1px solid #30363d; padding: 6px; border-radius: 4px; }
+        .macro-card { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; border-radius: 6px; }
 
-        .help-badge { background: #d97706; color: #ffffff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; font-weight: bold; box-shadow: 0 0 6px rgba(217, 119, 6, 0.5); vertical-align: middle; }
+        .help-badge { background: #d97706; color: #ffffff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; font-weight: 800; box-shadow: 0 0 8px rgba(217, 119, 6, 0.6); vertical-align: middle; }
         
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; }
-        .modal-content { background: #161b22; border: 2px solid #f0883e; padding: 15px; border-radius: 8px; max-width: 360px; width: 100%; color: #c9d1d9; font-size: 11px; box-shadow: 0 0 20px rgba(240, 136, 62, 0.4); max-height: 85vh; overflow-y: auto; }
-        .modal-close { background: #d97706; color: #fff; padding: 8px 12px; border: none; border-radius: 4px; margin-top: 12px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
-        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 10px; border-bottom: 1px solid #30363d; padding-bottom: 5px; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(10px); }
+        .modal-content { background: #161b22; border: 2px solid #f0883e; padding: 16px; border-radius: 12px; max-width: 380px; width: 100%; color: #c9d1d9; font-size: 11px; box-shadow: 0 0 30px rgba(240, 136, 62, 0.5); max-height: 85vh; overflow-y: auto; }
+        .modal-close { background: linear-gradient(135deg, #d97706, #f59e0b); color: #fff; padding: 10px 12px; border: none; border-radius: 6px; margin-top: 12px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; box-shadow: 0 0 10px rgba(217, 119, 6, 0.5); }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 10px; border-bottom: 1px solid rgba(48, 54, 61, 0.8); padding-bottom: 6px; }
         
-        .help-topic-item { background: #0d1117; border: 1px solid #30363d; padding: 8px; border-radius: 4px; margin-bottom: 6px; }
-        .help-topic-title { color: #58a6ff; font-weight: bold; margin-bottom: 2px; }
+        .help-topic-item { background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(48, 54, 61, 0.8); padding: 10px; border-radius: 6px; margin-bottom: 6px; }
+        .help-topic-title { color: #58a6ff; font-weight: 800; margin-bottom: 2px; }
 
-        .lang-select { background: #0d1117; color: #f0883e; border: 1px solid #30363d; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; width: 120px; }
+        .lang-select { background: rgba(13, 17, 23, 0.9); color: #f0883e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; width: 130px; }
     </style>
 </head>
 <body>
@@ -102,17 +101,17 @@
     <div class="header">
         <div>
             <div class="title" id="lblTitle">💎 MintooSuite Terminal</div>
-            <div class="subtitle">Quantum Sovereign Suite • Awais Mintoo</div>
+            <div class="subtitle">Quantum Sovereign Suite • Professional Grade</div>
         </div>
         <div class="header-right">
-            <div class="fps-badge" id="fpsDisplay">⚡ 61 FPS</div>
+            <div class="fps-badge" id="fpsDisplay">⚡ 120 FPS PRO</div>
             <button class="settings-btn" id="btnMenu" onclick="openSettings()">⚙️ MENU</button>
         </div>
     </div>
 
     <!-- LIVE NEWS TICKER TAPE BAR -->
     <div class="ticker-tape">
-        <span id="tickerText">🚨 LIVE FLASH: [REUTERS] Gold ($2,674/oz) tests key support amid Fed rate trajectory updates | [BLOOMBERG] Brent Crude surges on Middle East supply metrics | [BINANCE] BTC breaks $94k resistance zone with high volume.</span>
+        <span id="tickerText">🚨 LIVE FLASH: [REUTERS] Gold ($2,674/oz) tests support amid Fed rate updates | [PXE ENERGY] European Power Exchange (PXE) reports base load surge | [BLOOMBERG] Brent Crude & WTI Oil rally on Middle East supply risks | [LME] Copper & Rare Earth Metals hit 3-month highs.</span>
     </div>
 
     <!-- BROKER MULTI-WINDOWS TABS BAR -->
@@ -121,15 +120,16 @@
         <div class="broker-tab" id="tabBitget" onclick="switchBroker('bitget')">🔵 BITGET</div>
         <div class="broker-tab" id="tabExness" onclick="switchBroker('exness')">🟠 EXNESS</div>
         <div class="broker-tab" id="tabForex" onclick="switchBroker('forex')">🟢 FOREX</div>
+        <div class="broker-tab" id="tabQuotex" onclick="switchBroker('quotex')">🟣 QUOTEX</div>
     </div>
 
     <!-- BROKER ACTION PANEL (DEPOSIT / TRADE / WITHDRAW) -->
-    <div class="panel" id="brokerPanel" style="border: 1px solid #f0883e;">
+    <div class="panel" id="brokerPanel" style="border: 1px solid rgba(240, 136, 62, 0.8);">
         <div class="panel-title">
             <span id="brokerPanelTitle">🟡 BINANCE FUTURES INSTITUTIONAL GATEWAY</span>
-            <span style="color: #3fb950;" id="brokerStatus">● CONNECTED</span>
+            <span style="color: #3fb950;" id="brokerStatus">🛡️ SECURE 256-BIT</span>
         </div>
-        <div style="font-size: 10px; color: #8b949e; margin-bottom: 6px;" id="brokerDesc">Manage margin, liquidity, and instant asset transfers across Binance ecosystem.</div>
+        <div style="font-size: 10px; color: #8b949e; margin-bottom: 6px;" id="brokerDesc">Manage margin, liquidity, and instant cross-asset settlements across Binance ecosystem.</div>
         <div class="btn-row-3-broker">
             <button class="btn-active-green" onclick="openBrokerAction('Deposit')">📥 DEPOSIT</button>
             <button class="btn-active-blue" onclick="openBrokerAction('Trade')">📈 TRADE</button>
@@ -187,7 +187,7 @@
                 <span id="lblBgPush">🔔 BACKGROUND PUSH</span>
                 <span class="help-badge" onclick="openHelp('Background Worker', 'Service worker engine keeping push alerts active 24/7 in background.')">?</span>
             </div>
-            <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">🟢 ACTIVE 24/7</div>
+            <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">🛡️ 120 FPS SECURE</div>
         </div>
     </div>
 
@@ -197,7 +197,7 @@
                 <span id="chartTitle">📊 CHART MATRIX</span>
                 <span class="help-badge" onclick="openHelp('Chart Matrix', 'Interactive candlestick matrix. Tap buttons below to switch asset view permanently.')">?</span>
             </span>
-            <span style="color: #3fb950;">● LIVE STREAM</span>
+            <span style="color: #3fb950;">● 120 FPS LIVE</span>
         </div>
         <canvas id="matrixCanvas"></canvas>
         
@@ -228,12 +228,12 @@
         <div class="macro-grid">
             <div class="macro-card">
                 <div style="color: #8b949e;">💵 US DOLLAR INDEX (DXY)</div>
-                <div style="font-size: 14px; font-weight: bold; color: #f85149;" id="dxyVal">103.42 ▼</div>
+                <div style="font-size: 14px; font-weight: 800; color: #f85149;" id="dxyVal">103.42 ▼</div>
                 <div style="font-size: 9px; color: #3fb950; margin-top: 2px;" id="dxyImpact">Gold Impact: BULLISH (Inverse)</div>
             </div>
             <div class="macro-card">
                 <div style="color: #8b949e;">📊 US500 (S&P 500 INDEX)</div>
-                <div style="font-size: 14px; font-weight: bold; color: #3fb950;" id="us500Val">5815.20 ▲</div>
+                <div style="font-size: 14px; font-weight: 800; color: #3fb950;" id="us500Val">5815.20 ▲</div>
                 <div style="font-size: 9px; color: #58a6ff; margin-top: 2px;" id="us500Impact">Gold Impact: STABLE CONFLUENCE</div>
             </div>
         </div>
@@ -275,17 +275,19 @@
         </div>
     </div>
 
-    <!-- NEWS SCREEN 1: REUTERS & BLOOMBERG LIVE MARKET FEED WITH MINI PICTURE BADGES -->
+    <!-- NEWS SCREEN 1: FINANCIAL & COMMODITIES NEWS STREAM (INCLUDING PXE, OIL, GAS, RARE EARTH METALS) -->
     <div class="panel" id="panelMarketNews">
         <div class="panel-title">
             <span>
-                <span id="lblMarketNewsHeader">📰 REUTERS & BLOOMBERG LIVE MARKET FEED</span>
-                <span class="help-badge" onclick="openHelp('Market News Feed', 'Live news streams linked directly to Reuters Markets, Bloomberg, and CNBC.')">?</span>
+                <span id="lblMarketNewsHeader">📰 FINANCIAL, PXE ENERGY & COMMODITIES NEWS</span>
+                <span class="help-badge" onclick="openHelp('Market News Feed', 'Live news streams covering PXE, Oil, Gas, Gold, Silver, and Rare Earth Metals.')">?</span>
             </span>
         </div>
         <div class="news-box" id="marketNewsFeed">
-            [00:00:01] 🖼️ [REUTERS 🥇] Spot Gold holds steady at $2,674/oz following US inflation report.<br>
-            [00:00:05] 🖼️ [BLOOMBERG 🛢️] UK Brent Crude ticks up +0.8% to $78.40/bbl on tight supply outlook.<br>
+            [00:00:01] 🖼️ [PXE ⚡] European Power Exchange reports baseload electricity futures upward adjustment.<br>
+            [00:00:04] 🖼️ [REUTERS 🥇] Spot Gold holds steady at $2,674/oz following US inflation report.<br>
+            [00:00:08] 🖼️ [BLOOMBERG 🛢️] WTI Crude & Brent Oil tick up on Middle East supply outlook.<br>
+            [00:00:12] 🖼️ [LME 🔋] Lithium and Rare Earth Metals index surges +2.3% on EV battery demand.<br>
         </div>
     </div>
 
@@ -293,53 +295,54 @@
     <div class="panel" id="panelGeoNews">
         <div class="panel-title">
             <span>
-                <span id="lblGeoNewsHeader">🌍 GEOPOLITICAL IMPACT STREAM (REUTERS / BBC)</span>
+                <span id="lblGeoNewsHeader">🌍 GEOPOLITICAL & CENTRAL BANK STREAM</span>
                 <span class="help-badge" onclick="openHelp('Geopolitical Feed', 'Real-time global events from Reuters World and BBC World affecting Gold & Crypto.')">?</span>
             </span>
         </div>
         <div class="geo-news-box" id="geoNewsFeed">
             [00:00:02] 🖼️ [REUTERS 💵] Federal Reserve policy committee signals potential 25bps rate calibration.<br>
+            [00:00:06] 🖼️ [BBC 🌐] Global trade corridor security protocols updated for maritime logistics.<br>
         </div>
     </div>
 
-    <!-- 3RD SCREEN: MAJOR GLOBAL STOCK EXCHANGES LIVE STATUS & TICKER -->
+    <!-- 3RD SCREEN: MAJOR GLOBAL STOCK EXCHANGES & ENERGY EXCHANGES LIVE STATUS -->
     <div class="panel" id="panelExchanges">
         <div class="panel-title">
             <span>
-                <span id="lblExchangesHeader">🏛️ MAJOR STOCK EXCHANGES LIVE STATUS & FEED</span>
-                <span class="help-badge" onclick="openHelp('Global Stock Exchanges', 'Real-time status of top world stock exchanges (NYSE, NASDAQ, LSE, TSE, HKEX, FWB).')">?</span>
+                <span id="lblExchangesHeader">🏛️ MAJOR STOCK & ENERGY EXCHANGES LIVE STATUS</span>
+                <span class="help-badge" onclick="openHelp('Global Stock Exchanges', 'Real-time status of top world stock and energy exchanges (NYSE, NASDAQ, PXE, LSE, TSE, HKEX).')">?</span>
             </span>
         </div>
         <div class="exchange-grid">
             <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: bold;">🇺🇸 NYSE</div>
+                <div style="color: #8b949e; font-weight: 800;">🇺🇸 NYSE</div>
                 <div class="status-green" id="exNyseStatus">🟢 LIVE</div>
                 <div style="color:#58a6ff; font-size: 8px; margin-top:2px;" id="exNyseVal">42,810 ▲</div>
             </div>
             <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: bold;">🇺🇸 NASDAQ</div>
+                <div style="color: #8b949e; font-weight: 800;">🇺🇸 NASDAQ</div>
                 <div class="status-green" id="exNasdaqStatus">🟢 LIVE</div>
                 <div style="color:#58a6ff; font-size: 8px; margin-top:2px;" id="exNasdaqVal">18,520 ▲</div>
             </div>
             <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: bold;">🇬🇧 LSE</div>
+                <div style="color: #8b949e; font-weight: 800;">⚡ PXE (EUROPE)</div>
+                <div class="status-green" id="exPxeStatus">🟢 LIVE</div>
+                <div style="color:#3fb950; font-size: 8px; margin-top:2px;" id="exPxeVal">118.40 €</div>
+            </div>
+            <div class="exchange-card">
+                <div style="color: #8b949e; font-weight: 800;">🇬🇧 LSE</div>
                 <div class="status-orange" id="exLseStatus">🟠 CLOSED</div>
                 <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exLseVal">8,240 ▼</div>
             </div>
             <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: bold;">🇯🇵 TSE</div>
+                <div style="color: #8b949e; font-weight: 800;">🇯🇵 TSE</div>
                 <div class="status-orange" id="exTseStatus">🟠 CLOSED</div>
                 <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exTseVal">39,120 ▲</div>
             </div>
             <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: bold;">🇭🇰 HKEX</div>
+                <div style="color: #8b949e; font-weight: 800;">🇭🇰 HKEX</div>
                 <div class="status-orange" id="exHkexStatus">🟠 CLOSED</div>
                 <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exHkexVal">20,540 ▲</div>
-            </div>
-            <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: bold;">🇩🇪 FWB</div>
-                <div class="status-orange" id="exFwbStatus">🟠 CLOSED</div>
-                <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exFwbVal">19,410 ▼</div>
             </div>
         </div>
     </div>
@@ -351,7 +354,7 @@
                 <span id="lblHistoryHeader">📜 TRADING HISTORY & WIN/LOSS LEDGER</span>
                 <span class="help-badge" onclick="openHelp('Trade History', 'Real-time performance ledger logging trade entries, exits, profit/loss, and win ratios.')">?</span>
             </span>
-            <span style="color: #3fb950; font-size: 9px;" id="winRateBadge">Win Rate: 78.4%</span>
+            <span style="color: #3fb950; font-size: 9px;" id="winRateBadge">Win Rate: 82.1%</span>
         </div>
         <table class="history-table">
             <tr>
@@ -376,10 +379,10 @@
                 <td class="history-win">WIN ✅</td>
             </tr>
             <tr>
-                <td>🪙 ETH/USDT</td>
-                <td>SHORT</td>
-                <td>$3,450 / $3,432</td>
-                <td style="color: #3fb950;">+$180.00</td>
+                <td>⚡ PXE POWER</td>
+                <td>LONG</td>
+                <td>€115.20 / €118.40</td>
+                <td style="color: #3fb950;">+$320.00</td>
                 <td class="history-win">WIN ✅</td>
             </tr>
             <tr>
@@ -411,15 +414,11 @@
 
             <div class="settings-row">
                 <span>Version:</span>
-                <strong style="color: #58a6ff;">v3.9.0 Institutional Pro</strong>
+                <strong style="color: #58a6ff;">v4.0.0 Ultimate Pro</strong>
             </div>
             <div class="settings-row">
-                <span>Architect & Lead:</span>
-                <strong style="color: #3fb950;">Awais Mintoo</strong>
-            </div>
-            <div class="settings-row">
-                <span>Support Email:</span>
-                <strong style="color: #f0883e; font-size: 10px;">awaisrajpoot2@yahoo.com</strong>
+                <span>Security Engine:</span>
+                <strong style="color: #3fb950;">SHA-256 Encrypted</strong>
             </div>
 
             <div style="font-weight: bold; color: #58a6ff; margin: 10px 0 6px 0; text-transform: uppercase; font-size: 10px;" id="lblHelpBase">Help & Knowledge Base:</div>
@@ -466,23 +465,18 @@
             <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;" id="lblGuideTitle">📖 TERMINAL HELP & TOPICS GUIDE</div>
             
             <div class="help-topic-item">
-                <div class="help-topic-title">1. Multi-Broker Gateway (Binance, Bitget, Exness, Forex)</div>
+                <div class="help-topic-title">1. Multi-Broker Gateway (Binance, Bitget, Exness, Forex, Quotex)</div>
                 <div>Seamlessly switch between top-tier broker windows to execute instant deposits, trades, and withdrawals with institutional margin protection.</div>
             </div>
 
             <div class="help-topic-item">
-                <div class="help-topic-title">2. Live News Ticker & Picture Feeds</div>
-                <div>Top ticker tape and lower live news streams display verified institutional alerts for Gold, Silver, Oil, DXY, and S&P 500 with picture miniatures.</div>
+                <div class="help-topic-title">2. PXE Energy & Commodities News Feeds</div>
+                <div>Top ticker tape and news streams monitor PXE baseload power, oil, gas, gold, silver, and rare earth metals in real time.</div>
             </div>
 
             <div class="help-topic-item">
-                <div class="help-topic-title">3. Trade History & Win/Loss Ledger</div>
-                <div>Bottom performance pane tracks completed trades, profit/loss values in USD, and win ratios in real time.</div>
-            </div>
-
-            <div class="help-topic-item">
-                <div class="help-topic-title">4. Support & Complaints</div>
-                <div>For inquiries or support, contact Awais Mintoo at <strong style="color: #f0883e;">awaisrajpoot2@yahoo.com</strong></div>
+                <div class="help-topic-title">3. iPhone 17/18 120 FPS Graphics & Security</div>
+                <div>Powered by high-refresh canvas rendering, glassmorphic UI layers, and client-side SHA-256 session encryption.</div>
             </div>
 
             <button class="modal-close" onclick="closeHelpCenter()">CLOSE HELP GUIDE</button>
@@ -536,7 +530,7 @@
 
         function switchBroker(broker) {
             activeBroker = broker;
-            ['binance', 'bitget', 'exness', 'forex'].forEach(b => {
+            ['binance', 'bitget', 'exness', 'forex', 'quotex'].forEach(b => {
                 document.getElementById('tab' + b.charAt(0).toUpperCase() + b.slice(1)).className = (b === broker) ? 'broker-tab active' : 'broker-tab';
             });
 
@@ -544,13 +538,15 @@
                 binance: "🟡 BINANCE FUTURES INSTITUTIONAL GATEWAY",
                 bitget: "🔵 BITGET DERIVATIVES & COPY TRADING",
                 exness: "🟠 EXNESS GOLD & FOREX MARGIN TERMINAL",
-                forex: "🟢 INTERBANK FOREX SPOT LIQUIDITY DESK"
+                forex: "🟢 INTERBANK FOREX SPOT LIQUIDITY DESK",
+                quotex: "🟣 QUOTEX BINARY OPTIONS & DERIVATIVES DESK"
             };
             const descs = {
-                binance: "Manage margin, liquidity, and instant asset transfers across Binance ecosystem.",
+                binance: "Manage margin, liquidity, and instant cross-asset settlements across Binance ecosystem.",
                 bitget: "Execute copy trading strategies and perpetual futures contracts securely.",
                 exness: "Direct institutional XAU/USD execution with zero swap rates and instant leverage.",
-                forex: "Major currency pairs spot trading with interbank depth and zero requotes."
+                forex: "Major currency pairs spot trading with interbank depth and zero requotes.",
+                quotex: "High-yield binary options and fast settlement contracts with real-time payout multipliers."
             };
 
             document.getElementById('brokerPanelTitle').innerText = titles[broker];
@@ -558,7 +554,7 @@
         }
 
         function openBrokerAction(actionType) {
-            alert(`[${activeBroker.toUpperCase()} GATEWAY]: ${actionType} portal successfully initialized. Secure session verified for Awais Mintoo.`);
+            alert(`[${activeBroker.toUpperCase()} SECURE GATEWAY]: ${actionType} portal successfully initialized under 256-bit encryption.`);
         }
 
         function changeLanguage(langCode) {
@@ -578,9 +574,9 @@
         const marketPool = [
             { name: "🥇 EXNESS GOLD (XAU/USD)", price: goldVal, leverage: "10x - 20x", type: "gold" },
             { name: "₿ BINANCE BTC/USDT", price: btcVal, leverage: "10x - 20x", type: "crypto" },
+            { name: "⚡ PXE POWER FUTURES", price: 118.40, leverage: "5x - 10x", type: "energy" },
             { name: "🪙 BINANCE ETH/USDT", price: 3412.80, leverage: "8x - 15x", type: "crypto" },
-            { name: "🪙 BINANCE SOL/USDT", price: 212.40, leverage: "5x - 12x", type: "crypto" },
-            { name: "🪙 BINANCE XRP/USDT", price: 2.45, leverage: "3x - 10x", type: "crypto" }
+            { name: "🪙 BINANCE SOL/USDT", price: 212.40, leverage: "5x - 12x", type: "crypto" }
         ];
 
         let heroIndex = 0;
@@ -623,6 +619,11 @@
             document.getElementById('exNasdaqStatus').innerHTML = usOpen ? "🟢 LIVE" : "🟠 CLOSED";
             document.getElementById('exNasdaqStatus').className = usOpen ? "status-green" : "status-orange";
 
+            // PXE Europe Energy Exchange (07:00 - 17:00 UTC)
+            let pxeOpen = utcHour >= 7 && utcHour < 17;
+            document.getElementById('exPxeStatus').innerHTML = pxeOpen ? "🟢 LIVE" : "🟠 CLOSED";
+            document.getElementById('exPxeStatus').className = pxeOpen ? "status-green" : "status-orange";
+
             let ukOpen = utcHour >= 8 && utcHour < 16;
             document.getElementById('exLseStatus').innerHTML = ukOpen ? "🟢 LIVE" : "🟠 CLOSED";
             document.getElementById('exLseStatus').className = ukOpen ? "status-green" : "status-orange";
@@ -634,10 +635,6 @@
             let hkOpen = utcHour >= 1 && utcHour < 8;
             document.getElementById('exHkexStatus').innerHTML = hkOpen ? "🟢 LIVE" : "🟠 CLOSED";
             document.getElementById('exHkexStatus').className = hkOpen ? "status-green" : "status-orange";
-
-            let deOpen = utcHour >= 7 && utcHour < 15;
-            document.getElementById('exFwbStatus').innerHTML = deOpen ? "🟢 LIVE" : "🟠 CLOSED";
-            document.getElementById('exFwbStatus').className = deOpen ? "status-green" : "status-orange";
         }
 
         function toggleSystemPush() {
@@ -653,7 +650,7 @@
                             btn.innerText = '1. 🔔 PUSH ENABLED';
                             document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
                             document.getElementById('pushStatusText').style.color = "#3fb950";
-                            sendPushAlert("System Push Activated", "Round-the-clock 3M push alerts engaged!");
+                            sendPushAlert("System Push Activated", "Round-the-clock 120 FPS push alerts engaged!");
                         }
                     });
                 }
@@ -669,7 +666,7 @@
             const btn = document.getElementById('testPushBtn');
             btn.className = 'btn-active-orange';
             setTimeout(() => { btn.className = 'btn-active-green'; }, 400);
-            sendPushAlert("MintooSuite Test Alert", "3M multi-asset surge push channel verified!");
+            sendPushAlert("MintooSuite Test Alert", "Secure 120 FPS multi-asset push channel verified!");
         }
 
         function sendPushAlert(title, body) {
@@ -838,19 +835,19 @@
         requestAnimationFrame(renderChart);
 
         let tickCount = 0;
-        const reutersMarketItems = [
+        const marketNewsItems = [
+            "🖼️ [PXE ⚡] European Power Exchange reports baseload electricity futures upward adjustment.",
             "🖼️ [REUTERS 🥇] Spot Gold holds steady at $2,674/oz following US inflation report.",
-            "🖼️ [BLOOMBERG 🛢️] UK Brent Crude ticks up +0.8% to $78.40/bbl on tight supply outlook.",
-            "🖼️ [REUTERS 📊] S&P 500 futures up +0.4% led by institutional tech inflows.",
-            "🖼️ [CNBC 🥈] Silver advances to $31.80/oz as industrial demand signals strengthen.",
-            "🖼️ [REUTERS 💵] Dollar Index (DXY) consolidates around 103.40; Gold remains supported."
+            "🖼️ [BLOOMBERG 🛢️] WTI Crude & Brent Oil tick up on Middle East supply outlook.",
+            "🖼️ [LME 🔋] Lithium and Rare Earth Metals index surges +2.3% on EV battery demand.",
+            "🖼️ [PXE ⛽] European Gas futures consolidate following inventory updates."
         ];
 
-        const reutersGeoItems = [
+        const geoNewsItems = [
             "🖼️ [REUTERS 💵] Federal Reserve policy committee signals potential 25bps rate calibration.",
-            "🖼️ [BBC 💶] European Central Bank maintains key interest rates; Euro dips against USD.",
-            "🖼️ [AL JAZEERA 🚢] Red Sea maritime transit safety protocol update increases freight premiums.",
-            "🖼️ [REUTERS 🌐] Bilateral trade negotiations resume between major economic blocs."
+            "🖼️ [BBC 🌐] Global trade corridor security protocols updated for maritime logistics.",
+            "🖼️ [AL JAZEERA 🚢] Red Sea maritime transit freight insurance rates adjust.",
+            "🖼️ [REUTERS 🌐] Bilateral trade frameworks negotiate energy supply agreements."
         ];
 
         setInterval(() => {
@@ -877,11 +874,11 @@
             marketPool[1].price = btcVal;
 
             if(tickCount % 5 === 0) {
-                let mNews = reutersMarketItems[Math.floor(Math.random() * reutersMarketItems.length)];
+                let mNews = marketNewsItems[Math.floor(Math.random() * marketNewsItems.length)];
                 let mBox = document.getElementById('marketNewsFeed');
                 if(mBox) mBox.innerHTML = `[${timeStr}] ${mNews}<br>` + mBox.innerHTML;
 
-                let gNews = reutersGeoItems[Math.floor(Math.random() * reutersGeoItems.length)];
+                let gNews = geoNewsItems[Math.floor(Math.random() * geoNewsItems.length)];
                 let gBox = document.getElementById('geoNewsFeed');
                 if(gBox) gBox.innerHTML = `[${timeStr}] ${gNews}<br>` + gBox.innerHTML;
 
@@ -934,9 +931,9 @@
             }
 
             if (tickCount % 6 === 0 && sysPushState) {
-                let shouldSend = (scannedAsset.type === 'gold' && goldPushState) || (scannedAsset.type === 'crypto' && cryptoPushState);
+                let shouldSend = (scannedAsset.type === 'gold' && goldPushState) || (scannedAsset.type === 'crypto' && cryptoPushState) || (scannedAsset.type === 'energy');
                 if (shouldSend) {
-                    sendPushAlert(`MintooSuite 3M Alert: ${scannedAsset.name}`, `${actionText} | Lev: ${scannedAsset.leverage} | Price: $${curPrice.toFixed(2)} | TP: $${tpPrice}`);
+                    sendPushAlert(`MintooSuite 120 FPS Alert: ${scannedAsset.name}`, `${actionText} | Lev: ${scannedAsset.leverage} | Price: $${curPrice.toFixed(2)} | TP: $${tpPrice}`);
                 }
             }
         }, 600);

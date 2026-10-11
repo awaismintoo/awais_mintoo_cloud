@@ -8,7 +8,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'TRIGGER_PUSH') {
-        const uniqueTag = 'mintoo-alert-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+        const uniqueTag = 'mintoo-secure-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
         self.registration.showNotification(event.data.title, {
             body: event.data.body,
             icon: 'icon-192.png',
