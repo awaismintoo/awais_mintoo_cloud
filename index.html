@@ -296,7 +296,6 @@
         </div>
     </div>
 
-    <!-- SETTINGS & MULTI-LANGUAGE SELECTION DRAWER -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-content">
             <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;" id="lblSettingsTitle">⚙️ Terminal Settings & Language</div>
@@ -360,7 +359,6 @@
         </div>
     </div>
 
-    <!-- GENERAL HELP TOPICS MODAL -->
     <div class="modal-overlay" id="helpCenterModal">
         <div class="modal-content">
             <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;" id="lblGuideTitle">📖 TERMINAL HELP & TOPICS GUIDE</div>
@@ -463,7 +461,7 @@
                 timer: "مؤقت الشمعة 3 دقائق",
                 bgPush: "الإشعارات الخلفية",
                 signalsHeader: "⭐ الإشارات النشطة المعتمدة وسجل الانتهاء",
-                macroHeader: "📈 상관 관계 مؤشر الماكرو (US500 & DXY)",
+                macroHeader: "📈 مؤشر الماكرو (US500 & DXY)",
                 scannerHeader: "🤖 تغذية الماسح الضوئي المباشر للبوت",
                 notificationsHeader: "🔔 لوحة الإشعارات والتنبيهات المباشرة",
                 pushToggles: "تنبيهات الأصول متعددة 3 دقائق:",
@@ -630,7 +628,12 @@
             { name: "BINANCE BTC/USDT", price: btcVal, leverage: "10x - 20x", type: "crypto" },
             { name: "BINANCE ETH/USDT", price: 3412.80, leverage: "8x - 15x", type: "crypto" },
             { name: "BINANCE SOL/USDT", price: 212.40, leverage: "5x - 12x", type: "crypto" },
-            { name: "BINANCE XRP/USDT", price: 2.45, leverage: "3x - 10x", type: "crypto" }
+            { name: "BINANCE XRP/USDT", price: 2.45, leverage: "3x - 10x", type: "crypto" },
+            { name: "BINANCE ADA/USDT", price: 0.82, leverage: "3x - 8x", type: "crypto" },
+            { name: "BINANCE DOGE/USDT", price: 0.38, leverage: "5x - 10x", type: "crypto" },
+            { name: "BINANCE BNB/USDT", price: 642.10, leverage: "5x - 12x", type: "crypto" },
+            { name: "BINANCE AVAX/USDT", price: 34.50, leverage: "4x - 10x", type: "crypto" },
+            { name: "BINANCE LINK/USDT", price: 18.20, leverage: "4x - 10x", type: "crypto" }
         ];
 
         let heroIndex = 0;
@@ -980,10 +983,11 @@
                 feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] 3M Confluence: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
             }
 
-            if (tickCount % 6 === 0 && sysPushState) {
+            // Rapid Push Alert Multi-Asset Dispatcher
+            if (tickCount % 2 === 0 && sysPushState) {
                 let shouldSend = (scannedAsset.type === 'gold' && goldPushState) || (scannedAsset.type === 'crypto' && cryptoPushState);
                 if (shouldSend) {
-                    sendPushAlert(`MintooSuite 3M Signal: ${scannedAsset.name}`, `${actionText} | Lev: ${scannedAsset.leverage} | Entry: $${curPrice.toFixed(2)} | TP: $${tpPrice}`);
+                    sendPushAlert(`MintooSuite 3M Alert: ${scannedAsset.name}`, `${actionText} | Lev: ${scannedAsset.leverage} | Price: $${curPrice.toFixed(2)} | TP: $${tpPrice}`);
                 }
             }
         }, 600);

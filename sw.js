@@ -8,12 +8,14 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'TRIGGER_PUSH') {
+        // Dynamic tag ensures Android stacks multiple separate notifications in the shade
+        const uniqueTag = 'mintoo-alert-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
         self.registration.showNotification(event.data.title, {
             body: event.data.body,
             icon: 'icon-192.png',
             badge: 'icon-192.png',
             vibrate: [300, 100, 300, 100, 300],
-            tag: 'quantum-sovereign-master-alert',
+            tag: uniqueTag,
             renotify: true,
             requireInteraction: true
         });
