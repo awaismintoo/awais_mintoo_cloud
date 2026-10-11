@@ -7,16 +7,14 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'TRIGGER_ALERT') {
-        const title = event.data.title || 'MintooSuite Signal Alert';
-        const options = {
-            body: event.data.body || 'Exness Gold Confluence Confirmed.',
-            icon: './icon.png',
-            badge: './badge.png',
-            tag: 'mintoo-trade-signal',
-            renotify: true,
-            requireInteraction: true
-        };
-        self.registration.showNotification(title, options);
+    if (event.data && event.data.type === 'TRIGGER_PUSH') {
+        self.registration.showNotification(event.data.title, {
+            body: event.data.body,
+            icon: 'icon-192.png',
+            badge: 'icon-192.png',
+            vibrate: [200, 100, 200],
+            tag: 'mintoosuite-trade-alert',
+            renotify: true
+        });
     }
 });

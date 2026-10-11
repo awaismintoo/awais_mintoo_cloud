@@ -25,7 +25,6 @@
         .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
         button { padding: 12px; font-weight: bold; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.2s ease; }
         
-        /* State Colors */
         .btn-active-green { background: #238636 !important; color: #ffffff !important; box-shadow: 0 0 8px rgba(35, 134, 54, 0.4); }
         .btn-active-orange { background: #d97706 !important; color: #ffffff !important; box-shadow: 0 0 8px rgba(217, 119, 6, 0.4); }
         .btn-active-red { background: #da3633 !important; color: #ffffff !important; }
@@ -33,7 +32,7 @@
         
         .log-box { background: #0d1117; border: 1px solid #30363d; padding: 8px; font-size: 11px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 120px; overflow-y: auto; }
         .signal-box { color: #f0883e; font-size: 11px; border: 1px dashed #f0883e; padding: 8px; border-radius: 4px; margin-top: 8px; text-align: center; font-weight: bold; background: rgba(240, 136, 62, 0.05); }
-        .status-toast { font-size: 10px; color: #58a6ff; margin-top: 4px; text-align: right; height: 14px; }
+        .section-header { font-size: 11px; color: #58a6ff; margin-top: 6px; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -75,7 +74,6 @@
         </div>
         <canvas id="matrixCanvas"></canvas>
         
-        <!-- Asset Switcher Buttons -->
         <div class="btn-row">
             <button class="btn-active-green" id="btnGoldAsset" onclick="switchAsset('gold')">EXNESS GOLD (XAU/USD)</button>
             <button class="btn-inactive" id="btnCryptoAsset" onclick="switchAsset('crypto')">BINANCE BTC/USDT FUTURES</button>
@@ -91,12 +89,35 @@
     </div>
 
     <div class="panel">
+        <div class="panel-title">
+            <span>🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS</span>
+            <span style="color: #3fb950;" id="pushStatusText">SYSTEM PUSH READY</span>
+        </div>
+        
+        <div class="btn-row">
+            <button class="btn-active-orange" id="enableAlertsBtn" onclick="requestPushPermission()">1. ENABLE SYSTEM PUSH</button>
+            <button class="btn-active-green" id="testPushBtn" onclick="sendTestPush()">2. TEST INSTANT PUSH</button>
+        </div>
+
+        <div class="section-header">Exness Gold (XAU/USD) Alerts:</div>
+        <div class="btn-row">
+            <button class="btn-active-green" id="goldPushBtn" onclick="toggleBtn(this, 'EXNESS GOLD PUSH')">EXNESS GOLD PUSH: ON</button>
+            <button class="btn-active-green" id="goldSoundBtn" onclick="toggleBtn(this, 'EXNESS GOLD SOUND')">EXNESS GOLD SOUND: ON</button>
+        </div>
+
+        <div class="section-header">Binance BTC/USDT Futures Alerts:</div>
+        <div class="btn-row">
+            <button class="btn-active-green" id="cryptoPushBtn" onclick="toggleBtn(this, 'BINANCE FUTURES PUSH')">BINANCE FUTURES PUSH: ON</button>
+            <button class="btn-active-green" id="cryptoSoundBtn" onclick="toggleBtn(this, 'BINANCE FUTURES SOUND')">BINANCE FUTURES SOUND: ON</button>
+        </div>
+    </div>
+
+    <div class="panel">
         <div class="panel-title">⚙️ METRICS & ALERT CONFIGURATION</div>
         <div class="btn-row">
-            <button class="btn-active-green" id="toggle24HBtn" onclick="toggleBtn(this, '24H Metrics')">24H METRICS: ON</button>
-            <button class="btn-active-orange" id="alertConfigBtn" onclick="toggleBtn(this, 'Alert Sync')">ALERT SYNC: ON</button>
+            <button class="btn-active-green" id="toggle24HBtn" onclick="toggleBtn(this, '24H METRICS')">24H METRICS: ON</button>
+            <button class="btn-active-orange" id="alertConfigBtn" onclick="toggleBtn(this, 'ALERT SYNC')">ALERT SYNC: ON</button>
         </div>
-        <div class="status-toast" id="toastMetrics"></div>
     </div>
 
     <div class="panel">
@@ -114,26 +135,16 @@
         </div>
     </div>
 
-    <div class="panel">
-        <div class="panel-title">
-            <span>🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS</span>
-            <span style="color: #f0883e;">▲</span>
-        </div>
-        <div class="btn-row">
-            <button class="btn-active-orange" id="enableAlertsBtn" onclick="requestPushPermission()">ENABLE PUSH ALERTS</button>
-            <button class="btn-inactive" id="disableAlertsBtn" onclick="disablePushAlerts()">DISABLE ALERTS</button>
-        </div>
-        <div class="btn-row">
-            <button class="btn-active-green" id="goldPushBtn" onclick="toggleBtn(this, 'GOLD PUSH')">GOLD PUSH: ON</button>
-            <button class="btn-active-green" id="goldSoundBtn" onclick="toggleBtn(this, 'GOLD SOUND')">GOLD SOUND: ON</button>
-        </div>
-        <div class="btn-row">
-            <button class="btn-active-green" id="cryptoPushBtn" onclick="toggleBtn(this, 'CRYPTO PUSH')">CRYPTO PUSH: ON</button>
-            <button class="btn-active-green" id="cryptoSoundBtn" onclick="toggleBtn(this, 'CRYPTO SOUND')">CRYPTO SOUND: ON</button>
-        </div>
-    </div>
-
     <script>
+        // Service Worker Registration for Native Android Push Notifications
+        let swRegistration = null;
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                swRegistration = reg;
+                console.log('Service Worker Registered Successfully');
+            }).catch(err => console.log('SW Reg Error:', err));
+        }
+
         let currentAsset = 'gold'; 
         let goldVal = 2674.11;
         let btcVal = 94106.50;
@@ -155,14 +166,13 @@
             }
         }
 
-        // Color toggle helper (No blocking alerts)
         function toggleBtn(element, label) {
             let isON = element.className.includes('btn-active');
             if (isON) {
                 element.className = 'btn-inactive';
                 element.innerText = label + ': OFF';
             } else {
-                element.className = label.includes('24H') || label.includes('PUSH') || label.includes('SOUND') ? 'btn-active-green' : 'btn-active-orange';
+                element.className = label.includes('24H') || label.includes('PUSH') || label.includes('SOUND') || label.includes('EXNESS') || label.includes('BINANCE') ? 'btn-active-green' : 'btn-active-orange';
                 element.innerText = label + ': ON';
             }
         }
@@ -186,7 +196,7 @@
             document.getElementById('engineStateText').className = "card-value red";
         }
 
-        // Canvas Candlestick Chart (Connected to live history)
+        // Canvas Candlestick Chart
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         function resizeCanvas() {
@@ -223,28 +233,25 @@
         }
         requestAnimationFrame(renderChart);
 
-        // Real-time micro-second pricing engine
+        // Real-time Pricing Engine
         let tickCount = 0;
         setInterval(() => {
             tickCount++;
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0] + "." + String(now.getMilliseconds()).padStart(3, '0');
 
-            // Fluctuate Exness Gold
             let goldDiff = (Math.random() - 0.49) * 0.45;
             goldVal += goldDiff;
             goldHistory.shift();
             goldHistory.push(goldVal);
             document.getElementById('goldPrice').innerText = goldVal.toFixed(2);
 
-            // Fluctuate Binance BTC
             let btcDiff = (Math.random() - 0.49) * 14.0;
             btcVal += btcDiff;
             btcHistory.shift();
             btcHistory.push(btcVal);
             document.getElementById('btcPrice').innerText = btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-            // Feed Update
             const feed = document.getElementById('masterBotFeed');
             let activeName = currentAsset === 'gold' ? "EXNESS GOLD (XAU/USD)" : "BINANCE BTC/USDT FUTURES";
             let activePrice = currentAsset === 'gold' ? goldVal.toFixed(2) : btcVal.toFixed(2);
@@ -254,14 +261,18 @@
                 feed.innerHTML = `[${timeStr}] [${activeName}] ${direction} | Tick: $${activePrice}<br>` + feed.innerHTML;
             }
 
-            // Fire Push Notification every 15 ticks if enabled
-            if (tickCount % 15 === 0 && "Notification" in window && Notification.permission === "granted") {
-                const pushEnabled = document.getElementById('enableAlertsBtn').className.includes('btn-active');
-                if(pushEnabled) {
-                    new Notification(`MintooSuite: ${activeName}`, {
-                        body: `${direction} | Price: $${activePrice}`,
-                        icon: "icon-192.png",
-                        tag: "mintoosuite-alert"
+            // Dispatch System Notification via Service Worker every 10 ticks
+            if (tickCount % 10 === 0 && Notification.permission === "granted") {
+                const goldPushActive = document.getElementById('goldPushBtn').className.includes('btn-active');
+                const cryptoPushActive = document.getElementById('cryptoPushBtn').className.includes('btn-active');
+                
+                let shouldNotify = (currentAsset === 'gold' && goldPushActive) || (currentAsset === 'crypto' && cryptoPushActive);
+                
+                if (shouldNotify && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'TRIGGER_PUSH',
+                        title: `MintooSuite Signal: ${activeName}`,
+                        body: `${direction} confirmed at $${activePrice}`
                     });
                 }
             }
@@ -277,25 +288,34 @@
             document.getElementById('timerDisplay').innerText = `${m}:${s}`;
         }, 1000);
 
-        // Native System Push Permission Request
+        // Native System Push Handlers
         function requestPushPermission() {
             if ("Notification" in window) {
                 Notification.requestPermission().then(permission => {
                     if (permission === "granted") {
-                        document.getElementById('enableAlertsBtn').className = 'btn-active-orange';
-                        document.getElementById('disableAlertsBtn').className = 'btn-inactive';
-                        new Notification("MintooSuite Terminal", {
-                            body: "Live trading push notifications active for Exness & Binance.",
-                            icon: "icon-192.png"
-                        });
+                        document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
+                        document.getElementById('pushStatusText').style.color = "#3fb950";
+                        sendTestPush();
+                    } else {
+                        document.getElementById('pushStatusText').innerText = "PUSH DENIED";
+                        document.getElementById('pushStatusText').style.color = "#f85149";
                     }
                 });
             }
         }
 
-        function disablePushAlerts() {
-            document.getElementById('enableAlertsBtn').className = 'btn-inactive';
-            document.getElementById('disableAlertsBtn').className = 'btn-active-red';
+        function sendTestPush() {
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'TRIGGER_PUSH',
+                    title: 'MintooSuite System Test Alert',
+                    body: 'Exness Gold & Binance Futures native push channel connected!'
+                });
+            } else if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("MintooSuite System Test Alert", {
+                    body: "Exness Gold & Binance Futures push channel connected!"
+                });
+            }
         }
     </script>
 </body>
