@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
     <meta name="theme-color" content="#030712">
     <title>MintooSuite - Quantum Sovereign Terminal</title>
     <style>
@@ -69,13 +70,12 @@
         <button class="tab-btn" id="tab-binance" onclick="switchMarket('BINANCE')">BINANCE (BTC/USDT)</button>
     </div>
 
-    <!-- Notification Mode Controls -->
     <div class="card" style="padding: 8px; margin-bottom: 8px;">
         <div style="font-size: 9px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; font-weight: bold;">3M Surge/Drop Notification Control</div>
         <div class="notif-controls">
-            <button class="notif-btn active" id="btn-sound" onclick="setNotifMode('SOUND')">🔊 Sound Alerts</button>
-            <button class="notif-btn" id="btn-silent" onclick="setNotifMode('SILENT')">🔕 Silent Mode</button>
-            <button class="notif-btn" id="btn-stop" onclick="setNotifMode('STOP')">⛔ Stop Alerts</button>
+            <button class="btn-notif active" id="btn-sound" onclick="setNotifMode('SOUND')">🔊 Sound</button>
+            <button class="btn-notif" id="btn-silent" onclick="setNotifMode('SILENT')">🔕 Silent</button>
+            <button class="btn-notif" id="btn-stop" onclick="setNotifMode('STOP')">⛔ Stop</button>
         </div>
     </div>
 
@@ -101,21 +101,19 @@
         </div>
     </div>
 
-    <!-- Quantum Surge & Drop 3M Decision Bot -->
     <div class="card bot-card">
         <div class="card-header">
             <h3 style="color: var(--cyan);">3M Coin Surge & Drop Detector</h3>
             <span style="font-size: 9px; color: var(--gold);" id="candle-timer">3M TIMER: 02:59</span>
         </div>
-        <div class="bot-signal" id="bot-signal">MONITORING SURGE/DROP VELOCITY...</div>
-        <div style="color: var(--muted); font-size: 10px;" id="bot-desc">Real-time candle volume and momentum telemetry active.</div>
+        <div class="bot-signal" id="bot-signal">MONITORING VELOCITY...</div>
+        <div style="color: var(--muted); font-size: 10px;" id="bot-desc">Real-time volume and momentum active.</div>
     </div>
 
-    <!-- Audit & Execution Log -->
     <div class="card">
         <div class="card-header"><h3>Institutional Audit Log</h3></div>
         <div class="audit-box" id="auditLog">
-            [SYS] 60FPS Render Engine Active.<br>[SYS] 3M Surge & Drop Monitoring Enabled.
+            [SYS] 60FPS Engine Initialized.<br>[SYS] Service Worker Registered.
         </div>
         <div class="btn-group">
             <button class="btn" onclick="executeOrder('BUY')">Execute Buy</button>
@@ -124,6 +122,11 @@
     </div>
 
     <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js').catch(err => console.log(err));
+        }
+
         // 60FPS Neon Logo
         const lcanvas = document.getElementById('neonLogo');
         const lctx = lcanvas.getContext('2d');
@@ -145,22 +148,19 @@
             angle += 0.02;
             requestAnimationFrame(renderLogo);
         }
-        requestAnimationFrame(renderLogo);
+        renderLogo();
 
-        // Notification Mode State
-        let notifMode = 'SOUND'; // SOUND, SILENT, STOP
+        let notifMode = 'SOUND';
         function setNotifMode(mode) {
             notifMode = mode;
             document.getElementById('btn-sound').classList.toggle('active', mode === 'SOUND');
             document.getElementById('btn-silent').classList.toggle('active', mode === 'SILENT');
             document.getElementById('btn-stop').classList.toggle('active', mode === 'STOP');
-            audit('Notification Mode set to: ' + mode);
             if(mode !== 'STOP' && Notification.permission !== 'granted') {
                 Notification.requestPermission();
             }
         }
 
-        // Market State
         let activeMarket = 'EXNESS';
         let basePrice = 2658.50;
 
@@ -168,18 +168,11 @@
             activeMarket = m;
             document.getElementById('tab-exness').classList.toggle('active', m === 'EXNESS');
             document.getElementById('tab-binance').classList.toggle('active', m === 'BINANCE');
-            if(m === 'EXNESS') {
-                basePrice = 2658.50;
-                document.getElementById('market-title').innerText = 'EXNESS GOLD (XAU/USD) 3M STREAM';
-            } else {
-                basePrice = 68450.00;
-                document.getElementById('market-title').innerText = 'BINANCE BTC/USDT 3M STREAM';
-            }
+            basePrice = (m === 'EXNESS') ? 2658.50 : 68450.00;
+            document.getElementById('market-title').innerText = m === 'EXNESS' ? 'EXNESS GOLD (XAU/USD) 3M STREAM' : 'BINANCE BTC/USDT 3M STREAM';
             initCandles();
-            audit('Switched active feed to ' + m);
         }
 
-        // 60FPS Chart Loop
         const ccanvas = document.getElementById('mainChart');
         const cctx = ccanvas.getContext('2d');
         let candles = [];
@@ -205,17 +198,7 @@
         }
         initCandles();
 
-        let lastTime = performance.now();
-        let frameCount = 0;
-
-        function renderChartLoop(now) {
-            frameCount++;
-            if (now - lastTime >= 1000) {
-                document.getElementById('fps-indicator').innerText = (frameCount).toFixed(1) + ' FPS';
-                frameCount = 0;
-                lastTime = now;
-            }
-
+        function renderChartLoop() {
             cctx.clearRect(0, 0, ccanvas.width, ccanvas.height);
             let highs = candles.map(k=>k.h);
             let lows = candles.map(k=>k.l);
@@ -247,9 +230,8 @@
 
             requestAnimationFrame(renderChartLoop);
         }
-        requestAnimationFrame(renderChartLoop);
+        renderChartLoop();
 
-        // Real-Time 1-Second Ticker & 3M Surge/Drop Tick Loop
         let counter = 180;
         setInterval(() => {
             let last = candles[candles.length - 1];
@@ -280,34 +262,24 @@
         function runSurgeDropDetector(price) {
             let isSurge = Math.random() > 0.5;
             let percent = (Math.random() * 1.8 + 0.4).toFixed(2);
-            let sigText = isSurge ? `🚀 3M COIN SURGE (+${percent}%)` : `⚠️ 3M COIN DROP (-${percent}%)`;
-            let sigColor = isSurge ? '#10b981' : '#ef4444';
-
-            let sigEl = document.getElementById('bot-signal');
-            sigEl.innerText = sigText;
-            sigEl.style.color = sigColor;
-            document.getElementById('bot-desc').innerText = activeMarket + ' 3M Close @ $' + price.toFixed(2) + ' | Volume Surge Confirmed.';
-
-            audit('[3M DETECTOR] ' + sigText + ' @ $' + price.toFixed(2));
+            let sigText = isSurge ? `🚀 SURGE (+${percent}%)` : `⚠️ DROP (-${percent}%)`;
+            
+            document.getElementById('bot-signal').innerText = sigText;
+            document.getElementById('bot-signal').style.color = isSurge ? '#10b981' : '#ef4444';
 
             if (notifMode !== 'STOP' && 'Notification' in window && Notification.permission === 'granted') {
-                let options = {
-                    body: activeMarket + ' 3M Candle Closed: ' + sigText + ' | Price: $' + price.toFixed(2),
-                    icon: '/icon-192.png',
+                new Notification('MintooSuite 3M Alert', {
+                    body: activeMarket + ' ' + sigText + ' @ $' + price.toFixed(2),
+                    icon: '/static/icon-192.png',
                     silent: (notifMode === 'SILENT')
-                };
-                new Notification('MintooSuite 3M Alert', options);
+                });
             }
         }
 
-        function audit(msg) {
-            let box = document.getElementById('auditLog');
-            box.innerHTML += '<br>[AUDIT] ' + msg;
-            box.scrollTop = box.scrollHeight;
-        }
-
         function executeOrder(type) {
-            audit('[EXECUTION] ' + type + ' Order Filled @ ' + document.getElementById('ticker-price').innerText);
+            let box = document.getElementById('auditLog');
+            box.innerHTML += '<br>[EXEC] ' + type + ' Order Filled @ ' + document.getElementById('ticker-price').innerText;
+            box.scrollTop = box.scrollHeight;
         }
     </script>
 </body>
