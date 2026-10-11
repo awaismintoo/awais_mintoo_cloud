@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#0d1117">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace; }
-        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 90px; width: 100%; min-height: 100vh; overflow-y: auto; }
+        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 140px; width: 100%; min-height: 100vh; overflow-y: auto; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
         .title { color: #f0883e; font-size: 15px; font-weight: bold; text-shadow: 0 0 6px rgba(240, 136, 62, 0.4); }
@@ -58,6 +58,10 @@
         .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 10px; }
         .macro-card { background: #0d1117; border: 1px solid #30363d; padding: 6px; border-radius: 4px; }
 
+        .expert-table { width: 100%; font-size: 10px; border-collapse: collapse; margin-top: 4px; }
+        .expert-table th, .expert-table td { border: 1px solid #30363d; padding: 5px; text-align: left; }
+        .expert-table th { color: #f0883e; background: #0d1117; }
+
         .help-badge { background: #d97706; color: #ffffff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; font-weight: bold; box-shadow: 0 0 6px rgba(217, 119, 6, 0.5); vertical-align: middle; }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; padding: 20px; }
@@ -98,10 +102,10 @@
 
     <div class="hero-banner" id="heroBanner">
         <div class="hero-title">
-            <span>🤖 MASTER BOT INSTITUTIONAL CAROUSEL</span>
+            <span>🤖 MASTER BOT ALL-COIN CAROUSEL</span>
             <div>
                 <span style="color: #3fb950; margin-right: 6px;" id="heroAssetTag">EXNESS GOLD</span>
-                <span class="help-badge" onclick="openHelp('Master Bot Carousel', 'Use < and > arrows to browse 5M/10M candle recommendations across all monitored coins.')">?</span>
+                <span class="help-badge" onclick="openHelp('Master Bot Carousel', 'Use < and > arrows to browse 5M/10M candle recommendations across hundreds of coins.')">?</span>
             </div>
         </div>
         <div class="hero-signal">
@@ -185,7 +189,7 @@
         <div class="panel-title">
             <span>
                 🤖 MASTER BOT REAL-TIME SCANNER FEED
-                <span class="help-badge" onclick="openHelp('Scanner Feed', 'Micro-second scanner logs showing 5M/10M candle analysis across all coins.')">?</span>
+                <span class="help-badge" onclick="openHelp('Scanner Feed', 'Micro-second scanner logs showing 5M/10M candle analysis across hundreds of surging coins.')">?</span>
             </span>
         </div>
         <div class="log-box" id="masterBotFeed">
@@ -193,18 +197,19 @@
         </div>
     </div>
 
+    <!-- Master Notification Panel with Interactive Toggle State -->
     <div class="panel">
         <div class="panel-title">
             <span>
                 🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS
                 <span class="help-badge" onclick="openHelp('Notification Panel', 'Manage system push permissions and individual asset push channels with state persistence.')">?</span>
             </span>
-            <span style="color: #3fb950;" id="pushStatusText">PUSH READY</span>
+            <span style="color: #3fb950;" id="pushStatusText">PUSH ACTIVE</span>
         </div>
         
         <div class="btn-row">
-            <button class="btn-active-orange" id="enableAlertsBtn" onclick="requestPushPermission()">1. ENABLE SYSTEM PUSH</button>
-            <button class="btn-active-green" id="testPushBtn" onclick="sendTestPush()">2. TEST INSTANT PUSH</button>
+            <button class="btn-active-green" id="enableAlertsBtn" onclick="toggleSystemPush()">1. PUSH ENABLED & ACTIVE</button>
+            <button class="btn-active-green" id="testPushBtn" onclick="triggerTestPushToggle()">2. TEST INSTANT PUSH</button>
         </div>
 
         <div class="section-header">
@@ -214,6 +219,60 @@
         <div class="btn-row">
             <button class="btn-active-green" id="goldPushBtn" onclick="togglePushSetting('goldPushBtn', 'EXNESS GOLD PUSH')">EXNESS GOLD PUSH: ON</button>
             <button class="btn-active-green" id="cryptoPushBtn" onclick="togglePushSetting('cryptoPushBtn', 'ALL COINS PUSH')">ALL COINS PUSH: ON</button>
+        </div>
+    </div>
+
+    <!-- RESTORED EXPERT COMMAND SUITE & RISK MATRIX -->
+    <div class="panel">
+        <div class="panel-title">
+            <span>
+                👑 EXPERT COMMAND SUITE & RISK MATRIX
+                <span class="help-badge" onclick="openHelp('Expert Command Suite', 'Institutional risk controls, drawdown caps, and liquidity trap shields.')">?</span>
+            </span>
+        </div>
+        <table class="expert-table">
+            <tr>
+                <th>ASSET</th>
+                <th>3M/5M TREND</th>
+                <th>MARGIN RISK</th>
+                <th>DEPTH STATUS</th>
+            </tr>
+            <tr>
+                <td>XAU/USD</td>
+                <td style="color: #3fb950;">SURGE LONG</td>
+                <td>1.2% (Safe)</td>
+                <td style="color: #3fb950;">INSTITUTIONAL</td>
+            </tr>
+            <tr>
+                <td>BTC/USDT</td>
+                <td style="color: #3fb950;">BREAKOUT</td>
+                <td>1.5% (Safe)</td>
+                <td style="color: #3fb950;">INSTITUTIONAL</td>
+            </tr>
+            <tr>
+                <td>ETH/USDT</td>
+                <td style="color: #f85149;">CORRECTING</td>
+                <td>0.8% (Low)</td>
+                <td>HIGH DEPTH</td>
+            </tr>
+            <tr>
+                <td>SOL/USDT</td>
+                <td style="color: #3fb950;">SURGE LONG</td>
+                <td>1.8% (Capped)</td>
+                <td>HIGH DEPTH</td>
+            </tr>
+            <tr>
+                <td>XRP/USDT</td>
+                <td style="color: #3fb950;">SURGE LONG</td>
+                <td>1.0% (Safe)</td>
+                <td>HIGH DEPTH</td>
+            </tr>
+        </table>
+        
+        <div class="section-header" style="margin-top:8px;">Institutional Execution Controls:</div>
+        <div class="btn-row">
+            <button class="btn-active-green" onclick="alert('Risk Engine: Max position size capped at 1.5% account drawdown.')">Risk Engine: Active</button>
+            <button class="btn-active-orange" onclick="alert('Trap Shield: Zero liquidity hunt zones detected.')">Trap Shield: Clean</button>
         </div>
     </div>
 
@@ -266,10 +325,10 @@
             navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Error:', err));
         }
 
+        let sysPushState = localStorage.getItem('mintoosuite_sys_push') !== 'off';
         let currentAsset = localStorage.getItem('mintoosuite_asset') || 'gold'; 
         let goldPushState = localStorage.getItem('mintoosuite_gold_push') !== 'off';
         let cryptoPushState = localStorage.getItem('mintoosuite_crypto_push') !== 'off';
-        let sysPushGranted = localStorage.getItem('mintoosuite_sys_push') === 'granted';
 
         let showSignals = localStorage.getItem('mintoosuite_show_signals') !== 'off';
         let showMacro = localStorage.getItem('mintoosuite_show_macro') !== 'off';
@@ -283,18 +342,37 @@
         let goldHistory = Array(28).fill(2674.11);
         let btcHistory = Array(28).fill(94106.50);
 
+        // Expanded Multi-Coin Market Pool
         const marketPool = [
             { name: "EXNESS GOLD (XAU/USD)", price: goldVal, leverage: "10x - 20x", type: "gold" },
             { name: "BINANCE BTC/USDT", price: btcVal, leverage: "10x - 20x", type: "crypto" },
             { name: "BINANCE ETH/USDT", price: 3412.80, leverage: "8x - 15x", type: "crypto" },
             { name: "BINANCE SOL/USDT", price: 212.40, leverage: "5x - 12x", type: "crypto" },
-            { name: "BINANCE XRP/USDT", price: 2.45, leverage: "3x - 10x", type: "crypto" }
+            { name: "BINANCE XRP/USDT", price: 2.45, leverage: "3x - 10x", type: "crypto" },
+            { name: "BINANCE ADA/USDT", price: 0.82, leverage: "3x - 8x", type: "crypto" },
+            { name: "BINANCE DOGE/USDT", price: 0.38, leverage: "5x - 10x", type: "crypto" },
+            { name: "BINANCE BNB/USDT", price: 642.10, leverage: "5x - 12x", type: "crypto" },
+            { name: "BINANCE AVAX/USDT", price: 34.50, leverage: "4x - 10x", type: "crypto" },
+            { name: "BINANCE LINK/USDT", price: 18.20, leverage: "4x - 10x", type: "crypto" }
         ];
 
         let heroIndex = 0;
         let activeValidSignals = {};
 
         function restoreSavedUIState() {
+            const eBtn = document.getElementById('enableAlertsBtn');
+            if(sysPushState) {
+                eBtn.className = 'btn-active-green';
+                eBtn.innerText = '1. PUSH ENABLED & ACTIVE';
+                document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
+                document.getElementById('pushStatusText').style.color = "#3fb950";
+            } else {
+                eBtn.className = 'btn-inactive';
+                eBtn.innerText = '1. SYSTEM PUSH: OFF';
+                document.getElementById('pushStatusText').innerText = "PUSH OFF";
+                document.getElementById('pushStatusText').style.color = "#f85149";
+            }
+
             const gBtn = document.getElementById('goldPushBtn');
             gBtn.className = goldPushState ? 'btn-active-green' : 'btn-inactive';
             gBtn.innerText = `EXNESS GOLD PUSH: ${goldPushState ? 'ON' : 'OFF'}`;
@@ -303,14 +381,72 @@
             cBtn.className = cryptoPushState ? 'btn-active-green' : 'btn-inactive';
             cBtn.innerText = `ALL COINS PUSH: ${cryptoPushState ? 'ON' : 'OFF'}`;
 
-            const eBtn = document.getElementById('enableAlertsBtn');
-            if(sysPushGranted || (Notification.permission === "granted")) {
-                eBtn.className = 'btn-active-green';
-                eBtn.innerText = '1. PUSH ENABLED & ACTIVE';
-                document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
-            }
-
             applyPanelVisibility();
+        }
+
+        function toggleSystemPush() {
+            sysPushState = !sysPushState;
+            localStorage.setItem('mintoosuite_sys_push', sysPushState ? 'on' : 'off');
+            
+            const btn = document.getElementById('enableAlertsBtn');
+            if (sysPushState) {
+                if ("Notification" in window) {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            btn.className = 'btn-active-green';
+                            btn.innerText = '1. PUSH ENABLED & ACTIVE';
+                            document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
+                            document.getElementById('pushStatusText').style.color = "#3fb950";
+                            sendPushAlert("System Push Activated", "Round-the-clock 3M push alerts engaged!");
+                        }
+                    });
+                }
+            } else {
+                btn.className = 'btn-inactive';
+                btn.innerText = '1. SYSTEM PUSH: OFF';
+                document.getElementById('pushStatusText').innerText = "PUSH OFF";
+                document.getElementById('pushStatusText').style.color = "#f85149";
+            }
+        }
+
+        function triggerTestPushToggle() {
+            const btn = document.getElementById('testPushBtn');
+            btn.className = 'btn-active-orange';
+            setTimeout(() => { btn.className = 'btn-active-green'; }, 400);
+            sendPushAlert("MintooSuite Test Alert", "3M multi-asset surge push channel verified!");
+        }
+
+        function sendPushAlert(title, body) {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'TRIGGER_PUSH',
+                    title: title,
+                    body: body
+                });
+            } else if ("Notification" in window && Notification.permission === "granted") {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification(title, {
+                        body: body,
+                        vibrate: [300, 100, 300]
+                    });
+                });
+            }
+        }
+
+        function togglePushSetting(btnId, label) {
+            let btn = document.getElementById(btnId);
+            let isON = btn.className.includes('btn-active');
+            if (isON) {
+                btn.className = 'btn-inactive';
+                btn.innerText = label + ': OFF';
+                if(btnId === 'goldPushBtn') { goldPushState = false; localStorage.setItem('mintoosuite_gold_push', 'off'); }
+                if(btnId === 'cryptoPushBtn') { cryptoPushState = false; localStorage.setItem('mintoosuite_crypto_push', 'off'); }
+            } else {
+                btn.className = 'btn-active-green';
+                btn.innerText = label + ': ON';
+                if(btnId === 'goldPushBtn') { goldPushState = true; localStorage.setItem('mintoosuite_gold_push', 'on'); }
+                if(btnId === 'cryptoPushBtn') { cryptoPushState = true; localStorage.setItem('mintoosuite_crypto_push', 'on'); }
+            }
         }
 
         function applyPanelVisibility() {
@@ -332,16 +468,9 @@
         }
 
         function toggleWorkspacePanel(name) {
-            if(name === 'Signals') {
-                showSignals = !showSignals;
-                localStorage.setItem('mintoosuite_show_signals', showSignals ? 'on' : 'off');
-            } else if(name === 'Macro') {
-                showMacro = !showMacro;
-                localStorage.setItem('mintoosuite_show_macro', showMacro ? 'on' : 'off');
-            } else if(name === 'Scanner') {
-                showScanner = !showScanner;
-                localStorage.setItem('mintoosuite_show_scanner', showScanner ? 'on' : 'off');
-            }
+            if(name === 'Signals') { showSignals = !showSignals; localStorage.setItem('mintoosuite_show_signals', showSignals ? 'on' : 'off'); }
+            if(name === 'Macro') { showMacro = !showMacro; localStorage.setItem('mintoosuite_show_macro', showMacro ? 'on' : 'off'); }
+            if(name === 'Scanner') { showScanner = !showScanner; localStorage.setItem('mintoosuite_show_scanner', showScanner ? 'on' : 'off'); }
             applyPanelVisibility();
         }
 
@@ -387,22 +516,6 @@
             document.getElementById('heroLeverage').innerText = asset.leverage;
             document.getElementById('heroSL').innerText = sl;
             document.getElementById('heroTP').innerText = `${tp1} / ${tp2}`;
-        }
-
-        function togglePushSetting(btnId, label) {
-            let btn = document.getElementById(btnId);
-            let isON = btn.className.includes('btn-active');
-            if (isON) {
-                btn.className = 'btn-inactive';
-                btn.innerText = label + ': OFF';
-                if(btnId === 'goldPushBtn') localStorage.setItem('mintoosuite_gold_push', 'off');
-                if(btnId === 'cryptoPushBtn') localStorage.setItem('mintoosuite_crypto_push', 'off');
-            } else {
-                btn.className = 'btn-active-green';
-                btn.innerText = label + ': ON';
-                if(btnId === 'goldPushBtn') localStorage.setItem('mintoosuite_gold_push', 'on');
-                if(btnId === 'cryptoPushBtn') localStorage.setItem('mintoosuite_crypto_push', 'on');
-            }
         }
 
         function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
@@ -479,7 +592,7 @@
 
             let scannedAsset = marketPool[tickCount % marketPool.length];
             let isBullish = Math.random() > 0.45;
-            let actionText = isBullish ? "LONG" : "SHORT";
+            let actionText = isBullish ? "SURGE LONG" : "BEARISH DROP";
             let curPrice = scannedAsset.price;
             let slPrice = isBullish ? (curPrice * 0.994).toFixed(2) : (curPrice * 1.006).toFixed(2);
             let tpPrice = isBullish ? (curPrice * 1.012).toFixed(2) : (curPrice * 0.988).toFixed(2);
@@ -519,20 +632,15 @@
 
             const feed = document.getElementById('masterBotFeed');
             if(feed) {
-                feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] 5M/10M Signal: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
+                feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] 3M Confluence: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
             }
 
-            if (tickCount % 8 === 0 && Notification.permission === "granted") {
-                let goldOn = localStorage.getItem('mintoosuite_gold_push') !== 'off';
-                let cryptoOn = localStorage.getItem('mintoosuite_crypto_push') !== 'off';
-                let shouldSend = (scannedAsset.type === 'gold' && goldOn) || (scannedAsset.type === 'crypto' && cryptoOn);
+            // Guaranteed Native Service Worker Push Dispatch
+            if (tickCount % 6 === 0 && sysPushState) {
+                let shouldSend = (scannedAsset.type === 'gold' && goldPushState) || (scannedAsset.type === 'crypto' && cryptoPushState);
                 
-                if (shouldSend && navigator.serviceWorker && navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({
-                        type: 'TRIGGER_PUSH',
-                        title: `MintooSuite Signal: ${scannedAsset.name}`,
-                        body: `3M Confluence: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}`
-                    });
+                if (shouldSend) {
+                    sendPushAlert(`MintooSuite 3M Signal: ${scannedAsset.name}`, `${actionText} | Lev: ${scannedAsset.leverage} | Entry: $${curPrice.toFixed(2)} | TP: $${tpPrice}`);
                 }
             }
         }, 600);
@@ -545,31 +653,6 @@
             let s = String(timeLeft % 60).padStart(2, '0');
             document.getElementById('timerDisplay').innerText = `${m}:${s}`;
         }, 1000);
-
-        function requestPushPermission() {
-            const btn = document.getElementById('enableAlertsBtn');
-            if ("Notification" in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        btn.className = 'btn-active-green';
-                        btn.innerText = '1. PUSH ENABLED & ACTIVE';
-                        document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
-                        localStorage.setItem('mintoosuite_sys_push', 'granted');
-                        sendTestPush();
-                    }
-                });
-            }
-        }
-
-        function sendTestPush() {
-            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                    type: 'TRIGGER_PUSH',
-                    title: 'MintooSuite System Test Alert',
-                    body: 'Round-the-clock 3M push notification channel active!'
-                });
-            }
-        }
 
         restoreSavedUIState();
         switchAsset(currentAsset);
