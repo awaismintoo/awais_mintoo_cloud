@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
     <meta name="theme-color" content="#030712">
     <title>MintooSuite - Quantum Sovereign Terminal</title>
     <style>
@@ -113,7 +113,7 @@
     <div class="card">
         <div class="card-header"><h3>Institutional Audit Log</h3></div>
         <div class="audit-box" id="auditLog">
-            [SYS] 60FPS Engine Initialized.<br>[SYS] Service Worker Registered.
+            [SYS] 60FPS Engine Initialized.<br>[SYS] Service Worker Registered (/sw.js).
         </div>
         <div class="btn-group">
             <button class="btn" onclick="executeOrder('BUY')">Execute Buy</button>
@@ -122,9 +122,11 @@
     </div>
 
     <script>
-        // Register Service Worker
+        // Register Root Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/sw.js').catch(err => console.log(err));
+            navigator.serviceWorker.register('/sw.js').then(() => {
+                console.log('SW Registered');
+            }).catch(err => console.log('SW Error:', err));
         }
 
         // 60FPS Neon Logo
@@ -270,7 +272,7 @@
             if (notifMode !== 'STOP' && 'Notification' in window && Notification.permission === 'granted') {
                 new Notification('MintooSuite 3M Alert', {
                     body: activeMarket + ' ' + sigText + ' @ $' + price.toFixed(2),
-                    icon: '/static/icon-192.png',
+                    icon: '/icon-192.png',
                     silent: (notifMode === 'SILENT')
                 });
             }
