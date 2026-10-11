@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#0d1117">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace; }
-        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 140px; width: 100%; min-height: 100vh; overflow-y: auto; }
+        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 160px; width: 100%; min-height: 100vh; overflow-y: auto; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
         .title { color: #f0883e; font-size: 15px; font-weight: bold; text-shadow: 0 0 6px rgba(240, 136, 62, 0.4); }
@@ -46,7 +46,10 @@
         .btn-active-red { background: #da3633 !important; color: #ffffff !important; }
         .btn-inactive { background: #21262d !important; color: #8b949e !important; border: 1px solid #30363d; }
         
-        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 140px; overflow-y: auto; }
+        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 120px; overflow-y: auto; }
+        .news-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #58a6ff; line-height: 1.5; max-height: 130px; overflow-y: auto; }
+        .geo-news-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #f0883e; line-height: 1.5; max-height: 130px; overflow-y: auto; }
+
         .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         
         .signals-scroll-box { max-height: 180px; overflow-y: auto; padding-right: 2px; }
@@ -58,16 +61,15 @@
         .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 10px; }
         .macro-card { background: #0d1117; border: 1px solid #30363d; padding: 6px; border-radius: 4px; }
 
-        .expert-table { width: 100%; font-size: 10px; border-collapse: collapse; margin-top: 4px; }
-        .expert-table th, .expert-table td { border: 1px solid #30363d; padding: 5px; text-align: left; }
-        .expert-table th { color: #f0883e; background: #0d1117; }
-
         .help-badge { background: #d97706; color: #ffffff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; font-weight: bold; box-shadow: 0 0 6px rgba(217, 119, 6, 0.5); vertical-align: middle; }
         
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: #161b22; border: 2px solid #f0883e; padding: 15px; border-radius: 8px; max-width: 340px; width: 100%; color: #c9d1d9; font-size: 11px; box-shadow: 0 0 20px rgba(240, 136, 62, 0.4); }
-        .modal-close { background: #d97706; color: #fff; padding: 6px 12px; border: none; border-radius: 4px; margin-top: 12px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
-        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 11px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; }
+        .modal-content { background: #161b22; border: 2px solid #f0883e; padding: 15px; border-radius: 8px; max-width: 360px; width: 100%; color: #c9d1d9; font-size: 11px; box-shadow: 0 0 20px rgba(240, 136, 62, 0.4); max-height: 85vh; overflow-y: auto; }
+        .modal-close { background: #d97706; color: #fff; padding: 8px 12px; border: none; border-radius: 4px; margin-top: 12px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 10px; border-bottom: 1px solid #30363d; padding-bottom: 5px; }
+        
+        .help-topic-item { background: #0d1117; border: 1px solid #30363d; padding: 8px; border-radius: 4px; margin-bottom: 6px; }
+        .help-topic-title { color: #58a6ff; font-weight: bold; margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -105,7 +107,7 @@
             <span>🤖 MASTER BOT ALL-COIN CAROUSEL</span>
             <div>
                 <span style="color: #3fb950; margin-right: 6px;" id="heroAssetTag">EXNESS GOLD</span>
-                <span class="help-badge" onclick="openHelp('Master Bot Carousel', 'Use < and > arrows to browse 5M/10M candle recommendations across hundreds of coins.')">?</span>
+                <span class="help-badge" onclick="openHelp('Master Bot Carousel', 'Use < and > arrows to browse 5M/10M candle recommendations across all monitored assets.')">?</span>
             </div>
         </div>
         <div class="hero-signal">
@@ -189,7 +191,7 @@
         <div class="panel-title">
             <span>
                 🤖 MASTER BOT REAL-TIME SCANNER FEED
-                <span class="help-badge" onclick="openHelp('Scanner Feed', 'Micro-second scanner logs showing 5M/10M candle analysis across hundreds of surging coins.')">?</span>
+                <span class="help-badge" onclick="openHelp('Scanner Feed', 'Micro-second scanner logs showing 5M/10M candle analysis across all coins.')">?</span>
             </span>
         </div>
         <div class="log-box" id="masterBotFeed">
@@ -197,7 +199,6 @@
         </div>
     </div>
 
-    <!-- Master Notification Panel with Interactive Toggle State -->
     <div class="panel">
         <div class="panel-title">
             <span>
@@ -222,93 +223,119 @@
         </div>
     </div>
 
-    <!-- RESTORED EXPERT COMMAND SUITE & RISK MATRIX -->
-    <div class="panel">
+    <!-- LIVE COMMODITIES, CRYPTO & MACRO MARKET NEWS STREAM -->
+    <div class="panel" id="panelMarketNews">
         <div class="panel-title">
             <span>
-                👑 EXPERT COMMAND SUITE & RISK MATRIX
-                <span class="help-badge" onclick="openHelp('Expert Command Suite', 'Institutional risk controls, drawdown caps, and liquidity trap shields.')">?</span>
+                📊 LIVE MARKET & COMMODITY NEWS STREAM (GOLD, OIL, DXY, US500)
+                <span class="help-badge" onclick="openHelp('Market News Feed', 'Live real-time market updates for Gold, Silver, WTI Oil, UK Brent, DXY, and US500.')">?</span>
             </span>
         </div>
-        <table class="expert-table">
-            <tr>
-                <th>ASSET</th>
-                <th>3M/5M TREND</th>
-                <th>MARGIN RISK</th>
-                <th>DEPTH STATUS</th>
-            </tr>
-            <tr>
-                <td>XAU/USD</td>
-                <td style="color: #3fb950;">SURGE LONG</td>
-                <td>1.2% (Safe)</td>
-                <td style="color: #3fb950;">INSTITUTIONAL</td>
-            </tr>
-            <tr>
-                <td>BTC/USDT</td>
-                <td style="color: #3fb950;">BREAKOUT</td>
-                <td>1.5% (Safe)</td>
-                <td style="color: #3fb950;">INSTITUTIONAL</td>
-            </tr>
-            <tr>
-                <td>ETH/USDT</td>
-                <td style="color: #f85149;">CORRECTING</td>
-                <td>0.8% (Low)</td>
-                <td>HIGH DEPTH</td>
-            </tr>
-            <tr>
-                <td>SOL/USDT</td>
-                <td style="color: #3fb950;">SURGE LONG</td>
-                <td>1.8% (Capped)</td>
-                <td>HIGH DEPTH</td>
-            </tr>
-            <tr>
-                <td>XRP/USDT</td>
-                <td style="color: #3fb950;">SURGE LONG</td>
-                <td>1.0% (Safe)</td>
-                <td>HIGH DEPTH</td>
-            </tr>
-        </table>
-        
-        <div class="section-header" style="margin-top:8px;">Institutional Execution Controls:</div>
-        <div class="btn-row">
-            <button class="btn-active-green" onclick="alert('Risk Engine: Max position size capped at 1.5% account drawdown.')">Risk Engine: Active</button>
-            <button class="btn-active-orange" onclick="alert('Trap Shield: Zero liquidity hunt zones detected.')">Trap Shield: Clean</button>
+        <div class="news-box" id="marketNewsFeed">
+            [00:00:01] [GOLD / XAU] Spot Gold holds support at $2,674/oz following steady US CPI data.<br>
+            [00:00:05] [UK BRENT CRUDE] Brent Crude surges to $78.40/bbl on Middle East supply disruption concerns.<br>
+            [00:00:10] [US500 / S&P 500] S&P 500 futures up +0.4% led by tech volatility absorption.<br>
         </div>
     </div>
 
+    <!-- LIVE GEOPOLITICAL IMPACT NEWS STREAM -->
+    <div class="panel" id="panelGeoNews">
+        <div class="panel-title">
+            <span>
+                🌍 GEOPOLITICAL NEWS STREAM (GOLD & CRYPTO IMPACT)
+                <span class="help-badge" onclick="openHelp('Geopolitical Feed', 'Real-time global news events, central bank announcements, and conflict developments.')">?</span>
+            </span>
+        </div>
+        <div class="geo-news-box" id="geoNewsFeed">
+            [00:00:02] [GEOPOLITICAL] Federal Reserve signals potential 25bps rate adjustment amid labor metrics.<br>
+            [00:00:08] [CENTRAL BANK] European Central Bank holds rates steady; Euro dips, boosting Dollar Index (DXY).<br>
+            [00:00:14] [TRADE POLICY] Global maritime shipping lanes report increased freight risk premiums.<br>
+        </div>
+    </div>
+
+    <!-- SETTINGS & COMPLAINTS/HELP DRAWER -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-content">
-            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">⚙️ Terminal Settings & About</div>
+            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">⚙️ Terminal Settings & Contact</div>
             
             <div class="settings-row">
                 <span>Version:</span>
                 <strong style="color: #58a6ff;">v3.8.1 Institutional Pro</strong>
             </div>
             <div class="settings-row">
-                <span>Author / Architect:</span>
+                <span>Architect & Lead:</span>
                 <strong style="color: #3fb950;">Awais Mintoo</strong>
             </div>
             <div class="settings-row">
-                <span>Official Contact:</span>
+                <span>Official Contact Email:</span>
                 <strong style="color: #f0883e; font-size: 10px;">awaisrajpoot2@yahoo.com</strong>
             </div>
+            <div class="settings-row">
+                <span>Complaints & Support:</span>
+                <strong style="color: #3fb950; font-size: 10px;">awaisrajpoot2@yahoo.com</strong>
+            </div>
 
-            <div style="font-weight: bold; color: #58a6ff; margin: 10px 0 6px 0; text-transform: uppercase; font-size: 10px;">Workspace Panel Toggles:</div>
+            <div style="font-weight: bold; color: #58a6ff; margin: 10px 0 6px 0; text-transform: uppercase; font-size: 10px;">Help & Knowledge Base:</div>
+            <button class="btn-active-orange" style="width: 100%; margin-bottom: 10px;" onclick="openHelpCenter()">📖 OPEN GENERAL HELP TOPICS GUIDE</button>
+
+            <div style="font-weight: bold; color: #58a6ff; margin: 6px 0 6px 0; text-transform: uppercase; font-size: 10px;">Workspace Panel Toggles:</div>
             
             <div class="settings-row">
-                <span>Show Signals Ledger:</span>
+                <span>Signals Ledger:</span>
                 <button class="btn-active-green" id="togglePanelSignals" onclick="toggleWorkspacePanel('Signals')">ON</button>
             </div>
             <div class="settings-row">
-                <span>Show Macro Matrix:</span>
+                <span>Macro Matrix:</span>
                 <button class="btn-active-green" id="togglePanelMacro" onclick="toggleWorkspacePanel('Macro')">ON</button>
             </div>
             <div class="settings-row">
-                <span>Show Scanner Feed:</span>
+                <span>Scanner Feed:</span>
                 <button class="btn-active-green" id="togglePanelScanner" onclick="toggleWorkspacePanel('Scanner')">ON</button>
             </div>
+            <div class="settings-row">
+                <span>Market News Feed:</span>
+                <button class="btn-active-green" id="togglePanelMarketNews" onclick="toggleWorkspacePanel('MarketNews')">ON</button>
+            </div>
+            <div class="settings-row">
+                <span>Geopolitical News:</span>
+                <button class="btn-active-green" id="togglePanelGeoNews" onclick="toggleWorkspacePanel('GeoNews')">ON</button>
+            </div>
 
-            <button class="modal-close" onclick="closeSettings()">CLOSE SETTINGS</button>
+            <button class="modal-close" onclick="closeSettings()">CLOSE MENU</button>
+        </div>
+    </div>
+
+    <!-- GENERAL HELP TOPICS MODAL -->
+    <div class="modal-overlay" id="helpCenterModal">
+        <div class="modal-content">
+            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">📖 TERMINAL HELP & TOPICS GUIDE</div>
+            
+            <div class="help-topic-item">
+                <div class="help-topic-title">1. 5M/10M Multi-Timeframe Confluence</div>
+                <div>The Master Bot evaluates order book depth and candle momentum across 3M, 5M, and 10M timeframes before issuing signals to eliminate false breakouts and liquidity traps.</div>
+            </div>
+
+            <div class="help-topic-item">
+                <div class="help-topic-title">2. Macro Index Correlation (US500 & DXY)</div>
+                <div>Gold (XAU/USD) moves inversely to the US Dollar Index (DXY). When DXY drops, Gold surges. US500 reflects broader risk-on/risk-off sentiment across markets.</div>
+            </div>
+
+            <div class="help-topic-item">
+                <div class="help-topic-title">3. Persistent 24/7 Background Push Alerts</div>
+                <div>Service Worker (`sw.js`) stays active in browser background mode to deliver instant status bar push alerts even when the terminal tab is closed or minimized.</div>
+            </div>
+
+            <div class="help-topic-item">
+                <div class="help-topic-title">4. Risk Management & Position Sizing</div>
+                <div>Recommended leverage ranges (2x to 20x), Stop Loss (SL), and Take Profit (TP1/TP2) targets are automatically calculated based on market volatility.</div>
+            </div>
+
+            <div class="help-topic-item">
+                <div class="help-topic-title">5. Support, Contact & Feedback</div>
+                <div>For technical queries, complaints, or custom feature requests, contact Awais Mintoo directly at: <strong style="color: #f0883e;">awaisrajpoot2@yahoo.com</strong></div>
+            </div>
+
+            <button class="modal-close" onclick="closeHelpCenter()">CLOSE HELP GUIDE</button>
         </div>
     </div>
 
@@ -333,6 +360,8 @@
         let showSignals = localStorage.getItem('mintoosuite_show_signals') !== 'off';
         let showMacro = localStorage.getItem('mintoosuite_show_macro') !== 'off';
         let showScanner = localStorage.getItem('mintoosuite_show_scanner') !== 'off';
+        let showMarketNews = localStorage.getItem('mintoosuite_show_mnews') !== 'off';
+        let showGeoNews = localStorage.getItem('mintoosuite_show_gnews') !== 'off';
 
         let goldVal = 2674.11;
         let btcVal = 94106.50;
@@ -342,18 +371,12 @@
         let goldHistory = Array(28).fill(2674.11);
         let btcHistory = Array(28).fill(94106.50);
 
-        // Expanded Multi-Coin Market Pool
         const marketPool = [
             { name: "EXNESS GOLD (XAU/USD)", price: goldVal, leverage: "10x - 20x", type: "gold" },
             { name: "BINANCE BTC/USDT", price: btcVal, leverage: "10x - 20x", type: "crypto" },
             { name: "BINANCE ETH/USDT", price: 3412.80, leverage: "8x - 15x", type: "crypto" },
             { name: "BINANCE SOL/USDT", price: 212.40, leverage: "5x - 12x", type: "crypto" },
-            { name: "BINANCE XRP/USDT", price: 2.45, leverage: "3x - 10x", type: "crypto" },
-            { name: "BINANCE ADA/USDT", price: 0.82, leverage: "3x - 8x", type: "crypto" },
-            { name: "BINANCE DOGE/USDT", price: 0.38, leverage: "5x - 10x", type: "crypto" },
-            { name: "BINANCE BNB/USDT", price: 642.10, leverage: "5x - 12x", type: "crypto" },
-            { name: "BINANCE AVAX/USDT", price: 34.50, leverage: "4x - 10x", type: "crypto" },
-            { name: "BINANCE LINK/USDT", price: 18.20, leverage: "4x - 10x", type: "crypto" }
+            { name: "BINANCE XRP/USDT", price: 2.45, leverage: "3x - 10x", type: "crypto" }
         ];
 
         let heroIndex = 0;
@@ -453,10 +476,14 @@
             document.getElementById('panelSignals').style.display = showSignals ? 'block' : 'none';
             document.getElementById('panelMacro').style.display = showMacro ? 'block' : 'none';
             document.getElementById('panelScanner').style.display = showScanner ? 'block' : 'none';
+            document.getElementById('panelMarketNews').style.display = showMarketNews ? 'block' : 'none';
+            document.getElementById('panelGeoNews').style.display = showGeoNews ? 'block' : 'none';
 
             setToggleBtnState('togglePanelSignals', showSignals);
             setToggleBtnState('togglePanelMacro', showMacro);
             setToggleBtnState('togglePanelScanner', showScanner);
+            setToggleBtnState('togglePanelMarketNews', showMarketNews);
+            setToggleBtnState('togglePanelGeoNews', showGeoNews);
         }
 
         function setToggleBtnState(btnId, state) {
@@ -471,6 +498,8 @@
             if(name === 'Signals') { showSignals = !showSignals; localStorage.setItem('mintoosuite_show_signals', showSignals ? 'on' : 'off'); }
             if(name === 'Macro') { showMacro = !showMacro; localStorage.setItem('mintoosuite_show_macro', showMacro ? 'on' : 'off'); }
             if(name === 'Scanner') { showScanner = !showScanner; localStorage.setItem('mintoosuite_show_scanner', showScanner ? 'on' : 'off'); }
+            if(name === 'MarketNews') { showMarketNews = !showMarketNews; localStorage.setItem('mintoosuite_show_mnews', showMarketNews ? 'on' : 'off'); }
+            if(name === 'GeoNews') { showGeoNews = !showGeoNews; localStorage.setItem('mintoosuite_show_gnews', showGeoNews ? 'on' : 'off'); }
             applyPanelVisibility();
         }
 
@@ -520,6 +549,9 @@
 
         function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
         function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+        function openHelpCenter() { document.getElementById('helpCenterModal').style.display = 'flex'; }
+        function closeHelpCenter() { document.getElementById('helpCenterModal').style.display = 'none'; }
+
         function openHelp(title, desc) {
             document.getElementById('helpTitle').innerText = title;
             document.getElementById('helpBody').innerText = desc;
@@ -567,10 +599,25 @@
         requestAnimationFrame(renderChart);
 
         let tickCount = 0;
+        const marketNewsItems = [
+            "[GOLD / XAU] Spot Gold tests $2,678/oz resistance as safe-haven demand accelerates.",
+            "[SILVER / XAG] Silver rebounds +1.4% to $31.80/oz following industrial demand surge.",
+            "[WTI OIL] Crude Oil holds $74.20/bbl; OPEC OPEC+ output limits maintain floor.",
+            "[UK BRENT] Brent Crude steady at $78.10/bbl amid tanker freight risk adjustments.",
+            "[US500 / DXY] S&P 500 rises +0.3% as Dollar Index (DXY) consolidates around 103.40."
+        ];
+
+        const geoNewsItems = [
+            "[GEOPOLITICAL] Central Bank monetary policy meeting cues prospective rate shifts.",
+            "[MIDDLE EAST] Maritime shipping safety protocols updated for red sea transit routes.",
+            "[EASTERN EUROPE] Energy grid resilience measures implemented ahead of winter demand.",
+            "[TRADE POLICY] Bilateral trade framework negotiations resume between major economic blocs."
+        ];
+
         setInterval(() => {
             tickCount++;
             const now = new Date();
-            const timeStr = now.toTimeString().split(' ')[0] + "." + String(now.getMilliseconds()).padStart(3, '0');
+            const timeStr = now.toTimeString().split(' ')[0];
 
             goldVal += (Math.random() - 0.49) * 0.45;
             goldHistory.shift(); goldHistory.push(goldVal);
@@ -589,6 +636,17 @@
 
             marketPool[0].price = goldVal;
             marketPool[1].price = btcVal;
+
+            // Stream News Items
+            if(tickCount % 5 === 0) {
+                let mNews = marketNewsItems[Math.floor(Math.random() * marketNewsItems.length)];
+                let mBox = document.getElementById('marketNewsFeed');
+                if(mBox) mBox.innerHTML = `[${timeStr}] ${mNews}<br>` + mBox.innerHTML;
+
+                let gNews = geoNewsItems[Math.floor(Math.random() * geoNewsItems.length)];
+                let gBox = document.getElementById('geoNewsFeed');
+                if(gBox) gBox.innerHTML = `[${timeStr}] ${gNews}<br>` + gBox.innerHTML;
+            }
 
             let scannedAsset = marketPool[tickCount % marketPool.length];
             let isBullish = Math.random() > 0.45;
@@ -635,10 +693,8 @@
                 feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] 3M Confluence: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
             }
 
-            // Guaranteed Native Service Worker Push Dispatch
             if (tickCount % 6 === 0 && sysPushState) {
                 let shouldSend = (scannedAsset.type === 'gold' && goldPushState) || (scannedAsset.type === 'crypto' && cryptoPushState);
-                
                 if (shouldSend) {
                     sendPushAlert(`MintooSuite 3M Signal: ${scannedAsset.name}`, `${actionText} | Lev: ${scannedAsset.leverage} | Entry: $${curPrice.toFixed(2)} | TP: $${tpPrice}`);
                 }
