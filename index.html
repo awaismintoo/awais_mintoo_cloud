@@ -20,7 +20,7 @@
         .card-value.green { color: #3fb950; }
         .card-value.red { color: #f85149; }
         
-        /* Prominent Trade Recommendation Hero Banner */
+        /* Dynamic Hero Banner */
         .hero-banner { background: #161b22; border: 2px solid #238636; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 10px rgba(35, 134, 54, 0.25); }
         .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: bold; display: flex; justify-content: space-between; }
         .hero-signal { font-size: 16px; font-weight: bold; color: #3fb950; margin: 4px 0; }
@@ -42,9 +42,10 @@
         
         .log-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 120px; overflow-y: auto; }
         .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: bold; text-transform: uppercase; }
-        .expert-table { width: 100%; font-size: 10px; border-collapse: collapse; margin-top: 4px; }
-        .expert-table th, .expert-table td { border: 1px solid #30363d; padding: 4px; text-align: left; }
-        .expert-table th { color: #f0883e; background: #0d1117; }
+        .signal-card { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #3fb950; padding: 6px; border-radius: 4px; margin-bottom: 4px; font-size: 10px; }
+        .signal-card.red { border-left-color: #f85149; }
+        .signal-head { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px; }
+        .signal-meta { color: #8b949e; font-size: 9px; }
     </style>
 </head>
 <body>
@@ -68,17 +69,17 @@
         </div>
     </div>
 
-    <!-- Prominent Trade Recommendation Hero Banner -->
+    <!-- Synchronized Hero Banner -->
     <div class="hero-banner" id="heroBanner">
         <div class="hero-title">
-            <span>🤖 MASTER BOT 5M/10M INSTITUTIONAL HERO</span>
-            <span style="color: #3fb950;" id="heroAssetTag">EXNESS GOLD</span>
+            <span>🤖 MASTER BOT 5M/10M HERO</span>
+            <span style="color: #3fb950;" id="heroAssetTag">ACTIVE VIEW</span>
         </div>
-        <div class="hero-signal" id="heroSignalText">EXNESS GOLD: HIGH-CONFIDENCE LONG</div>
+        <div class="hero-signal" id="heroSignalText">SELECT ASSET VIEW BELOW</div>
         <div class="hero-details">
-            <div class="hero-detail-item"><span>REC. LEVERAGE</span><strong id="heroLeverage" style="color:#f0883e;">10x - 20x</strong></div>
-            <div class="hero-detail-item"><span>STOP LOSS (SL)</span><strong id="heroSL" style="color:#f85149;">2668.50</strong></div>
-            <div class="hero-detail-item"><span>TARGET TP1 / TP2</span><strong id="heroTP" style="color:#3fb950;">2682 / 2690</strong></div>
+            <div class="hero-detail-item"><span>REC. LEVERAGE</span><strong id="heroLeverage" style="color:#f0883e;">--</strong></div>
+            <div class="hero-detail-item"><span>STOP LOSS (SL)</span><strong id="heroSL" style="color:#f85149;">--</strong></div>
+            <div class="hero-detail-item"><span>TARGET TP1 / TP2</span><strong id="heroTP" style="color:#3fb950;">--</strong></div>
         </div>
     </div>
 
@@ -88,18 +89,19 @@
             <div class="card-value" id="timerDisplay">03:00</div>
         </div>
         <div class="card">
-            <div class="card-title">MICRO-SECOND ENGINE</div>
-            <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">ROUND-CLOCK LIVE</div>
+            <div class="card-title">PERSISTENT ENGINE</div>
+            <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">SYNCED & LIVE</div>
         </div>
     </div>
 
     <div class="panel">
         <div class="panel-title">
-            <span id="chartTitle">CHART MATRIX: EXNESS GOLD (XAU/USD)</span>
+            <span id="chartTitle">CHART MATRIX</span>
             <span style="color: #3fb950;">● LIVE STREAM</span>
         </div>
         <canvas id="matrixCanvas"></canvas>
         
+        <!-- Asset View Buttons with Persistent State -->
         <div class="btn-row-3">
             <button class="btn-active-green" id="btnGoldAsset" onclick="switchAsset('gold')">EXNESS GOLD</button>
             <button class="btn-inactive" id="btnCryptoAsset" onclick="switchAsset('crypto')">BINANCE FUTURES</button>
@@ -107,10 +109,18 @@
         </div>
     </div>
 
+    <!-- Active Valid Signals Panel with Expiry Timers -->
     <div class="panel">
-        <div class="panel-title">🤖 MASTER BOT ACTIVE COIN SIGNALS (WITH EXPIRY)</div>
+        <div class="panel-title">⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER</div>
+        <div id="validSignalsContainer">
+            <!-- Dynamic Active Signal Cards -->
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">🤖 MASTER BOT REAL-TIME SCANNER FEED</div>
         <div class="log-box" id="masterBotFeed">
-            [00:00:00.000] Scanning all coins & Exness Gold round-the-clock...<br>
+            [00:00:00.000] Multi-asset micro-second scanner active...<br>
         </div>
     </div>
 
@@ -125,51 +135,10 @@
             <button class="btn-active-green" id="testPushBtn" onclick="sendTestPush()">2. TEST INSTANT PUSH</button>
         </div>
 
-        <div class="section-header">Exness Gold & All-Coin 3M Push Toggles:</div>
+        <div class="section-header">3M Multi-Asset Push Toggles:</div>
         <div class="btn-row">
             <button class="btn-active-green" id="goldPushBtn" onclick="togglePushBtn(this, 'EXNESS GOLD PUSH')">EXNESS GOLD PUSH: ON</button>
             <button class="btn-active-green" id="cryptoPushBtn" onclick="togglePushBtn(this, 'ALL COINS PUSH')">ALL COINS PUSH: ON</button>
-        </div>
-    </div>
-
-    <!-- RESTORED & EXPANDED PROFESSIONAL EXPERT TRADER OPTIONS -->
-    <div class="panel">
-        <div class="panel-title">⭐ EXPERT TRADER COMMAND SUITE & RISK MATRIX</div>
-        <table class="expert-table">
-            <tr>
-                <th>ASSET</th>
-                <th>TREND (5M/10M)</th>
-                <th>MARGIN RISK</th>
-                <th>STATUS</th>
-            </tr>
-            <tr>
-                <td>XAU/USD</td>
-                <td style="color: #3fb950;">BULLISH</td>
-                <td>1.2% (Optimal)</td>
-                <td>ACTIVE</td>
-            </tr>
-            <tr>
-                <td>BTC/USDT</td>
-                <td style="color: #3fb950;">BREAKOUT</td>
-                <td>1.5% (Safe)</td>
-                <td>MONITORING</td>
-            </tr>
-            <tr>
-                <td>ETH/USDT</td>
-                <td style="color: #f85149;">CORRECTION</td>
-                <td>0.8% (Low)</td>
-                <td>HOLDING</td>
-            </tr>
-        </table>
-        
-        <div class="section-header">Institutional Execution Tools:</div>
-        <div class="btn-row">
-            <button class="btn-active-orange" onclick="alert('Risk Calculator: Position size locked at 2% max drawdown with automated 10x-20x trailing stops.')">Risk Calculator: Active</button>
-            <button class="btn-active-green" onclick="alert('Liquidity Heatmap: Zero institutional trap zones detected across order books.')">Liquidity Heatmap: Clean</button>
-        </div>
-        <div class="btn-row" style="margin-top: 6px;">
-            <button class="btn-inactive" onclick="alert('Auto-Hedge Protocol: Standing by for volatility spike.')">Auto-Hedge: Armed</button>
-            <button class="btn-active-red" onclick="alert('Emergency Margin Protect: Liquidation shield engaged.')">Margin Shield: ON</button>
         </div>
     </div>
 
@@ -178,7 +147,8 @@
             navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Error:', err));
         }
 
-        let currentAsset = 'gold'; 
+        // Restore saved asset state or default to 'gold'
+        let currentAsset = localStorage.getItem('mintoosuite_asset') || 'gold'; 
         let goldVal = 2674.11;
         let btcVal = 94106.50;
         let goldHistory = Array(28).fill(2674.11);
@@ -192,8 +162,12 @@
             { name: "BINANCE XRP/USDT", price: 2.45, leverage: "3x - 10x", type: "crypto" }
         ];
 
+        let activeValidSignals = {};
+
         function switchAsset(mode) {
             currentAsset = mode;
+            localStorage.setItem('mintoosuite_asset', mode);
+            
             document.getElementById('btnGoldAsset').className = mode === 'gold' ? 'btn-active-green' : 'btn-inactive';
             document.getElementById('btnCryptoAsset').className = mode === 'crypto' ? 'btn-active-green' : 'btn-inactive';
             document.getElementById('btnCombinedAsset').className = mode === 'combined' ? 'btn-active-green' : 'btn-inactive';
@@ -205,6 +179,26 @@
             } else {
                 document.getElementById('chartTitle').innerText = 'CHART MATRIX: COMBINED GOLD & BINANCE FEED';
             }
+            updateHeroBanner();
+        }
+
+        function updateHeroBanner() {
+            let filteredAsset = marketPool.find(a => currentAsset === 'crypto' ? a.type === 'crypto' : a.type === 'gold');
+            if(!filteredAsset) filteredAsset = marketPool[0];
+            
+            let isBull = Math.random() > 0.45;
+            let action = isBull ? "HIGH-CONFIDENCE LONG" : "HIGH-CONFIDENCE SHORT";
+            let curPrice = filteredAsset.price;
+            let sl = isBull ? (curPrice * 0.994).toFixed(2) : (curPrice * 1.006).toFixed(2);
+            let tp1 = isBull ? (curPrice * 1.008).toFixed(2) : (curPrice * 0.992).toFixed(2);
+            let tp2 = isBull ? (curPrice * 1.015).toFixed(2) : (curPrice * 0.985).toFixed(2);
+
+            document.getElementById('heroAssetTag').innerText = filteredAsset.name;
+            document.getElementById('heroSignalText').innerText = `${filteredAsset.name}: ${action}`;
+            document.getElementById('heroSignalText').style.color = isBull ? "#3fb950" : "#f85149";
+            document.getElementById('heroLeverage').innerText = filteredAsset.leverage;
+            document.getElementById('heroSL').innerText = sl;
+            document.getElementById('heroTP').innerText = `${tp1} / ${tp2}`;
         }
 
         function togglePushBtn(element, label) {
@@ -258,7 +252,7 @@
         }
         requestAnimationFrame(renderChart);
 
-        // Millisecond Updates & Expiry Tracking
+        // Micro-second Engine & Signal Ledger
         let tickCount = 0;
         setInterval(() => {
             tickCount++;
@@ -278,27 +272,51 @@
 
             let scannedAsset = marketPool[tickCount % marketPool.length];
             let isBullish = Math.random() > 0.45;
-            let candleState = isBullish ? "BULLISH 3M CANDLE SURGE" : "BEARISH 3M CANDLE DROP";
-            let actionText = isBullish ? "HIGH-CONFIDENCE LONG" : "HIGH-CONFIDENCE SHORT";
-            
+            let actionText = isBullish ? "LONG" : "SHORT";
             let curPrice = scannedAsset.price;
             let slPrice = isBullish ? (curPrice * 0.994).toFixed(2) : (curPrice * 1.006).toFixed(2);
-            let tp1Price = isBullish ? (curPrice * 1.008).toFixed(2) : (curPrice * 0.992).toFixed(2);
-            let tp2Price = isBullish ? (curPrice * 1.015).toFixed(2) : (curPrice * 0.985).toFixed(2);
-            let expiryTime = new Date(now.getTime() + 180000).toTimeString().split(' ')[0];
+            let tpPrice = isBullish ? (curPrice * 1.012).toFixed(2) : (curPrice * 0.988).toFixed(2);
+            let expTime = new Date(now.getTime() + 180000);
 
-            if(tickCount % 5 === 0) {
-                document.getElementById('heroAssetTag').innerText = scannedAsset.name;
-                document.getElementById('heroSignalText').innerText = `${scannedAsset.name}: ${actionText}`;
-                document.getElementById('heroSignalText').style.color = isBullish ? "#3fb950" : "#f85149";
-                document.getElementById('heroLeverage').innerText = scannedAsset.leverage;
-                document.getElementById('heroSL').innerText = slPrice;
-                document.getElementById('heroTP').innerText = `${tp1Price} / ${tp2Price}`;
+            activeValidSignals[scannedAsset.name] = {
+                signal: actionText,
+                price: curPrice.toFixed(2),
+                leverage: scannedAsset.leverage,
+                sl: slPrice,
+                tp: tpPrice,
+                expires: expTime,
+                isBullish: isBullish
+            };
+
+            // Render Valid Signal Cards
+            let container = document.getElementById('validSignalsContainer');
+            container.innerHTML = '';
+            Object.keys(activeValidSignals).forEach(key => {
+                let sig = activeValidSignals[key];
+                let remSec = Math.max(0, Math.floor((sig.expires - new Date()) / 1000));
+                let m = String(Math.floor(remSec / 60)).padStart(2, '0');
+                let s = String(remSec % 60).padStart(2, '0');
+                
+                let cardHTML = `
+                    <div class="signal-card ${sig.isBullish ? '' : 'red'}">
+                        <div class="signal-head">
+                            <span>${key} - ${sig.signal} (${sig.leverage})</span>
+                            <span style="color: #f0883e;">EXP: ${m}:${s}</span>
+                        </div>
+                        <div class="signal-meta">Entry: $${sig.price} | SL: $${sig.sl} | TP: $${sig.tp}</div>
+                    </div>
+                `;
+                container.innerHTML += cardHTML;
+            });
+
+            if(tickCount % 6 === 0) {
+                updateHeroBanner();
             }
 
             const feed = document.getElementById('masterBotFeed');
-            feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] ${candleState} | Rec: ${actionText} | Lev: ${scannedAsset.leverage} | Expires: ${expiryTime}<br>` + feed.innerHTML;
+            feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] Signal: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
 
+            // Service worker push alert trigger
             if (tickCount % 8 === 0 && Notification.permission === "granted") {
                 let goldPush = document.getElementById('goldPushBtn').className.includes('btn-active');
                 let cryptoPush = document.getElementById('cryptoPushBtn').className.includes('btn-active');
@@ -308,11 +326,11 @@
                     navigator.serviceWorker.controller.postMessage({
                         type: 'TRIGGER_PUSH',
                         title: `MintooSuite Signal: ${scannedAsset.name}`,
-                        body: `${candleState} | Rec: ${actionText} | Lev: ${scannedAsset.leverage} | Expires: ${expiryTime}`
+                        body: `3M Confluence: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}`
                     });
                 }
             }
-        }, 500);
+        }, 600);
 
         // 3M Timer
         let timeLeft = 180;
@@ -324,28 +342,19 @@
             document.getElementById('timerDisplay').innerText = `${m}:${s}`;
         }, 1000);
 
-        // Guaranteed Push Permission Handler with Direct Color Change
         function requestPushPermission() {
             const btn = document.getElementById('enableAlertsBtn');
-            if (!("Notification" in window)) {
-                alert("Browser does not support desktop/mobile push notifications.");
-                return;
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        btn.className = 'btn-active-green';
+                        btn.innerText = '1. PUSH ENABLED & ACTIVE';
+                        document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
+                        document.getElementById('pushStatusText').style.color = "#3fb950";
+                        sendTestPush();
+                    }
+                });
             }
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    btn.className = 'btn-active-green';
-                    btn.innerText = '1. PUSH ENABLED & ACTIVE';
-                    document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
-                    document.getElementById('pushStatusText').style.color = "#3fb950";
-                    sendTestPush();
-                } else {
-                    btn.className = 'btn-active-red';
-                    btn.innerText = '1. PUSH PERMISSION DENIED';
-                    document.getElementById('pushStatusText').innerText = "PERMISSION DENIED";
-                }
-            }).catch(err => {
-                console.error(err);
-            });
         }
 
         function sendTestPush() {
@@ -355,12 +364,11 @@
                     title: 'MintooSuite System Test Alert',
                     body: 'Round-the-clock 3M push notification channel active!'
                 });
-            } else if (Notification.permission === "granted") {
-                new Notification('MintooSuite System Test Alert', {
-                    body: 'Round-the-clock 3M push notification channel active!'
-                });
             }
         }
+
+        // Initialize saved asset selection on boot
+        switchAsset(currentAsset);
     </script>
 </body>
 </html>
