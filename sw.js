@@ -8,7 +8,6 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'TRIGGER_PUSH') {
-        // Dynamic tag ensures Android stacks multiple separate notifications in the shade
         const uniqueTag = 'mintoo-alert-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
         self.registration.showNotification(event.data.title, {
             body: event.data.body,
