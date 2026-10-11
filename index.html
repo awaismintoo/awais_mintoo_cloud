@@ -8,32 +8,31 @@
     <meta name="theme-color" content="#0d1117">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace; }
-        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 70px; width: 100%; min-height: 100vh; overflow-y: auto; }
+        html, body { background-color: #0b0f19; color: #c9d1d9; padding: 10px; padding-bottom: 90px; width: 100%; min-height: 100vh; overflow-y: auto; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
         .title { color: #f0883e; font-size: 15px; font-weight: bold; text-shadow: 0 0 6px rgba(240, 136, 62, 0.4); }
         .subtitle { color: #8b949e; font-size: 9px; }
-        .fps-badge { background: #1f6feb; color: #fff; padding: 3px 6px; font-size: 10px; border-radius: 4px; font-weight: bold; box-shadow: 0 0 8px rgba(31, 111, 235, 0.4); }
+        .fps-badge { background: #1f6feb; color: #fff; padding: 3px 6px; font-size: 10px; border-radius: 4px; font-weight: bold; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
-        .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; box-shadow: inset 0 0 8px rgba(255,255,255,0.02); }
-        .card-title { color: #8b949e; font-size: 9px; margin-bottom: 3px; text-transform: uppercase; display: flex; justify-content: space-between; }
-        .card-value { color: #58a6ff; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px rgba(88, 166, 255, 0.3); }
-        .card-value.green { color: #3fb950; text-shadow: 0 0 6px rgba(63, 185, 80, 0.4); }
-        .card-value.red { color: #f85149; text-shadow: 0 0 6px rgba(248, 81, 73, 0.4); }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; }
+        .card-title { color: #8b949e; font-size: 9px; margin-bottom: 3px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        .card-value { color: #58a6ff; font-size: 16px; font-weight: bold; }
+        .card-value.green { color: #3fb950; }
+        .card-value.red { color: #f85149; }
         
         /* 3D Neon Hero Carousel Banner */
-        .hero-banner { background: #161b22; border: 2px solid #238636; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 12px rgba(35, 134, 54, 0.3); position: relative; }
+        .hero-banner { background: #161b22; border: 2px solid #238636; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 12px rgba(35, 134, 54, 0.3); }
         .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .hero-signal { font-size: 15px; font-weight: bold; color: #3fb950; margin: 6px 0; text-shadow: 0 0 8px rgba(63, 185, 80, 0.4); display: flex; justify-content: space-between; align-items: center; }
+        .hero-signal { font-size: 15px; font-weight: bold; color: #3fb950; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; }
         .hero-details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: #0d1117; padding: 6px; border-radius: 4px; font-size: 10px; border: 1px solid #30363d; }
         .hero-detail-item { color: #c9d1d9; }
         .hero-detail-item span { color: #8b949e; font-size: 8px; display: block; }
         
         .carousel-btn { background: #21262d; color: #58a6ff; border: 1px solid #30363d; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        .carousel-btn:active { background: #30363d; }
-
-        .panel { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; margin-bottom: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.3); }
+        
+        .panel { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; margin-bottom: 8px; }
         .panel-title { color: #f0883e; font-size: 11px; font-weight: bold; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
         canvas { width: 100%; height: 100px; background: #0d1117; border-radius: 4px; border: 1px solid #30363d; display: block; }
         
@@ -46,10 +45,10 @@
         .btn-active-red { background: #da3633 !important; color: #ffffff !important; }
         .btn-inactive { background: #21262d !important; color: #8b949e !important; border: 1px solid #30363d; }
         
-        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 120px; overflow-y: auto; }
-        .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: bold; text-transform: uppercase; }
+        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 6px; font-size: 10px; border-radius: 4px; color: #3fb950; line-height: 1.4; max-height: 140px; overflow-y: auto; }
+        .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         
-        .signals-scroll-box { max-height: 160px; overflow-y: auto; padding-right: 2px; }
+        .signals-scroll-box { max-height: 180px; overflow-y: auto; padding-right: 2px; }
         .signal-card { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #3fb950; padding: 6px; border-radius: 4px; margin-bottom: 4px; font-size: 10px; }
         .signal-card.red { border-left-color: #f85149; }
         .signal-head { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px; }
@@ -58,8 +57,13 @@
         .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 10px; }
         .macro-card { background: #0d1117; border: 1px solid #30363d; padding: 6px; border-radius: 4px; }
 
-        .info-btn { background: #21262d; color: #58a6ff; border: 1px solid #30363d; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; vertical-align: middle; }
-        .tooltip-card { display: none; position: fixed; bottom: 20px; left: 10px; right: 10px; background: #161b22; border: 2px solid #1f6feb; padding: 10px; border-radius: 6px; color: #c9d1d9; font-size: 11px; z-index: 999; box-shadow: 0 0 15px rgba(31, 111, 235, 0.5); }
+        /* Small Orange Question Mark Help Balloons */
+        .help-badge { background: #d97706; color: #ffffff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; font-weight: bold; box-shadow: 0 0 6px rgba(217, 119, 6, 0.5); vertical-align: middle; }
+        
+        /* Modal Help Popup */
+        .help-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; padding: 20px; }
+        .help-content { background: #161b22; border: 2px solid #f0883e; padding: 15px; border-radius: 8px; max-width: 320px; width: 100%; color: #c9d1d9; font-size: 11px; box-shadow: 0 0 20px rgba(240, 136, 62, 0.4); text-align: center; }
+        .help-close { background: #d97706; color: #fff; padding: 6px 12px; border: none; border-radius: 4px; margin-top: 10px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -76,14 +80,14 @@
         <div class="card">
             <div class="card-title">
                 <span>EXNESS GOLD (XAU/USD)</span>
-                <span class="info-btn" onclick="showHelp('Exness Gold real-time spot pricing feed in USD per ounce.')">?</span>
+                <span class="help-badge" onclick="openHelp('Exness Gold Feed', 'Real-time spot pricing feed for XAU/USD in USD per ounce.')">?</span>
             </div>
             <div class="card-value green" id="goldPrice">2674.11</div>
         </div>
         <div class="card">
             <div class="card-title">
                 <span>BINANCE BTC/USDT</span>
-                <span class="info-btn" onclick="showHelp('Binance Perpetual Futures Bitcoin pricing feed in USDT.')">?</span>
+                <span class="help-badge" onclick="openHelp('Binance Futures Feed', 'Perpetual futures pricing feed for Bitcoin in USDT.')">?</span>
             </div>
             <div class="card-value" id="btcPrice">94,106.50</div>
         </div>
@@ -95,7 +99,7 @@
             <span>🤖 MASTER BOT INSTITUTIONAL CAROUSEL</span>
             <div>
                 <span style="color: #3fb950; margin-right: 6px;" id="heroAssetTag">EXNESS GOLD</span>
-                <span class="info-btn" onclick="showHelp('Top Hero Carousel: Use < > arrows to browse 5M/10M candle recommendations for all monitored coins.')">?</span>
+                <span class="help-badge" onclick="openHelp('Master Bot Carousel', 'Use < and > arrows to browse 5M/10M candle recommendations across all monitored coins.')">?</span>
             </div>
         </div>
         <div class="hero-signal">
@@ -114,14 +118,14 @@
         <div class="card">
             <div class="card-title">
                 <span>3M CANDLE TIMER</span>
-                <span class="info-btn" onclick="showHelp('Countdown timer to the next 3M candle close and automated push signal dispatch.')">?</span>
+                <span class="help-badge" onclick="openHelp('3M Candle Timer', 'Countdown to the next 3M candle close and signal dispatch.')">?</span>
             </div>
             <div class="card-value" id="timerDisplay">03:00</div>
         </div>
         <div class="card">
             <div class="card-title">
                 <span>BACKGROUND PUSH</span>
-                <span class="info-btn" onclick="showHelp('Persistent Service Worker mode: Alerts remain active in background even when app is closed.')">?</span>
+                <span class="help-badge" onclick="openHelp('Background Worker', 'Service worker engine keeping push alerts active 24/7.')">?</span>
             </div>
             <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">PERSISTENT ACTIVE</div>
         </div>
@@ -131,7 +135,7 @@
         <div class="panel-title">
             <span>
                 <span id="chartTitle">CHART MATRIX</span>
-                <span class="info-btn" onclick="showHelp('Interactive Candlestick Matrix. Tap buttons below to switch active asset view permanently.')">?</span>
+                <span class="help-badge" onclick="openHelp('Chart Matrix', 'Interactive candlestick matrix. Tap buttons below to switch asset view permanently.')">?</span>
             </span>
             <span style="color: #3fb950;">● LIVE STREAM</span>
         </div>
@@ -149,7 +153,7 @@
         <div class="panel-title">
             <span>
                 ⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER
-                <span class="info-btn" onclick="showHelp('Scrollable ledger of active recommended trade setups across all coins with expiry countdowns.')">?</span>
+                <span class="help-badge" onclick="openHelp('Signals Ledger', 'Scrollable list of active recommended trade setups with expiry countdowns.')">?</span>
             </span>
         </div>
         <div class="signals-scroll-box" id="validSignalsContainer">
@@ -157,12 +161,12 @@
         </div>
     </div>
 
-    <!-- Real-time Macro Correlation Panel (US500 & DXY Impact on Gold) -->
+    <!-- Macro Correlation Panel (US500 & DXY Impact on Gold) -->
     <div class="panel">
         <div class="panel-title">
             <span>
                 📈 MACRO INDEX CORRELATION (US500 & DXY)
-                <span class="info-btn" onclick="showHelp('Monitors US Dollar Index (DXY) and S&P 500 (US500) to predict Exness Gold directional impact.')">?</span>
+                <span class="help-badge" onclick="openHelp('Macro Matrix', 'Monitors US Dollar Index (DXY) and S&P 500 (US500) impact on Exness Gold.')">?</span>
             </span>
         </div>
         <div class="macro-grid">
@@ -183,7 +187,7 @@
         <div class="panel-title">
             <span>
                 🤖 MASTER BOT REAL-TIME SCANNER FEED
-                <span class="info-btn" onclick="showHelp('Micro-second scanner logs showing 5M/10M candle analysis across all coins round-the-clock.')">?</span>
+                <span class="help-badge" onclick="openHelp('Scanner Feed', 'Micro-second scanner logs showing 5M/10M candle analysis across all coins.')">?</span>
             </span>
         </div>
         <div class="log-box" id="masterBotFeed">
@@ -191,12 +195,12 @@
         </div>
     </div>
 
-    <!-- Master Notification Panel with Saved States -->
+    <!-- Master Notification Panel with Persistent Button States -->
     <div class="panel">
         <div class="panel-title">
             <span>
                 🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS
-                <span class="info-btn" onclick="showHelp('Manage push notification permissions and individual asset push channels with state persistence.')">?</span>
+                <span class="help-badge" onclick="openHelp('Notification Panel', 'Manage system push permissions and individual asset push channels with state persistence.')">?</span>
             </span>
             <span style="color: #3fb950;" id="pushStatusText">PUSH READY</span>
         </div>
@@ -206,16 +210,23 @@
             <button class="btn-active-green" id="testPushBtn" onclick="sendTestPush()">2. TEST INSTANT PUSH</button>
         </div>
 
-        <div class="section-header">3M Multi-Asset Push Toggles:</div>
+        <div class="section-header">
+            <span>3M Multi-Asset Push Toggles:</span>
+            <span class="help-badge" onclick="openHelp('Push Toggles', 'Independent toggles for Exness Gold and All-Coin Binance alerts.')">?</span>
+        </div>
         <div class="btn-row">
             <button class="btn-active-green" id="goldPushBtn" onclick="togglePushSetting('goldPushBtn', 'EXNESS GOLD PUSH')">EXNESS GOLD PUSH: ON</button>
             <button class="btn-active-green" id="cryptoPushBtn" onclick="togglePushSetting('cryptoPushBtn', 'ALL COINS PUSH')">ALL COINS PUSH: ON</button>
         </div>
     </div>
 
-    <!-- Explanation Tooltip Popups -->
-    <div class="tooltip-card" id="tooltipCard">
-        <div id="tooltipText">Tooltip explanation...</div>
+    <!-- Help Modal Popup -->
+    <div class="help-modal" id="helpModal">
+        <div class="help-content">
+            <div id="helpTitle" style="font-weight: bold; color: #f0883e; margin-bottom: 6px;">HELP</div>
+            <div id="helpBody" style="margin-bottom: 12px; line-height: 1.4;">Help description...</div>
+            <button class="help-close" onclick="closeHelp()">GOT IT</button>
+        </div>
     </div>
 
     <script>
@@ -223,7 +234,7 @@
             navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Error:', err));
         }
 
-        // Persistent Settings from localStorage
+        // Restore Persistent Settings from localStorage
         let currentAsset = localStorage.getItem('mintoosuite_asset') || 'gold'; 
         let goldPushState = localStorage.getItem('mintoosuite_gold_push') !== 'off';
         let cryptoPushState = localStorage.getItem('mintoosuite_crypto_push') !== 'off';
@@ -325,11 +336,14 @@
             }
         }
 
-        function showHelp(text) {
-            let card = document.getElementById('tooltipCard');
-            document.getElementById('tooltipText').innerText = text;
-            card.style.display = 'block';
-            setTimeout(() => { card.style.display = 'none'; }, 5000);
+        function openHelp(title, desc) {
+            document.getElementById('helpTitle').innerText = title;
+            document.getElementById('helpBody').innerText = desc;
+            document.getElementById('helpModal').style.display = 'flex';
+        }
+
+        function closeHelp() {
+            document.getElementById('helpModal').style.display = 'none';
         }
 
         // Canvas Chart Rendering
