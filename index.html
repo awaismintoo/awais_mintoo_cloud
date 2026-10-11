@@ -75,32 +75,34 @@
         
         .help-topic-item { background: #0d1117; border: 1px solid #30363d; padding: 8px; border-radius: 4px; margin-bottom: 6px; }
         .help-topic-title { color: #58a6ff; font-weight: bold; margin-bottom: 2px; }
+
+        .lang-select { background: #0d1117; color: #f0883e; border: 1px solid #30363d; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; width: 120px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div>
-            <div class="title">MintooSuite Terminal</div>
+            <div class="title" id="lblTitle">MintooSuite Terminal</div>
             <div class="subtitle">Quantum Sovereign Suite • Awais Mintoo</div>
         </div>
         <div class="header-right">
             <div class="fps-badge" id="fpsDisplay">61 FPS</div>
-            <button class="settings-btn" onclick="openSettings()">⚙️ MENU</button>
+            <button class="settings-btn" id="btnMenu" onclick="openSettings()">⚙️ MENU</button>
         </div>
     </div>
 
     <div class="grid-2">
         <div class="card">
             <div class="card-title">
-                <span>EXNESS GOLD (XAU/USD)</span>
+                <span id="lblGold">EXNESS GOLD (XAU/USD)</span>
                 <span class="help-badge" onclick="openHelp('Exness Gold Feed', 'Real-time spot pricing feed for XAU/USD in USD per ounce.')">?</span>
             </div>
             <div class="card-value green" id="goldPrice">2674.11</div>
         </div>
         <div class="card">
             <div class="card-title">
-                <span>BINANCE BTC/USDT</span>
+                <span id="lblBtc">BINANCE BTC/USDT</span>
                 <span class="help-badge" onclick="openHelp('Binance Futures Feed', 'Perpetual futures pricing feed for Bitcoin in USDT.')">?</span>
             </div>
             <div class="card-value" id="btcPrice">94,106.50</div>
@@ -109,7 +111,7 @@
 
     <div class="hero-banner" id="heroBanner">
         <div class="hero-title">
-            <span>🤖 MASTER BOT ALL-COIN CAROUSEL</span>
+            <span id="lblBotCarousel">🤖 MASTER BOT ALL-COIN CAROUSEL</span>
             <div>
                 <span style="color: #3fb950; margin-right: 6px;" id="heroAssetTag">EXNESS GOLD</span>
                 <span class="help-badge" onclick="openHelp('Master Bot Carousel', 'Use < and > arrows to browse 5M/10M candle recommendations across all monitored assets.')">?</span>
@@ -121,23 +123,23 @@
             <button class="carousel-btn" onclick="nextHero()">&gt;</button>
         </div>
         <div class="hero-details">
-            <div class="hero-detail-item"><span>REC. LEVERAGE</span><strong id="heroLeverage" style="color:#f0883e;">10x - 20x</strong></div>
-            <div class="hero-detail-item"><span>STOP LOSS (SL)</span><strong id="heroSL" style="color:#f85149;">2668.50</strong></div>
-            <div class="hero-detail-item"><span>TARGET TP1 / TP2</span><strong id="heroTP" style="color:#3fb950;">2682 / 2690</strong></div>
+            <div class="hero-detail-item"><span id="lblRecLev">REC. LEVERAGE</span><strong id="heroLeverage" style="color:#f0883e;">10x - 20x</strong></div>
+            <div class="hero-detail-item"><span id="lblStopLoss">STOP LOSS (SL)</span><strong id="heroSL" style="color:#f85149;">2668.50</strong></div>
+            <div class="hero-detail-item"><span id="lblTargetTp">TARGET TP1 / TP2</span><strong id="heroTP" style="color:#3fb950;">2682 / 2690</strong></div>
         </div>
     </div>
 
     <div class="grid-2">
         <div class="card">
             <div class="card-title">
-                <span>3M CANDLE TIMER</span>
+                <span id="lblTimer">3M CANDLE TIMER</span>
                 <span class="help-badge" onclick="openHelp('3M Candle Timer', 'Countdown to the next 3M candle close and signal dispatch.')">?</span>
             </div>
             <div class="card-value" id="timerDisplay">03:00</div>
         </div>
         <div class="card">
             <div class="card-title">
-                <span>BACKGROUND PUSH</span>
+                <span id="lblBgPush">BACKGROUND PUSH</span>
                 <span class="help-badge" onclick="openHelp('Background Worker', 'Service worker engine keeping push alerts active 24/7 in background.')">?</span>
             </div>
             <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">PERSISTENT ACTIVE</div>
@@ -164,7 +166,7 @@
     <div class="panel" id="panelSignals">
         <div class="panel-title">
             <span>
-                ⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER
+                <span id="lblSignalsHeader">⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER</span>
                 <span class="help-badge" onclick="openHelp('Signals Ledger', 'Scrollable list of active recommended trade setups with expiry countdowns.')">?</span>
             </span>
         </div>
@@ -174,7 +176,7 @@
     <div class="panel" id="panelMacro">
         <div class="panel-title">
             <span>
-                📈 MACRO INDEX CORRELATION (US500 & DXY)
+                <span id="lblMacroHeader">📈 MACRO INDEX CORRELATION (US500 & DXY)</span>
                 <span class="help-badge" onclick="openHelp('Macro Matrix', 'Monitors US Dollar Index (DXY) and S&P 500 (US500) impact on Exness Gold.')">?</span>
             </span>
         </div>
@@ -195,7 +197,7 @@
     <div class="panel" id="panelScanner">
         <div class="panel-title">
             <span>
-                🤖 MASTER BOT REAL-TIME SCANNER FEED
+                <span id="lblScannerHeader">🤖 MASTER BOT REAL-TIME SCANNER FEED</span>
                 <span class="help-badge" onclick="openHelp('Scanner Feed', 'Micro-second scanner logs showing 5M/10M candle analysis across all coins.')">?</span>
             </span>
         </div>
@@ -207,7 +209,7 @@
     <div class="panel">
         <div class="panel-title">
             <span>
-                🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS
+                <span id="lblNotificationsHeader">🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS</span>
                 <span class="help-badge" onclick="openHelp('Notification Panel', 'Manage system push permissions and individual asset push channels with state persistence.')">?</span>
             </span>
             <span style="color: #3fb950;" id="pushStatusText">PUSH ACTIVE</span>
@@ -219,7 +221,7 @@
         </div>
 
         <div class="section-header">
-            <span>3M Multi-Asset Push Toggles:</span>
+            <span id="lblPushToggles">3M Multi-Asset Push Toggles:</span>
             <span class="help-badge" onclick="openHelp('Push Toggles', 'Independent toggles for Exness Gold and All-Coin Binance alerts.')">?</span>
         </div>
         <div class="btn-row">
@@ -228,42 +230,36 @@
         </div>
     </div>
 
-    <!-- 1. LIVE REUTERS/BLOOMBERG COMMODITIES & MARKET NEWS STREAM -->
     <div class="panel" id="panelMarketNews">
         <div class="panel-title">
             <span>
-                📊 REUTERS & BLOOMBERG LIVE MARKET FEED
+                <span id="lblMarketNewsHeader">📊 REUTERS & BLOOMBERG LIVE MARKET FEED</span>
                 <span class="help-badge" onclick="openHelp('Market News Feed', 'Live news streams linked directly to Reuters Markets, Bloomberg, and CNBC.')">?</span>
             </span>
         </div>
         <div class="news-box" id="marketNewsFeed">
-            [00:00:01] [REUTERS MARKETS] Spot Gold holds steady at $2,674/oz as US inflation metrics align with Fed projections.<br>
-            [00:00:05] [BLOOMBERG COMMODITIES] UK Brent Crude ticks up to $78.40/bbl following OPEC production updates.<br>
-            [00:00:10] [CNBC FINANCE] S&P 500 futures extend gains +0.4% amid institutional tech accumulation.<br>
+            [00:00:01] [REUTERS MARKETS] Spot Gold holds steady at $2,674/oz following US inflation report.<br>
+            [00:00:05] [BLOOMBERG COMMODITIES] UK Brent Crude ticks up +0.8% to $78.40/bbl on tight supply outlook.<br>
         </div>
     </div>
 
-    <!-- 2. LIVE GEOPOLITICAL NEWS STREAM -->
     <div class="panel" id="panelGeoNews">
         <div class="panel-title">
             <span>
-                🌍 GEOPOLITICAL IMPACT STREAM (REUTERS / BBC WORLD)
+                <span id="lblGeoNewsHeader">🌍 GEOPOLITICAL IMPACT STREAM (REUTERS / BBC WORLD)</span>
                 <span class="help-badge" onclick="openHelp('Geopolitical Feed', 'Real-time global events from Reuters World and BBC World affecting Gold & Crypto.')">?</span>
             </span>
         </div>
         <div class="geo-news-box" id="geoNewsFeed">
             [00:00:02] [REUTERS WORLD] Federal Reserve policy committee signals potential 25bps rate calibration.<br>
-            [00:00:08] [BBC GEOPOLITICS] European Central Bank maintains key interest rates; Euro consolidates against USD.<br>
-            [00:00:14] [AL JAZEERA INT] Red Sea shipping corridor security protocol update boosts freight insurance rates.<br>
         </div>
     </div>
 
-    <!-- 3. MAJOR GLOBAL STOCK EXCHANGES LIVE STATUS & TICKER SCREEN -->
     <div class="panel" id="panelExchanges">
         <div class="panel-title">
             <span>
-                🏛️ MAJOR STOCK EXCHANGES LIVE STATUS & FEED
-                <span class="help-badge" onclick="openHelp('Global Stock Exchanges', 'Real-time status of top world stock exchanges (NYSE, NASDAQ, LSE, TSE, HKEX, FWB). Green when live open, Orange when off-hours.')">?</span>
+                <span id="lblExchangesHeader">🏛️ MAJOR STOCK EXCHANGES LIVE STATUS & FEED</span>
+                <span class="help-badge" onclick="openHelp('Global Stock Exchanges', 'Real-time status of top world stock exchanges (NYSE, NASDAQ, LSE, TSE, HKEX, FWB).')">?</span>
             </span>
         </div>
         <div class="exchange-grid">
@@ -300,11 +296,23 @@
         </div>
     </div>
 
-    <!-- SETTINGS & COMPLAINTS/HELP DRAWER -->
+    <!-- SETTINGS & MULTI-LANGUAGE SELECTION DRAWER -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-content">
-            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">⚙️ Terminal Settings & Contact</div>
+            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;" id="lblSettingsTitle">⚙️ Terminal Settings & Language</div>
             
+            <div class="settings-row">
+                <span id="lblLangSelect">Select Language / اللغة / 语言:</span>
+                <select class="lang-select" id="langSelector" onchange="changeLanguage(this.value)">
+                    <option value="en">English (US)</option>
+                    <option value="ar">العربية (Arabic)</option>
+                    <option value="zh">中文 (Chinese)</option>
+                    <option value="ur">اردو (Urdu)</option>
+                    <option value="de">Deutsch (German)</option>
+                    <option value="fr">Français (French)</option>
+                </select>
+            </div>
+
             <div class="settings-row">
                 <span>Version:</span>
                 <strong style="color: #58a6ff;">v3.8.1 Institutional Pro</strong>
@@ -317,15 +325,11 @@
                 <span>Official Contact Email:</span>
                 <strong style="color: #f0883e; font-size: 10px;">awaisrajpoot2@yahoo.com</strong>
             </div>
-            <div class="settings-row">
-                <span>Complaints & Support:</span>
-                <strong style="color: #3fb950; font-size: 10px;">awaisrajpoot2@yahoo.com</strong>
-            </div>
 
-            <div style="font-weight: bold; color: #58a6ff; margin: 10px 0 6px 0; text-transform: uppercase; font-size: 10px;">Help & Knowledge Base:</div>
-            <button class="btn-active-orange" style="width: 100%; margin-bottom: 10px;" onclick="openHelpCenter()">📖 OPEN GENERAL HELP TOPICS GUIDE</button>
+            <div style="font-weight: bold; color: #58a6ff; margin: 10px 0 6px 0; text-transform: uppercase; font-size: 10px;" id="lblHelpBase">Help & Knowledge Base:</div>
+            <button class="btn-active-orange" style="width: 100%; margin-bottom: 10px;" onclick="openHelpCenter()" id="btnOpenHelpGuide">📖 OPEN GENERAL HELP TOPICS GUIDE</button>
 
-            <div style="font-weight: bold; color: #58a6ff; margin: 6px 0 6px 0; text-transform: uppercase; font-size: 10px;">Workspace Panel Toggles:</div>
+            <div style="font-weight: bold; color: #58a6ff; margin: 6px 0 6px 0; text-transform: uppercase; font-size: 10px;" id="lblPanelToggles">Workspace Panel Toggles:</div>
             
             <div class="settings-row">
                 <span>Signals Ledger:</span>
@@ -352,33 +356,33 @@
                 <button class="btn-active-green" id="togglePanelExchanges" onclick="toggleWorkspacePanel('Exchanges')">ON</button>
             </div>
 
-            <button class="modal-close" onclick="closeSettings()">CLOSE MENU</button>
+            <button class="modal-close" onclick="closeSettings()" id="btnCloseMenu">CLOSE MENU</button>
         </div>
     </div>
 
     <!-- GENERAL HELP TOPICS MODAL -->
     <div class="modal-overlay" id="helpCenterModal">
         <div class="modal-content">
-            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">📖 TERMINAL HELP & TOPICS GUIDE</div>
+            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;" id="lblGuideTitle">📖 TERMINAL HELP & TOPICS GUIDE</div>
             
             <div class="help-topic-item">
-                <div class="help-topic-title">1. Reuters & Bloomberg Live Market News</div>
-                <div>Feeds are directly wired to institutional RSS streams (Reuters Markets, Bloomberg Financial, CNBC) monitoring Spot Gold, Brent Crude, DXY, and S&P 500.</div>
+                <div class="help-topic-title" id="ht1Title">1. Reuters & Bloomberg Live Market News</div>
+                <div id="ht1Body">Feeds are directly wired to institutional RSS streams monitoring Spot Gold, Brent Crude, DXY, and S&P 500.</div>
             </div>
 
             <div class="help-topic-item">
-                <div class="help-topic-title">2. Geopolitical Event Feed</div>
-                <div>Monitors global central bank policy (Federal Reserve, ECB), geopolitics, and trade events directly from Reuters World, BBC World, and Al Jazeera.</div>
+                <div class="help-topic-title" id="ht2Title">2. Geopolitical Event Feed</div>
+                <div id="ht2Body">Monitors global central bank policy (Fed, ECB), geopolitics, and trade events directly from Reuters World and BBC.</div>
             </div>
 
             <div class="help-topic-item">
-                <div class="help-topic-title">3. Global Stock Exchanges Live Screen</div>
-                <div>Displays live operational status for NYSE, NASDAQ, London (LSE), Tokyo (TSE), Hong Kong (HKEX), and Frankfurt (FWB). Green badge = Live Trading, Orange badge = Off-Hours.</div>
+                <div class="help-topic-title" id="ht3Title">3. Global Stock Exchanges Live Screen</div>
+                <div id="ht3Body">Displays live operational status for NYSE, NASDAQ, London (LSE), Tokyo (TSE), Hong Kong (HKEX), and Frankfurt (FWB).</div>
             </div>
 
             <div class="help-topic-item">
-                <div class="help-topic-title">4. Support, Contact & Feedback</div>
-                <div>For technical queries, complaints, or custom feature requests, contact Awais Mintoo directly at: <strong style="color: #f0883e;">awaisrajpoot2@yahoo.com</strong></div>
+                <div class="help-topic-title" id="ht4Title">4. Support, Contact & Feedback</div>
+                <div id="ht4Body">For technical queries, complaints, or custom requests, contact Awais Mintoo directly at: <strong style="color: #f0883e;">awaisrajpoot2@yahoo.com</strong></div>
             </div>
 
             <button class="modal-close" onclick="closeHelpCenter()">CLOSE HELP GUIDE</button>
@@ -402,6 +406,7 @@
         let currentAsset = localStorage.getItem('mintoosuite_asset') || 'gold'; 
         let goldPushState = localStorage.getItem('mintoosuite_gold_push') !== 'off';
         let cryptoPushState = localStorage.getItem('mintoosuite_crypto_push') !== 'off';
+        let currentLang = localStorage.getItem('mintoosuite_lang') || 'en';
 
         let showSignals = localStorage.getItem('mintoosuite_show_signals') !== 'off';
         let showMacro = localStorage.getItem('mintoosuite_show_macro') !== 'off';
@@ -417,6 +422,208 @@
 
         let goldHistory = Array(28).fill(2674.11);
         let btcHistory = Array(28).fill(94106.50);
+
+        const langDict = {
+            en: {
+                title: "MintooSuite Terminal",
+                menu: "⚙️ MENU",
+                gold: "EXNESS GOLD (XAU/USD)",
+                btc: "BINANCE BTC/USDT",
+                botCarousel: "🤖 MASTER BOT ALL-COIN CAROUSEL",
+                recLev: "REC. LEVERAGE",
+                stopLoss: "STOP LOSS (SL)",
+                targetTp: "TARGET TP1 / TP2",
+                timer: "3M CANDLE TIMER",
+                bgPush: "BACKGROUND PUSH",
+                signalsHeader: "⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER",
+                macroHeader: "📈 MACRO INDEX CORRELATION (US500 & DXY)",
+                scannerHeader: "🤖 MASTER BOT REAL-TIME SCANNER FEED",
+                notificationsHeader: "🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS",
+                pushToggles: "3M Multi-Asset Push Toggles:",
+                marketNewsHeader: "📊 REUTERS & BLOOMBERG LIVE MARKET FEED",
+                geoNewsHeader: "🌍 GEOPOLITICAL IMPACT STREAM (REUTERS / BBC WORLD)",
+                exchangesHeader: "🏛️ MAJOR STOCK EXCHANGES LIVE STATUS & FEED",
+                settingsTitle: "⚙️ Terminal Settings & Language",
+                langSelect: "Select Language / اللغة / 语言:",
+                helpBase: "Help & Knowledge Base:",
+                openHelpGuide: "📖 OPEN GENERAL HELP TOPICS GUIDE",
+                panelToggles: "Workspace Panel Toggles:",
+                closeMenu: "CLOSE MENU",
+                dir: "ltr"
+            },
+            ar: {
+                title: "منصة مينتو سويت",
+                menu: "⚙️ القائمة",
+                gold: "ذهب إكسنس (XAU/USD)",
+                btc: "بينانس بتكوين (BTC/USDT)",
+                botCarousel: "🤖 البوت الرئيسي لجميع العملات",
+                recLev: "الرافعة المالية الموصى بها",
+                stopLoss: "إيقاف الخسارة (SL)",
+                targetTp: "أهداف جني الأرباح TP1/TP2",
+                timer: "مؤقت الشمعة 3 دقائق",
+                bgPush: "الإشعارات الخلفية",
+                signalsHeader: "⭐ الإشارات النشطة المعتمدة وسجل الانتهاء",
+                macroHeader: "📈 상관 관계 مؤشر الماكرو (US500 & DXY)",
+                scannerHeader: "🤖 تغذية الماسح الضوئي المباشر للبوت",
+                notificationsHeader: "🔔 لوحة الإشعارات والتنبيهات المباشرة",
+                pushToggles: "تنبيهات الأصول متعددة 3 دقائق:",
+                marketNewsHeader: "📊 بث أخبار الأسواق المباشر - رويترز وبلومبرغ",
+                geoNewsHeader: "🌍 البث الجيوسياسي - رويترز وبي بي سي",
+                exchangesHeader: "🏛️ حالة أسواق الأسهم العالمية المباشرة",
+                settingsTitle: "⚙️ إعدادات المنصة واللغة",
+                langSelect: "اختر اللغة / Select Language:",
+                helpBase: "قاعدة المعرفة والمساعدة:",
+                openHelpGuide: "📖 فتح دليل مواضيع المساعدة العامة",
+                panelToggles: "تبديل لوحات مساحة العمل:",
+                closeMenu: "إغلاق القائمة",
+                dir: "rtl"
+            },
+            zh: {
+                title: "MintooSuite 终端",
+                menu: "⚙️ 菜单",
+                gold: "Exness 黄金 (XAU/USD)",
+                btc: "币安 比特币 (BTC/USDT)",
+                botCarousel: "🤖 核心机器人全币种轮播",
+                recLev: "推荐杠杆",
+                stopLoss: "止损价 (SL)",
+                targetTp: "目标止盈位 TP1 / TP2",
+                timer: "3分钟 K线倒计时",
+                bgPush: "后台推送引擎",
+                signalsHeader: "⭐ 有效实时信号与到期账本",
+                macroHeader: "📈 宏观指数关联 (US500与美元指数DXY)",
+                scannerHeader: "🤖 核心机器人实时扫描馈送",
+                notificationsHeader: "🔔 主通知面板与推送预警",
+                pushToggles: "3分钟多资产推送开关:",
+                marketNewsHeader: "📊 路透社与彭博社实时市场新闻",
+                geoNewsHeader: "🌍 地缘政治影响流 (路透社 / BBC)",
+                exchangesHeader: "🏛️ 全球主要证券交易所实时状态",
+                settingsTitle: "⚙️ 终端设置与语言",
+                langSelect: "选择语言 / Select Language:",
+                helpBase: "帮助与知识库:",
+                openHelpGuide: "📖 打开通用帮助指南",
+                panelToggles: "工作区面板切换:",
+                closeMenu: "关闭菜单",
+                dir: "ltr"
+            },
+            ur: {
+                title: "منٹو سوئیٹ ٹرمینل",
+                menu: "⚙️ مینو",
+                gold: "ایکسی لینس گولڈ (XAU/USD)",
+                btc: "بائنانس بٹ کوائن (BTC/USDT)",
+                botCarousel: "🤖 ماسٹر بوٹ تمام کوائنز کیرول",
+                recLev: "تجویز کردہ لیوریج",
+                stopLoss: "سٹاپ لاس (SL)",
+                targetTp: "ٹارگٹ پرافٹ TP1 / TP2",
+                timer: "3 منٹ کینڈل ٹائمر",
+                bgPush: "بیک گراؤنڈ پش الرٹ",
+                signalsHeader: "⭐ تصدیق شدہ ایکٹو سگنلز اور ایکسپائری لیجر",
+                macroHeader: "📈 میکرو انڈیکس باہمی تعلق (US500 & DXY)",
+                scannerHeader: "🤖 ماسٹر بوٹ ریئل ٹائم سکینر فیڈ",
+                notificationsHeader: "🔔 ماسٹر نوٹیفکیشن پینل اور پش الرٹس",
+                pushToggles: "3 منٹ ملٹی ایسٹ پش ٹوگلز:",
+                marketNewsHeader: "📊 روئٹرز اور بلومبرگ لائیو مارکیٹ فیڈ",
+                geoNewsHeader: "🌍 جیو پولیٹیکل لائیو نیوز فیڈ (روئٹرز / بی بی سی)",
+                exchangesHeader: "🏛️ عالمی سٹاک ایکسچینج لائیو سٹیٹس",
+                settingsTitle: "⚙️ ٹرمینل سیٹنگز اور زبان",
+                langSelect: "زبان کا انتخاب کریں / Select Language:",
+                helpBase: "مدد اور معلومات:",
+                openHelpGuide: "📖 عمومی گائیڈ کھولیں",
+                panelToggles: "ورک سپیس پینل ٹوگلز:",
+                closeMenu: "مینو بند کریں",
+                dir: "rtl"
+            },
+            de: {
+                title: "MintooSuite Terminal",
+                menu: "⚙️ MENÜ",
+                gold: "EXNESS GOLD (XAU/USD)",
+                btc: "BINANCE BTC/USDT",
+                botCarousel: "🤖 MASTER BOT ALLE-MÜNZEN KARUSSELL",
+                recLev: "EMPF. HEBEL",
+                stopLoss: "STOPP-LOSS (SL)",
+                targetTp: "ZIEL TP1 / TP2",
+                timer: "3M KERZEN-TIMER",
+                bgPush: "HINTERGRUND-PUSH",
+                signalsHeader: "⭐ GÜLTIGE AKTIVE SIGNALE & ABLAUF-BUCH",
+                macroHeader: "📈 MAKRO-INDEX-KORRELATION (US500 & DXY)",
+                scannerHeader: "🤖 MASTER BOT ECHTZEIT-SCANNER-FEED",
+                notificationsHeader: "🔔 MASTER-BENACHRICHTIGUNGSPANEL & PUSH-ALERTE",
+                pushToggles: "3M Multi-Asset Push-Schalter:",
+                marketNewsHeader: "📊 REUTERS & BLOOMBERG LIVE-MARKT-FEED",
+                geoNewsHeader: "🌍 GEOPOLITISCHER EINFLUSS-STREAM (REUTERS / BBC)",
+                exchangesHeader: "🏛️ WICHTIGE BÖRSEN LIVE-STATUS & FEED",
+                settingsTitle: "⚙️ Terminal-Einstellungen & Sprache",
+                langSelect: "Sprache wählen / Select Language:",
+                helpBase: "Hilfe & Wissensdatenbank:",
+                openHelpGuide: "📖 ALLGEMEINE HILFE ÖFFNEN",
+                panelToggles: "Arbeitsbereich-Umschalter:",
+                closeMenu: "MENÜ SCHLIESSEN",
+                dir: "ltr"
+            },
+            fr: {
+                title: "Terminal MintooSuite",
+                menu: "⚙️ MENU",
+                gold: "EXNESS OR (XAU/USD)",
+                btc: "BINANCE BTC/USDT",
+                botCarousel: "🤖 CARROUSEL TOUTES PIÈCES DU BOT",
+                recLev: "LEVIER RECOMMANDÉ",
+                stopLoss: "STOP LOSS (SL)",
+                targetTp: "CIBLE TP1 / TP2",
+                timer: "MINUTERIE BOUGIE 3M",
+                bgPush: "PUSH EN ARRIÈRE-PLAN",
+                signalsHeader: "⭐ SIGNAUX ACTIFS VALIDES ET REGISTRE D'EXPIRATION",
+                macroHeader: "📈 CORRÉLATION INDICE MACRO (US500 & DXY)",
+                scannerHeader: "🤖 FLUX DU SCANNER EN TEMPS RÉEL DU BOT",
+                notificationsHeader: "🔔 PANNEAU DE NOTIFICATION ET ALERTES PUSH",
+                pushToggles: "Boutons Push Multi-Actifs 3M:",
+                marketNewsHeader: "📊 FLUX EN DIRECT MARCHÉS REUTERS ET BLOOMBERG",
+                geoNewsHeader: "🌍 FLUX D'IMPACT GÉOPOLITIQUE (REUTERS / BBC)",
+                exchangesHeader: "🏛️ BOURSES MONDIALES STATUT ET FLUX EN DIRECT",
+                settingsTitle: "⚙️ Paramètres du terminal et langue",
+                langSelect: "Choisir la langue / Select Language:",
+                helpBase: "Aide et base de connaissances:",
+                openHelpGuide: "📖 OUVRIR LE GUIDE D'AIDE GÉNÉRAL",
+                panelToggles: "Commutateurs du panneau de travail:",
+                closeMenu: "FERMER LE MENU",
+                dir: "ltr"
+            }
+        };
+
+        function changeLanguage(langCode) {
+            currentLang = langCode;
+            localStorage.setItem('mintoosuite_lang', langCode);
+            applyLanguage();
+        }
+
+        function applyLanguage() {
+            const lang = langDict[currentLang] || langDict['en'];
+            document.body.dir = lang.dir;
+            document.getElementById('langSelector').value = currentLang;
+
+            document.getElementById('lblTitle').innerText = lang.title;
+            document.getElementById('btnMenu').innerText = lang.menu;
+            document.getElementById('lblGold').innerText = lang.gold;
+            document.getElementById('lblBtc').innerText = lang.btc;
+            document.getElementById('lblBotCarousel').innerText = lang.botCarousel;
+            document.getElementById('lblRecLev').innerText = lang.recLev;
+            document.getElementById('lblStopLoss').innerText = lang.stopLoss;
+            document.getElementById('lblTargetTp').innerText = lang.targetTp;
+            document.getElementById('lblTimer').innerText = lang.timer;
+            document.getElementById('lblBgPush').innerText = lang.bgPush;
+            document.getElementById('lblSignalsHeader').innerText = lang.signalsHeader;
+            document.getElementById('lblMacroHeader').innerText = lang.macroHeader;
+            document.getElementById('lblScannerHeader').innerText = lang.scannerHeader;
+            document.getElementById('lblNotificationsHeader').innerText = lang.notificationsHeader;
+            document.getElementById('lblPushToggles').innerText = lang.pushToggles;
+            document.getElementById('lblMarketNewsHeader').innerText = lang.marketNewsHeader;
+            document.getElementById('lblGeoNewsHeader').innerText = lang.geoNewsHeader;
+            document.getElementById('lblExchangesHeader').innerText = lang.exchangesHeader;
+            document.getElementById('lblSettingsTitle').innerText = lang.settingsTitle;
+            document.getElementById('lblLangSelect').innerText = lang.langSelect;
+            document.getElementById('lblHelpBase').innerText = lang.helpBase;
+            document.getElementById('btnOpenHelpGuide').innerText = lang.openHelpGuide;
+            document.getElementById('lblPanelToggles').innerText = lang.panelToggles;
+            document.getElementById('btnCloseMenu').innerText = lang.closeMenu;
+        }
 
         const marketPool = [
             { name: "EXNESS GOLD (XAU/USD)", price: goldVal, leverage: "10x - 20x", type: "gold" },
@@ -453,35 +660,31 @@
 
             applyPanelVisibility();
             updateExchangeStatus();
+            applyLanguage();
         }
 
         function updateExchangeStatus() {
             const now = new Date();
             const utcHour = now.getUTCHours();
             
-            // NYSE / NASDAQ (13:30 - 20:00 UTC)
             let usOpen = utcHour >= 13 && utcHour < 20;
             document.getElementById('exNyseStatus').innerHTML = usOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
             document.getElementById('exNyseStatus').className = usOpen ? "status-green" : "status-orange";
             document.getElementById('exNasdaqStatus').innerHTML = usOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
             document.getElementById('exNasdaqStatus').className = usOpen ? "status-green" : "status-orange";
 
-            // LSE London (08:00 - 16:30 UTC)
             let ukOpen = utcHour >= 8 && utcHour < 16;
             document.getElementById('exLseStatus').innerHTML = ukOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
             document.getElementById('exLseStatus').className = ukOpen ? "status-green" : "status-orange";
 
-            // Tokyo TSE (00:00 - 06:00 UTC)
             let jpOpen = utcHour >= 0 && utcHour < 6;
             document.getElementById('exTseStatus').innerHTML = jpOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
             document.getElementById('exTseStatus').className = jpOpen ? "status-green" : "status-orange";
 
-            // HKEX Hong Kong (01:30 - 08:00 UTC)
             let hkOpen = utcHour >= 1 && utcHour < 8;
             document.getElementById('exHkexStatus').innerHTML = hkOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
             document.getElementById('exHkexStatus').className = hkOpen ? "status-green" : "status-orange";
 
-            // FWB Frankfurt (07:00 - 15:30 UTC)
             let deOpen = utcHour >= 7 && utcHour < 15;
             document.getElementById('exFwbStatus').innerHTML = deOpen ? "🟢 LIVE OPEN" : "🟠 CLOSED";
             document.getElementById('exFwbStatus').className = deOpen ? "status-green" : "status-orange";
