@@ -1,26 +1,22 @@
-const CACHE_NAME = 'mintoosuite-v14';
-const ASSETS = [
-  '/',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-192-maskable.png',
-  '/icon-512.png',
-  '/icon-512-maskable.png'
-];
-
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-  self.skipWaiting();
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(self.clients.claim());
+self.addEventListener('activate', (event) => {
+    event.waitUntil(clients.claim());
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
-  );
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'TRIGGER_ALERT') {
+        const title = event.data.title || 'MintooSuite Signal Alert';
+        const options = {
+            body: event.data.body || 'Exness Gold Confluence Confirmed.',
+            icon: './icon.png',
+            badge: './badge.png',
+            tag: 'mintoo-trade-signal',
+            renotify: true,
+            requireInteraction: true
+        };
+        self.registration.showNotification(title, options);
+    }
 });
