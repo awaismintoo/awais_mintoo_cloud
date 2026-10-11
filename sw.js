@@ -1,7 +1,6 @@
-const CACHE_NAME = 'mintoosuite-v13';
+const CACHE_NAME = 'mintoosuite-v14';
 const ASSETS = [
   '/',
-  '/index.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-192-maskable.png',
