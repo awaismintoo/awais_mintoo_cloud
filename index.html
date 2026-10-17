@@ -216,18 +216,94 @@ function engineBoot(self) {
                 note = 'OVEREXTENDED DOWN: chasing a short is risky, wait for a bounce';
                 if (nd === 'SHORT') { nd = 'NEUTRAL'; ndc = 'LOW'; } if (day === 'SHORT') { day = 'NEUTRAL'; dayc = 'LOW'; } if (fh === 'SHORT') { fh = 'WAIT'; fhc = 'LOW'; }
             }
-            var fSL = Math.min(1.5 * a1, 0.06 * price), dSL = Math.min(ad, 0.12 * price);
+            var fSL = Math.min(1.2 * a1, 0.05 * price), fTP = Math.min(1.8 * a1, 0.075 * price), dSL = Math.min(0.75 * ad, 0.10 * price), dTP = Math.min(1.0 * ad, 0.13 * price);
             return { type: 'plan', sym: sym, kind: kind, w: Math.max(res[0].w, res[1].w), price: price, chg: chg, rsiH: rh, rsiD: rd, vr: vr, note: note,
                      nextDay: nd, nextDayConf: ndc, day: day, dayConf: dayc, fh: fh, fhConf: fhc,
-                     fhSL: fSL, fhTP: 2 * fSL, daySL: dSL, dayTP: 2 * dSL };
+                     fhSL: fSL, fhTP: fTP, daySL: dSL, dayTP: dTP };
         });
     }
+
+    var DAYMS = 86400000, QMS = 900000;
+    function morningCore(d, h, o, chgPrev) {
+        if (d.length < 55 || h.length < 30) { return null; }
+        var dc = d.map(function (x) { return x.c; }), hc = h.map(function (x) { return x.c; }), price = o.c;
+        var e20 = ema(dc, 20), e50 = ema(dc, 50), rd = rsi(dc, 14);
+        var ds = (price > e20 ? 1 : -1) + (e20 > e50 ? 1 : -1);
+        if (rd > 72) { ds -= 0.5; } else if (rd < 28) { ds += 0.5; }
+        var e9 = ema(hc, 9), e21 = ema(hc, 21), rh = rsi(hc, 14);
+        var hs = (e9 > e21 ? 1 : -1) + (price > e21 ? 0.5 : -0.5);
+        if (rh > 75) { hs -= 0.75; } else if (rh < 25) { hs += 0.75; }
+        var qv = d.slice(-31, -1).map(function (x) { return x.qv; });
+        var avg = qv.reduce(function (a, b) { return a + b; }, 0) / (qv.length || 1);
+        var vr = avg ? d[d.length - 1].qv / avg : 1, boost = vr > 1.2 ? 0.5 : vr < 0.7 ? -0.5 : 0, od = o.c >= o.o ? 1 : -1;
+        var dayScore = ds + hs * 0.5 + (ds >= 0 ? boost : -boost) + 0.5 * od;
+        var fhScore = hs + 0.5 * od + (hs >= 0 ? boost : -boost);
+        var day = dayScore >= 1.75 ? 'LONG' : dayScore <= -1.75 ? 'SHORT' : 'WAIT';
+        var fh = fhScore >= 1.5 ? 'LONG' : fhScore <= -1.5 ? 'SHORT' : 'WAIT', note = '', capped = false;
+        if (rd > 80 || chgPrev > 30) { note = 'Overextended up: chasing a long is risky, wait for a pullback'; if (day === 'LONG') { day = 'WAIT'; capped = true; } if (fh === 'LONG') { fh = 'WAIT'; capped = true; } }
+        else if (rd < 20 || chgPrev < -30) { note = 'Overextended down: chasing a short is risky, wait for a bounce'; if (day === 'SHORT') { day = 'WAIT'; capped = true; } if (fh === 'SHORT') { fh = 'WAIT'; capped = true; } }
+        var ad = atrK(d, 14), a1 = atrK(h, 14);
+        var dConf = day === 'WAIT' ? 'LOW' : Math.abs(dayScore) >= 3 ? 'HIGH' : 'MEDIUM';
+        var fConf = fh === 'WAIT' ? 'LOW' : Math.abs(fhScore) >= 2.25 ? 'HIGH' : 'MEDIUM';
+        var dSL = Math.min(0.75 * ad, 0.10 * price), dTP = Math.min(1.0 * ad, 0.13 * price), fSL = Math.min(1.2 * a1, 0.05 * price), fTP = Math.min(1.8 * a1, 0.075 * price);
+        return { price: price, day: day, dayConf: dConf, dayScore: dayScore, fh: fh, fhConf: fConf, fhScore: fhScore,
+                 dSL: dSL, dTP: dTP, fSL: fSL, fTP: fTP, rsiD: rd, rsiH: rh, vr: vr, chgPrev: chgPrev, note: note,
+                 solid: day !== 'WAIT' && fh === day };
+    }
+    function evalTrade(side, entry, sl, tp, cs, endT, now) {
+        if (side !== 'LONG' && side !== 'SHORT') { return null; }
+        var sg = side === 'LONG' ? 1 : -1, slL = entry - sg * sl, tpL = entry + sg * tp, last = entry, lastT = 0;
+        for (var i = 0; i < cs.length; i++) {
+            var x = cs[i]; last = x.c; lastT = x.t;
+            if (sg > 0 ? x.l <= slL : x.h >= slL) { return { res: 'LOSS', pnl: -sl / entry * 100, at: x.t }; }
+            if (sg > 0 ? x.h >= tpL : x.l <= tpL) { return { res: 'WIN', pnl: tp / entry * 100, at: x.t }; }
+        }
+        return { res: now >= endT ? 'TIME' : 'OPEN', pnl: sg * (last - entry) / entry * 100, at: lastT };
+    }
+    function morningSym(sym, kind, D0, now) {
+        return Promise.all([
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=1d&limit=80'),
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=1h&limit=400'),
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=15m&limit=1000')
+        ]).then(function (r) {
+            var dly = parse(r[0].j), hr = parse(r[1].j), m15 = parse(r[2].j);
+            function planFor(D) {
+                if (kind === 'gold') { var wd = new Date(D).getUTCDay(); if (wd === 0 || wd === 6) { return null; } }
+                var d = dly.filter(function (x) { return x.t < D; }), h = hr.filter(function (x) { return x.t + 3600000 <= D; }), o = null, i;
+                for (i = 0; i < m15.length; i++) { if (m15[i].t === D) { o = m15[i]; break; } }
+                if (!o || o.t + QMS > now) { return null; }
+                var chgPrev = d.length ? (d[d.length - 1].c - d[d.length - 1].o) / d[d.length - 1].o * 100 : 0;
+                var p = morningCore(d, h, o, chgPrev); if (!p) { return null; }
+                p.D = D; p.T = D + QMS; p.entry = o.c;
+                var after = m15.filter(function (x) { return x.t >= D + QMS && x.t < D + DAYMS; }), fhEnd = D + QMS + 4 * 3600000;
+                p.dayRes = evalTrade(p.day, p.entry, p.dSL, p.dTP, after, D + DAYMS, now);
+                p.fhRes = evalTrade(p.fh, p.entry, p.fSL, p.fTP, after.filter(function (x) { return x.t < fhEnd; }), fhEnd, now);
+                return p;
+            }
+            var hist = [], i, q;
+            for (i = 1; i <= 9; i++) { q = planFor(D0 - i * DAYMS); if (q) { hist.push(q); } }
+            return { type: 'morning', sym: sym, kind: kind, w: Math.max(r[0].w, r[1].w, r[2].w), D: D0, today: planFor(D0), hist: hist };
+        });
+    }
+    function newcSym(sym, onboard) {
+        return Promise.all([
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=1d&limit=60'),
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=1h&limit=99'),
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=15m&limit=99')
+        ]).then(function (r) {
+            var d = parse(r[0].j), h = parse(r[1].j).slice(0, -1), m = parse(r[2].j).slice(0, -1), hi = -Infinity, lo = Infinity;
+            d.forEach(function (x) { if (x.h > hi) { hi = x.h; } if (x.l < lo) { lo = x.l; } });
+            return { type: 'newc', sym: sym, onboard: onboard, w: Math.max(r[0].w, r[1].w, r[2].w), p0: d.length ? d[0].o : 0, hi: hi, lo: lo,
+                     last: d.length ? d[d.length - 1].c : 0, atr15: m.length >= 15 ? atrK(m, 14) : 0, hrs: h.length, t1h: tfAnalyze(h), t15: tfAnalyze(m) };
+        });
+    }
+    self.__t = { evalTrade: evalTrade, morningCore: morningCore, tfAnalyze: tfAnalyze };
     self.onmessage = function (e) {
         var jobs = e.data.jobs, conc = e.data.conc || 5, id = e.data.id, i = 0, maxw = 0, rate = 0, out = [], errs = 0;
         function lane() {
             if (i >= jobs.length || rate) { return Promise.resolve(); }
             var j = jobs[i++];
-            var p = j.type === 'plan' ? planSym(j.sym, j.chg, j.kind) : scanSym(j.sym);
+            var p = j.type === 'plan' ? planSym(j.sym, j.chg, j.kind) : j.type === 'morning' ? morningSym(j.sym, j.kind, j.D, j.now) : j.type === 'newc' ? newcSym(j.sym, j.onboard) : scanSym(j.sym);
             return p.then(function (r) { if (r.w > maxw) { maxw = r.w; } out.push(r); }, function (err) { if (err && err.rate) { rate = err.rate; } else { errs++; } }).then(lane);
         }
         var lanes = []; for (var n = 0; n < conc; n++) { lanes.push(lane()); }
@@ -244,7 +320,7 @@ var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, C
 
 var S = { tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
-    plan: { items: [], at: 0 }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
+    plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
     mkt: 'gain', scanf: 'all', chart: { sym: ls('mintoosuite_chart', 'BTCUSDT'), tf: '15m', k: [], ws: null, err: '' },
     win: ls('mintoosuite_win', 'overview'), log: [], lang: ls('mintoosuite_lang', 'en'),
     sysPush: ls('mintoosuite_sys_push', 'on') !== 'off', goldPush: ls('mintoosuite_gold_push', 'on') !== 'off',
@@ -263,6 +339,20 @@ function nm(s) { return s.replace(/USDT$/, '') + '/USDT'; }
 function cc(v) { return v >= 0 ? 'up' : 'dn'; }
 function pill(side) { var c = side === 'LONG' ? 'long' : side === 'SHORT' ? 'short' : 'wait'; return '<span class="pill ' + c + '">' + side + '</span>'; }
 function addLog(type, text) { S.log.unshift({ t: Date.now(), type: type, text: text }); if (S.log.length > 150) { S.log.length = 150; } lss('mintoosuite_log', JSON.stringify(S.log)); }
+
+// ---------- profit calculator ($100 and $50, net of estimated fees) ----------
+var FEE = 0.001;
+function feeOf(sym) { return sym === GOLD ? 0 : FEE; }
+function usd(n) { return (n >= 0 ? '+$' : '−$') + Math.abs(n).toFixed(2); }
+function plLine(side, price, sl, tp, sym) {
+    if ((side !== 'LONG' && side !== 'SHORT') || !price) { return ''; }
+    var f = feeOf(sym), tpp = tp / price, slp = sl / price;
+    return '$100: <span class="up">' + usd(100 * (tpp - f)) + '</span> at TP / <span class="dn">' + usd(-100 * (slp + f)) + '</span> at SL • $50: <span class="up">' + usd(50 * (tpp - f)) + '</span> / <span class="dn">' + usd(-50 * (slp + f)) + '</span>';
+}
+function netUsd(pnlPct, sym, amt) { return usd(amt * (pnlPct / 100 - feeOf(sym))); }
+function dayOpenFor(now) { return Math.floor((now - 900000) / 86400000) * 86400000; }
+function pk(ms) { try { return new Date(ms).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit' }); } catch (e) { return hm(ms); } }
+function pkd(ms) { try { return new Date(ms).toLocaleDateString('en-GB', { timeZone: 'Asia/Karachi', weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + pk(ms); } catch (e) { return fmtT(ms); } }
 
 // ---------- notifications (service worker) ----------
 function sendPush(title, body) {
@@ -347,6 +437,9 @@ function runScan() {
     if (t[GOLD] && liquid.indexOf(GOLD) < 0) { liquid.push(GOLD); }
     var jobs = liquid.map(function (s) { return { type: 'scan', sym: s }; });
     if (now - S.plan.at > 60000) { planPicks().reverse().forEach(function (p) { jobs.unshift({ type: 'plan', sym: p.sym, chg: p.chg, kind: p.kind }); }); }
+    var D0 = dayOpenFor(now);
+    if (now - S.morning.at > 300000 || S.morning.D !== D0) { morningUniverse().forEach(function (u) { jobs.push({ type: 'morning', sym: u.sym, kind: u.kind, D: D0, now: now }); }); }
+    if (S.newc.list.length && now - S.newc.at > 120000) { S.newc.list.forEach(function (n) { jobs.push({ type: 'newc', sym: n.sym, onboard: n.onboard }); }); }
     var buckets = []; for (var i = 0; i < NW; i++) { buckets.push([]); }
     jobs.forEach(function (j, n) { buckets[n % NW].push(j); });
     runId++; var rid = runId;
@@ -360,16 +453,18 @@ function runScan() {
         });
     });
     return Promise.all(proms).then(function (rs) {
-        var scanned = 0, rate = 0, maxw = 0, errs = 0, plans = [];
+        var scanned = 0, rate = 0, maxw = 0, errs = 0, plans = [], mor = [], newcGot = 0;
         rs.forEach(function (r) {
             rate = Math.max(rate, r.rate || 0); maxw = Math.max(maxw, r.maxw || 0); errs += r.errs || 0;
-            r.out.forEach(function (o) { if (o.type === 'scan') { S.scan.res[o.sym] = { tf: o.tf, at: Date.now() }; scanned++; } else { plans.push(o); } });
+            r.out.forEach(function (o) { if (o.type === 'scan') { S.scan.res[o.sym] = { tf: o.tf, at: Date.now() }; scanned++; } else if (o.type === 'morning') { mor.push(o); } else if (o.type === 'newc') { S.newc.res[o.sym] = o; newcGot++; } else { plans.push(o); } });
         });
         if (plans.length) {
             var order = planPicks().map(function (p) { return p.sym; });
             plans.sort(function (a, b) { return order.indexOf(a.sym) - order.indexOf(b.sym); });
             S.plan.items = plans; S.plan.at = Date.now();
         }
+        if (mor.length) { S.morning.items = mor; S.morning.D = D0; S.morning.at = Date.now(); S.morning.goldClosed = mor.some(function (o) { return o.kind === 'gold' && !o.today; }); maybeMorningAlert(); }
+        if (newcGot) { S.newc.at = Date.now(); }
         Object.keys(S.scan.res).forEach(function (s) { if (Date.now() - S.scan.res[s].at > 180000) { delete S.scan.res[s]; } });
         S.scan.n = scanned; S.scan.total = liquid.length; S.scan.ms = Date.now() - now; S.scan.maxw = maxw; S.scan.err = errs;
         if (rate) { S.scan.pause = Date.now() + rate * 1000; }
@@ -380,6 +475,58 @@ function runScan() {
 }
 function scanLoop() {
     runScan().then(function () { var d = Math.max(1000, (S.scan.next || Date.now() + 30000) - Date.now()); setTimeout(scanLoop, S.scan.next ? d : 2000); });
+}
+
+function morningUniverse() {
+    var t = S.tick, list = [];
+    if (t[GOLD]) { list.push({ sym: GOLD, kind: 'gold' }); }
+    Object.keys(t).filter(function (s) { return s !== GOLD; }).sort(function (a, b) { return t[b].q - t[a].q; }).slice(0, 10).forEach(function (s) { list.push({ sym: s, kind: 'crypto' }); });
+    return list;
+}
+function morningSolid() {
+    return S.morning.items.filter(function (o) { return o.today && o.today.solid; }).sort(function (a, b) { return Math.abs(b.today.dayScore) - Math.abs(a.today.dayScore); });
+}
+function maybeMorningAlert() {
+    var D = S.morning.D, T = D + 900000, now = Date.now();
+    if (ls('mintoosuite_morning_alert', '') === String(D)) { return; }
+    lss('mintoosuite_morning_alert', String(D));
+    var solid = morningSolid();
+    if (now - T > 45 * 60000 || !solid.length) { return; }
+    var top = solid.slice(0, 3).map(function (o) { return nm(o.sym) + ' ' + o.today.day; }).join(', ');
+    addLog('NEW DAY', 'New-day plan ready (' + pk(T) + ' PKT): ' + top);
+    if (S.aMaster && S.sysPush) { sendPush('🌅 New day plan ready', top + '. Open the New Day window for entries, targets and times.'); }
+}
+function loadListings() {
+    return fetchJSON('/fapi/v1/exchangeInfo', 25000).then(function (j) {
+        var now = Date.now(), all = [], fresh = [];
+        (j.symbols || []).forEach(function (s) {
+            if (!SYM_OK.test(s.symbol) || s.contractType !== 'PERPETUAL') { return; }
+            all.push(s.symbol);
+            if (s.status === 'TRADING' && s.onboardDate && now - s.onboardDate < 30 * 86400000) { fresh.push({ sym: s.symbol, onboard: +s.onboardDate }); }
+        });
+        fresh.sort(function (a, b) { return b.onboard - a.onboard; });
+        S.newc.list = fresh.slice(0, 14); S.newc.listAt = now;
+        var known = []; try { known = JSON.parse(ls('mintoosuite_known_syms', '[]')) || []; } catch (e) { known = []; }
+        if (known.length && all.length) {
+            var ks = {}; known.forEach(function (s) { ks[s] = 1; });
+            all.filter(function (s) { return !ks[s]; }).slice(0, 3).forEach(function (s) {
+                addLog('NEW COIN', 'New Binance Futures listing: ' + nm(s));
+                if (S.sysPush) { sendPush('🆕 New listing: ' + nm(s), 'Just listed on Binance Futures. Open the New Coins window for its data.'); }
+            });
+        }
+        if (all.length > 50) { lss('mintoosuite_known_syms', JSON.stringify(all)); }
+        if (S.win === 'newc') { renderView(); }
+    }).catch(function () { S.newc.err = 'Could not load the listing list'; });
+}
+
+function newcRec(r) {
+    var tk = S.tick[r.sym], price = tk ? tk.p : r.last, a = r.t15, b = r.t1h;
+    if (!a) { return { side: 'NONE', why: 'Only ' + Math.floor(r.hrs) + ' hours of history so far. Too new for a reliable signal.' }; }
+    var side, conf, why = '';
+    if (b) { if (a.side !== 'WAIT' && a.side === b.side) { side = a.side; conf = Math.abs(a.score) + Math.abs(b.score) >= 5 ? 'HIGH' : 'MEDIUM'; } else { side = 'WAIT'; conf = 'LOW'; why = 'The 15m and 1h timeframes disagree.'; } }
+    else { side = a.side; conf = 'LOW'; why = side === 'WAIT' ? '' : 'Early signal from 15m candles only (under 40 hours of history).'; }
+    var sl = Math.min(1.5 * a.atr, 0.10 * price);
+    return { side: side, conf: conf, why: why, price: price, sl: sl, tp: 2 * sl };
 }
 
 // ---------- recommendations from scan results ----------
@@ -480,8 +627,10 @@ function windows(kind, now) {
 // ---------- windows ----------
 var WINS = [
     { id: 'overview', ic: '🏠', n: 'Overview', sub: 'Live snapshot: top pick, gold, BTC, ETH and the market' },
+    { id: 'morning', ic: '🌅', n: 'New Day Recommendations', sub: 'Solid whole-day and few-hours plans locked at 05:15 PKT, with a replay of the last 9 days' },
     { id: 'plan', ic: '🧭', n: 'Master Plan', sub: 'Next-day trend, whole-day and few-hours plans with start and stop times' },
     { id: 'scanner', ic: '🔍', n: 'Scanner', sub: 'Top Binance Futures coins scanned in parallel on 10m + 15m' },
+    { id: 'newc', ic: '🆕', n: 'New Coins', sub: 'Newly listed Binance Futures coins and their real data' },
     { id: 'candles', ic: '🕯', n: '3m Candles', sub: 'Strong bullish and bearish 3-minute candles on volume' },
     { id: 'market', ic: '🟡', n: 'Binance Live', sub: 'Gainers, losers and volume, updated every second' },
     { id: 'chart', ic: '📈', n: 'Chart', sub: 'Real candlestick chart for any Binance Futures coin' },
@@ -510,7 +659,7 @@ function priceCard(label, sym) {
 function chips(arr) { return arr.map(function (s) { return '<span class="chip" data-act="chart:' + s + '">' + esc(s.replace('USDT', '')) + ' <span class="' + cc(S.tick[s].chg) + '">' + pct(S.tick[s].chg) + '</span></span>'; }).join(' '); }
 function pickRow(p) {
     return '<div class="row tap" data-act="chart:' + p.sym + '"><div><b>' + nm(p.sym) + '</b> ' + pill(p.side) + ' <span class="mut">' + p.conf + '</span>' +
-        '<div class="lvl">' + levelText(p.side, p.price, p.sl, p.tp) + '</div></div><div style="text-align:right"><div class="mid">' + fmtP(p.price) + '</div><div class="lvl">valid ' + hm(p.at) + '→' + hm(p.at + 45 * 60000) + '</div></div></div>';
+        '<div class="lvl">' + levelText(p.side, p.price, p.sl, p.tp) + '</div><div class="lvl">' + plLine(p.side, p.price, p.sl, p.tp, p.sym) + '</div></div><div style="text-align:right"><div class="mid">' + fmtP(p.price) + '</div><div class="lvl">valid ' + hm(p.at) + '→' + hm(p.at + 45 * 60000) + '</div></div></div>';
 }
 function planCard(r, label) {
     var w = windows(r.kind, S.plan.at), live = S.tick[r.sym] ? S.tick[r.sym].p : r.price;
@@ -520,9 +669,9 @@ function planCard(r, label) {
         (r.note ? '<div class="warnbox">⚠️ ' + esc(r.note) + '</div>' : '') +
         '<div class="row"><span>Next-day trend</span><span class="' + nc + '"><b>' + nd + '</b> <span class="mut">(' + r.nextDayConf + ')</span></span></div>' +
         '<div class="row" style="display:block"><div>Whole day ' + pill(r.day === 'NEUTRAL' ? 'WAIT' : r.day) + ' <span class="mut">' + r.dayConf + '</span></div>' +
-        '<div class="lvl">Start ' + fmtT(w.dayStart) + ' → Stop ' + fmtT(w.dayEnd) + '</div><div class="lvl">' + levelText(r.day, r.price, r.daySL, r.dayTP) + '</div></div>' +
+        '<div class="lvl">Start ' + fmtT(w.dayStart) + ' → Stop ' + fmtT(w.dayEnd) + '</div><div class="lvl">' + levelText(r.day, r.price, r.daySL, r.dayTP) + '</div><div class="lvl">' + plLine(r.day, r.price, r.daySL, r.dayTP, r.sym) + '</div></div>' +
         '<div class="row" style="display:block"><div>Few hours ' + pill(r.fh) + ' <span class="mut">' + r.fhConf + '</span>' + (counter ? ' <span class="org">against whole-day trend: small size</span>' : '') + '</div>' +
-        '<div class="lvl">Start ' + fmtT(w.fhStart) + ' → Stop ' + fmtT(w.fhStop) + '</div><div class="lvl">' + levelText(r.fh, r.price, r.fhSL, r.fhTP) + '</div></div>' +
+        '<div class="lvl">Start ' + fmtT(w.fhStart) + ' → Stop ' + fmtT(w.fhStop) + '</div><div class="lvl">' + levelText(r.fh, r.price, r.fhSL, r.fhTP) + '</div><div class="lvl">' + plLine(r.fh, r.price, r.fhSL, r.fhTP, r.sym) + '</div></div>' +
         '<div class="lvl">24h ' + pct(r.chg) + ' • volume vs 30-day avg x' + r.vr.toFixed(2) + ' • RSI 1h ' + r.rsiH.toFixed(0) + ' / 1d ' + r.rsiD.toFixed(0) + '</div></div>';
 }
 function scanSummary() {
@@ -541,7 +690,14 @@ function vOverview() {
     if (!S.scan.at) { h += '<div class="mut">Scanning the market…</div>'; }
     else if (top) { h += pickRow(top); }
     else { h += '<div class="mut">No coin has both the 10m and 15m timeframes in agreement right now. The bot is waiting.</div>'; }
-    h += '</div><div class="grid2">' + priceCard('🥇 Gold (' + GOLD + ')', GOLD) + priceCard('₿ Bitcoin', 'BTCUSDT') + '</div>' + priceCard('Ξ Ethereum', 'ETHUSDT');
+    h += '</div>';
+    var ms = morningSolid().slice(0, 3);
+    h += '<div class="card"><div class="row tap" style="padding:0" data-act="win:morning"><div><div class="h" style="margin-bottom:4px">🌅 New day plan (05:15 PKT)</div>' +
+        (ms.length ? ms.map(function (o) { return nm(o.sym) + ' ' + pill(o.today.day); }).join(' • ') : '<span class="mut">' + (S.morning.at ? 'No solid setup today' : 'Building…') + '</span>') + '</div><span class="mut">›</span></div></div>';
+    var nl = S.newc.list.slice(0, 3);
+    h += '<div class="card"><div class="row tap" style="padding:0" data-act="win:newc"><div><div class="h" style="margin-bottom:4px">🆕 New coins (last 30 days): ' + S.newc.list.length + '</div>' +
+        (nl.length ? nl.map(function (n) { var tk = S.tick[n.sym]; return nm(n.sym) + (tk ? ' <span class="' + cc(tk.chg) + '">' + pct(tk.chg) + '</span>' : ''); }).join(' • ') : '<span class="mut">None yet</span>') + '</div><span class="mut">›</span></div></div>';
+    h += '<div class="grid2">' + priceCard('🥇 Gold (' + GOLD + ')', GOLD) + priceCard('₿ Bitcoin', 'BTCUSDT') + '</div>' + priceCard('Ξ Ethereum', 'ETHUSDT');
     h += '<div class="card"><div class="h">Binance Futures market (24h)</div>';
     if (!m.n) { h += '<div class="mut">Waiting for live data…</div>'; }
     else {
@@ -573,7 +729,7 @@ function vScanner() {
     if (!S.scan.at) { h += '<div class="mut">Scanning…</div>'; }
     else if (!picks.length) { h += '<div class="mut">Nothing matches right now.</div>'; }
     else { h += picks.slice(0, 40).map(pickRow).join(''); }
-    h += '</div><div class="note">' + (all.length - all.filter(function (p) { return p.aligned; }).length) + ' scanned coins have mixed signals and are skipped. Levels use 1.5×ATR stop and 2:1 target. Valid for about 45 minutes. Tap a coin to open its chart.</div>';
+    h += '</div><div class="note">' + (all.length - all.filter(function (p) { return p.aligned; }).length) + ' scanned coins have mixed signals and are skipped. Levels use a 1.5×ATR stop and a target at twice the stop distance. Valid for about 45 minutes. Tap a coin to open its chart.</div>';
     return h;
 }
 function vCandles() {
@@ -660,6 +816,9 @@ function vExchanges() {
 }
 function vHelp() {
     var T = [['Windows button', 'Tap WINDOWS (top right, next to MENU) to switch between screens. Only one screen shows at a time so nothing is jumbled. The app remembers your last screen.'],
+        ['New Day Recommendations', 'At 05:15 PKT (15 minutes after the 05:00 PKT day open) the app locks a whole-day plan and a few-hours plan for gold and the 10 most active coins, using only data available at that moment. It then tracks each plan (target hit, stop hit, or still running) and replays the same rules on the last 9 days so you can see how they really performed.'],
+        ['New Coins', 'Coins listed on Binance Futures in the last 30 days: first-trade price, change since listing, highest price, volume, volatility and a signal. New coins are volatile, so both directions can win or lose quickly. You also get an alert when a new coin is listed.'],
+        ['Profit lines', 'Every entry shows the profit at the target and the loss at the stop for $100 and for $50, without leverage and after about 0.1% fees. With leverage both numbers multiply.'],
         ['Master Plan', 'For gold and the most active coins: next-day trend, a whole-day plan and a few-hours plan, each with start time, stop time, entry, stop-loss and take-profit.'],
         ['Scanner', 'Every 30 seconds the app scans the top 100 Binance Futures coins by volume on 10m and 15m candles using 25 parallel requests (5 background workers × 5). A coin is recommended only when both timeframes agree.'],
         ['3m Candles', 'Lists strong bullish or bearish 3-minute candles that are large compared with recent volatility and backed by high volume.'],
@@ -677,6 +836,88 @@ function vChart() {
     var h = '<div class="card"><select id="chartSel">' + keys.map(function (s) { return '<option value="' + s + '"' + (s === S.chart.sym ? ' selected' : '') + '>' + nm(s) + '</option>'; }).join('') + '</select><div class="seg" style="margin-top:8px">';
     ['1m', '3m', '5m', '15m', '1h', '4h', '1d'].forEach(function (tf) { h += '<span class="chip' + (S.chart.tf === tf ? ' on' : '') + '" data-act="tf:' + tf + '">' + tf + '</span>'; });
     return h + '</div><div class="lvl" id="chartInfo" style="margin-bottom:6px"></div><canvas id="cv"></canvas><div class="note" id="chartNote"></div></div>';
+}
+
+
+// ---------- New Day Recommendations ----------
+function recStats(items, key) {
+    var w = 0, l = 0, t = 0, net = 0, n = 0;
+    items.forEach(function (o) { (o.hist || []).forEach(function (p) { var r = p[key]; if (!r) { return; } n++; if (r.res === 'WIN') { w++; } else if (r.res === 'LOSS') { l++; } else { t++; } net += r.pnl - feeOf(o.sym) * 100; }); });
+    return { n: n, w: w, l: l, t: t, wr: (w + l) ? Math.round(w / (w + l) * 100) : 0, avg: n ? net / n : 0 };
+}
+function coinStats(o, key) { var w = 0, l = 0, t = 0; (o.hist || []).forEach(function (p) { var r = p[key]; if (!r) { return; } if (r.res === 'WIN') { w++; } else if (r.res === 'LOSS') { l++; } else { t++; } }); return w + ' TP / ' + l + ' SL / ' + t + ' timeout'; }
+function resLine(r, side, entry, sym) {
+    if (!r) { return ''; }
+    var s;
+    if (r.res === 'WIN') { s = '<b class="up">✅ Target hit at ' + pk(r.at) + ' PKT</b> • ' + netUsd(r.pnl, sym, 100) + ' on $100, ' + netUsd(r.pnl, sym, 50) + ' on $50'; }
+    else if (r.res === 'LOSS') { s = '<b class="dn">❌ Stop hit at ' + pk(r.at) + ' PKT</b> • ' + netUsd(r.pnl, sym, 100) + ' on $100, ' + netUsd(r.pnl, sym, 50) + ' on $50'; }
+    else {
+        var tk = S.tick[sym], pnl = r.pnl;
+        if (r.res === 'OPEN' && tk) { pnl = (side === 'LONG' ? 1 : -1) * (tk.p - entry) / entry * 100; }
+        s = (r.res === 'OPEN' ? '⏳ Running now: ' : '⌛ Window ended: ') + '<b class="' + (pnl >= 0 ? 'up' : 'dn') + '">' + netUsd(pnl, sym, 100) + ' on $100, ' + netUsd(pnl, sym, 50) + ' on $50</b> <span class="mut">(if closed now, after fees)</span>';
+    }
+    return '<div class="lvl">' + s + '</div>';
+}
+function morningCard(o) {
+    var p = o.today, sym = o.sym, label = o.kind === 'gold' ? '🥇 GOLD (' + GOLD + ')' : '🪙 ' + nm(sym), live = S.tick[sym] ? S.tick[sym].p : p.entry;
+    var dEnd = p.D + 86400000, fEnd = p.T + 4 * 3600000;
+    function block(title, side, conf, from, to, sl, tp, res) {
+        return '<div class="row" style="display:block"><div>' + title + ' ' + pill(side) + ' <span class="mut">' + conf + '</span></div>' +
+            '<div class="lvl">Start ' + pkd(from) + ' → Stop ' + pkd(to) + ' PKT</div><div class="lvl">' + levelText(side, p.entry, sl, tp) + '</div>' +
+            (side === 'WAIT' ? '' : '<div class="lvl">' + plLine(side, p.entry, sl, tp, sym) + '</div>') + resLine(res, side, p.entry, sym) + '</div>';
+    }
+    return '<div class="card"><div class="row" style="padding-top:0"><div><b>' + label + '</b> ' + (p.solid ? '<span class="pill long">SOLID</span>' : '<span class="pill wait">WATCH</span>') + '</div><span class="mid">' + fmtP(live) + '</span></div>' +
+        (p.note ? '<div class="warnbox">⚠️ ' + esc(p.note) + '</div>' : '') +
+        block('Whole day', p.day, p.dayConf, p.T, dEnd, p.dSL, p.dTP, p.dayRes) + block('Few hours', p.fh, p.fhConf, p.T, fEnd, p.fSL, p.fTP, p.fhRes) +
+        '<div class="lvl">Entry = price at 05:15 PKT. Stop and target are fixed fractions of the coin\'s recent average range. Previous day ' + pct(p.chgPrev) + ' • RSI 1d ' + p.rsiD.toFixed(0) + ' / 1h ' + p.rsiH.toFixed(0) + '</div>' +
+        '<div class="lvl">Last 9 days, same rules: whole day ' + coinStats(o, 'dayRes') + ' • few hours ' + coinStats(o, 'fhRes') + '</div></div>';
+}
+function vMorning() {
+    var now = Date.now(), D0 = dayOpenFor(now), nextT = D0 + 900000 + 86400000, left = Math.max(0, nextT - now), h = '';
+    h += '<div class="card"><div class="h">Plan for the day starting</div><div class="mid">' + pkd(D0) + ' PKT</div>' +
+        '<div class="lvl">The trading day opens at 05:00 PKT (00:00 UTC, when Binance\'s daily candle starts). The plan is locked at 05:15 PKT, after the first 15 minutes, using only data available at that moment. Next plan: ' + pkd(nextT) + ' PKT, in ' + Math.floor(left / 3600000) + 'h ' + Math.floor(left % 3600000 / 60000) + 'm.</div></div>';
+    var items = S.morning.D === D0 ? S.morning.items : [];
+    if (!items.length) { return h + '<div class="card"><div class="mut">' + (S.morning.at ? 'Building today\'s plan…' : 'Building the first plan from real candles… this takes a few seconds.') + '</div></div>'; }
+    var d = recStats(items, 'dayRes'), f = recStats(items, 'fhRes');
+    function line(t, s) { return '<div class="row" style="display:block"><b>' + t + '</b><div class="lvl">' + s.n + ' plans took a trade: ' + s.w + ' hit target, ' + s.l + ' hit stop, ' + s.t + ' ended on the clock • win rate ' + s.wr + '% • average <b class="' + (s.avg >= 0 ? 'up' : 'dn') + '">' + (s.avg >= 0 ? '+' : '') + s.avg.toFixed(2) + '%</b> per plan = ' + usd(s.avg) + ' per $100 after fees</div></div>'; }
+    h += '<div class="card"><div class="h">Track record: same rules replayed on the last 9 days</div>' + line('Whole-day plans', d) + line('Few-hours plans', f) +
+        '<div class="note">This is a replay on real past candles, not live trading. Past results do not guarantee future results. If the stop and the target were both touched in one 15-minute candle, the stop is counted first.</div></div>';
+    var ok = items.filter(function (o) { return o.today; }), solid = ok.filter(function (o) { return o.today.solid; }).sort(function (a, b) { return Math.abs(b.today.dayScore) - Math.abs(a.today.dayScore); });
+    var rest = ok.filter(function (o) { return !o.today.solid; });
+    if (S.morning.goldClosed) { h += '<div class="warnbox">Exness gold has no plan today because the market is closed (weekend).</div>'; }
+    h += '<div class="h">✅ Solid setups (whole day and few hours agree) • ' + solid.length + '</div>';
+    h += solid.length ? solid.map(morningCard).join('') : '<div class="card"><div class="mut">No coin has a solid setup today. Waiting is also a position. See the watch list below.</div></div>';
+    if (rest.length) { h += '<div class="h">👀 Watch list (no solid setup)</div>' + rest.map(morningCard).join(''); }
+    return h + '<div class="note">Profit and loss are for $100 and $50 invested without leverage, after about 0.1% Binance trading fees (gold: no fee, spread not included). With leverage both profit and loss grow by the same multiple. Not financial advice.</div>';
+}
+
+// ---------- New Coins ----------
+function newcCard(n) {
+    var r = S.newc.res[n.sym], tk = S.tick[n.sym], age = Date.now() - n.onboard;
+    var ageT = age < 86400000 ? Math.floor(age / 3600000) + 'h' : Math.floor(age / 86400000) + 'd ' + Math.floor(age % 86400000 / 3600000) + 'h';
+    var h = '<div class="card"><div class="row tap" style="padding-top:0" data-act="chart:' + n.sym + '"><div><b>' + nm(n.sym) + '</b> <span class="pill wait">NEW • ' + ageT + '</span><div class="lvl">Listed ' + new Date(n.onboard).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</div></div>' +
+        '<div style="text-align:right">' + (tk ? '<div class="mid">' + fmtP(tk.p) + '</div><div class="' + cc(tk.chg) + '"><b>' + pct(tk.chg) + '</b> <span class="mut">24h</span></div>' : '<div class="mut">no price yet</div>') + '</div></div>';
+    if (!r) { return h + '<div class="mut">Loading history…</div></div>'; }
+    var price = tk ? tk.p : r.last, since = r.p0 ? (price - r.p0) / r.p0 * 100 : 0, fromHi = r.hi ? (price - r.hi) / r.hi * 100 : 0, riseHi = r.p0 ? (r.hi - r.p0) / r.p0 * 100 : 0, atrp = price ? r.atr15 / price * 100 : 0;
+    h += '<div class="row"><span>Since first trade (' + fmtP(r.p0) + ')</span><b class="' + cc(since) + '">' + pct(since) + '</b></div>' +
+        '<div class="row"><span>Highest so far</span><b>' + fmtP(r.hi) + ' <span class="up">(' + pct(riseHi) + ')</span></b></div>' +
+        '<div class="row"><span>Now vs highest</span><b class="' + cc(fromHi) + '">' + pct(fromHi) + '</b></div>' +
+        '<div class="row"><span>24h volume</span><b>' + (tk ? money(tk.q) : '—') + '</b></div>' +
+        '<div class="row"><span>Typical 15m swing</span><b>' + atrp.toFixed(2) + '%</b></div>';
+    var flags = [];
+    if (atrp > 2) { flags.push('EXTREME VOLATILITY'); } if (fromHi < -30) { flags.push('FADING FROM HIGH'); } else if (fromHi > -5) { flags.push('NEAR HIGH'); } if (tk && tk.q < 5e6) { flags.push('LOW VOLUME'); }
+    if (flags.length) { h += '<div class="warnbox">⚠️ ' + flags.join(' • ') + '</div>'; }
+    var rec = newcRec(r);
+    if (rec.side === 'NONE') { h += '<div class="lvl">' + esc(rec.why) + '</div>'; }
+    else {
+        h += '<div class="row" style="display:block"><div>Signal ' + pill(rec.side === 'WAIT' ? 'WAIT' : rec.side) + ' <span class="mut">' + rec.conf + '</span></div>' + (rec.side === 'LONG' || rec.side === 'SHORT' ? '<div class="lvl">' + levelText(rec.side, rec.price, rec.sl, rec.tp) + '</div><div class="lvl">' + plLine(rec.side, rec.price, rec.sl, rec.tp, n.sym) + '</div>' : '') + (rec.why ? '<div class="lvl">' + esc(rec.why) + '</div>' : '') + '</div>';
+    }
+    return h + '</div>';
+}
+function vNewc() {
+    var h = '<div class="warnbox">New listings move fast in both directions. A long or a short can win, and both can lose quickly. Nothing here is guaranteed, so keep size small.</div>', list = S.newc.list;
+    if (!list.length) { return h + '<div class="card"><div class="mut">' + (S.newc.listAt ? 'No Binance Futures coin was listed in the last 30 days.' : (S.newc.err || 'Loading the listing list…')) + '</div></div>'; }
+    return h + list.map(newcCard).join('') + '<div class="note">Listing dates come from Binance. Prices and candles are real. You also get an alert when a brand-new Futures coin appears (while the app is open or in the background).</div>';
 }
 
 // ---------- chart ----------
@@ -735,8 +976,8 @@ function drawChart() {
 }
 
 // ---------- rendering & events ----------
-var VIEWS = { overview: vOverview, plan: vPlan, scanner: vScanner, candles: vCandles, market: vMarket, chart: vChart, gold: vGold, news: vNews, alerts: vAlerts, log: vLog, exchanges: vExchanges, help: vHelp };
-var LIVE = { overview: 1, plan: 1, scanner: 1, candles: 1, market: 1, gold: 1, exchanges: 1 };
+var VIEWS = { morning: vMorning, newc: vNewc, overview: vOverview, plan: vPlan, scanner: vScanner, candles: vCandles, market: vMarket, chart: vChart, gold: vGold, news: vNews, alerts: vAlerts, log: vLog, exchanges: vExchanges, help: vHelp };
+var LIVE = { morning: 1, newc: 1, overview: 1, plan: 1, scanner: 1, candles: 1, market: 1, gold: 1, exchanges: 1 };
 function renderView() {
     var d = winDef(S.win);
     $('winName').textContent = d.ic + ' ' + d.n; $('winSub').textContent = d.sub;
@@ -805,7 +1046,7 @@ function tick() { if (!S.tick.XAUUSDT && S.tick.PAXGUSDT) { GOLD = 'PAXGUSDT'; }
 applyLang(); buildTiles(); if (!VIEWS[S.win]) { S.win = 'overview'; } renderView();
 if (S.win === 'chart') { loadChart(); }
 makeWorkers(false); connectWS(); pollREST(); setInterval(pollREST, 5000);
-scanLoop(); loadNews(); setInterval(loadNews, 300000); setInterval(tick, 1000);
+loadListings(); setInterval(loadListings, 1800000); scanLoop(); loadNews(); setInterval(loadNews, 300000); setInterval(tick, 1000);
 if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
 S.dbg = { processSignals: processSignals, computePicks: computePicks };
 window.__mintoo = S;
