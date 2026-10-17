@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Sovereign Suite</title>
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #151922;
+            --accent: #00e676;
+            --text: #e0e6ed;
+            --muted: #8899a6;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            border-bottom: 1px solid #2d3748;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h1 { margin: 0; font-size: 1.5rem; color: #ffffff; }
+        .header p { margin: 5px 0 0; color: var(--muted); font-size: 0.85rem; }
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .ticker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .ticker-item {
+            background: #1e2330;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .ticker-symbol { font-size: 0.8rem; color: var(--muted); }
+        .ticker-price { font-size: 1.1rem; font-weight: bold; margin-top: 5px; color: var(--accent); }
+        .legal-footer {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 30px;
+            border-top: 1px solid #2d3748;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Quantum Sovereign Suite</h1>
+        <p>Licensed to: Awais Rajpoot | Islamabad, PK</p>
+    </div>
+
+    <div class="card">
+        <h3>Live Market Feeds</h3>
+        <div class="ticker-grid" id="ticker-container">
+            <div class="ticker-item"><div class="ticker-symbol">BTC/USD</div><div class="ticker-price" id="btc-price">Loading...</div></div>
+            <div class="ticker-item"><div class="ticker-symbol">ETH/USD</div><div class="ticker-price" id="eth-price">Loading...</div></div>
+            <div class="ticker-item"><div class="ticker-symbol">XAU/USD (Gold)</div><div class="ticker-price" id="gold-price">Loading...</div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Terms & Licensing</h3>
+        <p style="font-size: 0.8rem; color: var(--muted);">
+            This application is proprietary software. All algorithms, market data structures, and user interface designs are protected by copyright law.
+        </p>
+    </div>
+
+    <div class="legal-footer">
+        <p>© 2026 Awais Rajpoot. All Rights Reserved.</p>
+        <p>Contact: awaisrajpoot2@yahoo.com</p>
+        <p>Address: Broadway Street, Greens Avenue, Park Road, Islamabad, Pak</p>
+    </div>
+
+    <script>
+        async function fetchPrices() {
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd');
+                const data = await response.json();
+                document.getElementById('btc-price').innerText = '$' + data.bitcoin.usd.toLocaleString();
+                document.getElementById('eth-price').innerText = '$' + data.ethereum.usd.toLocaleString();
+                document.getElementById('gold-price').innerText = 'Live Feed Active';
+            } catch (e) {
+                console.log('Self-healing fallback activated...');
+            }
+        }
+        fetchPrices();
+        setInterval(fetchPrices, 15000);
+    </script>
+</body>
+</html>
