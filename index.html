@@ -239,6 +239,17 @@
         </div>
     </div>
 
+    <!-- MINTOO-MASTERPLAN-V1 -->
+    <div class="panel" id="panelMasterPlan" style="border: 1px solid rgba(88, 166, 255, 0.8);">
+        <div class="panel-title">
+            <span>🧭 MASTER BOT PLAN: VOLUME, GAINERS/LOSERS, TREND & TIME WINDOWS</span>
+            <span style="color: #3fb950;" id="mpStamp">LOADING…</span>
+        </div>
+        <div style="font-size: 10px; color: #3fb950; margin-bottom: 6px;">🛡️ RECOMMENDATIONS ONLY: the master bot cannot place trades on any real account.</div>
+        <div id="mpBody" style="font-size: 10px; color: #c9d1d9; line-height: 1.5;">Loading live Binance Futures data…</div>
+        <button class="btn-active-blue" style="width: 100%; margin-top: 6px;" onclick="window.mintooPlanRefresh && window.mintooPlanRefresh()">🔄 REFRESH PLAN NOW</button>
+    </div>
+
     <div class="panel" id="panelScanner">
         <div class="panel-title">
             <span>
@@ -962,5 +973,191 @@
         switchAsset(currentAsset);
         updateHeroBanner();
     </script>
+<script>
+(function () {
+    'use strict';
+    // SAFETY: the master bot is recommendation-only. This flag is locked and nothing here sends orders.
+    try { Object.defineProperty(window, 'REAL_TRADING_ENABLED', { value: false, writable: false, configurable: false }); } catch (e) {}
+
+    var FAPI = 'https://fapi.binance.com';
+    var HOUR = 3600000;
+    var busy = false;
+
+    function $(id) { return document.getElementById(id); }
+    function jget(path) {
+        return fetch(FAPI + path, { cache: 'no-store' }).then(function (r) {
+            if (!r.ok) { throw new Error('HTTP ' + r.status); }
+            return r.json();
+        });
+    }
+    function ema(a, n) { var k = 2 / (n + 1), e = a[0]; for (var i = 1; i < a.length; i++) { e = a[i] * k + e * (1 - k); } return e; }
+    function rsi(a, n) {
+        n = n || 14; if (a.length <= n) { return 50; }
+        var g = 0, l = 0, i, d;
+        for (i = 1; i <= n; i++) { d = a[i] - a[i - 1]; if (d >= 0) { g += d; } else { l -= d; } }
+        g /= n; l /= n;
+        for (i = n + 1; i < a.length; i++) { d = a[i] - a[i - 1]; g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n; }
+        return l === 0 ? 100 : 100 - 100 / (1 + g / l);
+    }
+    function atr(k, n) {
+        n = n || 14; var s = 0, c = 0;
+        for (var i = Math.max(1, k.length - n); i < k.length; i++) {
+            s += Math.max(k[i].h - k[i].l, Math.abs(k[i].h - k[i - 1].c), Math.abs(k[i].l - k[i - 1].c)); c++;
+        }
+        return c ? s / c : 0;
+    }
+    function parseK(rows) {
+        return rows.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], qv: +r[7] }; });
+    }
+    function fmtP(p) { return p >= 1000 ? p.toFixed(2) : p >= 1 ? p.toFixed(3) : p.toPrecision(4); }
+    function fmtT(ms) {
+        var d = new Date(ms), n = new Date();
+        var t = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return d.toDateString() === n.toDateString() ? t : d.toLocaleDateString([], { weekday: 'short' }) + ' ' + t;
+    }
+    function money(v) { return v >= 1e9 ? '$' + (v / 1e9).toFixed(1) + 'B' : '$' + (v / 1e6).toFixed(0) + 'M'; }
+    function pct(v) { return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
+
+    function goldClosed(d) {
+        var wd = d.getUTCDay(), m = d.getUTCHours() * 60 + d.getUTCMinutes();
+        return wd === 6 || (wd === 5 && m >= 22 * 60) || (wd === 0 && m < 22 * 60);
+    }
+    function nextGoldOpen(ms) {
+        var t = ms;
+        for (var i = 0; i < 9 * 96; i++) { if (!goldClosed(new Date(t))) { return t; } t += 900000; }
+        return ms;
+    }
+    function windows(kind, now) {
+        var start, dayStart, dayEnd, fhStop;
+        if (kind === 'gold') {
+            start = nextGoldOpen(now);
+            var s = new Date(start);
+            dayEnd = Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate(), 21, 0, 0);
+            if (dayEnd - start < 2 * HOUR) { dayEnd += 24 * HOUR; }
+            dayStart = start; fhStop = Math.min(start + 4 * HOUR, dayEnd);
+        } else {
+            start = now;
+            var u = new Date(now);
+            dayEnd = Date.UTC(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate() + 1, 0, 0, 0);
+            dayStart = now;
+            if (dayEnd - now < 3 * HOUR) { dayStart = dayEnd; dayEnd += 24 * HOUR; }
+            fhStop = now + 4 * HOUR;
+        }
+        return { start: start, fhStart: start, fhStop: fhStop, dayStart: dayStart, dayEnd: dayEnd };
+    }
+
+    function analyze(sym, kind, now) {
+        return Promise.all([
+            jget('/fapi/v1/klines?symbol=' + sym + '&interval=1h&limit=120'),
+            jget('/fapi/v1/klines?symbol=' + sym + '&interval=1d&limit=90')
+        ]).then(function (res) {
+            var h = parseK(res[0]), d = parseK(res[1]);
+            var hc = h.map(function (x) { return x.c; }), dc = d.map(function (x) { return x.c; });
+            var price = hc[hc.length - 1];
+            var e20 = ema(dc, 20), e50 = ema(dc, 50), rd = rsi(dc, 14);
+            var ds = (price > e20 ? 1 : -1) + (e20 > e50 ? 1 : -1);
+            if (rd > 72) { ds -= 0.5; } else if (rd < 28) { ds += 0.5; }
+            var e9 = ema(hc, 9), e21 = ema(hc, 21), rh = rsi(hc, 14);
+            var hs = (e9 > e21 ? 1 : -1) + (price > e21 ? 0.5 : -0.5);
+            if (rh > 75) { hs -= 0.75; } else if (rh < 25) { hs += 0.75; }
+            var qv = d.slice(-31, -1).map(function (x) { return x.qv; });
+            var avg = qv.reduce(function (a, b) { return a + b; }, 0) / (qv.length || 1);
+            var last24 = h.slice(-24).reduce(function (a, x) { return a + x.qv; }, 0);
+            var vr = avg ? last24 / avg : 1;
+            var boost = vr > 1.2 ? 0.5 : vr < 0.7 ? -0.5 : 0;
+            var daySide = ds >= 1.5 ? 'LONG' : ds <= -1.5 ? 'SHORT' : 'NEUTRAL';
+            var dayScore = ds + hs * 0.5 + (ds >= 0 ? boost : -boost);
+            var daySide2 = dayScore >= 1.5 ? 'LONG' : dayScore <= -1.5 ? 'SHORT' : 'NEUTRAL';
+            var fhScore = hs + (hs >= 0 ? boost : -boost);
+            var fhSide = fhScore >= 1.25 ? 'LONG' : fhScore <= -1.25 ? 'SHORT' : 'WAIT';
+            var a1 = atr(h, 14), ad = atr(d, 14);
+            var conf = function (s) { var a = Math.abs(s); return a >= 2.5 ? 'HIGH' : a >= 1.5 ? 'MEDIUM' : 'LOW'; };
+            return {
+                sym: sym, kind: kind, price: price, rsiD: rd, rsiH: rh, vr: vr, w: windows(kind, now),
+                nextDay: daySide, nextDayConf: conf(ds),
+                day: daySide2, dayConf: conf(dayScore), dayScore: dayScore,
+                fh: fhSide, fhConf: conf(fhScore), fhScore: fhScore,
+                fhSL: 1.5 * a1, fhTP: 3 * a1, daySL: ad, dayTP: 2 * ad
+            };
+        });
+    }
+
+    function sideColor(s) { return s === 'LONG' ? '#3fb950' : s === 'SHORT' ? '#f85149' : '#8b949e'; }
+    function levels(side, price, sl, tp) {
+        if (side === 'LONG') { return 'Entry ' + fmtP(price) + ' | SL ' + fmtP(price - sl) + ' | TP ' + fmtP(price + tp); }
+        if (side === 'SHORT') { return 'Entry ' + fmtP(price) + ' | SL ' + fmtP(price + sl) + ' | TP ' + fmtP(price - tp); }
+        return 'No trade: wait for a clearer setup';
+    }
+    function card(r, label) {
+        var red = r.fh === 'SHORT' ? ' red' : '';
+        return '<div class="signal-card' + red + '">' +
+            '<div style="display:flex;justify-content:space-between;font-weight:800;"><span>' + label + '</span><span>' + fmtP(r.price) + '</span></div>' +
+            '<div style="margin-top:3px;"><b>NEXT-DAY TREND:</b> <span style="color:' + sideColor(r.nextDay) + '">' + (r.nextDay === 'NEUTRAL' ? 'SIDEWAYS' : r.nextDay === 'LONG' ? 'UP' : 'DOWN') + '</span> (' + r.nextDayConf + ')</div>' +
+            '<div style="margin-top:3px;"><b>WHOLE-DAY:</b> <span style="color:' + sideColor(r.day) + '">' + r.day + '</span> (' + r.dayConf + ') ' +
+            'START ' + fmtT(r.w.dayStart) + ' → STOP ' + fmtT(r.w.dayEnd) + '<br><span style="color:#8b949e;">' + levels(r.day, r.price, r.daySL, r.dayTP) + '</span></div>' +
+            '<div style="margin-top:3px;"><b>FEW-HOURS:</b> <span style="color:' + sideColor(r.fh) + '">' + r.fh + '</span> (' + r.fhConf + ') ' +
+            'START ' + fmtT(r.w.fhStart) + ' → STOP ' + fmtT(r.w.fhStop) + '<br><span style="color:#8b949e;">' + levels(r.fh, r.price, r.fhSL, r.fhTP) + '</span></div>' +
+            '<div style="margin-top:3px;color:#8b949e;">24h volume vs 30-day avg: ' + r.vr.toFixed(2) + 'x | RSI 1h ' + r.rsiH.toFixed(0) + ' / 1d ' + r.rsiD.toFixed(0) + '</div>' +
+            '</div>';
+    }
+    function list(arr) {
+        return arr.map(function (x) {
+            var c = x.change >= 0 ? '#3fb950' : '#f85149';
+            return x.sym.replace('USDT', '') + ' <span style="color:' + c + '">' + pct(x.change) + '</span>';
+        }).join(' | ');
+    }
+
+    function run() {
+        if (busy) { return Promise.resolve(); }
+        busy = true;
+        var stamp = $('mpStamp'), body = $('mpBody');
+        if (stamp) { stamp.innerText = 'UPDATING…'; }
+        var now = Date.now();
+        return jget('/fapi/v1/ticker/24hr').then(function (all) {
+            var rows = all.filter(function (t) { return /USDT$/.test(t.symbol) && /^[A-Z0-9]+$/.test(t.symbol); })
+                .map(function (t) { return { sym: t.symbol, change: +t.priceChangePercent, qv: +t.quoteVolume }; });
+            var total = rows.reduce(function (a, x) { return a + x.qv; }, 0);
+            var up = rows.filter(function (x) { return x.change > 0; }).length;
+            var liquid = rows.filter(function (x) { return x.qv > 50e6; });
+            var gainers = liquid.slice().sort(function (a, b) { return b.change - a.change; }).slice(0, 5);
+            var losers = liquid.slice().sort(function (a, b) { return a.change - b.change; }).slice(0, 5);
+            var topVol = rows.slice().sort(function (a, b) { return b.qv - a.qv; }).slice(0, 5);
+            var picks = ['BTCUSDT', 'ETHUSDT'];
+            gainers.slice(0, 3).concat(losers.slice(0, 3)).concat(topVol.slice(0, 2)).forEach(function (x) { if (picks.indexOf(x.sym) < 0) { picks.push(x.sym); } });
+            picks = picks.slice(0, 9);
+            var goldSym = rows.some(function (x) { return x.sym === 'XAUUSDT'; }) ? 'XAUUSDT' : 'PAXGUSDT';
+            var jobs = picks.map(function (s) { return analyze(s, 'crypto', now).catch(function () { return null; }); });
+            jobs.unshift(analyze(goldSym, 'gold', now).catch(function () { return null; }));
+            return Promise.all(jobs).then(function (out) {
+                var gold = out[0], coins = out.slice(1).filter(Boolean);
+                var breadth = rows.length ? Math.round(up / rows.length * 100) : 0;
+                var html = '<div class="signal-card" style="border-left-color:#58a6ff;">' +
+                    '<b>BINANCE FUTURES MARKET (24h):</b> total volume ' + money(total) + ' | coins up ' + breadth + '% (' + (breadth >= 55 ? 'bullish breadth' : breadth <= 45 ? 'bearish breadth' : 'mixed') + ')' +
+                    '<br><b style="color:#3fb950;">TOP GAINERS:</b> ' + list(gainers) +
+                    '<br><b style="color:#f85149;">TOP LOSERS:</b> ' + list(losers) +
+                    '<br><b style="color:#58a6ff;">TOP VOLUME:</b> ' + topVol.map(function (x) { return x.sym.replace('USDT', '') + ' ' + money(x.qv); }).join(' | ') + '</div>';
+                html += '<div style="margin:6px 0 2px;font-weight:800;color:#f0883e;">🥇 EXNESS GOLD (XAU/USD)</div>';
+                if (goldClosed(new Date(now))) {
+                    html += '<div class="signal-card red">Exness gold market is CLOSED (weekend). The plan below starts when it reopens: ' + fmtT(nextGoldOpen(now)) + '.</div>';
+                }
+                html += gold ? card(gold, '🥇 GOLD (live proxy: Binance ' + goldSym + ')') : '<div class="signal-card red">Gold data unavailable right now.</div>';
+                html += '<div style="margin:6px 0 2px;font-weight:800;color:#f0883e;">🟡 BINANCE FUTURES</div>';
+                html += coins.length ? coins.map(function (r) { return card(r, '🪙 ' + r.sym.replace('USDT', '/USDT')); }).join('') : '<div class="signal-card red">Binance data unavailable right now.</div>';
+                html += '<div style="color:#8b949e;margin-top:4px;">Rule-based estimate from live Binance data (trend, RSI, volume). Not a guarantee and not financial advice. Exness has no public price feed, so gold uses Binance gold futures as a close proxy.</div>';
+                body.innerHTML = html;
+                if (stamp) { stamp.innerText = 'LIVE ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); stamp.style.color = '#3fb950'; }
+            });
+        }).catch(function (e) {
+            if (body) { body.innerHTML = 'Live data could not be loaded (' + (e && e.message ? e.message : 'network') + '). Check your internet connection; it retries automatically every 5 minutes.'; }
+            if (stamp) { stamp.innerText = 'OFFLINE'; stamp.style.color = '#f85149'; }
+        }).then(function () { busy = false; });
+    }
+
+    window.mintooPlanRefresh = run;
+    run();
+    setInterval(run, 300000);
+})();
+
+</script>
 </body>
 </html>
