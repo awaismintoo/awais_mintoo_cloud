@@ -1,996 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MintooSuite Terminal - Sovereign Elite</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#05070b">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", monospace; -webkit-font-smoothing: antialiased; }
-        html, body { background-color: #05070b; color: #f0f6fc; padding: 10px; padding-bottom: 210px; width: 100%; min-height: 100vh; overflow-y: auto; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid rgba(48, 54, 61, 0.6); padding-bottom: 8px; background: rgba(22, 27, 34, 0.85); backdrop-filter: blur(25px); border-radius: 8px; padding: 8px 12px; }
-        .title { color: #f0883e; font-size: 15px; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 0 10px rgba(240, 136, 62, 0.5); }
-        .subtitle { color: #8b949e; font-size: 9px; }
-        .header-right { display: flex; align-items: center; gap: 6px; }
-        .fps-badge { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; padding: 3px 8px; font-size: 10px; border-radius: 6px; font-weight: 800; box-shadow: 0 0 10px rgba(35, 134, 54, 0.5); }
-        .settings-btn { background: rgba(33, 38, 45, 0.9); color: #f0883e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 800; backdrop-filter: blur(10px); }
-
-        .ticker-tape { background: rgba(22, 27, 34, 0.85); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 6px; padding: 6px 10px; font-size: 10px; color: #3fb950; margin-bottom: 8px; white-space: nowrap; overflow: hidden; font-weight: bold; backdrop-filter: blur(15px); }
-        .ticker-tape span { display: inline-block; padding-left: 100%; animation: ticker 28s linear infinite; }
-        @keyframes ticker { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
-
-        /* Broker Multi-Windows Tabs Bar */
-        .broker-tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin-bottom: 8px; }
-        .broker-tab { background: rgba(22, 27, 34, 0.85); color: #8b949e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px 1px; font-size: 7.5px; font-weight: 800; text-align: center; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.25s ease; }
-        .broker-tab.active { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; border-color: #3fb950; box-shadow: 0 0 12px rgba(35, 134, 54, 0.6); }
-
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
-        .card { background: rgba(22, 27, 34, 0.75); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 8px; padding: 10px; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-        .card-title { color: #8b949e; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
-        .card-value { color: #58a6ff; font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
-        .card-value.green { color: #3fb950; text-shadow: 0 0 8px rgba(63, 185, 80, 0.3); }
-        .card-value.red { color: #f85149; text-shadow: 0 0 8px rgba(248, 81, 73, 0.3); }
-        
-        .hero-banner { background: rgba(22, 27, 34, 0.85); border: 2px solid rgba(35, 134, 54, 0.8); border-radius: 10px; padding: 10px; margin-bottom: 8px; box-shadow: 0 0 20px rgba(35, 134, 54, 0.3); backdrop-filter: blur(25px); }
-        .hero-title { font-size: 10px; color: #8b949e; text-transform: uppercase; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
-        .hero-signal { font-size: 14px; font-weight: 800; color: #3fb950; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; }
-        .hero-details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: rgba(13, 17, 23, 0.95); padding: 6px; border-radius: 6px; font-size: 10px; border: 1px solid rgba(48, 54, 61, 0.8); }
-        .hero-detail-item { color: #c9d1d9; }
-        .hero-detail-item span { color: #8b949e; font-size: 8px; display: block; font-weight: 700; }
-        
-        .carousel-btn { background: rgba(33, 38, 45, 0.9); color: #58a6ff; border: 1px solid rgba(48, 54, 61, 0.8); padding: 3px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 800; }
-        
-        .panel { background: rgba(22, 27, 34, 0.75); border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 8px; padding: 10px; margin-bottom: 8px; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-        .panel-title { color: #f0883e; font-size: 11px; font-weight: 800; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
-        canvas { width: 100%; height: 100px; background: rgba(13, 17, 23, 0.95); border-radius: 6px; border: 1px solid rgba(48, 54, 61, 0.8); display: block; }
-        
-        .btn-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 6px; }
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
-        .btn-row-3-broker { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 6px; }
-        button { padding: 10px; font-weight: 800; font-size: 10px; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.2s ease; }
-        
-        .btn-active-green { background: linear-gradient(135deg, #238636, #2ea043) !important; color: #ffffff !important; box-shadow: 0 0 10px rgba(35, 134, 54, 0.5); }
-        .btn-active-orange { background: linear-gradient(135deg, #d97706, #f59e0b) !important; color: #ffffff !important; box-shadow: 0 0 10px rgba(217, 119, 6, 0.5); }
-        .btn-active-blue { background: linear-gradient(135deg, #1f6feb, #388bfd) !important; color: #ffffff !important; box-shadow: 0 0 10px rgba(31, 111, 235, 0.5); }
-        .btn-inactive { background: rgba(33, 38, 45, 0.85) !important; color: #8b949e !important; border: 1px solid rgba(48, 54, 61, 0.8); }
-        
-        .log-box { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #3fb950; line-height: 1.4; max-height: 110px; overflow-y: auto; }
-        .news-box { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #58a6ff; line-height: 1.5; max-height: 120px; overflow-y: auto; }
-        .geo-news-box { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; font-size: 10px; border-radius: 6px; color: #f0883e; line-height: 1.5; max-height: 120px; overflow-y: auto; }
-
-        .exchange-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; font-size: 9px; }
-        .exchange-card { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px; border-radius: 6px; text-align: center; }
-        .status-green { color: #3fb950; font-weight: 800; }
-        .status-orange { color: #d97706; font-weight: 800; }
-
-        .history-table { width: 100%; font-size: 9px; border-collapse: collapse; margin-top: 4px; }
-        .history-table th, .history-table td { border: 1px solid rgba(48, 54, 61, 0.8); padding: 6px; text-align: left; }
-        .history-table th { color: #f0883e; background: rgba(13, 17, 23, 0.95); font-weight: 800; }
-        .history-win { color: #3fb950; font-weight: 800; }
-        .history-loss { color: #f85149; font-weight: 800; }
-
-        .section-header { font-size: 10px; color: #58a6ff; margin-top: 6px; font-weight: 800; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-        
-        .signals-scroll-box { max-height: 160px; overflow-y: auto; padding-right: 2px; }
-        .signal-card { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); border-left: 3px solid #3fb950; padding: 8px; border-radius: 6px; margin-bottom: 4px; font-size: 10px; }
-        .signal-card.red { border-left-color: #f85149; }
-        .signal-head { display: flex; justify-content: space-between; font-weight: 800; margin-bottom: 2px; }
-        .signal-meta { color: #8b949e; font-size: 9px; }
-
-        .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 10px; }
-        .macro-card { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 8px; border-radius: 6px; }
-
-        .help-badge { background: #d97706; color: #ffffff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; font-weight: 800; box-shadow: 0 0 8px rgba(217, 119, 6, 0.6); vertical-align: middle; }
-        
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(12px); }
-        .modal-content { background: #161b22; border: 2px solid #f0883e; padding: 16px; border-radius: 12px; max-width: 380px; width: 100%; color: #c9d1d9; font-size: 11px; box-shadow: 0 0 35px rgba(240, 136, 62, 0.5); max-height: 85vh; overflow-y: auto; }
-        .modal-close { background: linear-gradient(135deg, #d97706, #f59e0b); color: #fff; padding: 10px 12px; border: none; border-radius: 6px; margin-top: 12px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; box-shadow: 0 0 10px rgba(217, 119, 6, 0.5); }
-        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 10px; border-bottom: 1px solid rgba(48, 54, 61, 0.8); padding-bottom: 6px; }
-        
-        .help-topic-item { background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(48, 54, 61, 0.8); padding: 10px; border-radius: 6px; margin-bottom: 6px; }
-        .help-topic-title { color: #58a6ff; font-weight: 800; margin-bottom: 2px; }
-
-        .lang-select { background: rgba(13, 17, 23, 0.95); color: #f0883e; border: 1px solid rgba(48, 54, 61, 0.8); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; width: 130px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MintooSuite Terminal</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0f17">
+<style>
+:root{--bg:#0b0f17;--card:#121826;--card2:#1a2236;--line:#26324a;--tx:#e8eef7;--mut:#8b98ad;--grn:#2ebd85;--red:#f6465d;--amb:#f0b90b;--blu:#4c9aff;--org:#ff9f43}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.4}
+body{padding-bottom:calc(env(safe-area-inset-bottom) + 16px)}
+.top{position:sticky;top:0;z-index:20;background:rgba(11,15,23,.96);backdrop-filter:blur(12px);padding:calc(env(safe-area-inset-top) + 10px) 12px 8px;border-bottom:1px solid var(--line)}
+.top-in{max-width:560px;margin:0 auto}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{font-weight:800;font-size:16px}
+.sub{font-size:11px;color:var(--mut)}
+.btns{display:flex;gap:6px}
+.tbtn{background:var(--card2);border:1px solid var(--line);color:var(--tx);padding:8px 11px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer}
+.tbtn.win{border-color:var(--blu);color:var(--blu)}
+.status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);margin-top:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex:none}
+.dot.ok{background:var(--grn)}.dot.warn{background:var(--amb)}
+.wrap{max-width:560px;margin:0 auto;padding:0 12px}
+.winname{font-size:19px;font-weight:800;margin:14px 0 4px}
+.winsub{font-size:12px;color:var(--mut);margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.h{font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--mut);text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.mid{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.up{color:var(--grn)}.dn{color:var(--red)}.mut{color:var(--mut)}.org{color:var(--org)}.blu{color:var(--blu)}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap}
+.pill.long{background:rgba(46,189,133,.16);color:var(--grn)}
+.pill.short{background:rgba(246,70,93,.16);color:var(--red)}
+.pill.wait{background:rgba(139,152,173,.16);color:var(--mut)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.row:last-child{border-bottom:none}
+.row.tap{cursor:pointer}
+.lvl{font-size:12px;color:var(--mut);margin-top:2px}
+.warnbox{background:rgba(240,185,11,.1);border:1px solid rgba(240,185,11,.4);color:var(--amb);border-radius:10px;padding:8px 10px;font-size:12px;margin:6px 0}
+.note{font-size:11px;color:var(--mut);margin-top:8px}
+.seg{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.chip{background:var(--card2);border:1px solid var(--line);color:var(--mut);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}
+.chip.on{color:var(--tx);border-color:var(--blu);background:rgba(76,154,255,.14)}
+.btn{background:var(--card2);border:1px solid var(--line);color:var(--tx);padding:11px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;width:100%;margin-bottom:8px;text-align:left;display:flex;justify-content:space-between}
+.btn.on{border-color:var(--grn)}.btn.off{border-color:var(--red);color:var(--mut)}
+.btn.primary{background:var(--blu);border-color:var(--blu);color:#06101f;justify-content:center}
+select,input[type=text]{background:var(--card2);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:9px;font-size:13px;width:100%}
+canvas{width:100%;height:300px;display:block;background:var(--card);border-radius:12px;border:1px solid var(--line)}
+a{color:var(--blu);text-decoration:none}
+.news a{color:var(--tx);font-weight:600}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:flex-end;z-index:50}
+.sheet.open{display:flex}
+.sheet-in{background:var(--card);width:100%;max-width:560px;margin:0 auto;border-radius:20px 20px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom) + 14px);max-height:85vh;overflow:auto;border:1px solid var(--line)}
+.sheet-t{font-size:15px;font-weight:800;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 4px;text-align:center;font-size:12px;font-weight:700;cursor:pointer}
+.tile.on{border-color:var(--blu);background:rgba(76,154,255,.14)}
+.tile .ic{font-size:24px;display:block;margin-bottom:4px}
+.topic{background:var(--card2);border-radius:10px;padding:10px;margin-bottom:8px;font-size:13px}
+.topic b{display:block;color:var(--org);margin-bottom:3px}
+</style>
 </head>
 <body>
-
-    <div class="header">
-        <div>
-            <div class="title" id="lblTitle">💎 MintooSuite Terminal</div>
-            <div class="subtitle">Sovereign Elite • Professional Grade</div>
-        </div>
-        <div class="header-right">
-            <div class="fps-badge" id="fpsDisplay">⚡ 120 FPS PRO</div>
-            <button class="settings-btn" id="btnMenu" onclick="openSettings()">⚙️ MENU</button>
-        </div>
+<div class="top"><div class="top-in">
+  <div class="top-row">
+    <div><div class="brand" id="lblTitle">💎 MintooSuite Terminal</div><div class="sub">Live market terminal • recommendations only</div></div>
+    <div class="btns">
+      <button class="tbtn win" id="btnWin" data-act="openwin">🗂 WINDOWS</button>
+      <button class="tbtn" id="btnMenu" data-act="openmenu">⚙️ MENU</button>
     </div>
-
-    <!-- LIVE NEWS TICKER TAPE BAR -->
-    <div class="ticker-tape">
-        <span id="tickerText">🚨 LIVE FLASH: [PXE ENERGY] European Power Exchange baseload futures surge | [REUTERS] Gold ($2,674/oz) tests support amid Fed rate updates | [BLOOMBERG] Brent Crude & WTI Oil rally | [LME] Rare Earth Metals index hits 3-month highs.</span>
-    </div>
-
-    <!-- BROKER MULTI-WINDOWS TABS BAR (INCLUDING HISTORY TAB & VAULT) -->
-    <div class="broker-tabs">
-        <div class="broker-tab active" id="tabBinance" onclick="switchBroker('binance')">🟡 BINANCE</div>
-        <div class="broker-tab" id="tabBitget" onclick="switchBroker('bitget')">🔵 BITGET</div>
-        <div class="broker-tab" id="tabExness" onclick="switchBroker('exness')">🟠 EXNESS</div>
-        <div class="broker-tab" id="tabForex" onclick="switchBroker('forex')">🟢 FOREX</div>
-        <div class="broker-tab" id="tabQuotex" onclick="switchBroker('quotex')">🟣 QUOTEX</div>
-        <div class="broker-tab" id="tabHistory" onclick="switchBroker('history')">📜 HISTORY</div>
-    </div>
-
-    <!-- BROKER ACTION PANEL (DEPOSIT / TRADE / WITHDRAW / VAULT) -->
-    <div class="panel" id="brokerPanel" style="border: 1px solid rgba(240, 136, 62, 0.8);">
-        <div class="panel-title">
-            <span id="brokerPanelTitle">🟡 BINANCE FUTURES INSTITUTIONAL GATEWAY</span>
-            <span style="color: #3fb950;" id="brokerStatus">🛡️ 256-BIT SECURE</span>
-        </div>
-        <div style="font-size: 10px; color: #8b949e; margin-bottom: 6px;" id="brokerDesc">Manage margin, liquidity, and instant cross-asset settlements across Binance ecosystem.</div>
-        <div class="btn-row-3-broker">
-            <button class="btn-active-green" onclick="openBrokerAction('Deposit')">📥 DEPOSIT</button>
-            <button class="btn-active-blue" onclick="openBrokerAction('Trade')">📈 TRADE</button>
-            <button class="btn-active-orange" onclick="openBrokerAction('Withdraw')">📤 WITHDRAW</button>
-        </div>
-    </div>
-
-    <div class="grid-2">
-        <div class="card">
-            <div class="card-title">
-                <span id="lblGold">🥇 EXNESS GOLD ($XAU/USD)</span>
-                <span class="help-badge" onclick="openHelp('Exness Gold Feed', 'Real-time spot pricing feed for XAU/USD in USD per ounce.')">?</span>
-            </div>
-            <div class="card-value green" id="goldPrice">2,674.11</div>
-        </div>
-        <div class="card">
-            <div class="card-title">
-                <span id="lblBtc">₿ BINANCE BTC/USDT</span>
-                <span class="help-badge" onclick="openHelp('Binance Futures Feed', 'Perpetual futures pricing feed for Bitcoin in USDT.')">?</span>
-            </div>
-            <div class="card-value" id="btcPrice">94,106.50</div>
-        </div>
-    </div>
-
-    <div class="hero-banner" id="heroBanner">
-        <div class="hero-title">
-            <span id="lblBotCarousel">🤖 MASTER BOT ALL-COIN CAROUSEL</span>
-            <div>
-                <span style="color: #3fb950; margin-right: 6px;" id="heroAssetTag">🥇 EXNESS GOLD</span>
-                <span class="help-badge" onclick="openHelp('Master Bot Carousel', 'Use < and > arrows to browse 5M/10M candle recommendations across all monitored assets.')">?</span>
-            </div>
-        </div>
-        <div class="hero-signal">
-            <button class="carousel-btn" onclick="prevHero()">&lt;</button>
-            <span id="heroSignalText">🥇 EXNESS GOLD: HIGH-CONFIDENCE LONG</span>
-            <button class="carousel-btn" onclick="nextHero()">&gt;</button>
-        </div>
-        <div class="hero-details">
-            <div class="hero-detail-item"><span id="lblRecLev">REC. LEVERAGE</span><strong id="heroLeverage" style="color:#f0883e;">10x - 20x</strong></div>
-            <div class="hero-detail-item"><span id="lblStopLoss">STOP LOSS (SL)</span><strong id="heroSL" style="color:#f85149;">2668.50</strong></div>
-            <div class="hero-detail-item"><span id="lblTargetTp">TARGET TP1 / TP2</span><strong id="heroTP" style="color:#3fb950;">2682 / 2690</strong></div>
-        </div>
-    </div>
-
-    <div class="grid-2">
-        <div class="card">
-            <div class="card-title">
-                <span id="lblTimer">⏳ 3M CANDLE TIMER</span>
-                <span class="help-badge" onclick="openHelp('3M Candle Timer', 'Countdown to the next 3M candle close and signal dispatch.')">?</span>
-            </div>
-            <div class="card-value" id="timerDisplay">03:00</div>
-        </div>
-        <div class="card">
-            <div class="card-title">
-                <span id="lblBgPush">🔔 BACKGROUND PUSH</span>
-                <span class="help-badge" onclick="openHelp('Background Worker', 'Service worker engine keeping push alerts active 24/7 in background.')">?</span>
-            </div>
-            <div class="card-value green" style="font-size: 13px; padding-top: 4px;" id="engineStateText">🛡️ 120 FPS SECURE</div>
-        </div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-title">
-            <span>
-                <span id="chartTitle">📊 CHART MATRIX</span>
-                <span class="help-badge" onclick="openHelp('Chart Matrix', 'Interactive candlestick matrix. Tap buttons below to switch asset view permanently.')">?</span>
-            </span>
-            <span style="color: #3fb950;">● 120 FPS LIVE</span>
-        </div>
-        <canvas id="matrixCanvas"></canvas>
-        
-        <div class="btn-row-3">
-            <button class="btn-active-green" id="btnGoldAsset" onclick="switchAsset('gold')">🥇 EXNESS GOLD</button>
-            <button class="btn-inactive" id="btnCryptoAsset" onclick="switchAsset('crypto')">₿ BINANCE</button>
-            <button class="btn-inactive" id="btnCombinedAsset" onclick="switchAsset('combined')">⚡ COMBINED</button>
-        </div>
-    </div>
-
-    <div class="panel" id="panelSignals">
-        <div class="panel-title">
-            <span>
-                <span id="lblSignalsHeader">⭐ VALID ACTIVE SIGNALS & EXPIRY LEDGER</span>
-                <span class="help-badge" onclick="openHelp('Signals Ledger', 'Scrollable list of active recommended trade setups with expiry countdowns.')">?</span>
-            </span>
-        </div>
-        <div class="signals-scroll-box" id="validSignalsContainer"></div>
-    </div>
-
-    <div class="panel" id="panelMacro">
-        <div class="panel-title">
-            <span>
-                <span id="lblMacroHeader">📈 MACRO INDEX CORRELATION ($US500 & $DXY)</span>
-                <span class="help-badge" onclick="openHelp('Macro Matrix', 'Monitors US Dollar Index (DXY) and S&P 500 (US500) impact on Exness Gold.')">?</span>
-            </span>
-        </div>
-        <div class="macro-grid">
-            <div class="macro-card">
-                <div style="color: #8b949e;">💵 US DOLLAR INDEX (DXY)</div>
-                <div style="font-size: 14px; font-weight: 800; color: #f85149;" id="dxyVal">103.42 ▼</div>
-                <div style="font-size: 9px; color: #3fb950; margin-top: 2px;" id="dxyImpact">Gold Impact: BULLISH (Inverse)</div>
-            </div>
-            <div class="macro-card">
-                <div style="color: #8b949e;">📊 US500 (S&P 500 INDEX)</div>
-                <div style="font-size: 14px; font-weight: 800; color: #3fb950;" id="us500Val">5815.20 ▲</div>
-                <div style="font-size: 9px; color: #58a6ff; margin-top: 2px;" id="us500Impact">Gold Impact: STABLE CONFLUENCE</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MINTOO-MASTERPLAN-V2 -->
-    <div class="panel" id="panelMasterPlan" style="border: 1px solid rgba(88, 166, 255, 0.8);">
-        <div class="panel-title">
-            <span>🧭 MASTER BOT PLAN: VOLUME, GAINERS/LOSERS, TREND & TIME WINDOWS</span>
-            <span style="color: #3fb950;" id="mpStamp">LOADING…</span>
-        </div>
-        <div style="font-size: 10px; color: #3fb950; margin-bottom: 6px;">🛡️ RECOMMENDATIONS ONLY: the master bot cannot place trades on any real account.</div>
-        <div id="mpBody" style="font-size: 10px; color: #c9d1d9; line-height: 1.5;">Loading live Binance Futures data…</div>
-        <button class="btn-active-blue" style="width: 100%; margin-top: 6px;" onclick="window.mintooPlanRefresh && window.mintooPlanRefresh()">🔄 REFRESH PLAN NOW</button>
-    </div>
-
-    <div class="panel" id="panelScanner">
-        <div class="panel-title">
-            <span>
-                <span id="lblScannerHeader">🤖 MASTER BOT REAL-TIME SCANNER FEED</span>
-                <span class="help-badge" onclick="openHelp('Scanner Feed', 'Micro-second scanner logs showing 5M/10M candle analysis across all coins.')">?</span>
-            </span>
-        </div>
-        <div class="log-box" id="masterBotFeed">
-            [00:00:00.000] Multi-asset micro-second scanner active...<br>
-        </div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-title">
-            <span>
-                <span id="lblNotificationsHeader">🔔 MASTER NOTIFICATION PANEL & PUSH ALERTS</span>
-                <span class="help-badge" onclick="openHelp('Notification Panel', 'Manage system push permissions and individual asset push channels with state persistence.')">?</span>
-            </span>
-            <span style="color: #3fb950;" id="pushStatusText">PUSH ACTIVE</span>
-        </div>
-        
-        <div class="btn-row">
-            <button class="btn-active-green" id="enableAlertsBtn" onclick="toggleSystemPush()">1. 🔔 PUSH ENABLED</button>
-            <button class="btn-active-green" id="testPushBtn" onclick="triggerTestPushToggle()">2. ⚡ TEST PUSH</button>
-        </div>
-
-        <div class="section-header">
-            <span id="lblPushToggles">3M Multi-Asset Push Toggles:</span>
-            <span class="help-badge" onclick="openHelp('Push Toggles', 'Independent toggles for Exness Gold and All-Coin Binance alerts.')">?</span>
-        </div>
-        <div class="btn-row">
-            <button class="btn-active-green" id="goldPushBtn" onclick="togglePushSetting('goldPushBtn', 'EXNESS GOLD PUSH')">🥇 GOLD PUSH: ON</button>
-            <button class="btn-active-green" id="cryptoPushBtn" onclick="togglePushSetting('cryptoPushBtn', 'ALL COINS PUSH')">₿ CRYPTO PUSH: ON</button>
-        </div>
-    </div>
-
-    <!-- NEWS SCREEN 1: FINANCIAL & COMMODITIES NEWS STREAM (PXE ENERGY, OIL, GAS, RARE EARTHS) -->
-    <div class="panel" id="panelMarketNews">
-        <div class="panel-title">
-            <span>
-                <span id="lblMarketNewsHeader">📰 FINANCIAL, PXE ENERGY & COMMODITIES NEWS</span>
-                <span class="help-badge" onclick="openHelp('Market News Feed', 'Live news streams covering PXE, Oil, Gas, Gold, Silver, and Rare Earth Metals.')">?</span>
-            </span>
-        </div>
-        <div class="news-box" id="marketNewsFeed">
-            [00:00:01] 🖼️ [PXE ⚡] European Power Exchange reports baseload electricity futures upward adjustment.<br>
-            [00:00:04] 🖼️ [REUTERS 🥇] Spot Gold holds steady at $2,674/oz following US inflation report.<br>
-            [00:00:08] 🖼️ [BLOOMBERG 🛢️] WTI Crude & Brent Oil tick up on Middle East supply outlook.<br>
-            [00:00:12] 🖼️ [LME 🔋] Lithium and Rare Earth Metals index surges +2.3% on EV battery demand.<br>
-        </div>
-    </div>
-
-    <!-- NEWS SCREEN 2: GEOPOLITICAL IMPACT STREAM -->
-    <div class="panel" id="panelGeoNews">
-        <div class="panel-title">
-            <span>
-                <span id="lblGeoNewsHeader">🌍 GEOPOLITICAL & CENTRAL BANK STREAM</span>
-                <span class="help-badge" onclick="openHelp('Geopolitical Feed', 'Real-time global events from Reuters World and BBC World affecting Gold & Crypto.')">?</span>
-            </span>
-        </div>
-        <div class="geo-news-box" id="geoNewsFeed">
-            [00:00:02] 🖼️ [REUTERS 💵] Federal Reserve policy committee signals potential 25bps rate calibration.<br>
-            [00:00:06] 🖼️ [BBC 🌐] Global trade corridor security protocols updated for maritime logistics.<br>
-        </div>
-    </div>
-
-    <!-- 3RD SCREEN: MAJOR GLOBAL STOCK EXCHANGES & ENERGY EXCHANGES LIVE STATUS -->
-    <div class="panel" id="panelExchanges">
-        <div class="panel-title">
-            <span>
-                <span id="lblExchangesHeader">🏛️ MAJOR STOCK & ENERGY EXCHANGES LIVE STATUS</span>
-                <span class="help-badge" onclick="openHelp('Global Stock Exchanges', 'Real-time status of top world stock and energy exchanges (NYSE, NASDAQ, PXE, LSE, TSE, HKEX).')">?</span>
-            </span>
-        </div>
-        <div class="exchange-grid">
-            <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: 800;">🇺🇸 NYSE</div>
-                <div class="status-green" id="exNyseStatus">🟢 LIVE</div>
-                <div style="color:#58a6ff; font-size: 8px; margin-top:2px;" id="exNyseVal">42,810 ▲</div>
-            </div>
-            <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: 800;">🇺🇸 NASDAQ</div>
-                <div class="status-green" id="exNasdaqStatus">🟢 LIVE</div>
-                <div style="color:#58a6ff; font-size: 8px; margin-top:2px;" id="exNasdaqVal">18,520 ▲</div>
-            </div>
-            <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: 800;">⚡ PXE (EUROPE)</div>
-                <div class="status-green" id="exPxeStatus">🟢 LIVE</div>
-                <div style="color:#3fb950; font-size: 8px; margin-top:2px;" id="exPxeVal">118.40 €</div>
-            </div>
-            <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: 800;">🇬🇧 LSE</div>
-                <div class="status-orange" id="exLseStatus">🟠 CLOSED</div>
-                <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exLseVal">8,240 ▼</div>
-            </div>
-            <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: 800;">🇯🇵 TSE</div>
-                <div class="status-orange" id="exTseStatus">🟠 CLOSED</div>
-                <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exTseVal">39,120 ▲</div>
-            </div>
-            <div class="exchange-card">
-                <div style="color: #8b949e; font-weight: 800;">🇭🇰 HKEX</div>
-                <div class="status-orange" id="exHkexStatus">🟠 CLOSED</div>
-                <div style="color:#c9d1d9; font-size: 8px; margin-top:2px;" id="exHkexVal">20,540 ▲</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- BOTTOM SCREEN: TRADE HISTORY & WIN/LOSS LEDGER -->
-    <div class="panel" id="panelHistory">
-        <div class="panel-title">
-            <span>
-                <span id="lblHistoryHeader">📜 TRADING HISTORY & WIN/LOSS LEDGER</span>
-                <span class="help-badge" onclick="openHelp('Trade History', 'Real-time performance ledger logging trade entries, exits, profit/loss, and win ratios.')">?</span>
-            </span>
-            <span style="color: #3fb950; font-size: 9px;" id="winRateBadge">Win Rate: 84.6%</span>
-        </div>
-        <table class="history-table">
-            <tr>
-                <th>ASSET</th>
-                <th>TYPE</th>
-                <th>ENTRY / EXIT</th>
-                <th>P/L ($)</th>
-                <th>STATUS</th>
-            </tr>
-            <tr>
-                <td>🥇 XAU/USD</td>
-                <td>LONG</td>
-                <td>$2,668 / $2,682</td>
-                <td style="color: #3fb950;">+$142.50</td>
-                <td class="history-win">WIN ✅</td>
-            </tr>
-            <tr>
-                <td>₿ BTC/USDT</td>
-                <td>LONG</td>
-                <td>$93,400 / $94,150</td>
-                <td style="color: #3fb950;">+$750.00</td>
-                <td class="history-win">WIN ✅</td>
-            </tr>
-            <tr>
-                <td>⚡ PXE POWER</td>
-                <td>LONG</td>
-                <td>€115.20 / €118.40</td>
-                <td style="color: #3fb950;">+$320.00</td>
-                <td class="history-win">WIN ✅</td>
-            </tr>
-            <tr>
-                <td>🪙 SOL/USDT</td>
-                <td>LONG</td>
-                <td>$215.00 / $211.50</td>
-                <td style="color: #f85149;">-$35.00</td>
-                <td class="history-loss">LOSS ❌</td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- MENU MODAL (CONTAINING TERMINAL SETTINGS, VAULT & WORKSPACE PANEL TOGGLES) -->
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal-content">
-            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;" id="lblSettingsTitle">⚙️ TERMINAL MENU & SETTINGS</div>
-            
-            <div class="settings-row">
-                <span id="lblLangSelect">Select Language / اللغة / 语言:</span>
-                <select class="lang-select" id="langSelector" onchange="changeLanguage(this.value)">
-                    <option value="en">English (US)</option>
-                    <option value="ar">العربية (Arabic)</option>
-                    <option value="zh">中文 (Chinese)</option>
-                    <option value="ur">اردو (Urdu)</option>
-                    <option value="de">Deutsch (German)</option>
-                    <option value="fr">Français (French)</option>
-                </select>
-            </div>
-
-            <div class="settings-row">
-                <span>Version:</span>
-                <strong style="color: #58a6ff;">v5.0.0 Sovereign Elite</strong>
-            </div>
-            <div class="settings-row">
-                <span>Security Vault:</span>
-                <strong style="color: #3fb950;">AES-256 Active</strong>
-            </div>
-
-            <div style="font-weight: bold; color: #58a6ff; margin: 10px 0 6px 0; text-transform: uppercase; font-size: 10px;" id="lblHelpBase">Help & Knowledge Base:</div>
-            <button class="btn-active-orange" style="width: 100%; margin-bottom: 10px;" onclick="openHelpCenter()" id="btnOpenHelpGuide">📖 OPEN GENERAL HELP TOPICS GUIDE</button>
-
-            <div style="font-weight: bold; color: #58a6ff; margin: 6px 0 6px 0; text-transform: uppercase; font-size: 10px;" id="lblPanelToggles">Workspace Panel Toggles:</div>
-            
-            <div class="settings-row">
-                <span>Signals Ledger:</span>
-                <button class="btn-active-green" id="togglePanelSignals" onclick="toggleWorkspacePanel('Signals')">ON</button>
-            </div>
-            <div class="settings-row">
-                <span>Macro Matrix:</span>
-                <button class="btn-active-green" id="togglePanelMacro" onclick="toggleWorkspacePanel('Macro')">ON</button>
-            </div>
-            <div class="settings-row">
-                <span>Scanner Feed:</span>
-                <button class="btn-active-green" id="togglePanelScanner" onclick="toggleWorkspacePanel('Scanner')">ON</button>
-            </div>
-            <div class="settings-row">
-                <span>Market News Feed:</span>
-                <button class="btn-active-green" id="togglePanelMarketNews" onclick="toggleWorkspacePanel('MarketNews')">ON</button>
-            </div>
-            <div class="settings-row">
-                <span>Geopolitical News:</span>
-                <button class="btn-active-green" id="togglePanelGeoNews" onclick="toggleWorkspacePanel('GeoNews')">ON</button>
-            </div>
-            <div class="settings-row">
-                <span>Exchanges Status:</span>
-                <button class="btn-active-green" id="togglePanelExchanges" onclick="toggleWorkspacePanel('Exchanges')">ON</button>
-            </div>
-            <div class="settings-row">
-                <span>Trade History Ledger:</span>
-                <button class="btn-active-green" id="togglePanelHistory" onclick="toggleWorkspacePanel('History')">ON</button>
-            </div>
-
-            <button class="modal-close" onclick="closeSettings()" id="btnCloseMenu">CLOSE MENU</button>
-        </div>
-    </div>
-
-    <!-- GENERAL HELP TOPICS MODAL -->
-    <div class="modal-overlay" id="helpCenterModal">
-        <div class="modal-content">
-            <div style="font-weight: bold; color: #f0883e; margin-bottom: 10px; font-size: 13px; text-transform: uppercase;" id="lblGuideTitle">📖 TERMINAL HELP & TOPICS GUIDE</div>
-            
-            <div class="help-topic-item">
-                <div class="help-topic-title">1. Multi-Broker & Vault Gateway</div>
-                <div>Seamlessly switch between Binance, Bitget, Exness, Forex, Quotex, and the Sovereign Vault for institutional margin allocation.</div>
-            </div>
-
-            <div class="help-topic-item">
-                <div class="help-topic-title">2. History Ledger Tab & Panel</div>
-                <div>Access your trade history, win ratios, and profit/loss performance either from the top multi-window tabs or the workspace panel.</div>
-            </div>
-
-            <div class="help-topic-item">
-                <div class="help-topic-title">3. Menu & Settings Control</div>
-                <div>Manage language preferences, workspace panel toggles, and security settings directly from the top-right Menu.</div>
-            </div>
-
-            <button class="modal-close" onclick="closeHelpCenter()">CLOSE HELP GUIDE</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="helpModal">
-        <div class="modal-content" style="text-align: center;">
-            <div id="helpTitle" style="font-weight: bold; color: #f0883e; margin-bottom: 6px;">HELP</div>
-            <div id="helpBody" style="margin-bottom: 12px; line-height: 1.4;">Help description...</div>
-            <button class="modal-close" onclick="closeHelp()">GOT IT</button>
-        </div>
-    </div>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Error:', err));
-        }
-
-        let sysPushState = localStorage.getItem('mintoosuite_sys_push') !== 'off';
-        let currentAsset = localStorage.getItem('mintoosuite_asset') || 'gold'; 
-        let goldPushState = localStorage.getItem('mintoosuite_gold_push') !== 'off';
-        let cryptoPushState = localStorage.getItem('mintoosuite_crypto_push') !== 'off';
-        let currentLang = localStorage.getItem('mintoosuite_lang') || 'en';
-        let activeBroker = 'binance';
-
-        let showSignals = localStorage.getItem('mintoosuite_show_signals') !== 'off';
-        let showMacro = localStorage.getItem('mintoosuite_show_macro') !== 'off';
-        let showScanner = localStorage.getItem('mintoosuite_show_scanner') !== 'off';
-        let showMarketNews = localStorage.getItem('mintoosuite_show_mnews') !== 'off';
-        let showGeoNews = localStorage.getItem('mintoosuite_show_gnews') !== 'off';
-        let showExchanges = localStorage.getItem('mintoosuite_show_exchanges') !== 'off';
-        let showHistory = localStorage.getItem('mintoosuite_show_history') !== 'off';
-
-        let goldVal = 2674.11;
-        let btcVal = 94106.50;
-        let dxyVal = 103.42;
-        let us500Val = 5815.20;
-
-        let goldHistory = Array(28).fill(2674.11);
-        let btcHistory = Array(28).fill(94106.50);
-
-        const langDict = {
-            en: { title: "MintooSuite Terminal", menu: "⚙️ MENU", dir: "ltr" },
-            ar: { title: "منصة مينتو سويت", menu: "⚙️ القائمة", dir: "rtl" },
-            zh: { title: "MintooSuite 终端", menu: "⚙️ 菜单", dir: "ltr" },
-            ur: { title: "منٹو سوئیٹ ٹرمینل", menu: "⚙️ مینو", dir: "rtl" },
-            de: { title: "MintooSuite Terminal", menu: "⚙️ MENÜ", dir: "ltr" },
-            fr: { title: "Terminal MintooSuite", menu: "⚙️ MENU", dir: "ltr" }
-        };
-
-        function switchBroker(broker) {
-            activeBroker = broker;
-            ['binance', 'bitget', 'exness', 'forex', 'quotex', 'history'].forEach(b => {
-                let el = document.getElementById('tab' + b.charAt(0).toUpperCase() + b.slice(1));
-                if(el) el.className = (b === broker) ? 'broker-tab active' : 'broker-tab';
-            });
-
-            if(broker === 'history') {
-                document.getElementById('brokerPanelTitle').innerText = "📜 TRADING HISTORY & PERFORMANCE VAULT";
-                document.getElementById('brokerDesc').innerText = "Review complete win/loss records, executed volume, and net P/L settlements.";
-                document.getElementById('brokerPanel').style.display = 'block';
-                return;
-            }
-
-            const titles = {
-                binance: "🟡 BINANCE FUTURES INSTITUTIONAL GATEWAY",
-                bitget: "🔵 BITGET DERIVATIVES & COPY TRADING",
-                exness: "🟠 EXNESS GOLD & FOREX MARGIN TERMINAL",
-                forex: "🟢 INTERBANK FOREX SPOT LIQUIDITY DESK",
-                quotex: "🟣 QUOTEX BINARY OPTIONS & DERIVATIVES DESK"
-            };
-            const descs = {
-                binance: "Manage margin, liquidity, and instant cross-asset settlements across Binance ecosystem.",
-                bitget: "Execute copy trading strategies and perpetual futures contracts securely.",
-                exness: "Direct institutional XAU/USD execution with zero swap rates and instant leverage.",
-                forex: "Major currency pairs spot trading with interbank depth and zero requotes.",
-                quotex: "High-yield binary options and fast settlement contracts with real-time payout multipliers."
-            };
-
-            document.getElementById('brokerPanelTitle').innerText = titles[broker];
-            document.getElementById('brokerDesc').innerText = descs[broker];
-        }
-
-        function openBrokerAction(actionType) {
-            if(activeBroker === 'history') {
-                alert("[HISTORY VAULT]: Exporting complete cryptographic trade ledger for Awais Mintoo...");
-            } else {
-                alert(`[${activeBroker.toUpperCase()} SECURE GATEWAY]: ${actionType} portal successfully initialized under AES-256 vault encryption.`);
-            }
-        }
-
-        function changeLanguage(langCode) {
-            currentLang = langCode;
-            localStorage.setItem('mintoosuite_lang', langCode);
-            applyLanguage();
-        }
-
-        function applyLanguage() {
-            const lang = langDict[currentLang] || langDict['en'];
-            document.body.dir = lang.dir;
-            document.getElementById('langSelector').value = currentLang;
-            document.getElementById('lblTitle').innerText = "💎 " + lang.title;
-            document.getElementById('btnMenu').innerText = lang.menu;
-        }
-
-        const marketPool = [
-            { name: "🥇 EXNESS GOLD (XAU/USD)", price: goldVal, leverage: "10x - 20x", type: "gold" },
-            { name: "₿ BINANCE BTC/USDT", price: btcVal, leverage: "10x - 20x", type: "crypto" },
-            { name: "⚡ PXE POWER FUTURES", price: 118.40, leverage: "5x - 10x", type: "energy" },
-            { name: "🪙 BINANCE ETH/USDT", price: 3412.80, leverage: "8x - 15x", type: "crypto" },
-            { name: "🪙 BINANCE SOL/USDT", price: 212.40, leverage: "5x - 12x", type: "crypto" }
-        ];
-
-        let heroIndex = 0;
-        let activeValidSignals = {};
-
-        function restoreSavedUIState() {
-            const eBtn = document.getElementById('enableAlertsBtn');
-            if(sysPushState) {
-                eBtn.className = 'btn-active-green';
-                eBtn.innerText = '1. 🔔 PUSH ENABLED';
-                document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
-                document.getElementById('pushStatusText').style.color = "#3fb950";
-            } else {
-                eBtn.className = 'btn-inactive';
-                eBtn.innerText = '1. 🔕 PUSH: OFF';
-                document.getElementById('pushStatusText').innerText = "PUSH OFF";
-                document.getElementById('pushStatusText').style.color = "#f85149";
-            }
-
-            const gBtn = document.getElementById('goldPushBtn');
-            gBtn.className = goldPushState ? 'btn-active-green' : 'btn-inactive';
-            gBtn.innerText = `🥇 GOLD PUSH: ${goldPushState ? 'ON' : 'OFF'}`;
-
-            const cBtn = document.getElementById('cryptoPushBtn');
-            cBtn.className = cryptoPushState ? 'btn-active-green' : 'btn-inactive';
-            cBtn.innerText = `₿ CRYPTO PUSH: ${cryptoPushState ? 'ON' : 'OFF'}`;
-
-            applyPanelVisibility();
-            updateExchangeStatus();
-            applyLanguage();
-        }
-
-        function updateExchangeStatus() {
-            const now = new Date();
-            const utcHour = now.getUTCHours();
-            
-            let usOpen = utcHour >= 13 && utcHour < 20;
-            document.getElementById('exNyseStatus').innerHTML = usOpen ? "🟢 LIVE" : "🟠 CLOSED";
-            document.getElementById('exNyseStatus').className = usOpen ? "status-green" : "status-orange";
-            document.getElementById('exNasdaqStatus').innerHTML = usOpen ? "🟢 LIVE" : "🟠 CLOSED";
-            document.getElementById('exNasdaqStatus').className = usOpen ? "status-green" : "status-orange";
-
-            let pxeOpen = utcHour >= 7 && utcHour < 17;
-            document.getElementById('exPxeStatus').innerHTML = pxeOpen ? "🟢 LIVE" : "🟠 CLOSED";
-            document.getElementById('exPxeStatus').className = pxeOpen ? "status-green" : "status-orange";
-
-            let ukOpen = utcHour >= 8 && utcHour < 16;
-            document.getElementById('exLseStatus').innerHTML = ukOpen ? "🟢 LIVE" : "🟠 CLOSED";
-            document.getElementById('exLseStatus').className = ukOpen ? "status-green" : "status-orange";
-
-            let jpOpen = utcHour >= 0 && utcHour < 6;
-            document.getElementById('exTseStatus').innerHTML = jpOpen ? "🟢 LIVE" : "🟠 CLOSED";
-            document.getElementById('exTseStatus').className = jpOpen ? "status-green" : "status-orange";
-
-            let hkOpen = utcHour >= 1 && utcHour < 8;
-            document.getElementById('exHkexStatus').innerHTML = hkOpen ? "🟢 LIVE" : "🟠 CLOSED";
-            document.getElementById('exHkexStatus').className = hkOpen ? "status-green" : "status-orange";
-        }
-
-        function toggleSystemPush() {
-            sysPushState = !sysPushState;
-            localStorage.setItem('mintoosuite_sys_push', sysPushState ? 'on' : 'off');
-            
-            const btn = document.getElementById('enableAlertsBtn');
-            if (sysPushState) {
-                if ("Notification" in window) {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === "granted") {
-                            btn.className = 'btn-active-green';
-                            btn.innerText = '1. 🔔 PUSH ENABLED';
-                            document.getElementById('pushStatusText').innerText = "PUSH ACTIVE";
-                            document.getElementById('pushStatusText').style.color = "#3fb950";
-                            sendPushAlert("System Push Activated", "Round-the-clock 120 FPS push alerts engaged!");
-                        }
-                    });
-                }
-            } else {
-                btn.className = 'btn-inactive';
-                btn.innerText = '1. 🔕 PUSH: OFF';
-                document.getElementById('pushStatusText').innerText = "PUSH OFF";
-                document.getElementById('pushStatusText').style.color = "#f85149";
-            }
-        }
-
-        function triggerTestPushToggle() {
-            const btn = document.getElementById('testPushBtn');
-            btn.className = 'btn-active-orange';
-            setTimeout(() => { btn.className = 'btn-active-green'; }, 400);
-            sendPushAlert("MintooSuite Test Alert", "Secure 120 FPS multi-asset push channel verified!");
-        }
-
-        function sendPushAlert(title, body) {
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                    type: 'TRIGGER_PUSH',
-                    title: title,
-                    body: body
-                });
-            } else if ("Notification" in window && Notification.permission === "granted") {
-                navigator.serviceWorker.ready.then(registration => {
-                    registration.showNotification(title, {
-                        body: body,
-                        vibrate: [300, 100, 300]
-                    });
-                });
-            }
-        }
-
-        function togglePushSetting(btnId, label) {
-            let btn = document.getElementById(btnId);
-            let isON = btn.className.includes('btn-active');
-            if (isON) {
-                btn.className = 'btn-inactive';
-                btn.innerText = label + ': OFF';
-                if(btnId === 'goldPushBtn') { goldPushState = false; localStorage.setItem('mintoosuite_gold_push', 'off'); }
-                if(btnId === 'cryptoPushBtn') { cryptoPushState = false; localStorage.setItem('mintoosuite_crypto_push', 'off'); }
-            } else {
-                btn.className = 'btn-active-green';
-                btn.innerText = label + ': ON';
-                if(btnId === 'goldPushBtn') { goldPushState = true; localStorage.setItem('mintoosuite_gold_push', 'on'); }
-                if(btnId === 'cryptoPushBtn') { cryptoPushState = true; localStorage.setItem('mintoosuite_crypto_push', 'on'); }
-            }
-        }
-
-        function applyPanelVisibility() {
-            document.getElementById('panelSignals').style.display = showSignals ? 'block' : 'none';
-            document.getElementById('panelMacro').style.display = showMacro ? 'block' : 'none';
-            document.getElementById('panelScanner').style.display = showScanner ? 'block' : 'none';
-            document.getElementById('panelMarketNews').style.display = showMarketNews ? 'block' : 'none';
-            document.getElementById('panelGeoNews').style.display = showGeoNews ? 'block' : 'none';
-            document.getElementById('panelExchanges').style.display = showExchanges ? 'block' : 'none';
-            document.getElementById('panelHistory').style.display = showHistory ? 'block' : 'none';
-
-            setToggleBtnState('togglePanelSignals', showSignals);
-            setToggleBtnState('togglePanelMacro', showMacro);
-            setToggleBtnState('togglePanelScanner', showScanner);
-            setToggleBtnState('togglePanelMarketNews', showMarketNews);
-            setToggleBtnState('togglePanelGeoNews', showGeoNews);
-            setToggleBtnState('togglePanelExchanges', showExchanges);
-            setToggleBtnState('togglePanelHistory', showHistory);
-        }
-
-        function setToggleBtnState(btnId, state) {
-            let btn = document.getElementById(btnId);
-            if(btn) {
-                btn.className = state ? 'btn-active-green' : 'btn-inactive';
-                btn.innerText = state ? 'ON' : 'OFF';
-            }
-        }
-
-        function toggleWorkspacePanel(name) {
-            if(name === 'Signals') { showSignals = !showSignals; localStorage.setItem('mintoosuite_show_signals', showSignals ? 'on' : 'off'); }
-            if(name === 'Macro') { showMacro = !showMacro; localStorage.setItem('mintoosuite_show_macro', showMacro ? 'on' : 'off'); }
-            if(name === 'Scanner') { showScanner = !showScanner; localStorage.setItem('mintoosuite_show_scanner', showScanner ? 'on' : 'off'); }
-            if(name === 'MarketNews') { showMarketNews = !showMarketNews; localStorage.setItem('mintoosuite_show_mnews', showMarketNews ? 'on' : 'off'); }
-            if(name === 'GeoNews') { showGeoNews = !showGeoNews; localStorage.setItem('mintoosuite_show_gnews', showGeoNews ? 'on' : 'off'); }
-            if(name === 'Exchanges') { showExchanges = !showExchanges; localStorage.setItem('mintoosuite_show_exchanges', showExchanges ? 'on' : 'off'); }
-            if(name === 'History') { showHistory = !showHistory; localStorage.setItem('mintoosuite_show_history', showHistory ? 'on' : 'off'); }
-            applyPanelVisibility();
-        }
-
-        function switchAsset(mode) {
-            currentAsset = mode;
-            localStorage.setItem('mintoosuite_asset', mode);
-            
-            document.getElementById('btnGoldAsset').className = mode === 'gold' ? 'btn-active-green' : 'btn-inactive';
-            document.getElementById('btnCryptoAsset').className = mode === 'crypto' ? 'btn-active-green' : 'btn-inactive';
-            document.getElementById('btnCombinedAsset').className = mode === 'combined' ? 'btn-active-green' : 'btn-inactive';
-            
-            if(mode === 'gold') {
-                document.getElementById('chartTitle').innerText = 'CHART MATRIX: 🥇 EXNESS GOLD (XAU/USD)';
-            } else if(mode === 'crypto') {
-                document.getElementById('chartTitle').innerText = 'CHART MATRIX: ₿ BINANCE FUTURES (BTC/USDT)';
-            } else {
-                document.getElementById('chartTitle').innerText = 'CHART MATRIX: ⚡ COMBINED GOLD & BINANCE FEED';
-            }
-        }
-
-        function prevHero() {
-            heroIndex = (heroIndex - 1 + marketPool.length) % marketPool.length;
-            updateHeroBanner();
-        }
-
-        function nextHero() {
-            heroIndex = (heroIndex + 1) % marketPool.length;
-            updateHeroBanner();
-        }
-
-        function updateHeroBanner() {
-            let asset = marketPool[heroIndex];
-            let isBull = Math.random() > 0.45;
-            let action = isBull ? "HIGH-CONFIDENCE LONG" : "HIGH-CONFIDENCE SHORT";
-            let curPrice = asset.price;
-            let sl = isBull ? (curPrice * 0.994).toFixed(2) : (curPrice * 1.006).toFixed(2);
-            let tp1 = isBull ? (curPrice * 1.008).toFixed(2) : (curPrice * 0.992).toFixed(2);
-            let tp2 = isBull ? (curPrice * 1.015).toFixed(2) : (curPrice * 0.985).toFixed(2);
-
-            document.getElementById('heroAssetTag').innerText = asset.name;
-            document.getElementById('heroSignalText').innerText = `${asset.name}: ${action}`;
-            document.getElementById('heroSignalText').style.color = isBull ? "#3fb950" : "#f85149";
-            document.getElementById('heroLeverage').innerText = asset.leverage;
-            document.getElementById('heroSL').innerText = sl;
-            document.getElementById('heroTP').innerText = `${tp1} / ${tp2}`;
-        }
-
-        function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
-        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
-        function openHelpCenter() { document.getElementById('helpCenterModal').style.display = 'flex'; }
-        function closeHelpCenter() { document.getElementById('helpCenterModal').style.display = 'none'; }
-
-        function openHelp(title, desc) {
-            document.getElementById('helpTitle').innerText = title;
-            document.getElementById('helpBody').innerText = desc;
-            document.getElementById('helpModal').style.display = 'flex';
-        }
-        function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
-
-        const canvas = document.getElementById('matrixCanvas');
-        const ctx = canvas.getContext('2d');
-        function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth - 16;
-            canvas.height = 100;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        function renderChart() {
-            ctx.fillStyle = '#0d1117';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            let data = currentAsset === 'crypto' ? btcHistory : goldHistory;
-            if(currentAsset === 'combined') {
-                data = goldHistory.map((val, idx) => (val + (btcHistory[idx] / 35)));
-            }
-
-            const candles = data.length;
-            const w = canvas.width / candles;
-            let minP = Math.min(...data);
-            let maxP = Math.max(...data);
-            let range = (maxP - minP) || 1;
-
-            for(let i = 0; i < candles; i++) {
-                let normVal = ((data[i] - minP) / range) * 60 + 15;
-                let prevNorm = i > 0 ? ((data[i-1] - minP) / range) * 60 + 15 : normVal;
-                let isGreen = normVal >= prevNorm;
-                
-                ctx.fillStyle = isGreen ? '#3fb950' : '#f85149';
-                let cHeight = Math.max(Math.abs(normVal - prevNorm), 3);
-                let yPos = 85 - Math.max(normVal, prevNorm);
-                
-                ctx.fillRect(i * w + 2, yPos, w - 4, cHeight);
-            }
-            requestAnimationFrame(renderChart);
-        }
-        requestAnimationFrame(renderChart);
-
-        let tickCount = 0;
-        const marketNewsItems = [
-            "🖼️ [PXE ⚡] European Power Exchange reports baseload electricity futures upward adjustment.",
-            "🖼️ [REUTERS 🥇] Spot Gold holds steady at $2,674/oz following US inflation report.",
-            "🖼️ [BLOOMBERG 🛢️] WTI Crude & Brent Oil tick up on Middle East supply outlook.",
-            "🖼️ [LME 🔋] Lithium and Rare Earth Metals index surges +2.3% on EV battery demand.",
-            "🖼️ [PXE ⛽] European Gas futures consolidate following inventory updates."
-        ];
-
-        const geoNewsItems = [
-            "🖼️ [REUTERS 💵] Federal Reserve policy committee signals potential 25bps rate calibration.",
-            "🖼️ [BBC 🌐] Global trade corridor security protocols updated for maritime logistics.",
-            "🖼️ [AL JAZEERA 🚢] Red Sea maritime transit freight insurance rates adjust.",
-            "🖼️ [REUTERS 🌐] Bilateral trade frameworks negotiate energy supply agreements."
-        ];
-
-        setInterval(() => {
-            tickCount++;
-            const now = new Date();
-            const timeStr = now.toTimeString().split(' ')[0];
-
-            goldVal += (Math.random() - 0.49) * 0.45;
-            goldHistory.shift(); goldHistory.push(goldVal);
-            document.getElementById('goldPrice').innerText = goldVal.toFixed(2);
-
-            btcVal += (Math.random() - 0.49) * 14.0;
-            btcHistory.shift(); btcHistory.push(btcVal);
-            document.getElementById('btcPrice').innerText = btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-            dxyVal += (Math.random() - 0.51) * 0.04;
-            document.getElementById('dxyVal').innerText = `${dxyVal.toFixed(2)} ${dxyVal < 103.40 ? '▼' : '▲'}`;
-            document.getElementById('dxyImpact').innerText = dxyVal < 103.40 ? "Gold Impact: BULLISH (DXY Drop)" : "Gold Impact: BEARISH PRESSURE";
-
-            us500Val += (Math.random() - 0.49) * 1.5;
-            document.getElementById('us500Val').innerText = `${us500Val.toFixed(2)} ▲`;
-
-            marketPool[0].price = goldVal;
-            marketPool[1].price = btcVal;
-
-            if(tickCount % 5 === 0) {
-                let mNews = marketNewsItems[Math.floor(Math.random() * marketNewsItems.length)];
-                let mBox = document.getElementById('marketNewsFeed');
-                if(mBox) mBox.innerHTML = `[${timeStr}] ${mNews}<br>` + mBox.innerHTML;
-
-                let gNews = geoNewsItems[Math.floor(Math.random() * geoNewsItems.length)];
-                let gBox = document.getElementById('geoNewsFeed');
-                if(gBox) gBox.innerHTML = `[${timeStr}] ${gNews}<br>` + gBox.innerHTML;
-
-                updateExchangeStatus();
-            }
-
-            let scannedAsset = marketPool[tickCount % marketPool.length];
-            let isBullish = Math.random() > 0.45;
-            let actionText = isBullish ? "SURGE LONG" : "BEARISH DROP";
-            let curPrice = scannedAsset.price;
-            let slPrice = isBullish ? (curPrice * 0.994).toFixed(2) : (curPrice * 1.006).toFixed(2);
-            let tpPrice = isBullish ? (curPrice * 1.012).toFixed(2) : (curPrice * 0.988).toFixed(2);
-            let expTime = new Date(now.getTime() + 180000);
-
-            activeValidSignals[scannedAsset.name] = {
-                signal: actionText,
-                price: curPrice.toFixed(2),
-                leverage: scannedAsset.leverage,
-                sl: slPrice,
-                tp: tpPrice,
-                expires: expTime,
-                isBullish: isBullish
-            };
-
-            let container = document.getElementById('validSignalsContainer');
-            if(container) {
-                container.innerHTML = '';
-                Object.keys(activeValidSignals).forEach(key => {
-                    let sig = activeValidSignals[key];
-                    let remSec = Math.max(0, Math.floor((sig.expires - new Date()) / 1000));
-                    let m = String(Math.floor(remSec / 60)).padStart(2, '0');
-                    let s = String(remSec % 60).padStart(2, '0');
-                    
-                    let cardHTML = `
-                        <div class="signal-card ${sig.isBullish ? '' : 'red'}">
-                            <div class="signal-head">
-                                <span>${key} - ${sig.signal} (${sig.leverage})</span>
-                                <span style="color: #f0883e;">EXP: ${m}:${s}</span>
-                            </div>
-                            <div class="signal-meta">Entry: $${sig.price} | SL: $${sig.sl} | TP: $${sig.tp}</div>
-                        </div>
-                    `;
-                    container.innerHTML += cardHTML;
-                });
-            }
-
-            const feed = document.getElementById('masterBotFeed');
-            if(feed) {
-                feed.innerHTML = `[${timeStr}] [${scannedAsset.name}] 3M Confluence: ${actionText} | Lev: ${scannedAsset.leverage} | SL: $${slPrice} | TP: $${tpPrice}<br>` + feed.innerHTML;
-            }
-
-            if (tickCount % 6 === 0 && sysPushState) {
-                let shouldSend = (scannedAsset.type === 'gold' && goldPushState) || (scannedAsset.type === 'crypto' && cryptoPushState) || (scannedAsset.type === 'energy');
-                if (shouldSend) {
-                    sendPushAlert(`MintooSuite 120 FPS Alert: ${scannedAsset.name}`, `${actionText} | Lev: ${scannedAsset.leverage} | Price: $${curPrice.toFixed(2)} | TP: $${tpPrice}`);
-                }
-            }
-        }, 600);
-
-        let timeLeft = 180;
-        setInterval(() => {
-            timeLeft--;
-            if(timeLeft < 0) timeLeft = 180;
-            let m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-            let s = String(timeLeft % 60).padStart(2, '0');
-            document.getElementById('timerDisplay').innerText = `${m}:${s}`;
-        }, 1000);
-
-        restoreSavedUIState();
-        switchAsset(currentAsset);
-        updateHeroBanner();
-    </script>
+  </div>
+  <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">Connecting to Binance…</span></div>
+</div></div>
+
+<div class="wrap">
+  <div class="winname" id="winName"></div>
+  <div class="winsub" id="winSub"></div>
+  <div id="view"></div>
+</div>
+
+<div class="sheet" id="sheetWin"><div class="sheet-in">
+  <div class="sheet-t"><span>🗂 Windows</span><button class="tbtn" data-act="closesheets">✕</button></div>
+  <div class="tiles" id="tiles"></div>
+</div></div>
+
+<div class="sheet" id="sheetMenu"><div class="sheet-in">
+  <div class="sheet-t"><span>⚙️ Menu & Settings</span><button class="tbtn" data-act="closesheets">✕</button></div>
+  <div class="card">
+    <div class="h">Language / اللغة / 语言</div>
+    <select id="langSel">
+      <option value="en">English (US)</option><option value="ar">العربية (Arabic)</option><option value="zh">中文 (Chinese)</option>
+      <option value="ur">اردو (Urdu)</option><option value="de">Deutsch (German)</option><option value="fr">Français (French)</option>
+    </select>
+    <div class="note">Language changes the title and top buttons only.</div>
+  </div>
+  <div class="card">
+    <div class="row"><span>Version</span><b class="blu">v6.0 live</b></div>
+    <div class="row"><span>Data</span><b>Binance Futures (public, live)</b></div>
+    <div class="row"><span>Trading</span><b class="up">Recommendations only</b></div>
+  </div>
+  <button class="btn" data-act="win:help"><span>📖 Help & contact</span><span>›</span></button>
+  <button class="btn" data-act="win:alerts"><span>🔔 Alert settings</span><span>›</span></button>
+</div></div>
 <script>
-(function () {
-    'use strict';
-    // SAFETY: the master bot is recommendation-only. This flag is locked and nothing here sends orders.
-    try { Object.defineProperty(window, 'REAL_TRADING_ENABLED', { value: false, writable: false, configurable: false }); } catch (e) {}
-
-    var FAPI = 'https://fapi.binance.com';
-    var HOUR = 3600000;
-    var busy = false;
-
-    function $(id) { return document.getElementById(id); }
-    function jget(path) {
-        return fetch(FAPI + path, { cache: 'no-store' }).then(function (r) {
-            if (!r.ok) { throw new Error('HTTP ' + r.status); }
-            return r.json();
-        });
-    }
-    function ema(a, n) { var k = 2 / (n + 1), e = a[0]; for (var i = 1; i < a.length; i++) { e = a[i] * k + e * (1 - k); } return e; }
+// ---------- Scan engine: runs inside background workers (or on the main thread as a fallback) ----------
+function engineBoot(self) {
+    var BASE = 'https://fapi.binance.com';
+    function emaSeries(a, n) { var k = 2 / (n + 1), o = [a[0]]; for (var i = 1; i < a.length; i++) { o.push(a[i] * k + o[i - 1] * (1 - k)); } return o; }
+    function ema(a, n) { var s = emaSeries(a, n); return s[s.length - 1]; }
     function rsi(a, n) {
         n = n || 14; if (a.length <= n) { return 50; }
         var g = 0, l = 0, i, d;
@@ -999,59 +119,74 @@
         for (i = n + 1; i < a.length; i++) { d = a[i] - a[i - 1]; g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n; }
         return l === 0 ? 100 : 100 - 100 / (1 + g / l);
     }
-    function atr(k, n) {
+    function atrK(k, n) {
         n = n || 14; var s = 0, c = 0;
         for (var i = Math.max(1, k.length - n); i < k.length; i++) {
             s += Math.max(k[i].h - k[i].l, Math.abs(k[i].h - k[i - 1].c), Math.abs(k[i].l - k[i - 1].c)); c++;
         }
         return c ? s / c : 0;
     }
-    function parseK(rows) {
-        return rows.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], qv: +r[7] }; });
+    function macdHist(c) {
+        var e12 = emaSeries(c, 12), e26 = emaSeries(c, 26), m = [], i;
+        for (i = 0; i < c.length; i++) { m.push(e12[i] - e26[i]); }
+        var sg = emaSeries(m, 9);
+        return [m[m.length - 2] - sg[sg.length - 2], m[m.length - 1] - sg[sg.length - 1]];
     }
-    function fmtP(p) { return p >= 1000 ? p.toFixed(2) : p >= 1 ? p.toFixed(3) : p >= 0.1 ? p.toFixed(4) : p.toFixed(6); }
-    function fmtT(ms) {
-        var d = new Date(ms), n = new Date();
-        var t = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        return d.toDateString() === n.toDateString() ? t : d.toLocaleDateString([], { weekday: 'short' }) + ' ' + t;
+    function parse(rows) { return rows.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5], qv: +r[7] }; }); }
+    function get(path) {
+        return fetch(BASE + path, { cache: 'no-store' }).then(function (r) {
+            var w = +(r.headers.get('x-mbx-used-weight-1m') || 0);
+            if (r.status === 429 || r.status === 418) { var e = new Error('rate'); e.rate = +(r.headers.get('retry-after') || 60); throw e; }
+            if (!r.ok) { throw new Error('HTTP ' + r.status); }
+            return r.json().then(function (j) { return { j: j, w: w }; });
+        });
     }
-    function money(v) { return v >= 1e9 ? '$' + (v / 1e9).toFixed(1) + 'B' : '$' + (v / 1e6).toFixed(0) + 'M'; }
-    function pct(v) { return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
-
-    function goldClosed(d) {
-        var wd = d.getUTCDay(), m = d.getUTCHours() * 60 + d.getUTCMinutes();
-        return wd === 6 || (wd === 5 && m >= 22 * 60) || (wd === 0 && m < 22 * 60);
+    function agg10(k5) {
+        var out = [], cur = null;
+        k5.forEach(function (x) {
+            var b = Math.floor(x.t / 600000) * 600000;
+            if (!cur || cur.t !== b) { if (cur) { out.push(cur); } cur = { t: b, o: x.o, h: x.h, l: x.l, c: x.c, v: x.v, n: 1 }; }
+            else { cur.h = Math.max(cur.h, x.h); cur.l = Math.min(cur.l, x.l); cur.c = x.c; cur.v += x.v; cur.n++; }
+        });
+        if (cur) { out.push(cur); }
+        return out.filter(function (x) { return x.n === 2; });
     }
-    function nextGoldOpen(ms) {
-        var t = ms;
-        for (var i = 0; i < 9 * 96; i++) { if (!goldClosed(new Date(t))) { return t; } t += 900000; }
-        return ms;
+    function tfAnalyze(k) {
+        if (k.length < 40) { return null; }
+        var c = k.map(function (x) { return x.c; }), last = k[k.length - 1];
+        var e9 = ema(c, 9), e21 = ema(c, 21), e50 = ema(c, Math.min(50, c.length - 1));
+        var r = rsi(c, 14), a = atrK(k, 14), mh = macdHist(c);
+        var vols = k.slice(-21, -1).map(function (x) { return x.v; });
+        var avgv = vols.reduce(function (s, x) { return s + x; }, 0) / (vols.length || 1);
+        var vr = avgv ? last.v / avgv : 1;
+        var s = (e9 > e21 ? 1 : -1) + (last.c > e50 ? 0.5 : -0.5);
+        if (mh[1] > 0 && mh[1] >= mh[0]) { s += 0.5; } else if (mh[1] < 0 && mh[1] <= mh[0]) { s -= 0.5; }
+        if (r > 75) { s -= 0.75; } else if (r < 25) { s += 0.75; }
+        if (vr > 1.5) { s += (last.c >= last.o ? 0.5 : -0.5); }
+        var side = s >= 1.75 ? 'LONG' : s <= -1.75 ? 'SHORT' : 'WAIT', note = '';
+        if (r > 80 && side === 'LONG') { side = 'WAIT'; note = 'overbought'; }
+        if (r < 20 && side === 'SHORT') { side = 'WAIT'; note = 'oversold'; }
+        var body = Math.abs(last.c - last.o);
+        return { side: side, score: s, conf: Math.abs(s) >= 2.5 ? 'HIGH' : Math.abs(s) >= 1.75 ? 'MEDIUM' : 'LOW',
+                 rsi: r, atr: a, vr: vr, close: last.c, open: last.o, bodyAtr: a ? body / a : 0, bull: last.c >= last.o, t: last.t, note: note };
     }
-    function windows(kind, now) {
-        var start, dayStart, dayEnd, fhStop;
-        if (kind === 'gold') {
-            start = nextGoldOpen(now);
-            var s = new Date(start);
-            dayEnd = Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate(), 21, 0, 0);
-            if (dayEnd - start < 2 * HOUR) { dayEnd += 24 * HOUR; }
-            dayStart = start; fhStop = Math.min(start + 4 * HOUR, dayEnd);
-        } else {
-            start = now;
-            var u = new Date(now);
-            dayEnd = Date.UTC(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate() + 1, 0, 0, 0);
-            dayStart = now;
-            if (dayEnd - now < 3 * HOUR) { dayStart = dayEnd; dayEnd += 24 * HOUR; }
-            fhStop = now + 4 * HOUR;
-        }
-        return { start: start, fhStart: start, fhStop: fhStop, dayStart: dayStart, dayEnd: dayEnd };
-    }
-
-    function analyze(sym, kind, now, chg) {
+    function scanSym(sym) {
         return Promise.all([
-            jget('/fapi/v1/klines?symbol=' + sym + '&interval=1h&limit=120'),
-            jget('/fapi/v1/klines?symbol=' + sym + '&interval=1d&limit=90')
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=3m&limit=50'),
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=5m&limit=99'),
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=15m&limit=99')
+        ]).then(function (r) {
+            var k3 = parse(r[0].j).slice(0, -1), k5 = parse(r[1].j).slice(0, -1), k15 = parse(r[2].j).slice(0, -1);
+            return { type: 'scan', sym: sym, w: Math.max(r[0].w, r[1].w, r[2].w),
+                     tf: { '3m': tfAnalyze(k3), '10m': tfAnalyze(agg10(k5)), '15m': tfAnalyze(k15) } };
+        });
+    }
+    function planSym(sym, chg, kind) {
+        return Promise.all([
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=1h&limit=120'),
+            get('/fapi/v1/klines?symbol=' + sym + '&interval=1d&limit=90')
         ]).then(function (res) {
-            var h = parseK(res[0]), d = parseK(res[1]);
+            var h = parse(res[0].j), d = parse(res[1].j);
             var hc = h.map(function (x) { return x.c; }), dc = d.map(function (x) { return x.c; });
             var price = hc[hc.length - 1];
             var e20 = ema(dc, 20), e50 = ema(dc, 50), rd = rsi(dc, 14);
@@ -1065,130 +200,615 @@
             var last24 = h.slice(-24).reduce(function (a, x) { return a + x.qv; }, 0);
             var vr = avg ? last24 / avg : 1;
             var boost = vr > 1.2 ? 0.5 : vr < 0.7 ? -0.5 : 0;
-            var daySide = ds >= 1.5 ? 'LONG' : ds <= -1.5 ? 'SHORT' : 'NEUTRAL';
+            var nd = ds >= 1.5 ? 'LONG' : ds <= -1.5 ? 'SHORT' : 'NEUTRAL';
             var dayScore = ds + hs * 0.5 + (ds >= 0 ? boost : -boost);
-            var daySide2 = dayScore >= 1.5 ? 'LONG' : dayScore <= -1.5 ? 'SHORT' : 'NEUTRAL';
+            var day = dayScore >= 1.5 ? 'LONG' : dayScore <= -1.5 ? 'SHORT' : 'NEUTRAL';
             var fhScore = hs + (hs >= 0 ? boost : -boost);
-            var fhSide = fhScore >= 1.25 ? 'LONG' : fhScore <= -1.25 ? 'SHORT' : 'WAIT';
-            var a1 = atr(h, 14), ad = atr(d, 14);
+            var fh = fhScore >= 1.25 ? 'LONG' : fhScore <= -1.25 ? 'SHORT' : 'WAIT';
+            var a1 = atrK(h, 14), ad = atrK(d, 14);
             var conf = function (s) { var a = Math.abs(s); var c = a >= 2.5 ? 'HIGH' : a >= 1.5 ? 'MEDIUM' : 'LOW'; return (vr > 10 && c === 'HIGH') ? 'MEDIUM' : c; };
-            var note = '', nd = daySide, ndc = conf(ds), dc2 = conf(dayScore), fc2 = conf(fhScore);
+            var ndc = conf(ds), dayc = conf(dayScore), fhc = conf(fhScore), note = '';
             var over = (rd > 80 || chg > 30) ? 'UP' : (rd < 20 || chg < -30) ? 'DOWN' : '';
             if (over === 'UP') {
-                note = 'OVEREXTENDED UP: chasing a long here is risky, wait for a pullback';
-                if (nd === 'LONG') { nd = 'NEUTRAL'; ndc = 'LOW'; }
-                if (daySide2 === 'LONG') { daySide2 = 'NEUTRAL'; dc2 = 'LOW'; }
-                if (fhSide === 'LONG') { fhSide = 'WAIT'; fc2 = 'LOW'; }
+                note = 'OVEREXTENDED UP: chasing a long is risky, wait for a pullback';
+                if (nd === 'LONG') { nd = 'NEUTRAL'; ndc = 'LOW'; } if (day === 'LONG') { day = 'NEUTRAL'; dayc = 'LOW'; } if (fh === 'LONG') { fh = 'WAIT'; fhc = 'LOW'; }
             } else if (over === 'DOWN') {
-                note = 'OVEREXTENDED DOWN: chasing a short here is risky, wait for a bounce';
-                if (nd === 'SHORT') { nd = 'NEUTRAL'; ndc = 'LOW'; }
-                if (daySide2 === 'SHORT') { daySide2 = 'NEUTRAL'; dc2 = 'LOW'; }
-                if (fhSide === 'SHORT') { fhSide = 'WAIT'; fc2 = 'LOW'; }
+                note = 'OVEREXTENDED DOWN: chasing a short is risky, wait for a bounce';
+                if (nd === 'SHORT') { nd = 'NEUTRAL'; ndc = 'LOW'; } if (day === 'SHORT') { day = 'NEUTRAL'; dayc = 'LOW'; } if (fh === 'SHORT') { fh = 'WAIT'; fhc = 'LOW'; }
             }
             var fSL = Math.min(1.5 * a1, 0.06 * price), dSL = Math.min(ad, 0.12 * price);
-            return {
-                sym: sym, kind: kind, price: price, rsiD: rd, rsiH: rh, vr: vr, chg: chg, note: note, w: windows(kind, now),
-                nextDay: nd, nextDayConf: ndc,
-                day: daySide2, dayConf: dc2, dayScore: dayScore,
-                fh: fhSide, fhConf: fc2, fhScore: fhScore,
-                fhSL: fSL, fhTP: 2 * fSL, daySL: dSL, dayTP: 2 * dSL
-            };
+            return { type: 'plan', sym: sym, kind: kind, w: Math.max(res[0].w, res[1].w), price: price, chg: chg, rsiH: rh, rsiD: rd, vr: vr, note: note,
+                     nextDay: nd, nextDayConf: ndc, day: day, dayConf: dayc, fh: fh, fhConf: fhc,
+                     fhSL: fSL, fhTP: 2 * fSL, daySL: dSL, dayTP: 2 * dSL };
         });
     }
+    self.onmessage = function (e) {
+        var jobs = e.data.jobs, conc = e.data.conc || 5, id = e.data.id, i = 0, maxw = 0, rate = 0, out = [], errs = 0;
+        function lane() {
+            if (i >= jobs.length || rate) { return Promise.resolve(); }
+            var j = jobs[i++];
+            var p = j.type === 'plan' ? planSym(j.sym, j.chg, j.kind) : scanSym(j.sym);
+            return p.then(function (r) { if (r.w > maxw) { maxw = r.w; } out.push(r); }, function (err) { if (err && err.rate) { rate = err.rate; } else { errs++; } }).then(lane);
+        }
+        var lanes = []; for (var n = 0; n < conc; n++) { lanes.push(lane()); }
+        Promise.all(lanes).then(function () { self.postMessage({ id: id, out: out, maxw: maxw, rate: rate, errs: errs }); });
+    };
+}
+(function () {
+'use strict';
+var $ = function (id) { return document.getElementById(id); };
+function ls(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-    function sideColor(s) { return s === 'LONG' ? '#3fb950' : s === 'SHORT' ? '#f85149' : '#8b949e'; }
-    function levels(side, price, sl, tp) {
-        if (side === 'LONG') { return 'Entry ' + fmtP(price) + ' | SL ' + fmtP(price - sl) + ' | TP ' + fmtP(price + tp); }
-        if (side === 'SHORT') { return 'Entry ' + fmtP(price) + ' | SL ' + fmtP(price + sl) + ' | TP ' + fmtP(price - tp); }
-        return 'No trade: wait for a clearer setup';
-    }
-    function card(r, label) {
-        var red = r.fh === 'SHORT' ? ' red' : '';
-        return '<div class="signal-card' + red + '">' +
-            '<div style="display:flex;justify-content:space-between;font-weight:800;"><span>' + label + '</span><span data-lp="' + r.sym + '">' + fmtP(r.price) + '</span></div>' +
-            (r.note ? '<div style="color:#f0883e;margin-top:3px;">⚠️ ' + r.note + '</div>' : '') +
-            '<div style="margin-top:3px;"><b>NEXT-DAY TREND:</b> <span style="color:' + sideColor(r.nextDay) + '">' + (r.nextDay === 'NEUTRAL' ? 'SIDEWAYS' : r.nextDay === 'LONG' ? 'UP' : 'DOWN') + '</span> (' + r.nextDayConf + ')</div>' +
-            '<div style="margin-top:3px;"><b>WHOLE-DAY:</b> <span style="color:' + sideColor(r.day) + '">' + r.day + '</span> (' + r.dayConf + ') ' +
-            'START ' + fmtT(r.w.dayStart) + ' → STOP ' + fmtT(r.w.dayEnd) + '<br><span style="color:#8b949e;">' + levels(r.day, r.price, r.daySL, r.dayTP) + '</span></div>' +
-            '<div style="margin-top:3px;"><b>FEW-HOURS:</b> <span style="color:' + sideColor(r.fh) + '">' + r.fh + '</span> (' + r.fhConf + ') ' +
-            ((r.fh === 'LONG' || r.fh === 'SHORT') && (r.day === 'LONG' || r.day === 'SHORT') && r.fh !== r.day ? '<span style="color:#f0883e;">[against whole-day trend: small size]</span> ' : '') +
-            'START ' + fmtT(r.w.fhStart) + ' → STOP ' + fmtT(r.w.fhStop) + '<br><span style="color:#8b949e;">' + levels(r.fh, r.price, r.fhSL, r.fhTP) + '</span></div>' +
-            '<div style="margin-top:3px;color:#8b949e;">24h change ' + pct(r.chg) + ' | 24h volume vs 30-day avg: ' + r.vr.toFixed(2) + 'x | RSI 1h ' + r.rsiH.toFixed(0) + ' / 1d ' + r.rsiD.toFixed(0) + '</div>' +
-            '</div>';
-    }
-    function list(arr) {
-        return arr.map(function (x) {
-            var c = x.change >= 0 ? '#3fb950' : '#f85149';
-            return x.sym.replace('USDT', '') + ' <span style="color:' + c + '">' + pct(x.change) + '</span>';
-        }).join(' | ');
-    }
+var S = { tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
+    scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
+    plan: { items: [], at: 0 }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
+    mkt: 'gain', scanf: 'all', chart: { sym: ls('mintoosuite_chart', 'BTCUSDT'), tf: '15m', k: [], ws: null, err: '' },
+    win: ls('mintoosuite_win', 'overview'), log: [], lang: ls('mintoosuite_lang', 'en'),
+    sysPush: ls('mintoosuite_sys_push', 'on') !== 'off', goldPush: ls('mintoosuite_gold_push', 'on') !== 'off',
+    cryptoPush: ls('mintoosuite_crypto_push', 'on') !== 'off', a3m: ls('mintoosuite_alert_3m', 'on') !== 'off', aMaster: ls('mintoosuite_alert_master', 'on') !== 'off' };
+try { S.log = JSON.parse(ls('mintoosuite_log', '[]')) || []; } catch (e) { S.log = []; }
 
-    function run() {
-        if (busy) { return Promise.resolve(); }
-        busy = true;
-        var stamp = $('mpStamp'), body = $('mpBody');
-        if (stamp) { stamp.innerText = 'UPDATING…'; }
-        var now = Date.now();
-        return jget('/fapi/v1/ticker/24hr').then(function (all) {
-            var rows = all.filter(function (t) { return /USDT$/.test(t.symbol) && /^[A-Z0-9]+$/.test(t.symbol); })
-                .map(function (t) { return { sym: t.symbol, change: +t.priceChangePercent, qv: +t.quoteVolume }; });
-            var total = rows.reduce(function (a, x) { return a + x.qv; }, 0);
-            var up = rows.filter(function (x) { return x.change > 0; }).length;
-            var liquid = rows.filter(function (x) { return x.qv > 50e6; });
-            var gainers = liquid.slice().sort(function (a, b) { return b.change - a.change; }).slice(0, 5);
-            var losers = liquid.slice().sort(function (a, b) { return a.change - b.change; }).slice(0, 5);
-            var topVol = rows.slice().sort(function (a, b) { return b.qv - a.qv; }).slice(0, 5);
-            var picks = ['BTCUSDT', 'ETHUSDT'];
-            gainers.slice(0, 3).concat(losers.slice(0, 3)).concat(topVol.slice(0, 2)).forEach(function (x) { if (picks.indexOf(x.sym) < 0) { picks.push(x.sym); } });
-            picks = picks.slice(0, 9);
-            var goldSym = rows.some(function (x) { return x.sym === 'XAUUSDT'; }) ? 'XAUUSDT' : 'PAXGUSDT';
-            var chgOf = {}; rows.forEach(function (x) { chgOf[x.sym] = x.change; });
-            var jobs = picks.map(function (s) { return analyze(s, 'crypto', now, chgOf[s] || 0).catch(function () { return null; }); });
-            jobs.unshift(analyze(goldSym, 'gold', now, chgOf[goldSym] || 0).catch(function () { return null; }));
-            return Promise.all(jobs).then(function (out) {
-                var gold = out[0], coins = out.slice(1).filter(Boolean);
-                var breadth = rows.length ? Math.round(up / rows.length * 100) : 0;
-                var html = '<div class="signal-card" style="border-left-color:#58a6ff;">' +
-                    '<b>BINANCE FUTURES MARKET (24h):</b> total volume ' + money(total) + ' | coins up ' + breadth + '% (' + (breadth >= 55 ? 'bullish breadth' : breadth <= 45 ? 'bearish breadth' : 'mixed') + ')' +
-                    '<br><b style="color:#3fb950;">TOP GAINERS:</b> ' + list(gainers) +
-                    '<br><b style="color:#f85149;">TOP LOSERS:</b> ' + list(losers) +
-                    '<br><b style="color:#58a6ff;">TOP VOLUME:</b> ' + topVol.map(function (x) { return x.sym.replace('USDT', '') + ' ' + money(x.qv); }).join(' | ') + '</div>';
-                html += '<div style="margin:6px 0 2px;font-weight:800;color:#f0883e;">🥇 EXNESS GOLD (XAU/USD)</div>';
-                if (goldClosed(new Date(now))) {
-                    html += '<div class="signal-card red">Exness gold market is CLOSED (weekend). The plan below starts when it reopens: ' + fmtT(nextGoldOpen(now)) + '.</div>';
-                }
-                html += gold ? card(gold, '🥇 GOLD (live proxy: Binance ' + goldSym + ')') : '<div class="signal-card red">Gold data unavailable right now.</div>';
-                html += '<div style="margin:6px 0 2px;font-weight:800;color:#f0883e;">🟡 BINANCE FUTURES</div>';
-                html += coins.length ? coins.map(function (r) { return card(r, '🪙 ' + r.sym.replace('USDT', '/USDT')); }).join('') : '<div class="signal-card red">Binance data unavailable right now.</div>';
-                html += '<div style="color:#8b949e;margin-top:4px;">Plan calculated at ' + new Date(now).toLocaleTimeString() + '. The price at the top right of each card is live (every 5 seconds); Entry, SL and TP were fixed at plan time and the plan refreshes every minute. Rule-based estimate from live Binance data (trend, RSI, volume). Not a guarantee and not financial advice. Exness has no public price feed, so gold uses Binance gold futures as a close proxy.</div>';
-                body.innerHTML = html;
-                if (stamp) { stamp.innerText = 'LIVE ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); stamp.style.color = '#3fb950'; }
-            });
-        }).catch(function (e) {
-            if (body) { body.innerHTML = 'Live data could not be loaded (' + (e && e.message ? e.message : 'network') + '). Check your internet connection; it retries automatically every minute.'; }
-            if (stamp) { stamp.innerText = 'OFFLINE'; stamp.style.color = '#f85149'; }
-        }).then(function () { busy = false; });
-    }
+// ---------- formatting ----------
+function fmtP(p) { return p >= 1000 ? p.toFixed(2) : p >= 1 ? p.toFixed(3) : p >= 0.1 ? p.toFixed(4) : p >= 0.001 ? p.toFixed(6) : p.toFixed(8); }
+function pct(v) { return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
+function money(v) { return v >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? '$' + (v / 1e6).toFixed(1) + 'M' : '$' + Math.round(v / 1e3) + 'K'; }
+function hm(ms) { return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+function hms(ms) { return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+function fmtT(ms) { var d = new Date(ms), n = new Date(); return d.toDateString() === n.toDateString() ? hm(ms) : d.toLocaleDateString([], { weekday: 'short' }) + ' ' + hm(ms); }
+function ago(ms) { var s = Math.max(0, Math.round((Date.now() - ms) / 1000)); return s < 60 ? s + 's ago' : s < 3600 ? Math.round(s / 60) + 'm ago' : s < 86400 ? Math.round(s / 3600) + 'h ago' : Math.round(s / 86400) + 'd ago'; }
+function nm(s) { return s.replace(/USDT$/, '') + '/USDT'; }
+function cc(v) { return v >= 0 ? 'up' : 'dn'; }
+function pill(side) { var c = side === 'LONG' ? 'long' : side === 'SHORT' ? 'short' : 'wait'; return '<span class="pill ' + c + '">' + side + '</span>'; }
+function addLog(type, text) { S.log.unshift({ t: Date.now(), type: type, text: text }); if (S.log.length > 150) { S.log.length = 150; } lss('mintoosuite_log', JSON.stringify(S.log)); }
 
-    function livePrices() {
-        return jget('/fapi/v1/ticker/price').then(function (arr) {
-            var m = {}; arr.forEach(function (x) { m[x.symbol] = x.price; });
-            var els = document.querySelectorAll('[data-lp]');
-            for (var i = 0; i < els.length; i++) {
-                var v = m[els[i].getAttribute('data-lp')];
-                if (v) { els[i].textContent = fmtP(+v); }
-            }
-            var st = $('mpStamp');
-            if (st && !busy && els.length) { st.innerText = 'LIVE ' + new Date().toLocaleTimeString(); st.style.color = '#3fb950'; }
-        }).catch(function () {});
-    }
+// ---------- notifications (service worker) ----------
+function sendPush(title, body) {
+    try {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) { navigator.serviceWorker.controller.postMessage({ type: 'TRIGGER_PUSH', title: title, body: body }); }
+        else if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) { navigator.serviceWorker.ready.then(function (r) { r.showNotification(title, { body: body, vibrate: [300, 100, 300], requireInteraction: true }); }); }
+    } catch (e) {}
+}
+function alertPush(sym, title, body) {
+    if (!S.sysPush) { return; }
+    if (sym === GOLD ? !S.goldPush : !S.cryptoPush) { return; }
+    sendPush(title, body);
+}
 
-    window.mintooPlanRefresh = run;
-    run();
-    setInterval(run, 60000);
-    setInterval(livePrices, 5000);
+// ---------- live prices: WebSocket (1s) with REST fallback ----------
+function ingest(a) {
+    for (var i = 0; i < a.length; i++) {
+        var x = a[i]; if (!SYM_OK.test(x.s)) { continue; }
+        var p = +x.c, o = +x.o; if (!p) { continue; }
+        S.tick[x.s] = { p: p, o: o, h: +x.h, l: +x.l, q: +x.q, chg: o ? (p - o) / o * 100 : 0 };
+    }
+}
+var wsBack = 1000;
+function connectWS() {
+    var ws, dead = false;
+    function retry() { if (dead) { return; } dead = true; setTimeout(connectWS, wsBack); wsBack = Math.min(wsBack * 2, 15000); }
+    try { ws = new WebSocket('wss://fstream.binance.com/ws/!miniTicker@arr'); } catch (e) { retry(); return; }
+    ws.onmessage = function (ev) { var a; try { a = JSON.parse(ev.data); } catch (e) { return; } if (!Array.isArray(a)) { return; } ingest(a); S.wsAt = Date.now(); wsBack = 1000; };
+    ws.onclose = retry; ws.onerror = retry;
+}
+function fetchJSON(path, ms) {
+    var ac = typeof AbortController !== 'undefined' ? new AbortController() : null, to = ac ? setTimeout(function () { ac.abort(); }, ms || 10000) : null;
+    return fetch('https://fapi.binance.com' + path, { cache: 'no-store', signal: ac ? ac.signal : undefined }).then(function (r) {
+        if (to) { clearTimeout(to); } if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json();
+    });
+}
+function pollREST() {
+    if (S.wsAt && Date.now() - S.wsAt < 6000) { return; }
+    fetchJSON('/fapi/v1/ticker/24hr').then(function (a) {
+        ingest(a.map(function (x) { return { s: x.symbol, c: x.lastPrice, o: x.openPrice, h: x.highPrice, l: x.lowPrice, q: x.quoteVolume }; }));
+        S.restAt = Date.now();
+    }).catch(function () {});
+}
+
+// ---------- 25 parallel scans: 5 workers x 5 requests ----------
+var workers = [], pending = {}, runId = 0;
+function inlineWorker() {
+    var me = { onmessage: null }, scope = { onmessage: null, postMessage: function (m) { setTimeout(function () { if (me.onmessage) { me.onmessage({ data: m }); } }, 0); } };
+    engineBoot(scope);
+    me.postMessage = function (m) { scope.onmessage({ data: m }); };
+    return me;
+}
+function onWorkerMsg(e) { var d = e.data, f = pending[d.id]; if (f) { delete pending[d.id]; f(d); } }
+function makeWorkers(forceMain) {
+    workers = []; var i;
+    if (!forceMain) {
+        try {
+            var url = URL.createObjectURL(new Blob(['(' + engineBoot.toString() + ')(self);'], { type: 'application/javascript' }));
+            for (i = 0; i < NW; i++) { workers.push(new Worker(url)); }
+            S.threads = 'workers';
+        } catch (e) { workers = []; }
+    }
+    if (!workers.length) { for (i = 0; i < NW; i++) { workers.push(inlineWorker()); } S.threads = 'main'; }
+    workers.forEach(function (w) { w.onmessage = onWorkerMsg; });
+}
+function planPicks() {
+    var t = S.tick, all = Object.keys(t), liq = all.filter(function (s) { return t[s].q > 50e6; }), list = [];
+    function add(s, k) { if (!t[s] || list.some(function (x) { return x.sym === s; })) { return; } list.push({ sym: s, chg: t[s].chg, kind: k || 'crypto' }); }
+    add(GOLD, 'gold'); add('BTCUSDT'); add('ETHUSDT');
+    liq.slice().sort(function (a, b) { return t[b].chg - t[a].chg; }).slice(0, 3).forEach(function (s) { add(s); });
+    liq.slice().sort(function (a, b) { return t[a].chg - t[b].chg; }).slice(0, 3).forEach(function (s) { add(s); });
+    all.slice().sort(function (a, b) { return t[b].q - t[a].q; }).slice(0, 2).forEach(function (s) { add(s); });
+    return list.slice(0, 10);
+}
+function runScan() {
+    var now = Date.now();
+    if (S.scan.running || now < S.scan.pause) { return Promise.resolve(); }
+    var t = S.tick, syms = Object.keys(t);
+    if (syms.length < 20) { return Promise.resolve(); }
+    S.scan.running = true;
+    var liquid = syms.filter(function (s) { return t[s].q > 5e6; }).sort(function (a, b) { return t[b].q - t[a].q; }).slice(0, 100);
+    if (t[GOLD] && liquid.indexOf(GOLD) < 0) { liquid.push(GOLD); }
+    var jobs = liquid.map(function (s) { return { type: 'scan', sym: s }; });
+    if (now - S.plan.at > 60000) { planPicks().reverse().forEach(function (p) { jobs.unshift({ type: 'plan', sym: p.sym, chg: p.chg, kind: p.kind }); }); }
+    var buckets = []; for (var i = 0; i < NW; i++) { buckets.push([]); }
+    jobs.forEach(function (j, n) { buckets[n % NW].push(j); });
+    runId++; var rid = runId;
+    var proms = buckets.map(function (b, i) {
+        if (!b.length) { return Promise.resolve({ out: [], maxw: 0, rate: 0, errs: 0 }); }
+        var id = rid * 100 + i;
+        return new Promise(function (res) {
+            var to = setTimeout(function () { delete pending[id]; res({ out: [], maxw: 0, rate: 0, errs: 0, timeout: true }); }, 25000);
+            pending[id] = function (d) { clearTimeout(to); res(d); };
+            try { workers[i].postMessage({ id: id, jobs: b, conc: CONC }); } catch (e) { clearTimeout(to); delete pending[id]; res({ out: [], maxw: 0, rate: 0, errs: 1 }); }
+        });
+    });
+    return Promise.all(proms).then(function (rs) {
+        var scanned = 0, rate = 0, maxw = 0, errs = 0, plans = [];
+        rs.forEach(function (r) {
+            rate = Math.max(rate, r.rate || 0); maxw = Math.max(maxw, r.maxw || 0); errs += r.errs || 0;
+            r.out.forEach(function (o) { if (o.type === 'scan') { S.scan.res[o.sym] = { tf: o.tf, at: Date.now() }; scanned++; } else { plans.push(o); } });
+        });
+        if (plans.length) {
+            var order = planPicks().map(function (p) { return p.sym; });
+            plans.sort(function (a, b) { return order.indexOf(a.sym) - order.indexOf(b.sym); });
+            S.plan.items = plans; S.plan.at = Date.now();
+        }
+        Object.keys(S.scan.res).forEach(function (s) { if (Date.now() - S.scan.res[s].at > 180000) { delete S.scan.res[s]; } });
+        S.scan.n = scanned; S.scan.total = liquid.length; S.scan.ms = Date.now() - now; S.scan.maxw = maxw; S.scan.err = errs;
+        if (rate) { S.scan.pause = Date.now() + rate * 1000; }
+        if (scanned) { S.scan.at = Date.now(); S.zero = 0; processSignals(); S.scan.first = false; }
+        else if (!rate) { S.zero++; if (S.zero >= 2 && S.threads === 'workers') { makeWorkers(true); S.zero = 0; } }
+        S.scan.next = Date.now() + (maxw > 1800 ? 60000 : 30000);
+    }).then(function () { S.scan.running = false; }, function () { S.scan.running = false; });
+}
+function scanLoop() {
+    runScan().then(function () { var d = Math.max(1000, (S.scan.next || Date.now() + 30000) - Date.now()); setTimeout(scanLoop, S.scan.next ? d : 2000); });
+}
+
+// ---------- recommendations from scan results ----------
+function computePicks() {
+    var out = [];
+    Object.keys(S.scan.res).forEach(function (s) {
+        var r = S.scan.res[s].tf, a = r['15m'], b = r['10m']; if (!a || !b) { return; }
+        var tk = S.tick[s], price = tk ? tk.p : a.close, aligned = a.side !== 'WAIT' && a.side === b.side, avg = (Math.abs(a.score) + Math.abs(b.score)) / 2;
+        var sl = Math.min(1.5 * a.atr, 0.05 * price), tp = 2 * sl;
+        out.push({ sym: s, side: aligned ? a.side : 'MIXED', aligned: aligned, score: aligned ? avg : 0, conf: aligned ? (avg >= 2.5 ? 'HIGH' : 'MEDIUM') : 'LOW',
+                   price: price, sl: sl, tp: tp, rsi: a.rsi, vr: a.vr, note: a.note || b.note, at: S.scan.res[s].at });
+    });
+    out.sort(function (x, y) { return y.score - x.score; });
+    return out;
+}
+function levelText(side, price, sl, tp) {
+    if (side === 'LONG') { return 'Entry ' + fmtP(price) + ' • SL ' + fmtP(price - sl) + ' • TP ' + fmtP(price + tp); }
+    if (side === 'SHORT') { return 'Entry ' + fmtP(price) + ' • SL ' + fmtP(price + sl) + ' • TP ' + fmtP(price - tp); }
+    return 'No trade: wait for a clearer setup';
+}
+function processSignals() {
+    var now = Date.now(), first = S.scan.first, sent = 0, i;
+    computePicks().filter(function (p) { return p.aligned && p.conf === 'HIGH'; }).forEach(function (p) {
+        var k = 'M' + p.sym; if (S.notified[k] && now - S.notified[k] < 30 * 60000) { return; }
+        S.notified[k] = now;
+        if (first) { return; }
+        var txt = nm(p.sym) + ' ' + p.side + ' (10m+15m agree) ' + levelText(p.side, p.price, p.sl, p.tp);
+        addLog('MASTER', txt + ' • valid ' + hm(now) + '→' + hm(now + 45 * 60000));
+        if (S.aMaster && sent < 3) { sent++; alertPush(p.sym, 'Master pick: ' + nm(p.sym) + ' ' + p.side, txt); }
+    });
+    var csent = 0;
+    Object.keys(S.scan.res).forEach(function (s) {
+        var c = S.scan.res[s].tf['3m']; if (!c || c.bodyAtr < 1.2 || c.vr < 2) { return; }
+        var key = s + c.t; if (S.seen[key]) { return; } S.seen[key] = 1;
+        S.candles.unshift({ sym: s, bull: c.bull, t: c.t, price: c.close, vr: c.vr, ba: c.bodyAtr, at: now });
+        if (first) { return; }
+        var kk = 'C' + s; if (S.notified[kk] && now - S.notified[kk] < 15 * 60000) { return; }
+        S.notified[kk] = now;
+        var txt = nm(s) + ' 3m ' + (c.bull ? 'BULLISH' : 'BEARISH') + ' candle at ' + fmtP(c.close) + ' (volume x' + c.vr.toFixed(1) + ')';
+        addLog('3M', txt);
+        if (S.a3m && csent < 5) { csent++; alertPush(s, '3m ' + (c.bull ? 'bullish' : 'bearish') + ': ' + nm(s), txt); }
+    });
+    if (S.candles.length > 80) { S.candles.length = 80; }
+    if (Object.keys(S.seen).length > 3000) { S.seen = {}; }
+}
+
+// ---------- news (real RSS via rss2json) ----------
+var FEEDS = [
+    { n: 'CoinDesk', u: 'https://www.coindesk.com/arc/outboundfeeds/rss/', g: 'mkt' },
+    { n: 'Cointelegraph', u: 'https://cointelegraph.com/rss', g: 'mkt' },
+    { n: 'BBC World', u: 'https://feeds.bbci.co.uk/news/world/rss.xml', g: 'geo' },
+    { n: 'BBC Business', u: 'https://feeds.bbci.co.uk/news/business/rss.xml', g: 'geo' }
+];
+function loadNews() {
+    S.newsTried = true;
+    return Promise.all(FEEDS.map(function (f) {
+        var ac = typeof AbortController !== 'undefined' ? new AbortController() : null, to = ac ? setTimeout(function () { ac.abort(); }, 9000) : null;
+        return fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(f.u), { signal: ac ? ac.signal : undefined })
+            .then(function (r) { if (to) { clearTimeout(to); } return r.json(); })
+            .then(function (j) { return (j && j.status === 'ok' && j.items ? j.items : []).slice(0, 8).map(function (it) {
+                var t = Date.parse(String(it.pubDate || '').replace(' ', 'T') + 'Z');
+                return { src: f.n, g: f.g, title: String(it.title || ''), link: String(it.link || ''), t: isNaN(t) ? 0 : t }; }); })
+            .catch(function () { return []; });
+    })).then(function (arr) {
+        var all = [].concat.apply([], arr).sort(function (a, b) { return b.t - a.t; });
+        if (all.length) { S.news = all; S.newsAt = Date.now(); }
+        if (S.win === 'news') { renderView(); }
+    });
+}
+
+// ---------- market hours (real schedule, holidays not included) ----------
+function zoned(tz) {
+    try {
+        var o = {}; new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).forEach(function (x) { o[x.type] = x.value; });
+        return { wd: o.weekday, m: (+o.hour) * 60 + (+o.minute), label: o.hour + ':' + o.minute };
+    } catch (e) { return null; }
+}
+var EXCH = [['🇺🇸 NYSE / NASDAQ', 'America/New_York', [[570, 960]]], ['🇬🇧 London (LSE)', 'Europe/London', [[480, 990]]], ['🇩🇪 Frankfurt (Xetra)', 'Europe/Berlin', [[540, 1050]]],
+            ['🇯🇵 Tokyo (TSE)', 'Asia/Tokyo', [[540, 690], [750, 930]]], ['🇭🇰 Hong Kong (HKEX)', 'Asia/Hong_Kong', [[570, 720], [780, 960]]]];
+function goldClosed(d) { var wd = d.getUTCDay(), m = d.getUTCHours() * 60 + d.getUTCMinutes(); return wd === 6 || (wd === 5 && m >= 22 * 60) || (wd === 0 && m < 22 * 60); }
+function nextGoldOpen(ms) { var t = ms; for (var i = 0; i < 9 * 96; i++) { if (!goldClosed(new Date(t))) { return t; } t += 900000; } return ms; }
+function windows(kind, now) {
+    var start, dayStart, dayEnd, fhStop;
+    if (kind === 'gold') {
+        start = nextGoldOpen(now); var s = new Date(start);
+        dayEnd = Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate(), 21, 0, 0);
+        if (dayEnd - start < 2 * HOUR) { dayEnd += 24 * HOUR; }
+        dayStart = start; fhStop = Math.min(start + 4 * HOUR, dayEnd);
+    } else {
+        start = now; var u = new Date(now);
+        dayEnd = Date.UTC(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate() + 1, 0, 0, 0); dayStart = now;
+        if (dayEnd - now < 3 * HOUR) { dayStart = dayEnd; dayEnd += 24 * HOUR; }
+        fhStop = now + 4 * HOUR;
+    }
+    return { fhStart: start, fhStop: fhStop, dayStart: dayStart, dayEnd: dayEnd };
+}
+
+// ---------- windows ----------
+var WINS = [
+    { id: 'overview', ic: '🏠', n: 'Overview', sub: 'Live snapshot: top pick, gold, BTC, ETH and the market' },
+    { id: 'plan', ic: '🧭', n: 'Master Plan', sub: 'Next-day trend, whole-day and few-hours plans with start and stop times' },
+    { id: 'scanner', ic: '🔍', n: 'Scanner', sub: 'Top Binance Futures coins scanned in parallel on 10m + 15m' },
+    { id: 'candles', ic: '🕯', n: '3m Candles', sub: 'Strong bullish and bearish 3-minute candles on volume' },
+    { id: 'market', ic: '🟡', n: 'Binance Live', sub: 'Gainers, losers and volume, updated every second' },
+    { id: 'chart', ic: '📈', n: 'Chart', sub: 'Real candlestick chart for any Binance Futures coin' },
+    { id: 'gold', ic: '🥇', n: 'Gold', sub: 'Gold live price and plan (Binance XAUUSDT as the Exness proxy)' },
+    { id: 'news', ic: '📰', n: 'News', sub: 'Live crypto, business and world headlines' },
+    { id: 'alerts', ic: '🔔', n: 'Alerts', sub: 'Push notification settings' },
+    { id: 'log', ic: '📜', n: 'Log', sub: 'Alerts and master picks this app has issued on this device' },
+    { id: 'exchanges', ic: '🏛', n: 'Exchanges', sub: 'Which major markets are open right now' },
+    { id: 'help', ic: '📖', n: 'Help', sub: 'How it works, limits and contact' }
+];
+function winDef(id) { for (var i = 0; i < WINS.length; i++) { if (WINS[i].id === id) { return WINS[i]; } } return WINS[0]; }
+
+function mktStats() {
+    var t = S.tick, keys = Object.keys(t), tot = 0, up = 0;
+    keys.forEach(function (s) { tot += t[s].q; if (t[s].chg > 0) { up++; } });
+    var liq = keys.filter(function (s) { return t[s].q > 20e6; });
+    return { n: keys.length, tot: tot, up: up, breadth: keys.length ? Math.round(up / keys.length * 100) : 0,
+        gain: liq.slice().sort(function (a, b) { return t[b].chg - t[a].chg; }).slice(0, 3),
+        los: liq.slice().sort(function (a, b) { return t[a].chg - t[b].chg; }).slice(0, 3) };
+}
+function priceCard(label, sym) {
+    var t = S.tick[sym];
+    if (!t) { return '<div class="card"><div class="h">' + label + '</div><div class="mut">Waiting for live data…</div></div>'; }
+    return '<div class="card"><div class="h">' + label + '</div><div class="big">' + fmtP(t.p) + '</div><div class="' + cc(t.chg) + '"><b>' + pct(t.chg) + '</b> <span class="mut">24h</span></div></div>';
+}
+function chips(arr) { return arr.map(function (s) { return '<span class="chip" data-act="chart:' + s + '">' + esc(s.replace('USDT', '')) + ' <span class="' + cc(S.tick[s].chg) + '">' + pct(S.tick[s].chg) + '</span></span>'; }).join(' '); }
+function pickRow(p) {
+    return '<div class="row tap" data-act="chart:' + p.sym + '"><div><b>' + nm(p.sym) + '</b> ' + pill(p.side) + ' <span class="mut">' + p.conf + '</span>' +
+        '<div class="lvl">' + levelText(p.side, p.price, p.sl, p.tp) + '</div></div><div style="text-align:right"><div class="mid">' + fmtP(p.price) + '</div><div class="lvl">valid ' + hm(p.at) + '→' + hm(p.at + 45 * 60000) + '</div></div></div>';
+}
+function planCard(r, label) {
+    var w = windows(r.kind, S.plan.at), live = S.tick[r.sym] ? S.tick[r.sym].p : r.price;
+    var nd = r.nextDay === 'NEUTRAL' ? 'SIDEWAYS' : r.nextDay === 'LONG' ? 'UP' : 'DOWN', nc = r.nextDay === 'LONG' ? 'up' : r.nextDay === 'SHORT' ? 'dn' : 'mut';
+    var counter = (r.fh === 'LONG' || r.fh === 'SHORT') && (r.day === 'LONG' || r.day === 'SHORT') && r.fh !== r.day;
+    return '<div class="card"><div class="row" style="padding-top:0"><b>' + label + '</b><span class="mid">' + fmtP(live) + '</span></div>' +
+        (r.note ? '<div class="warnbox">⚠️ ' + esc(r.note) + '</div>' : '') +
+        '<div class="row"><span>Next-day trend</span><span class="' + nc + '"><b>' + nd + '</b> <span class="mut">(' + r.nextDayConf + ')</span></span></div>' +
+        '<div class="row" style="display:block"><div>Whole day ' + pill(r.day === 'NEUTRAL' ? 'WAIT' : r.day) + ' <span class="mut">' + r.dayConf + '</span></div>' +
+        '<div class="lvl">Start ' + fmtT(w.dayStart) + ' → Stop ' + fmtT(w.dayEnd) + '</div><div class="lvl">' + levelText(r.day, r.price, r.daySL, r.dayTP) + '</div></div>' +
+        '<div class="row" style="display:block"><div>Few hours ' + pill(r.fh) + ' <span class="mut">' + r.fhConf + '</span>' + (counter ? ' <span class="org">against whole-day trend: small size</span>' : '') + '</div>' +
+        '<div class="lvl">Start ' + fmtT(w.fhStart) + ' → Stop ' + fmtT(w.fhStop) + '</div><div class="lvl">' + levelText(r.fh, r.price, r.fhSL, r.fhTP) + '</div></div>' +
+        '<div class="lvl">24h ' + pct(r.chg) + ' • volume vs 30-day avg x' + r.vr.toFixed(2) + ' • RSI 1h ' + r.rsiH.toFixed(0) + ' / 1d ' + r.rsiD.toFixed(0) + '</div></div>';
+}
+function scanSummary() {
+    var s = S.scan;
+    if (!s.at) { return '<div class="card"><div class="mut">Starting the first scan… results appear in a few seconds.</div></div>'; }
+    return '<div class="card"><div class="h">Scanner status</div><div class="row"><span>Last scan</span><b>' + ago(s.at) + '</b></div>' +
+        '<div class="row"><span>Coins scanned</span><b>' + s.n + ' of ' + s.total + ' in ' + (s.ms / 1000).toFixed(1) + 's</b></div>' +
+        '<div class="row"><span>Parallel scans</span><b>' + (NW * CONC) + ' (' + NW + ' ' + (S.threads === 'workers' ? 'background workers' : 'lanes on main thread') + ' × ' + CONC + ')</b></div>' +
+        '<div class="row"><span>Next scan</span><b>' + (s.pause > Date.now() ? 'paused by Binance rate limit' : 'in ' + Math.max(0, Math.round((s.next - Date.now()) / 1000)) + 's') + '</b></div>' +
+        (s.err ? '<div class="note">' + s.err + ' request(s) failed in the last scan.</div>' : '') + '</div>';
+}
+
+function vOverview() {
+    var h = '', picks = computePicks().filter(function (p) { return p.aligned; }), m = mktStats(), top = picks[0];
+    h += '<div class="card"><div class="h"><span>Top master pick</span><span class="mut">10m + 15m agree</span></div>';
+    if (!S.scan.at) { h += '<div class="mut">Scanning the market…</div>'; }
+    else if (top) { h += pickRow(top); }
+    else { h += '<div class="mut">No coin has both the 10m and 15m timeframes in agreement right now. The bot is waiting.</div>'; }
+    h += '</div><div class="grid2">' + priceCard('🥇 Gold (' + GOLD + ')', GOLD) + priceCard('₿ Bitcoin', 'BTCUSDT') + '</div>' + priceCard('Ξ Ethereum', 'ETHUSDT');
+    h += '<div class="card"><div class="h">Binance Futures market (24h)</div>';
+    if (!m.n) { h += '<div class="mut">Waiting for live data…</div>'; }
+    else {
+        h += '<div class="row"><span>Total volume</span><b>' + money(m.tot) + '</b></div><div class="row"><span>Coins up</span><b class="' + (m.breadth >= 50 ? 'up' : 'dn') + '">' + m.breadth + '% (' + (m.breadth >= 55 ? 'bullish breadth' : m.breadth <= 45 ? 'bearish breadth' : 'mixed') + ')</b></div>' +
+            '<div class="h" style="margin-top:8px">Top gainers</div>' + chips(m.gain) + '<div class="h" style="margin:8px 0">Top losers</div>' + chips(m.los);
+    }
+    h += '</div>' + scanSummary();
+    return h;
+}
+function vPlan() {
+    var h = '', items = S.plan.items;
+    if (!items.length) { return '<div class="card"><div class="mut">Building the first plan from live Binance data…</div></div>'; }
+    h += '<div class="note" style="margin:0 0 8px">Plan calculated ' + hms(S.plan.at) + '. The price at the top right of each card is live; Entry, SL and TP are fixed at plan time. The plan refreshes every minute.</div>';
+    var gold = items.filter(function (r) { return r.kind === 'gold'; })[0];
+    h += '<div class="h">🥇 Exness gold (XAU/USD)</div>';
+    if (goldClosed(new Date())) { h += '<div class="warnbox">Exness gold is closed (weekend). The plan starts when it reopens: ' + fmtT(nextGoldOpen(Date.now())) + '.</div>'; }
+    h += gold ? planCard(gold, '🥇 GOLD (Binance ' + GOLD.replace('USDT', '/USDT') + ' proxy)') : '<div class="card mut">Gold data unavailable right now.</div>';
+    h += '<div class="h">🟡 Binance Futures</div>';
+    items.filter(function (r) { return r.kind !== 'gold'; }).forEach(function (r) { h += planCard(r, '🪙 ' + nm(r.sym)); });
+    h += '<div class="note">Rule-based estimate from live Binance data (trend, RSI, volume). Not a guarantee and not financial advice.</div>';
+    return h;
+}
+function vScanner() {
+    var all = computePicks(), picks = all.filter(function (p) { return p.aligned; });
+    if (S.scanf === 'long') { picks = picks.filter(function (p) { return p.side === 'LONG'; }); } else if (S.scanf === 'short') { picks = picks.filter(function (p) { return p.side === 'SHORT'; }); }
+    var h = scanSummary() + '<div class="seg">';
+    [['all', 'All'], ['long', 'Long only'], ['short', 'Short only']].forEach(function (f) { h += '<span class="chip' + (S.scanf === f[0] ? ' on' : '') + '" data-act="scanf:' + f[0] + '">' + f[1] + '</span>'; });
+    h += '</div><div class="card"><div class="h"><span>Recommendations (10m + 15m agree)</span><span>' + picks.length + '</span></div>';
+    if (!S.scan.at) { h += '<div class="mut">Scanning…</div>'; }
+    else if (!picks.length) { h += '<div class="mut">Nothing matches right now.</div>'; }
+    else { h += picks.slice(0, 40).map(pickRow).join(''); }
+    h += '</div><div class="note">' + (all.length - all.filter(function (p) { return p.aligned; }).length) + ' scanned coins have mixed signals and are skipped. Levels use 1.5×ATR stop and 2:1 target. Valid for about 45 minutes. Tap a coin to open its chart.</div>';
+    return h;
+}
+function vCandles() {
+    var h = '<div class="card"><div class="h"><span>Strong 3m candles (body ≥ 1.2×ATR and volume ≥ 2×)</span><span>' + S.candles.length + '</span></div>';
+    if (!S.scan.at) { return h + '<div class="mut">Scanning…</div></div>'; }
+    if (!S.candles.length) { return h + '<div class="mut">No strong candle yet. They show up here as they close.</div></div>'; }
+    h += S.candles.map(function (c) {
+        return '<div class="row tap" data-act="chart:' + c.sym + '"><div><b>' + nm(c.sym) + '</b> <span class="' + (c.bull ? 'up' : 'dn') + '"><b>' + (c.bull ? '▲ BULLISH' : '▼ BEARISH') + '</b></span>' +
+            '<div class="lvl">volume x' + c.vr.toFixed(1) + ' • body ' + c.ba.toFixed(1) + '×ATR</div></div><div style="text-align:right"><div class="mid">' + fmtP(c.price) + '</div><div class="lvl">' + hm(c.t) + ' candle</div></div></div>';
+    }).join('');
+    return h + '</div>';
+}
+function vMarket() {
+    var t = S.tick, keys = Object.keys(t), list;
+    if (S.mkt === 'vol') { list = keys.slice().sort(function (a, b) { return t[b].q - t[a].q; }); }
+    else { var liq = keys.filter(function (s) { return t[s].q > 20e6; }); list = liq.sort(function (a, b) { return S.mkt === 'gain' ? t[b].chg - t[a].chg : t[a].chg - t[b].chg; }); }
+    var h = '<div class="seg">';
+    [['gain', '🟢 Gainers'], ['loss', '🔴 Losers'], ['vol', '💰 Volume']].forEach(function (f) { h += '<span class="chip' + (S.mkt === f[0] ? ' on' : '') + '" data-act="mkt:' + f[0] + '">' + f[1] + '</span>'; });
+    h += '</div><div class="card">';
+    if (!keys.length) { return h + '<div class="mut">Waiting for live data…</div></div>'; }
+    h += list.slice(0, 40).map(function (s, i) {
+        return '<div class="row tap" data-act="chart:' + s + '"><div><span class="mut">' + (i + 1) + '.</span> <b>' + nm(s) + '</b><div class="lvl">vol ' + money(t[s].q) + '</div></div><div style="text-align:right"><div class="mid">' + fmtP(t[s].p) + '</div><div class="' + cc(t[s].chg) + '"><b>' + pct(t[s].chg) + '</b></div></div></div>';
+    }).join('');
+    return h + '</div><div class="note">Gainers and losers only include coins with more than $20M 24h volume, to hide illiquid noise.</div>';
+}
+function vGold() {
+    var t = S.tick[GOLD], m = mktStats(), h = '';
+    h += '<div class="card"><div class="h">🥇 Gold (Binance ' + GOLD + ')</div>';
+    if (!t) { h += '<div class="mut">Waiting for live data…</div>'; }
+    else { h += '<div class="big">' + fmtP(t.p) + '</div><div class="' + cc(t.chg) + '"><b>' + pct(t.chg) + '</b> <span class="mut">24h</span></div><div class="row"><span>24h high / low</span><b>' + fmtP(t.h) + ' / ' + fmtP(t.l) + '</b></div><div class="row"><span>24h volume</span><b>' + money(t.q) + '</b></div>'; }
+    h += '</div>';
+    if (goldClosed(new Date())) { h += '<div class="warnbox">Exness gold is closed (weekend). Plan starts at ' + fmtT(nextGoldOpen(Date.now())) + '.</div>'; }
+    var gold = S.plan.items.filter(function (r) { return r.kind === 'gold'; })[0];
+    h += gold ? planCard(gold, 'Gold plan') : '<div class="card mut">Building the gold plan…</div>';
+    h += '<div class="card"><div class="h">Context (real, live)</div><div class="row"><span>BTC 24h</span><b class="' + cc((S.tick.BTCUSDT || { chg: 0 }).chg) + '">' + (S.tick.BTCUSDT ? pct(S.tick.BTCUSDT.chg) : '—') + '</b></div>' +
+        '<div class="row"><span>ETH 24h</span><b class="' + cc((S.tick.ETHUSDT || { chg: 0 }).chg) + '">' + (S.tick.ETHUSDT ? pct(S.tick.ETHUSDT.chg) : '—') + '</b></div>' +
+        '<div class="row"><span>Crypto coins up</span><b>' + m.breadth + '%</b></div></div>' +
+        '<div class="note">Exness publishes no free price feed, so gold uses Binance gold futures as a close proxy and can differ slightly from your Exness chart. The US Dollar Index and S&P 500 are not shown because no free live feed exists for them, and this app shows no made-up numbers.</div>';
+    return h;
+}
+function vNews() {
+    if (!S.news.length) { return '<div class="card"><div class="mut">' + (S.newsTried ? 'No headlines could be loaded right now (the free news service may be busy or you may be offline). It retries every 5 minutes.' : 'Loading headlines…') + '</div></div>'; }
+    var h = '';
+    [['mkt', '🪙 Crypto & markets'], ['geo', '🌍 World & business']].forEach(function (g) {
+        h += '<div class="card news"><div class="h">' + g[1] + '</div>';
+        var items = S.news.filter(function (n) { return n.g === g[0]; }).slice(0, 12);
+        if (!items.length) { h += '<div class="mut">No headlines from these sources right now.</div>'; }
+        items.forEach(function (n) {
+            var ok = /^https?:\/\//.test(n.link);
+            h += '<div class="row" style="display:block"><div>' + (ok ? '<a href="' + esc(n.link) + '" target="_blank" rel="noopener noreferrer">' + esc(n.title) + '</a>' : esc(n.title)) + '</div><div class="lvl">' + esc(n.src) + (n.t ? ' • ' + ago(n.t) : '') + '</div></div>';
+        });
+        h += '</div>';
+    });
+    return h + '<div class="note">Updated ' + ago(S.newsAt) + '. Headlines come from CoinDesk, Cointelegraph and BBC through the free rss2json service.</div>';
+}
+function vAlerts() {
+    function b(on, label, k) { return '<button class="btn ' + (on ? 'on' : 'off') + '" data-act="set:' + k + '"><span>' + label + '</span><b>' + (on ? 'ON' : 'OFF') + '</b></button>'; }
+    var perm = 'Notification' in window ? Notification.permission : 'not supported', eff = S.sysPush && perm === 'granted';
+    return '<div class="card"><div class="row"><span>Phone permission</span><b class="' + (perm === 'granted' ? 'up' : 'org') + '">' + perm + '</b></div>' +
+        (perm === 'granted' ? '' : '<div class="warnbox">Notifications are not allowed yet. Tap the master switch below to allow them' + (perm === 'denied' ? ', or enable them for this app in your phone settings (they are currently blocked)' : '') + '.</div>') + '</div>' +
+        b(eff, '🔔 Push notifications (master switch)', 'sys') + b(S.goldPush, '🥇 Gold alerts', 'gold') + b(S.cryptoPush, '₿ Crypto alerts', 'crypto') +
+        b(S.a3m, '🕯 Strong 3m candle alerts', 'a3m') + b(S.aMaster, '🧭 Master pick alerts (10m + 15m HIGH)', 'amaster') +
+        '<button class="btn primary" data-act="set:test">⚡ SEND TEST NOTIFICATION</button>' +
+        '<div class="note">Alerts are limited to avoid spam: at most 5 candle alerts and 3 master-pick alerts per scan, and one alert per coin per 15–30 minutes. They are delivered while the app is open or running in the background. This app has no server, so alerts cannot arrive after the app is fully closed.</div>';
+}
+function vLog() {
+    var h = '<button class="btn" data-act="clearlog"><span>🗑 Clear log</span><span>' + S.log.length + '</span></button><div class="card">';
+    if (!S.log.length) { return h + '<div class="mut">Nothing yet. Master picks and candle alerts are recorded here as they happen.</div></div>'; }
+    h += S.log.slice(0, 80).map(function (e) { return '<div class="row" style="display:block"><div><span class="pill wait">' + esc(e.type) + '</span> ' + esc(e.text) + '</div><div class="lvl">' + new Date(e.t).toLocaleString() + '</div></div>'; }).join('');
+    return h + '</div><div class="note">This is a record of what the bot recommended, not of trades. The app places no trades and does not track profit or loss.</div>';
+}
+function vExchanges() {
+    var h = '<div class="card">', now = Date.now();
+    EXCH.forEach(function (x) {
+        var z = zoned(x[1]);
+        if (!z) { h += '<div class="row"><span>' + x[0] + '</span><span class="mut">n/a</span></div>'; return; }
+        var open = z.wd !== 'Sat' && z.wd !== 'Sun' && x[2].some(function (r) { return z.m >= r[0] && z.m < r[1]; });
+        h += '<div class="row"><div><b>' + x[0] + '</b><div class="lvl">local time ' + z.label + '</div></div><b class="' + (open ? 'up' : 'org') + '">' + (open ? '🟢 OPEN' : '🟠 CLOSED') + '</b></div>';
+    });
+    var fx = !goldClosed(new Date(now));
+    h += '<div class="row"><div><b>💱 Forex & Exness gold</b><div class="lvl">24 hours, Monday to Friday</div></div><b class="' + (fx ? 'up' : 'org') + '">' + (fx ? '🟢 OPEN' : '🟠 CLOSED') + '</b></div>';
+    h += '<div class="row"><div><b>🟡 Binance Futures</b><div class="lvl">24/7</div></div><b class="up">🟢 OPEN</b></div></div>';
+    return h + '<div class="note">Based on regular trading hours. Public holidays and early closes are not included.</div>';
+}
+function vHelp() {
+    var T = [['Windows button', 'Tap WINDOWS (top right, next to MENU) to switch between screens. Only one screen shows at a time so nothing is jumbled. The app remembers your last screen.'],
+        ['Master Plan', 'For gold and the most active coins: next-day trend, a whole-day plan and a few-hours plan, each with start time, stop time, entry, stop-loss and take-profit.'],
+        ['Scanner', 'Every 30 seconds the app scans the top 100 Binance Futures coins by volume on 10m and 15m candles using 25 parallel requests (5 background workers × 5). A coin is recommended only when both timeframes agree.'],
+        ['3m Candles', 'Lists strong bullish or bearish 3-minute candles that are large compared with recent volatility and backed by high volume.'],
+        ['Real data only', 'Prices come live from Binance Futures. Headlines come from public RSS feeds. If a feed is unavailable the app says so instead of showing made-up numbers.'],
+        ['Limits', 'Recommendations only: this app cannot place trades on any account. Signals are rule-based (trend, RSI, volume) and are not guaranteed or financial advice. Gold uses Binance XAUUSDT as a proxy for Exness.']];
+    var h = T.map(function (x) { return '<div class="topic"><b>' + x[0] + '</b>' + x[1] + '</div>'; }).join('');
+    h += '<div class="card"><div class="h">Contact & support</div><div class="row"><span>Name</span><b>Muhammad Awais</b></div>' +
+        '<div class="row"><span>Email</span><a href="mailto:awaisrajpoot2@yahoo.com">awaisrajpoot2@yahoo.com</a></div>' +
+        '<div class="row" style="display:block"><div class="mut">Address</div><div>Broadway Street, Greens Avenue, Park Road, Islamabad, Pakistan</div></div></div>';
+    return h;
+}
+function vChart() {
+    var t = S.tick, keys = Object.keys(t).sort(function (a, b) { return t[b].q - t[a].q; }).slice(0, 120);
+    if (keys.indexOf(S.chart.sym) < 0) { keys.unshift(S.chart.sym); }
+    var h = '<div class="card"><select id="chartSel">' + keys.map(function (s) { return '<option value="' + s + '"' + (s === S.chart.sym ? ' selected' : '') + '>' + nm(s) + '</option>'; }).join('') + '</select><div class="seg" style="margin-top:8px">';
+    ['1m', '3m', '5m', '15m', '1h', '4h', '1d'].forEach(function (tf) { h += '<span class="chip' + (S.chart.tf === tf ? ' on' : '') + '" data-act="tf:' + tf + '">' + tf + '</span>'; });
+    return h + '</div><div class="lvl" id="chartInfo" style="margin-bottom:6px"></div><canvas id="cv"></canvas><div class="note" id="chartNote"></div></div>';
+}
+
+// ---------- chart ----------
+function closeChartWS() { var c = S.chart; if (c.ws) { try { c.ws.onmessage = null; c.ws.close(); } catch (e) {} c.ws = null; } }
+function openChartWS() {
+    var c = S.chart, sym = c.sym, tf = c.tf; closeChartWS();
+    try {
+        var ws = new WebSocket('wss://fstream.binance.com/ws/' + sym.toLowerCase() + '@kline_' + tf);
+        ws.onmessage = function (ev) {
+            var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+            if (!m || !m.k || sym !== c.sym || tf !== c.tf) { return; }
+            var k = m.k, cd = { t: +k.t, o: +k.o, h: +k.h, l: +k.l, c: +k.c, v: +k.v }, last = c.k[c.k.length - 1];
+            if (last && last.t === cd.t) { c.k[c.k.length - 1] = cd; } else if (!last || cd.t > last.t) { c.k.push(cd); if (c.k.length > 300) { c.k.shift(); } }
+            if (S.win === 'chart') { drawChart(); }
+        };
+        c.ws = ws;
+    } catch (e) {}
+}
+function loadChart() {
+    var c = S.chart, sym = c.sym, tf = c.tf; c.err = ''; c.k = []; closeChartWS();
+    fetchJSON('/fapi/v1/klines?symbol=' + sym + '&interval=' + tf + '&limit=120').then(function (rows) {
+        if (sym !== c.sym || tf !== c.tf) { return; }
+        c.k = rows.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }; });
+        drawChart(); openChartWS();
+    }).catch(function (e) { c.err = 'Could not load candles (' + e.message + ')'; drawChart(); });
+}
+function drawChart() {
+    var cv = $('cv'); if (!cv) { return; }
+    var dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) { return; }
+    cv.width = w * dpr; cv.height = h * dpr;
+    var g = cv.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, w, h);
+    var k = S.chart.k, note = $('chartNote'), info = $('chartInfo');
+    g.font = '11px sans-serif';
+    if (!k.length) { g.fillStyle = '#8b98ad'; g.fillText(S.chart.err || 'Loading candles…', 12, 24); if (note) { note.textContent = S.chart.err; } return; }
+    var n = Math.min(k.length, Math.floor((w - 62) / 7)), v = k.slice(-n), padR = 58, padT = 8, volH = 46, ph = h - padT - volH - 6, hi = -Infinity, lo = Infinity, vmax = 0;
+    v.forEach(function (x) { if (x.h > hi) { hi = x.h; } if (x.l < lo) { lo = x.l; } if (x.v > vmax) { vmax = x.v; } });
+    var span = (hi - lo) || 1, y = function (p) { return padT + (hi - p) / span * ph; }, cw = (w - padR - 4) / n, i;
+    g.strokeStyle = '#26324a'; g.fillStyle = '#8b98ad'; g.lineWidth = 1;
+    for (i = 0; i <= 4; i++) { var gy = padT + ph * i / 4, gp = hi - span * i / 4; g.beginPath(); g.moveTo(0, gy); g.lineTo(w - padR, gy); g.stroke(); g.fillText(fmtP(gp), w - padR + 4, gy + 4); }
+    v.forEach(function (x, j) {
+        var up = x.c >= x.o, col = up ? '#2ebd85' : '#f6465d', cx = 2 + j * cw + cw / 2, bw = Math.max(1, cw * 0.7);
+        g.strokeStyle = col; g.fillStyle = col;
+        g.beginPath(); g.moveTo(cx, y(x.h)); g.lineTo(cx, y(x.l)); g.stroke();
+        var y1 = y(Math.max(x.o, x.c)), y2 = y(Math.min(x.o, x.c)); g.fillRect(cx - bw / 2, y1, bw, Math.max(1, y2 - y1));
+        g.globalAlpha = 0.45; var vh = vmax ? x.v / vmax * volH : 0; g.fillRect(cx - bw / 2, h - vh - 2, bw, vh); g.globalAlpha = 1;
+    });
+    var cl = k.map(function (x) { return x.c; }), kk = 2 / 22, e = cl[0], es = [e];
+    for (i = 1; i < cl.length; i++) { e = cl[i] * kk + e * (1 - kk); es.push(e); }
+    g.strokeStyle = '#f0b90b'; g.lineWidth = 1.2; g.beginPath();
+    es.slice(-n).forEach(function (val, j) { var cx = 2 + j * cw + cw / 2; if (j === 0) { g.moveTo(cx, y(val)); } else { g.lineTo(cx, y(val)); } }); g.stroke();
+    var lastC = k[k.length - 1], tk = S.tick[S.chart.sym], lp = tk ? tk.p : lastC.c, ly = Math.min(padT + ph, Math.max(padT, y(lp)));
+    g.setLineDash([4, 3]); g.strokeStyle = lp >= lastC.o ? '#2ebd85' : '#f6465d'; g.beginPath(); g.moveTo(0, ly); g.lineTo(w - padR, ly); g.stroke(); g.setLineDash([]);
+    g.fillStyle = lp >= lastC.o ? '#2ebd85' : '#f6465d'; g.fillRect(w - padR, ly - 8, padR, 16); g.fillStyle = '#06101f'; g.fillText(fmtP(lp), w - padR + 3, ly + 4);
+    if (info) { info.innerHTML = nm(S.chart.sym) + ' • ' + S.chart.tf + ' • O ' + fmtP(lastC.o) + ' H ' + fmtP(lastC.h) + ' L ' + fmtP(lastC.l) + ' C ' + fmtP(lastC.c) + ' <span style="color:#f0b90b">— EMA21</span>'; }
+    if (note) { note.textContent = 'Live candles from Binance Futures. Last candle updates in real time.'; }
+}
+
+// ---------- rendering & events ----------
+var VIEWS = { overview: vOverview, plan: vPlan, scanner: vScanner, candles: vCandles, market: vMarket, chart: vChart, gold: vGold, news: vNews, alerts: vAlerts, log: vLog, exchanges: vExchanges, help: vHelp };
+var LIVE = { overview: 1, plan: 1, scanner: 1, candles: 1, market: 1, gold: 1, exchanges: 1 };
+function renderView() {
+    var d = winDef(S.win);
+    $('winName').textContent = d.ic + ' ' + d.n; $('winSub').textContent = d.sub;
+    $('view').innerHTML = VIEWS[d.id]();
+    if (d.id === 'chart') { drawChart(); }
+}
+function buildTiles() {
+    $('tiles').innerHTML = WINS.map(function (w) { return '<div class="tile' + (w.id === S.win ? ' on' : '') + '" data-act="win:' + w.id + '"><span class="ic">' + w.ic + '</span>' + w.n + '</div>'; }).join('');
+}
+function gotoWin(id, keepChart) {
+    if (!VIEWS[id]) { id = 'overview'; }
+    var leaving = S.win === 'chart' && id !== 'chart';
+    S.win = id; lss('mintoosuite_win', id); closeSheets(); buildTiles(); renderView(); window.scrollTo(0, 0);
+    if (leaving) { closeChartWS(); }
+    if (id === 'chart') { loadChart(); }
+    if (id === 'news' && (!S.newsTried || (!S.news.length && Date.now() - S.newsAt > 60000))) { loadNews(); }
+}
+function openSheet(id) { closeSheets(); $(id).classList.add('open'); }
+function closeSheets() { $('sheetWin').classList.remove('open'); $('sheetMenu').classList.remove('open'); }
+function setPref(k) {
+    function save() { lss('mintoosuite_sys_push', S.sysPush ? 'on' : 'off'); lss('mintoosuite_gold_push', S.goldPush ? 'on' : 'off'); lss('mintoosuite_crypto_push', S.cryptoPush ? 'on' : 'off'); lss('mintoosuite_alert_3m', S.a3m ? 'on' : 'off'); lss('mintoosuite_alert_master', S.aMaster ? 'on' : 'off'); renderView(); }
+    if (k === 'sys') {
+        if (!(S.sysPush && 'Notification' in window && Notification.permission === 'granted') && 'Notification' in window && Notification.permission !== 'granted') { Notification.requestPermission().then(function (p) { S.sysPush = p === 'granted'; save(); }); return; }
+        S.sysPush = !S.sysPush;
+    } else if (k === 'gold') { S.goldPush = !S.goldPush; } else if (k === 'crypto') { S.cryptoPush = !S.cryptoPush; }
+    else if (k === 'a3m') { S.a3m = !S.a3m; } else if (k === 'amaster') { S.aMaster = !S.aMaster; }
+    else if (k === 'test') {
+        var go = function () { sendPush('MintooSuite test', 'Push notifications are working.'); };
+        if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission().then(function () { go(); save(); }); return; }
+        go(); return;
+    }
+    save();
+}
+var askedPerm = false;
+document.addEventListener('click', function (e) {
+    if (!askedPerm && S.sysPush && 'Notification' in window && Notification.permission === 'default') { askedPerm = true; try { Notification.requestPermission(); } catch (err) {} }
+    if (e.target.classList && e.target.classList.contains('sheet')) { closeSheets(); return; }
+    var el = e.target.closest ? e.target.closest('[data-act]') : null; if (!el) { return; }
+    var a = el.getAttribute('data-act'), p = a.split(':'), v = p.slice(1).join(':');
+    if (a === 'openwin') { buildTiles(); openSheet('sheetWin'); } else if (a === 'openmenu') { $('langSel').value = S.lang; openSheet('sheetMenu'); } else if (a === 'closesheets') { closeSheets(); }
+    else if (p[0] === 'win') { gotoWin(v); }
+    else if (p[0] === 'mkt') { S.mkt = v; renderView(); }
+    else if (p[0] === 'scanf') { S.scanf = v; renderView(); }
+    else if (p[0] === 'chart') { if (SYM_OK.test(v)) { S.chart.sym = v; lss('mintoosuite_chart', v); gotoWin('chart'); } }
+    else if (p[0] === 'tf') { S.chart.tf = v; renderView(); loadChart(); }
+    else if (p[0] === 'set') { setPref(v); }
+    else if (a === 'clearlog') { S.log = []; lss('mintoosuite_log', '[]'); renderView(); }
+});
+document.addEventListener('change', function (e) {
+    if (e.target.id === 'chartSel' && SYM_OK.test(e.target.value)) { S.chart.sym = e.target.value; lss('mintoosuite_chart', S.chart.sym); loadChart(); drawChart(); }
+    else if (e.target.id === 'langSel') { S.lang = e.target.value; lss('mintoosuite_lang', S.lang); applyLang(); }
+});
+window.addEventListener('resize', function () { if (S.win === 'chart') { drawChart(); } });
+var LANG = { en: ['💎 MintooSuite Terminal', '⚙️ MENU', '🗂 WINDOWS'], ar: ['💎 منصة مينتو', '⚙️ القائمة', '🗂 النوافذ'], zh: ['💎 MintooSuite 终端', '⚙️ 菜单', '🗂 窗口'],
+    ur: ['💎 منٹو ٹرمینل', '⚙️ مینو', '🗂 ونڈوز'], de: ['💎 MintooSuite Terminal', '⚙️ MENÜ', '🗂 FENSTER'], fr: ['💎 Terminal MintooSuite', '⚙️ MENU', '🗂 FENÊTRES'] };
+function applyLang() { var d = LANG[S.lang] || LANG.en; $('lblTitle').textContent = d[0]; $('btnMenu').textContent = d[1]; $('btnWin').textContent = d[2]; document.documentElement.lang = S.lang; }
+function updateStatus() {
+    var now = Date.now(), n = Object.keys(S.tick).length, ws = S.wsAt && now - S.wsAt < 5000, rest = S.restAt && now - S.restAt < 12000, d = $('dot'), t = $('statusTxt');
+    if (ws) { d.className = 'dot ok'; t.textContent = 'LIVE • ' + n + ' futures coins • ' + hms(S.wsAt) + (S.scan.at ? ' • scan ' + ago(S.scan.at) : ' • scanning…'); }
+    else if (rest) { d.className = 'dot warn'; t.textContent = 'Slow mode (refreshing every 5s) • ' + n + ' coins'; }
+    else { d.className = 'dot'; t.textContent = n ? 'OFFLINE • last data ' + ago(Math.max(S.wsAt, S.restAt)) : 'Connecting to Binance…'; }
+}
+function tick() { if (!S.tick.XAUUSDT && S.tick.PAXGUSDT) { GOLD = 'PAXGUSDT'; } else if (S.tick.XAUUSDT) { GOLD = 'XAUUSDT'; } updateStatus(); if (LIVE[S.win] && !document.hidden) { renderView(); } }
+
+// ---------- start ----------
+applyLang(); buildTiles(); if (!VIEWS[S.win]) { S.win = 'overview'; } renderView();
+if (S.win === 'chart') { loadChart(); }
+makeWorkers(false); connectWS(); pollREST(); setInterval(pollREST, 5000);
+scanLoop(); loadNews(); setInterval(loadNews, 300000); setInterval(tick, 1000);
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+S.dbg = { processSignals: processSignals, computePicks: computePicks };
+window.__mintoo = S;
 })();
-
 </script>
-</body>
-</html>
+</body></html>
