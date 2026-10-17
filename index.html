@@ -239,7 +239,7 @@
         </div>
     </div>
 
-    <!-- MINTOO-MASTERPLAN-V1 -->
+    <!-- MINTOO-MASTERPLAN-V2 -->
     <div class="panel" id="panelMasterPlan" style="border: 1px solid rgba(88, 166, 255, 0.8);">
         <div class="panel-title">
             <span>🧭 MASTER BOT PLAN: VOLUME, GAINERS/LOSERS, TREND & TIME WINDOWS</span>
@@ -1009,7 +1009,7 @@
     function parseK(rows) {
         return rows.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], qv: +r[7] }; });
     }
-    function fmtP(p) { return p >= 1000 ? p.toFixed(2) : p >= 1 ? p.toFixed(3) : p.toPrecision(4); }
+    function fmtP(p) { return p >= 1000 ? p.toFixed(2) : p >= 1 ? p.toFixed(3) : p >= 0.1 ? p.toFixed(4) : p.toFixed(6); }
     function fmtT(ms) {
         var d = new Date(ms), n = new Date();
         var t = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1046,7 +1046,7 @@
         return { start: start, fhStart: start, fhStop: fhStop, dayStart: dayStart, dayEnd: dayEnd };
     }
 
-    function analyze(sym, kind, now) {
+    function analyze(sym, kind, now, chg) {
         return Promise.all([
             jget('/fapi/v1/klines?symbol=' + sym + '&interval=1h&limit=120'),
             jget('/fapi/v1/klines?symbol=' + sym + '&interval=1d&limit=90')
@@ -1071,13 +1071,27 @@
             var fhScore = hs + (hs >= 0 ? boost : -boost);
             var fhSide = fhScore >= 1.25 ? 'LONG' : fhScore <= -1.25 ? 'SHORT' : 'WAIT';
             var a1 = atr(h, 14), ad = atr(d, 14);
-            var conf = function (s) { var a = Math.abs(s); return a >= 2.5 ? 'HIGH' : a >= 1.5 ? 'MEDIUM' : 'LOW'; };
+            var conf = function (s) { var a = Math.abs(s); var c = a >= 2.5 ? 'HIGH' : a >= 1.5 ? 'MEDIUM' : 'LOW'; return (vr > 10 && c === 'HIGH') ? 'MEDIUM' : c; };
+            var note = '', nd = daySide, ndc = conf(ds), dc2 = conf(dayScore), fc2 = conf(fhScore);
+            var over = (rd > 80 || chg > 30) ? 'UP' : (rd < 20 || chg < -30) ? 'DOWN' : '';
+            if (over === 'UP') {
+                note = 'OVEREXTENDED UP: chasing a long here is risky, wait for a pullback';
+                if (nd === 'LONG') { nd = 'NEUTRAL'; ndc = 'LOW'; }
+                if (daySide2 === 'LONG') { daySide2 = 'NEUTRAL'; dc2 = 'LOW'; }
+                if (fhSide === 'LONG') { fhSide = 'WAIT'; fc2 = 'LOW'; }
+            } else if (over === 'DOWN') {
+                note = 'OVEREXTENDED DOWN: chasing a short here is risky, wait for a bounce';
+                if (nd === 'SHORT') { nd = 'NEUTRAL'; ndc = 'LOW'; }
+                if (daySide2 === 'SHORT') { daySide2 = 'NEUTRAL'; dc2 = 'LOW'; }
+                if (fhSide === 'SHORT') { fhSide = 'WAIT'; fc2 = 'LOW'; }
+            }
+            var fSL = Math.min(1.5 * a1, 0.06 * price), dSL = Math.min(ad, 0.12 * price);
             return {
-                sym: sym, kind: kind, price: price, rsiD: rd, rsiH: rh, vr: vr, w: windows(kind, now),
-                nextDay: daySide, nextDayConf: conf(ds),
-                day: daySide2, dayConf: conf(dayScore), dayScore: dayScore,
-                fh: fhSide, fhConf: conf(fhScore), fhScore: fhScore,
-                fhSL: 1.5 * a1, fhTP: 3 * a1, daySL: ad, dayTP: 2 * ad
+                sym: sym, kind: kind, price: price, rsiD: rd, rsiH: rh, vr: vr, chg: chg, note: note, w: windows(kind, now),
+                nextDay: nd, nextDayConf: ndc,
+                day: daySide2, dayConf: dc2, dayScore: dayScore,
+                fh: fhSide, fhConf: fc2, fhScore: fhScore,
+                fhSL: fSL, fhTP: 2 * fSL, daySL: dSL, dayTP: 2 * dSL
             };
         });
     }
@@ -1091,13 +1105,15 @@
     function card(r, label) {
         var red = r.fh === 'SHORT' ? ' red' : '';
         return '<div class="signal-card' + red + '">' +
-            '<div style="display:flex;justify-content:space-between;font-weight:800;"><span>' + label + '</span><span>' + fmtP(r.price) + '</span></div>' +
+            '<div style="display:flex;justify-content:space-between;font-weight:800;"><span>' + label + '</span><span data-lp="' + r.sym + '">' + fmtP(r.price) + '</span></div>' +
+            (r.note ? '<div style="color:#f0883e;margin-top:3px;">⚠️ ' + r.note + '</div>' : '') +
             '<div style="margin-top:3px;"><b>NEXT-DAY TREND:</b> <span style="color:' + sideColor(r.nextDay) + '">' + (r.nextDay === 'NEUTRAL' ? 'SIDEWAYS' : r.nextDay === 'LONG' ? 'UP' : 'DOWN') + '</span> (' + r.nextDayConf + ')</div>' +
             '<div style="margin-top:3px;"><b>WHOLE-DAY:</b> <span style="color:' + sideColor(r.day) + '">' + r.day + '</span> (' + r.dayConf + ') ' +
             'START ' + fmtT(r.w.dayStart) + ' → STOP ' + fmtT(r.w.dayEnd) + '<br><span style="color:#8b949e;">' + levels(r.day, r.price, r.daySL, r.dayTP) + '</span></div>' +
             '<div style="margin-top:3px;"><b>FEW-HOURS:</b> <span style="color:' + sideColor(r.fh) + '">' + r.fh + '</span> (' + r.fhConf + ') ' +
+            ((r.fh === 'LONG' || r.fh === 'SHORT') && (r.day === 'LONG' || r.day === 'SHORT') && r.fh !== r.day ? '<span style="color:#f0883e;">[against whole-day trend: small size]</span> ' : '') +
             'START ' + fmtT(r.w.fhStart) + ' → STOP ' + fmtT(r.w.fhStop) + '<br><span style="color:#8b949e;">' + levels(r.fh, r.price, r.fhSL, r.fhTP) + '</span></div>' +
-            '<div style="margin-top:3px;color:#8b949e;">24h volume vs 30-day avg: ' + r.vr.toFixed(2) + 'x | RSI 1h ' + r.rsiH.toFixed(0) + ' / 1d ' + r.rsiD.toFixed(0) + '</div>' +
+            '<div style="margin-top:3px;color:#8b949e;">24h change ' + pct(r.chg) + ' | 24h volume vs 30-day avg: ' + r.vr.toFixed(2) + 'x | RSI 1h ' + r.rsiH.toFixed(0) + ' / 1d ' + r.rsiD.toFixed(0) + '</div>' +
             '</div>';
     }
     function list(arr) {
@@ -1126,8 +1142,9 @@
             gainers.slice(0, 3).concat(losers.slice(0, 3)).concat(topVol.slice(0, 2)).forEach(function (x) { if (picks.indexOf(x.sym) < 0) { picks.push(x.sym); } });
             picks = picks.slice(0, 9);
             var goldSym = rows.some(function (x) { return x.sym === 'XAUUSDT'; }) ? 'XAUUSDT' : 'PAXGUSDT';
-            var jobs = picks.map(function (s) { return analyze(s, 'crypto', now).catch(function () { return null; }); });
-            jobs.unshift(analyze(goldSym, 'gold', now).catch(function () { return null; }));
+            var chgOf = {}; rows.forEach(function (x) { chgOf[x.sym] = x.change; });
+            var jobs = picks.map(function (s) { return analyze(s, 'crypto', now, chgOf[s] || 0).catch(function () { return null; }); });
+            jobs.unshift(analyze(goldSym, 'gold', now, chgOf[goldSym] || 0).catch(function () { return null; }));
             return Promise.all(jobs).then(function (out) {
                 var gold = out[0], coins = out.slice(1).filter(Boolean);
                 var breadth = rows.length ? Math.round(up / rows.length * 100) : 0;
@@ -1143,19 +1160,33 @@
                 html += gold ? card(gold, '🥇 GOLD (live proxy: Binance ' + goldSym + ')') : '<div class="signal-card red">Gold data unavailable right now.</div>';
                 html += '<div style="margin:6px 0 2px;font-weight:800;color:#f0883e;">🟡 BINANCE FUTURES</div>';
                 html += coins.length ? coins.map(function (r) { return card(r, '🪙 ' + r.sym.replace('USDT', '/USDT')); }).join('') : '<div class="signal-card red">Binance data unavailable right now.</div>';
-                html += '<div style="color:#8b949e;margin-top:4px;">Rule-based estimate from live Binance data (trend, RSI, volume). Not a guarantee and not financial advice. Exness has no public price feed, so gold uses Binance gold futures as a close proxy.</div>';
+                html += '<div style="color:#8b949e;margin-top:4px;">Plan calculated at ' + new Date(now).toLocaleTimeString() + '. The price at the top right of each card is live (every 5 seconds); Entry, SL and TP were fixed at plan time and the plan refreshes every minute. Rule-based estimate from live Binance data (trend, RSI, volume). Not a guarantee and not financial advice. Exness has no public price feed, so gold uses Binance gold futures as a close proxy.</div>';
                 body.innerHTML = html;
                 if (stamp) { stamp.innerText = 'LIVE ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); stamp.style.color = '#3fb950'; }
             });
         }).catch(function (e) {
-            if (body) { body.innerHTML = 'Live data could not be loaded (' + (e && e.message ? e.message : 'network') + '). Check your internet connection; it retries automatically every 5 minutes.'; }
+            if (body) { body.innerHTML = 'Live data could not be loaded (' + (e && e.message ? e.message : 'network') + '). Check your internet connection; it retries automatically every minute.'; }
             if (stamp) { stamp.innerText = 'OFFLINE'; stamp.style.color = '#f85149'; }
         }).then(function () { busy = false; });
     }
 
+    function livePrices() {
+        return jget('/fapi/v1/ticker/price').then(function (arr) {
+            var m = {}; arr.forEach(function (x) { m[x.symbol] = x.price; });
+            var els = document.querySelectorAll('[data-lp]');
+            for (var i = 0; i < els.length; i++) {
+                var v = m[els[i].getAttribute('data-lp')];
+                if (v) { els[i].textContent = fmtP(+v); }
+            }
+            var st = $('mpStamp');
+            if (st && !busy && els.length) { st.innerText = 'LIVE ' + new Date().toLocaleTimeString(); st.style.color = '#3fb950'; }
+        }).catch(function () {});
+    }
+
     window.mintooPlanRefresh = run;
     run();
-    setInterval(run, 300000);
+    setInterval(run, 60000);
+    setInterval(livePrices, 5000);
 })();
 
 </script>
