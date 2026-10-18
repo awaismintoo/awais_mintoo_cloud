@@ -189,6 +189,24 @@ function engineBoot(self) {
         var sg = emaSeries(m, 9);
         return [m[m.length - 2] - sg[sg.length - 2], m[m.length - 1] - sg[sg.length - 1]];
     }
+    function supertrend(k, n, m) {
+        var len = k.length, i; if (len < n + 3) { return null; }
+        var tr = [], atr = [], a = 0;
+        for (i = 0; i < len; i++) { var pc = i ? k[i - 1].c : k[i].c; tr.push(Math.max(k[i].h - k[i].l, Math.abs(k[i].h - pc), Math.abs(k[i].l - pc))); }
+        for (i = 0; i < n; i++) { a += tr[i]; } a /= n; atr[n - 1] = a;
+        for (i = n; i < len; i++) { a = (a * (n - 1) + tr[i]) / n; atr[i] = a; }
+        var fu = [], fl = [], dir = [], s = n - 1, hl2 = (k[s].h + k[s].l) / 2;
+        fu[s] = hl2 + m * atr[s]; fl[s] = hl2 - m * atr[s]; dir[s] = k[s].c > hl2 ? 1 : -1;
+        for (i = s + 1; i < len; i++) {
+            hl2 = (k[i].h + k[i].l) / 2; var bu = hl2 + m * atr[i], bl = hl2 - m * atr[i];
+            fu[i] = (bu < fu[i - 1] || k[i - 1].c > fu[i - 1]) ? bu : fu[i - 1];
+            fl[i] = (bl > fl[i - 1] || k[i - 1].c < fl[i - 1]) ? bl : fl[i - 1];
+            if (dir[i - 1] < 0) { dir[i] = k[i].c > fu[i] ? 1 : -1; } else { dir[i] = k[i].c < fl[i] ? -1 : 1; }
+        }
+        var d = dir[len - 1];
+        return { dir: d, val: d > 0 ? fl[len - 1] : fu[len - 1], flipped: dir[len - 1] !== dir[Math.max(s, len - 4)] };
+    }
+    function agree(v, side) { var sg = side === 'LONG' ? 1 : -1, n = 0, i; for (i = 0; i < v.length; i++) { if (v[i] === sg) { n++; } } return v.length ? Math.round(n / v.length * 100) : 0; }
     function parse(rows) { return rows.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5], qv: +r[7] }; }); }
     function get(path) {
         return fetch(BASE + path, { cache: 'no-store' }).then(function (r) {
@@ -220,12 +238,15 @@ function engineBoot(self) {
         if (mh[1] > 0 && mh[1] >= mh[0]) { s += 0.5; } else if (mh[1] < 0 && mh[1] <= mh[0]) { s -= 0.5; }
         if (r > 75) { s -= 0.75; } else if (r < 25) { s += 0.75; }
         if (vr > 1.5) { s += (last.c >= last.o ? 0.5 : -0.5); }
+        var st = supertrend(k, 10, 3), sd = st ? st.dir : 0; s += sd * 0.5;
+        var votes = [e9 > e21 ? 1 : -1, last.c > e50 ? 1 : -1, (mh[1] > 0 && mh[1] >= mh[0]) ? 1 : (mh[1] < 0 && mh[1] <= mh[0]) ? -1 : 0, r > 52 ? 1 : r < 48 ? -1 : 0, vr > 1.3 ? (last.c >= last.o ? 1 : -1) : 0, sd];
         var side = s >= 1.75 ? 'LONG' : s <= -1.75 ? 'SHORT' : 'WAIT', note = '';
         if (r > 80 && side === 'LONG') { side = 'WAIT'; note = 'overbought'; }
         if (r < 20 && side === 'SHORT') { side = 'WAIT'; note = 'oversold'; }
+        if (side === 'LONG' && sd < 0) { side = 'WAIT'; note = 'Supertrend is down'; } else if (side === 'SHORT' && sd > 0) { side = 'WAIT'; note = 'Supertrend is up'; }
         var body = Math.abs(last.c - last.o);
         return { side: side, score: s, conf: Math.abs(s) >= 2.5 ? 'HIGH' : Math.abs(s) >= 1.75 ? 'MEDIUM' : 'LOW',
-                 rsi: r, atr: a, vr: vr, close: last.c, open: last.o, bodyAtr: a ? body / a : 0, bull: last.c >= last.o, t: last.t, note: note };
+                 rsi: r, atr: a, vr: vr, close: last.c, open: last.o, bodyAtr: a ? body / a : 0, bull: last.c >= last.o, t: last.t, note: note, votes: votes, st: st };
     }
     function scanSym(sym) {
         return Promise.all([
@@ -273,15 +294,20 @@ function engineBoot(self) {
                 note = 'OVEREXTENDED DOWN: chasing a short is risky, wait for a bounce';
                 if (nd === 'SHORT') { nd = 'NEUTRAL'; ndc = 'LOW'; } if (day === 'SHORT') { day = 'NEUTRAL'; dayc = 'LOW'; } if (fh === 'SHORT') { fh = 'WAIT'; fhc = 'LOW'; }
             }
+            var st1 = supertrend(h, 10, 3), s1 = st1 ? st1.dir : 0, dvol = vr > 1.2 ? (d[d.length - 1].c >= d[d.length - 1].o ? 1 : -1) : 0;
+            var dv = [price > e20 ? 1 : -1, e20 > e50 ? 1 : -1, rd > 55 ? 1 : rd < 45 ? -1 : 0, dvol], hv = [e9 > e21 ? 1 : -1, price > e21 ? 1 : -1, rh > 52 ? 1 : rh < 48 ? -1 : 0, s1];
+            if ((fh === 'LONG' && s1 < 0) || (fh === 'SHORT' && s1 > 0)) { fh = 'WAIT'; fhc = 'LOW'; if (!note) { note = 'Hourly Supertrend disagrees with the short-term signal'; } }
+            if ((day === 'LONG' && s1 < 0) || (day === 'SHORT' && s1 > 0)) { day = 'NEUTRAL'; dayc = 'LOW'; if (!note) { note = 'Hourly Supertrend disagrees with the daily trend'; } }
+            var nextPct = nd === 'NEUTRAL' ? 0 : agree(dv, nd), dayPct = day === 'NEUTRAL' ? 0 : agree(dv.concat(hv), day), fhPct = fh === 'WAIT' ? 0 : agree(hv.concat(dv.slice(0, 2)), fh);
             var fSL = Math.min(1.2 * a1, 0.05 * price), fTP = Math.min(1.8 * a1, 0.075 * price), dSL = Math.min(0.75 * ad, 0.10 * price), dTP = Math.min(1.0 * ad, 0.13 * price);
-            return { type: 'plan', sym: sym, kind: kind, w: Math.max(res[0].w, res[1].w), price: price, chg: chg, rsiH: rh, rsiD: rd, vr: vr, note: note,
+            return { type: 'plan', nextPct: nextPct, dayPct: dayPct, fhPct: fhPct, st1: s1, sym: sym, kind: kind, w: Math.max(res[0].w, res[1].w), price: price, chg: chg, rsiH: rh, rsiD: rd, vr: vr, note: note,
                      nextDay: nd, nextDayConf: ndc, day: day, dayConf: dayc, fh: fh, fhConf: fhc,
                      fhSL: fSL, fhTP: fTP, daySL: dSL, dayTP: dTP };
         });
     }
 
     var DAYMS = 86400000, QMS = 900000;
-    function morningCore(d, h, o, chgPrev) {
+    function morningCore(d, h, o, chgPrev, m15p) {
         if (d.length < 55 || h.length < 30) { return null; }
         var dc = d.map(function (x) { return x.c; }), hc = h.map(function (x) { return x.c; }), price = o.c;
         var e20 = ema(dc, 20), e50 = ema(dc, 50), rd = rsi(dc, 14);
@@ -299,11 +325,17 @@ function engineBoot(self) {
         var fh = fhScore >= 1.5 ? 'LONG' : fhScore <= -1.5 ? 'SHORT' : 'WAIT', note = '', capped = false;
         if (rd > 80 || chgPrev > 30) { note = 'Overextended up: chasing a long is risky, wait for a pullback'; if (day === 'LONG') { day = 'WAIT'; capped = true; } if (fh === 'LONG') { fh = 'WAIT'; capped = true; } }
         else if (rd < 20 || chgPrev < -30) { note = 'Overextended down: chasing a short is risky, wait for a bounce'; if (day === 'SHORT') { day = 'WAIT'; capped = true; } if (fh === 'SHORT') { fh = 'WAIT'; capped = true; } }
-        var ad = atrK(d, 14), a1 = atrK(h, 14);
-        var dConf = day === 'WAIT' ? 'LOW' : Math.abs(dayScore) >= 3 ? 'HIGH' : 'MEDIUM';
-        var fConf = fh === 'WAIT' ? 'LOW' : Math.abs(fhScore) >= 2.25 ? 'HIGH' : 'MEDIUM';
+        var stH = supertrend(h, 10, 3), st15 = m15p && m15p.length > 20 ? supertrend(m15p, 10, 3) : null, s1 = stH ? stH.dir : 0, s15 = st15 ? st15.dir : 0;
+        var dvol = vr > 1.2 ? (d[d.length - 1].c >= d[d.length - 1].o ? 1 : -1) : 0;
+        var votes = [price > e20 ? 1 : -1, e20 > e50 ? 1 : -1, rd > 55 ? 1 : rd < 45 ? -1 : 0, e9 > e21 ? 1 : -1, price > e21 ? 1 : -1, rh > 52 ? 1 : rh < 48 ? -1 : 0, dvol, od, s15, s1];
+        var fvotes = [e9 > e21 ? 1 : -1, price > e21 ? 1 : -1, rh > 52 ? 1 : rh < 48 ? -1 : 0, od, s15, s1, e20 > e50 ? 1 : -1];
+        if ((day === 'LONG' && s1 < 0) || (day === 'SHORT' && s1 > 0)) { day = 'WAIT'; capped = true; if (!note) { note = 'The hourly Supertrend disagrees with the daily trend'; } }
+        if (s15 && ((fh === 'LONG' && s15 < 0) || (fh === 'SHORT' && s15 > 0))) { fh = 'WAIT'; capped = true; if (!note) { note = 'The 15m Supertrend disagrees with the short-term signal'; } }
+        var ad = atrK(d, 14), a1 = atrK(h, 14), dayPct = day === 'WAIT' ? 0 : agree(votes, day), fhPct = fh === 'WAIT' ? 0 : agree(fvotes, fh);
+        var dConf = dayPct >= 75 ? 'HIGH' : dayPct >= 55 ? 'MEDIUM' : 'LOW';
+        var fConf = fhPct >= 75 ? 'HIGH' : fhPct >= 55 ? 'MEDIUM' : 'LOW';
         var dSL = Math.min(0.75 * ad, 0.10 * price), dTP = Math.min(1.0 * ad, 0.13 * price), fSL = Math.min(1.2 * a1, 0.05 * price), fTP = Math.min(1.8 * a1, 0.075 * price);
-        return { price: price, day: day, dayConf: dConf, dayScore: dayScore, fh: fh, fhConf: fConf, fhScore: fhScore,
+        return { price: price, dayPct: dayPct, fhPct: fhPct, st15: s15, st1h: s1, day: day, dayConf: dConf, dayScore: dayScore, fh: fh, fhConf: fConf, fhScore: fhScore,
                  dSL: dSL, dTP: dTP, fSL: fSL, fTP: fTP, rsiD: rd, rsiH: rh, vr: vr, chgPrev: chgPrev, note: note,
                  solid: day !== 'WAIT' && fh === day };
     }
@@ -330,7 +362,7 @@ function engineBoot(self) {
                 for (i = 0; i < m15.length; i++) { if (m15[i].t === D) { o = m15[i]; break; } }
                 if (!o || o.t + QMS > now) { return null; }
                 var chgPrev = d.length ? (d[d.length - 1].c - d[d.length - 1].o) / d[d.length - 1].o * 100 : 0;
-                var p = morningCore(d, h, o, chgPrev); if (!p) { return null; }
+                var p = morningCore(d, h, o, chgPrev, m15.filter(function (x) { return x.t <= D; })); if (!p) { return null; }
                 p.D = D; p.T = D + QMS; p.entry = o.c;
                 var after = m15.filter(function (x) { return x.t >= D + QMS && x.t < D + DAYMS; }), fhEnd = D + QMS + 4 * 3600000;
                 p.dayRes = evalTrade(p.day, p.entry, p.dSL, p.dTP, after, D + DAYMS, now);
@@ -342,6 +374,7 @@ function engineBoot(self) {
             return { type: 'morning', sym: sym, kind: kind, w: Math.max(r[0].w, r[1].w, r[2].w), D: D0, today: planFor(D0), hist: hist };
         });
     }
+    function dayOpenSym(sym) { return get('/fapi/v1/klines?symbol=' + sym + '&interval=1d&limit=1').then(function (r) { var k = r.j[0]; return { type: 'dayopen', sym: sym, w: r.w, t: +k[0], o: +k[1] }; }); }
     function newcSym(sym, onboard) {
         return Promise.all([
             get('/fapi/v1/klines?symbol=' + sym + '&interval=1d&limit=60'),
@@ -354,13 +387,13 @@ function engineBoot(self) {
                      last: d.length ? d[d.length - 1].c : 0, atr15: m.length >= 15 ? atrK(m, 14) : 0, hrs: h.length, t1h: tfAnalyze(h), t15: tfAnalyze(m) };
         });
     }
-    self.__t = { evalTrade: evalTrade, morningCore: morningCore, tfAnalyze: tfAnalyze };
+    self.__t = { evalTrade: evalTrade, morningCore: morningCore, tfAnalyze: tfAnalyze, supertrend: supertrend };
     self.onmessage = function (e) {
         var jobs = e.data.jobs, conc = e.data.conc || 5, id = e.data.id, i = 0, maxw = 0, rate = 0, out = [], errs = 0;
         function lane() {
             if (i >= jobs.length || rate) { return Promise.resolve(); }
             var j = jobs[i++];
-            var p = j.type === 'plan' ? planSym(j.sym, j.chg, j.kind) : j.type === 'morning' ? morningSym(j.sym, j.kind, j.D, j.now) : j.type === 'newc' ? newcSym(j.sym, j.onboard) : scanSym(j.sym);
+            var p = j.type === 'plan' ? planSym(j.sym, j.chg, j.kind) : j.type === 'morning' ? morningSym(j.sym, j.kind, j.D, j.now) : j.type === 'newc' ? newcSym(j.sym, j.onboard) : j.type === 'dayopen' ? dayOpenSym(j.sym) : scanSym(j.sym);
             return p.then(function (r) { if (r.w > maxw) { maxw = r.w; } out.push(r); }, function (err) { if (err && err.rate) { rate = err.rate; } else { errs++; } }).then(lane);
         }
         var lanes = []; for (var n = 0; n < conc; n++) { lanes.push(lane()); }
@@ -375,8 +408,8 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-18.1';
-var S = { skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
+var BUILD = '2026-10-18.4';
+var S = { dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
     mkt: 'gain', scanf: 'all', chart: { sym: ls('mintoosuite_chart', 'BTCUSDT'), tf: '15m', k: [], ws: null, err: '' },
@@ -386,6 +419,16 @@ var S = { skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null,
 try { S.log = JSON.parse(ls('mintoosuite_log', '[]')) || []; } catch (e) { S.log = []; }
 
 function nowMs() { return Date.now() + S.skew; }
+function utcDay(ms) { return Math.floor(ms / 86400000) * 86400000; }
+// Binance shows the change since the UTC day opened (05:00 PKT). We show that as the main figure and the rolling 24h beside it.
+function chgOf(sym) {
+    var t = S.tick[sym]; if (!t) { return { v: 0, kind: '24h', roll: 0 }; }
+    var d = S.dayOpen[sym];
+    if (d && d.o && d.t === utcDay(nowMs())) { return { v: (t.p - d.o) / d.o * 100, kind: 'today', roll: t.chg }; }
+    return { v: t.chg, kind: '24h', roll: t.chg };
+}
+function agreePct(v, side) { if (!v || !v.length) { return 0; } var sg = side === 'LONG' ? 1 : -1, n = 0; v.forEach(function (x) { if (x === sg) { n++; } }); return Math.round(n / v.length * 100); }
+function confOf(p) { return p >= 75 ? 'HIGH' : p >= 55 ? 'MEDIUM' : 'LOW'; }
 
 // ---------- formatting ----------
 function fmtP(p) { return p >= 1000 ? p.toFixed(2) : p >= 1 ? p.toFixed(3) : p >= 0.1 ? p.toFixed(4) : p >= 0.001 ? p.toFixed(6) : p.toFixed(8); }
@@ -409,7 +452,7 @@ function plLine(side, price, sl, tp, sym) {
     var f = feeOf(sym), tpp = tp / price, slp = sl / price;
     return '$100: <span class="up">' + usd(100 * (tpp - f)) + '</span> at TP / <span class="dn">' + usd(-100 * (slp + f)) + '</span> at SL • $50: <span class="up">' + usd(50 * (tpp - f)) + '</span> / <span class="dn">' + usd(-50 * (slp + f)) + '</span>';
 }
-function netUsd(pnlPct, sym, amt) { return usd(amt * (pnlPct / 100 - feeOf(sym))); }
+function netUsd(pnlPct, sym, amt) { return usd(Math.max(-amt, amt * S.lev * (pnlPct / 100 - feeOf(sym)))); }
 function dayOpenFor(now) { return Math.floor((now - 900000) / 86400000) * 86400000; }
 function pk(ms) { try { return new Date(ms).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit' }); } catch (e) { return hm(ms); } }
 function pkd(ms) { try { return new Date(ms).toLocaleDateString('en-GB', { timeZone: 'Asia/Karachi', weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + pk(ms); } catch (e) { return fmtT(ms); } }
@@ -510,8 +553,8 @@ function planPicks() {
     var t = S.tick, all = Object.keys(t), liq = all.filter(function (s) { return t[s].q > 50e6; }), list = [];
     function add(s, k) { if (!t[s] || list.some(function (x) { return x.sym === s; })) { return; } list.push({ sym: s, chg: t[s].chg, kind: k || 'crypto' }); }
     add(GOLD, 'gold'); add('BTCUSDT'); add('ETHUSDT');
-    liq.slice().sort(function (a, b) { return t[b].chg - t[a].chg; }).slice(0, 3).forEach(function (s) { add(s); });
-    liq.slice().sort(function (a, b) { return t[a].chg - t[b].chg; }).slice(0, 3).forEach(function (s) { add(s); });
+    liq.slice().sort(function (a, b) { return chgOf(b).v - chgOf(a).v; }).slice(0, 3).forEach(function (s) { add(s); });
+    liq.slice().sort(function (a, b) { return chgOf(a).v - chgOf(b).v; }).slice(0, 3).forEach(function (s) { add(s); });
     all.slice().sort(function (a, b) { return t[b].q - t[a].q; }).slice(0, 2).forEach(function (s) { add(s); });
     return list.slice(0, 10);
 }
@@ -531,8 +574,12 @@ function runScanCore(now) {
     var jobs = liquid.map(function (s) { return { type: 'scan', sym: s }; });
     if (now - S.plan.at > 60000) { planPicks().reverse().forEach(function (p) { jobs.unshift({ type: 'plan', sym: p.sym, chg: p.chg, kind: p.kind }); }); }
     var D0 = dayOpenFor(now);
-    if ((now - S.morning.at > 300000 || S.morning.D !== D0) && now - (S.morning.tried || 0) > 20000) { S.morning.tried = now; morningUniverse().forEach(function (u) { jobs.push({ type: 'morning', sym: u.sym, kind: u.kind, D: D0, now: now }); }); }
+    if ((now - S.morning.at > 300000 || S.morning.D !== D0) && now - (S.morning.tried || 0) > 7000) { S.morning.tried = now; morningUniverse().forEach(function (u) { jobs.push({ type: 'morning', sym: u.sym, kind: u.kind, D: D0, now: now }); }); }
     if (S.newc.list.length && now - S.newc.at > 120000) { S.newc.list.forEach(function (n) { jobs.push({ type: 'newc', sym: n.sym, onboard: n.onboard }); }); }
+    if (now - S.dayOpenTried > 7000) {
+        var dstart = utcDay(now), need = syms.filter(function (s) { return t[s].q > 1e6 && (!S.dayOpen[s] || S.dayOpen[s].t !== dstart); }).sort(function (a, b) { return t[b].q - t[a].q; }).slice(0, 250);
+        if (need.length) { S.dayOpenTried = now; need.forEach(function (s) { jobs.push({ type: 'dayopen', sym: s }); }); }
+    }
     var buckets = []; for (var i = 0; i < NW; i++) { buckets.push([]); }
     jobs.forEach(function (j, n) { buckets[n % NW].push(j); });
     runId++; var rid = runId;
@@ -549,7 +596,7 @@ function runScanCore(now) {
         var scanned = 0, rate = 0, maxw = 0, errs = 0, plans = [], mor = [], newcGot = 0;
         rs.forEach(function (r) {
             rate = Math.max(rate, r.rate || 0); maxw = Math.max(maxw, r.maxw || 0); errs += r.errs || 0;
-            r.out.forEach(function (o) { if (o.type === 'scan') { S.scan.res[o.sym] = { tf: o.tf, spark: o.spark, at: nowMs() }; scanned++; } else if (o.type === 'morning') { mor.push(o); } else if (o.type === 'newc') { S.newc.res[o.sym] = o; newcGot++; } else { plans.push(o); } });
+            r.out.forEach(function (o) { if (o.type === 'scan') { S.scan.res[o.sym] = { tf: o.tf, spark: o.spark, at: nowMs() }; scanned++; } else if (o.type === 'morning') { mor.push(o); } else if (o.type === 'newc') { S.newc.res[o.sym] = o; newcGot++; } else if (o.type === 'dayopen') { S.dayOpen[o.sym] = { t: o.t, o: o.o }; } else { plans.push(o); } });
         });
         if (plans.length) {
             var order = planPicks().map(function (p) { return p.sym; });
@@ -563,7 +610,9 @@ function runScanCore(now) {
         if (rate) { S.scan.pause = nowMs() + rate * 1000; }
         if (scanned) { S.scan.at = nowMs(); S.zero = 0; processSignals(); S.scan.first = false; }
         else if (!rate) { S.zero++; if (S.zero >= 2 && S.threads === 'workers') { makeWorkers(true); S.zero = 0; } }
-        S.scan.next = nowMs() + (maxw > 1800 ? 60000 : 30000);
+        var dsN = utcDay(nowMs()), missing = Object.keys(S.tick).filter(function (s) { return S.tick[s].q > 1e6 && (!S.dayOpen[s] || S.dayOpen[s].t !== dsN); }).length, pend = S.morning.D !== D0 || missing > 0;
+        S.fup = pend ? (S.fup || 0) + 1 : 0;
+        S.scan.next = nowMs() + (!scanned ? 6000 : (pend && S.fup <= 4) ? 8000 : maxw > 1800 ? 60000 : 30000);
     }).then(function () { S.scan.running = false; }, function () { S.scan.running = false; });
 }
 function scanLoop() {
@@ -577,8 +626,11 @@ function morningUniverse() {
     Object.keys(t).filter(function (s) { return s !== GOLD; }).sort(function (a, b) { return t[b].q - t[a].q; }).slice(0, 10).forEach(function (s) { list.push({ sym: s, kind: 'crypto' }); });
     return list;
 }
+function usOpen() { var z = zoned('America/New_York'); return !!z && z.wd !== 'Sat' && z.wd !== 'Sun' && z.m >= 570 && z.m < 960; }
+function offHours(sym) { return !!S.tradfi[sym] && !usOpen(); }
+function isSolid(o) { return !!(o.today && o.today.solid) && !offHours(o.sym); }
 function morningSolid() {
-    return S.morning.items.filter(function (o) { return o.today && o.today.solid; }).sort(function (a, b) { return Math.abs(b.today.dayScore) - Math.abs(a.today.dayScore); });
+    return S.morning.items.filter(isSolid).sort(function (a, b) { return Math.abs(b.today.dayScore) - Math.abs(a.today.dayScore); });
 }
 function maybeMorningAlert() {
     var D = S.morning.D, T = D + 900000, now = nowMs();
@@ -592,14 +644,16 @@ function maybeMorningAlert() {
 }
 function loadListings() {
     return fetchJSON('/fapi/v1/exchangeInfo', 25000).then(function (j) {
-        var now = nowMs(), all = [], fresh = [];
+        var now = nowMs(), all = [], fresh = [], tf = {};
         (j.symbols || []).forEach(function (s) {
-            if (!SYM_OK.test(s.symbol) || s.contractType !== 'PERPETUAL') { return; }
+            if (!SYM_OK.test(s.symbol) || (s.contractType !== 'PERPETUAL' && s.contractType !== 'TRADIFI_PERPETUAL')) { return; }
             all.push(s.symbol);
+            var ut = String(s.underlyingType || '').toUpperCase(), sub = JSON.stringify(s.underlyingSubType || []).toLowerCase();
+            if ((s.contractType === 'TRADIFI_PERPETUAL' || ut === 'EQUITY' || /tradfi|equity|stock|etf/.test(sub)) && s.symbol !== 'XAUUSDT' && s.symbol !== 'PAXGUSDT' && !/metal|commodity/.test(sub)) { tf[s.symbol] = 1; }
             if (s.status === 'TRADING' && s.onboardDate && now - s.onboardDate < 30 * 86400000) { fresh.push({ sym: s.symbol, onboard: +s.onboardDate }); }
         });
         fresh.sort(function (a, b) { return b.onboard - a.onboard; });
-        S.newc.list = fresh.slice(0, 14); S.newc.listAt = now;
+        S.newc.list = fresh.slice(0, 14); S.newc.listAt = now; S.tradfi = tf;
         var known = []; try { known = JSON.parse(ls('mintoosuite_known_syms', '[]')) || []; } catch (e) { known = []; }
         if (known.length && all.length) {
             var ks = {}; known.forEach(function (s) { ks[s] = 1; });
@@ -616,11 +670,11 @@ function loadListings() {
 function newcRec(r) {
     var tk = S.tick[r.sym], price = tk ? tk.p : r.last, a = r.t15, b = r.t1h;
     if (!a) { return { side: 'NONE', why: 'Only ' + Math.floor(r.hrs) + ' hours of history so far. Too new for a reliable signal.' }; }
-    var side, conf, why = '';
-    if (b) { if (a.side !== 'WAIT' && a.side === b.side) { side = a.side; conf = Math.abs(a.score) + Math.abs(b.score) >= 5 ? 'HIGH' : 'MEDIUM'; } else { side = 'WAIT'; conf = 'LOW'; why = 'The 15m and 1h timeframes disagree.'; } }
-    else { side = a.side; conf = 'LOW'; why = side === 'WAIT' ? '' : 'Early signal from 15m candles only (under 40 hours of history).'; }
+    var side, why = '', pct = 0;
+    if (b) { if (a.side !== 'WAIT' && a.side === b.side) { side = a.side; pct = agreePct(a.votes.concat(b.votes), side); } else { side = 'WAIT'; why = a.note || b.note || 'The 15m and 1h timeframes disagree.'; } }
+    else { side = a.side; pct = side === 'WAIT' ? 0 : agreePct(a.votes, side); why = side === 'WAIT' ? (a.note || '') : 'Early signal from 15m candles only (under 40 hours of history).'; }
     var sl = Math.min(1.5 * a.atr, 0.10 * price);
-    return { side: side, conf: conf, why: why, price: price, sl: sl, tp: 2 * sl };
+    return { side: side, pct: pct, conf: confOf(pct), why: why, price: price, sl: sl, tp: 2 * sl };
 }
 
 // ---------- recommendations from scan results ----------
@@ -628,9 +682,9 @@ function computePicks() {
     var out = [];
     Object.keys(S.scan.res).forEach(function (s) {
         var r = S.scan.res[s].tf, a = r['15m'], b = r['10m']; if (!a || !b || nowMs() - S.scan.res[s].at > 180000) { return; }
-        var tk = S.tick[s], price = tk ? tk.p : a.close, aligned = a.side !== 'WAIT' && a.side === b.side, avg = (Math.abs(a.score) + Math.abs(b.score)) / 2;
+        var tk = S.tick[s], price = tk ? tk.p : a.close, aligned = a.side !== 'WAIT' && a.side === b.side, avg = (Math.abs(a.score) + Math.abs(b.score)) / 2, pct = aligned ? agreePct(a.votes.concat(b.votes), a.side) : 0;
         var sl = Math.min(1.5 * a.atr, 0.05 * price), tp = 2 * sl;
-        out.push({ sym: s, side: aligned ? a.side : 'MIXED', aligned: aligned, score: aligned ? avg : 0, conf: aligned ? (avg >= 2.5 ? 'HIGH' : 'MEDIUM') : 'LOW',
+        out.push({ sym: s, side: aligned ? a.side : 'MIXED', aligned: aligned, score: aligned ? avg + pct / 100 : 0, pct: pct, conf: aligned ? confOf(pct) : 'LOW', st: a.st,
                    price: price, sl: sl, tp: tp, rsi: a.rsi, vr: a.vr, note: a.note || b.note, spark: S.scan.res[s].spark, at: S.scan.res[s].at });
     });
     out.sort(function (x, y) { return y.score - x.score; });
@@ -643,7 +697,7 @@ function levelText(side, price, sl, tp) {
 }
 function processSignals() {
     var now = nowMs(), first = S.scan.first, sent = 0, i;
-    computePicks().filter(function (p) { return p.aligned && p.conf === 'HIGH'; }).forEach(function (p) {
+    computePicks().filter(function (p) { return p.aligned && p.pct >= 75; }).forEach(function (p) {
         var k = 'M' + p.sym; if (S.notified[k] && now - S.notified[k] < 30 * 60000) { return; }
         S.notified[k] = now;
         if (first) { return; }
@@ -774,7 +828,15 @@ function spark(a, up, color, w, h) {
     return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '"><polyline points="' + pts + '" fill="none" stroke="' + (color || (up ? 'var(--grn)' : 'var(--red)')) + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 }
 function sparkOf(sym, color) { var r = S.scan.res[sym]; if (!r || !r.spark || r.spark.length < 4) { return ''; } var a = r.spark; return spark(a, a[a.length - 1] >= a[0], color); }
-function dots(conf) { var n = conf === 'HIGH' ? 3 : conf === 'MEDIUM' ? 2 : 1; return '<span class="dots">' + [1, 2, 3].map(function (i) { return '<i' + (i <= n ? ' class="on"' : '') + '></i>'; }).join('') + ' ' + conf + '</span>'; }
+function meter(p) { var n = p >= 75 ? 3 : p >= 55 ? 2 : 1; return '<span class="dots">' + [1, 2, 3].map(function (i) { return '<i' + (i <= n ? ' class="on"' : '') + '></i>'; }).join('') + ' <b style="color:var(--tx);font-size:12px">' + p + '%</b> confidence</span>'; }
+function stChip(sym, side) {
+    var r = S.scan.res[sym], a = r && r.tf['15m'] && r.tf['15m'].st;
+    if (!a || (side !== 'LONG' && side !== 'SHORT')) { return ''; }
+    var want = side === 'LONG' ? 1 : -1, now = a.dir > 0 ? 'UP' : 'DOWN';
+    if (a.dir === want) { return '<div class="res win">✅ Entry timing OK: the 15m Supertrend is ' + now + ', matching this ' + side + '</div>'; }
+    return '<div class="warn">⏳ Wait: the 15m Supertrend is now ' + now + ', against this ' + side + '. Enter only when it flips ' + (want > 0 ? 'UP' : 'DOWN') + '.</div>';
+}
+function tfWarn(sym) { return offHours(sym) ? '<div class="warn">⚠️ Stock-linked contract. The US market is closed, so trading is thin and prices can jump. Shown for reference only, not as a solid setup.</div>' : ''; }
 function badge(side) {
     if (side === 'LONG') { return '<span class="badge long">▲ LONG</span>'; }
     if (side === 'SHORT') { return '<span class="badge short">▼ SHORT</span>'; }
@@ -785,36 +847,57 @@ function lv(side, price, sl, tp) {
     var s = side === 'LONG' ? price - sl : price + sl, t = side === 'LONG' ? price + tp : price - tp;
     return '<div class="lv"><div><span>ENTRY</span><b>' + fmtP(price) + '</b></div><div><span>STOP</span><b class="dn">' + fmtP(s) + '</b></div><div><span>TARGET</span><b class="up">' + fmtP(t) + '</b></div></div>';
 }
+function lrow(a, lev, slp, tpp, f) {
+    var liq = 100 / lev - 0.5, hit = lev > 1 && slp * 100 >= liq;
+    return { gain: a * lev * (tpp - f), loss: hit ? a : Math.min(a, a * lev * (slp + f)), liq: liq, hit: hit };
+}
 function plBox(side, price, sl, tp, sym) {
     if ((side !== 'LONG' && side !== 'SHORT') || !price) { return ''; }
-    var f = feeOf(sym), tpp = tp / price, slp = sl / price;
-    function r(a) { return '<div class="plr"><span>$' + a + '</span><span class="up">' + usd(a * (tpp - f)) + '</span><span class="dn">' + usd(-a * (slp + f)) + '</span></div>'; }
-    return '<div class="pl"><div class="plr hd"><span>INVEST</span><span>AT TARGET</span><span>AT STOP</span></div>' + r(100) + r(50) + '</div>';
+    var f = feeOf(sym), tpp = tp / price, slp = sl / price, L = S.lev, net = tpp - f;
+    function r(a) { var x = lrow(a, L, slp, tpp, f); return '<div class="plr"><span>$' + a + (L > 1 ? ' × ' + L : '') + '</span><span class="up">' + usd(x.gain) + '</span><span class="dn">' + usd(-x.loss) + (x.hit ? ' ⚠️' : '') + '</span></div>'; }
+    var h = '<div class="pl"><div class="plr hd"><span>INVEST' + (L > 1 ? ' @ ' + L + '×' : '') + '</span><span>AT TARGET</span><span>AT STOP</span></div>' + r(50) + r(100) + '</div>';
+    if (L > 1 && lrow(100, L, slp, tpp, f).hit) { h += '<div class="warn">⚠️ At ' + L + '× you are liquidated after about ' + (100 / L - 0.5).toFixed(1) + '% against you, but this stop is ' + (slp * 100).toFixed(1) + '% away. You would lose the whole amount before the stop works.</div>'; }
+    function g(inv, goal) {
+        if (net <= 0) { return '<div class="plr"><span>$' + goal + ' on $' + inv + '</span><span>not reachable</span><span>—</span></div>'; }
+        var need = goal / (inv * net); need = need < 10 ? Math.ceil(need * 10) / 10 : Math.ceil(need); var x = lrow(inv, need, slp, tpp, f);
+        if (need > 125) { return '<div class="plr"><span>$' + goal + ' on $' + inv + '</span><span class="org">over 125×</span><span>not possible</span></div>'; }
+        return '<div class="plr"><span>$' + goal + ' on $' + inv + '</span><span class="' + (x.hit ? 'dn' : need > 20 ? 'org' : '') + '">' + (need < 10 ? need.toFixed(1) : Math.ceil(need)) + '×</span><span class="dn">' + usd(-x.loss) + (x.hit ? ' ⚠️' : '') + '</span></div>';
+    }
+    h += '<div class="pl"><div class="plr hd"><span>PROFIT GOAL</span><span>LEVERAGE NEEDED</span><span>LOSS AT STOP</span></div>' + g(50, 20) + g(100, 50) + '</div>';
+    var x2 = net > 0 ? lrow(50, Math.ceil(20 / (50 * net)), slp, tpp, f) : null;
+    if (x2 && x2.hit) { h += '<div class="warn">⚠️ To reach these goals at this target you need so much leverage that you would be liquidated before the stop. Leverage multiplies profit and loss equally. A smaller target or a smaller goal is safer.</div>'; }
+    return h;
+}
+function levBar() {
+    return '<div class="sh" style="margin-top:4px"><span>Profit boxes: leverage</span><span>' + (S.lev > 1 ? S.lev + '× (profit and loss both multiply)' : 'none (1×)') + '</span></div><div class="segc">' +
+        [1, 3, 5, 10, 20, 50].map(function (l) { return '<span class="' + (S.lev === l ? 'on' : '') + '" data-act="lev:' + l + '">' + l + '×</span>'; }).join('') + '</div>';
 }
 function px(sym, fallback) { var t = S.tick[sym]; return '<span data-px="' + sym + '">' + fmtP(t ? t.p : (fallback || 0)) + '</span>'; }
-function chgTxt(sym, suffix) { var t = S.tick[sym]; if (!t) { return ''; } return '<span class="chg ' + cc(t.chg) + '" data-chg="' + sym + '" data-suf="' + (suffix || '') + '">' + pct(t.chg) + (suffix || '') + '</span>'; }
-function chgChip(sym) { var t = S.tick[sym]; if (!t) { return ''; } return '<span class="badge ' + (t.chg >= 0 ? 'long' : 'short') + '" data-chip="' + sym + '">' + pct(t.chg) + '</span>'; }
+function chgLbl(k) { return k === 'today' ? ' today' : ' 24h'; }
+function chgTxt(sym, label) { var t = S.tick[sym]; if (!t) { return ''; } var c = chgOf(sym); return '<span class="chg ' + cc(c.v) + '" data-chg="' + sym + '" data-lbl="' + (label ? 1 : 0) + '">' + pct(c.v) + (label ? chgLbl(c.kind) : '') + '</span>'; }
+function chgChip(sym) { var t = S.tick[sym]; if (!t) { return ''; } var c = chgOf(sym); return '<span class="badge ' + (c.v >= 0 ? 'long' : 'short') + '" data-chip="' + sym + '">' + pct(c.v) + '</span>'; }
+function bothChg(sym) { var c = chgOf(sym); return c.kind === 'today' ? 'Today ' + pct(c.v) + ' (since 05:00 PKT) • 24h ' + pct(c.roll) : '24h ' + pct(c.roll); }
 function sh(title, right) { return '<div class="sh"><span>' + title + '</span><span>' + (right || '') + '</span></div>'; }
 function skel(n, h) { var o = ''; for (var i = 0; i < n; i++) { o += '<div class="sk skb"' + (h ? ' style="height:' + h + 'px"' : '') + '></div>'; } return o; }
 function who(sym, sub) { return '<div class="who">' + avatar(sym) + '<div><b>' + (sym === 'XAUUSDT' || sym === 'PAXGUSDT' ? 'Gold' : base(sym)) + '</b><small>' + (sub || (sym === 'XAUUSDT' || sym === 'PAXGUSDT' ? sym : 'USDT Perpetual')) + '</small></div></div>'; }
 
 function pickCard(p) {
-    return '<div class="group pad tap" data-act="chart:' + p.sym + '"><div class="ph">' + who(p.sym) + '<div class="side">' + badge(p.side) + dots(p.conf) + '</div></div>' +
-        '<div class="pm"><div><div class="px">' + px(p.sym, p.price) + '</div>' + chgTxt(p.sym, ' 24h') + '</div>' + sparkOf(p.sym) + '</div>' +
+    return '<div class="group pad tap" data-act="chart:' + p.sym + '"><div class="ph">' + who(p.sym) + '<div class="side">' + badge(p.side) + meter(p.pct) + '</div></div>' + tfWarn(p.sym) +
+        '<div class="pm"><div><div class="px">' + px(p.sym, p.price) + '</div>' + chgTxt(p.sym, true) + '</div>' + sparkOf(p.sym) + '</div>' +
         lv(p.side, p.price, p.sl, p.tp) + plBox(p.side, p.price, p.sl, p.tp, p.sym) +
-        '<div class="foot">Valid ' + hm(p.at) + ' → ' + hm(p.at + 45 * 60000) + ' • RSI ' + p.rsi.toFixed(0) + ' • volume ×' + p.vr.toFixed(1) + (p.note ? ' • ' + esc(p.note) : '') + '</div></div>';
+        '<div class="foot">' + bothChg(p.sym) + '<br>Valid ' + hm(p.at) + ' → ' + hm(p.at + 45 * 60000) + ' • RSI ' + p.rsi.toFixed(0) + ' • volume ×' + p.vr.toFixed(1) + (p.note ? ' • ' + esc(p.note) : '') + (p.st ? ' • 15m Supertrend ' + (p.st.dir > 0 ? 'UP' : 'DOWN') : '') + '</div></div>';
 }
 function heroPick(p) {
     return '<div class="hero tap" data-act="chart:' + p.sym + '"><div class="hl"><span>Top master pick</span><span>10m + 15m agree</span></div>' +
-        '<div class="ph" style="margin-top:12px">' + who(p.sym) + '<div class="side"><span class="badge">' + (p.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + '</span><span class="dots" style="color:rgba(255,255,255,.85)">' + p.conf + '</span></div></div>' +
-        '<div class="pm"><div><div class="px">' + px(p.sym, p.price) + '</div>' + chgTxt(p.sym, ' 24h') + '</div>' + sparkOf(p.sym, '#fff') + '</div>' +
+        '<div class="ph" style="margin-top:12px">' + who(p.sym) + '<div class="side"><span class="badge">' + (p.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + '</span><span class="dots" style="color:rgba(255,255,255,.9)"><b style="color:#fff;font-size:15px">' + p.pct + '%</b> confidence</span></div></div>' +
+        '<div class="pm"><div><div class="px">' + px(p.sym, p.price) + '</div>' + chgTxt(p.sym, true) + '</div>' + sparkOf(p.sym, '#fff') + '</div>' +
         lv(p.side, p.price, p.sl, p.tp) + plBox(p.side, p.price, p.sl, p.tp, p.sym) +
         '<div class="foot" style="color:rgba(255,255,255,.82)">Valid ' + hm(p.at) + ' → ' + hm(p.at + 45 * 60000) + ' • tap for chart</div></div>';
 }
 function stile(label, sym) {
     var t = S.tick[sym];
     if (!t) { return '<div class="group stile"><div class="lb">' + avatar(sym) + label + '</div><div class="sk" style="height:34px;margin-top:10px"></div></div>'; }
-    return '<div class="group stile tap" data-act="chart:' + sym + '"><div class="lb" style="gap:9px">' + avatar(sym).replace('width:38px', '') + '<span>' + label + '</span></div><div class="big">' + px(sym) + '</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">' + chgTxt(sym, '') + sparkOf(sym) + '</div></div>';
+    return '<div class="group stile tap" data-act="chart:' + sym + '"><div class="lb" style="gap:9px">' + avatar(sym).replace('width:38px', '') + '<span>' + label + '</span></div><div class="big">' + px(sym) + '</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">' + chgTxt(sym, true) + sparkOf(sym) + '</div></div>';
 }
 function scanSummary() {
     var s = S.scan;
@@ -846,15 +929,15 @@ var WINS = [
 function winDef(id) { for (var i = 0; i < WINS.length; i++) { if (WINS[i].id === id) { return WINS[i]; } } return WINS[0]; }
 function mktStats() {
     var t = S.tick, keys = Object.keys(t), tot = 0, up = 0;
-    keys.forEach(function (s) { tot += t[s].q; if (t[s].chg > 0) { up++; } });
+    keys.forEach(function (s) { tot += t[s].q; if (chgOf(s).v > 0) { up++; } });
     var liq = keys.filter(function (s) { return t[s].q > 20e6; });
     return { n: keys.length, tot: tot, up: up, breadth: keys.length ? Math.round(up / keys.length * 100) : 0,
-        gain: liq.slice().sort(function (a, b) { return t[b].chg - t[a].chg; }).slice(0, 4), los: liq.slice().sort(function (a, b) { return t[a].chg - t[b].chg; }).slice(0, 4) };
+        gain: liq.slice().sort(function (a, b) { return chgOf(b).v - chgOf(a).v; }).slice(0, 4), los: liq.slice().sort(function (a, b) { return chgOf(a).v - chgOf(b).v; }).slice(0, 4) };
 }
-function chips(arr) { return '<div class="chips">' + arr.map(function (s) { return '<span class="cc tap" data-act="chart:' + s + '">' + esc(base(s)) + ' ' + chgTxt(s, '') + '</span>'; }).join('') + '</div>'; }
+function chips(arr) { return '<div class="chips">' + arr.map(function (s) { return '<span class="cc tap" data-act="chart:' + s + '">' + esc(base(s)) + ' ' + chgTxt(s, false) + '</span>'; }).join('') + '</div>'; }
 
 function vOverview() {
-    var picks = computePicks().filter(function (p) { return p.aligned; }), top = picks[0], m = mktStats(), h = '';
+    var picks = computePicks().filter(function (p) { return p.aligned; }), top = picks[0], m = mktStats(), h = levBar();
     if (!S.scan.at) { h += skel(1, 230); }
     else if (top) { h += heroPick(top); }
     else { h += '<div class="group pad"><b>No strong setup right now</b><div class="note" style="margin:4px 0 0">No coin has the 10m and 15m timeframes in agreement. Waiting is also a position.</div></div>'; }
@@ -872,16 +955,16 @@ function vOverview() {
 function planCard(r, label, goldCard) {
     var w = windows(r.kind, S.plan.at), sym = r.sym, nd = r.nextDay === 'NEUTRAL' ? 'SIDEWAYS' : r.nextDay === 'LONG' ? 'UP' : 'DOWN', nc = r.nextDay === 'LONG' ? 'up' : r.nextDay === 'SHORT' ? 'dn' : 'mut';
     var counter = (r.fh === 'LONG' || r.fh === 'SHORT') && (r.day === 'LONG' || r.day === 'SHORT') && r.fh !== r.day;
-    return '<div class="group pad"><div class="ph">' + who(sym, goldCard ? 'Binance ' + sym + ' proxy' : null) + '<div class="px" style="font-size:20px">' + px(sym, r.price) + '</div></div>' +
+    return '<div class="group pad"><div class="ph">' + who(sym, goldCard ? 'Binance ' + sym + ' proxy' : null) + '<div class="px" style="font-size:20px">' + px(sym, r.price) + '</div></div>' + tfWarn(sym) +
         (r.note ? '<div class="warn">⚠️ ' + esc(r.note) + '</div>' : '') +
-        '<div class="blk"><div class="t"><span>Next-day trend</span><span class="' + nc + '">' + nd + ' <small>' + r.nextDayConf + '</small></span></div></div>' +
-        '<div class="blk"><div class="t"><span>Whole day</span>' + badge(r.day === 'NEUTRAL' ? 'WAIT' : r.day) + '</div><div class="tm">' + fmtT(w.dayStart) + ' → ' + fmtT(w.dayEnd) + ' • strength ' + dots(r.dayConf) + '</div>' + lv(r.day, r.price, r.daySL, r.dayTP) + plBox(r.day, r.price, r.daySL, r.dayTP, sym) + '</div>' +
-        '<div class="blk"><div class="t"><span>Few hours</span>' + badge(r.fh) + '</div><div class="tm">' + fmtT(w.fhStart) + ' → ' + fmtT(w.fhStop) + ' • strength ' + dots(r.fhConf) + (counter ? ' • <span class="org">against whole-day trend: small size</span>' : '') + '</div>' + lv(r.fh, r.price, r.fhSL, r.fhTP) + plBox(r.fh, r.price, r.fhSL, r.fhTP, sym) + '</div>' +
-        '<div class="foot">24h ' + pct(r.chg) + ' • volume vs 30-day avg ×' + r.vr.toFixed(2) + ' • RSI 1h ' + r.rsiH.toFixed(0) + ' / 1d ' + r.rsiD.toFixed(0) + '</div></div>';
+        '<div class="blk"><div class="t"><span>Next-day trend</span><span class="' + nc + '">' + nd + ' <small>' + (r.nextPct ? r.nextPct + '% confidence' : '') + '</small></span></div></div>' +
+        '<div class="blk"><div class="t"><span>Whole day</span>' + badge(r.day === 'NEUTRAL' ? 'WAIT' : r.day) + '</div><div class="tm">' + fmtT(w.dayStart) + ' → ' + fmtT(w.dayEnd) + (r.dayPct ? ' • ' + meter(r.dayPct) : '') + '</div>' + lv(r.day, r.price, r.daySL, r.dayTP) + plBox(r.day, r.price, r.daySL, r.dayTP, sym) + '</div>' +
+        '<div class="blk"><div class="t"><span>Few hours</span>' + badge(r.fh) + '</div><div class="tm">' + fmtT(w.fhStart) + ' → ' + fmtT(w.fhStop) + (r.fhPct ? ' • ' + meter(r.fhPct) : '') + (counter ? ' • <span class="org">against whole-day trend: small size</span>' : '') + '</div>' + lv(r.fh, r.price, r.fhSL, r.fhTP) + plBox(r.fh, r.price, r.fhSL, r.fhTP, sym) + '</div>' +
+        '<div class="foot">' + bothChg(sym) + ' • volume vs 30-day avg ×' + r.vr.toFixed(2) + ' • RSI 1h ' + r.rsiH.toFixed(0) + ' / 1d ' + r.rsiD.toFixed(0) + '</div></div>';
 }
 function vPlan() {
-    var items = S.plan.items, h = '';
-    if (!items.length) { return skel(3, 200); }
+    var items = S.plan.items, h = levBar();
+    if (!items.length) { return h + skel(3, 200); }
     if (nowMs() - S.plan.at > 240000) { h += '<div class="warn">This plan is ' + Math.round((nowMs() - S.plan.at) / 60000) + ' minutes old because the data refresh is delayed.</div>'; }
     h += '<div class="note" style="margin-top:0">Plan calculated ' + hms(S.plan.at) + '. The price on each card is live; entry, stop and target are fixed at plan time. The plan refreshes every minute.</div>';
     var gold = items.filter(function (r) { return r.kind === 'gold'; })[0];
@@ -895,13 +978,13 @@ function vPlan() {
 function vScanner() {
     var all = computePicks(), picks = all.filter(function (p) { return p.aligned; });
     if (S.scanf === 'long') { picks = picks.filter(function (p) { return p.side === 'LONG'; }); } else if (S.scanf === 'short') { picks = picks.filter(function (p) { return p.side === 'SHORT'; }); }
-    var h = scanSummary() + '<div style="height:14px"></div><div class="segc">';
+    var h = levBar() + scanSummary() + '<div style="height:14px"></div><div class="segc">';
     [['all', 'All'], ['long', 'Long'], ['short', 'Short']].forEach(function (f) { h += '<span class="' + (S.scanf === f[0] ? 'on' : '') + '" data-act="scanf:' + f[0] + '">' + f[1] + '</span>'; });
     h += '</div>' + sh('Recommendations (10m + 15m agree)', picks.length);
     if (!S.scan.at) { h += skel(3, 200); }
     else if (!picks.length) { h += '<div class="group pad mut">Nothing matches right now.</div>'; }
     else { h += picks.slice(0, 30).map(pickCard).join(''); }
-    return h + '<div class="note">' + (all.length - all.filter(function (p) { return p.aligned; }).length) + ' scanned coins have mixed signals and are skipped. Stop is 1.5×ATR and the target is twice the stop distance. Valid for about 45 minutes. Tap a coin to open its chart.</div>';
+    return h + '<div class="note">' + (all.length - all.filter(function (p) { return p.aligned; }).length) + ' scanned coins have mixed signals and are skipped. Confidence % is the share of indicator checks (trend, momentum, RSI, volume, Supertrend) that agree with the signal. It is not a probability of profit. Stop is 1.5×ATR and the target is twice the stop distance. Valid for about 45 minutes. Tap a coin to open its chart.</div>';
 }
 function vCandles() {
     if (!S.scan.at) { return skel(4, 70); }
@@ -913,18 +996,18 @@ function vCandles() {
 function vMarket() {
     var t = S.tick, keys = Object.keys(t), list;
     if (S.mkt === 'vol') { list = keys.slice().sort(function (a, b) { return t[b].q - t[a].q; }); }
-    else { list = keys.filter(function (s) { return t[s].q > 20e6; }).sort(function (a, b) { return S.mkt === 'gain' ? t[b].chg - t[a].chg : t[a].chg - t[b].chg; }); }
+    else { list = keys.filter(function (s) { return t[s].q > 20e6; }).sort(function (a, b) { return S.mkt === 'gain' ? chgOf(b).v - chgOf(a).v : chgOf(a).v - chgOf(b).v; }); }
     var h = '<div class="segc">';
     [['gain', 'Gainers'], ['loss', 'Losers'], ['vol', 'Volume']].forEach(function (f) { h += '<span class="' + (S.mkt === f[0] ? 'on' : '') + '" data-act="mkt:' + f[0] + '">' + f[1] + '</span>'; });
     h += '</div>';
     if (!keys.length) { return h + skel(5, 64); }
     h += '<div class="group">' + list.slice(0, 40).map(function (s) {
-        return '<div class="row tap" data-act="chart:' + s + '">' + who(s, 'Vol ' + money(t[s].q)) + '<div style="display:flex;align-items:center;gap:10px">' + sparkOf(s) + '<div style="text-align:right"><div style="font-weight:800">' + px(s) + '</div>' + chgChip(s) + '</div></div></div>';
+        return '<div class="row tap" data-act="chart:' + s + '">' + who(s, 'Vol ' + money(t[s].q) + (chgOf(s).kind === 'today' ? ' • 24h ' + pct(chgOf(s).roll) : '')) + '<div style="display:flex;align-items:center;gap:10px">' + sparkOf(s) + '<div style="text-align:right"><div style="font-weight:800">' + px(s) + '</div>' + chgChip(s) + '</div></div></div>';
     }).join('') + '</div>';
-    return h + '<div class="note">Gainers and losers only include coins with more than $20M 24h volume, to hide illiquid noise.</div>';
+    return h + '<div class="note">The big percentage is the change since the day opened at 05:00 PKT, the same figure Binance shows on its Futures screen. The rolling last-24-hours change is shown under each name. Gainers and losers only include coins with more than $20M 24h volume, to hide illiquid noise.</div>';
 }
 function vGold() {
-    var t = S.tick[GOLD], h = '';
+    var t = S.tick[GOLD], h = levBar();
     if (!t) { h += skel(1, 150); }
     else { h += '<div class="group pad"><div class="ph">' + who(GOLD, 'Binance ' + GOLD + ' (Exness proxy)') + chgChip(GOLD) + '</div><div class="pm"><div class="px">' + px(GOLD) + '</div>' + sparkOf(GOLD) + '</div></div><div class="group"><div class="row"><span>24h high / low</span><b>' + fmtP(t.h) + ' / ' + fmtP(t.l) + '</b></div><div class="row"><span>24h volume</span><b>' + money(t.q) + '</b></div></div>'; }
     if (goldClosed(new Date(nowMs()))) { h += '<div class="warn">Exness gold is closed (weekend). Plan starts at ' + fmtT(nextGoldOpen(nowMs())) + '.</div>'; }
@@ -935,7 +1018,7 @@ function vGold() {
         '<div class="row"><span>US dollar vs EUR & GBP, 24h</span><b class="' + cc(usdP) + '">' + (usdP >= 0 ? '▲ stronger ' : '▼ weaker ') + pct(usdP) + '</b></div><div class="row"><span>EUR/USDT</span><b class="' + cc(fx.eur) + '">' + pct(fx.eur) + '</b></div><div class="row"><span>GBP/USDT</span><b class="' + cc(fx.gbp) + '">' + pct(fx.gbp) + '</b></div>') + '</div>' +
         '<div class="note">This is a proxy built from real Binance EUR and GBP prices, weighted like the official index. It is not the official US Dollar Index (DXY), which has no free live feed. Gold usually moves opposite to the dollar.</div>';
     var m = mktStats();
-    return h + sh('Context') + '<div class="group"><div class="row"><span>BTC 24h</span><b class="' + cc((S.tick.BTCUSDT || { chg: 0 }).chg) + '">' + (S.tick.BTCUSDT ? pct(S.tick.BTCUSDT.chg) : '—') + '</b></div><div class="row"><span>Crypto coins up</span><b>' + m.breadth + '%</b></div></div>' +
+    return h + sh('Context') + '<div class="group"><div class="row"><span>BTC ' + (chgOf('BTCUSDT').kind === 'today' ? 'today' : '24h') + '</span><b class="' + cc(chgOf('BTCUSDT').v) + '">' + (S.tick.BTCUSDT ? pct(chgOf('BTCUSDT').v) : '—') + '</b></div><div class="row"><span>Crypto coins up</span><b>' + m.breadth + '%</b></div></div>' +
         '<div class="note">Exness publishes no free price feed, so gold uses Binance gold futures as a close proxy and can differ slightly from your Exness chart.</div>';
 }
 function vNews() {
@@ -989,7 +1072,9 @@ function vExchanges() {
 function vHelp() {
     var T = [['New Day Recommendations', 'At 05:15 PKT (15 minutes after the 05:00 PKT day open) the app locks a whole-day plan and a few-hours plan for gold and the 10 most active coins, using only data available at that moment. It then tracks each plan (target hit, stop hit, or still running) and replays the same rules on the last 9 days so you can see how they really performed.'],
         ['New Coins', 'Coins listed on Binance Futures in the last 30 days: first-trade price, change since listing, highest price, volume, volatility and a signal. New coins move fast in both directions, so a long or a short can win or lose quickly. You also get an alert when a coin is newly listed.'],
-        ['Profit boxes', 'Every entry shows the profit at the target and the loss at the stop for $100 and for $50, without leverage and after about 0.1% fees. With leverage both numbers multiply.'],
+        ['Why percentages can differ', 'Binance Futures shows the change since its day opened at 00:00 UTC, which is 05:00 PKT. The rolling change over the last 24 hours is a different number, and for fast-moving coins the two can be far apart. This app shows the Binance one as the main figure and the rolling 24h beside it, so you can match either.'],
+        ['Confidence %', 'The percentage on each signal is the share of indicator checks that agree with it: trend, momentum, RSI, volume, and the Supertrend (10, 3) like the one on your Binance chart. 100% means every check agrees. It is not a probability of making profit, so also look at the 9-day track record. A signal is never shown against its own Supertrend.'],
+        ['Profit boxes and leverage', 'Every entry shows the profit at the target and the loss at the stop for $50 and $100, at the leverage chosen at the top of the screen (1× to 50×), after about 0.1% fees. A second box shows the leverage you would need to make $20 on $50 and $50 on $100 at that target, and the loss at the stop. Leverage multiplies profit and loss equally, and a position is liquidated after about 100 ÷ leverage percent against you, which can happen before your stop.'],
         ['Master Plan', 'For gold and the most active coins: next-day trend, a whole-day plan and a few-hours plan, each with start time, stop time, entry, stop and target.'],
         ['Scanner', 'Every 30 seconds the app scans the top 100 Binance Futures coins on 10m and 15m candles using 25 parallel requests (5 background workers × 5). A coin is recommended only when both timeframes agree.'],
         ['3m Candles', 'Strong bullish or bearish 3-minute candles that are large compared with recent volatility and backed by high volume.'],
@@ -1015,37 +1100,37 @@ function recStats(items, key) {
 function coinStats(o, key) { var w = 0, l = 0, t = 0; (o.hist || []).forEach(function (p) { var r = p[key]; if (!r) { return; } if (r.res === 'WIN') { w++; } else if (r.res === 'LOSS') { l++; } else { t++; } }); return w + ' target · ' + l + ' stop · ' + t + ' timeout'; }
 function resBox(r, side, entry, sym) {
     if (!r) { return ''; }
-    if (r.res === 'WIN') { return '<div class="res win">✅ Target hit at ' + pk(r.at) + ' PKT · ' + netUsd(r.pnl, sym, 100) + ' on $100 · ' + netUsd(r.pnl, sym, 50) + ' on $50</div>'; }
+    if (r.res === 'WIN') { return '<div class="res win">✅ Target hit at ' + pk(r.at) + ' PKT · ' + netUsd(r.pnl, sym, 100) + ' on $100 · ' + netUsd(r.pnl, sym, 50) + ' on $50' + (S.lev > 1 ? ' (at ' + S.lev + '×)' : '') + '</div>'; }
     if (r.res === 'LOSS') { return '<div class="res loss">❌ Stop hit at ' + pk(r.at) + ' PKT · ' + netUsd(r.pnl, sym, 100) + ' on $100 · ' + netUsd(r.pnl, sym, 50) + ' on $50</div>'; }
     var tk = S.tick[sym], pnl = r.pnl; if (r.res === 'OPEN' && tk) { pnl = (side === 'LONG' ? 1 : -1) * (tk.p - entry) / entry * 100; }
     return '<div class="res ' + (r.res === 'OPEN' ? 'run' : 'end') + '">' + (r.res === 'OPEN' ? '⏳ Running now: ' : '⌛ Window ended: ') + netUsd(pnl, sym, 100) + ' on $100 · ' + netUsd(pnl, sym, 50) + ' on $50 <small>(if closed now, after fees)</small></div>';
 }
 function morningCard(o) {
     var p = o.today, sym = o.sym, dEnd = p.D + 86400000, fEnd = p.T + 4 * 3600000, now = nowMs();
-    function blk(title, side, conf, from, to, sl, tp, res) {
+    function blk(title, side, pctv, from, to, sl, tp, res) {
         var pr = Math.max(0, Math.min(1, (now - from) / (to - from)));
-        return '<div class="blk"><div class="t"><span>' + title + '</span>' + badge(side) + '</div><div class="tm">' + pkd(from) + ' → ' + pkd(to) + ' PKT • strength ' + dots(conf) + '</div>' +
+        return '<div class="blk"><div class="t"><span>' + title + '</span>' + badge(side) + '</div><div class="tm">' + pkd(from) + ' → ' + pkd(to) + ' PKT' + (pctv ? ' • ' + meter(pctv) : '') + '</div>' +
             (side === 'WAIT' ? '' : '<div class="prog"><i style="width:' + Math.round(pr * 100) + '%"></i></div>') + lv(side, p.entry, sl, tp) + plBox(side, p.entry, sl, tp, sym) + resBox(res, side, p.entry, sym) + '</div>';
     }
-    return '<div class="group pad"><div class="ph">' + who(sym) + '<div class="side"><span class="badge ' + (p.solid ? 'solid' : 'wait') + '">' + (p.solid ? '✓ SOLID' : 'WATCH') + '</span><div class="px" style="font-size:18px">' + px(sym, p.entry) + '</div></div></div>' +
-        (p.note ? '<div class="warn">⚠️ ' + esc(p.note) + '</div>' : '') +
-        blk('Whole day', p.day, p.dayConf, p.T, dEnd, p.dSL, p.dTP, p.dayRes) + blk('Few hours', p.fh, p.fhConf, p.T, fEnd, p.fSL, p.fTP, p.fhRes) +
+    return '<div class="group pad"><div class="ph">' + who(sym) + '<div class="side"><span class="badge ' + (isSolid(o) ? 'solid' : 'wait') + '">' + (isSolid(o) ? '✓ SOLID' : 'WATCH') + '</span><div class="px" style="font-size:18px">' + px(sym, p.entry) + '</div></div></div>' +
+        tfWarn(sym) + (p.note ? '<div class="warn">⚠️ ' + esc(p.note) + '</div>' : '') + stChip(sym, p.day !== 'WAIT' ? p.day : p.fh) +
+        blk('Whole day', p.day, p.dayPct, p.T, dEnd, p.dSL, p.dTP, p.dayRes) + blk('Few hours', p.fh, p.fhPct, p.T, fEnd, p.fSL, p.fTP, p.fhRes) +
         '<div class="foot">Entry = price at 05:15 PKT. Stop and target are fixed fractions of the coin\'s recent average range. Previous day ' + pct(p.chgPrev) + ' • RSI 1d ' + p.rsiD.toFixed(0) + ' / 1h ' + p.rsiH.toFixed(0) + '</div>' +
         '<div class="foot">Last 9 days, same rules: whole day ' + coinStats(o, 'dayRes') + ' • few hours ' + coinStats(o, 'fhRes') + '</div></div>';
 }
 function vMorning() {
-    var now = nowMs(), D0 = dayOpenFor(now), nextT = D0 + 900000 + 86400000, left = Math.max(0, nextT - now), h = '';
+    var now = nowMs(), D0 = dayOpenFor(now), nextT = D0 + 900000 + 86400000, left = Math.max(0, nextT - now), h = levBar();
     h += '<div class="group pad"><div class="sh" style="margin:0 0 6px">Plan for the day starting</div><div style="font-size:21px;font-weight:800">' + pkd(D0) + ' PKT</div><div class="note" style="margin:8px 0 0">The trading day opens at 05:00 PKT (00:00 UTC, when Binance\'s daily candle starts). The plan is locked at 05:15 PKT, after the first 15 minutes, using only data available at that moment. Next plan: ' + pkd(nextT) + ' PKT, in ' + Math.floor(left / 3600000) + 'h ' + Math.floor(left % 3600000 / 60000) + 'm.</div></div>';
     var items = S.morning.D === D0 ? S.morning.items : [];
     if (!items.length) { return h + skel(3, 200) + '<div class="note">Building the plan from real candles… this takes a few seconds.</div>'; }
     var d = recStats(items, 'dayRes'), f = recStats(items, 'fhRes');
     function trk(t, s) { return '<div class="pad" style="border-top:1px solid var(--line)"><b>' + t + '</b><div class="lv x2"><div><span>TARGET</span><b class="up">' + s.w + '</b></div><div><span>STOP</span><b class="dn">' + s.l + '</b></div><div><span>TIMEOUT</span><b>' + s.t + '</b></div><div><span>WIN RATE</span><b>' + s.wr + '%</b></div></div><div class="note" style="margin:8px 0 0">' + s.n + ' plans took a trade • average <b class="' + (s.avg >= 0 ? 'up' : 'dn') + '">' + (s.avg >= 0 ? '+' : '') + s.avg.toFixed(2) + '%</b> per plan = ' + usd(s.avg) + ' per $100 after fees</div></div>'; }
     h += sh('Track record: last 9 days replayed') + '<div class="group">' + trk('Whole-day plans', d) + trk('Few-hours plans', f) + '</div><div class="note">A replay of the same rules on real past candles, not live trading. Past results do not guarantee future results. If the stop and target were both touched in one 15-minute candle, the stop is counted first.</div>';
-    var ok = items.filter(function (o) { return o.today; }), solid = ok.filter(function (o) { return o.today.solid; }).sort(function (a, b) { return Math.abs(b.today.dayScore) - Math.abs(a.today.dayScore); }), rest = ok.filter(function (o) { return !o.today.solid; });
+    var ok = items.filter(function (o) { return o.today; }), solid = ok.filter(isSolid).sort(function (a, b) { return b.today.dayPct - a.today.dayPct; }), rest = ok.filter(function (o) { return !isSolid(o); });
     if (S.morning.goldClosed) { h += '<div class="warn">Exness gold has no plan today because the market is closed (weekend).</div>'; }
     h += sh('✅ Solid setups', solid.length) + (solid.length ? solid.map(morningCard).join('') : '<div class="group pad mut">No coin has a solid setup today (whole day and few hours must agree). Waiting is also a position.</div>');
     if (rest.length) { h += sh('👀 Watch list', rest.length) + rest.map(morningCard).join(''); }
-    return h + '<div class="note">Profit and loss are for $100 and $50 invested without leverage, after about 0.1% Binance trading fees (gold: no fee, spread not included). With leverage both profit and loss grow by the same multiple. Not financial advice.</div>';
+    return h + '<div class="note">Confidence % is the share of indicator checks (daily and hourly trend, RSI, volume, opening candle, 15m and hourly Supertrend) that agree with the plan. It is not a probability of profit: judge it together with the 9-day track record above. Profit and loss are for $50 and $100 at the leverage you pick, after about 0.1% Binance trading fees on the full position (gold: no fee, spread not included). Leverage multiplies profit and loss by the same amount, and a position is liquidated after roughly 100 ÷ leverage percent against you. The track record above is at 1×. Not financial advice.</div>';
 }
 
 // ---------- New Coins ----------
@@ -1061,11 +1146,11 @@ function newcCard(n) {
     if (flags.length) { h += '<div class="warn">⚠️ ' + flags.join(' · ') + '</div>'; }
     var rec = newcRec(r);
     if (rec.side === 'NONE') { h += '<div class="nt">' + esc(rec.why) + '</div>'; }
-    else { h += '<div class="blk"><div class="t"><span>Signal</span>' + badge(rec.side) + '</div><div class="tm">strength ' + dots(rec.conf) + (rec.why ? ' • ' + esc(rec.why) : '') + '</div>' + lv(rec.side, rec.price, rec.sl, rec.tp) + plBox(rec.side, rec.price, rec.sl, rec.tp, n.sym) + '</div>'; }
+    else { h += '<div class="blk"><div class="t"><span>Signal</span>' + badge(rec.side) + '</div><div class="tm">' + (rec.pct ? meter(rec.pct) : '') + (rec.why ? ' • ' + esc(rec.why) : '') + '</div>' + lv(rec.side, rec.price, rec.sl, rec.tp) + plBox(rec.side, rec.price, rec.sl, rec.tp, n.sym) + '</div>'; }
     return h + '</div>';
 }
 function vNewc() {
-    var h = '<div class="warn">New listings move fast in both directions. A long or a short can win, and both can lose quickly. Nothing here is guaranteed, so keep size small.</div>', list = S.newc.list;
+    var h = levBar() + '<div class="warn">New listings move fast in both directions. A long or a short can win, and both can lose quickly. Nothing here is guaranteed, so keep size small.</div>', list = S.newc.list;
     if (!list.length) { return h + (S.newc.listAt ? '<div class="group pad mut">No Binance Futures coin was listed in the last 30 days.</div>' : skel(2, 200)); }
     return h + list.map(newcCard).join('') + '<div class="note">Listing dates come from Binance. Prices and candles are real. You also get an alert when a brand-new Futures coin appears (while the app is open or in the background).</div>';
 }
@@ -1129,11 +1214,11 @@ function drawChart() {
 var VIEWS = { morning: vMorning, newc: vNewc, overview: vOverview, plan: vPlan, scanner: vScanner, candles: vCandles, market: vMarket, chart: vChart, gold: vGold, news: vNews, alerts: vAlerts, log: vLog, exchanges: vExchanges, help: vHelp };
 var LIVE = { morning: 1, newc: 1, overview: 1, plan: 1, scanner: 1, candles: 1, market: 1, gold: 1, exchanges: 1, news: 1 };
 var lastKey = '';
-function renderKey() { return [S.win, S.scan.at, S.plan.at, S.morning.at, S.newc.at, S.newsAt, S.candles.length, S.log.length, S.fx.at, S.mkt, S.scanf, Math.floor(nowMs() / 15000)].join('|'); }
+function renderKey() { return [S.lev, S.win, S.scan.at, S.plan.at, S.morning.at, S.newc.at, S.newsAt, S.candles.length, S.log.length, S.fx.at, S.mkt, S.scanf, Math.floor(nowMs() / 15000)].join('|'); }
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
     $('winName').textContent = d.n; $('winSub').textContent = d.sub;
-    try { $('view').innerHTML = VIEWS[d.id](); } catch (e) { $('view').innerHTML = '<div class="group pad"><b>Something went wrong showing this window.</b><div class="note">' + esc(e && e.message || e) + '</div></div>'; }
+    try { $('view').innerHTML = VIEWS[d.id]() + '<div class="note" style="text-align:center;margin-top:18px">MintooSuite build ' + BUILD + '</div>'; } catch (e) { $('view').innerHTML = '<div class="group pad"><b>Something went wrong showing this window.</b><div class="note">' + esc(e && e.message || e) + '</div></div>'; }
     if (d.id === 'chart') { drawChart(); }
     if (keep) { window.scrollTo(0, y); }
     lastKey = renderKey();
@@ -1142,9 +1227,9 @@ function livePatch() {
     var els = document.querySelectorAll('[data-px]'), i, t, el, s;
     for (i = 0; i < els.length; i++) { el = els[i]; t = S.tick[el.getAttribute('data-px')]; if (t) { s = fmtP(t.p); if (el.textContent !== s) { el.textContent = s; } } }
     els = document.querySelectorAll('[data-chg]');
-    for (i = 0; i < els.length; i++) { el = els[i]; t = S.tick[el.getAttribute('data-chg')]; if (t) { el.textContent = pct(t.chg) + (el.getAttribute('data-suf') || ''); el.className = 'chg ' + cc(t.chg); } }
+    for (i = 0; i < els.length; i++) { el = els[i]; s = el.getAttribute('data-chg'); if (S.tick[s]) { var cg = chgOf(s); el.textContent = pct(cg.v) + (el.getAttribute('data-lbl') === '1' ? chgLbl(cg.kind) : ''); el.className = 'chg ' + cc(cg.v); } }
     els = document.querySelectorAll('[data-chip]');
-    for (i = 0; i < els.length; i++) { el = els[i]; t = S.tick[el.getAttribute('data-chip')]; if (t) { el.textContent = pct(t.chg); el.className = 'badge ' + (t.chg >= 0 ? 'long' : 'short'); } }
+    for (i = 0; i < els.length; i++) { el = els[i]; s = el.getAttribute('data-chip'); if (S.tick[s]) { var cq = chgOf(s); el.textContent = pct(cq.v); el.className = 'badge ' + (cq.v >= 0 ? 'long' : 'short'); } }
 }
 var TABS = [['overview', 'Home', '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'],
     ['morning', 'New Day', '<circle cx="12" cy="14" r="4"/><path d="M12 3v3M4.5 7.5l2 2M19.5 7.5l-2 2M2 18h20"/>'],
@@ -1206,6 +1291,7 @@ document.addEventListener('click', function (e) {
     else if (p[0] === 'mkt') { S.mkt = v; renderView(); } else if (p[0] === 'scanf') { S.scanf = v; renderView(); }
     else if (p[0] === 'chart') { if (SYM_OK.test(v)) { S.chart.sym = v; lss('mintoosuite_chart', v); gotoWin('chart'); } }
     else if (p[0] === 'tf') { S.chart.tf = v; renderView(); loadChart(); }
+    else if (p[0] === 'lev') { S.lev = Math.max(1, Math.min(125, +v || 1)); lss('mintoosuite_lev', String(S.lev)); renderView(true); }
     else if (p[0] === 'set') { setPref(v); }
     else if (a === 'clearlog') { S.log = []; lss('mintoosuite_log', '[]'); renderView(); }
 });
