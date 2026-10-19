@@ -367,6 +367,9 @@ function engineBoot(self) {
                 var after = m15.filter(function (x) { return x.t >= D + QMS && x.t < D + DAYMS; }), fhEnd = D + QMS + 4 * 3600000;
                 p.dayRes = evalTrade(p.day, p.entry, p.dSL, p.dTP, after, D + DAYMS, now);
                 p.fhRes = evalTrade(p.fh, p.entry, p.fSL, p.fTP, after.filter(function (x) { return x.t < fhEnd; }), fhEnd, now);
+                var opp = function (s) { return s === 'LONG' ? 'SHORT' : s === 'SHORT' ? 'LONG' : 'WAIT'; }, afterFh = after.filter(function (x) { return x.t < fhEnd; });
+                p.dayInv = evalTrade(opp(p.day), p.entry, p.dSL, p.dTP, after, D + DAYMS, now);
+                p.fhInv = evalTrade(opp(p.fh), p.entry, p.fSL, p.fTP, afterFh, fhEnd, now);
                 return p;
             }
             var hist = [], i, q;
@@ -408,7 +411,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-18.4';
+var BUILD = '2026-10-18.5';
 var S = { dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -1124,8 +1127,10 @@ function vMorning() {
     var items = S.morning.D === D0 ? S.morning.items : [];
     if (!items.length) { return h + skel(3, 200) + '<div class="note">Building the plan from real candles… this takes a few seconds.</div>'; }
     var d = recStats(items, 'dayRes'), f = recStats(items, 'fhRes');
-    function trk(t, s) { return '<div class="pad" style="border-top:1px solid var(--line)"><b>' + t + '</b><div class="lv x2"><div><span>TARGET</span><b class="up">' + s.w + '</b></div><div><span>STOP</span><b class="dn">' + s.l + '</b></div><div><span>TIMEOUT</span><b>' + s.t + '</b></div><div><span>WIN RATE</span><b>' + s.wr + '%</b></div></div><div class="note" style="margin:8px 0 0">' + s.n + ' plans took a trade • average <b class="' + (s.avg >= 0 ? 'up' : 'dn') + '">' + (s.avg >= 0 ? '+' : '') + s.avg.toFixed(2) + '%</b> per plan = ' + usd(s.avg) + ' per $100 after fees</div></div>'; }
-    h += sh('Track record: last 9 days replayed') + '<div class="group">' + trk('Whole-day plans', d) + trk('Few-hours plans', f) + '</div><div class="note">A replay of the same rules on real past candles, not live trading. Past results do not guarantee future results. If the stop and target were both touched in one 15-minute candle, the stop is counted first.</div>';
+    function line2(s, label) { return '<div class="note" style="margin:6px 0 0">' + label + ': ' + s.n + ' plans took a trade, ' + s.w + ' target · ' + s.l + ' stop · ' + s.t + ' timeout, average <b class="' + (s.avg >= 0 ? 'up' : 'dn') + '">' + (s.avg >= 0 ? '+' : '') + s.avg.toFixed(2) + '%</b> per plan = ' + usd(s.avg) + ' per $100 after fees</div>'; }
+    function trk(t, s, inv) { return '<div class="pad" style="border-top:1px solid var(--line)"><b>' + t + '</b><div class="lv x2"><div><span>TARGET</span><b class="up">' + s.w + '</b></div><div><span>STOP</span><b class="dn">' + s.l + '</b></div><div><span>TIMEOUT</span><b>' + s.t + '</b></div><div><span>WIN RATE</span><b>' + s.wr + '%</b></div></div>' + line2(s, 'As signalled') + line2(inv, 'Opposite side every time') + '</div>'; }
+    var di = recStats(items, 'dayInv'), fi = recStats(items, 'fhInv');
+    h += sh('Track record: last 9 days replayed') + '<div class="group">' + trk('Whole-day plans', d, di) + trk('Few-hours plans', f, fi) + '</div><div class="note">Doing the opposite of every signal is not a fix. With the same stop, target and fees, a signal with no real edge loses on both sides. Only a result that holds over many days would justify it, and 9 days is too short to trust. A replay of the same rules on real past candles, not live trading. Past results do not guarantee future results. If the stop and target were both touched in one 15-minute candle, the stop is counted first.</div>';
     var ok = items.filter(function (o) { return o.today; }), solid = ok.filter(isSolid).sort(function (a, b) { return b.today.dayPct - a.today.dayPct; }), rest = ok.filter(function (o) { return !isSolid(o); });
     if (S.morning.goldClosed) { h += '<div class="warn">Exness gold has no plan today because the market is closed (weekend).</div>'; }
     h += sh('✅ Solid setups', solid.length) + (solid.length ? solid.map(morningCard).join('') : '<div class="group pad mut">No coin has a solid setup today (whole day and few hours must agree). Waiting is also a position.</div>');
