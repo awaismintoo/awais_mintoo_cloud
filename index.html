@@ -430,7 +430,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-20.1';
+var BUILD = '2026-10-20.5';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -1274,6 +1274,391 @@ document.addEventListener('click', function (e) {
     if (el.getAttribute('data-cb') === 'run') { cbRun(); } else { S.anchor = 'roll'; lss('mintoosuite_anchor', 'roll'); renderView(true); }
 });
 // ---------- windows ----------
+/* MintooSuite self-custody wallet. Keys never leave this phone. */
+var MW = (function () {
+    'use strict';
+    var P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn;
+    var N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;
+    var G = [0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n, 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n];
+    var M64 = (1n << 64n) - 1n, te = new TextEncoder(), sub = crypto.subtle;
+    var st = { mode: 'home', msg: '', busy: false, bal: null, balAt: 0 }, f = {};
+    function mod(a, m) { a %= m; return a < 0n ? a + m : a; }
+    function inv(a, m) { var r0 = m, r1 = mod(a, m), t0 = 0n, t1 = 1n, q, t; while (r1) { q = r0 / r1; t = r0 - q * r1; r0 = r1; r1 = t; t = t0 - q * t1; t0 = t1; t1 = t; } return mod(t0, m); }
+    function pAdd(a, b) {
+        if (!a) { return b; } if (!b) { return a; }
+        var l; if (a[0] === b[0]) { if (mod(a[1] + b[1], P) === 0n) { return null; } l = mod(3n * a[0] * a[0] * inv(2n * a[1], P), P); } else { l = mod((b[1] - a[1]) * inv(b[0] - a[0], P), P); }
+        var x = mod(l * l - a[0] - b[0], P); return [x, mod(l * (a[0] - x) - a[1], P)];
+    }
+    function mul(k) { var r = null, q = G; while (k > 0n) { if (k & 1n) { r = pAdd(r, q); } q = pAdd(q, q); k >>= 1n; } return r; }
+    function hex(u) { return Array.prototype.map.call(u, function (b) { return (b < 16 ? '0' : '') + b.toString(16); }).join(''); }
+    function b2n(u) { return u.length ? BigInt('0x' + hex(u)) : 0n; }
+    function n2b(n, len) { var h = n.toString(16); while (h.length < len * 2) { h = '0' + h; } var o = new Uint8Array(len), i; for (i = 0; i < len; i++) { o[i] = parseInt(h.substr(i * 2, 2), 16); } return o; }
+    function cat() { var a = Array.prototype.slice.call(arguments), n = 0, o, i, p = 0; a.forEach(function (x) { n += x.length; }); o = new Uint8Array(n); for (i = 0; i < a.length; i++) { o.set(a[i], p); p += a[i].length; } return o; }
+    async function dg(alg, d) { return new Uint8Array(await sub.digest(alg, d)); }
+    async function hmac512(key, data) { var k = await sub.importKey('raw', key, { name: 'HMAC', hash: 'SHA-512' }, false, ['sign']); return new Uint8Array(await sub.sign('HMAC', k, data)); }
+    async function pbkdf(pw, salt, it, hash, bits) { var k = await sub.importKey('raw', te.encode(pw), 'PBKDF2', false, ['deriveBits']); return new Uint8Array(await sub.deriveBits({ name: 'PBKDF2', salt: salt, iterations: it, hash: hash }, k, bits)); }
+    /* keccak-256 */
+    var KR = (function () { var r = [], x = 1, y = 0, t, i, nx; for (i = 0; i < 25; i++) { r.push(0); } for (t = 0; t < 24; t++) { r[x + 5 * y] = ((t + 1) * (t + 2) / 2) % 64; nx = y; y = (2 * x + 3 * y) % 5; x = nx; } return r; })();
+    var KC = (function () { var R = 1, out = [], i, j, c; for (i = 0; i < 24; i++) { c = 0n; for (j = 0; j < 7; j++) { R = ((R << 1) ^ ((R >> 7) * 0x71)) & 255; if (R & 2) { c |= 1n << BigInt((1 << j) - 1); } } out.push(c); } return out; })();
+    function rotl(v, n) { return n === 0 ? v : ((v << BigInt(n)) | (v >> BigInt(64 - n))) & M64; }
+    function keccak(msg) {
+        var A = [], B = [], C = [], i, j, x, y, rd, off, v, D, rate = 136, p;
+        for (i = 0; i < 25; i++) { A.push(0n); B.push(0n); }
+        p = new Uint8Array(Math.ceil((msg.length + 1) / rate) * rate); p.set(msg); p[msg.length] ^= 1; p[p.length - 1] ^= 0x80;
+        for (off = 0; off < p.length; off += rate) {
+            for (i = 0; i < 17; i++) { v = 0n; for (j = 7; j >= 0; j--) { v = (v << 8n) | BigInt(p[off + i * 8 + j]); } A[i] ^= v; }
+            for (rd = 0; rd < 24; rd++) {
+                for (x = 0; x < 5; x++) { C[x] = A[x] ^ A[x + 5] ^ A[x + 10] ^ A[x + 15] ^ A[x + 20]; }
+                for (x = 0; x < 5; x++) { D = C[(x + 4) % 5] ^ rotl(C[(x + 1) % 5], 1); for (y = 0; y < 5; y++) { A[x + 5 * y] ^= D; } }
+                for (x = 0; x < 5; x++) { for (y = 0; y < 5; y++) { B[y + 5 * ((2 * x + 3 * y) % 5)] = rotl(A[x + 5 * y], KR[x + 5 * y]); } }
+                for (x = 0; x < 5; x++) { for (y = 0; y < 5; y++) { A[x + 5 * y] = B[x + 5 * y] ^ ((M64 ^ B[(x + 1) % 5 + 5 * y]) & B[(x + 2) % 5 + 5 * y]); } }
+                A[0] ^= KC[rd];
+            }
+        }
+        return cat(n2b(A[0], 8).reverse(), n2b(A[1], 8).reverse(), n2b(A[2], 8).reverse(), n2b(A[3], 8).reverse());
+    }
+    /* ripemd-160 */
+    var RL = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,7,4,13,1,10,6,15,3,12,0,9,5,2,14,11,8,3,10,14,4,9,15,8,1,2,7,0,6,13,11,5,12,1,9,11,10,0,8,12,4,13,3,7,15,14,5,6,2,4,0,5,9,7,12,2,10,14,1,3,8,11,6,15,13];
+    var RR = [5,14,7,0,9,2,11,4,13,6,15,8,1,10,3,12,6,11,3,7,0,13,5,10,14,15,8,12,4,9,1,2,15,5,1,3,7,14,6,9,11,8,12,2,10,0,4,13,8,6,4,1,3,11,15,0,5,12,2,13,9,7,10,14,12,15,10,4,1,5,8,7,6,2,13,14,0,3,9,11];
+    var SL = [11,14,15,12,5,8,7,9,11,13,14,15,6,7,9,8,7,6,8,13,11,9,7,15,7,12,15,9,11,7,13,12,11,13,6,7,14,9,13,15,14,8,13,6,5,12,7,5,11,12,14,15,14,15,9,8,9,14,5,6,8,6,5,12,9,15,5,11,6,8,13,12,5,12,13,14,11,8,5,6];
+    var SR = [8,9,9,11,13,15,15,5,7,7,8,11,14,14,12,6,9,13,15,7,12,8,9,11,7,7,12,7,6,15,13,11,9,7,15,11,8,6,6,14,12,13,5,14,13,13,7,5,15,5,8,11,14,14,6,14,6,9,12,9,12,5,15,8,8,5,12,9,12,5,14,6,8,13,6,5,15,13,11,11];
+    var KL = [0, 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xA953FD4E], KRr = [0x50A28BE6, 0x5C4DD124, 0x6D703EF3, 0x7A6D76E9, 0];
+    function rol(x, n) { return (x << n) | (x >>> (32 - n)); }
+    function rf(j, x, y, z) { return j < 16 ? (x ^ y ^ z) : j < 32 ? ((x & y) | (~x & z)) : j < 48 ? ((x | ~y) ^ z) : j < 64 ? ((x & z) | (y & ~z)) : (x ^ (y | ~z)); }
+    function ripemd(msg) {
+        var h = [0x67452301, 0xEFCDAB89 | 0, 0x98BADCFE | 0, 0x10325476, 0xC3D2E1F0 | 0], l = msg.length, n = Math.ceil((l + 9) / 64) * 64, p = new Uint8Array(n), X = new Array(16), b, i, j, T, al, bl, cl, dl, el, ar, br, cr, dr, er, bits = l * 8;
+        p.set(msg); p[l] = 0x80; p[n - 8] = bits & 255; p[n - 7] = (bits >>> 8) & 255; p[n - 6] = (bits >>> 16) & 255; p[n - 5] = (bits >>> 24) & 255; p[n - 4] = Math.floor(bits / 4294967296) & 255;
+        for (b = 0; b < n; b += 64) {
+            for (i = 0; i < 16; i++) { X[i] = p[b + i * 4] | (p[b + i * 4 + 1] << 8) | (p[b + i * 4 + 2] << 16) | (p[b + i * 4 + 3] << 24); }
+            al = ar = h[0]; bl = br = h[1]; cl = cr = h[2]; dl = dr = h[3]; el = er = h[4];
+            for (j = 0; j < 80; j++) {
+                T = (rol((al + rf(j, bl, cl, dl) + X[RL[j]] + KL[j >> 4]) | 0, SL[j]) + el) | 0; al = el; el = dl; dl = rol(cl, 10); cl = bl; bl = T;
+                T = (rol((ar + rf(79 - j, br, cr, dr) + X[RR[j]] + KRr[j >> 4]) | 0, SR[j]) + er) | 0; ar = er; er = dr; dr = rol(cr, 10); cr = br; br = T;
+            }
+            T = (h[1] + cl + dr) | 0; h[1] = (h[2] + dl + er) | 0; h[2] = (h[3] + el + ar) | 0; h[3] = (h[4] + al + br) | 0; h[4] = (h[0] + bl + cr) | 0; h[0] = T;
+        }
+        var o = new Uint8Array(20); for (i = 0; i < 20; i++) { o[i] = (h[i >> 2] >>> ((i & 3) * 8)) & 255; } return o;
+    }
+    /* BIP39 / BIP32 */
+    function words() { if (typeof MW_WORDS === 'undefined' || MW_WORDS.length !== 2048) { throw new Error('Word list missing. Reinstall the app update.'); } return MW_WORDS; }
+    async function genPhrase() {
+        var ent = crypto.getRandomValues(new Uint8Array(16)), cs = (await dg('SHA-256', ent))[0] >> 4, bits = '', i, w = words(), out = [];
+        for (i = 0; i < 16; i++) { bits += ('0000000' + ent[i].toString(2)).slice(-8); } bits += ('000' + cs.toString(2)).slice(-4);
+        for (i = 0; i < 12; i++) { out.push(w[parseInt(bits.substr(i * 11, 11), 2)]); }
+        return out.join(' ');
+    }
+    async function checkPhrase(ph) {
+        var a = ph.trim().toLowerCase().split(/\s+/), w = words(), bits = '', i, idx, ent, cs;
+        if (a.length !== 12) { return 'Please enter exactly 12 words.'; }
+        for (i = 0; i < 12; i++) { idx = w.indexOf(a[i]); if (idx < 0) { return 'Word ' + (i + 1) + ' ("' + a[i] + '") is not in the word list.'; } bits += ('00000000000' + idx.toString(2)).slice(-11); }
+        ent = new Uint8Array(16); for (i = 0; i < 16; i++) { ent[i] = parseInt(bits.substr(i * 8, 8), 2); }
+        cs = (await dg('SHA-256', ent))[0] >> 4; if (cs !== parseInt(bits.substr(128, 4), 2)) { return 'This phrase has a wrong word or a wrong order (checksum failed).'; }
+        return '';
+    }
+    async function child(par, i) {
+        var d = i >= 0x80000000 ? cat(new Uint8Array([0]), n2b(par.k, 32)) : cat(pub(par.k), new Uint8Array(0)), I;
+        d = cat(d, n2b(BigInt(i), 4)); I = await hmac512(par.c, d);
+        return { k: mod(b2n(I.slice(0, 32)) + par.k, N), c: I.slice(32) };
+    }
+    function pub(k) { var p = mul(k); return cat(new Uint8Array([p[1] & 1n ? 3 : 2]), n2b(p[0], 32)); }
+    async function derive(phrase, path) {
+        var seed = await pbkdf(phrase.trim().toLowerCase().split(/\s+/).join(' ').normalize('NFKD'), te.encode('mnemonic'), 2048, 'SHA-512', 512), I = await hmac512(te.encode('Bitcoin seed'), seed), n = { k: b2n(I.slice(0, 32)), c: I.slice(32) }, i, s;
+        for (i = 0; i < path.length; i++) { s = path[i]; n = await child(n, s); }
+        return n.k;
+    }
+    var H = 0x80000000;
+    async function evmAddr(phrase) {
+        var k = await derive(phrase, [44 + H, 60 + H, 0 + H, 0, 0]), p = mul(k), h = hex(keccak(cat(n2b(p[0], 32), n2b(p[1], 32))).slice(12)), ch = hex(keccak(te.encode(h))), o = '0x', i;
+        for (i = 0; i < 40; i++) { o += parseInt(ch[i], 16) >= 8 ? h[i].toUpperCase() : h[i]; } return o;
+    }
+    var BC = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+    function bpoly(v) { var g = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3], c = 1, i, j, b; for (i = 0; i < v.length; i++) { b = c >>> 25; c = ((c & 0x1ffffff) << 5) ^ v[i]; for (j = 0; j < 5; j++) { if ((b >>> j) & 1) { c ^= g[j]; } } } return c; }
+    function bech32(hrp, ver, prog) {
+        var d = [ver], acc = 0, bits = 0, i, v, hx = [], r, s;
+        for (i = 0; i < prog.length; i++) { acc = (acc << 8) | prog[i]; bits += 8; while (bits >= 5) { bits -= 5; d.push((acc >> bits) & 31); } acc &= (1 << bits) - 1; }
+        if (bits) { d.push((acc << (5 - bits)) & 31); }
+        for (i = 0; i < hrp.length; i++) { hx.push(hrp.charCodeAt(i) >> 5); } hx.push(0); for (i = 0; i < hrp.length; i++) { hx.push(hrp.charCodeAt(i) & 31); }
+        r = bpoly(hx.concat(d, [0, 0, 0, 0, 0, 0])) ^ 1; s = hrp + '1'; for (i = 0; i < d.length; i++) { s += BC[d[i]]; } for (i = 0; i < 6; i++) { s += BC[(r >>> (5 * (5 - i))) & 31]; } return s;
+    }
+    async function btcAddr(phrase) { var k = await derive(phrase, [84 + H, 0 + H, 0 + H, 0, 0]); return bech32('bc', 0, ripemd(await dg('SHA-256', pub(k)))); }
+    /* encrypted storage */
+    function b64(u) { var s = '', i; for (i = 0; i < u.length; i++) { s += String.fromCharCode(u[i]); } return btoa(s); }
+    function unb64(s) { var b = atob(s), u = new Uint8Array(b.length), i; for (i = 0; i < b.length; i++) { u[i] = b.charCodeAt(i); } return u; }
+    async function aesKey(pw, salt, use) { return sub.importKey('raw', await pbkdf(pw, salt, 250000, 'SHA-256', 256), 'AES-GCM', false, [use]); }
+    async function seal(phrase, pw) { var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), c = await sub.encrypt({ name: 'AES-GCM', iv: iv }, await aesKey(pw, salt, 'encrypt'), te.encode(phrase)); return JSON.stringify({ v: 1, s: b64(salt), i: b64(iv), c: b64(new Uint8Array(c)) }); }
+    async function unseal(blob, pw) { var o = JSON.parse(blob), p = await sub.decrypt({ name: 'AES-GCM', iv: unb64(o.i) }, await aesKey(pw, unb64(o.s), 'decrypt'), unb64(o.c)); return new TextDecoder().decode(p); }
+    function store(k, v) { try { if (v === null) { localStorage.removeItem(k); } else { localStorage.setItem(k, v); } } catch (e) { throw new Error('This phone would not let the app save the wallet.'); } }
+    function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function pubs() { try { return JSON.parse(load('mw_pub') || 'null'); } catch (e) { return null; } }
+    async function save(phrase, pw) { var a = await evmAddr(phrase), b = await btcAddr(phrase); store('mw_vault', await seal(phrase, pw)); store('mw_pub', JSON.stringify({ evm: a, btc: b })); }
+    /* balances (read only, public data) */
+    function fmt(v, d) { var s = v.toString(); while (s.length <= d) { s = '0' + s; } var i = s.slice(0, s.length - d), fr = s.slice(s.length - d, s.length - d + 6).replace(/0+$/, ''); return i + (fr ? '.' + fr : ''); }
+    async function jget(url, opt) { var c = new AbortController(), t = setTimeout(function () { c.abort(); }, 10000); try { opt = opt || {}; opt.signal = c.signal; var r = await fetch(url, opt); if (!r.ok) { throw new Error('http'); } return await r.json(); } finally { clearTimeout(t); } }
+    async function rpcRaw(url, method, params) { var j = await jget(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: method, params: params }) }); if (j.error || !j.result) { throw new Error(j.error && j.error.message ? j.error.message : 'The network did not answer.'); } return j.result; }
+    async function rpc(url, method, params) { return BigInt(await rpcRaw(url, method, params)); }
+    async function balances() {
+        var p = pubs(), o = {}, tasks = [], pad = p.evm.slice(2).toLowerCase();
+        function tokBal(nd, sym, addr, dec) { tasks.push([sym + ' (' + nd.s + ')', function () { return rpc(nd.rpc, 'eth_call', [{ to: addr, data: '0x70a08231000000000000000000000000' + pad }, 'latest']).then(function (v) { return fmt(v, dec); }); }]); }
+        ['main', 'eth', 'poly', 'arb', 'base'].forEach(function (k) {
+            var nd = NETS[k]; tasks.push([nd.sym + ' (' + nd.s + ')', function () { return rpc(nd.rpc, 'eth_getBalance', [p.evm, 'latest']).then(function (v) { return fmt(v, 18); }); }]);
+            tokList(k).forEach(function (t) { tokBal(nd, t[0], t[1], t[2]); });
+        });
+        myTokens().forEach(function (t) { if (NETS[t.net] && NETS[t.net].rpc) { tokBal(NETS[t.net], t.sym, t.addr, t.dec); } });
+        tasks.push(['BTC (Bitcoin)', function () { return jget(BTCAPI + '/address/' + p.btc).then(function (j) { return fmt(BigInt(j.chain_stats.funded_txo_sum - j.chain_stats.spent_txo_sum), 8); }); }]);
+        await Promise.all(tasks.map(function (t) { return t[1]().then(function (v) { o[t[0]] = v; }, function () { o[t[0]] = null; }); }));
+        return o;
+    }
+        /* signing and sending (BNB Smart Chain, legacy EIP-155 transactions) */
+    function unhex(h) { if (h.length % 2) { h = '0' + h; } var o = new Uint8Array(h.length / 2), i; for (i = 0; i < o.length; i++) { o[i] = parseInt(h.substr(i * 2, 2), 16); } return o; }
+    function ni(n) { return n === 0n ? new Uint8Array(0) : unhex(n.toString(16)); }
+    function rlpLen(l, o) { if (l < 56) { return new Uint8Array([o + l]); } var lb = unhex(l.toString(16)); return cat(new Uint8Array([o + 55 + lb.length]), lb); }
+    function rlpB(b) { return (b.length === 1 && b[0] < 128) ? b : cat(rlpLen(b.length, 128), b); }
+    function rlpL(items) { var p = cat.apply(null, items.map(rlpB)); return cat(rlpLen(p.length, 192), p); }
+    async function hm256(key, data) { var ck = await sub.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']); return new Uint8Array(await sub.sign('HMAC', ck, data)); }
+    async function rfc6979(k, h) {
+        var x = n2b(k, 32), h1 = n2b(mod(b2n(h), N), 32), v = new Uint8Array(32).fill(1), kk = new Uint8Array(32), c;
+        kk = await hm256(kk, cat(v, new Uint8Array([0]), x, h1)); v = await hm256(kk, v);
+        kk = await hm256(kk, cat(v, new Uint8Array([1]), x, h1)); v = await hm256(kk, v);
+        for (;;) { v = await hm256(kk, v); c = b2n(v); if (c >= 1n && c < N) { return c; } kk = await hm256(kk, cat(v, new Uint8Array([0]))); v = await hm256(kk, v); }
+    }
+    async function sign(h, k) { var d = await rfc6979(k, h), R = mul(d), r = mod(R[0], N), s = mod(inv(d, N) * (b2n(h) + r * k), N), rec = Number(R[1] & 1n); if (s > N / 2n) { s = N - s; rec ^= 1; } return { r: r, s: s, rec: rec }; }
+    async function signTx(k, t) {
+        var base = [ni(t.nonce), ni(t.gasPrice), ni(t.gas), unhex(t.to.slice(2)), ni(t.value), t.data], cid = BigInt(t.chainId), h = keccak(rlpL(base.concat([ni(cid), new Uint8Array(0), new Uint8Array(0)]))), sg = await sign(h, k), v = BigInt(sg.rec) + cid * 2n + 35n, raw = rlpL(base.concat([ni(v), ni(sg.r), ni(sg.s)]));
+        return { raw: '0x' + hex(raw), hash: '0x' + hex(keccak(raw)) };
+    }
+    function csum(a) { var h = a.slice(2).toLowerCase(), ch = hex(keccak(te.encode(h))), o = '0x', i; for (i = 0; i < 40; i++) { o += parseInt(ch[i], 16) >= 8 ? h[i].toUpperCase() : h[i]; } return o; }
+    function okAddr(a) { if (!/^0x[0-9a-fA-F]{40}$/.test(a)) { return false; } var b = a.slice(2); return (b === b.toLowerCase() || b === b.toUpperCase()) ? true : csum(a) === a; }
+    function parseAmt(s, d) { s = (s || '').trim(); if (!/^\d+(\.\d+)?$/.test(s)) { return null; } var p = s.split('.'); if (p[1] && p[1].length > d) { return null; } var v = BigInt(p[0] + ((p[1] || '') + '0'.repeat(d)).slice(0, d)); return v > 0n ? v : null; }
+    var NETS = {
+        prac: { n: 'Practice (virtual money, nothing is sent)', s: 'Practice', id: 56, rpc: '', sym: 'BNB' },
+        test: { n: 'BNB test network (free test coins)', s: 'BNB test', id: 97, rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545/', sym: 'tBNB' },
+        main: { n: 'BNB Smart Chain, BEP-20 (REAL money)', s: 'BNB Smart Chain', id: 56, rpc: 'https://bsc-dataseed.binance.org/', sym: 'BNB', real: 1 },
+        eth: { n: 'Ethereum (REAL money)', s: 'Ethereum', id: 1, rpc: 'https://cloudflare-eth.com/', sym: 'ETH', real: 1 },
+        poly: { n: 'Polygon (REAL money)', s: 'Polygon', id: 137, rpc: 'https://polygon-rpc.com/', sym: 'POL', real: 1 },
+        arb: { n: 'Arbitrum One (REAL money)', s: 'Arbitrum', id: 42161, rpc: 'https://arb1.arbitrum.io/rpc', sym: 'ETH', real: 1 },
+        base: { n: 'Base (REAL money)', s: 'Base', id: 8453, rpc: 'https://mainnet.base.org', sym: 'ETH', real: 1 },
+        btc: { n: 'Bitcoin network (REAL money)', s: 'Bitcoin', kind: 'btc', sym: 'BTC', real: 1 }
+    };
+    var TOK = {
+        main: [['USDT', '0x55d398326f99059fF775485246999027B3197955', 18], ['USDC', '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', 18], ['BUSD', '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', 18]],
+        eth: [['USDT', '0xdAC17F958D2ee523a2206206994597C13D831ec7', 6], ['USDC', '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', 6]],
+        poly: [['USDT', '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', 6], ['USDC', '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', 6]],
+        arb: [['USDT', '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', 6], ['USDC', '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', 6]],
+        base: [['USDC', '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', 6]]
+    };
+    function tokList(net) { return TOK[net === 'prac' ? 'main' : net] || []; }
+    function assetsFor(net) {
+        var n = NETS[net], o = [], t = tokList(net), i;
+        if (n.kind === 'btc') { return [['BTC', 'Bitcoin (BTC)']]; }
+        o.push(['N', n.sym + ' (coin)']); for (i = 0; i < t.length; i++) { o.push(['T' + i, t[i][0] + ' (token)']); }
+        if (net === 'prac') { o.push(['BTC', 'Bitcoin (BTC)']); } else { o.push(['C', 'Other token (paste its contract address)']); }
+        return o;
+    }
+    function strDec(h) { var b = unhex(h.replace(/^0x/, '')), o, l, i, t = ''; if (b.length === 32) { for (i = 0; i < 32 && b[i]; i++) { t += String.fromCharCode(b[i]); } return t; } if (b.length >= 64) { o = Number(b2n(b.slice(0, 32))); l = Number(b2n(b.slice(o, o + 32))); for (i = 0; i < l; i++) { t += String.fromCharCode(b[o + 32 + i]); } return t; } return ''; }
+    async function tokenMeta(url, addr) {
+        var sy, dc, sym, dec;
+        try { sy = await rpcRaw(url, 'eth_call', [{ to: addr, data: '0x95d89b41' }, 'latest']); dc = await rpcRaw(url, 'eth_call', [{ to: addr, data: '0x313ce567' }, 'latest']); sym = strDec(sy); dec = Number(BigInt(dc)); } catch (e) { throw new Error('That address is not a token on this network (or the network did not answer).'); }
+        if (!/^[A-Za-z0-9.\-]{1,12}$/.test(sym) || !(dec >= 0 && dec <= 36)) { throw new Error('That address is not a normal token contract. Nothing was sent.'); }
+        return { sym: sym, dec: dec };
+    }
+    function myTokens() { try { return JSON.parse(load('mw_tokens') || '[]'); } catch (e) { return []; } }
+    function addToken(t) { var l = myTokens().filter(function (x) { return !(x.net === t.net && x.addr.toLowerCase() === t.addr.toLowerCase()); }); l.push(t); store('mw_tokens', JSON.stringify(l.slice(-20))); }
+
+    /* Bitcoin sending (native SegWit P2WPKH, BIP-143) */
+    var BTCAPI = 'https://blockstream.info/api';
+    function varint(n) { return n < 253 ? new Uint8Array([n]) : cat(new Uint8Array([253]), new Uint8Array([n & 255, n >> 8])); }
+    function le(n, len) { return n2b(BigInt(n), len).reverse(); }
+    async function dsha(b) { return dg('SHA-256', await dg('SHA-256', b)); }
+    function der(r, s2) { function int(v) { var b = n2b(v, 32), i = 0; while (i < 31 && b[i] === 0) { i++; } b = b.slice(i); if (b[0] & 128) { b = cat(new Uint8Array([0]), b); } return cat(new Uint8Array([2, b.length]), b); } var a = int(r), c = int(s2); return cat(new Uint8Array([0x30, a.length + c.length]), a, c); }
+    async function bip143(ver, hp, hs, op, sc, val, seq, ho, lock) { return dsha(cat(ver, hp, hs, op, sc, val, seq, ho, lock, le(1, 4))); }
+    function b58dec(s2) { var A = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz', n = 0n, i, z = 0, c; for (i = 0; i < s2.length; i++) { c = A.indexOf(s2[i]); if (c < 0) { return null; } n = n * 58n + BigInt(c); } for (i = 0; i < s2.length && s2[i] === '1'; i++) { z++; } var h = n === 0n ? '' : n.toString(16); if (h.length % 2) { h = '0' + h; } return cat(new Uint8Array(z), h ? unhex(h) : new Uint8Array(0)); }
+    async function btcDest(a) {
+        var low = a.toLowerCase(), i, d, v, prog, acc, bits, hp, chk;
+        if (low.indexOf('bc1') === 0 && (a === low || a === a.toUpperCase())) {
+            if (low.length < 14 || low.length > 74) { throw new Error('That Bitcoin address has the wrong length.'); }
+            d = []; for (i = 3; i < low.length; i++) { v = BC.indexOf(low[i]); if (v < 0) { throw new Error('That Bitcoin address has a wrong character.'); } d.push(v); }
+            hp = [3, 3, 0, 2, 3]; if (bpoly(hp.concat(d)) !== 1) { if (low.indexOf('bc1p') === 0) { throw new Error('Taproot addresses (bc1p…) are not supported yet. Ask for a bc1q… address.'); } throw new Error('That Bitcoin address is not valid (checksum failed). Paste it again.'); }
+            d = d.slice(0, d.length - 6); if (d[0] !== 0) { throw new Error('Only standard Bitcoin addresses are supported (bc1q…, 1…, 3…).'); }
+            prog = []; acc = 0; bits = 0; for (i = 1; i < d.length; i++) { acc = (acc << 5) | d[i]; bits += 5; while (bits >= 8) { bits -= 8; prog.push((acc >> bits) & 255); } acc &= (1 << bits) - 1; }
+            if (bits >= 5 || (acc << (8 - bits)) & 255) { throw new Error('That Bitcoin address is not valid.'); }
+            if (prog.length === 20) { return cat(new Uint8Array([0, 20]), new Uint8Array(prog)); }
+            if (prog.length === 32) { return cat(new Uint8Array([0, 32]), new Uint8Array(prog)); }
+            throw new Error('That Bitcoin address is not valid.');
+        }
+        d = b58dec(a); if (!d || d.length !== 25) { throw new Error('That is not a valid Bitcoin address. Paste it again.'); }
+        chk = (await dsha(d.slice(0, 21))).slice(0, 4); for (i = 0; i < 4; i++) { if (chk[i] !== d[21 + i]) { throw new Error('That Bitcoin address is not valid (checksum failed). Paste it again.'); } }
+        if (d[0] === 0) { return cat(unhex('76a914'), d.slice(1, 21), unhex('88ac')); }
+        if (d[0] === 5) { return cat(unhex('a914'), d.slice(1, 21), unhex('87')); }
+        throw new Error('That is not a Bitcoin address (wrong type).');
+    }
+    function vsz(nIn, outs) { var t = 11 + 68 * nIn, i; for (i = 0; i < outs.length; i++) { t += 9 + outs[i]; } return t; }
+    async function prepareBtc() {
+        var p = pubs(), to = (f.to || '').trim(), amt = parseAmt(f.amt, 8), dest, me, utxos, rate, j, fe, i, k, sum, n, fN, fC, r, DUST = 294n;
+        if (f.net !== 'prac' && f.net !== 'btc') { throw new Error('Bitcoin has no test network here. Choose Practice, or the Bitcoin network with a very small amount.'); }
+        dest = await btcDest(to); me = await btcDest(p.btc);
+        if (hex(dest) === hex(me)) { throw new Error('That is your own address. Enter the address you want to send to.'); }
+        if (!amt) { throw new Error('Enter an amount such as 0.0005 (more than zero, up to 8 decimals).'); }
+        if (amt < DUST) { throw new Error('That amount is too small for Bitcoin (minimum 0.00000294).'); }
+        if (f.net === 'prac') { utxos = [{ txid: '11'.repeat(32), vout: 0, value: 200000n }]; rate = 5n; }
+        else {
+            j = await jget(BTCAPI + '/address/' + p.btc + '/utxo'); utxos = j.filter(function (u) { return u.status && u.status.confirmed; }).map(function (u) { return { txid: u.txid, vout: u.vout, value: BigInt(u.value) }; });
+            fe = await jget(BTCAPI + '/fee-estimates'); rate = BigInt(Math.max(2, Math.ceil(fe['3'] || fe['6'] || 5)));
+        }
+        if (rate > 500n) { throw new Error('Bitcoin network fees are extremely high right now. Try again later.'); }
+        utxos.sort(function (a, b) { return a.value < b.value ? 1 : -1; });
+        for (k = 1; k <= utxos.length; k++) {
+            sum = 0n; for (i = 0; i < k; i++) { sum += utxos[i].value; }
+            fN = rate * BigInt(vsz(k, [dest.length])); fC = rate * BigInt(vsz(k, [dest.length, me.length]));
+            if (sum >= amt + fC + DUST) { r = { ins: utxos.slice(0, k), outs: [{ script: dest, value: amt }, { script: me, value: sum - amt - fC }], fee: fC, vs: vsz(k, [dest.length, me.length]) }; break; }
+            if (sum >= amt + fN) { r = { ins: utxos.slice(0, k), outs: [{ script: dest, value: amt }], fee: sum - amt, vs: vsz(k, [dest.length]) }; break; }
+        }
+        if (!r) { throw new Error('Not enough confirmed BTC for the amount plus the network fee. Wait for pending coins to confirm, or send less.'); }
+        if (r.fee > amt) { throw new Error('The network fee (' + fmt(r.fee, 8) + ' BTC) is bigger than the amount. Send a larger amount.'); }
+        r.net = f.net || 'prac'; r.asset = 'BTC'; r.sym = 'BTC'; r.dec = 8; r.fsym = 'BTC'; r.fdec = 8; r.to = to; r.amt = amt; r.rate = rate; return r;
+    }
+    async function btcBuild(k, ins, outs) {
+        var pk = pub(k), h160 = ripemd(await dg('SHA-256', pk)), seq = le(0xfffffffd, 4), ver = le(2, 4), lock = new Uint8Array(4), ops = ins.map(function (x) { return cat(unhex(x.txid).reverse(), le(x.vout, 4)); }), oser = outs.map(function (o) { return cat(le(o.value, 8), varint(o.script.length), o.script); }), hp = await dsha(cat.apply(null, ops)), hs = await dsha(cat.apply(null, ins.map(function () { return seq; }))), ho = await dsha(cat.apply(null, oser)), sc = cat(unhex('1976a914'), h160, unhex('88ac')), wit = [], i, sh, sg, sig, body, vin = [];
+        for (i = 0; i < ins.length; i++) {
+            sh = await bip143(ver, hp, hs, ops[i], sc, le(ins[i].value, 8), seq, ho, lock); sg = await sign(sh, k); sig = cat(der(sg.r, sg.s), new Uint8Array([1]));
+            wit.push(cat(new Uint8Array([2]), varint(sig.length), sig, varint(33), pk)); vin.push(cat(ops[i], new Uint8Array([0]), seq));
+        }
+        body = cat(varint(ins.length), cat.apply(null, vin), varint(outs.length), cat.apply(null, oser));
+        return { raw: hex(cat(ver, new Uint8Array([0, 1]), body, cat.apply(null, wit), lock)), txid: hex((await dsha(cat(ver, body, lock))).reverse()) };
+    }
+    async function sendBtc(r) {
+        var ph = await getPhrase(f.pw), k = await derive(ph, [84 + H, 0 + H, 0 + H, 0, 0]), t, txid, res; ph = null;
+        t = await btcBuild(k, r.ins, r.outs); k = 0n; txid = t.txid;
+        if (r.net !== 'prac') {
+            res = await fetch(BTCAPI + '/tx', { method: 'POST', body: t.raw }); txid = (await res.text()).trim();
+            if (!res.ok || !/^[0-9a-f]{64}$/.test(txid)) { throw new Error('The Bitcoin network refused the transaction: ' + txid.slice(0, 120)); }
+        }
+        return { hash: txid, practice: r.net === 'prac', raw: t.raw, sum: r };
+    }
+    function lockLeft() { return Math.max(0, +(load('mw_lock') || 0) - Date.now()); }
+    async function getPhrase(pw) {
+        var l = lockLeft(), n; if (l > 0) { throw new Error('Too many wrong passwords. Try again in ' + Math.ceil(l / 60000) + ' minute(s).'); }
+        try { var ph = await unseal(load('mw_vault'), pw || ''); store('mw_fail', '0'); return ph; } catch (e) { n = (+(load('mw_fail') || 0)) + 1; store('mw_fail', String(n)); if (n >= 5) { store('mw_lock', String(Date.now() + 300000)); store('mw_fail', '0'); throw new Error('Wrong password. The wallet is locked for 5 minutes.'); } throw new Error('Wrong password. ' + (5 - n) + ' tries left before a 5 minute lock.'); }
+    }
+    async function prepare() {
+        var net = f.net || 'prac', nd = NETS[net], asset = f.asset || (nd.kind === 'btc' ? 'BTC' : 'N');
+        if (asset === 'BTC' || nd.kind === 'btc') { return prepareBtc(); }
+        var p = pubs(), to = (f.to || '').trim(), list = tokList(net), tok = null, sym = nd.sym, dec = 18, custom = false, m, amt, r, tx, fee, est, ca;
+        if (!okAddr(to)) { throw new Error('That is not a valid address (or its capital letters are wrong). Paste it again.'); }
+        if (to.toLowerCase() === p.evm.toLowerCase()) { throw new Error('That is your own address. Enter the address you want to send to.'); }
+        if (asset.charAt(0) === 'T') { tok = list[+asset.slice(1)]; if (!tok) { throw new Error('Choose a token.'); } }
+        else if (asset === 'C') {
+            if (net === 'prac') { throw new Error('Other tokens need a real or test network. In Practice, choose a listed token.'); }
+            ca = (f.caddr || '').trim(); if (!okAddr(ca)) { throw new Error('The token contract address is not valid. Paste it again.'); } tok = ['?', ca, 18]; custom = true;
+        }
+        if (tok) {
+            if (net === 'prac') { sym = tok[0]; dec = tok[2]; }
+            else { m = await tokenMeta(nd.rpc, tok[1]); if (!custom && m.sym !== tok[0]) { throw new Error('Safety stop: the contract at this address calls itself "' + m.sym + '", not ' + tok[0] + '. Nothing was sent.'); } sym = m.sym; dec = m.dec; }
+        }
+        amt = parseAmt(f.amt, dec); if (!amt) { throw new Error('Enter an amount such as 0.01 (more than zero, up to ' + dec + ' decimals).'); }
+        tx = tok ? { to: tok[1], value: 0n, data: cat(unhex('a9059cbb'), new Uint8Array(12), unhex(to.slice(2)), n2b(amt, 32)) } : { to: to, value: amt, data: new Uint8Array(0) };
+        r = { net: net, asset: tok ? 'TOKEN' : 'COIN', sym: sym, dec: dec, fsym: nd.sym, fdec: 18, custom: custom, caddr: custom ? tok[1] : '', to: to, amt: amt, tx: tx, chainId: nd.id };
+        if (net === 'prac') { r.nonce = 0n; r.gasPrice = 5000000000n; r.gas = tok ? 65000n : 21000n; r.balN = 10n * 10n ** 18n; r.balT = 1000n * 10n ** BigInt(dec); }
+        else {
+            r.nonce = await rpc(nd.rpc, 'eth_getTransactionCount', [p.evm, 'pending']); r.gasPrice = await rpc(nd.rpc, 'eth_gasPrice', []);
+            est = await rpc(nd.rpc, 'eth_estimateGas', [{ from: p.evm, to: tx.to, value: '0x' + tx.value.toString(16), data: '0x' + hex(tx.data) }]); r.gas = est * 12n / 10n;
+            r.balN = await rpc(nd.rpc, 'eth_getBalance', [p.evm, 'latest']);
+            if (tok) { r.balT = await rpc(nd.rpc, 'eth_call', [{ to: tok[1], data: '0x70a08231000000000000000000000000' + p.evm.slice(2).toLowerCase() }, 'latest']); }
+        }
+        fee = r.gas * r.gasPrice; r.fee = fee;
+        if (!tok && r.balN < amt + fee) { throw new Error('Not enough ' + nd.sym + ' for the amount plus the network fee (' + fmt(fee, 18) + '). You have ' + fmt(r.balN, 18) + '.'); }
+        if (tok && r.balT < amt) { throw new Error('Not enough ' + sym + '. You have ' + fmt(r.balT, dec) + '.'); }
+        if (tok && r.balN < fee) { throw new Error('You need a little ' + nd.sym + ' for the network fee (about ' + fmt(fee, 18) + ').'); }
+        if (custom) { addToken({ net: net, addr: tok[1], sym: sym, dec: dec }); }
+        return r;
+    }
+    async function doSend() {
+        var r = f.rev, last = (f.last6 || '').trim().toLowerCase(), ph, k, sg, hash;
+        if (!r) { throw new Error('Start again.'); }
+        if (last !== r.to.slice(-6).toLowerCase()) { throw new Error('The last 6 characters do not match. Check the address carefully; this protects you from look-alike addresses.'); }
+        if (r.custom && (f.symc || '').trim().toLowerCase() !== r.sym.toLowerCase()) { throw new Error('Type the token name exactly as shown (' + r.sym + ') to confirm you mean this token.'); }
+        if (r.asset === 'BTC') { return sendBtc(r); }
+        ph = await getPhrase(f.pw);
+        k = await derive(ph, [44 + H, 60 + H, 0 + H, 0, 0]); ph = null;
+        sg = await signTx(k, { nonce: r.nonce, gasPrice: r.gasPrice, gas: r.gas, to: r.tx.to, value: r.tx.value, data: r.tx.data, chainId: r.chainId }); k = 0n;
+        hash = sg.hash;
+        if (r.net !== 'prac') { hash = await rpcRaw(NETS[r.net].rpc, 'eth_sendRawTransaction', [sg.raw]); }
+        return { hash: hash, practice: r.net === 'prac', raw: sg.raw, sum: r };
+    }
+    /* screens */
+    function inp(k, type, ph) { return '<input data-wf="' + k + '" type="' + type + '" placeholder="' + ph + '" autocomplete="off" autocapitalize="none" spellcheck="false" value="' + esc(f[k] || '') + '" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0;border-radius:10px;border:1px solid #8e8e9355;font-size:16px;background:transparent;color:inherit">'; }
+    function sel(k, opts) { var o = '<select data-wf="' + k + '" style="width:100%;padding:12px;margin:6px 0;border-radius:10px;border:1px solid #8e8e9355;font-size:16px;background:transparent;color:inherit">'; opts.forEach(function (x) { o += '<option value="' + x[0] + '"' + ((f[k] || opts[0][0]) === x[0] ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }); return o + '</select>'; }
+    function chunk(a) { return a.slice(0, 8) + ' ' + a.slice(8).replace(/(.{4})/g, '$1 ').trim(); }
+    function btn(a, t, sec) { return '<button class="btn' + (sec ? ' sec' : '') + '" data-w="' + a + '"' + (st.busy ? ' disabled' : '') + ' style="width:100%;margin:6px 0">' + t + '</button>'; }
+    function addrRow(n, a) { return '<div class="row" style="display:block"><span>' + n + '</span><div style="word-break:break-all;font-family:monospace;font-size:13px;margin:4px 0 8px">' + esc(a) + '</div><button class="btn sec" data-w="copy:' + esc(a) + '" style="width:100%">Copy address</button></div>'; }
+    function html() {
+        var p = pubs(), h = '<div class="group pad">', m = st.mode, i;
+        if (st.msg) { h += '<div class="note" style="margin:0 0 10px;font-weight:600">' + esc(st.msg) + '</div>'; }
+        if (m === 'home' && !p) {
+            h += '<b>Your own wallet</b><div class="note" style="margin:6px 0 10px">Your keys are made and kept only on this phone. Nobody, including MintooSuite, can see them or recover them. If you lose the 12 words and the phone, the money is gone for good.</div>' + btn('create', 'Create a new wallet') + btn('import', 'I already have 12 words (import)', 1);
+        } else if (m === 'home') {
+            h += '<b>My wallet</b><div class="note" style="margin:4px 0 8px">Receive on the networks shown. Your EVM address works on BNB Smart Chain (BEP-20), Ethereum, Polygon, Arbitrum and Base, for coins and tokens. Practice first, then try a very small amount.</div>' + addrRow('Ethereum, BNB Smart Chain and other EVM networks', p.evm) + addrRow('Bitcoin (native SegWit)', p.btc) + '<b>Balances</b>';
+            if (st.bal) { Object.keys(st.bal).forEach(function (k) { h += '<div class="row"><span>' + esc(k) + '</span><b>' + (st.bal[k] === null ? 'unavailable' : esc(st.bal[k])) + '</b></div>'; }); } else { h += '<div class="note">Not loaded yet.</div>'; }
+            h += btn('send', 'Send coins') + btn('bal', st.busy ? 'Working…' : 'Refresh balances', 1) + btn('reveal', 'Show my 12 words', 1) + btn('remove', 'Remove wallet from this phone', 1);
+        } else if (m === 'create') {
+            h += '<b>Choose a wallet password</b><div class="note">It locks the wallet on this phone. At least 8 characters.</div>' + inp('pw', 'password', 'Password') + inp('pw2', 'password', 'Repeat password') + btn('gen', st.busy ? 'Working…' : 'Continue') + btn('cancel', 'Cancel', 1);
+        } else if (m === 'show') {
+            h += '<b>Write these 12 words on paper, in order</b><div style="font-size:18px;line-height:2;margin:10px 0">';
+            f.ph.split(' ').forEach(function (w, j) { h += '<span style="display:inline-block;min-width:46%"><span style="opacity:.5">' + (j + 1) + '.</span> <b>' + esc(w) + '</b></span>'; });
+            h += '</div><div class="note">Never photograph them, never type them into any website or chat, never share them. Anyone with these words owns your money.</div>' + btn('written', 'I have written them down') + btn('cancel', 'Cancel', 1);
+        } else if (m === 'confirm') {
+            h += '<b>Check your paper</b><div class="note">Type word number ' + (f.q[0] + 1) + ' and word number ' + (f.q[1] + 1) + '.</div>' + inp('w1', 'text', 'Word ' + (f.q[0] + 1)) + inp('w2', 'text', 'Word ' + (f.q[1] + 1)) + btn('finish', st.busy ? 'Saving…' : 'Create my wallet') + btn('cancel', 'Cancel', 1);
+        } else if (m === 'import') {
+            h += '<b>Import your 12 words</b>' + '<textarea data-wf="ph" rows="3" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="word1 word2 word3 …" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0;border-radius:10px;border:1px solid #8e8e9355;font-size:16px;background:transparent;color:inherit">' + esc(f.ph || '') + '</textarea>' + inp('pw', 'password', 'New wallet password (8+ characters)') + btn('doimport', st.busy ? 'Working…' : 'Import') + btn('cancel', 'Cancel', 1);
+        } else if (m === 'reveal') {
+            h += '<b>Enter your wallet password</b>' + inp('pw', 'password', 'Password') + btn('doreveal', st.busy ? 'Working…' : 'Show my 12 words') + btn('cancel', 'Cancel', 1);
+        } else if (m === 'shown') {
+            h += '<b>Your 12 words</b><div style="font-size:18px;line-height:2;margin:10px 0">'; f.ph.split(' ').forEach(function (w, j) { h += '<span style="display:inline-block;min-width:46%"><span style="opacity:.5">' + (j + 1) + '.</span> <b>' + esc(w) + '</b></span>'; }); h += '</div>' + btn('cancel', 'Hide them', 1);
+        } else if (m === 'send') {
+            var cn = f.net || 'prac';
+            h += '<b>Send coins</b><div class="note">Start with Practice. It uses virtual money and sends nothing.</div>' + sel('net', Object.keys(NETS).map(function (k) { return [k, NETS[k].n]; })) + sel('asset', assetsFor(cn)) + (f.asset === 'C' ? inp('caddr', 'text', 'Token contract address (0x…)') + '<div class="note">Anyone can create a fake token with a famous name. Only use a contract address from the token\'s official website.</div>' : '') + inp('to', 'text', cn === 'btc' || f.asset === 'BTC' ? 'Send to address (bc1q… or 1… or 3…)' : 'Send to address (0x…)') + inp('amt', 'text', 'Amount, for example 0.01') + btn('sreview', st.busy ? 'Checking…' : 'Review') + btn('cancel', 'Cancel', 1);
+        } else if (m === 'sreview') {
+            var r = f.rev;
+            h += '<b>Please check everything</b>' + (NETS[r.net].real ? '<div class="note" style="color:#ff453a;font-weight:700">REAL MONEY. Sent coins cannot be taken back.</div>' : '<div class="note" style="font-weight:700">' + esc(NETS[r.net].n) + '</div>') + '<div class="row"><span>Send</span><b>' + fmt(r.amt, r.dec) + ' ' + esc(r.sym) + '</b></div><div class="row" style="display:block"><span>To</span><div style="word-break:break-all;font-family:monospace;font-size:14px;margin:4px 0">' + esc(chunk(r.to)) + '</div></div><div class="row"><span>Network fee</span><b>' + fmt(r.fee, r.fdec) + ' ' + esc(r.fsym) + '</b></div>' + (r.asset === 'BTC' ? '<div class="note">Fee rate ' + r.rate + ' sat/vB. Change (if any) returns to your own Bitcoin address.</div>' : '') + (r.custom ? '<div class="note" style="color:#ff9f0a;font-weight:700">Other token: the contract says it is "' + esc(r.sym) + '". Contract: ' + esc(r.caddr) + '</div>' + inp('symc', 'text', 'Type the token name (' + esc(r.sym) + ') to confirm') : '') + '<div class="note" style="margin:8px 0">Type the last 6 characters of the address to prove you checked it, then your wallet password.</div>' + inp('last6', 'text', 'Last 6 characters of the address') + inp('pw', 'password', 'Wallet password') + btn('dosend', st.busy ? 'Signing…' : (r.net === 'prac' ? 'Practice send' : 'Send now')) + btn('send', 'Back', 1) + btn('cancel', 'Cancel', 1);
+        } else if (m === 'sdone') {
+            h += '<b>' + (f.res.practice ? 'Practice complete' : 'Sent') + '</b><div class="note" style="margin:6px 0">' + (f.res.practice ? 'Nothing was sent and no real or test coins moved. This is exactly what a real send would sign.' : 'Your transaction was submitted. It usually confirms within a minute. Refresh balances to see it.') + '</div><div class="row" style="display:block"><span>Transaction ID</span><div style="word-break:break-all;font-family:monospace;font-size:12px;margin:4px 0 8px">' + esc(f.res.hash) + '</div><button class="btn sec" data-w="copy:' + esc(f.res.hash) + '" style="width:100%">Copy transaction ID</button></div>' + btn('cancel', 'Done');
+        } else if (m === 'remove') {
+            h += '<b>Remove the wallet from this phone?</b><div class="note">Without your 12 words written on paper, the money in it is lost forever. Type DELETE to confirm.</div>' + inp('del', 'text', 'DELETE') + btn('doremove', 'Remove wallet') + btn('cancel', 'Cancel', 1);
+        }
+        return h + '</div>';
+    }
+    function draw() { try { if (typeof S !== 'undefined' && S.win === 'wallet') { renderView(true); } } catch (e) {} }
+    function clear() { f = {}; }
+    async function run(fn) { st.busy = true; st.msg = ''; draw(); try { await fn(); } catch (e) { st.msg = e && e.message ? e.message : 'Something went wrong.'; } st.busy = false; draw(); }
+    function act(a) {
+        if (st.busy) { return; }
+        if (a.indexOf('copy:') === 0) { var t = a.slice(5); try { navigator.clipboard.writeText(t); st.msg = 'Address copied.'; } catch (e) { st.msg = 'Could not copy. Select the address and copy it by hand.'; } draw(); return; }
+        if (a === 'cancel') { clear(); st.mode = 'home'; st.msg = ''; draw(); }
+        else if (a === 'create') { clear(); st.mode = 'create'; st.msg = ''; draw(); }
+        else if (a === 'import') { clear(); st.mode = 'import'; st.msg = ''; draw(); }
+        else if (a === 'reveal') { clear(); st.mode = 'reveal'; st.msg = ''; draw(); }
+        else if (a === 'remove') { clear(); st.mode = 'remove'; st.msg = ''; draw(); }
+        else if (a === 'gen') { run(async function () { if ((f.pw || '').length < 8) { throw new Error('The password needs at least 8 characters.'); } if (f.pw !== f.pw2) { throw new Error('The two passwords do not match.'); } f.ph = await genPhrase(); f.q = [1 + Math.floor(Math.random() * 5), 6 + Math.floor(Math.random() * 6)]; f.q = [f.q[0] - 1 + 0, f.q[1] - 1 + 0]; st.mode = 'show'; }); }
+        else if (a === 'written') { st.mode = 'confirm'; st.msg = ''; draw(); }
+        else if (a === 'finish') { run(async function () { var w = f.ph.split(' '); if ((f.w1 || '').trim().toLowerCase() !== w[f.q[0]] || (f.w2 || '').trim().toLowerCase() !== w[f.q[1]]) { throw new Error('Those words do not match. Check your paper (or go back and write them again).'); } await save(f.ph, f.pw); clear(); st.mode = 'home'; st.msg = 'Wallet created. Keep your paper safe.'; st.bal = null; }); }
+        else if (a === 'doimport') { run(async function () { var e = await checkPhrase(f.ph || ''); if (e) { throw new Error(e); } if ((f.pw || '').length < 8) { throw new Error('The password needs at least 8 characters.'); } await save(f.ph.trim().toLowerCase().split(/\s+/).join(' '), f.pw); clear(); st.mode = 'home'; st.msg = 'Wallet imported.'; st.bal = null; }); }
+        else if (a === 'doreveal') { run(async function () { var ph = await getPhrase(f.pw); f = { ph: ph }; st.mode = 'shown'; setTimeout(function () { if (st.mode === 'shown') { clear(); st.mode = 'home'; draw(); } }, 60000); }); }
+        else if (a === 'doremove') { if ((f.del || '').trim() !== 'DELETE') { st.msg = 'Type DELETE exactly to confirm.'; draw(); return; } store('mw_vault', null); store('mw_pub', null); clear(); st.mode = 'home'; st.bal = null; st.msg = 'Wallet removed from this phone.'; draw(); }
+        else if (a === 'send') { f = { net: f.net || 'prac', asset: f.asset || 'N', to: f.to || '', amt: f.amt || '', caddr: f.caddr || '' }; st.mode = 'send'; st.msg = ''; draw(); }
+        else if (a === 'sreview') { run(async function () { f.rev = await prepare(); f.last6 = ''; f.pw = ''; st.mode = 'sreview'; }); }
+        else if (a === 'dosend') { run(async function () { var res = await doSend(); clear(); f.res = res; st.mode = 'sdone'; st.bal = null; }); }
+        else if (a === 'bal') { run(async function () { st.bal = await balances(); st.msg = ''; }); }
+    }
+    if (typeof document !== 'undefined' && document.addEventListener) {
+        document.addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-w]') : null; if (b) { act(b.getAttribute('data-w')); } });
+        var onIn = function (e) { var k = e.target.getAttribute ? e.target.getAttribute('data-wf') : null; if (k) { f[k] = e.target.value; if (k === 'net') { f.asset = NETS[f.net].kind === 'btc' ? 'BTC' : 'N'; draw(); } else if (k === 'asset') { draw(); } } };
+        document.addEventListener('input', onIn); document.addEventListener('change', onIn);
+        document.addEventListener('visibilitychange', function () { if (document.hidden && (st.mode === 'shown' || st.mode === 'sreview')) { var keep = st.mode === 'sreview'; if (!keep) { clear(); st.mode = 'home'; } else { f.pw = ''; } draw(); } });
+    }
+    return { html: html, onOpen: function () { if (pubs() && !st.bal && !st.busy) { act('bal'); } }, _t: { TOK: TOK, NETS: NETS, tokenMeta: tokenMeta, strDec: strDec, okAddr: okAddr, bip143: bip143, btcBuild: btcBuild, btcDest: btcDest, der: der, le: le, unhex: unhex, dsha: dsha, pub: pub, signTx: signTx, sign: sign, rlpL: rlpL, okAddr: okAddr, parseAmt: parseAmt, csum: csum, keccak: keccak, ripemd: ripemd, evmAddr: evmAddr, btcAddr: btcAddr, derive: derive, checkPhrase: checkPhrase, genPhrase: genPhrase, seal: seal, unseal: unseal, pbkdf: pbkdf, hex: hex, fmt: fmt } };
+})();
+
+var MW_WORDS = "abandon ability able about above absent absorb abstract absurd abuse access accident account accuse achieve acid acoustic acquire across act action actor actress actual adapt add addict address adjust admit adult advance advice aerobic affair afford afraid again age agent agree ahead aim air airport aisle alarm album alcohol alert alien all alley allow almost alone alpha already also alter always amateur amazing among amount amused analyst anchor ancient anger angle angry animal ankle announce annual another answer antenna antique anxiety any apart apology appear apple approve april arch arctic area arena argue arm armed armor army around arrange arrest arrive arrow art artefact artist artwork ask aspect assault asset assist assume asthma athlete atom attack attend attitude attract auction audit august aunt author auto autumn average avocado avoid awake aware away awesome awful awkward axis baby bachelor bacon badge bag balance balcony ball bamboo banana banner bar barely bargain barrel base basic basket battle beach bean beauty because become beef before begin behave behind believe below belt bench benefit best betray better between beyond bicycle bid bike bind biology bird birth bitter black blade blame blanket blast bleak bless blind blood blossom blouse blue blur blush board boat body boil bomb bone bonus book boost border boring borrow boss bottom bounce box boy bracket brain brand brass brave bread breeze brick bridge brief bright bring brisk broccoli broken bronze broom brother brown brush bubble buddy budget buffalo build bulb bulk bullet bundle bunker burden burger burst bus business busy butter buyer buzz cabbage cabin cable cactus cage cake call calm camera camp can canal cancel candy cannon canoe canvas canyon capable capital captain car carbon card cargo carpet carry cart case cash casino castle casual cat catalog catch category cattle caught cause caution cave ceiling celery cement census century cereal certain chair chalk champion change chaos chapter charge chase chat cheap check cheese chef cherry chest chicken chief child chimney choice choose chronic chuckle chunk churn cigar cinnamon circle citizen city civil claim clap clarify claw clay clean clerk clever click client cliff climb clinic clip clock clog close cloth cloud clown club clump cluster clutch coach coast coconut code coffee coil coin collect color column combine come comfort comic common company concert conduct confirm congress connect consider control convince cook cool copper copy coral core corn correct cost cotton couch country couple course cousin cover coyote crack cradle craft cram crane crash crater crawl crazy cream credit creek crew cricket crime crisp critic crop cross crouch crowd crucial cruel cruise crumble crunch crush cry crystal cube culture cup cupboard curious current curtain curve cushion custom cute cycle dad damage damp dance danger daring dash daughter dawn day deal debate debris decade december decide decline decorate decrease deer defense define defy degree delay deliver demand demise denial dentist deny depart depend deposit depth deputy derive describe desert design desk despair destroy detail detect develop device devote diagram dial diamond diary dice diesel diet differ digital dignity dilemma dinner dinosaur direct dirt disagree discover disease dish dismiss disorder display distance divert divide divorce dizzy doctor document dog doll dolphin domain donate donkey donor door dose double dove draft dragon drama drastic draw dream dress drift drill drink drip drive drop drum dry duck dumb dune during dust dutch duty dwarf dynamic eager eagle early earn earth easily east easy echo ecology economy edge edit educate effort egg eight either elbow elder electric elegant element elephant elevator elite else embark embody embrace emerge emotion employ empower empty enable enact end endless endorse enemy energy enforce engage engine enhance enjoy enlist enough enrich enroll ensure enter entire entry envelope episode equal equip era erase erode erosion error erupt escape essay essence estate eternal ethics evidence evil evoke evolve exact example excess exchange excite exclude excuse execute exercise exhaust exhibit exile exist exit exotic expand expect expire explain expose express extend extra eye eyebrow fabric face faculty fade faint faith fall false fame family famous fan fancy fantasy farm fashion fat fatal father fatigue fault favorite feature february federal fee feed feel female fence festival fetch fever few fiber fiction field figure file film filter final find fine finger finish fire firm first fiscal fish fit fitness fix flag flame flash flat flavor flee flight flip float flock floor flower fluid flush fly foam focus fog foil fold follow food foot force forest forget fork fortune forum forward fossil foster found fox fragile frame frequent fresh friend fringe frog front frost frown frozen fruit fuel fun funny furnace fury future gadget gain galaxy gallery game gap garage garbage garden garlic garment gas gasp gate gather gauge gaze general genius genre gentle genuine gesture ghost giant gift giggle ginger giraffe girl give glad glance glare glass glide glimpse globe gloom glory glove glow glue goat goddess gold good goose gorilla gospel gossip govern gown grab grace grain grant grape grass gravity great green grid grief grit grocery group grow grunt guard guess guide guilt guitar gun gym habit hair half hammer hamster hand happy harbor hard harsh harvest hat have hawk hazard head health heart heavy hedgehog height hello helmet help hen hero hidden high hill hint hip hire history hobby hockey hold hole holiday hollow home honey hood hope horn horror horse hospital host hotel hour hover hub huge human humble humor hundred hungry hunt hurdle hurry hurt husband hybrid ice icon idea identify idle ignore ill illegal illness image imitate immense immune impact impose improve impulse inch include income increase index indicate indoor industry infant inflict inform inhale inherit initial inject injury inmate inner innocent input inquiry insane insect inside inspire install intact interest into invest invite involve iron island isolate issue item ivory jacket jaguar jar jazz jealous jeans jelly jewel job join joke journey joy judge juice jump jungle junior junk just kangaroo keen keep ketchup key kick kid kidney kind kingdom kiss kit kitchen kite kitten kiwi knee knife knock know lab label labor ladder lady lake lamp language laptop large later latin laugh laundry lava law lawn lawsuit layer lazy leader leaf learn leave lecture left leg legal legend leisure lemon lend length lens leopard lesson letter level liar liberty library license life lift light like limb limit link lion liquid list little live lizard load loan lobster local lock logic lonely long loop lottery loud lounge love loyal lucky luggage lumber lunar lunch luxury lyrics machine mad magic magnet maid mail main major make mammal man manage mandate mango mansion manual maple marble march margin marine market marriage mask mass master match material math matrix matter maximum maze meadow mean measure meat mechanic medal media melody melt member memory mention menu mercy merge merit merry mesh message metal method middle midnight milk million mimic mind minimum minor minute miracle mirror misery miss mistake mix mixed mixture mobile model modify mom moment monitor monkey monster month moon moral more morning mosquito mother motion motor mountain mouse move movie much muffin mule multiply muscle museum mushroom music must mutual myself mystery myth naive name napkin narrow nasty nation nature near neck need negative neglect neither nephew nerve nest net network neutral never news next nice night noble noise nominee noodle normal north nose notable note nothing notice novel now nuclear number nurse nut oak obey object oblige obscure observe obtain obvious occur ocean october odor off offer office often oil okay old olive olympic omit once one onion online only open opera opinion oppose option orange orbit orchard order ordinary organ orient original orphan ostrich other outdoor outer output outside oval oven over own owner oxygen oyster ozone pact paddle page pair palace palm panda panel panic panther paper parade parent park parrot party pass patch path patient patrol pattern pause pave payment peace peanut pear peasant pelican pen penalty pencil people pepper perfect permit person pet phone photo phrase physical piano picnic picture piece pig pigeon pill pilot pink pioneer pipe pistol pitch pizza place planet plastic plate play please pledge pluck plug plunge poem poet point polar pole police pond pony pool popular portion position possible post potato pottery poverty powder power practice praise predict prefer prepare present pretty prevent price pride primary print priority prison private prize problem process produce profit program project promote proof property prosper protect proud provide public pudding pull pulp pulse pumpkin punch pupil puppy purchase purity purpose purse push put puzzle pyramid quality quantum quarter question quick quit quiz quote rabbit raccoon race rack radar radio rail rain raise rally ramp ranch random range rapid rare rate rather raven raw razor ready real reason rebel rebuild recall receive recipe record recycle reduce reflect reform refuse region regret regular reject relax release relief rely remain remember remind remove render renew rent reopen repair repeat replace report require rescue resemble resist resource response result retire retreat return reunion reveal review reward rhythm rib ribbon rice rich ride ridge rifle right rigid ring riot ripple risk ritual rival river road roast robot robust rocket romance roof rookie room rose rotate rough round route royal rubber rude rug rule run runway rural sad saddle sadness safe sail salad salmon salon salt salute same sample sand satisfy satoshi sauce sausage save say scale scan scare scatter scene scheme school science scissors scorpion scout scrap screen script scrub sea search season seat second secret section security seed seek segment select sell seminar senior sense sentence series service session settle setup seven shadow shaft shallow share shed shell sheriff shield shift shine ship shiver shock shoe shoot shop short shoulder shove shrimp shrug shuffle shy sibling sick side siege sight sign silent silk silly silver similar simple since sing siren sister situate six size skate sketch ski skill skin skirt skull slab slam sleep slender slice slide slight slim slogan slot slow slush small smart smile smoke smooth snack snake snap sniff snow soap soccer social sock soda soft solar soldier solid solution solve someone song soon sorry sort soul sound soup source south space spare spatial spawn speak special speed spell spend sphere spice spider spike spin spirit split spoil sponsor spoon sport spot spray spread spring spy square squeeze squirrel stable stadium staff stage stairs stamp stand start state stay steak steel stem step stereo stick still sting stock stomach stone stool story stove strategy street strike strong struggle student stuff stumble style subject submit subway success such sudden suffer sugar suggest suit summer sun sunny sunset super supply supreme sure surface surge surprise surround survey suspect sustain swallow swamp swap swarm swear sweet swift swim swing switch sword symbol symptom syrup system table tackle tag tail talent talk tank tape target task taste tattoo taxi teach team tell ten tenant tennis tent term test text thank that theme then theory there they thing this thought three thrive throw thumb thunder ticket tide tiger tilt timber time tiny tip tired tissue title toast tobacco today toddler toe together toilet token tomato tomorrow tone tongue tonight tool tooth top topic topple torch tornado tortoise toss total tourist toward tower town toy track trade traffic tragic train transfer trap trash travel tray treat tree trend trial tribe trick trigger trim trip trophy trouble truck true truly trumpet trust truth try tube tuition tumble tuna tunnel turkey turn turtle twelve twenty twice twin twist two type typical ugly umbrella unable unaware uncle uncover under undo unfair unfold unhappy uniform unique unit universe unknown unlock until unusual unveil update upgrade uphold upon upper upset urban urge usage use used useful useless usual utility vacant vacuum vague valid valley valve van vanish vapor various vast vault vehicle velvet vendor venture venue verb verify version very vessel veteran viable vibrant vicious victory video view village vintage violin virtual virus visa visit visual vital vivid vocal voice void volcano volume vote voyage wage wagon wait walk wall walnut want warfare warm warrior wash wasp waste water wave way wealth weapon wear weasel weather web wedding weekend weird welcome west wet whale what wheat wheel when where whip whisper wide width wife wild will win window wine wing wink winner winter wire wisdom wise wish witness wolf woman wonder wood wool word work world worry worth wrap wreck wrestle wrist write wrong yard year yellow you young youth zebra zero zone zoo".split(" ");
+
 var WINS = [
     { id: 'overview', ic: '🏠', c: '#0a84ff', n: 'Home', sub: 'Best opportunities first, with clear steps' },
     { id: 'bot', ic: '🤖', c: '#34c759', n: 'Auto Bot (paper)', t: 'Auto Bot', sub: 'An autonomous bot that trades virtual money with real prices' },
@@ -1287,6 +1672,7 @@ var WINS = [
     { id: 'gold', ic: '🥇', c: '#c9971c', n: 'Gold', sub: 'Gold live, plan and dollar strength' },
     { id: 'exness', ic: '🟢', c: '#00a9e0', n: 'Exness Gold', sub: 'Plan, lot sizes and statistics for XAU/USD' },
     { id: 'trade', ic: '💱', c: '#f0b90b', n: 'Trade (Binance)', t: 'Trade', sub: 'Orders with stop and target, using your own API keys' },
+    { id: 'wallet', ic: '👛', c: '#0a84ff', n: 'My Wallet', t: 'Wallet', sub: 'Your own keys: receive, balances, 12-word backup' },
     { id: 'calib', ic: '🎯', c: '#34c759', n: 'Match Binance %', t: 'Match', sub: 'Make the % change equal to what Binance shows' },
     { id: 'news', ic: '📰', c: '#ff453a', n: 'News', sub: 'Live crypto, markets and world headlines' },
     { id: 'alerts', ic: '🔔', c: '#ffd60a', n: 'Alerts', sub: 'Push notification settings' },
@@ -1646,6 +2032,7 @@ var VIEWS = { bot: vBot, health: vHealth, morning: vMorning, newc: vNewc, overvi
 var LIVE = { bot: 1, health: 1, morning: 1, newc: 1, overview: 1, plan: 1, scanner: 1, candles: 1, market: 1, gold: 1, exness: 1, exchanges: 1, news: 1 };
 var lastKey = '';
 function renderKey() { return [S.bot.open.length, S.bot.closed.length, S.lev, S.win, S.scan.at, S.plan.at, S.morning.at, S.newc.at, S.newsAt, S.candles.length, S.log.length, S.fx.at, S.mkt, S.scanf, Math.floor(nowMs() / (S.win === 'bot' || S.win === 'health' ? 3000 : S.win === 'overview' ? 5000 : 15000))].join('|'); }
+VIEWS.wallet = function () { return MW.html(); };
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
     $('winName').textContent = d.n; $('winSub').textContent = d.sub;
@@ -1680,6 +2067,7 @@ function gotoWin(id, isBack) {
     S.win = id; lss('mintoosuite_win', id); closeSheets(); buildNav(); renderView(); window.scrollTo(0, 0); updateBack();
     if (leaving) { closeChartWS(); }
     if (id === 'chart') { loadChart(); }
+    if (id === 'wallet') { MW.onOpen(); }
     if (id === 'news' && (!S.newsTried || nowMs() - S.newsAt > 60000)) { loadNews(); }
 }
 function goBack() { if (S.hist.length) { try { history.back(); } catch (e) { gotoWin(S.hist.pop(), true); } } }
