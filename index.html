@@ -430,7 +430,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-21.3';
+var BUILD = '2026-10-21.4';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -937,18 +937,35 @@ function botClose(i, exit, why, ct0) {
     addLog('BOT', (pnl >= 0 ? 'Paper win ' : 'Paper loss ') + nm(p.sym) + ' ' + p.side + ' ' + usd(pnl) + ' (' + why + ')');
     botSave();
 }
+function botTrail(p, fav) {
+    var full = Math.abs(p.tp - p.entry), done = p.sg > 0 ? fav - p.entry : p.entry - fav, nsl;
+    if (!(full > 0) || done < 0.5 * full) { return false; }
+    nsl = done >= 0.75 * full ? p.entry + p.sg * 0.4 * full : p.entry * (1 + p.sg * 2 * BOT_FEE);
+    if (p.sg > 0 ? nsl > p.sl : nsl < p.sl) { p.sl = nsl; p.trail = 1; return true; }
+    return false;
+}
+function botGate() {
+    var b = S.bot, now = nowMs(), dl = 0, ls = 0, i;
+    b.closed.forEach(function (c) { if (now - c.ct < 86400000) { dl += c.pnl; } });
+    if (dl <= -0.03 * b.start) { return 'Safety pause: the bot lost more than 3% in the last 24 hours, so it opens no new trade until that improves.'; }
+    for (i = 0; i < b.closed.length && b.closed[i].pnl < 0; i++) { ls++; }
+    if (ls >= 3 && now - b.closed[0].ct < 7200000) { return 'Safety pause: 3 losses in a row. The bot waits 2 hours before a new trade.'; }
+    return '';
+}
 function botBackfill(p) {
     var now = nowMs(); if (p.bf || (p.chk && now - p.chk < 90000) || now - p.at < 70000) { return; } p.bf = 1;
     fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + p.sym + '&interval=1m&startTime=' + (Math.floor(p.at / 60000) * 60000) + '&limit=1000').then(function (r) { return r.json(); }).then(function (ks) {
-        var b = S.bot, idx = b ? b.open.indexOf(p) : -1, i, k, tk, hit = null, slHit, tpHit; if (idx < 0 || !Array.isArray(ks)) { return; }
+        var b = S.bot, idx = b ? b.open.indexOf(p) : -1, i, k, tk, hit = null, slHit, tpHit, q; if (idx < 0 || !Array.isArray(ks)) { return; }
+        q = { entry: p.entry, sg: p.sg, tp: p.tp, sl: p.sl, trail: p.trail };
         for (i = 0; i < ks.length && !hit; i++) {
             k = ks[i]; tk = +k[0]; if (tk <= p.at) { continue; }
-            slHit = p.sg > 0 ? +k[3] <= p.sl : +k[2] >= p.sl; tpHit = p.sg > 0 ? +k[2] >= p.tp : +k[3] <= p.tp;
-            if (slHit) { hit = { px: p.sl * (1 - p.sg * BOT_SLIP), why: 'stop', t: tk + 60000 }; }
-            else if (tpHit) { hit = { px: p.tp, why: 'target', t: tk + 60000 }; }
+            slHit = q.sg > 0 ? +k[3] <= q.sl : +k[2] >= q.sl; tpHit = q.sg > 0 ? +k[2] >= q.tp : +k[3] <= q.tp;
+            if (slHit) { hit = { px: q.sl * (1 - q.sg * BOT_SLIP), why: q.trail ? 'trailing stop' : 'stop', t: tk + 60000 }; }
+            else if (tpHit) { hit = { px: q.tp, why: 'target', t: tk + 60000 }; }
             else if (tk + 60000 - p.at >= 3 * 3600000) { hit = { px: +k[4], why: 'time limit', t: tk + 60000 }; }
+            else { botTrail(q, q.sg > 0 ? +k[2] : +k[3]); }
         }
-        p.chk = nowMs(); if (hit) { botClose(idx, hit.px, hit.why, Math.min(hit.t, nowMs())); }
+        p.chk = nowMs(); p.sl = q.sl; p.trail = q.trail; if (hit) { botClose(idx, hit.px, hit.why, Math.min(hit.t, nowMs())); } else { botSave(); }
     }).catch(function () {}).then(function () { p.bf = 0; });
 }
 function botStep() {
@@ -956,12 +973,14 @@ function botStep() {
     for (i = b.open.length - 1; i >= 0; i--) {
         var p = b.open[i], t = S.tick[p.sym]; botBackfill(p); if (!t || now - t.at > 20000) { continue; }
         var px = t.p, hitSL = p.sg > 0 ? px <= p.sl : px >= p.sl, hitTP = p.sg > 0 ? px >= p.tp : px <= p.tp;
-        if (hitSL) { botClose(i, p.sl * (1 - p.sg * BOT_SLIP), 'stop'); }
+        if (hitSL) { botClose(i, p.sl * (1 - p.sg * BOT_SLIP), p.trail ? 'trailing stop' : 'stop'); }
         else if (hitTP) { botClose(i, p.tp, 'target'); }
         else if (now - p.at > 3 * 3600000 + 600000) { botClose(i, px, 'time limit'); }
+        else if (botTrail(p, px)) { botSave(); }
     }
     if (!b.on || dataAge() > 10000 || !S.scan.at || now - S.scan.at > 120000 || b.open.length >= b.maxOpen) { return; }
     var eq = botEquity();
+    if (botGate()) { return; }
     if (eq <= b.start * 0.5) { b.on = false; botSave(); addLog('BOT', 'Paper bot paused: equity fell below half of the starting amount'); return; }
     getActions().filter(function (a) { return a.tier === 'NOW'; }).forEach(function (a) {
         if (b.open.length >= b.maxOpen || b.open.some(function (p) { return p.sym === a.sym; })) { return; }
@@ -2222,6 +2241,60 @@ function vBrokers() {
     document.addEventListener('touchend', function () { var go = py !== null && pd > 110; py = null; if (go) { doRefresh(); } else { pbar(''); } }, { passive: true });
     try { buildNav(); } catch (e) {}
 })();
+/* mw-v102 */
+WINS.push({ id: 'movers', ic: '🚀', c: '#ff9f0a', n: 'Early Movers', t: 'Movers', sub: 'Coins starting to move fast on rising volume, before the big headline move' });
+LIVE.movers = 1; VIEWS.movers = vMovers;
+MW_GROUPS[0][1].splice(MW_GROUPS[0][1].indexOf('scanner') + 1, 0, 'movers');
+MW_HELP.movers = 'Scans the most traded Binance Futures coins every minute for a fast move on rising volume while the day change is still small. EARLY = just starting, LATE = already stretched, WATCH = building. Each idea lists VALID times. Not a guarantee: many fast moves reverse.';
+S.mv = { at: 0, list: [], busy: false, seen: {}, n: 0 };
+function mvClamp(x) { return Math.max(0, Math.min(1, x)); }
+function moverMetrics(sym, ks, chg24) {
+    var n = ks ? ks.length : 0, c = [], qv = [], i, r5, r15, r60, vr, vb, dir, late, score, tag, stop, hi, lo, price, risk, tgt, side;
+    if (n < 62) { return null; }
+    for (i = 0; i < n; i++) { c.push(+ks[i][4]); qv.push(+ks[i][7]); }
+    price = c[n - 1]; r5 = (price - c[n - 6]) / c[n - 6] * 100; r15 = (price - c[n - 16]) / c[n - 16] * 100; r60 = (price - c[n - 61]) / c[n - 61] * 100;
+    vr = 0; for (i = n - 15; i < n; i++) { vr += qv[i]; } vb = 0; for (i = n - 60; i < n - 15; i++) { vb += qv[i]; } vb = vb / 3;
+    if (!(vb > 0) || !isFinite(r15)) { return null; }
+    dir = r15 >= 0 ? 1 : -1; side = dir > 0 ? 'LONG' : 'SHORT'; vr = vr / vb;
+    late = Math.abs(chg24) >= 40 || Math.abs(r60) >= 15 || (chg24 * dir) >= 40;
+    score = 35 * mvClamp(Math.abs(r15) / 2.5) + 30 * mvClamp((vr - 1) / 4) + 20 * mvClamp(Math.abs(r60) / 6) + (r5 * dir > 0 ? 15 : 0) - (late ? 25 : 0);
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    if (Math.abs(r15) < 0.5 || vr < 1.6) { return null; }
+    tag = late ? 'LATE' : score >= 55 ? 'EARLY' : 'WATCH';
+    hi = -Infinity; lo = Infinity; for (i = n - 15; i < n; i++) { hi = Math.max(hi, +ks[i][2]); lo = Math.min(lo, +ks[i][3]); }
+    stop = dir > 0 ? lo : hi; risk = Math.abs(price - stop); tgt = dir > 0 ? price + 1.5 * risk : price - 1.5 * risk;
+    return { sym: sym, side: side, price: price, r5: r5, r15: r15, r60: r60, vr: vr, chg24: chg24, score: score, tag: tag, stop: stop, tgt: tgt, wide: risk / price > 0.06 || !(risk > 0), at: nowMs() };
+}
+function moversScan() {
+    var t = S.tick, now = nowMs(), syms, idx = 0, res = [], k, pool = [];
+    if (S.mv.busy) { return; }
+    syms = Object.keys(t).filter(function (s) { return /USDT$/.test(s) && t[s].q > 3e6 && s !== GOLD && !(S.tradfi && S.tradfi[s]); }).sort(function (a, b) { return t[b].q - t[a].q; }).slice(0, 160);
+    if (syms.length < 20) { return; } S.mv.busy = true;
+    function worker() {
+        if (idx >= syms.length) { return Promise.resolve(); } var s = syms[idx++];
+        return fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + s + '&interval=1m&limit=70').then(function (r) { return r.json(); }).then(function (ks) { var m = Array.isArray(ks) ? moverMetrics(s, ks, t[s] ? t[s].chg : 0) : null; if (m) { res.push(m); } }).catch(function () {}).then(worker);
+    }
+    for (k = 0; k < 8; k++) { pool.push(worker()); }
+    Promise.all(pool).then(function () {
+        var tn = nowMs(); res.sort(function (a, b) { return b.score - a.score; }); S.mv.list = res.slice(0, 40); S.mv.at = tn; S.mv.n = syms.length;
+        S.mv.list.forEach(function (m) { var key = m.sym + m.side; if (m.tag === 'EARLY' && (!S.mv.seen[key] || tn - S.mv.seen[key] > 3600000)) { S.mv.seen[key] = tn; addLog('MOVER', 'Early mover: ' + nm(m.sym) + ' ' + m.side + ' ' + pct(m.r15) + ' in 15 min, volume ×' + m.vr.toFixed(1)); } });
+    }).catch(function () {}).then(function () { S.mv.busy = false; if (S.win === 'movers') { renderView(true); } });
+}
+function vMovers() {
+    var m = S.mv, now = nowMs(), h = '<div class="note" style="margin:0 0 8px">Looks for coins that just started moving fast on rising volume while their day change is still small. Updated every minute. These are ideas to watch, not promises: many fast moves reverse.</div>';
+    if (!m.at) { return h + (m.busy || Object.keys(S.tick).length > 20 ? '<div class="group pad mut">Scanning the top coins… first results in about 20 seconds.</div>' : '<div class="group pad mut">Waiting for live prices…</div>'); }
+    h += '<div class="note" style="margin:0 0 8px">Scanned ' + m.n + ' coins · updated ' + ago(m.at) + '</div>';
+    if (!m.list.length) { return h + '<div class="group pad mut">No coin is moving fast on rising volume right now. This is normal in quiet markets.</div>'; }
+    m.list.slice(0, 25).forEach(function (x) {
+        var col = x.tag === 'EARLY' ? 'long' : x.tag === 'LATE' ? 'short' : 'wait', until = x.at + 30 * 60000;
+        h += '<div class="mwtr tap" data-act="chart:' + x.sym + '"><div class="mwh"><span><b>' + esc(base(x.sym)) + '</b> <span class="pill ' + (x.side === 'LONG' ? 'long' : 'short') + '">' + x.side + '</span></span><span class="badge ' + col + '">' + x.tag + ' · ' + x.score + '</span></div><div class="mwd">Price ' + fmtP(x.price, x.sym) + ' · 5 min ' + pct(x.r5) + ' · 15 min ' + pct(x.r15) + ' · 1 hour ' + pct(x.r60) + '<br>Volume ×' + x.vr.toFixed(1) + ' vs the last hour · day ' + pct(x.chg24) + (x.tag === 'LATE' ? '<br><b>Already stretched: chasing is risky.</b>' : '') + (x.tag === 'EARLY' && !x.wide ? '<br>Idea: ' + (x.side === 'LONG' ? 'buy' : 'sell') + ' near ' + fmtP(x.price, x.sym) + ' · stop ' + fmtP(x.stop, x.sym) + ' · target ' + fmtP(x.tgt, x.sym) + '<br><b class="vwin">VALID ' + hm(x.at) + ' → ' + hm(until) + '</b>' : (x.tag === 'EARLY' ? '<br>Stop would be too far away: watch only.' : '')) + '</div></div>';
+    });
+    return h;
+}
+setInterval(function () { try { moversScan(); } catch (e) {} }, 60000); setTimeout(function () { try { moversScan(); } catch (e) {} }, 12000);
+var _vr2 = VIEWS.risk; VIEWS.risk = function () { var r = _vr2(), g = botGate(); return g ? r + '<div class="warn">' + esc(g) + '</div>' : r; };
+var _vb2 = VIEWS.bot; VIEWS.bot = function () { var r = _vb2(), g = botGate(); return g ? '<div class="warn" style="margin-top:0">' + esc(g) + '</div>' + r : r; };
+try { buildNav(); } catch (e) {}
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
     $('winName').innerHTML = esc(d.n) + ' <span class="qm" data-help="' + d.id + '">?</span>'; $('winSub').textContent = d.sub;
