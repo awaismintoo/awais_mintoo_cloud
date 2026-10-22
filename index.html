@@ -430,7 +430,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-20.5';
+var BUILD = '2026-10-21.1';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -947,7 +947,7 @@ function botStep() {
         if (notional < 10) { return; }
         b.open.push({ sym: a.sym, side: a.side, sg: sg, entry: entry, sl: a.stopLvl, tp: a.tgtLvl, notional: notional, margin: margin, lev: lev, at: now, pct: a.pct, score: a.score, risk: notional * cost });
         b.lastTrade[a.sym] = now; botSave();
-        addLog('BOT', 'Paper trade opened: ' + nm(a.sym) + ' ' + a.side + ' at ' + fmtP(entry, a.sym) + ' (confidence ' + a.pct + '%, priority ' + a.score + ')');
+        addLog('BOT', 'Paper trade opened: ' + nm(a.sym) + ' ' + a.side + ' at ' + fmtP(entry, a.sym) + ' (indicators agree ' + a.pct + '%, priority ' + a.score + ')');
     });
 }
 function botStats() {
@@ -996,7 +996,7 @@ function spark(a, up, color, w, h) {
     return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '"><polyline points="' + pts + '" fill="none" stroke="' + (color || (up ? 'var(--grn)' : 'var(--red)')) + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 }
 function sparkOf(sym, color) { var r = S.scan.res[sym]; if (!r || !r.spark || r.spark.length < 4) { return ''; } var a = r.spark; return spark(a, a[a.length - 1] >= a[0], color); }
-function meter(p) { var n = p >= 75 ? 3 : p >= 55 ? 2 : 1; return '<span class="dots">' + [1, 2, 3].map(function (i) { return '<i' + (i <= n ? ' class="on"' : '') + '></i>'; }).join('') + ' <b style="color:var(--tx);font-size:12px">' + p + '%</b> confidence</span>'; }
+function meter(p) { var n = p >= 75 ? 3 : p >= 55 ? 2 : 1; return '<span class="dots">' + [1, 2, 3].map(function (i) { return '<i' + (i <= n ? ' class="on"' : '') + '></i>'; }).join('') + ' <b style="color:var(--tx);font-size:12px">' + p + '%</b> indicators agree</span>'; }
 function stChip(sym, side) {
     var r = S.scan.res[sym], a = r && r.tf['15m'] && r.tf['15m'].st;
     if (!a || (side !== 'LONG' && side !== 'SHORT')) { return ''; }
@@ -1057,7 +1057,7 @@ function pickCard(p) {
 }
 function heroPick(p) {
     return '<div class="hero tap" data-act="chart:' + p.sym + '"><div class="hl"><span>Top master pick</span><span>10m + 15m agree</span></div>' +
-        '<div class="ph" style="margin-top:12px">' + who(p.sym) + '<div class="side"><span class="badge">' + (p.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + '</span><span class="dots" style="color:rgba(255,255,255,.9)"><b style="color:#fff;font-size:15px">' + p.pct + '%</b> confidence</span></div></div>' +
+        '<div class="ph" style="margin-top:12px">' + who(p.sym) + '<div class="side"><span class="badge">' + (p.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + '</span><span class="dots" style="color:rgba(255,255,255,.9)"><b style="color:#fff;font-size:15px">' + p.pct + '%</b> indicators agree</span></div></div>' +
         '<div class="pm"><div><div class="px">' + px(p.sym, p.price) + '</div>' + chgTxt(p.sym, true) + '</div>' + sparkOf(p.sym, '#fff') + '</div>' +
         lv(p.side, p.price, p.sl, p.tp, p.sym) + plBox(p.side, p.price, p.sl, p.tp, p.sym) +
         '<div class="foot" style="color:rgba(255,255,255,.82)">Valid ' + hm(p.at) + ' → ' + hm(p.at + 45 * 60000) + ' • tap for chart</div></div>';
@@ -1702,7 +1702,7 @@ function boardCard(a, rank, big) {
     var mvTxt = (a.moved >= 0 ? '+' : '') + a.moved.toFixed(2) + '% since the signal', col = a.tier === 'NOW' ? 'var(--grn)' : a.tier === 'PREPARE' ? 'var(--org)' : 'var(--line)';
     var h = '<div class="group pad" style="border-top:4px solid ' + col + '"><div class="ph tap" data-act="chart:' + a.sym + '"><div class="who"><span class="rank">' + rank + '</span>' + avatar(a.sym) + '<div><b>' + base(a.sym) + '</b><small>USDT Perpetual</small></div></div><div class="side">' + badge(a.side) + tierBadge(a.tier) + '</div></div>';
     h += '<div class="pm"><div><div class="px">' + px(a.sym, a.live) + '</div><small>Signal price ' + fmtP(a.entry, a.sym) + ' • ' + mvTxt + '</small></div>' + sparkOf(a.sym) + '</div>';
-    h += '<div class="foot" style="margin-top:8px"><b style="color:var(--tx)">Priority ' + a.score + '/100</b> • ' + a.pct + '% confidence • reward ÷ risk ' + a.rr.toFixed(1) + '</div><div class="bar2"><i style="width:' + a.score + '%;background:' + (a.tier === 'NOW' ? 'var(--grn)' : a.tier === 'PREPARE' ? 'var(--org)' : 'var(--mut)') + '"></i></div>';
+    h += '<div class="foot" style="margin-top:8px"><b style="color:var(--tx)">Priority ' + a.score + '/100</b> • ' + a.pct + '% indicators agree • reward ÷ risk ' + a.rr.toFixed(1) + '</div><div class="bar2"><i style="width:' + a.score + '%;background:' + (a.tier === 'NOW' ? 'var(--grn)' : a.tier === 'PREPARE' ? 'var(--org)' : 'var(--mut)') + '"></i></div>';
     h += lv(a.side, a.entry, a.sl, a.tp, a.sym) + plBox(a.side, a.entry, a.sl, a.tp, a.sym);
     if (a.until > nowMs() && a.tier === 'NOW') { h += '<button class="btn" style="margin-top:10px" data-tr="open" data-sym="' + a.sym + '" data-side="' + a.side + '" data-sl="' + a.stopLvl + '" data-tp="' + a.tgtLvl + '" data-until="' + a.until + '">💱 Trade this on Binance</button>'; }
     h += '<div class="why"><b>Why it ranks here</b>' + a.reasons.map(function (r) { return '<div>✅ ' + esc(r) + '</div>'; }).join('') + a.warns.map(function (w) { return '<div class="org">⚠️ ' + esc(w) + '</div>'; }).join('') + '</div>';
@@ -1717,7 +1717,7 @@ function boardHTML(max) {
     now.slice(0, 3).forEach(function (a) { n++; h += boardCard(a, '#' + n, true); });
     if (prep.length) { h += '<div class="sh"><span>🟠 Prepare: not ready yet</span><span>' + prep.length + '</span></div>'; prep.slice(0, 3).forEach(function (a) { n++; h += boardCard(a, '#' + n, false); }); }
     if (watch.length && max > 6) { h += '<div class="sh"><span>⚪ Watch</span><span>' + watch.length + '</span></div>'; watch.slice(0, 5).forEach(function (a) { n++; h += boardCard(a, '#' + n, false); }); }
-    return h + '<div class="note">Priority 0–100 combines the confidence %, volume, liquidity, agreement with the New Day plan, and how fresh the signal is. Only the Do now group passes every check, and even those can lose.</div>';
+    return h + '<div class="note">Priority 0–100 combines the indicator agreement %, volume, liquidity, agreement with the New Day plan, and how fresh the signal is. Only the Do now group passes every check, and even those can lose.</div>';
 }
 function vBot() {
     var b = S.bot, s = botStats(), h = '<div class="warn" style="margin-top:0">🧪 Paper trading: virtual money, real prices. No real order is ever placed.</div>';
@@ -1769,7 +1769,7 @@ function planCard(r, label, goldCard) {
     var counter = (r.fh === 'LONG' || r.fh === 'SHORT') && (r.day === 'LONG' || r.day === 'SHORT') && r.fh !== r.day;
     return '<div class="group pad"><div class="ph">' + who(sym, goldCard ? 'Binance ' + sym + ' proxy' : null) + '<div class="px" style="font-size:20px">' + px(sym, r.price) + '</div></div>' + tfWarn(sym) +
         (r.note ? '<div class="warn">⚠️ ' + esc(r.note) + '</div>' : '') +
-        '<div class="blk"><div class="t"><span>Next-day trend</span><span class="' + nc + '">' + nd + ' <small>' + (r.nextPct ? r.nextPct + '% confidence' : '') + '</small></span></div></div>' +
+        '<div class="blk"><div class="t"><span>Next-day trend</span><span class="' + nc + '">' + nd + ' <small>' + (r.nextPct ? r.nextPct + '% indicators agree' : '') + '</small></span></div></div>' +
         '<div class="blk"><div class="t"><span>Whole day</span>' + badge(r.day === 'NEUTRAL' ? 'WAIT' : r.day) + '</div><div class="tm">' + fmtT(w.dayStart) + ' → ' + fmtT(w.dayEnd) + (r.dayPct ? ' • ' + meter(r.dayPct) : '') + '</div>' + lv(r.day, r.price, r.daySL, r.dayTP, sym) + plBox(r.day, r.price, r.daySL, r.dayTP, sym) + '</div>' +
         '<div class="blk"><div class="t"><span>Few hours</span>' + badge(r.fh) + '</div><div class="tm">' + fmtT(w.fhStart) + ' → ' + fmtT(w.fhStop) + (r.fhPct ? ' • ' + meter(r.fhPct) : '') + (counter ? ' • <span class="org">against whole-day trend: small size</span>' : '') + '</div>' + lv(r.fh, r.price, r.fhSL, r.fhTP, sym) + plBox(r.fh, r.price, r.fhSL, r.fhTP, sym) + '</div>' +
         '<div class="foot">' + bothChg(sym) + ' • volume vs 30-day avg ×' + r.vr.toFixed(2) + ' • RSI 1h ' + r.rsiH.toFixed(0) + ' / 1d ' + r.rsiD.toFixed(0) + '</div></div>';
@@ -1924,14 +1924,14 @@ function morningCard(o) {
     var p = o.today, sym = o.sym, dEnd = p.D + 86400000, fEnd = p.T + 4 * 3600000, now = nowMs();
     function blk(title, side, pctv, from, to, sl, tp, res) {
         var pr = Math.max(0, Math.min(1, (now - from) / (to - from)));
-        return '<div class="blk"><div class="t"><span>' + title + '</span>' + badge(side) + '</div><div class="tm">' + pkd(from) + ' → ' + pkd(to) + ' PKT' + (pctv ? ' • ' + meter(pctv) : '') + '</div>' +
+        return '<div class="blk"><div class="t"><span>' + title + '</span>' + (now >= to && side !== 'WAIT' ? '<span class="badge wait">ENDED</span>' : badge(side)) + '</div><div class="tm">' + pkd(from) + ' → ' + pkd(to) + ' PKT' + (side === 'WAIT' ? '' : (now >= to ? ' • <b>window ended</b>' : ' • <b>valid now</b>')) + (pctv ? ' • ' + meter(pctv) : '') + '</div>' +
             (side === 'WAIT' ? '' : '<div class="prog"><i style="width:' + Math.round(pr * 100) + '%"></i></div>') + lv(side, p.entry, sl, tp, sym) + plBox(side, p.entry, sl, tp, sym) + resBox(res, side, p.entry, sym) + '</div>';
     }
     return '<div class="group pad"><div class="ph">' + who(sym) + '<div class="side"><span class="badge ' + (isSolid(o) ? 'solid' : 'wait') + '">' + (isSolid(o) ? '✓ SOLID' : 'WATCH') + '</span><div class="px" style="font-size:18px">' + px(sym, p.entry) + '</div></div></div>' +
-        tfWarn(sym) + (p.note ? '<div class="warn">⚠️ ' + esc(p.note) + '</div>' : '') + stChip(sym, p.day !== 'WAIT' ? p.day : p.fh) +
+        tfWarn(sym) + (p.note ? '<div class="warn">⚠️ ' + esc(p.note) + '</div>' : '') + stChip(sym, (p.day !== 'WAIT' && now < dEnd) ? p.day : ((p.fh !== 'WAIT' && now < fEnd) ? p.fh : 'WAIT')) + (p.fh !== 'WAIT' && now >= fEnd ? '<div class="note" style="margin:6px 0">⌛ The few-hours window has ended. Its entry is no longer valid: do not enter on this card.</div>' : '') +
         blk('Whole day', p.day, p.dayPct, p.T, dEnd, p.dSL, p.dTP, p.dayRes) + blk('Few hours', p.fh, p.fhPct, p.T, fEnd, p.fSL, p.fTP, p.fhRes) +
         '<div class="foot">Entry = price at 05:15 PKT. Stop and target are fixed fractions of the coin\'s recent average range. Previous day ' + pct(p.chgPrev) + ' • RSI 1d ' + p.rsiD.toFixed(0) + ' / 1h ' + p.rsiH.toFixed(0) + '</div>' +
-        '<div class="foot">Last 9 days, same rules: whole day ' + coinStats(o, 'dayRes') + ' • few hours ' + coinStats(o, 'fhRes') + '</div></div>';
+        '<div class="foot">Last 9 days, same rules: whole day ' + coinStats(o, 'dayRes') + ' • few hours ' + coinStats(o, 'fhRes') + '</div><div class="foot">"Indicators agree" shows how many checks point the same way. It is not the chance of profit. The track record above shows what really happened.</div></div>'; /* mw-fix-ended */
 }
 function vMorning() {
     var now = nowMs(), D0 = dayOpenFor(now), nextT = D0 + 900000 + 86400000, left = Math.max(0, nextT - now), h = levBar();
