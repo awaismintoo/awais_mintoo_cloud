@@ -430,12 +430,12 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-21.2';
+var BUILD = '2026-10-21.3';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
     mkt: 'gain', scanf: 'all', chart: { sym: ls('mintoosuite_chart', 'BTCUSDT'), tf: '15m', k: [], ws: null, err: '' },
-    win: ls('mintoosuite_win', 'overview'), log: [], lang: ls('mintoosuite_lang', 'en'),
+    win: 'overview', log: [], lang: ls('mintoosuite_lang', 'en'),
     sysPush: ls('mintoosuite_sys_push', 'on') !== 'off', goldPush: ls('mintoosuite_gold_push', 'on') !== 'off',
     cryptoPush: ls('mintoosuite_crypto_push', 'on') !== 'off', a3m: ls('mintoosuite_alert_3m', 'on') !== 'off', aMaster: ls('mintoosuite_alert_master', 'on') !== 'off' };
 try { S.log = JSON.parse(ls('mintoosuite_log', '[]')) || []; } catch (e) { S.log = []; }
@@ -454,9 +454,12 @@ function agreePct(v, side) { if (!v || !v.length) { return 0; } var sg = side ==
 function confOf(p) { return p >= 75 ? 'HIGH' : p >= 55 ? 'MEDIUM' : 'LOW'; }
 
 // ---------- formatting ----------
+function tickDec(tk) { if (!(tk > 0)) { return null; } var s = String(tk), m = s.match(/^(\d)(?:\.(\d+))?e-(\d+)$/), i; if (m) { return (+m[3]) + (m[2] ? m[2].length : 0); } i = s.indexOf('.'); return i < 0 ? 0 : s.length - i - 1; }
 function fmtP(p, sym) {
-    var d = sym && S.prec && S.prec[sym] != null ? S.prec[sym] : (p >= 1000 ? 2 : p >= 1 ? 4 : p >= 0.1 ? 5 : p >= 0.001 ? 6 : 8);
-    return (+p).toFixed(d);
+    var f = sym && S.filt && S.filt[sym], tk = f && f.tick > 0 ? f.tick : 0, d = tk ? tickDec(tk) : null, v = +p;
+    if (d === null) { d = sym && S.prec && S.prec[sym] != null ? S.prec[sym] : (p >= 1000 ? 2 : p >= 1 ? 4 : p >= 0.1 ? 5 : p >= 0.001 ? 6 : 8); }
+    else { v = Math.round(v / tk) * tk; }
+    return v.toFixed(Math.min(d, 12));
 }
 function pct(v) { return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
 function money(v) { return v >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? '$' + (v / 1e6).toFixed(1) + 'M' : '$' + Math.round(v / 1e3) + 'K'; }
@@ -762,12 +765,15 @@ var FEEDS = [
     { n: 'Gold & macro', u: gq('gold price OR Federal Reserve OR inflation OR US dollar'), g: 'macro' },
     { n: 'BBC Business', u: 'https://feeds.bbci.co.uk/news/business/rss.xml', g: 'macro' },
     { n: 'World & geopolitics', u: gq('war OR sanctions OR OPEC OR geopolitics'), g: 'geo' },
-    { n: 'BBC World', u: 'https://feeds.bbci.co.uk/news/world/rss.xml', g: 'geo' }
+    { n: 'BBC World', u: 'https://feeds.bbci.co.uk/news/world/rss.xml', g: 'geo' },
+    { n: 'CryptoCompare', u: 'https://min-api.cryptocompare.com/data/v2/news/?lang=EN', g: 'mkt', cc: 1 }
 ];
 var PROXIES = [
     function (u) { return 'https://api.allorigins.win/raw?disableCache=true&url=' + encodeURIComponent(u); },
     function (u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
-    function (u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); }
+    function (u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
+    function (u) { return 'https://api.cors.lol/?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://corsproxy.org/?' + encodeURIComponent(u); }
 ];
 function fetchText(url, ms) {
     var ac = typeof AbortController !== 'undefined' ? new AbortController() : null, to = ac ? setTimeout(function () { ac.abort(); }, ms || 9000) : null;
@@ -794,8 +800,10 @@ function rssJson(f) {
     });
 }
 function fetchFeed(f) {
+    if (f.cc) { return fetchText(f.u, 9000).then(function (tx) { var j = JSON.parse(tx), d = j && j.Data; if (!d || !d.length) { throw new Error('empty'); } return { via: 'direct', items: d.slice(0, 25).map(function (x) { return { src: (x.source_info && x.source_info.name) || x.source || f.n, g: f.g, title: String(x.title || ''), link: String(x.url || ''), t: (+x.published_on || 0) * 1000 }; }).filter(function (x) { return x.title; }) }; }); }
     var tries = PROXIES.map(function (px, i) { return fetchText(px(f.u), 9000).then(function (t) { var it = parseFeed(t, f); if (!it.length) { throw new Error('empty'); } return { via: 'proxy ' + (i + 1), items: it }; }); });
     tries.push(rssJson(f));
+    tries.push(fetchText(f.u, 9000).then(function (tx) { var it = parseFeed(tx, f); if (!it.length) { throw new Error('empty'); } return { via: 'direct', items: it }; }));
     return firstOk(tries);
 }
 function loadNews(manual) {
@@ -890,13 +898,20 @@ function buildActions() {
         if (age > 90) { score -= Math.min(20, (age - 90) / 10); warns.push('This signal is ' + Math.round(age) + ' seconds old'); }
         if (offHours(p.sym)) { score -= 30; warns.push('Stock-linked contract while the US market is closed: thin and jumpy'); }
         if (p.note) { warns.push(p.note); }
+        var tgX = p.side === 'LONG' ? p.price + p.tp : p.price - p.tp, ext = chgOf(p.sym).v;
+        if (tk && Math.abs(ext) >= 25 && ((p.side === 'LONG' && ext > 0) || (p.side === 'SHORT' && ext < 0))) {
+            warns.push('Already ' + pct(ext) + ' today. Chasing a big move is risky: use a small size');
+            if (p.side === 'LONG' && tk.h > 0 && tgX > tk.h * 1.02) { tgX = tk.h * 1.02; warns.push("Target lowered to just above today's high (the original was too far to be realistic)"); score -= 10; }
+            else if (p.side === 'SHORT' && tk.l > 0 && tgX < tk.l * 0.98) { tgX = tk.l * 0.98; warns.push("Target raised to just below today's low (the original was too far to be realistic)"); score -= 10; }
+            score -= 10;
+        }
         var late = p.moved > 0.4 * tpPct, against = -p.moved > 0.5 * slPct;
         if (late) { warns.push('Price already moved ' + p.moved.toFixed(2) + '% your way. It is late: wait for a pullback'); score -= 20; }
         if (against) { warns.push('Price moved ' + (-p.moved).toFixed(2) + '% against the signal: wait'); score -= 25; }
         score = Math.max(0, Math.min(100, Math.round(score)));
         var tier = score >= 78 && !late && !against && age <= 150 ? 'NOW' : score >= 62 ? 'PREPARE' : 'WATCH';
         out.push({ sym: p.sym, side: p.side, pct: p.pct, score: score, tier: tier, entry: p.price, live: tk.p, moved: p.moved, sl: p.sl, tp: p.tp,
-                   stopLvl: p.side === 'LONG' ? p.price - p.sl : p.price + p.sl, tgtLvl: p.side === 'LONG' ? p.price + p.tp : p.price - p.tp, rr: p.tp / p.sl,
+                   stopLvl: p.side === 'LONG' ? p.price - p.sl : p.price + p.sl, tgtLvl: tgX, rr: Math.abs(tgX - p.price) / p.sl,
                    reasons: reasons, warns: warns, at: p.at, until: p.at + 45 * 60000, spark: p.spark });
     });
     out.sort(function (a, b) { return b.score - a.score; });
@@ -913,23 +928,37 @@ function botLoad() {
 S.bot = botLoad();
 function botSave() { lss('mintoosuite_bot', JSON.stringify(S.bot)); }
 function botEquity() { var b = S.bot, u = 0; b.open.forEach(function (p) { var t = S.tick[p.sym]; if (t) { u += p.notional * (p.sg * (t.p - p.entry) / p.entry); } }); return b.bal + u; }
-function botClose(i, exit, why) {
+function botClose(i, exit, why, ct0) {
     var b = S.bot, p = b.open.splice(i, 1)[0], pnl = p.notional * (p.sg * (exit - p.entry) / p.entry) - p.notional * BOT_FEE * 2;
     b.bal += pnl; if (b.bal > b.peak) { b.peak = b.bal; }
     var dd = b.peak ? (b.peak - b.bal) / b.peak * 100 : 0; if (dd > b.maxDd) { b.maxDd = dd; }
-    b.closed.unshift({ sym: p.sym, side: p.side, entry: p.entry, exit: exit, pnl: pnl, at: p.at, ct: nowMs(), why: why, pct: p.pct, r: p.risk ? pnl / p.risk : 0 });
+    b.closed.unshift({ sym: p.sym, side: p.side, entry: p.entry, exit: exit, pnl: pnl, at: p.at, ct: ct0 || nowMs(), why: why, pct: p.pct, r: p.risk ? pnl / p.risk : 0 });
     if (b.closed.length > 300) { b.closed.length = 300; }
     addLog('BOT', (pnl >= 0 ? 'Paper win ' : 'Paper loss ') + nm(p.sym) + ' ' + p.side + ' ' + usd(pnl) + ' (' + why + ')');
     botSave();
 }
+function botBackfill(p) {
+    var now = nowMs(); if (p.bf || (p.chk && now - p.chk < 90000) || now - p.at < 70000) { return; } p.bf = 1;
+    fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + p.sym + '&interval=1m&startTime=' + (Math.floor(p.at / 60000) * 60000) + '&limit=1000').then(function (r) { return r.json(); }).then(function (ks) {
+        var b = S.bot, idx = b ? b.open.indexOf(p) : -1, i, k, tk, hit = null, slHit, tpHit; if (idx < 0 || !Array.isArray(ks)) { return; }
+        for (i = 0; i < ks.length && !hit; i++) {
+            k = ks[i]; tk = +k[0]; if (tk <= p.at) { continue; }
+            slHit = p.sg > 0 ? +k[3] <= p.sl : +k[2] >= p.sl; tpHit = p.sg > 0 ? +k[2] >= p.tp : +k[3] <= p.tp;
+            if (slHit) { hit = { px: p.sl * (1 - p.sg * BOT_SLIP), why: 'stop', t: tk + 60000 }; }
+            else if (tpHit) { hit = { px: p.tp, why: 'target', t: tk + 60000 }; }
+            else if (tk + 60000 - p.at >= 3 * 3600000) { hit = { px: +k[4], why: 'time limit', t: tk + 60000 }; }
+        }
+        p.chk = nowMs(); if (hit) { botClose(idx, hit.px, hit.why, Math.min(hit.t, nowMs())); }
+    }).catch(function () {}).then(function () { p.bf = 0; });
+}
 function botStep() {
     var b = S.bot, now = nowMs(), i; if (!b) { return; }
     for (i = b.open.length - 1; i >= 0; i--) {
-        var p = b.open[i], t = S.tick[p.sym]; if (!t || now - t.at > 20000) { continue; }
+        var p = b.open[i], t = S.tick[p.sym]; botBackfill(p); if (!t || now - t.at > 20000) { continue; }
         var px = t.p, hitSL = p.sg > 0 ? px <= p.sl : px >= p.sl, hitTP = p.sg > 0 ? px >= p.tp : px <= p.tp;
         if (hitSL) { botClose(i, p.sl * (1 - p.sg * BOT_SLIP), 'stop'); }
         else if (hitTP) { botClose(i, p.tp, 'target'); }
-        else if (now - p.at > 3 * 3600000) { botClose(i, px, 'time limit'); }
+        else if (now - p.at > 3 * 3600000 + 600000) { botClose(i, px, 'time limit'); }
     }
     if (!b.on || dataAge() > 10000 || !S.scan.at || now - S.scan.at > 120000 || b.open.length >= b.maxOpen) { return; }
     var eq = botEquity();
@@ -1053,7 +1082,7 @@ function pickCard(p) {
     return '<div class="group pad tap" data-act="chart:' + p.sym + '"><div class="ph">' + who(p.sym) + '<div class="side">' + badge(p.side) + meter(p.pct) + '</div></div>' + tfWarn(p.sym) +
         '<div class="pm"><div><div class="px">' + px(p.sym, p.price) + '</div>' + chgTxt(p.sym, true) + '</div>' + sparkOf(p.sym) + '</div>' +
         lv(p.side, p.price, p.sl, p.tp, p.sym) + plBox(p.side, p.price, p.sl, p.tp, p.sym) +
-        '<div class="foot">' + bothChg(p.sym) + '<br>Valid ' + hm(p.at) + ' → ' + hm(p.at + 45 * 60000) + ' • RSI ' + p.rsi.toFixed(0) + ' • volume ×' + p.vr.toFixed(1) + (p.note ? ' • ' + esc(p.note) : '') + (p.st ? ' • 15m Supertrend ' + (p.st.dir > 0 ? 'UP' : 'DOWN') : '') + '</div></div>';
+        '<div class="foot">' + bothChg(p.sym) + '<br><b class="vwin">VALID ' + hm(p.at) + ' → ' + hm(p.at + 45 * 60000) + '</b>' + ' • RSI ' + p.rsi.toFixed(0) + ' • volume ×' + p.vr.toFixed(1) + (p.note ? ' • ' + esc(p.note) : '') + (p.st ? ' • 15m Supertrend ' + (p.st.dir > 0 ? 'UP' : 'DOWN') : '') + '</div></div>';
 }
 function heroPick(p) {
     return '<div class="hero tap" data-act="chart:' + p.sym + '"><div class="hl"><span>Top master pick</span><span>10m + 15m agree</span></div>' +
@@ -1225,7 +1254,7 @@ function vExness() {
     h += '<div class="group pad"><div class="ph">' + who(GOLD, 'Exness XAU/USD (live, via Binance gold)') + chgChip(GOLD) + '</div><div class="pm"><div class="px">' + px(GOLD) + '</div>' + sparkOf(GOLD) + '</div></div>';
     if (goldClosed(new Date(now))) { h += '<div class="warn">Exness gold is closed (weekend). Plans start at ' + fmtT(nextGoldOpen(now)) + '.</div>'; }
     var D0 = dayOpenFor(now), g = S.morning.D === D0 ? S.morning.items.filter(function (o) { return o.sym === GOLD && o.today; })[0] : null, gp = S.plan.items.filter(function (r) { return r.kind === 'gold'; })[0], side, entry, sl, tp;
-    h += sh('Gold plan') + (g ? morningCard(g) : gp ? planCard(gp, 'Gold', true) : skel(1, 160));
+    h += '<button class="btn sec" data-act="chart:' + GOLD + '">📈 Open gold chart</button>' + sh('Gold plan') + (g ? morningCard(g) : gp ? planCard(gp, 'Gold', true) : skel(1, 160));
     if (g) { side = g.today.day; entry = g.today.entry; sl = g.today.dSL; tp = g.today.dTP; } else if (gp) { side = gp.day; entry = gp.price; sl = gp.daySL; tp = gp.dayTP; }
     if ((side === 'LONG' || side === 'SHORT') && sl > 0 && tp > 0) {
         h += sh('Lot sizes for the whole-day plan') + '<div class="group"><div class="row"><span><b>' + (side === 'LONG' ? 'BUY' : 'SELL') + '</b> at ' + fmtP(entry, GOLD) + '</span><span class="mut">SL ' + fmtP(side === 'LONG' ? entry - sl : entry + sl, GOLD) + ' • TP ' + fmtP(side === 'LONG' ? entry + tp : entry - tp, GOLD) + '</span></div>';
@@ -1260,8 +1289,9 @@ function cbRun() {
         var now = nowMs(), c = [{ h: 'roll', v: t.chg, n: 'Binance 24-hour value' }];
         for (var h = 0; h < 24; h++) { var st = anchorStart(now, h), k = null; for (var i = 0; i < ks.length; i++) { if (+ks[i][0] === st) { k = ks[i]; } } if (k && +k[1] > 0) { c.push({ h: h, v: (t.p - +k[1]) / +k[1] * 100, n: 'since ' + ((h + 5) % 24 < 10 ? '0' : '') + (h + 5) % 24 + ':00 PKT' }); } }
         c.forEach(function (x) { x.d = Math.abs(x.v - typed); }); c.sort(function (a, b) { return a.d - b.d; });
-        var b = c[0], tbl = '<div class="group">' + c.slice(0, 4).map(function (x) { return '<div class="row"><span>' + esc(x.n) + '</span><b>' + pct(x.v) + '</b></div>'; }).join('') + '</div>';
-        if (b.d <= 0.6 && (!c[1] || c[1].d - b.d >= 0.25)) {
+        var rollC = c.filter(function (x) { return x.h === 'roll'; })[0], b = c[0], tbl = '<div class="group">' + c.slice(0, 4).map(function (x) { return '<div class="row"><span>' + esc(x.n) + '</span><b>' + pct(x.v) + '</b></div>'; }).join('') + '</div>';
+        if (rollC && rollC.d <= 0.8 && rollC.d - b.d <= 0.45) { b = rollC; }
+        if (b.d <= 0.8 && (b === rollC || !c[1] || c[1].d - b.d >= 0.25)) {
             S.anchor = b.h; lss('mintoosuite_anchor', String(b.h)); S.dayOpen = {}; S.dayOpenTried = 0;
             out.innerHTML = '<div class="note" style="color:var(--green)">Matched: ' + esc(b.n) + ' (' + pct(b.v) + ' against your ' + pct(typed) + ').</div>' + tbl + '<div class="note">The app is loading the starting prices for all coins. Wait about a minute, then compare a few coins in Binance Live with Binance.</div>';
         } else {
@@ -1824,7 +1854,7 @@ function vGold() {
     else { h += '<div class="group pad"><div class="ph">' + who(GOLD, 'Binance ' + GOLD + ' (Exness proxy)') + chgChip(GOLD) + '</div><div class="pm"><div class="px">' + px(GOLD) + '</div>' + sparkOf(GOLD) + '</div></div><div class="group"><div class="row"><span>24h high / low</span><b>' + fmtP(t.h, GOLD) + ' / ' + fmtP(t.l, GOLD) + '</b></div><div class="row"><span>24h volume</span><b>' + money(t.q) + '</b></div></div>'; }
     if (goldClosed(new Date(nowMs()))) { h += '<div class="warn">Exness gold is closed (weekend). Plan starts at ' + fmtT(nextGoldOpen(nowMs())) + '.</div>'; }
     var gold = S.plan.items.filter(function (r) { return r.kind === 'gold'; })[0];
-    h += gold ? planCard(gold, 'Gold', true) : skel(1, 160);
+    h += '<button class="btn sec" data-act="chart:' + GOLD + '">📈 Open gold chart</button>' + (gold ? planCard(gold, 'Gold', true) : skel(1, 160));
     var fx = S.fx, usdP = fx.eur != null && fx.gbp != null ? -(0.829 * fx.eur + 0.171 * fx.gbp) : null;
     h += sh('Dollar strength (proxy)') + '<div class="group">' + (usdP == null ? '<div class="row mut">Loading real EUR and GBP data…</div>' :
         '<div class="row"><span>US dollar vs EUR & GBP, 24h</span><b class="' + cc(usdP) + '">' + (usdP >= 0 ? '▲ stronger ' : '▼ weaker ') + pct(usdP) + '</b></div><div class="row"><span>EUR/USDT</span><b class="' + cc(fx.eur) + '">' + pct(fx.eur) + '</b></div><div class="row"><span>GBP/USDT</span><b class="' + cc(fx.gbp) + '">' + pct(fx.gbp) + '</b></div>') + '</div>' +
@@ -2071,9 +2101,130 @@ VIEWS.wallet = function () { return MW.html(); };
         try { go(next, right); } catch (err) {}
     }, { passive: true });
 })();
+/* mw-v101 */
+WINS.push({ id: 'risk', ic: '🎛', c: '#ff375f', n: 'Risk Meter & Trades', t: 'Risk', sub: 'Neon risk gauge, open trades with live profit and loss, close buttons' },
+    { id: 'hist', ic: '🗂', c: '#8e8e93', n: 'Trade History', t: 'History', sub: 'Every closed trade: times, prices, result and reason' },
+    { id: 'brokers', ic: '🌐', c: '#0a84ff', n: 'Trading Sites', t: 'Sites', sub: 'Open Binance, Exness and other sites in your phone browser' });
+LIVE.risk = 1; LIVE.hist = 1;
+var MW_GROUPS = [['Trade & signals', ['overview', 'morning', 'plan', 'scanner', 'candles', 'bot', 'risk', 'hist', 'trade']], ['Markets', ['market', 'chart', 'gold', 'exness', 'newc', 'news', 'exchanges']], ['Money', ['wallet', 'brokers']], ['Tools & settings', ['calib', 'alerts', 'log', 'health', 'help']]];
+function mwTiles() {
+    var used = {}, h = '';
+    function tile(w) { return '<div class="tile' + (w.id === S.win ? ' on' : '') + '" data-act="win:' + w.id + '"><div class="ic" style="background:' + w.c + '22">' + w.ic + '</div>' + (w.t || w.n) + '</div>'; }
+    MW_GROUPS.forEach(function (g) { var inner = ''; g[1].forEach(function (id) { var w = winDef(id); if (w && w.id === id && !used[id]) { used[id] = 1; inner += tile(w); } }); if (inner) { h += '<div class="mwgh">' + g[0] + '</div>' + inner; } });
+    var rest = WINS.filter(function (w) { return !used[w.id]; }); if (rest.length) { h += '<div class="mwgh">More</div>' + rest.map(tile).join(''); }
+    return h;
+}
+var MW_HELP = {
+    overview: 'Your best chances first. Green "Do now" cards pass every check. Each card shows entry, stop (where you accept being wrong), target, and VALID times. Not a guarantee.',
+    morning: 'Plans locked at 05:15 PKT for the whole day and for a few hours. A coloured badge shows if the window is still running (valid now) or ENDED. The track record shows what really happened over 9 days.',
+    plan: 'The next-day trend and the whole-day and few-hours plans for gold and the biggest coins.',
+    scanner: 'Scans the most traded Binance Futures coins and ranks the ones where indicators agree.',
+    newc: 'Coins listed on Binance Futures in the last 30 days. They move fast both ways.',
+    candles: 'Strong 3-minute candles that may start a quick move.',
+    market: 'Live gainers, losers and volume on Binance Futures.',
+    chart: 'Real candlesticks for any Futures coin, with the usual indicators.',
+    gold: 'Gold live, its plan, a gold chart button, and a dollar-strength proxy.',
+    exness: 'Gold plan with lot sizes for Exness (XAU/USD). Prices come from Binance gold futures, so they can differ slightly from Exness.',
+    trade: 'Place Binance orders with stop and target using your own API keys. Use a key with trading only and withdrawals switched off. Try Test mode first.',
+    wallet: 'Your own wallet. Keys stay on this phone. Write the 12 words on paper. Receive, see balances, and send with Practice mode first.',
+    calib: 'Compares the % this app shows with the % Binance shows for a coin, using Binance 24-hour value. Small gaps appear because prices move while you type.',
+    news: 'Crypto, markets and world headlines. Pull down or tap Try again to refresh. The source list at the bottom shows which sources answered.',
+    alerts: 'Choose which push notifications you want.',
+    log: 'A record of what the app recommended on this phone.',
+    exchanges: 'Which world markets are open now.',
+    health: 'The app checks itself. A phone clock that is a few seconds off is corrected automatically; for the best result turn on Automatic date and time in phone settings.',
+    help: 'How the app works, a glossary, limits and contact details.',
+    bot: 'A paper bot with virtual money and real prices. It checks stops and targets on 1-minute candles even after the app was closed. It never places real orders.',
+    risk: 'Neon risk gauge: % of your account lost if every open trade hits its stop. Below it: open trades with live profit and loss and a Close button (tap twice).',
+    hist: 'All closed paper trades with open and close times, prices, result and why they closed. Filter wins or losses.',
+    brokers: 'Shortcuts that open the official sites in your phone browser. Your browser can remember your login. This app never sees your passwords.'
+};
+VIEWS.risk = vRisk; VIEWS.hist = vHist; VIEWS.brokers = vBrokers;
+function mwGauge(v, max, label) {
+    var a = Math.max(0, Math.min(1, v / max)), ang = Math.PI * (1 - a), cx = 120, cy = 120, r = 90, nx = cx + 76 * Math.cos(ang), ny = cy - 76 * Math.sin(ang);
+    function arc(a0, a1, col) { var x0 = cx + r * Math.cos(Math.PI * (1 - a0)), y0 = cy - r * Math.sin(Math.PI * (1 - a0)), x1 = cx + r * Math.cos(Math.PI * (1 - a1)), y1 = cy - r * Math.sin(Math.PI * (1 - a1)); return '<path d="M' + x0.toFixed(1) + ' ' + y0.toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + x1.toFixed(1) + ' ' + y1.toFixed(1) + '" stroke="' + col + '" stroke-width="15" fill="none" stroke-linecap="round" filter="url(#mwg)"/>'; }
+    return '<svg viewBox="0 0 240 150" width="100%" style="max-width:330px;display:block;margin:0 auto"><defs><filter id="mwg" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>' + arc(0, 0.3, '#30d158') + arc(0.33, 0.6, '#ffd60a') + arc(0.63, 0.82, '#ff9f0a') + arc(0.85, 1, '#ff453a') + '<line x1="' + cx + '" y1="' + cy + '" x2="' + nx.toFixed(1) + '" y2="' + ny.toFixed(1) + '" stroke="#64d2ff" stroke-width="4" stroke-linecap="round" filter="url(#mwg)"/><circle cx="' + cx + '" cy="' + cy + '" r="7" fill="#64d2ff" filter="url(#mwg)"/><text x="120" y="104" text-anchor="middle" font-size="22" font-weight="800" fill="#e8f1ff">' + esc(label) + '</text></svg>';
+}
+function mwCell(l, v) { return '<div><span>' + l + '</span><b>' + v + '</b></div>'; }
+function vRisk() {
+    var b = S.bot, eq = botEquity(), used = 0, heat = 0, expo = 0, upl = 0, now = nowMs(), h, heatPct, usedPct, lvl, col;
+    b.open.forEach(function (p) { var t = S.tick[p.sym]; used += p.margin; expo += p.notional; upl += t ? p.notional * (p.sg * (t.p - p.entry) / p.entry) : 0; heat += p.notional * Math.abs(p.entry - p.sl) / p.entry; });
+    heatPct = eq > 0 ? heat / eq * 100 : 0; usedPct = eq > 0 ? used / eq * 100 : 0;
+    lvl = heatPct < 2 ? 'LOW RISK' : heatPct < 4 ? 'MODERATE' : heatPct < 7 ? 'HIGH' : 'EXTREME'; col = heatPct < 2 ? '#30d158' : heatPct < 4 ? '#ffd60a' : heatPct < 7 ? '#ff9f0a' : '#ff453a';
+    h = '<div class="mwneon"><div class="mwt">RISK METER <span style="opacity:.6;font-weight:600">· paper account</span></div>' + mwGauge(heatPct, 10, heatPct.toFixed(1) + '%') + '<div class="mwlv" style="color:' + col + '">' + lvl + '</div><div class="mwg">' + mwCell('EQUITY', usd(eq).replace('+', '')) + mwCell('OPEN P/L', usd(upl)) + mwCell('MARGIN USED', usd(used).replace('+', '') + ' · ' + usedPct.toFixed(0) + '%') + mwCell('FREE MARGIN', usd(Math.max(0, b.bal - used)).replace('+', '')) + mwCell('EXPOSURE', usd(expo).replace('+', '')) + mwCell('MAX DRAWDOWN', b.maxDd.toFixed(1) + '%') + '</div><div class="mwn">Risk % = the part of your account lost if every open trade hits its stop. Virtual money, real prices.</div></div>';
+    h += sh('Open trades', b.open.length);
+    if (!b.open.length) { h += '<div class="group pad mut">No open trade. The bot opens one only when a signal reaches ENTER NOW.</div>'; }
+    b.open.forEach(function (p, i) {
+        var t = S.tick[p.sym], u = t ? p.notional * (p.sg * (t.p - p.entry) / p.entry) : 0, up = t ? p.sg * (t.p - p.entry) / p.entry * 100 * p.lev : 0, left = Math.max(0, p.at + 3 * 3600000 - now), c = S.rkc === i && now - (S.rkt || 0) < 5000;
+        h += '<div class="mwtr"><div class="mwh"><span><b>' + esc(base(p.sym)) + '</b> <span class="pill ' + (p.side === 'LONG' ? 'long' : 'short') + '">' + p.side + ' ' + p.lev + '×</span></span><b class="' + cc(u) + '">' + usd(u) + ' · ' + pct(up) + '</b></div><div class="mwd">Entry ' + fmtP(p.entry, p.sym) + ' · Now ' + (t ? fmtP(t.p, p.sym) : '—') + '<br>Stop ' + fmtP(p.sl, p.sym) + ' · Target ' + fmtP(p.tp, p.sym) + '<br>Opened ' + fmtT(p.at) + ' · ' + (left > 0 ? 'time left ' + Math.floor(left / 3600000) + 'h ' + Math.floor(left % 3600000 / 60000) + 'm' : 'time limit reached') + '</div><button class="btn sec" data-rk="close:' + i + '">' + (c ? 'Tap again to close at the live price' : 'Close this trade') + '</button></div>';
+    });
+    if (b.open.length > 1) { h += '<button class="btn sec" data-rk="closeall" style="border:2px solid #ff453a;color:#ff453a">' + (S.rkc === 'all' && now - (S.rkt || 0) < 5000 ? 'Tap again to close ALL trades' : 'Emergency: close all trades') + '</button>'; }
+    return h + '<div class="note">This window shows the paper bot. Real Binance orders are placed from the Trade window with your own API keys.</div>';
+}
+function vHist() {
+    var b = S.bot, s = botStats(), f = S.hf || 'all', rows = b.closed.filter(function (c) { return f === 'all' || (f === 'win' ? c.pnl >= 0 : c.pnl < 0); }), best = 0, worst = 0, h;
+    b.closed.forEach(function (c) { if (c.pnl > best) { best = c.pnl; } if (c.pnl < worst) { worst = c.pnl; } });
+    h = '<div class="group pad"><div class="lv x2">' + mwCell('TRADES', s.n) + mwCell('WIN RATE', s.n ? s.wr + '%' : '—') + mwCell('PROFIT FACTOR', s.n ? (s.pf >= 99 ? '∞' : s.pf.toFixed(2)) : '—') + mwCell('AVG RESULT', s.n ? (s.avgR >= 0 ? '+' : '') + s.avgR.toFixed(2) + ' R' : '—') + mwCell('BEST', usd(best)) + mwCell('WORST', usd(worst)) + '</div></div>';
+    h += '<div class="chips">' + [['all', 'All'], ['win', 'Wins'], ['loss', 'Losses']].map(function (x) { return '<span class="cc tap" data-rk="hf:' + x[0] + '" style="' + (f === x[0] ? 'background:var(--blu);color:#fff' : '') + '">' + x[1] + '</span>'; }).join('') + '</div>';
+    if (!rows.length) { return h + '<div class="group pad mut">Nothing here yet.</div>'; }
+    h += rows.slice(0, 120).map(function (c) { var d = Math.max(0, c.ct - c.at), mins = Math.round(d / 60000), pc = c.entry ? (c.side === 'LONG' ? 1 : -1) * (c.exit - c.entry) / c.entry * 100 : 0; return '<div class="mwtr"><div class="mwh"><span><b>' + esc(base(c.sym)) + '</b> <span class="pill ' + (c.side === 'LONG' ? 'long' : 'short') + '">' + c.side + '</span></span><b class="' + cc(c.pnl) + '">' + usd(c.pnl) + '</b></div><div class="mwd">Entry ' + fmtP(c.entry, c.sym) + ' → Exit ' + fmtP(c.exit, c.sym) + ' (' + pct(pc) + ' price move)<br>Opened ' + fmtT(c.at) + ' · Closed ' + fmtT(c.ct) + ' · ' + (mins >= 60 ? Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm' : mins + ' min') + '<br>Closed by: <b>' + esc(c.why) + '</b> · indicators agreed ' + (c.pct != null ? c.pct + '%' : '—') + ' · ' + (c.r >= 0 ? '+' : '') + (c.r || 0).toFixed(2) + ' R</div></div>'; }).join('');
+    return h;
+}
+function vBrokers() {
+    var G = [['Exchanges', [['Binance', 'https://www.binance.com'], ['Bitget', 'https://www.bitget.com'], ['Bybit', 'https://www.bybit.com'], ['OKX', 'https://www.okx.com'], ['KuCoin', 'https://www.kucoin.com'], ['Gate', 'https://www.gate.io']]], ['Gold and forex broker', [['Exness', 'https://www.exness.com']]], ['Charts and data', [['TradingView', 'https://www.tradingview.com'], ['CoinMarketCap', 'https://coinmarketcap.com'], ['CoinGecko', 'https://www.coingecko.com']]]], h = '<div class="note" style="margin:0 0 6px">Each button opens the official site in your phone browser. Your browser can remember your login; this app never sees your passwords.</div>';
+    G.forEach(function (g) { h += sh(g[0]) + '<div class="group">' + g[1].map(function (x) { return '<a class="row" style="text-decoration:none;color:inherit" href="' + x[1] + '" target="_blank" rel="noopener"><span><b>' + x[0] + '</b><br><small class="mut">' + x[1].replace('https://', '') + '</small></span><b>Open ›</b></a>'; }).join('') + '</div>'; });
+    return h + '<div class="note">Binary-options sites are not included: Google Play does not allow apps that promote them, and most traders lose money on them.</div>';
+}
+(function () {
+    var css = document.createElement('style');
+    css.textContent = '.qm{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#ff9f0a;color:#fff;font-size:13px;font-weight:800;vertical-align:middle;margin-left:8px;cursor:pointer}.mwpop{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:99999;padding:24px}.mwpb{background:var(--card,#fff);color:var(--tx,#111);border-radius:22px;padding:20px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35)}.mwpb p{margin:10px 0 16px;line-height:1.45}.mwgh{grid-column:1/-1;font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--mut);margin:12px 4px 0}.mwneon{background:linear-gradient(160deg,#0a1226,#13203f);color:#e8f1ff;border-radius:24px;padding:18px 14px 14px;box-shadow:0 0 0 1px rgba(100,210,255,.25),0 12px 40px rgba(20,60,140,.35);margin-bottom:6px}.mwt{font-weight:800;letter-spacing:1.2px;font-size:13px;text-align:center;margin-bottom:2px;color:#9fd8ff}.mwlv{text-align:center;font-weight:800;letter-spacing:1.5px;margin:-4px 0 12px;text-shadow:0 0 12px currentColor}.mwg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mwg>div{background:rgba(255,255,255,.06);border-radius:14px;padding:10px 12px}.mwg span{display:block;font-size:11px;letter-spacing:.8px;opacity:.65}.mwg b{font-size:16px;text-shadow:0 0 10px rgba(100,210,255,.35)}.mwn{font-size:12px;opacity:.7;margin-top:10px;line-height:1.4}.mwtr{background:var(--card,#fff);border-radius:18px;padding:14px;margin:10px 0;box-shadow:var(--shadow)}.mwh{display:flex;justify-content:space-between;align-items:center;font-size:16px}.mwd{font-size:13px;color:var(--mut);margin:8px 0;line-height:1.55}.vwin{font-size:15px;color:var(--blu,#0a84ff)}.blk .tm{font-size:15px;font-weight:700;color:var(--tx);background:rgba(10,132,255,.09);padding:7px 10px;border-radius:10px;margin:6px 0}.btn:active{transform:scale(.98)}.tile:active,.tab:active{transform:scale(.96)}@keyframes mwin{from{opacity:.0;transform:translateY(8px)}to{opacity:1;transform:none}}#view>*{animation:mwin .25s ease-out both}.mwptr{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--card,#fff);color:var(--tx,#111);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.2);z-index:9998;display:none}';
+    document.head.appendChild(css);
+    function pop(id) { var d = winDef(id), el = document.getElementById('mwHelp'); if (!el) { el = document.createElement('div'); el.id = 'mwHelp'; el.className = 'mwpop'; document.body.appendChild(el); } el.innerHTML = '<div class="mwpb"><b style="font-size:18px">' + esc(d.n) + '</b><p>' + esc(MW_HELP[id] || d.sub) + '</p><button class="btn" data-qm="close">Got it</button></div>'; el.style.display = 'flex'; }
+    document.addEventListener('click', function (e) {
+        var q = e.target.closest ? e.target.closest('[data-help],[data-qm],[data-rk]') : null, a, i, p, t, now = Date.now();
+        if (!q) { var h0 = document.getElementById('mwHelp'); if (h0 && h0.style.display === 'flex' && e.target === h0) { h0.style.display = 'none'; } return; }
+        if (q.hasAttribute('data-help')) { pop(q.getAttribute('data-help')); return; }
+        if (q.hasAttribute('data-qm')) { var h1 = document.getElementById('mwHelp'); if (h1) { h1.style.display = 'none'; } return; }
+        a = q.getAttribute('data-rk');
+        if (a.indexOf('hf:') === 0) { S.hf = a.slice(3); renderView(true); return; }
+        if (a.indexOf('close:') === 0) {
+            i = +a.slice(6);
+            if (S.rkc === i && now - (S.rkt || 0) < 5000) { p = S.bot.open[i]; t = p && S.tick[p.sym]; if (p && t) { botClose(i, t.p * (1 - p.sg * BOT_SLIP), 'manual'); } S.rkc = -1; } else { S.rkc = i; S.rkt = now; }
+            renderView(true); return;
+        }
+        if (a === 'closeall') {
+            if (S.rkc === 'all' && now - (S.rkt || 0) < 5000) { for (i = S.bot.open.length - 1; i >= 0; i--) { p = S.bot.open[i]; t = S.tick[p.sym]; if (t) { botClose(i, t.p * (1 - p.sg * BOT_SLIP), 'manual'); } } S.rkc = -1; } else { S.rkc = 'all'; S.rkt = now; }
+            renderView(true);
+        }
+    });
+    document.addEventListener('click', function (e) { var a = e.target.closest ? e.target.closest('[data-act="openwin"]') : null; });
+    var _vn = VIEWS.news, _vh = VIEWS.help;
+    VIEWS.news = function () {
+        var h = _vn(), d = S.newsSrc || [];
+        if (d.length) { h += '<div class="note" style="margin-top:14px"><b>News sources</b><br>' + d.map(function (x) { return (x.ok ? '✅ ' : '⚠️ ') + esc(x.n) + (x.ok ? ' (' + x.count + ' headlines, ' + esc(x.via) + ')' : ' (no answer)'); }).join('<br>') + '</div>'; }
+        return h;
+    };
+    VIEWS.help = function () {
+        return _vh() + sh('Glossary') + '<div class="group pad"><div class="note" style="margin:0"><b>Entry</b>: the price to buy (LONG) or sell (SHORT). <b>Stop</b>: the price where you accept being wrong and close. <b>Target</b>: where you take profit. <b>Leverage (5×)</b>: multiplies profit and loss; high leverage can wipe out your money fast. <b>Indicators agree</b>: how many checks point the same way, not the chance of profit. <b>VALID</b>: the time window in which the idea still applies. <b>Paper trading</b>: virtual money with real prices.</div></div>' + sh('Support') + '<div class="group pad"><div class="note" style="margin:0">Email: awaisrajpoot2@yahoo.com<br>Muhammad Awais, Broadway Street, Greens Avenue, Park Road, Islamabad, Pakistan<br>This app gives information, not financial advice. Trading can lose money.</div></div>';
+    };
+    /* pull down to refresh (when the page is at the top) */
+    var py = null, px0 = 0, pd = 0, bar = null;
+    function pbar(txt) { if (!bar) { bar = document.createElement('div'); bar.className = 'mwptr'; document.body.appendChild(bar); } bar.textContent = txt; bar.style.display = txt ? 'block' : 'none'; }
+    function doRefresh() {
+        pbar('Refreshing…');
+        try {
+            if (S.win === 'news') { loadNews(true); } else if (S.win === 'wallet') { MW.refresh(); } else { try { runScan(); } catch (e) {} try { loadFx(); } catch (e) {} renderView(true); }
+        } catch (e) {}
+        setTimeout(function () { pbar('Updated'); setTimeout(function () { pbar(''); }, 700); }, 900);
+    }
+    document.addEventListener('touchstart', function (e) { py = null; if (e.touches && e.touches.length === 1 && (window.pageYOffset || 0) <= 0 && !document.querySelector('.sheet.open')) { py = e.touches[0].clientY; px0 = e.touches[0].clientX; pd = 0; } }, { passive: true });
+    document.addEventListener('touchmove', function (e) { if (py === null || !e.touches.length) { return; } pd = e.touches[0].clientY - py; if ((window.pageYOffset || 0) > 0) { py = null; pbar(''); return; } if (pd > 40 && Math.abs(e.touches[0].clientX - px0) < pd) { pbar(pd > 110 ? 'Release to refresh' : 'Pull down to refresh'); } }, { passive: true });
+    document.addEventListener('touchend', function () { var go = py !== null && pd > 110; py = null; if (go) { doRefresh(); } else { pbar(''); } }, { passive: true });
+    try { buildNav(); } catch (e) {}
+})();
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
-    $('winName').textContent = d.n; $('winSub').textContent = d.sub;
+    $('winName').innerHTML = esc(d.n) + ' <span class="qm" data-help="' + d.id + '">?</span>'; $('winSub').textContent = d.sub;
     try { $('view').innerHTML = VIEWS[d.id]() + '<div class="note" style="text-align:center;margin-top:18px">MintooSuite build ' + BUILD + '</div>'; } catch (e) { $('view').innerHTML = '<div class="group pad"><b>Something went wrong showing this window.</b><div class="note">' + esc(e && e.message || e) + '</div></div>'; }
     if (d.id === 'chart') { drawChart(); }
     if (keep) { window.scrollTo(0, y); }
@@ -2094,7 +2245,7 @@ var TABS = [['overview', 'Home', '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9
     ['more', 'More', '<rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/>']];
 function buildNav() {
     $('tabs').innerHTML = TABS.map(function (t) { var act = t[0] === 'more' ? 'openwin' : 'win:' + t[0]; return '<button class="tab' + (t[0] === S.win ? ' on' : '') + '" data-act="' + act + '"><svg viewBox="0 0 24 24">' + t[2] + '</svg>' + t[1] + '</button>'; }).join('');
-    $('tiles').innerHTML = WINS.map(function (w) { return '<div class="tile' + (w.id === S.win ? ' on' : '') + '" data-act="win:' + w.id + '"><div class="ic" style="background:' + w.c + '22">' + w.ic + '</div>' + (w.t || w.n) + '</div>'; }).join('');
+    $('tiles').innerHTML = mwTiles();
 }
 S.hist = [];
 function updateBack() { var el = $('btnBack'); if (el) { el.style.display = S.hist.length ? '' : 'none'; } }
