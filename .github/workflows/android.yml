@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -59,3 +59,10 @@ jobs:
           path: |
             android/app/build/outputs/apk/release/app-release.apk
             android/app/build/outputs/bundle/release/app-release.aab
+
+      - name: Publish a downloadable release
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "build-${{ github.run_number }}" android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/bundle/release/app-release.aab --repo "${{ github.repository }}" --title "MintooSuite build ${{ github.run_number }}" --notes "Signed APK (install on your phone) and AAB (upload to Google Play)." --latest
