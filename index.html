@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-20.5';
+var BUILD = '2026-10-29.5';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5950,6 +5950,74 @@ PF_TIPS.me = 'Swipe the cards sideways. Tap ✏️ Edit to choose your own short
     } };
     var st2 = document.createElement('style'); st2.textContent = '#pfm .pfbub{pointer-events:none;max-width:170px}.mwql{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--mut,#777);letter-spacing:.4px;text-transform:uppercase;margin:4px 2px 0}.nbtn .meav.hd{box-shadow:0 0 0 2px #fff,0 2px 8px rgba(0,0,0,.25)}'; document.head.appendChild(st2);
 })();
+/* ===== v10.8 build .7: complete Profile (details, password, real-bot PnL, security, invite) + Trade Hub ===== */
+function mpGet() { try { return JSON.parse(localStorage.getItem('mintoosuite_prof') || '{}') || {}; } catch (e) { return {}; } }
+function mpSet(o) { try { localStorage.setItem('mintoosuite_prof', JSON.stringify(o)); } catch (e) {} }
+function mpIn(key, label, ph, type) { var v = mpGet()[key] || ''; return '<div style="margin:0 0 10px"><div class="mut" style="font-size:12.5px;margin-bottom:4px">' + label + '</div><input class="mpin" data-m14in="' + key + '" type="' + (type || 'text') + '" value="' + esc(v) + '" placeholder="' + esc(ph || '') + '" autocomplete="off" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid var(--line,#d7d7dc);background:var(--card,#fff);color:inherit;font-size:15px"></div>'; }
+function mpBtn(act, txt, pri) { return '<span class="pfbtn" data-m14="' + act + '" style="display:inline-block;margin:2px 8px 2px 0;padding:9px 16px;border-radius:14px;cursor:pointer;font-weight:600;' + (pri ? 'background:#0a84ff;color:#fff' : 'background:var(--fill,#eee)') + '">' + txt + '</span>'; }
+function mpPnl() {
+    var R = S.rb || {}, cl = R.closed || [], tot = 0, w = 0, best = null, worst = null;
+    cl.forEach(function (c) { tot += c.pnl; if (c.pnl > 0) { w++; } if (!best || c.pnl > best.pnl) { best = c; } if (!worst || c.pnl < worst.pnl) { worst = c; } });
+    var cls = function (n) { return n >= 0 ? 'up' : 'dn'; }, usd = function (n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + ' USDT'; };
+    var mode = 'TEST'; try { mode = rbMode(); } catch (e) {}
+    var h = '<div class="group pad"><div class="row"><span>Mode</span><b>' + mode + (mode === 'TEST' ? ' (play money)' : ' (real money)') + '</b></div>';
+    if (!cl.length) { return h + '<div class="note" style="margin:6px 0 0">No real-bot trades yet. Results appear here after the bot closes trades (last 200 kept on this phone). In TEST mode the money is not real.</div><div class="row tap" data-m13="go:rbot"><span>Open Real Bot</span><b>›</b></div></div>'; }
+    h += '<div class="row"><span>Total result</span><b class="' + cls(tot) + '">' + usd(tot) + '</b></div><div class="row"><span>Today</span><b class="' + cls(R.dayPnl || 0) + '">' + usd(R.dayPnl || 0) + '</b></div><div class="row"><span>Closed trades · win rate</span><b>' + cl.length + ' · ' + Math.round(w / cl.length * 100) + '%</b></div><div class="row"><span>Open now</span><b>' + ((R.open || []).length) + '</b></div>';
+    h += '<div class="row"><span>Best · worst trade</span><b><span class="up">' + usd(best.pnl) + '</span> · <span class="dn">' + usd(worst.pnl) + '</span></b></div>';
+    return h + '<div class="note" style="margin:6px 0 0">Calculated from the bot\'s own records on this phone. Binance remains the official record for fees and funding.</div><div class="row tap" data-m13="go:rbot"><span>Open Real Bot</span><b>›</b></div></div>';
+}
+function mpSections() {
+    var p = mpGet(), a = null, lk = null; try { a = auAcct(); } catch (e) {} try { lk = lkState(); } catch (e) {}
+    var h = sh('Personal details (kept on this phone only)') + '<div class="group pad">' + mpIn('name', 'Full name', meName()) + mpIn('phone', 'Mobile number', '+92 …', 'tel') + mpIn('email2', 'Contact email', meEmail(), 'email') + mpIn('addr', 'Address', 'Street, area, city') + mpIn('country', 'Country', 'Pakistan') +
+        '<div>' + mpBtn('savep', 'Save details', 1) + '<span class="mut" id="mpMsg" style="font-size:12.5px"></span></div><div class="note" style="margin:6px 0 0">Saved only in this app on your phone. Nothing is uploaded, because the app has no server.</div></div>';
+    h += sh('Real bot earnings (P/L)') + mpPnl();
+    h += sh('Security center') + '<div class="group pad"><div style="font-weight:600;margin-bottom:6px">Change password</div>' + (a && a.hash ? '<input id="mpOld" type="password" placeholder="Current password" autocomplete="off" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid var(--line,#d7d7dc);background:var(--card,#fff);color:inherit;font-size:15px;margin-bottom:8px"><input id="mpNew" type="password" placeholder="New password (8+ characters)" autocomplete="off" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid var(--line,#d7d7dc);background:var(--card,#fff);color:inherit;font-size:15px;margin-bottom:8px"><input id="mpNew2" type="password" placeholder="Repeat new password" autocomplete="off" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid var(--line,#d7d7dc);background:var(--card,#fff);color:inherit;font-size:15px;margin-bottom:8px"><div>' + mpBtn('pw', 'Change password', 1) + '<span id="mpPw" style="font-size:12.5px"></span></div>' : '<div class="note" style="margin:0">No password account on this phone. Sign in first (Account).</div>') + '</div>';
+    h += '<div class="group pad"><div class="row tap" data-m13="go:perms"><span>🔒 App lock (fingerprint / PIN)</span><b>' + (lk && lk.enabled ? 'ON' : (lk ? 'OFF' : 'Android app only')) + ' ›</b></div><div class="row tap" data-m13="go:account"><span>👤 Sign-in and sign-out</span><b>›</b></div><div class="row tap" data-m13="go:perms"><span>🛡 Notifications, battery, background</span><b>›</b></div><div class="row" data-m14="sec2fa" style="cursor:pointer"><span>🔑 2FA, anti-phishing code, API safety</span><b>Ask Professor ›</b></div></div>';
+    h += sh('Identity (KYC)') + '<div class="group pad"><div class="row"><span>Identity check</span><b>Done in Binance / Bitget</b></div><div class="note" style="margin:6px 0 0">This app does not collect ID cards or CNIC photos on purpose. Your exchange verifies you itself, the Real Bot only needs your Binance API keys, and a photo of an ID stored on a phone with no server adds risk but no benefit. Never send ID photos to anyone who asks for them in a chat.</div></div>';
+    h += sh('Invite friends') + '<div class="group pad">' + mpIn('ref', 'Your own Binance or Bitget referral link / code', 'paste yours here') + '<div>' + mpBtn('share', '📤 Share', 1) + mpBtn('savep', 'Save') + '</div><div class="note" style="margin:6px 0 0">Rewards come only from the exchange\'s own referral programme, under its rules. This app cannot create or pay prizes, so none are shown here.</div></div>';
+    h += sh('Contact and support') + '<div class="group pad"><div class="row"><span>Email</span><b>awaisrajpoot2@yahoo.com</b></div><div class="row tap" data-m13="go:help"><span>📖 Help and guides</span><b>›</b></div><div class="row" data-m14="askpf" style="cursor:pointer"><span>🎓 Ask Professor Mintoo</span><b>›</b></div></div>';
+    return h;
+}
+var _vme114 = VIEWS.me;
+VIEWS.me = function () { var h = _vme114.apply(this, arguments), k = '<div class="note">Everything on this page'; var i = h.lastIndexOf(k); return i < 0 ? h + mpSections() : h.slice(0, i) + mpSections() + h.slice(i); };
+document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-m14in')) { var o = mpGet(); o[t.getAttribute('data-m14in')] = t.value; mpSet(o); } }, true);
+function mpMsg(id, txt, ok) { var el = document.getElementById(id); if (el) { el.textContent = txt; el.style.color = ok ? '#1d8a3b' : '#d70015'; } }
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m14]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-m14');
+    if (a === 'savep') { var o = mpGet(), a2 = null; try { a2 = auAcct(); } catch (er) {} if (o.name && a2 && o.name !== a2.name) { a2.name = o.name; lss('mintoosuite_acct', JSON.stringify(a2)); } mpMsg('mpMsg', 'Saved on this phone.', true); }
+    else if (a === 'askpf') { var b = document.createElement('button'); b.setAttribute('data-m13', 'ask'); document.body.appendChild(b); b.click(); b.remove(); }
+    else if (a === 'sec2fa') { var b2 = document.createElement('button'); b2.setAttribute('data-m13', 'ask'); document.body.appendChild(b2); b2.click(); b2.remove(); setTimeout(function () { try { pfAsk('how do I secure my exchange account with 2FA and an anti-phishing code'); } catch (er) {} }, 400); }
+    else if (a === 'share') {
+        var r = (mpGet().ref || '').trim(), txt = r ? 'Join me on the exchange: ' + r : 'Trade with MintooSuite: live Binance data, Best Picks and a built-in Professor.';
+        try { if (navigator.share) { navigator.share({ text: txt }); } else if (navigator.clipboard) { navigator.clipboard.writeText(txt); mpMsg('mpMsg', 'Copied.', true); } } catch (er) {}
+    }
+    else if (a === 'pw') {
+        var ac = null; try { ac = auAcct(); } catch (er) {} var o1 = (document.getElementById('mpOld') || {}).value || '', n1 = (document.getElementById('mpNew') || {}).value || '', n2 = (document.getElementById('mpNew2') || {}).value || '';
+        if (!ac || !ac.salt) { mpMsg('mpPw', ' No password account here.', false); return; }
+        if (n1.length < 8) { mpMsg('mpPw', ' New password needs 8+ characters.', false); return; } if (n1 !== n2) { mpMsg('mpPw', ' The two new passwords differ.', false); return; } if (n1 === o1) { mpMsg('mpPw', ' Choose a different password.', false); return; }
+        mpMsg('mpPw', ' Checking…', true);
+        auHash(o1, ac.salt).then(function (h) {
+            if (h !== ac.hash) { mpMsg('mpPw', ' Current password is wrong.', false); return; }
+            var salt = auRand(16); return auHash(n1, salt).then(function (nh) { ac.salt = salt; ac.hash = nh; ac.changed = Date.now(); lss('mintoosuite_acct', JSON.stringify(ac)); ['mpOld', 'mpNew', 'mpNew2'].forEach(function (i) { var x = document.getElementById(i); if (x) { x.value = ''; } }); mpMsg('mpPw', ' Password changed on this phone.', true); });
+        }).catch(function () { mpMsg('mpPw', ' Could not change it.', false); });
+    }
+}, true);
+// ---- Trade Hub: one organised place to start any kind of trade (a launcher, not a broker) ----
+function vHub() {
+    var mode = 'TEST'; try { mode = rbMode(); } catch (e) {}
+    var card = function (ic, t, sub, tag, go) { return '<div class="row tap" data-m13="go:' + go + '" style="align-items:flex-start;gap:10px"><span style="font-size:24px">' + ic + '</span><span style="flex:1"><b>' + t + '</b><div class="mut" style="font-size:12.5px;margin-top:2px">' + sub + '</div></span><small style="white-space:nowrap">' + tag + ' ›</small></div>'; };
+    var h = '<div class="note" style="margin:0 0 10px">Pick what you want to trade. This app connects to <b>your own</b> accounts at licensed exchanges and brokers. It is not a broker itself and holds no customer money.</div>';
+    h += sh('Crypto') + '<div class="group pad">' + card('⚡', 'Trading Terminal', 'Place one Binance order at a time with your own keys. You confirm every order.', mode, 'terminal') + card('🤖', 'Real Bot', 'Automatic trading with limits and a kill switch, on your Binance keys.', mode, 'rbot') + card('🟦', 'MEXC', 'Prices, movers and analysis. Orders are placed on MEXC, not here.', 'View', 'mexc') + '</div>';
+    h += sh('Gold and currencies') + '<div class="group pad">' + card('🥇', 'Gold and Exness', 'Live gold view and plans. Trade at your Exness account.', 'View', 'exness') + card('💱', 'Rates', 'Currencies, gold per tola, oil and fuel.', 'View', 'rates') + '</div>';
+    h += sh('Stocks') + '<div class="group pad">' + card('🏛️', 'KSE / PSX', 'Pakistan market view. Orders go through your broker.', 'View', 'psx') + '</div>';
+    h += sh('Traders and brokers') + '<div class="group pad">' + card('👥', 'Copy trading', 'How it works on Binance, Bitget and XM, with a lead-trader scorecard.', 'Learn', 'copy') + card('🌐', 'Trading sites', 'Open Binance, Exness and others in your browser.', 'Open', 'brokers') + card('🕒', 'Which markets are open', 'Exchanges open now.', 'View', 'exchanges') + '</div>';
+    return h + '<div class="note">Building a real marketplace where traders and brokers join and customers deposit money needs financial licences, a secure server and customer-money rules. That is a separate project. Until then this hub keeps every real way to trade in one tidy place. Not financial advice.</div>';
+}
+WINS.push({ id: 'hub', ic: '🧭', c: '#0a84ff', n: 'Trade Hub', t: 'Trade Hub', sub: 'Crypto, gold, currencies, stocks, copy trading and brokers: start any trade from one place' }); LIVE.hub = 0; VIEWS.hub = vHub;
+MW_HELP.hub = 'Choose what you want to trade. Terminal and Real Bot place orders on your own Binance account (test network by default). Everything else opens a view or your broker.';
+(function () { var g = MW_GROUPS[0][1], i = g.indexOf('trade'); if (g.indexOf('hub') < 0) { g.splice(i < 0 ? g.length : i, 0, 'hub'); } })();
+PF_WIN['Trade Hub'] = 'hub';
+PF_APP.push(['trade hub|where can i trade|which broker|start trading|marketplace|onboard', 'Trade Hub', 'Windows > Trade Hub groups every real way to trade: Terminal and Real Bot (your Binance account), MEXC, gold and Exness, Rates, KSE/PSX, copy trading and broker sites. The app is a tool that connects to your accounts at licensed exchanges. It is not a broker, so it cannot onboard traders or hold customer money.'], ['change password|reset password|cnic|id card|passport|upload id|referral prize|referral reward|my pnl|real bot profit|my earning', 'Profile: password, PnL, ID, referrals', 'Open your picture (top right). There you can change the password, save your contact details, see Real Bot earnings (P/L), and store your own referral link to share. The app deliberately does not store ID or CNIC photos: your exchange does the identity check. Referral prizes come only from the exchange.']);
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
