@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.2';
+var BUILD = '2026-10-29.5';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -4179,7 +4179,7 @@ function fbScan() {
             F.sigs.unshift({ sym: s, sg: sg, px: px0, at: Date.now() }); F.sigs = F.sigs.slice(0, 12);
             if (F.open.length >= F.maxOpen || F.open.some(function (p) { return p.sym === s; }) || F.lockUntil > Date.now()) { fbSave(); return; }
             var size = F.bal * F.stake / 100; if (size < 5) { return; }
-            F.open.push({ sym: s, sg: sg, entry: px0 * (1 + sg * 0.0003), size: size, t0: Date.now(), pk: 0 }); fbSave(); if (S.win === 'botpro') { renderView(true); }
+            fxThen(s, sg).then(function (ok) { if (!ok || F.open.length >= F.maxOpen || F.open.some(function (p) { return p.sym === s; })) { return; } F.open.push({ sym: s, sg: sg, entry: ((S.tick[s] && S.tick[s].p) || px0) * (1 + sg * 0.0003), size: size, t0: Date.now(), pk: 0 }); fbSave(); if (S.win === 'botpro') { renderView(true); } });
         }).catch(function () {});
     });
 }
@@ -4480,7 +4480,7 @@ function rbScan() {
             var closed = k.slice(0, -1); if (closed.length < 70) { return; } var sig = labSignals(closed, R.strat), l0 = sig[sig.length - 1]; if (!l0) { return; }
             var sg = l0 > 0 ? 1 : -1; if (sg < 0 && !R.shorts) { return; } var px0 = t[s] && t[s].p; if (!px0) { return; }
             if (Math.abs(px0 / closed[closed.length - 1].c - 1) > 0.012) { return; }
-            rbLog('Signal: ' + base(s) + ' ' + (sg > 0 ? 'LONG' : 'SHORT') + ' (' + R.strat + ' ' + R.tf + ')'); return rbEnter(s, sg, px0);
+            rbLog('Signal: ' + base(s) + ' ' + (sg > 0 ? 'LONG' : 'SHORT') + ' (' + R.strat + ' ' + R.tf + ')'); return fxThen(s, sg).then(function (ok) { if (!ok) { rbLog('Skipped ' + base(s) + ': the all-factors check (order book, volume, funding, open interest, news) is against it'); return; } if (R.open.length >= R.maxOpen || R.open.some(function (p) { return p.sym === s; })) { return; } return rbEnter(s, sg, (t[s] && t[s].p) || px0); });
         }).catch(function () {});
     });
 }
@@ -4807,6 +4807,540 @@ VIEWS.news = function () {
     document.head.appendChild(st);
 })();
 MW_HELP.market = (MW_HELP.market || '') + ' Change(%): tap the header once for biggest gainers, again for biggest losers, a third time to return to the default (by volume). The 🕒 chip at the top changes the time zone the day starts in.';
+// ===== v10.9 · part E: Analyst - type any coin, choose LONG or SHORT, get a few-hours and whole-day answer =====
+S.an.want = ls('mintoosuite_anwant', 'auto');
+function anSym(s) { s = String(s).toUpperCase().replace(/[^A-Z0-9]/g, ''); if (s === 'GOLD') { s = 'XAU'; } if (s === 'SILVER') { s = 'XAG'; } return /USDT$/.test(s) ? s : s + 'USDT'; }
+// Futures first, then Spot (for coins that are not on Futures yet)
+var _kl109 = m7kl;
+m7kl = function (sym, tf, n) {
+    return _kl109(sym, tf, n).then(function (k) { S.an.src = 'Futures'; return k; }, function (e) {
+        return m7get('https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=' + tf + '&limit=' + n).then(function (a) { if (!Array.isArray(a)) { throw e; } S.an.src = 'Spot'; return cxMap(a); });
+    });
+};
+function anCheck(r, want) {
+    var sg = want === 'LONG' ? 1 : -1, tf = r.tf, h = tf['1h'], out = [];
+    function frame(name, keys, wts, pi, hz) {
+        var tot = 0, wt = 0, agree = 0; keys.forEach(function (k, i) { var s = tf[k].sc * sg; tot += s * wts[i]; wt += wts[i]; if (s > 0.5) { agree++; } });
+        var al = tot / wt, plan = r.plans[pi], rsi = h.rsi, stretched = r.stretch > 3.2 || (sg > 0 ? rsi > 72 : rsi < 28), e = (typeof fxEval === 'function') ? fxEval(r.sym, want, hz) : null;
+        var fin = e ? 0.55 * fxClamp(al / 2, -1, 1) + 0.45 * fxClamp(e.al * 2, -1, 1) : fxClamp(al / 2, -1, 1), edge = Math.max(-0.08, Math.min(0.08, 0.08 * fin)), verdict, tone, note;
+        if (e && e.veto) { verdict = 'STAY OUT'; tone = 'short'; note = 'The all-factors check blocks this ' + want.toLowerCase() + ': ' + (e.flags[0] || e.fac.filter(function (x) { return x.eff < 0; }).map(function (x) { return x.n; }).slice(0, 3).join(', ')) + '.'; }
+        else if (fin >= 0.42 && agree >= keys.length - 1 && !stretched) { verdict = 'GOOD ' + want + ' SETUP'; tone = 'long'; note = 'Indicators and the other factors (volume, order book, funding, open interest, news) agree with a ' + want.toLowerCase() + '. You can enter now with the stop below.'; }
+        else if (fin >= 0.2 && stretched) { verdict = 'WAIT FOR A PULLBACK'; tone = 'wait'; note = 'The direction fits a ' + want.toLowerCase() + ', but price has already run (' + r.stretch.toFixed(1) + '× its normal swing, RSI ' + Math.round(rsi) + '). Entering now means chasing. Better entry near ' + fmtP(h.e21, r.sym) + '.'; }
+        else if (fin >= 0.2) { verdict = 'WEAK ' + want + ' SETUP'; tone = 'wait'; note = 'Some things agree, not enough. Use a smaller size or wait for a 1-hour close in your direction.'; }
+        else if (fin > -0.2) { verdict = 'NOT CLEAR'; tone = 'wait'; note = 'Indicators and factors are mixed. This is close to a coin toss.'; }
+        else { verdict = 'AGAINST A ' + want; tone = 'short'; note = 'Trend and factors point the other way. A ' + want.toLowerCase() + ' here is a counter-trend trade; the bot suggests staying out.'; }
+        var a = plan.a, b = plan.b, ca = m7chance(a.tp, a.sl, edge), cb = m7chance(b.tp, b.sl, edge);
+        return { name: name, verdict: verdict, tone: tone, note: note, a: { tp: a.tp, sl: a.sl, ch: ca }, b: { tp: b.tp, sl: b.sl, ch: cb }, al: fin, agree: agree, n: keys.length, fx: e, block: !!(e && e.veto) };
+    }
+    out.push(frame('Few hours (next 1 to 4 hours)', ['15m', '1h', '4h'], [1, 2, 2], 1, 'fh'));
+    out.push(frame('Whole day (next 24 hours)', ['1h', '4h', '1d'], [1, 2, 1.5], 2, 'day'));
+    return out;
+}
+function anCard(r) {
+    var want = S.an.want === 'auto' ? (r.side === 'SHORT' ? 'SHORT' : 'LONG') : S.an.want, ent = r.price, chk = anCheck(r, want), h = '';
+    h += sh('Your ' + want + ' check on ' + base(r.sym) + (S.an.src === 'Spot' ? ' (Spot only)' : ''));
+    if (S.an.src === 'Spot') { h += '<div class="warn">This coin is not on Binance Futures, so you cannot go ' + want.toLowerCase() + ' with leverage here. The numbers below come from the Spot chart.</div>'; }
+    if (typeof FX !== 'undefined' && !FX.raw[r.sym]) { h += '<div class="group pad mut">Reading the order book, funding, open interest, volume and news…</div>'; }
+    chk.forEach(function (c) {
+        function row(lbl, o) { var tpP = o.tp / ent * 100, slP = o.sl / ent * 100; return '<div class="blk"><div class="t"><span>' + lbl + '</span><span class="badge ' + (o.ch >= 0.62 ? 'long' : 'wait') + '">' + Math.round(o.ch * 100) + '% reaches target first</span></div>' + lv(want, ent, o.sl, o.tp, r.sym) + '<div class="foot">Target about ' + tpP.toFixed(2) + '% away, stop about ' + slP.toFixed(2) + '% away. Per $100 at ' + S.lev + '×: ' + m7money(tpP, 0) + ' if it works, ' + m7money(-slP, 0) + ' if the stop is hit.</div></div>'; }
+        h += '<div class="group pad"><div class="sh" style="margin:0 0 6px">' + esc(c.name) + '</div><div style="margin:0 0 8px"><span class="badge ' + c.tone + '">' + esc(c.verdict) + '</span> <span class="note" style="margin:0">' + c.agree + ' of ' + c.n + ' frames agree</span></div><div class="note" style="margin:0 0 8px">' + esc(c.note) + '</div>' + (c.al > -0.2 && !c.block ? row('Safer: smaller target, wider stop', c.a) + row('Balanced', c.b) : '') + (c.fx ? '<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">All factors behind this answer (' + c.fx.n + ')</summary>' + fxTable(c.fx) + '</details>' : '') + '</div>';
+    });
+    return h;
+}
+var _an0 = m7analyse;
+m7analyse = function (sym) { var p = _an0(sym); return p.then(function () { if (typeof fxSym === 'function') { return fxSym(sym, true).then(function () { if (S.win === 'analyst') { renderView(true); } }); } }); };
+var _vAn109 = vAnalyst;
+vAnalyst = function () {
+    var A = S.an, h = _vAn109();
+    h = h.replace('placeholder="Coin, e.g. BTC, XAN, XAU"', 'placeholder="Type any coin, e.g. XPIN, BTC, XAU"');
+    var w = ['auto', 'LONG', 'SHORT'].map(function (x) { return '<span class="' + (A.want === x ? 'on' : '') + '" data-m9="anwant:' + x + '">' + (x === 'auto' ? 'Auto' : x === 'LONG' ? '▲ I want LONG' : '▼ I want SHORT') + '</span>'; }).join('');
+    h = h.replace('<div class="m7row">', '<div class="m7row">' + w + '</div><div class="m7row">');
+    h = h.replace('Type a coin and tap Analyse.', 'Type any coin (for example XPIN), choose LONG or SHORT, then tap Analyse. You get an answer for the next few hours and for the whole day.');
+    if (A.res && !A.busy) { var card = anCard(A.res); h = h.replace('<div class="m7why">', function (m) { return card + m; }); if (h.indexOf('Your ' + (A.want === 'auto' ? '' : A.want)) < 0) { h += anCard(A.res); } }
+    return h;
+};
+VIEWS.analyst = vAnalyst;
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m9^="anwant:"]') : null; if (!el) { return; }
+    e.stopPropagation(); S.an.want = el.getAttribute('data-m9').slice(7); lss('mintoosuite_anwant', S.an.want);
+    var inp = document.querySelector('[data-m7in="an"]'), s = anSym(inp && inp.value ? inp.value : S.an.sym);
+    if (s !== S.an.sym || !S.an.res) { m7analyse(s); } else { renderView(true); }
+}, true);
+document.addEventListener('keydown', function (e) { var t = e.target; if (e.key === 'Enter' && t && t.getAttribute && t.getAttribute('data-m7in') === 'an') { e.preventDefault(); t.blur(); m7analyse(anSym(t.value)); } });
+MW_HELP.analyst = 'Type any coin (it also works for coins that are only on Spot). Choose LONG or SHORT, then Analyse. The bot reads four time frames and the news, and answers separately for the next few hours and the whole day: good setup, wait for a pullback, or stay out, with entry, stop, target and the chance of reaching it.';
+// ===== v10.9 · part F: all-factors engine (order book, volume, funding, open interest, long/short, Bitcoin trend, news, geopolitics, extra indicators) =====
+var FX = { raw: {}, pend: {}, act: 0, queue: [], funding: null, fundAt: 0, mkt: null, mktAt: 0, vetoed: 0, news: {} };
+var RL = { until: 0, chartN: 0, chartT: 0 };
+function rlHold() { return Date.now() < RL.until; }
+function fxGet(u) { return fetch(u, { cache: 'no-store' }).then(function (r) { if (!r.ok) { if (r.status === 429 || r.status === 418) { RL.until = Date.now() + 150000; } throw new Error('HTTP ' + r.status); } return r.json(); }); }
+function fxClamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+function fxKl(sym) {
+    return fxGet('https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=1h&limit=100').then(function (a) { if (!Array.isArray(a) || a.length < 30) { throw new Error('no klines'); } return cxMap(a); }).catch(function () {
+        return fxGet('https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=1h&limit=100').then(function (a) { if (!Array.isArray(a) || a.length < 30) { throw new Error('no klines'); } return cxMap(a); });
+    });
+}
+function fxBuild(sym, k, dep, oi, gls, top) {
+    var R = { at: Date.now(), ok: !!k };
+    if (k) {
+        var n = k.length - 1, c = k.map(function (x) { return x.c; }), px = c[n], iv = {}, s = iSAR(k)[n], v = iVWAP(k)[n], kj = iKDJ(k), ob = iOBV(k), bb = iBOLL(c, 20, 2);
+        iv.sar = s ? (s.up ? 1 : -1) : null; iv.vwap = v ? (px > v ? 1 : -1) : null;
+        iv.kdj = kj.j[n] === null ? null : kj.j[n] > 100 ? -0.5 : kj.j[n] < 0 ? 0.5 : (kj.k[n] > kj.d[n] ? 0.5 : -0.5);
+        iv.obv = n > 12 ? (ob[n] > ob[n - 12] ? 1 : -1) : null;
+        if (bb.mid[n] !== null && bb.up[n] > bb.mid[n]) { var pos = (px - bb.mid[n]) / (bb.up[n] - bb.mid[n]); iv.boll = pos > 1 ? -0.5 : pos > 0 ? 0.5 : pos < -1 ? 0.5 : -0.5; iv.bpos = pos; }
+        R.iv = iv; R.px = px;
+        var last3 = (k[n].q + k[n - 1].q + k[n - 2].q) / 3, base = 0, i; for (i = n - 23; i <= n - 4; i++) { base += k[i].q; } base /= 20;
+        R.vr1h = base ? last3 / base : 1; R.vdir = c[n] > c[n - 3] ? 1 : c[n] < c[n - 3] ? -1 : 0; R.p4h = c[n - 4] ? c[n] / c[n - 4] - 1 : 0;
+    }
+    if (dep && dep.bids && dep.asks && dep.bids.length && dep.asks.length) {
+        var bu = 0, au = 0, bmax = 0, amax = 0; dep.bids.forEach(function (x) { var u = +x[0] * +x[1]; bu += u; bmax = Math.max(bmax, u); }); dep.asks.forEach(function (x) { var u = +x[0] * +x[1]; au += u; amax = Math.max(amax, u); });
+        var b0 = +dep.bids[0][0], a0 = +dep.asks[0][0], mid = (a0 + b0) / 2;
+        R.book = { bu: bu, au: au, imb: (bu + au) ? (bu - au) / (bu + au) : 0, spread: mid ? (a0 - b0) / mid * 1e4 : 0, bwall: bu ? bmax / bu : 0, awall: au ? amax / au : 0 };
+    }
+    if (Array.isArray(oi) && oi.length > 2) { var f0 = +oi[0].sumOpenInterestValue, l0 = +oi[oi.length - 1].sumOpenInterestValue; if (f0 > 0) { R.oi = l0 / f0 - 1; R.oiv = l0; } }
+    if (Array.isArray(gls) && gls[0]) { R.gls = +gls[0].longShortRatio; }
+    if (Array.isArray(top) && top[0]) { R.top = +top[0].longShortRatio; }
+    return R;
+}
+function fxSym(sym, force) {
+    var now = Date.now(), R = FX.raw[sym]; if (!force && R && now - R.at < 240000) { return Promise.resolve(R); }
+    if (FX.pend[sym]) { return FX.pend[sym]; }
+    var u = 'https://fapi.binance.com', p = new Promise(function (res) { FX.queue[force ? 'unshift' : 'push']({ sym: sym, res: res }); fxPump(); });
+    FX.pend[sym] = p; return p;
+}
+function fxPump() {
+    while (FX.act < 3 && FX.queue.length) {
+        (function (job) {
+            FX.act++; var sym = job.sym, u = 'https://fapi.binance.com', fut = true;
+            Promise.all([fxKl(sym).catch(function () { return null; }), fxGet(u + '/fapi/v1/depth?symbol=' + sym + '&limit=50').catch(function () { return null; }),
+                fxGet(u + '/futures/data/openInterestHist?symbol=' + sym + '&period=1h&limit=6').catch(function () { return null; }),
+                fxGet(u + '/futures/data/globalLongShortAccountRatio?symbol=' + sym + '&period=1h&limit=1').catch(function () { return null; }),
+                fxGet(u + '/futures/data/topLongShortPositionRatio?symbol=' + sym + '&period=1h&limit=1').catch(function () { return null; })]).then(function (r) {
+                var R = fxBuild(sym, r[0], r[1], r[2], r[3], r[4]); FX.raw[sym] = R; job.res(R); return R;
+            }).catch(function () { job.res(null); }).then(function () { delete FX.pend[sym]; FX.act--; fxAfter(); fxPump(); });
+        })(FX.queue.shift());
+    }
+}
+var fxAfterT = 0;
+function fxAfter() {
+    clearTimeout(fxAfterT); fxAfterT = setTimeout(function () {
+        try { fxReapplyPlan(); } catch (e) {}
+        try { if (S.win === 'scanner' || S.win === 'plan' || S.win === 'glance' || S.win === 'analyst' || S.win === 'morning') { var a = document.activeElement; if (!(a && a.getAttribute && a.getAttribute('data-m7in'))) { renderView(true); } } } catch (e) {}
+    }, 900);
+}
+function fxLoadFunding() {
+    if (Date.now() - FX.fundAt < 300000) { return; } FX.fundAt = Date.now();
+    fxGet('https://fapi.binance.com/fapi/v1/premiumIndex').then(function (a) { if (!Array.isArray(a)) { return; } var o = {}; a.forEach(function (x) { o[x.symbol] = +x.lastFundingRate; }); FX.funding = o; }).catch(function () {});
+}
+function fxLoadMkt() {
+    if (Date.now() - FX.mktAt < 300000) { return; } FX.mktAt = Date.now();
+    Promise.all([fxGet('https://fapi.binance.com/fapi/v1/klines?symbol=BTCUSDT&interval=1h&limit=100'), fxGet('https://fapi.binance.com/fapi/v1/klines?symbol=BTCUSDT&interval=4h&limit=100')]).then(function (r) {
+        function tr(a) { var c = cxMap(a).map(function (x) { return x.c; }), n = c.length - 1, e9 = iEMA(c, 9)[n], e21 = iEMA(c, 21)[n]; return (e9 > e21 ? 0.5 : -0.5) + (c[n] > e21 ? 0.5 : -0.5); }
+        var tk = S.tick.BTCUSDT, ch = tk ? tk.chg : 0; FX.mkt = { v: fxClamp(0.35 * tr(r[0]) + 0.35 * tr(r[1]) + 0.3 * fxClamp(ch / 3, -1, 1), -1, 1), h1: tr(r[0]), h4: tr(r[1]), ch: ch };
+    }).catch(function () {});
+}
+// ---- news and geopolitics ----
+var FX_POS = /surge|rally|jump|soar|record|approve|approval|launch|partnership|upgrade|rate cut|ceasefire|inflow|bull|gain|rise|adopt|etf|breakout/i, FX_NEG = /plunge|crash|fall|drop|hack|exploit|ban|lawsuit|sanction|outflow|bear|delist|fraud|rate hike|tariff|liquidat|slump|probe|sec sues|fine/i;
+var FX_GEO = /war|attack|missile|strike|invasion|escalat|conflict|tension|sanction|nuclear|terror|coup|crisis|default|shutdown|blockade|troops|bomb|clash/i, FX_RELIEF = /ceasefire|truce|peace|deal|talks|agreement|de-escalat/i;
+function fxNewsInfo(sym) {
+    var c = FX.news[sym]; if (c && Date.now() - c.at < 60000) { return c; }
+    var b = base(sym).toLowerCase(), now = nowMs(), re = null; try { re = new RegExp('\\b' + b.replace(/[^a-z0-9]/g, '') + '\\b', 'i'); } catch (e) {}
+    var coin = { n: 0, t: 0, items: [] }, cr = { n: 0, t: 0 }, geo = { n: 0, risk: 0, items: [] }, gold = sym === GOLD || sym === 'PAXGUSDT';
+    (S.news || []).forEach(function (n) {
+        var age = now - (n.t || now); if (age > 12 * 3600000) { return; } var t = n.title || '', s = FX_POS.test(t) ? 1 : FX_NEG.test(t) ? -1 : 0;
+        if (re && !gold && re.test(t)) { coin.n++; coin.t += s; coin.items.push(t); }
+        if (n.g === 'mkt' && age < 8 * 3600000) { cr.n++; cr.t += s; }
+        if ((n.g === 'geo' || n.g === 'macro') && FX_GEO.test(t)) { var rel = FX_RELIEF.test(t); geo.n++; geo.risk += rel ? -0.5 : 1; if (geo.items.length < 2) { geo.items.push(t); } }
+    });
+    var ann = { del: false, list: false, title: '' }; (S.ann && S.ann.list || []).forEach(function (a) { if (!re || !re.test(a.title || '') || now - (a.t || 0) > 3 * 86400000) { return; } if (/delist|remov|cease|suspend/i.test(a.title)) { ann.del = true; ann.title = a.title; } else if (/will list|will add|launch|new listing/i.test(a.title)) { ann.list = true; ann.title = ann.title || a.title; } });
+    c = { at: Date.now(), coin: coin, cr: cr, geo: geo, ann: ann, gold: gold }; FX.news[sym] = c; return c;
+}
+// ---- the scoring ----
+function fxEval(sym, side, hz) {
+    var R = FX.raw[sym]; if (!R || !R.ok) { return null; } hz = hz || 'fh'; var sg = side === 'LONG' ? 1 : -1, gold = sym === GOLD, isBtc = sym === 'BTCUSDT', tk = S.tick[sym], fac = [], flags = [], hard = false, pen = 0;
+    var W = hz === 'day' ? { ind: 0.8, vol: 0.8, book: 0.3, oi: 0.8, fund: 0.8, ls: 0.6, btc: 1, brd: 0.6, news: 1, cr: 0.7, geo: 0.9 } : { ind: 1, vol: 1, book: 1, oi: 0.8, fund: 0.4, ls: 0.3, btc: 0.8, brd: 0.4, news: 0.4, cr: 0.3, geo: 0.3 };
+    function add(k, name, f, txt) { if (f === null || f === undefined || isNaN(f)) { return; } fac.push({ k: k, n: name, f: fxClamp(f, -1, 1), w: W[k], t: txt }); }
+    var iv = R.iv || {}, vs = [iv.sar, iv.vwap, iv.kdj, iv.obv, iv.boll].filter(function (x) { return x !== null && x !== undefined; });
+    if (vs.length) { var avg = vs.reduce(function (a, b) { return a + b; }, 0) / vs.length; add('ind', 'Extra indicators (SAR, VWAP, KDJ, OBV, Bollinger)', avg, 'SAR ' + (iv.sar > 0 ? 'up' : 'down') + ', VWAP ' + (iv.vwap > 0 ? 'price above' : 'price below') + ', OBV ' + (iv.obv > 0 ? 'rising' : 'falling') + (iv.bpos !== undefined ? ', Bollinger position ' + iv.bpos.toFixed(2) : '')); }
+    var q = tk ? tk.q : 0, keys = Object.keys(S.tick), rank = 1, tot = 0; keys.forEach(function (s) { var x = S.tick[s]; if (/USDT$/.test(s)) { tot += x.q; if (x.q > q) { rank++; } } });
+    var share = tot ? q / tot * 100 : 0, volTxt = '24h volume ' + m7vol(q) + ' USDT (rank #' + rank + ', ' + share.toFixed(2) + '% of all Futures volume), last 3 hours ×' + R.vr1h.toFixed(1) + ' its normal';
+    add('vol', '24h and recent volume', R.vr1h > 1.3 ? fxClamp((R.vr1h - 1) / 2, 0, 1) * R.vdir : 0, volTxt);
+    if (!gold && q && q < 3e6) { pen += 0.15; flags.push('Thin: only ' + m7vol(q) + ' USDT traded in 24h'); } if (!gold && q && q < 1e6) { hard = true; flags.push('Too illiquid to trade safely'); }
+    if (R.vr1h > 10) { flags.push('Volume ×' + R.vr1h.toFixed(0) + ' normal: extremely crowded, moves can reverse fast'); pen += 0.1; }
+    if (R.book) { var bk = R.book; add('book', 'Order book (top 50 levels)', fxClamp(bk.imb * 2, -1, 1), 'Buyers ' + m7vol(bk.bu) + ' vs sellers ' + m7vol(bk.au) + ' USDT (' + (bk.imb >= 0 ? '+' : '') + (bk.imb * 100).toFixed(0) + '%), spread ' + bk.spread.toFixed(1) + ' bps');
+        if (bk.spread > 15) { pen += 0.1; flags.push('Wide spread ' + bk.spread.toFixed(0) + ' bps: you lose a lot to slippage'); } if (bk.spread > 40) { hard = true; flags.push('Spread far too wide'); }
+        if (bk.bwall > 0.4) { flags.push('One big buy wall holds ' + Math.round(bk.bwall * 100) + '% of the bid side (can vanish)'); } if (bk.awall > 0.4) { flags.push('One big sell wall holds ' + Math.round(bk.awall * 100) + '% of the ask side'); } }
+    var fr = FX.funding ? FX.funding[sym] : undefined; if (fr !== undefined) { add('fund', 'Funding rate', -fxClamp(fr / 0.001, -1, 1) * 0.6, 'Funding ' + (fr * 100).toFixed(3) + '% per 8h' + (fr > 0.0005 ? ' (longs crowded and paying)' : fr < -0.0005 ? ' (shorts crowded and paying)' : ' (normal)')); if (Math.abs(fr) > 0.002) { flags.push('Extreme funding ' + (fr * 100).toFixed(2) + '%'); } }
+    if (R.oi !== undefined) { var pc = R.p4h, f = 0, why; if (R.oi > 0.02 && pc > 0.005) { f = 0.8; why = 'rising with price (new money backs the move)'; } else if (R.oi > 0.02 && pc < -0.005) { f = -0.8; why = 'rising while price falls (shorts piling in)'; } else if (R.oi < -0.02 && pc > 0.005) { f = -0.3; why = 'falling while price rises (weak rally, shorts closing)'; } else if (R.oi < -0.02 && pc < -0.005) { f = 0.2; why = 'falling with price (selling is drying up)'; } else { why = 'flat'; } add('oi', 'Open interest', f, 'Changed ' + (R.oi >= 0 ? '+' : '') + (R.oi * 100).toFixed(1) + '% over 5h, ' + why); }
+    if (R.gls) { add('ls', 'Long/short ratio', (R.gls > 2.5 ? -0.6 : R.gls < 0.7 ? 0.6 : 0) + (R.top ? (R.top > 1.4 ? 0.4 : R.top < 0.8 ? -0.4 : 0) : 0), 'Accounts long/short ' + R.gls.toFixed(2) + (R.top ? ', big traders\' positions ' + R.top.toFixed(2) : '')); }
+    var m = FX.mkt;
+    if (m && !isBtc && !gold) { add('btc', 'Bitcoin trend', m.v, 'Bitcoin 1h ' + (m.h1 > 0 ? 'up' : m.h1 < 0 ? 'down' : 'flat') + ', 4h ' + (m.h4 > 0 ? 'up' : m.h4 < 0 ? 'down' : 'flat') + ', 24h ' + pct(m.ch)); }
+    var ups = 0, nn = 0; keys.forEach(function (s) { var x = S.tick[s]; if (/USDT$/.test(s) && x.q > 2e7) { nn++; if (x.chg > 0) { ups++; } } });
+    if (nn > 20 && !gold) { var br = ups / nn; add('brd', 'Market breadth', fxClamp((br - 0.5) * 3, -1, 1), Math.round(br * 100) + '% of the big coins are up in 24h'); }
+    var nw = fxNewsInfo(sym);
+    if (nw.coin.n) { add('news', 'News about this coin', fxClamp(nw.coin.t / 2, -1, 1), nw.coin.n + ' headline' + (nw.coin.n > 1 ? 's' : '') + ', tone ' + (nw.coin.t > 0 ? 'positive' : nw.coin.t < 0 ? 'negative' : 'mixed')); }
+    if (!gold && nw.cr.n >= 3) { add('cr', 'Crypto news mood (8h)', fxClamp(nw.cr.t / 4, -1, 1), nw.cr.n + ' crypto headlines, tone ' + (nw.cr.t > 0 ? 'positive' : nw.cr.t < 0 ? 'negative' : 'mixed')); }
+    if (nw.geo.n) { var rk = fxClamp(nw.geo.risk / 6, -1, 1); add('geo', 'War, sanctions and world risk', gold ? rk * 0.8 : -rk * 0.8, nw.geo.n + ' world headline' + (nw.geo.n > 1 ? 's' : '') + ' about conflict or sanctions' + (gold ? ' (gold usually rises on fear)' : ' (risk-off for crypto)')); }
+    if (nw.ann.del) { hard = true; flags.push('Binance announcement: ' + nw.ann.title); } else if (nw.ann.list) { flags.push('Recent Binance listing news: ' + nw.ann.title + ' (big, unpredictable moves)'); pen += 0.05; }
+    var sw = 0, ss = 0; fac.forEach(function (x) { sw += x.w; ss += x.w * x.f; }); var S0 = sw ? ss / sw : 0, al = sg * S0 - pen;
+    fac.forEach(function (x) { x.al = x.f * sg; x.eff = x.al >= 0.2 ? 1 : x.al <= -0.2 ? -1 : 0; });
+    var veto = hard || al <= -0.3;
+    return { sym: sym, side: side, hz: hz, S: S0, al: al, fac: fac, flags: flags, veto: veto, hard: hard, support: al >= 0.15, against: al <= -0.15, n: fac.length, at: R.at };
+}
+function fxVerdictTxt(e) { return e.hard ? 'blocked' : e.veto ? 'against' : e.support ? 'supports' : e.against ? 'leans against' : 'neutral'; }
+function fxLine(e) {
+    if (!e) { return '<div class="fxl mut">🧮 Checking order book, volume, funding, open interest and news…</div>'; }
+    var pro = e.fac.filter(function (x) { return x.eff > 0; }).sort(function (a, b) { return b.al * b.w - a.al * a.w; }).slice(0, 2), con = e.fac.filter(function (x) { return x.eff < 0; }).sort(function (a, b) { return a.al * a.w - b.al * b.w; }).slice(0, 2);
+    return '<div class="fxl">🧮 All factors: <b class="' + (e.support ? 'up' : e.veto || e.against ? 'dn' : 'mut') + '">' + fxVerdictTxt(e) + '</b> (' + (e.al >= 0 ? '+' : '') + e.al.toFixed(2) + ', ' + e.n + ' checks)' + (pro.length ? ' · ▲ ' + pro.map(function (x) { return esc(x.n); }).join(', ') : '') + (con.length ? ' · ▼ ' + con.map(function (x) { return esc(x.n); }).join(', ') : '') + (e.flags.length ? '<br>⚠️ ' + e.flags.map(esc).join(' · ') : '') + '</div>';
+}
+function fxTable(e) {
+    if (!e) { return ''; }
+    return '<table style="width:100%;font-size:12.5px;border-collapse:collapse;margin-top:6px"><tr style="color:var(--mut)"><td>Factor</td><td>Reading</td><td></td></tr>' + e.fac.map(function (x) { return '<tr style="border-top:1px solid var(--line)"><td style="padding:4px 4px 4px 0;vertical-align:top"><b>' + esc(x.n) + '</b></td><td style="padding:4px 4px;color:var(--mut)">' + esc(x.t) + '</td><td class="' + (x.eff > 0 ? 'up' : x.eff < 0 ? 'dn' : 'mut') + '" style="vertical-align:top;font-weight:800">' + (x.eff > 0 ? '▲' : x.eff < 0 ? '▼' : '•') + '</td></tr>'; }).join('') + '</table>' + (e.flags.length ? '<div class="warn" style="margin-top:6px">⚠️ ' + e.flags.map(esc).join('<br>⚠️ ') + '</div>' : '');
+}
+// ---- queueing: keep the data warm for every coin that can be recommended ----
+function fxWatchList() {
+    var set = {}, out = [];
+    function add(s) { if (s && !set[s] && S.tick[s]) { set[s] = 1; out.push(s); } }
+    try { (S.plan.items || []).forEach(function (r) { add(r.sym); }); } catch (e) {}
+    try { computePicksRaw().filter(function (p) { return p.aligned; }).slice(0, 20).forEach(function (p) { add(p.sym); }); } catch (e) {}
+    try { (S.rd.list || []).filter(function (m) { return m.kind === 'EARLY' || m.kind === 'TREND'; }).slice(0, 12).forEach(function (m) { add(m.sym); }); } catch (e) {}
+    try { (S.risers || []).slice(0, 12).forEach(function (r) { add(r.sym); }); } catch (e) {}
+    try { (S.bot.open || []).forEach(function (p) { add(p.sym); }); } catch (e) {}
+    Object.keys(S.tick).filter(function (s) { return /USDT$/.test(s) && !(S.tradfi && S.tradfi[s]); }).sort(function (a, b) { return S.tick[b].q - S.tick[a].q; }).slice(0, 25).forEach(add);
+    return out;
+}
+function fxQueue(sym, hi) { if (!S.tick[sym]) { return; } var R = FX.raw[sym]; if (R && Date.now() - R.at < 240000) { return; } fxSym(sym, !!hi); }
+setInterval(function () {
+    try { if (rlHold()) { return; } fxLoadFunding(); fxLoadMkt(); if (dataAge() > 20000) { return; } var n = 0; fxWatchList().forEach(function (s) { var R = FX.raw[s]; if (n < 2 && !FX.pend[s] && (!R || Date.now() - R.at > 240000)) { n++; fxSym(s, false); } }); } catch (e) {}
+}, 15000);
+setTimeout(function () { try { fxLoadFunding(); fxLoadMkt(); } catch (e) {} }, 6000);
+// gate used by the bots: waits for fresh factor data, then says yes or no
+function fxThen(sym, sg) {
+    var side = sg > 0 ? 'LONG' : 'SHORT';
+    return fxSym(sym, false).then(function (R) {
+        if (!R) { return true; } /* data unreachable: do not block the bot's own rules */
+        var e = fxEval(sym, side, 'fh'); if (!e) { return true; }
+        if (e.veto) { var why = e.flags[0] || (e.fac.filter(function (x) { return x.eff < 0; }).map(function (x) { return x.n; }).slice(0, 2).join(', ')); try { addLog('FACTORS', 'Bot skipped ' + base(sym) + ' ' + side + ': factors against (' + why + ')'); } catch (er) {} return false; }
+        return true;
+    });
+}
+// ---- plans: adjust the Master Plan items so that the bots and every list see the same picture ----
+function fxAdjPlan(r0) {
+    var r = {}, k; for (k in r0) { r[k] = r0[k]; } r.fx = {};
+    function one(key, pk, ck, ptk) {
+        var sd = r[key]; if (sd !== 'LONG' && sd !== 'SHORT') { return; } var e = fxEval(r.sym, sd, key === 'fh' ? 'fh' : 'day'); r.fx[key] = e; if (!e) { fxQueue(r.sym); return; }
+        if (r[pk]) { r[pk] = fxClamp(r[pk] + Math.round(e.al * 25), 1, 99); }
+        if (e.veto) { r[key] = key === 'fh' ? 'WAIT' : 'NEUTRAL'; r[ck] = 'LOW'; r[pk] = 0; r.note = (r.note ? r.note + ' · ' : '') + 'Factors against a ' + sd.toLowerCase() + ' (' + (e.flags[0] || e.fac.filter(function (x) { return x.eff < 0; }).map(function (x) { return x.n; }).slice(0, 2).join(', ')) + ')'; }
+    }
+    one('fh', 'fhPct', 'fhConf'); one('day', 'dayPct', 'dayConf'); one('nextDay', 'nextPct', 'nextDayConf');
+    return r;
+}
+function fxReapplyPlan() { S.plan._adj = (S.plan._raw || []).map(fxAdjPlan); }
+(function () {
+    var init = S.plan.items || []; S.plan._raw = init;
+    try { Object.defineProperty(S.plan, 'items', { configurable: true, enumerable: true, get: function () { return S.plan._adj || S.plan._raw || []; }, set: function (v) { S.plan._raw = v || []; fxReapplyPlan(); } }); } catch (e) {}
+    fxReapplyPlan();
+})();
+// ---- scanner picks: every pick is checked, vetoed picks are hidden ----
+var computePicksRaw = computePicks;
+computePicks = function () {
+    var out = computePicksRaw(), i = 0; FX.vetoed = 0;
+    out.forEach(function (p) {
+        if (!p.aligned) { return; } var e = fxEval(p.sym, p.side, 'fh'); p.fx = e || null;
+        if (!e) { if (i++ < 20) { fxQueue(p.sym); } return; }
+        p.pct = fxClamp(p.pct + Math.round(e.al * 25), 1, 99); p.conf = confOf(p.pct); p.score += e.al;
+        if (e.veto) { p.aligned = false; p.side = 'MIXED'; p.score = 0; p.fxVeto = true; FX.vetoed++; }
+    });
+    out.sort(function (x, y) { return y.score - x.score; }); return out;
+};
+var _pickCard0 = pickCard;
+pickCard = function (p) { var h = _pickCard0(p), i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + fxLine(p.fx || null) + h.slice(i); };
+var _vScan0 = vScanner;
+vScanner = function () { var h = _vScan0(); return h + (FX.vetoed ? '<div class="note">' + FX.vetoed + ' pick' + (FX.vetoed > 1 ? 's were' : ' was') + ' hidden because the order book, funding, open interest, volume or news argued against them.</div>' : ''); };
+VIEWS.scanner = vScanner;
+// ---- priority actions and the paper bot ----
+var _getAct0 = getActions;
+getActions = function () {
+    var list = _getAct0(); list.forEach(function (a) {
+        if (a._fx || (a.side !== 'LONG' && a.side !== 'SHORT')) { return; } a._fx = 1; if (typeof offHours === 'function' && offHours(a.sym) && a.tier === 'NOW') { a.tier = 'WATCH'; (a.warns = a.warns || []).push('Stock-linked contract while the US market is closed: the bot skips it'); } var e = fxEval(a.sym, a.side, 'fh'); a.fx = e || null; a.warns = a.warns || []; a.reasons = a.reasons || [];
+        if (!e) { fxQueue(a.sym, a.tier === 'NOW'); if (a.tier === 'NOW') { a.tier = 'PREPARE'; a.warns.push('Still checking order book, funding and news before this becomes a NOW trade'); } return; }
+        a.score = fxClamp(Math.round(a.score + e.al * 25), 0, 100); if (a.pct) { a.pct = fxClamp(a.pct + Math.round(e.al * 25), 1, 99); }
+        if (a.tier === 'NOW' && !e.support) { a.tier = 'PREPARE'; a.warns.push('Waiting for the all-factors check to support this trade before the bot enters'); }
+        if (e.veto) { a.tier = 'WATCH'; a.warns.push('All-factors check is against this ' + a.side.toLowerCase() + ': ' + (e.flags[0] || e.fac.filter(function (x) { return x.eff < 0; }).map(function (x) { return x.n; }).slice(0, 2).join(', '))); }
+        else if (e.support) { a.reasons.push('All-factors check supports it (order book, volume, funding, open interest, news: ' + (e.al >= 0 ? '+' : '') + e.al.toFixed(2) + ')'); }
+    }); return list;
+};
+// radar entries taken by the paper bot must pass the factor check as well
+var _radar0 = m7botRadar;
+m7botRadar = function () {
+    var keep = S.rd.list; try { S.rd.list = (keep || []).filter(function (m) { var e = fxEval(m.sym, m.side, 'fh'); if (!e) { fxQueue(m.sym, true); return false; } return !e.veto; }); (S.risers || []).forEach(function (rz) { if (rz.bot) { S.rd.list.push(rz.bot); } }); return _radar0(); } finally { S.rd.list = keep; }
+};
+MW_HELP.scanner = (MW_HELP.scanner || '') + ' Every pick is also checked against the order book, 24h volume, funding, open interest, long/short ratio, Bitcoin trend, crypto, Binance and world news; picks the factors argue against are hidden.';
+(function () {
+    var st = document.createElement('style');
+    st.textContent = '.fxl{margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--fill,#eee);font-size:12px;line-height:1.45}';
+    document.head.appendChild(st);
+})();
+
+var _lc111 = loadChart;
+loadChart = function () {
+    var r = _lc111.apply(this, arguments); clearTimeout(RL.chartT);
+    RL.chartT = setTimeout(function () { try { if (S.win === 'chart' && S.chart.err && /Too many|429|418|limit|Failed to fetch|NetworkError/i.test(S.chart.err) && RL.chartN < 6) { RL.chartN++; S.chart.err = ''; loadChart(); } else if (!S.chart.err) { RL.chartN = 0; } } catch (e) {} }, 12000);
+    return r;
+};
+// ===== v10.9 · part G: Top risers (coins like XPIN that keep climbing), "At a glance" window, contents corner button and back links =====
+S.risers = []; S.rz = { at: 0, kl: {}, busy: 0 };
+function rzOne(sym, k) {
+    var c = k.map(function (x) { return x.c; }), n = c.length - 1, tk = S.tick[sym], price = tk ? tk.p : c[n], e9 = iEMA(c, 9)[n], e21 = iEMA(c, 21)[n], rs = iRSI(c, 14)[n], atr = m7atr(k, 14) || price * 0.01;
+    var hi24 = Math.max.apply(null, k.slice(-24).map(function (x) { return x.h; })), last3 = (k[n].q + k[n - 1].q + k[n - 2].q) / 3, bs = 0, i; for (i = n - 23; i <= n - 4; i++) { bs += k[i].q; } bs /= 20;
+    var vr = bs ? last3 / bs : 1, stretch = (price - e21) / atr, nearHigh = price >= hi24 * 0.97, off = (hi24 - price) / hi24, st, entry = price, stop, tgt, note;
+    if (price < e9 && off > 0.06) { st = 'FADING'; } else if (stretch > 3.5 || rs > 80) { st = 'HOT'; } else if (e9 > e21 && price > e21) { st = 'RISING'; } else { st = 'WEAK'; }
+    if (st === 'RISING') { stop = Math.max(e21 - 0.4 * atr, price - 3 * atr); tgt = price + Math.min(1.6 * atr, price * 0.12); note = 'Still climbing with its short average above the long one. Buy now with the stop below, or wait for a small dip toward ' + fmtP(e9, sym) + ' for a better entry.'; }
+    else if (st === 'HOT') { entry = Math.max(e9, price - 1.6 * atr); stop = entry - 1.2 * atr; tgt = Math.max(hi24, entry + 1.2 * atr); note = 'Already stretched (' + stretch.toFixed(1) + '× its normal swing, RSI ' + Math.round(rs) + '). Do not chase: place a buy on the pullback near ' + fmtP(entry, sym) + '.'; }
+    else if (st === 'FADING') { stop = price - atr; tgt = price + atr; note = 'It rose but is now losing strength (' + (off * 100).toFixed(1) + '% below its 24h high and under its short average). No entry.'; }
+    else { stop = price - 1.5 * atr; tgt = price + atr; note = 'Rising but the trend is not clean yet. Wait for the short average to cross above the long one.'; }
+    var pct0 = 50 + (e9 > e21 ? 10 : -10) + (nearHigh ? 8 : 0) + fxClamp((vr - 1) * 8, -10, 15) - (stretch > 3 ? 12 : 0) - (rs > 75 ? 8 : 0) - (st === 'FADING' ? 25 : 0), now = nowMs();
+    return { sym: sym, side: 'LONG', st: st, price: price, entry: entry, stop: stop, tgt: tgt, sl: Math.abs(entry - stop), tp: Math.abs(tgt - entry), chg: chgOf(sym).v, rsi: rs, vr: vr, stretch: stretch, hi24: hi24, note: note, pct: fxClamp(Math.round(pct0), 5, 95), at: now };
+}
+function rzRefresh() {
+    if (!Object.keys(S.tick).length || dataAge() > 20000 || Date.now() - S.rz.at < 30000 || rlHold()) { return; } S.rz.at = Date.now();
+    var cand = Object.keys(S.tick).filter(function (s) { var t = S.tick[s]; return /USDT$/.test(s) && s !== GOLD && !/^(USDC|FDUSD|TUSD|BUSD)/.test(s) && t.q >= 3e6 && chgOf(s).v >= 4; }).sort(function (a, b) { return chgOf(b).v - chgOf(a).v; }).slice(0, 14), done = 0;
+    if (!cand.length) { S.risers = []; return; }
+    cand.forEach(function (s) {
+        var c = S.rz.kl[s]; var go = c && Date.now() - c.at < 150000 ? Promise.resolve(c.k) : fxKl(s).then(function (k) { S.rz.kl[s] = { at: Date.now(), k: k }; return k; });
+        go.then(function (k) { return rzOne(s, k); }).catch(function () { return null; }).then(function (r) {
+            if (r) { var old = S.risers.filter(function (x) { return x.sym !== s; }); old.push(r); S.risers = old; } if (++done === cand.length) { rzFinish(cand); }
+        });
+    });
+}
+function rzFinish(cand) {
+    S.risers = S.risers.filter(function (r) { return cand.indexOf(r.sym) >= 0; }).sort(function (a, b) { return b.chg - a.chg; });
+    S.risers.forEach(function (r) { fxQueue(r.sym); var e = fxEval(r.sym, 'LONG', 'fh'); r.fx = e; if (e) { r.pct = fxClamp(r.pct + Math.round(e.al * 25), 5, 95); r.vetoed = e.veto; }
+        r.bot = (r.st === 'RISING' && e && e.support && !e.veto && r.pct >= 60 && r.vr >= 1.8) ? { sym: r.sym, side: 'LONG', kind: 'TREND', score: Math.max(62, r.pct), chance: r.pct, wide: false, vr: r.vr, at: nowMs(), entry: r.entry, stop: r.stop, tgt: r.tgt, price: r.price } : null; });
+    try { if (S.win === 'scanner' || S.win === 'plan' || S.win === 'glance') { var a = document.activeElement; if (!(a && a.getAttribute && a.getAttribute('data-m7in'))) { renderView(true); } } } catch (e) {}
+}
+setInterval(function () { try { rzRefresh(); } catch (e) {} }, 15000); setTimeout(function () { try { rzRefresh(); } catch (e) {} }, 7000);
+function ixBackHTML() { return '<div class="ixb"><a href="#" data-m9="ixback">↩ ' + (S.ix && S.ix.from === 'glance' ? 'At a glance' : 'Contents') + '</a></div>'; }
+S.ix = { from: '', y: 0 };
+function rzCard(r) {
+    var tone = r.st === 'RISING' ? 'long' : r.st === 'HOT' ? 'wait' : 'short', lbl = r.st === 'RISING' ? 'RISING · buy zone' : r.st === 'HOT' ? 'HOT · wait for dip' : r.st === 'FADING' ? 'FADING · no entry' : 'WEAK TREND';
+    var tradable = r.st === 'RISING' || r.st === 'HOT';
+    return '<div id="rs-' + r.sym + '" data-ix="1" data-ixl="' + esc(base(r.sym)) + ' ▲' + (r.chg >= 0 ? '+' : '') + r.chg.toFixed(0) + '%"><div class="group pad tap" data-act="chart:' + r.sym + '">' + ixBackHTML() + '<div class="ph">' + who(r.sym) + '<div class="side"><span class="badge ' + tone + '">' + lbl + '</span><div style="font-weight:800;margin-top:3px">' + fmtP(r.price, r.sym) + ' <span class="up">+' + r.chg.toFixed(1) + '%</span></div></div></div>' +
+        (tradable ? lv('LONG', r.entry, r.sl, r.tp, r.sym) + plBox('LONG', r.entry, r.sl, r.tp, r.sym) : '') + '<div class="note" style="margin:6px 0 0">' + esc(r.note) + '</div><div class="foot">Confidence ' + r.pct + '% · RSI 1h ' + Math.round(r.rsi) + ' · volume ×' + r.vr.toFixed(1) + ' · 24h high ' + fmtP(r.hi24, r.sym) + (tradable ? '<br><b class="vwin">VALID ' + hm(r.at) + ' → ' + hm(r.at + 45 * 60000) + '</b>' : '') + '</div>' + fxLine(r.fx || null) + '</div></div>';
+}
+function rzSection(limit) {
+    if (!S.risers.length) { return ''; } var list = S.risers.filter(function (r) { return !r.vetoed; }), hid = S.risers.length - list.length;
+    return sh('🚀 Top risers right now', list.length) + '<div class="note" style="margin:0 0 6px">Coins that are already climbing hard today. They can be missing from the lists below because those need the 10m and 15m charts to agree and skip over-stretched coins. Buy only inside the marked zone, with the stop.' + (hid ? ' ' + hid + ' hidden: the all-factors check was against them.' : '') + '</div>' + list.slice(0, limit || 5).map(rzCard).join('') + (list.length > (limit || 5) ? '<div class="note"><a href="#" data-m9="glopen">See all ' + list.length + ' in At a glance ›</a></div>' : '');
+}
+var _vScan1 = vScanner; vScanner = function () { return rzSection(5) + _vScan1(); }; VIEWS.scanner = vScanner;
+var _vPlan1 = vPlan; vPlan = function () { var h = _vPlan1(), rs = rzSection(3); if (!rs) { return h; } var i = h.indexOf('<div class="note" style="margin-top:0">Plan calculated'); return i < 0 ? rs + h : h.slice(0, i) + rs + h.slice(i); }; VIEWS.plan = vPlan;
+// ---- anchors and back links on the existing cards ----
+function ixArr(s) { return s === 'LONG' ? '▲' : s === 'SHORT' ? '▼' : '·'; }
+var _planCard1 = planCard; planCard = function (r, label, g) { return '<div id="pl-' + r.sym + '" data-ix="1" data-ixl="' + esc(base(r.sym)) + ' ' + ixArr(r.day === 'NEUTRAL' ? 'WAIT' : r.day) + ixArr(r.fh) + '">' + ixBackHTML() + _planCard1(r, label, g) + (r.fx && (r.fx.fh || r.fx.day) ? fxLine(r.fx.fh || r.fx.day) : (r.fh === 'LONG' || r.fh === 'SHORT' || r.day === 'LONG' || r.day === 'SHORT' ? fxLine(null) : '')) + '</div>'; };
+var _pickCard1 = pickCard; pickCard = function (p) { return '<div id="pk-' + p.sym + '" data-ix="1" data-ixl="' + esc(base(p.sym)) + ' ' + ixArr(p.side) + '">' + ixBackHTML() + _pickCard1(p) + '</div>'; };
+var _morn1 = morningCard; morningCard = function (o) { var t = o.today || {}; return '<div id="mo-' + o.sym + '" data-ix="1" data-ixl="' + esc(base(o.sym)) + ' ' + ixArr(t.day) + ixArr(t.fh) + '">' + ixBackHTML() + _morn1(o) + (t.day === 'LONG' || t.day === 'SHORT' ? fxLine(fxEval(o.sym, t.day, 'day')) : '') + '</div>'; };
+// ---- At a glance window ----
+S.gl = { f: 'all', hz: 'all', rows: [] };
+function glMoney(sym, amt, tpFrac) { var g = amt * S.lev * (tpFrac - feeOf(sym)); return (g >= 0 ? '+$' : '−$') + Math.abs(g).toFixed(g >= 100 ? 0 : 2); }
+function glRows() {
+    var rows = [], now = nowMs();
+    function add(o) { if (o.tpP > 0) { rows.push(o); } }
+    (S.plan.items || []).forEach(function (r) { var w = windows(r.kind, S.plan.at);
+        if (r.fh === 'LONG' || r.fh === 'SHORT') { add({ src: 'Master Plan', hz: 'fh', hzl: 'few hours', sym: r.sym, side: r.fh, conf: r.fhPct || 0, tpP: r.fhTP / r.price * 100, slP: r.fhSL / r.price * 100, from: w.fhStart, to: w.fhStop, win: 'plan', anchor: 'pl-' + r.sym, fx: r.fx && r.fx.fh }); }
+        if (r.day === 'LONG' || r.day === 'SHORT') { add({ src: 'Master Plan', hz: 'day', hzl: 'whole day', sym: r.sym, side: r.day, conf: r.dayPct || 0, tpP: r.dayTP / r.price * 100, slP: r.daySL / r.price * 100, from: w.dayStart, to: w.dayEnd, win: 'plan', anchor: 'pl-' + r.sym, fx: r.fx && r.fx.day }); } });
+    computePicks().filter(function (p) { return p.aligned && !p.expired; }).forEach(function (p) { add({ src: 'Scanner', hz: 'fh', hzl: '45 min', sym: p.sym, side: p.side, conf: p.pct, tpP: p.tp / p.price * 100, slP: p.sl / p.price * 100, from: p.at, to: p.at + 45 * 60000, win: 'scanner', anchor: 'pk-' + p.sym, fx: p.fx }); });
+    S.risers.filter(function (r) { return !r.vetoed && (r.st === 'RISING' || r.st === 'HOT'); }).forEach(function (r) { add({ src: 'Top riser', hz: 'fh', hzl: r.st === 'HOT' ? 'on pullback' : 'now', sym: r.sym, side: 'LONG', conf: r.pct, tpP: r.tp / r.entry * 100, slP: r.sl / r.entry * 100, from: r.at, to: r.at + 45 * 60000, win: 'scanner', anchor: 'rs-' + r.sym, fx: r.fx }); });
+    (S.rd.list || []).filter(function (m) { return (m.kind === 'EARLY' || m.kind === 'TREND') && m.entry && now - m.at < 180000; }).forEach(function (m) { add({ src: m.kind === 'EARLY' ? 'Early mover' : 'Running trend', hz: 'fh', hzl: '30 min', sym: m.sym, side: m.side, conf: m.chance || m.score || 0, tpP: Math.abs(m.tgt - m.entry) / m.entry * 100, slP: Math.abs(m.entry - m.stop) / m.entry * 100, from: m.at, to: m.at + 30 * 60000, win: 'movers', anchor: 'mv-' + m.sym }); });
+    try { if (S.morning.D === dayOpenFor(now)) { S.morning.items.filter(function (o) { return o.today && isSolid(o); }).forEach(function (o) { var p = o.today;
+        if (p.fh === 'LONG' || p.fh === 'SHORT') { add({ src: 'New Day (solid)', hz: 'fh', hzl: 'few hours', sym: o.sym, side: p.fh, conf: p.fhPct || 0, tpP: p.fTP / p.entry * 100, slP: p.fSL / p.entry * 100, from: p.T, to: p.T + 4 * 3600000, win: 'morning', anchor: 'mo-' + o.sym }); }
+        if (p.day === 'LONG' || p.day === 'SHORT') { add({ src: 'New Day (solid)', hz: 'day', hzl: 'whole day', sym: o.sym, side: p.day, conf: p.dayPct || 0, tpP: p.dTP / p.entry * 100, slP: p.dSL / p.entry * 100, from: p.T, to: p.D + 86400000, win: 'morning', anchor: 'mo-' + o.sym }); } }); } } catch (e) {}
+    return rows;
+}
+function vGlance() {
+    var G = S.gl, rows = glRows().filter(function (r) { return (G.f === 'all' || r.side === G.f) && (G.hz === 'all' || r.hz === G.hz); }); rows.sort(function (a, b) { return b.conf - a.conf; }); rows = rows.slice(0, 80); G.rows = rows;
+    var h = '<div class="note" style="margin:0 0 8px">Every recommendation in one list. Tap a line to jump to its full details; there is a “↩ At a glance” link on each detail to come back. Profit figures are at the target, at ' + (S.lev > 1 ? S.lev + '×' : '1× (no leverage)') + ' after fees, before slippage.</div>';
+    h += '<div class="m7row">' + [['all', 'All'], ['LONG', '▲ Long'], ['SHORT', '▼ Short']].map(function (x) { return '<span class="' + (G.f === x[0] ? 'on' : '') + '" data-m9="glf:' + x[0] + '">' + x[1] + '</span>'; }).join('') + '</div>';
+    h += '<div class="m7row">' + [['all', 'Any time'], ['fh', 'Few hours'], ['day', 'Whole day']].map(function (x) { return '<span class="' + (G.hz === x[0] ? 'on' : '') + '" data-m9="glh:' + x[0] + '">' + x[1] + '</span>'; }).join('') + '</div>';
+    var ob = (S.bot && S.bot.open) || []; if (ob.length) { h += sh('Open paper-bot trades', ob.length) + '<div class="group">' + ob.map(function (p) { var t = S.tick[p.sym], u = t ? p.notional * p.sg * (t.p - p.entry) / p.entry : 0; return '<div class="glr tap" data-m9="glwin:bot"><div><b>' + esc(base(p.sym)) + '</b> <span class="badge ' + (p.side === 'LONG' ? 'long' : 'short') + '">' + ixArr(p.side) + ' ' + p.side + '</span><small>entry ' + fmtP(p.entry, p.sym) + ' · target ' + fmtP(p.tp, p.sym) + ' · stop ' + fmtP(p.sl, p.sym) + '</small></div><div class="glp ' + (u >= 0 ? 'up' : 'dn') + '">' + (u >= 0 ? '+' : '−') + '$' + Math.abs(u).toFixed(2) + '</div></div>'; }).join('') + '</div>'; }
+    h += sh('Recommendations', rows.length);
+    if (!rows.length) { return h + '<div class="group pad mut">Nothing yet. The lists fill in a minute or two after the app opens.</div>'; }
+    h += '<div class="gl-head"><span>COIN · SOURCE · VALID</span><span>$50 · $100 · $200 at target</span></div><div class="group">' + rows.map(function (r, i) {
+        var e = r.fx, fxb = e ? '<span class="' + (e.support ? 'up' : e.veto || e.against ? 'dn' : 'mut') + '"> · factors ' + fxVerdictTxt(e) + '</span>' : '';
+        return '<div class="glr tap" data-m9="glgo:' + i + '"><div><b>' + esc(base(r.sym)) + '</b> <span class="badge ' + (r.side === 'LONG' ? 'long' : 'short') + '">' + ixArr(r.side) + ' ' + r.side + '</span> <b class="' + (r.conf >= 70 ? 'up' : r.conf >= 55 ? '' : 'mut') + '" style="font-size:13px">' + r.conf + '% chance</b><small>' + esc(r.src) + ' · ' + esc(r.hzl) + ' · ' + hm(r.from) + '→' + hm(r.to) + fxb + '</small></div><div class="glp"><span class="up">' + glMoney(r.sym, 50, r.tpP / 100) + '</span> · <span class="up">' + glMoney(r.sym, 100, r.tpP / 100) + '</span> · <span class="up">' + glMoney(r.sym, 200, r.tpP / 100) + '</span><small>target +' + r.tpP.toFixed(1) + '% · stop −' + r.slP.toFixed(1) + '%</small></div></div>';
+    }).join('') + '</div>';
+    return h + '<div class="note">Confidence is how many checks agree, adjusted by the all-factors check. It is not a probability of profit. Not financial advice.</div>';
+}
+WINS.push({ id: 'glance', ic: '🗂', c: '#0a84ff', n: 'At a glance', t: 'Glance', sub: 'All recommendations in one list: timing, profit on $50, $100, $200' }); LIVE.glance = 0; VIEWS.glance = vGlance;
+MW_HELP.glance = 'One list of every recommendation from the Master Plan, Scanner, Top risers, Early Movers and New Day, sorted by confidence, with valid times and the profit at target on $50, $100 and $200. Tap a line to jump to its details; use the ↩ link there to come back.';
+// ---- jumping, back links, contents button ----
+function ixGo(win, anchor) {
+    S.ix = { from: 'glance', y: window.pageYOffset || 0 }; gotoWin(win); var tries = 0;
+    (function look() { var el = anchor && document.getElementById(anchor); if (el) { try { el.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); } catch (e) {} el.classList.add('ixflash'); setTimeout(function () { el.classList.remove('ixflash'); }, 1800); try { renderBackLabels(); } catch (e) {} return; } if (++tries < 12) { setTimeout(look, 150); } })();
+}
+function renderBackLabels() { Array.prototype.forEach.call(document.querySelectorAll('.ixb a'), function (a) { a.textContent = '↩ ' + (S.ix.from === 'glance' ? 'At a glance' : 'Contents'); }); }
+var IX_WINS = { plan: 1, scanner: 1, morning: 1, movers: 1, bot: 1, live: 1, glance: 0, newc: 1 };
+function ixDecorate() {
+    var v = document.getElementById('view'); if (!v) { return; }
+    if (S.win === 'movers') { Array.prototype.forEach.call(v.querySelectorAll('.m7card[data-act^="chart:"]'), function (c) { var s = c.getAttribute('data-act').slice(6); if (!c.id) { c.id = 'mv-' + s; c.setAttribute('data-ix', '1'); c.setAttribute('data-ixl', base(s) + (c.classList.contains('long') ? ' ▲' : ' ▼')); c.insertAdjacentHTML('afterbegin', ixBackHTML()); } }); }
+    var n = 0; Array.prototype.forEach.call(v.querySelectorAll('.sh'), function (e) { if (!e.id) { e.id = 'sec-' + (n++); e.setAttribute('data-ixs', '1'); } });
+    var fab = document.getElementById('ixfab'); if (IX_WINS[S.win] && (v.querySelector('[data-ix],[data-ixs]'))) { if (!fab) { fab = document.createElement('div'); fab.id = 'ixfab'; fab.setAttribute('data-m9', 'ixopen'); fab.textContent = '☰'; document.body.appendChild(fab); } fab.style.display = 'flex'; } else if (fab) { fab.style.display = 'none'; }
+}
+function ixOpen() {
+    var old = document.getElementById('ixpan'); if (old) { old.remove(); return; } var v = document.getElementById('view'); if (!v) { return; } var h = '<div class="ixh"><b>Contents</b><span data-m9="ixclose" class="ixx">✕</span></div><div class="ixl"><div class="ixr" data-m9="glopen">🗂 <b>At a glance</b> · all recommendations</div>';
+    Array.prototype.forEach.call(v.querySelectorAll('[data-ixs],[data-ix]'), function (e) { if (e.hasAttribute('data-ixs')) { var f1 = e.querySelector('span'), t = ((f1 || e).textContent || '').replace(/\s+/g, ' ').trim(); h += '<div class="ixr sec" data-m9="ixj:' + e.id + '">' + esc(t) + '</div>'; } else { h += '<div class="ixr" data-m9="ixj:' + e.id + '">' + esc(e.getAttribute('data-ixl') || e.id) + '</div>'; } });
+    var p = document.createElement('div'); p.id = 'ixpan'; p.innerHTML = h + '</div>'; document.body.appendChild(p);
+}
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m9]') : null; if (!el) { return; } var a = el.getAttribute('data-m9'), i = a.indexOf(':'), v = i < 0 ? a : a.slice(0, i), x = i < 0 ? '' : a.slice(i + 1);
+    if (v === 'glf') { S.gl.f = x; renderView(true); } else if (v === 'glh') { S.gl.hz = x; renderView(true); }
+    else if (v === 'glgo') { var r = S.gl.rows[+x]; if (r) { ixGo(r.win, r.anchor); } } else if (v === 'glwin') { ixGo(x, null); }
+    else if (v === 'glopen') { var op = document.getElementById('ixpan'); if (op) { op.remove(); } S.ix = { from: '', y: 0 }; gotoWin('glance'); }
+    else if (v === 'ixopen') { ixOpen(); } else if (v === 'ixclose') { var o2 = document.getElementById('ixpan'); if (o2) { o2.remove(); } }
+    else if (v === 'ixj') { var t = document.getElementById(x), o3 = document.getElementById('ixpan'); if (o3) { o3.remove(); } if (t) { try { t.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); } catch (er) {} t.classList.add('ixflash'); setTimeout(function () { t.classList.remove('ixflash'); }, 1800); } }
+    else if (v === 'ixback') { e.stopPropagation(); if (S.ix.from === 'glance') { var y = S.ix.y; S.ix = { from: '', y: 0 }; gotoWin('glance'); setTimeout(function () { window.scrollTo(0, y); }, 80); } else { ixOpen(); } }
+    else { return; }
+    e.preventDefault(); e.stopPropagation();
+}, true);
+var _rv110 = renderView; renderView = function () { var r = _rv110.apply(this, arguments); try { ixDecorate(); } catch (e) {} return r; };
+(function () {
+    var st = document.createElement('style');
+    st.textContent = '.ixb{text-align:right;margin:0 0 4px;font-size:12px}.ixb a{color:#0a84ff;text-decoration:none;font-weight:700;padding:4px 2px}.ixflash{animation:ixf 1.8s ease}@keyframes ixf{0%,60%{box-shadow:0 0 0 3px #f0b90b;border-radius:16px}100%{box-shadow:0 0 0 0 transparent}}' +
+        '#ixfab{position:fixed;right:12px;bottom:84px;width:40px;height:40px;border-radius:50%;background:#0a4fd6;color:#fff;font-size:20px;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,.35);z-index:9000;cursor:pointer;display:none}' +
+        '#ixpan{position:fixed;right:10px;bottom:132px;width:min(78vw,300px);max-height:56vh;background:var(--card,#fff);color:var(--tx,#111);border-radius:16px;box-shadow:0 6px 28px rgba(0,0,0,.35);z-index:9001;overflow:hidden;display:flex;flex-direction:column}.ixh{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line,#ddd)}.ixx{cursor:pointer;padding:0 4px}.ixl{overflow:auto}' +
+        '.ixr{padding:10px 14px;border-bottom:1px solid var(--line,#eee);font-size:14px;cursor:pointer}.ixr.sec{background:var(--fill,#f2f2f7);font-weight:800;font-size:12px;text-transform:uppercase;color:var(--mut,#777)}' +
+        '.glr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line,#eee)}.glr small{display:block;color:var(--mut,#777);font-size:11.5px;margin-top:2px}.glp{text-align:right;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}.glp small{font-weight:600}.gl-head{display:flex;justify-content:space-between;font-size:10.5px;color:var(--mut,#777);padding:0 6px 4px;letter-spacing:.3px}';
+    document.head.appendChild(st);
+})();
+// ===== v10.9 · part H: live % change in front of every coin, gold and currency =====
+var _who0 = who;
+who = function (sym, sub) {
+    var h = _who0(sym, sub), t = S.tick[sym]; if (!t) { return h; }
+    return h.replace('</b><small>', '</b> ' + chgChip(sym) + '<small>');
+};
+function pcHead() {
+    var s = S.chart && S.chart.sym, t = s && S.tick[s]; if (!t) { return ''; }
+    return '<div class="pchead"><div class="pcn"><b>' + esc(s === 'XAUUSDT' ? 'Gold' : base(s)) + '</b><small>' + esc(s) + '</small></div><div class="pcp"><b data-px="' + s + '">' + fmtP(t.p, s) + '</b>' + chgTxt(s, true) + '<small>24h ' + pct(t.chg) + '</small></div></div>';
+}
+var _vChart1 = VIEWS.chart; VIEWS.chart = function () { return pcHead() + _vChart1(); };
+// rows that show a coin name without a percentage get one added after drawing (Early Movers cards, bot trades, new coins, candles, live trades, rates)
+function pcAddAll() {
+    var v = document.getElementById('view'); if (!v) { return; }
+    Array.prototype.forEach.call(v.querySelectorAll('.ph'), function (ph) { var cs = ph.querySelectorAll('[data-chip]'); if (cs.length > 1) { var seen = {}; Array.prototype.forEach.call(cs, function (c) { var k = c.getAttribute('data-chip'); if (seen[k]) { c.remove(); } else { seen[k] = 1; } }); } });
+    Array.prototype.forEach.call(v.querySelectorAll('[data-act^="chart:"]'), function (el) {
+        if (el.querySelector('[data-chg],[data-chip],.m7chg')) { return; } var sym = el.getAttribute('data-act').slice(6), t = S.tick[sym]; if (!t) { return; }
+        var b = el.querySelector('b'); if (!b || b.getAttribute('data-pc')) { return; } b.setAttribute('data-pc', '1'); b.insertAdjacentHTML('afterend', ' ' + chgChip(sym));
+    });
+}
+var _rv111 = renderView; renderView = function () { var r = _rv111.apply(this, arguments); try { pcAddAll(); } catch (e) {} return r; };
+(function () { var st = document.createElement('style'); st.textContent = '.who small+*,.who b+.badge{margin-left:4px}.who .badge{font-size:11px;padding:1px 6px;vertical-align:middle}.pchead{display:flex;justify-content:space-between;align-items:center;padding:6px 4px 10px}.pcn b{font-size:20px;display:block}.pcn small,.pcp small{color:var(--mut,#777);font-size:12px}.pcp{text-align:right}.pcp b{font-size:20px;display:block;font-variant-numeric:tabular-nums}'; document.head.appendChild(st); })();
+/* ===== v10.8 build .5: Best Picks window, bot upgrades, rate-limit guard ===== */
+S.bp = { at: 0, busy: false, c: {}, n: 0, tried: 0 };
+function bpTF(sym) {
+    return Promise.all([m7kl(sym, '15m', 120), m7kl(sym, '1h', 120), m7kl(sym, '4h', 120), m7kl(sym, '1d', 80)]).then(function (r) {
+        return { at: Date.now(), tf: { '15m': m7tfScore(r[0]), '1h': m7tfScore(r[1]), '4h': m7tfScore(r[2]), '1d': m7tfScore(r[3]) } };
+    });
+}
+function bpRefresh(force) {
+    if (S.bp.busy || rlHold() || !Object.keys(S.tick).length || dataAge() > 20000) { return; }
+    if (!force && Date.now() - S.bp.at < 120000) { return; }
+    var list = fxWatchList().filter(function (s) { var t = S.tick[s]; return t && t.q >= 2e7 && s !== GOLD && !(typeof offHours === 'function' && offHours(s)); }).slice(0, 14);
+    var todo = list.filter(function (s) { var c = S.bp.c[s]; return !c || Date.now() - c.at > 360000; });
+    S.bp.n = list.length; S.bp.at = Date.now(); if (!todo.length) { return; }
+    S.bp.busy = true; var i = 0;
+    (function next() {
+        if (i >= todo.length || rlHold()) { S.bp.busy = false; S.bp.tried = Date.now(); if (S.win === 'best') { bpRender(); } return; }
+        var s = todo[i++]; bpTF(s).then(function (c) { S.bp.c[s] = c; }).catch(function () {}).then(function () { fxQueue(s); setTimeout(next, 350); });
+    })();
+}
+function bpRender() { try { var a = document.activeElement; if (!(a && a.getAttribute && a.getAttribute('data-m7in'))) { renderView(true); } } catch (e) {} }
+// Strict filter: picks only what is lined up on every time frame AND supported by the all-factors check
+function bpList(hz) {
+    var out = [], now = nowMs(), D0 = dayOpenFor(now);
+    Object.keys(S.bp.c).forEach(function (sym) {
+        var c = S.bp.c[sym], tf = c.tf, tk = S.tick[sym]; if (!tk || Date.now() - c.at > 900000) { return; }
+        if (typeof offHours === 'function' && offHours(sym)) { return; }
+        var s15 = tf['15m'], s1 = tf['1h'], s4 = tf['4h'], sd = tf['1d'], ov, ag, side, atr, tpM, slM, hzl;
+        if (hz === 'fh') { ov = (s15.sc * 1 + s1.sc * 2 + s4.sc * 2 + sd.sc * 1.5) / 6.5; var up = [s15, s1, s4, sd].filter(function (x) { return x.sc > 0.5; }).length, dn = [s15, s1, s4, sd].filter(function (x) { return x.sc < -0.5; }).length; side = ov >= 1 && up >= 3 ? 'LONG' : ov <= -1 && dn >= 3 ? 'SHORT' : ''; ag = Math.max(up, dn); atr = s1.atr; tpM = 1.0; slM = 1.2; hzl = 'few hours'; }
+        else { ov = (s1.sc * 1 + s4.sc * 2 + sd.sc * 2) / 5; var u2 = [s1, s4, sd].filter(function (x) { return x.sc > 0.5; }).length, d2 = [s1, s4, sd].filter(function (x) { return x.sc < -0.5; }).length; side = ov >= 1 && u2 === 3 ? 'LONG' : ov <= -1 && d2 === 3 ? 'SHORT' : ''; ag = Math.max(u2, d2); atr = s4.atr; tpM = 1.3; slM = 1.5; hzl = 'whole day'; }
+        if (!side) { return; }
+        var sg = side === 'LONG' ? 1 : -1, price = tk.p, rsi = s1.rsi; if (!(atr > 0) || !price) { return; }
+        if (s1.stretch * sg > 3 || (sg > 0 && rsi > 72) || (sg < 0 && rsi < 28)) { return; }
+        var tp = atr * tpM, sl = atr * slM, slp = sl / price * 100; if (slp < 0.2 || slp > 6) { return; }
+        var e = fxEval(sym, side, hz); if (!e) { fxQueue(sym, true); return; }
+        if (e.veto || e.al < 0.1) { return; }
+        var chance = m7chance(tp, sl, Math.min(0.17, 0.04 * Math.abs(ov) + 0.1 * Math.max(0, e.al))); if (chance < 0.62) { return; }
+        var score = 0.5 * Math.min(1, Math.abs(ov) / 2.5) + 0.5 * Math.min(1, e.al * 2) + (chance - 0.5);
+        var from = now, to = hz === 'fh' ? now + 4 * 3600000 : D0 + 900000 + 86400000; if (to <= now) { to = now + 4 * 3600000; }
+        out.push({ sym: sym, side: side, hz: hz, hzl: hzl, price: price, tp: tp, sl: sl, chance: chance, pct: Math.round(chance * 100), score: score, ov: ov, ag: ag, e: e, rsi: rsi, from: from, to: to, tf: tf });
+    });
+    out.sort(function (a, b) { return b.score - a.score; }); return out.slice(0, 3);
+}
+function bpCard(p) {
+    var id = 'bp-' + p.sym + '-' + p.hz, d = p.side === 'LONG' ? 1 : -1;
+    var why = ['Time frames agreeing: ' + p.ag + ' of ' + (p.hz === 'fh' ? 4 : 3) + ' (15m/1h/4h/1d) ' + (d > 0 ? 'point up' : 'point down'), 'Indicator strength ' + Math.abs(p.ov).toFixed(1) + ' out of about 3 (needs 1.0)', 'All-factors check supports it: ' + (p.e.al >= 0 ? '+' : '') + p.e.al.toFixed(2) + ' from ' + p.e.n + ' checks (order book, volume, funding, open interest, news)', 'Not stretched: RSI ' + p.rsi.toFixed(0) + ', no veto flags'];
+    return '<div class="group pad tap" id="' + id + '" data-ix="best" data-act="chart:' + p.sym + '"><div class="ph">' + who(p.sym) + '<div class="side">' + badge(p.side) + meter(p.pct) + '</div></div>' +
+        '<div class="pm"><div><div class="px">' + px(p.sym, p.price) + '</div>' + chgTxt(p.sym, true) + '</div>' + sparkOf(p.sym) + '</div>' + lv(p.side, p.price, p.sl, p.tp, p.sym) + plBox(p.side, p.price, p.sl, p.tp, p.sym) +
+        '<div class="foot"><b class="vwin">VALID ' + hm(p.from) + ' → ' + hm(p.to) + '</b> • estimated chance about ' + p.pct + '% (an estimate, not a promise)</div>' +
+        '<ul style="margin:8px 0 0 18px;padding:0;font-size:12.5px;line-height:1.5">' + why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>' + fxLine(p.e) +
+        (p.e.flags.length ? '<div class="warn">' + esc(p.e.flags[0]) + '</div>' : '') + '<details onclick="event.stopPropagation()"><summary style="font-size:12.5px;margin-top:6px">Show every factor checked</summary>' + fxTable(p.e) + '</details>' + ixBackHTML() + '</div>';
+}
+function vBest() {
+    bpRefresh(false);
+    var h = '<div class="warn" style="margin:0 0 10px">⭐ <b>Best Picks are a suggestion, not an instruction.</b> No tool, bot or person can make profit sure. These are only the few setups where every time frame and every factor lines up. Even then some will lose, so always use the stop shown and keep each trade small.</div>';
+    var f = bpList('fh'), d = bpList('day'), checked = Object.keys(S.bp.c).length;
+    h += '<div class="note" style="margin:0 0 6px">' + (S.bp.busy ? 'Checking the biggest coins on 4 time frames… ' : '') + checked + ' coins checked (of ' + S.bp.n + ' big ones). Rate-limit pause: ' + (rlHold() ? 'ON, waiting for Binance' : 'off') + '.</div>';
+    function part(t, a, w) {
+        var x = sh(t, a.length);
+        if (!a.length) { return x + '<div class="group pad mut">Nothing passes the strict check right now for ' + w + '. That is normal: the best action is often to wait. Check again in a few minutes.</div>'; }
+        return x + a.map(bpCard).join('');
+    }
+    h += part('Next few hours', f, 'the next few hours') + part('Whole day', d, 'the whole day');
+    return h + '<div class="note">Stock-linked contracts are skipped while the US market is closed. Not financial advice.</div>';
+}
+WINS.push({ id: 'best', ic: '⭐', c: '#ff9f0a', n: 'Best Picks (most reliable)', t: 'Best', sub: 'The few strongest setups for the next few hours and the whole day, all checks agreeing' }); LIVE.best = 0; VIEWS.best = vBest;
+MW_HELP.best = 'The strictest list in the app. A coin appears only when 3 to 4 time frames agree, the order book, volume, funding, open interest and news support it, and it is not overstretched. Often the list is empty, which means wait. It is a suggestion, never a guarantee.';
+IX_WINS.best = 1;
+(function () { var g = MW_GROUPS[0][1]; ['best', 'glance'].forEach(function (k) { if (g.indexOf(k) < 0) { g.splice(Math.min(g.length, g.indexOf('overview') + 1), 0, k); } }); })();
+setInterval(function () { try { bpRefresh(false); } catch (e) {} }, 20000); setTimeout(function () { try { bpRefresh(true); } catch (e) {} }, 9000);
+setInterval(function () { try { if (S.win === 'best') { bpRender(); } } catch (e) {} }, 30000);
+// Best Picks in the glance list
+var _glr = glRows;
+glRows = function () {
+    var rows = _glr(); try { ['fh', 'day'].forEach(function (hz) { bpList(hz).forEach(function (p) { rows.push({ src: 'Best Pick', hz: hz, hzl: p.hzl, sym: p.sym, side: p.side, conf: p.pct + 10, tpP: p.tp / p.price * 100, slP: p.sl / p.price * 100, from: p.from, to: p.to, win: 'best', anchor: 'bp-' + p.sym + '-' + hz, fx: p.e }); }); }); } catch (e) {}
+    return rows;
+};
+// Home card
+var _ov111 = VIEWS.overview;
+VIEWS.overview = function () {
+    var n = 0; try { n = bpList('fh').length + bpList('day').length; } catch (e) {}
+    var card = '<div class="group pad tap" data-m10="bestopen" style="border-left:4px solid #ff9f0a"><div style="display:flex;justify-content:space-between;align-items:center"><b>⭐ Best Picks</b><span class="mut">' + (n ? n + ' ready' : 'waiting for a strong setup') + ' ›</span></div><div class="mut" style="font-size:12.5px;margin-top:4px">The few most reliable ideas for the next hours and the whole day. A suggestion only.</div></div>' +
+        '<div class="group pad tap" data-m10="glopen" style="margin-top:8px"><div style="display:flex;justify-content:space-between;align-items:center"><b>🗂 At a glance</b><span class="mut">every recommendation ›</span></div></div>';
+    return card + _ov111.apply(this, arguments);
+};
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m10]') : null; if (!el) { return; } var v = el.getAttribute('data-m10');
+    if (v === 'bestopen') { e.preventDefault(); e.stopPropagation(); gotoWin('best'); } else if (v === 'glopen') { e.preventDefault(); e.stopPropagation(); gotoWin('glance'); }
+}, true);
+// ---- Auto Bot: also follow Best Picks and strong Master Plan signals, skip stock-linked contracts when the US market is closed ----
+var _ga111 = getActions;
+getActions = function () {
+    var list = _ga111.apply(this, arguments);
+    list.forEach(function (a) { if (a.tier === 'NOW' && typeof offHours === 'function' && offHours(a.sym)) { a.tier = 'WATCH'; (a.warns = a.warns || []).push('Stock-linked contract while the US market is closed: the bot skips it'); } });
+    return list;
+};
+var _rd111 = m7botRadar;
+m7botRadar = function () {
+    var keep = S.rd.list, extra = [], have = {}, now = nowMs();
+    try {
+        (keep || []).forEach(function (m) { have[m.sym] = 1; });
+        ['fh'].forEach(function (hz) { bpList(hz).forEach(function (p) { if (!have[p.sym]) { have[p.sym] = 1; var st = p.side === 'LONG' ? p.price - p.sl : p.price + p.sl, tg = p.side === 'LONG' ? p.price + p.tp : p.price - p.tp; extra.push({ sym: p.sym, side: p.side, kind: 'TREND', score: Math.max(66, p.pct), chance: p.pct, wide: false, vr: 2, at: now, entry: p.price, stop: st, tgt: tg, price: p.price, best: 1 }); } }); });
+        (S.plan.items || []).forEach(function (r) {
+            if ((r.fh === 'LONG' || r.fh === 'SHORT') && (r.fhPct || 0) >= 70 && !have[r.sym] && r.price && S.tick[r.sym] && !(typeof offHours === 'function' && offHours(r.sym))) {
+                var e = fxEval(r.sym, r.fh, 'fh'); if (e && e.support && !e.veto) { have[r.sym] = 1; var L = r.fh === 'LONG'; extra.push({ sym: r.sym, side: r.fh, kind: 'TREND', score: Math.max(64, r.fhPct), chance: r.fhPct, wide: false, vr: 2, at: now, entry: r.price, stop: L ? r.price - r.fhSL : r.price + r.fhSL, tgt: L ? r.price + r.fhTP : r.price - r.fhTP, price: r.price, plan: 1 }); }
+            }
+        });
+        S.rd.list = (keep || []).concat(extra); return _rd111();
+    } finally { S.rd.list = keep; }
+};
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;

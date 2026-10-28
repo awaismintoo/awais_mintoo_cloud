@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-20.5';
+var BUILD = '2026-10-29.5';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5341,6 +5341,615 @@ m7botRadar = function () {
         S.rd.list = (keep || []).concat(extra); return _rd111();
     } finally { S.rd.list = keep; }
 };
+
+// ---- Day-open price on demand: so the % always follows the chosen Change(%) time zone (matches Binance) even if the background scan has not fetched it yet ----
+var DO = { busy: 0 };
+function doEnsure() {
+    if (S.anchor === 'roll' || rlHold() || !Object.keys(S.tick).length) { return; }
+    var st = anchorStart(nowMs()), want = [];
+    function add(s) { if (s && S.tick[s] && want.indexOf(s) < 0 && (!S.dayOpen[s] || S.dayOpen[s].t !== st)) { want.push(s); } }
+    try { add(S.chart && S.chart.sym); } catch (e) {} try { add(S.an && S.an.sym); } catch (e) {}
+    try { (S.risers || []).forEach(function (r) { add(r.sym); }); } catch (e) {}
+    try { Object.keys(S.tick).filter(function (s) { return /USDT$/.test(s); }).sort(function (a, b) { return S.tick[b].q - S.tick[a].q; }).slice(0, 60).forEach(add); } catch (e) {}
+    want.slice(0, 6).forEach(function (s) {
+        if (DO.busy > 3) { return; } DO.busy++;
+        m7get('https://fapi.binance.com/fapi/v1/klines?symbol=' + s + '&interval=1h&startTime=' + st + '&limit=1').then(function (a) {
+            if (Array.isArray(a) && a.length && +a[0][0] === st && +a[0][1] > 0) { S.dayOpen[s] = { t: st, o: +a[0][1] }; }
+        }).catch(function () {}).then(function () { DO.busy--; });
+    });
+}
+setInterval(function () { try { doEnsure(); } catch (e) {} }, 3000);
+var PF_KB = [
+['rsi|relative strength', 'RSI', 'RSI (Relative Strength Index) is a 0 to 100 gauge of how fast price has risen or fallen lately. Above 70 means "overbought" (it rose fast and may pause or drop). Below 30 means "oversold" (it fell fast and may bounce). In a strong trend RSI can stay above 70 for a long time, so never short only because RSI is high.'],
+['ma|moving average|sma', 'MA (Moving Average)', 'A moving average is the average price of the last N candles drawn as a smooth line (MA7 = last 7 candles). Price above its average and a short average above a long one usually means an uptrend; the opposite means a downtrend.'],
+['ema|exponential', 'EMA', 'EMA is a moving average that gives more weight to recent candles, so it reacts faster than a normal MA. The app uses EMA 9, 21 and 50: 9 above 21 means short-term strength.'],
+['macd', 'MACD', 'MACD compares a fast and a slow average. When the MACD line crosses above its signal line, momentum is turning up; below means turning down. The histogram bars show how strong that momentum is. It is slow, so it confirms trends more than it predicts them.'],
+['bollinger|boll|bb', 'Bollinger Bands (BOLL)', 'Three lines around price: a middle average and two outer bands about 2 standard deviations away. Price near the top band means stretched upward; near the bottom, stretched downward. Narrow bands often come before a big move.'],
+['sar|parabolic', 'Parabolic SAR', 'SAR draws dots under price in an uptrend and above price in a downtrend. When the dots flip sides, the trend may be reversing. Many false flips in sideways markets.'],
+['supertrend|super', 'Supertrend', 'Supertrend is a trailing line based on ATR. Price above the line = uptrend (line is green, acts like a stop). Price below = downtrend. The app uses it as one of its trend votes.'],
+['vwap', 'VWAP', 'Volume Weighted Average Price: the average price weighted by how much traded at each price. Price above VWAP means buyers are in control for the day; below means sellers.'],
+['kdj|stochastic', 'KDJ / Stochastic', 'KDJ is like RSI but faster: it shows where the price sits within its recent high-low range. Above 80 is high, below 20 is low. The J line swings the most and gives early warnings.'],
+['obv|on balance volume', 'OBV', 'On-Balance Volume adds volume on up candles and subtracts it on down candles. If price rises and OBV rises too, real volume backs the move. If price rises but OBV falls, be careful.'],
+['atr|average true range', 'ATR', 'Average True Range is how far price normally moves per candle. The app sizes stops and targets using ATR, so volatile coins get wider stops and calm coins tighter ones.'],
+['funding|funding rate', 'Funding rate', 'On perpetual futures, longs and shorts pay each other every 8 hours so the futures price stays near the real price. Positive funding means longs pay shorts (many people are long, crowded). Very high positive funding often comes before a drop; very negative before a bounce.'],
+['open interest|oi', 'Open interest', 'Open interest is the total value of all open futures positions. Price up with open interest up means new money backs the move. Price up with open interest down means shorts are closing, which is a weaker rise.'],
+['long short ratio|long/short|longshort', 'Long/short ratio', 'The share of accounts (or big traders) that are long compared with short. If almost everyone is long, a drop can trigger a chain of forced selling. The app treats extreme ratios as a warning.'],
+['leverage', 'Leverage', 'Leverage lets you trade a bigger position than your money. 10x means a 10% move against you wipes out your deposit. Higher leverage multiplies both profit and loss, so beginners should stay at 1x to 5x.'],
+['liquidation|liquidated|liquid', 'Liquidation', 'If price moves against a leveraged trade until your margin is used up, the exchange force-closes it and you lose that margin. The app warns when your stop is farther away than your liquidation price.'],
+['margin', 'Margin', 'Margin is the money you put in as a deposit for a leveraged trade. Isolated margin risks only that trade; cross margin lets the whole account balance back it (riskier).'],
+['stop loss|stoploss|stop', 'Stop loss', 'A stop loss is an order that closes your trade automatically at a set loss so one bad trade cannot hurt you much. Decide it before you enter and never move it further away.'],
+['take profit|tp|target', 'Take profit / target', 'A take-profit order closes your trade automatically when it reaches the profit you planned. The app shows TARGET on every card so you know where to exit.'],
+['risk reward|risk/reward|rr', 'Risk to reward', 'Compare how much you could lose (entry to stop) with how much you could win (entry to target). A 1:2 ratio means you win twice what you risk, so even 40% winning trades can be profitable. The app shows both sides in dollars.'],
+['order book|orderbook|depth', 'Order book', 'The list of waiting buy orders (bids) and sell orders (asks). Much more buy volume near the price than sell volume suggests support; the opposite suggests resistance. Big walls can be removed at any time, so treat them as hints only.'],
+['spread', 'Spread', 'The gap between the best buy price and the best sell price. A wide spread means you lose money just entering and exiting. The app blocks coins with very wide spreads.'],
+['slippage', 'Slippage', 'The difference between the price you expected and the price you actually got, common on thin coins and fast markets. Market orders suffer more than limit orders.'],
+['volume|turnover', 'Volume', 'How much was traded. High volume on a move means many people agree with it; a move on tiny volume is unreliable. The app shows 24h volume in USDT and compares recent hours with normal.'],
+['market cap|marketcap', 'Market cap', 'Market cap = price multiplied by the number of coins in circulation. It shows how big a coin is. Small market cap coins can move a lot but are much riskier.'],
+['futures|perpetual|perp', 'Futures and perpetuals', 'Futures let you bet on price going up (long) or down (short) without owning the coin, usually with leverage. A "perpetual" has no expiry date and uses the funding rate to stay near the real price.'],
+['spot', 'Spot trading', 'Spot means you really buy the coin and own it. No leverage, no liquidation, and you cannot short. Safer for beginners.'],
+['long', 'Long', 'A long trade profits when price goes up: you buy first and sell later.'],
+['short', 'Short', 'A short trade profits when price goes down: you sell first and buy back later. Risk is higher because price can in theory keep rising.'],
+['bullish|bull', 'Bullish', 'Bullish means expecting prices to rise (a bull market).'],
+['bearish|bear', 'Bearish', 'Bearish means expecting prices to fall (a bear market).'],
+['candle|candlestick|candles', 'Candlesticks', 'Each candle shows one time period (for example 15 minutes): open, high, low and close. Green means it closed higher than it opened, red lower. The thin lines (wicks) show the highest and lowest points reached.'],
+['support|resistance', 'Support and resistance', 'Support is a price area where falling prices often stop and bounce; resistance is where rising prices often stop. When price breaks through, the old level often flips role.'],
+['trend', 'Trend', 'A trend is the main direction: higher highs and higher lows is an uptrend; lower highs and lower lows is a downtrend. Trading with the larger trend is usually safer than against it.'],
+['breakout', 'Breakout', 'A breakout is price moving through support or resistance with strong volume. Many breakouts fail (fake-outs), so wait for a close beyond the level and for volume.'],
+['pump|dump|pump and dump', 'Pump and dump', 'A pump is a very fast rise (often on a small coin with hype); a dump is the crash that follows when early buyers sell. If a coin is already up 30% to 40%, the risk of buying the top is high, which is why the app calls it "stretched".'],
+['fomo', 'FOMO', 'Fear of missing out: buying because a coin is already flying and you feel left behind. It is the most common reason beginners buy at the top. A plan with a stop loss is the cure.'],
+['dca|dollar cost', 'DCA', 'Dollar-cost averaging means buying a fixed amount at regular times regardless of price. It reduces the risk of buying everything at the top. Good for long-term holding, not for short trades.'],
+['halving|halvening', 'Bitcoin halving', 'About every four years, the reward miners get for new Bitcoin blocks is cut in half, reducing new supply. Historically it has been followed by bull markets, but that is not guaranteed.'],
+['stablecoin|usdt|usdc|tether', 'Stablecoins (USDT, USDC)', 'Stablecoins aim to stay at 1 US dollar. USDT (Tether) and USDC are the most used. Futures on Binance are priced and settled in USDT.'],
+['bitcoin|btc', 'Bitcoin (BTC)', 'Bitcoin is the first and largest cryptocurrency, often called digital gold. Most coins follow its direction, so the app checks the Bitcoin trend before recommending other coins.'],
+['ethereum|eth', 'Ethereum (ETH)', 'Ethereum is the second largest crypto and a platform for smart contracts, DeFi and NFTs. Fees for using it are paid in ETH.'],
+['altcoin|alt coin|alts', 'Altcoins', 'Every coin other than Bitcoin. They usually move more than Bitcoin, up and down, and are riskier.'],
+['defi', 'DeFi', 'Decentralized finance: lending, borrowing and trading done by smart contracts on blockchains instead of banks or exchanges.'],
+['nft', 'NFT', 'A non-fungible token is a unique digital item recorded on a blockchain, such as art or game items. Prices are very speculative.'],
+['gas|gas fee|network fee', 'Gas fees', 'The fee you pay the network to process a transaction. On Ethereum it varies with traffic; on BNB Smart Chain it is usually very small.'],
+['wallet', 'Wallet', 'A crypto wallet holds the keys that control your coins. In this app, My Wallet is self-custody: only you hold the 12-word backup, and it is encrypted on your phone.'],
+['seed phrase|recovery phrase|12 word|12-word|mnemonic', 'Seed phrase', 'The 12 words that can restore your whole wallet. Write them on paper, never photograph them, never type them into a website and never share them with anyone, including support staff.'],
+['kyc', 'KYC', 'Know Your Customer: identity verification exchanges require before big deposits and withdrawals.'],
+['p2p', 'P2P', 'Peer-to-peer trading: buying or selling crypto directly with another person, often using local payment apps. Use only the exchange escrow and never release coins before the money has arrived in your own account.'],
+['forex|fx', 'Forex', 'The foreign-exchange market where currencies like EUR/USD are traded. It is the largest market in the world and trades around the clock on weekdays.'],
+['pip|pips', 'Pip', 'A pip is the smallest standard price move in forex, usually 0.0001 for pairs like EUR/USD. Profit is counted in pips multiplied by lot size.'],
+['lot|lots', 'Lot', 'A standard trade size in forex: 1 lot is 100,000 units of the base currency, 0.1 is a mini lot and 0.01 a micro lot. Beginners should use 0.01.'],
+['gold|xau|xauusd|tola', 'Gold (XAU)', 'Gold is priced per troy ounce in US dollars (XAU/USD). Gold often rises when the dollar falls, when interest rates fall or when there is war or fear, and it falls when the dollar and real yields rise. One tola is about 11.66 grams. The Rates window shows gold per tola.'],
+['dxy|dollar index', 'DXY (Dollar index)', 'The US Dollar Index measures the dollar against a basket of major currencies. A rising DXY usually pushes gold, crypto and other assets down, and a falling DXY helps them.'],
+['fed|interest rate|rates cut|rate cut|fomc', 'Interest rates and the Fed', 'When the US Federal Reserve cuts interest rates, money becomes cheaper and risk assets like crypto and stocks usually benefit; when it raises rates or sounds strict, they usually fall. Decision days cause big, fast moves, so avoid large trades just before them.'],
+['cpi|inflation', 'Inflation and CPI', 'CPI measures how fast prices rise. Hotter-than-expected inflation usually pushes the dollar and yields up and hurts crypto and gold short-term; cooler data does the opposite.'],
+['yield|treasury|bond', 'Bond yields', 'The interest paid on government bonds. Rising US yields tend to strengthen the dollar and pressure gold and crypto.'],
+['s&p|spx|sp500|stock market|nasdaq', 'Stock indexes', 'The S&P 500 and Nasdaq track big US companies. Crypto often moves with Nasdaq when markets are driven by risk appetite. Stock-linked futures on Binance (TradFi) only trade properly while the US market is open.'],
+['tradfi|stock linked|stock-linked|equity perp', 'TradFi contracts', 'Contracts on Binance that follow stocks or ETFs (for example EBAY or SOXS). They follow the US market, so outside US trading hours prices can stand still or jump. The app lets the bot skip them when the US market is closed.'],
+['pkr|rupee|dollar rate', 'PKR and currencies', 'The Rates window shows world currencies, gold and silver per tola/ounce and oil with an Update now button. Pakistani rupee rates in banks and open market can differ from the interbank rate.'],
+['win rate|winrate', 'Win rate', 'The share of closed trades that made profit. Alone it means little: 40% winners can be profitable with a good risk-to-reward, and 70% winners can lose money if the losses are much bigger than the wins.'],
+['profit factor', 'Profit factor', 'Total money won divided by total money lost. Above 1 means profitable overall; 1.5 or more is good; below 1 means losing. Judge it only after 50 or more trades.'],
+['drawdown|max drop', 'Drawdown', 'How far your account fell from its highest point. Max drawdown shows the worst losing streak so far. Choose position sizes so you can survive a bad streak.'],
+['paper trading|paper bot|virtual', 'Paper trading', 'Practising with virtual money at real prices. No real order is placed. Use it for at least a few weeks before risking real money.'],
+['backtest|replay', 'Backtest', 'Testing a strategy on past prices to see how it would have done. Good strategies on the past can still fail in the future, so treat it as a filter, not a promise.'],
+['pre market|premarket|pre-market|pre ipo|pre-ipo', 'Pre-Market / Pre-IPO', 'Contracts that trade a coin or company before it is officially listed. Prices are thin and can swing wildly, so be extra careful.'],
+['alpha', 'Binance Alpha', 'A Binance section for very new on-chain tokens. They are high-risk and often illiquid.'],
+['airdrop', 'Airdrop', 'Free tokens given to users of a project. Many fake airdrops try to steal wallets; never connect your wallet to unknown sites.'],
+['rug pull|rugpull|scam', 'Rug pull and scams', 'A rug pull is when creators drain the money and abandon a project. Warning signs: promised guaranteed returns, anonymous team, pressure to hurry, asking for your seed phrase. No real signal service or bot can guarantee profit.'],
+['hedge|hedging', 'Hedging', 'Opening an opposite position to reduce risk, for example being long a coin and short another correlated one.'],
+['whale|whales', 'Whales', 'Very large holders whose trades can move the market. Big transfers to exchanges sometimes come before selling.'],
+['market maker', 'Market maker', 'A firm that continuously posts buy and sell orders so others can trade. They earn the spread and add liquidity.'],
+['liquidity', 'Liquidity', 'How easily you can buy or sell without moving the price. High-volume coins are liquid; tiny coins are not.'],
+['volatility', 'Volatility', 'How much and how fast price moves. High volatility means higher profit chances and higher loss chances.'],
+['hodl|hold', 'HODL', 'A famous typo for "hold": keeping a coin long term regardless of short-term moves.'],
+['bag|bagholder', 'Bagholder', 'Someone stuck holding a coin that dropped far below their buying price.'],
+['ath|all time high', 'ATH', 'All-time high: the highest price a coin has ever reached.'],
+['dyor', 'DYOR', 'Do your own research: never rely only on tips, influencers or any app, including this one.'],
+['cex|dex|exchange', 'CEX and DEX', 'A CEX (centralized exchange like Binance) holds your coins for you. A DEX (decentralized exchange like Uniswap) trades directly from your own wallet through smart contracts.'],
+['mexc', 'MEXC', 'Another crypto exchange. The MEXC window in this app shows its Futures and Spot lists. Orders are not placed in the app; tap the badge to open that market on MEXC.'],
+['psx|kse|pakistan stock', 'PSX / KSE', 'The Pakistan Stock Exchange and its KSE-100 index. The app shows the index and listings for information; orders are not placed from here.']
+];
+/* ===== v10.8 build .5: Professor Mintoo - animated draggable helper, tutor and Q&A ===== */
+var PF_APP = [
+['install|installation|update the app|how do i update|setup file|termux', 'Install / update', 'In Termux run: cp ~/storage/downloads/mintoo_FINAL.sh ~/ && bash ~/mintoo_FINAL.sh . When it says DONE, install app-release.apk from Downloads > MintooSuite_signed_FULL_v108 > MintooSuite-signed > apk > release. Install it over the old app (no need to uninstall) to keep your data.'],
+['delete old|old version|old files|clean up|cleanup', 'Which files can I delete?', 'Keep: mintoosuite-release.jks (your signing key, plus a copy off the phone), the newest MintooSuite_signed_FULL folder, the newest FullBackup zip, the RESTORE_POINT zip and mintoo_FINAL.sh. Older APK folders, old mintoo_*.sh scripts and older backups can go once the new build works for a day or two.'],
+['percentage differs|percent differs|percentage different|% differs|different percentage|change time zone|change(%)|changepercent|why % |why percentage|binance percentage', 'Why does the % differ from Binance?', 'Binance counts the change from the start of its day in the zone you chose (for example UTC+5, 00:00), while "Last 24 hours" counts a rolling day. In this app open Windows > Time zone & clock and tap the line "Change(%) time zone" at the top, then pick the same zone as in your Binance app (for example UTC+5, 00:00).'],
+['12 hour|12-hour|24 hour clock|24-hour|clock style|am pm', 'Clock style', 'Windows > Time zone & clock > CLOCK STYLE: tap 24-hour or 12-hour (AM/PM). The row list below it chooses which country time to show (Pakistan is the default).'],
+['why not recommended|not in recommendation|xpin|idol|not in scanner|missing coin|not included|why is it missing|coin missing', 'Why is a rising coin not in the recommendations?', 'A coin that has already jumped 25% to 40% is "stretched": RSI is very high, price is far above its averages, and buying now means chasing the top. The Scanner and Master Plan rightly skip it. Coins that are climbing hard are listed in "Top risers" and in Early Movers, and Best Picks only shows coins where every check agrees and the move is not overstretched.'],
+['best picks|best pick|reliable|sure profit|guaranteed|closed eye', 'Best Picks', 'Best Picks is the strictest list: 3 to 4 time frames must agree, the order book, volume, funding, open interest and news must support it, and it must not be stretched. Often it is empty, which means wait. It is a suggestion only: nobody can guarantee profit, so always use the stop and a small size.'],
+['at a glance|glance|contents|content list', 'At a glance', 'Windows > At a glance lists every recommendation (Master Plan, Scanner, Top risers, Early Movers, New Day, Best Picks) with timing, profit on $50/$100/$200 and a bold chance %. Tap a line to jump to the details; each detail has a back link. On Scanner, Master Plan and others there is also a ☰ button in the corner.'],
+['chance|confidence|probability|indicators agree', 'What does the % chance mean?', 'It shows how many of the checks agree and how strong the setup is, adjusted by the all-factors check. It is not a promise of profit. Even a 75% setup loses one time in four.'],
+['all factors|all-factors|factors check|factor check', 'All-factors check', 'Before recommending, the app also looks at the order book, 24h and recent volume, funding rate, open interest, long/short ratio, Bitcoin trend, market breadth and crypto, Binance and world news. If these argue against a trade, it is downgraded or hidden.'],
+['top riser|top risers|risers', 'Top risers', 'Coins that are already up 4% or more with real volume. Each shows a status (RISING, HOT, FADING, WEAK) with entry, stop and target. HOT means stretched: wait for a pullback.'],
+['auto bot|autobot|paper bot lost|bot loss|bot losing|bot not trading|bot is losing', 'Auto Bot', 'The paper bot trades virtual money. It now also follows Best Picks and strong Master Plan signals, skips stock-linked contracts when the US market is closed, and only enters when the all-factors check agrees. A few trades prove nothing: judge it after 50 or more closed trades. You can reset the paper account in the Auto Bot window.'],
+['real bot|real money bot|live bot|testnet', 'Real bot', 'The Real bot starts in TEST (Binance testnet). Live needs a typed confirmation, small default limits, and puts stop and take-profit on Binance. It was tested only against a mock Binance, so start small and watch it. No bot can promise profit.'],
+['429|418|too many request|rate limit|limit of ip|2400', 'Too many requests', 'Binance limits how many requests one phone can make per minute. The app now pauses its extra background requests for about 2.5 minutes after such an error and retries the chart by itself. Closing other Binance tabs or apps on the same connection helps.'],
+['news|cryptocompare', 'News', 'The News window reads several crypto and world sources. CryptoCompare sometimes needs a free key; you can paste it in the News window. Headlines also feed the all-factors check.'],
+['time zone|timezone|utc', 'Time zones', 'Windows > Time zone & clock has two things: the clock (which country time to show and 12/24-hour) and the "Change(%) time zone" line that decides where the daily % starts.'],
+['analyst|analyse|analyze|ask the bot|type any coin', 'Analyst (Ask the bot)', 'Windows > Ask the bot: type any coin (for example XPIN, BTC or XAU), choose I want LONG or SHORT (or Auto) and you get a plan for a few hours and for the whole day with entry, stop, target and the reasons.'],
+['backup|restore', 'Backup and restore', 'The installer makes a full backup zip in ~/mintoo_backups and in phone Downloads each time. To go back to the safe old version run: bash ~/mintoo_restore_v94.sh . Keep your signing key safe: without it you cannot update the same app.'],
+['subscription|premium|play store|google play|billing', 'Premium and Google Play', 'Premium billing and shared comments need your own Google Play product ids and Firebase configuration; the guide explains where to get them. They are not active yet.'],
+['security|safe|hack|password', 'Security', 'Your API keys and wallet are stored only on your phone. Never share your seed phrase or API secret. For Binance API keys turn off withdrawals and, if you can, restrict them to your own IP.'],
+['hello|hi|hey|salam|assalam|aoa', 'Greeting', 'Hello! Ask me about the app, a coin, an indicator or any trading idea. Try: "what is RSI", "price of BTC", "open Best Picks", "explain this screen".']
+];
+var PF_WIN = { 'Best Picks': 'best', 'At a glance': 'glance', 'Time zones': 'timez', 'Clock style': 'timez', 'Why does the % differ from Binance?': 'timez', 'Analyst (Ask the bot)': 'analyst', 'Top risers': 'scanner', 'Auto Bot': 'bot', 'Real bot': 'bot', 'News': 'news', 'Backup and restore': 'health' };
+var PF_WIN = { 'Best Picks': 'best', 'At a glance': 'glance', 'Time zones': 'timez', 'Clock style': 'timez', 'Why does the % differ from Binance?': 'timez', 'Analyst (Ask the bot)': 'analyst', 'Top risers': 'scanner', 'Auto Bot': 'bot', 'Real bot': 'bot', 'News': 'news', 'Backup and restore': 'health' };
+var PF = { open: false, msgs: [], seen: {}, st: { x: null, y: null, hide: false, quiet: false } };
+try { var _s = JSON.parse(localStorage.getItem('mintoosuite_prof') || 'null'); if (_s) { PF.st = _s; } } catch (e) {}
+function pfSave() { try { localStorage.setItem('mintoosuite_prof', JSON.stringify(PF.st)); } catch (e) {} }
+var PF_AV = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g class="pf-body">' +
+    '<path d="M6 100 Q8 76 50 73 Q92 76 94 100Z" fill="#1b1b22"/><path d="M14 100 Q14 86 20 80 L24 100Z M86 100 Q86 86 80 80 L76 100Z" fill="#2a2a33"/><path d="M16 98 L19 86M21 98 L24 86" stroke="#cfd3da" stroke-width="2" stroke-linecap="round"/>' +
+    '<rect x="41" y="62" width="18" height="14" rx="6" fill="#c58a66"/>' +
+    '<path d="M23 46 Q10 52 12 70 Q14 82 22 78 Q18 66 26 56Z" fill="#1d1410" class="pf-pony"/>' +
+    '<ellipse cx="50" cy="44" rx="23" ry="27" fill="#d29c78"/><ellipse cx="27.5" cy="46" rx="3.6" ry="6" fill="#c58a66"/><ellipse cx="72.5" cy="46" rx="3.6" ry="6" fill="#c58a66"/>' +
+    '<path d="M26 42 Q24 14 52 13 Q78 14 74 42 Q72 27 52 26 Q34 27 26 42Z" fill="#1d1410"/><path d="M31 24 Q50 12 70 24" stroke="#3a2a20" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+    '<path d="M32 40 Q40 35 47 39M53 39 Q60 35 68 40" stroke="#1d1410" stroke-width="3.4" fill="none" stroke-linecap="round"/>' +
+    '<g class="pf-eyes"><ellipse cx="39.5" cy="46" rx="5" ry="3.6" fill="#fff"/><ellipse cx="60.5" cy="46" rx="5" ry="3.6" fill="#fff"/><circle cx="40" cy="46" r="2.6" fill="#4a2a18"/><circle cx="60" cy="46" r="2.6" fill="#4a2a18"/><circle cx="40.8" cy="45.2" r=".9" fill="#fff"/><circle cx="60.8" cy="45.2" r=".9" fill="#fff"/></g>' +
+    '<path d="M50 48 Q46 58 51 59 Q54 59 54 57" stroke="#a8704f" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+    '<path d="M27 50 Q26 76 50 80 Q74 76 73 50 Q69 64 60 64 Q50 68 40 64 Q31 64 27 50Z" fill="#241913"/>' +
+    '<path d="M37 60 Q50 54 63 60 Q50 65 37 60Z" fill="#241913"/><ellipse class="pf-mouth" cx="50" cy="66.5" rx="5" ry="1.8" fill="#c3646b"/></g></svg>';
+function pfWinName(id) { var w = (WINS || []).filter(function (x) { return x.id === id; })[0]; return w ? w.n : id; }
+var PF_TIPS = { overview: 'Tap me anytime: I can explain any screen.', scanner: 'Top risers are at the top. Tap the ☰ for a quick contents list.', plan: 'Tap a card to see its chart. I can explain the chance % if you ask.', best: 'Best Picks is often empty. That means wait, and it is normal.', bot: 'Judge the bot only after 50 closed trades.', analyst: 'Type any coin here, even a new one.', timez: 'Tap the Change(%) time zone line to match Binance.', chart: 'Tap a candle to see its details. Ask me what any indicator means.' };
+function pfCSS() {
+    var st = document.createElement('style'); st.id = 'pfcss';
+    st.textContent = '#pfm{position:fixed;z-index:8500;width:64px;height:64px;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}' +
+        '#pfm .pfav{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c9f3e3,#7ad7b5 70%);box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 0 0 3px #fff;overflow:hidden;animation:pfbob 3.2s ease-in-out infinite}' +
+        '#pfm .pfav svg{width:100%;height:100%;display:block}#pfm.drag .pfav{animation:none;transform:scale(1.08)}#pfm.wave .pfav{animation:pfwave .9s ease}' +
+        '#pfm .pfbub{position:absolute;bottom:72px;right:0;max-width:210px;background:#fff;color:#111;font-size:12.5px;line-height:1.35;padding:8px 10px;border-radius:12px 12px 2px 12px;box-shadow:0 4px 14px rgba(0,0,0,.28);display:none}' +
+        '#pfm.tip .pfbub{display:block;animation:pfpop .25s ease}#pfm .pfbadge{position:absolute;top:-2px;right:-2px;background:#ff375f;color:#fff;width:20px;height:20px;border-radius:50%;font:700 12px/20px sans-serif;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.3)}' +
+        '.pf-eyes{transform-origin:50px 46px;animation:pfblink 4.5s infinite}.pf-pony{transform-origin:24px 52px;animation:pfsway 3.2s ease-in-out infinite}#pfm.talk .pf-mouth,#pfp.talk .pf-mouth{animation:pftalk .28s infinite}.pf-mouth{transform-origin:50px 66.5px}' +
+        '@keyframes pfbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes pfblink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}@keyframes pfsway{0%,100%{transform:rotate(0)}50%{transform:rotate(5deg)}}' +
+        '@keyframes pftalk{0%,100%{transform:scaleY(1)}50%{transform:scaleY(2.6)}}@keyframes pfwave{0%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}100%{transform:rotate(0)}}@keyframes pfpop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}' +
+        '#pfp{position:fixed;left:0;right:0;bottom:0;z-index:8600;height:min(78vh,560px);background:var(--card,#fff);color:var(--tx,#111);border-radius:18px 18px 0 0;box-shadow:0 -6px 28px rgba(0,0,0,.35);display:none;flex-direction:column;overflow:hidden}#pfp.on{display:flex;animation:pfup .22s ease}@keyframes pfup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}' +
+        '#pfp .pfh{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line,#e5e5ea)}#pfp .pfh .pfav2{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c9f3e3,#7ad7b5 70%);overflow:hidden;flex:none}#pfp .pfh .pfav2 svg{width:100%;height:100%}' +
+        '#pfp .pfh b{display:block;font-size:15px}#pfp .pfh small{color:var(--mut,#777);font-size:11.5px}#pfp .pfx{margin-left:auto;font-size:20px;padding:4px 10px;cursor:pointer}' +
+        '#pfp .pfmsgs{flex:1;overflow-y:auto;padding:10px 12px;-webkit-overflow-scrolling:touch}.pfm1{margin:6px 0;max-width:88%;padding:8px 11px;border-radius:14px;font-size:13.5px;line-height:1.45;word-wrap:break-word}.pfm1.me{margin-left:auto;background:#0a84ff;color:#fff;border-bottom-right-radius:3px}.pfm1.bot{background:var(--fill,#f0f0f3);border-bottom-left-radius:3px}.pfm1 b.t{display:block;margin-bottom:3px}' +
+        '#pfp .pfchips{display:flex;gap:6px;overflow-x:auto;padding:6px 12px}#pfp .pfchips span,.pfm1 .pfbtn{white-space:nowrap;background:var(--fill,#f0f0f3);border:1px solid var(--line,#ddd);border-radius:16px;padding:6px 11px;font-size:12.5px;cursor:pointer;display:inline-block;margin:4px 4px 0 0}.pfm1 .pfbtn{background:#0a84ff;color:#fff;border:0}' +
+        '#pfp .pfin{display:flex;gap:8px;padding:8px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line,#e5e5ea)}#pfp .pfin input{flex:1;padding:10px 12px;border-radius:20px;border:1px solid var(--line,#ccc);font-size:14px;background:var(--bg,#fff);color:inherit;min-width:0}#pfp .pfin button{border:0;background:#0a84ff;color:#fff;border-radius:20px;padding:0 16px;font-weight:600}' +
+        '.pfdots i{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:#999;animation:pfd 1s infinite}.pfdots i:nth-child(2){animation-delay:.2s}.pfdots i:nth-child(3){animation-delay:.4s}@keyframes pfd{0%,80%,100%{opacity:.25}40%{opacity:1}}';
+    document.head.appendChild(st);
+}
+function pfPos() {
+    var m = document.getElementById('pfm'); if (!m) { return; } var W = window.innerWidth, H = window.innerHeight, x = PF.st.x, y = PF.st.y;
+    if (x == null || y == null) { x = W - 78; y = H - 160; } x = Math.max(4, Math.min(W - 68, x)); y = Math.max(60, Math.min(H - 150, y)); m.style.left = x + 'px'; m.style.top = y + 'px';
+    var bub = m.querySelector('.pfbub'); if (bub) { if (x > W / 2) { bub.style.right = '0'; bub.style.left = 'auto'; } else { bub.style.left = '0'; bub.style.right = 'auto'; } }
+}
+function pfBuild() {
+    if (document.getElementById('pfm')) { return; } pfCSS();
+    var m = document.createElement('div'); m.id = 'pfm'; m.innerHTML = '<div class="pfbub"></div><div class="pfav">' + PF_AV + '</div>'; document.body.appendChild(m);
+    var p = document.createElement('div'); p.id = 'pfp'; p.innerHTML = '<div class="pfh"><div class="pfav2">' + PF_AV + '</div><div><b>Professor Mintoo</b><small>Ask about the app, coins, trading, currencies</small></div><span class="pfx" data-pf="close">✕</span></div><div class="pfmsgs" id="pfmsgs"></div><div class="pfchips" id="pfchips"></div><div class="pfin"><input id="pfq" placeholder="Ask me anything…" autocomplete="off"><button data-pf="send">Ask</button></div>'; document.body.appendChild(p);
+    pfPos(); window.addEventListener('resize', pfPos); pfDrag(m);
+    p.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('[data-pf],[data-pfq],[data-pfgo]') : null; if (!el) { return; }
+        if (el.getAttribute('data-pf') === 'close') { pfClose(); } else if (el.getAttribute('data-pf') === 'send') { pfAsk(); } else if (el.getAttribute('data-pfq')) { pfAsk(el.getAttribute('data-pfq')); } else if (el.getAttribute('data-pfgo')) { pfAct(el.getAttribute('data-pfgo')); }
+    });
+    p.querySelector('#pfq').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); pfAsk(); } });
+    if (PF.st.hide) { m.style.display = 'none'; }
+}
+function pfDrag(m) {
+    var sx, sy, ox, oy, moved = false, down = false;
+    m.addEventListener('pointerdown', function (e) { down = true; moved = false; sx = e.clientX; sy = e.clientY; var r = m.getBoundingClientRect(); ox = r.left; oy = r.top; try { m.setPointerCapture(e.pointerId); } catch (x) {} });
+    m.addEventListener('pointermove', function (e) { if (!down) { return; } var dx = e.clientX - sx, dy = e.clientY - sy; if (!moved && Math.abs(dx) + Math.abs(dy) > 7) { moved = true; m.classList.add('drag'); m.classList.remove('tip'); } if (moved) { PF.st.x = ox + dx; PF.st.y = oy + dy; pfPos(); } });
+    function end() { if (!down) { return; } down = false; m.classList.remove('drag'); if (moved) { var W = window.innerWidth; PF.st.x = PF.st.x > W / 2 ? W - 70 : 6; pfPos(); pfSave(); } else { pfToggle(); } }
+    m.addEventListener('pointerup', end); m.addEventListener('pointercancel', function () { down = false; m.classList.remove('drag'); });
+}
+function pfToggle() { if (PF.open) { pfClose(); } else { pfOpen(); } }
+function pfOpen() {
+    pfBuild(); var m = document.getElementById('pfm'), p = document.getElementById('pfp'); PF.open = true; p.classList.add('on'); m.classList.remove('tip'); m.classList.add('wave'); setTimeout(function () { m.classList.remove('wave'); }, 950);
+    if (!PF.msgs.length) { pfSay('Hello! I am <b>Professor Mintoo</b>. I know this app, indicators, coins, currencies, gold and trading basics. Type a question, or tap a topic below. I am not a financial adviser and cannot promise profit, but I will always tell you honestly what I know.', 'Hi'); }
+    pfChips(); pfRender();
+}
+function pfClose() { var p = document.getElementById('pfp'); if (p) { p.classList.remove('on'); } PF.open = false; }
+function pfChips() {
+    var c = document.getElementById('pfchips'); if (!c) { return; }
+    var base1 = ['Explain this screen', 'What can you do?', 'What is RSI?', 'Best Picks', 'Why % differs from Binance', 'What is funding rate?', 'Price of BTC', 'Open At a glance'];
+    c.innerHTML = base1.map(function (q) { return '<span data-pfq="' + esc(q) + '">' + esc(q) + '</span>'; }).join('');
+}
+function pfRender() { var box = document.getElementById('pfmsgs'); if (!box) { return; } box.innerHTML = PF.msgs.map(function (m) { return '<div class="pfm1 ' + m.who + '">' + (m.title ? '<b class="t">' + esc(m.title) + '</b>' : '') + m.html + '</div>'; }).join(''); box.scrollTop = box.scrollHeight; }
+function pfSay(html, title) { PF.msgs.push({ who: 'bot', html: html, title: title }); }
+function pfAct(a) {
+    var i = a.indexOf(':'), v = a.slice(0, i), x = a.slice(i + 1);
+    if (v === 'win') { pfClose(); try { gotoWin(x); } catch (e) {} } else if (v === 'chart') { pfClose(); S.chart = S.chart || {}; S.chart.sym = x; try { gotoWin('chart'); } catch (e) {} } else if (v === 'an') { pfClose(); S.an = S.an || {}; S.an.sym = x; try { gotoWin('analyst'); m7analyse(x); } catch (e) {} } else if (v === 'hide') { PF.st.hide = true; pfSave(); pfClose(); document.getElementById('pfm').style.display = 'none'; }
+}
+function btn(a, t) { return '<span class="pfbtn" data-pfgo="' + esc(a) + '">' + esc(t) + '</span>'; }
+function pfNorm(q) { return ' ' + q.toLowerCase().replace(/[^a-z0-9%&\/+\-\.\s]/g, ' ').replace(/\s+/g, ' ').trim() + ' '; }
+var _pfre = {};
+function pfHit(kw, q) { var out = 0; kw.split('|').forEach(function (k) { var r = _pfre[k]; if (!r) { r = _pfre[k] = new RegExp('(^|[^a-z0-9])' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z0-9]|$)'); } if (r.test(q)) { out += k.length > 4 ? 2 : 1; } }); return out; }
+var PF_STOP = { THE: 1, AND: 1, FOR: 1, ARE: 1, WHAT: 1, WHY: 1, HOW: 1, IS: 1, TO: 1, OF: 1, IN: 1, A: 1, MY: 1, ME: 1, IT: 1, DO: 1, I: 1, PRICE: 1, OPEN: 1, SHOW: 1, ABOUT: 1, COIN: 1, ANALYSE: 1, ANALYZE: 1, CHART: 1, GO: 1, TAKE: 1, BUY: 1, SELL: 1, LONG: 1, SHORT: 1, ON: 1, AT: 1, BEST: 1, NOW: 1, TODAY: 1, TELL: 1, CAN: 1, YOU: 1, THIS: 1, THAT: 1, WITH: 1, FROM: 1, NEW: 1, ALL: 1 };
+function pfCoin(raw) {
+    var toks = raw.replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean), found = null, aliases = { bitcoin: 'BTC', ethereum: 'ETH', gold: 'XAU', solana: 'SOL', ripple: 'XRP', dogecoin: 'DOGE', binance: 'BNB' };
+    toks.forEach(function (t) { if (found) { return; } var low = t.toLowerCase(), U = (aliases[low] || t).toUpperCase(); if (PF_STOP[U] && !aliases[low]) { return; } if (U.length >= 2 && U.length <= 12 && S.tick && S.tick[U + 'USDT'] && (t === t.toUpperCase() || aliases[low] || /price|chart|analy|about|open|show|buy|sell|trade|how is|how's/i.test(raw))) { found = U + 'USDT'; } });
+    return found;
+}
+function pfCoinCard(sym) {
+    var t = S.tick[sym], c = chgOf(sym), q = t.q, keys = Object.keys(S.tick), rank = 1; keys.forEach(function (s) { if (/USDT$/.test(s) && S.tick[s].q > q) { rank++; } });
+    var nm = sym === 'XAUUSDT' ? 'Gold' : base(sym), fr = FX && FX.funding ? FX.funding[sym] : undefined;
+    var h = '<b>' + esc(nm) + '</b> now <b>' + fmtP(t.p, sym) + '</b> (' + pct(c.v) + (c.kind === 'today' ? ' since ' + anchorLbl() : ' last 24h') + ').<br>24h volume ' + m7vol(q) + ' USDT (volume rank #' + rank + ')' + (fr !== undefined ? ', funding ' + (fr * 100).toFixed(3) + '% per 8h' : '') + '.';
+    var rz = (S.risers || []).filter(function (r) { return r.sym === sym; })[0]; if (rz) { h += '<br>It is in <b>Top risers</b> (' + rz.st + ').'; }
+    if (c.v > 25) { h += '<br>⚠️ It is up a lot already. Chasing very big moves is risky: the chance of a pullback is high.'; }
+    return h + '<br>' + btn('chart:' + sym, '📈 Open chart') + btn('an:' + sym, '🤖 Analyse it') + '<br><small>Not financial advice.</small>';
+}
+function pfScreen() {
+    var id = S.win, w = (WINS || []).filter(function (x) { return x.id === id; })[0], help = (typeof MW_HELP !== 'undefined' && MW_HELP[id]) || '';
+    if (!w) { return 'This is the Home screen. It shows the market summary, Best Picks and At a glance, gold and your top ideas.'; }
+    return '<b>' + esc(w.n) + '</b><br>' + esc(w.sub || '') + (help ? '<br><br>' + esc(help) : '');
+}
+function pfWinFind(q) {
+    var best = null, bs = 0; (WINS || []).forEach(function (w) { var name = (w.n + ' ' + w.t).toLowerCase().replace(/[^a-z0-9 ]/g, ' '), s = 0; name.split(/\s+/).forEach(function (p) { if (p.length > 2 && q.indexOf(' ' + p) >= 0) { s += p.length; } }); if (q.indexOf(w.id) >= 0 && w.id.length > 3) { s += 6; } if (s > bs) { bs = s; best = w; } });
+    return bs >= 4 ? best : null;
+}
+function pfAnswer(raw) {
+    var q = pfNorm(raw), out = { html: '', title: '' }, i;
+    if (/(^| )(explain|what is|what's|help).*(this|here) (screen|window|page)|^ (explain|help) ?$|what am i looking at/.test(q)) { out.title = 'This screen'; out.html = pfScreen(); return out; }
+    if (/what can you do|who are you|your name|what do you know|help me/.test(q)) { out.title = 'What I can do'; out.html = 'I can: <br>• explain any screen of this app ("explain this screen")<br>• open windows ("open Best Picks")<br>• explain indicators and trading words (RSI, funding rate, leverage…)<br>• give the live price, change and volume of any coin ("price of XPIN")<br>• explain gold, currencies, Fed, inflation and news effects<br>• tell you why a coin is or is not recommended<br>• guide you through install, backup, time zones and the bots.<br>I am a built-in knowledge base, not live internet search, and I cannot predict the future or promise profit.'; return out; }
+    var openWanted = /(^| )(open|go to|take me|show me|show|launch|navigate)( |$)/.test(q), wf = pfWinFind(q);
+    if (openWanted && wf) { out.title = wf.n; out.html = esc(wf.sub || '') + '<br>' + btn('win:' + wf.id, 'Open ' + wf.n + ' ›'); return out; }
+    if (/(will|going to) .*(go up|go down|rise|fall|moon|crash|pump|dump)|predict/.test(q)) { out.title = 'Predictions'; out.html = 'Nobody can know that for sure. What I can do is show what the indicators, order book, funding, news and trend say right now. Ask me "price of COIN" or use the Analyst window for a full check.'; return out; }
+    var sym = pfCoin(raw), wantsCoin = sym && (/price|chart|analy|how is|how's|about|trade|buy|sell|going|worth|long|short|^ ?[a-z0-9]{2,12} ?$/i.test(raw) || raw.trim().toUpperCase() === raw.trim());
+    var best = null, bs = 0, all = PF_APP.concat(PF_KB);
+    all.forEach(function (e, n) { var s = pfHit(e[0], q) * (n < PF_APP.length ? 1.4 : 1); if (s > bs) { bs = s; best = e; } });
+    if (wantsCoin && !(bs >= 4 && !/price|chart/.test(q))) { out.title = base(sym); out.html = pfCoinCard(sym); return out; }
+    if (best && bs >= 1) { out.title = best[1]; out.html = esc(best[2]); var wid = PF_WIN[best[1]]; if (wid) { out.html += '<br>' + btn('win:' + wid, 'Open ' + pfWinName(wid) + ' ›'); } if (/long|short|buy|sell|trade/.test(q) && !sym) { out.html += '<br><small>Not financial advice.</small>'; } return out; }
+    if (sym) { out.title = base(sym); out.html = pfCoinCard(sym); return out; }
+    if (wf) { out.title = wf.n; out.html = esc(wf.sub || '') + '<br>' + btn('win:' + wf.id, 'Open ' + wf.n + ' ›'); return out; }
+    if (/best.*(pick|trade)|which coin|what should i (buy|trade)|recommend/.test(q)) { out.title = 'Recommendations'; out.html = 'I cannot tell you what to buy, and nobody can promise profit. The strictest list in the app is <b>Best Picks</b>, and <b>At a glance</b> shows everything in one place.<br>' + btn('win:best', 'Open Best Picks') + btn('win:glance', 'Open At a glance'); return out; }
+    out.title = 'I am not sure'; out.html = 'I could not find that in my built-in knowledge. Try other words, for example a coin ("price of SOL"), an indicator ("what is MACD"), a word ("what is leverage") or a window ("open News"). For anything outside this, please use a trusted source.'; return out;
+}
+function pfAsk(txt) {
+    var inp = document.getElementById('pfq'), q = txt || (inp && inp.value.trim()); if (!q) { return; } if (inp) { inp.value = ''; }
+    PF.msgs.push({ who: 'me', html: esc(q) }); PF.msgs.push({ who: 'bot', html: '<span class="pfdots"><i></i><i></i><i></i></span>' }); pfRender(); var m = document.getElementById('pfm'), p = document.getElementById('pfp'); m.classList.add('talk'); p.classList.add('talk');
+    setTimeout(function () { var a; try { a = pfAnswer(q); } catch (e) { a = { title: 'Oops', html: 'I had a small problem answering that. Please try again.' }; } PF.msgs.pop(); PF.msgs.push({ who: 'bot', html: a.html, title: a.title }); pfRender(); m.classList.remove('talk'); p.classList.remove('talk'); }, 450);
+}
+function pfTip() {
+    var m = document.getElementById('pfm'); if (!m || PF.open || PF.st.hide || PF.st.quiet || m.classList.contains('drag')) { return; } var id = S.win || 'overview', t = PF_TIPS[id];
+    if (!t || PF.seen[id]) { return; } PF.seen[id] = 1; var b = m.querySelector('.pfbub'); b.textContent = t; m.classList.add('tip', 'wave'); setTimeout(function () { m.classList.remove('wave'); }, 950); setTimeout(function () { m.classList.remove("tip"); }, 4500);
+}
+// Windows entry to bring the helper back
+function vProf() {
+    var h = '<div class="group pad"><div style="display:flex;gap:12px;align-items:center"><div style="width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c9f3e3,#7ad7b5 70%);overflow:hidden;flex:none">' + PF_AV + '</div><div><b>Professor Mintoo</b><div class="mut" style="font-size:13px">Your built-in tutor: the app, indicators, coins, gold, currencies and trading basics.</div></div></div></div>';
+    h += '<div class="group pad"><div class="row tap" data-m11="ask"><span>💬 Ask a question</span><b>›</b></div><div class="row tap" data-m11="' + (PF.st.hide ? 'show' : 'hide') + '"><span>' + (PF.st.hide ? '👁 Show the floating helper' : '🙈 Hide the floating helper') + '</span><b>›</b></div><div class="row tap" data-m11="quiet"><span>🔕 Tips popping up</span><b>' + (PF.st.quiet ? 'OFF' : 'ON') + '</b></div></div>';
+    return h + '<div class="note">Drag the helper anywhere with your finger. Tap it to ask. I am a built-in knowledge base that works offline, not an internet search, and I never promise profit. Not financial advice.</div>';
+}
+WINS.push({ id: 'prof', ic: '🎓', c: '#34c759', n: 'Professor Mintoo (ask anything)', t: 'Professor', sub: 'Animated helper: explains the app, indicators, coins, gold and trading, answers questions' }); LIVE.prof = 0; VIEWS.prof = vProf;
+MW_HELP.prof = 'Tap the cartoon helper on any screen and type a question. It also gives short tips, can open windows for you, and shows live price, change and volume for any coin.';
+(function () { var g = MW_GROUPS[0][1]; if (g.indexOf('prof') < 0) { g.splice(Math.min(g.length, g.indexOf('overview') + 1), 0, 'prof'); } })();
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m11]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var v = el.getAttribute('data-m11');
+    if (v === 'ask') { PF.st.hide = false; pfSave(); pfBuild(); document.getElementById('pfm').style.display = ''; pfOpen(); } else if (v === 'hide') { PF.st.hide = true; pfSave(); pfBuild(); document.getElementById('pfm').style.display = 'none'; renderView(true); } else if (v === 'show') { PF.st.hide = false; pfSave(); pfBuild(); document.getElementById('pfm').style.display = ''; pfPos(); renderView(true); } else if (v === 'quiet') { PF.st.quiet = !PF.st.quiet; pfSave(); renderView(true); }
+}, true);
+function pfStart() { try { pfBuild(); } catch (e) {} } if (document.body) { setTimeout(pfStart, 1500); } else { document.addEventListener('DOMContentLoaded', function () { setTimeout(pfStart, 1500); }); }
+setInterval(function () { try { pfTip(); } catch (e) {} }, 9000);
+/* ===== v10.8 build .5: Analyst for anything (Binance, MEXC, gold, silver, oil, currencies), where-to-trade, live values, auto refresh ===== */
+var AR = { route: {}, fxh: {}, fxLatest: null, fxAt: 0, poll: 0, lastAuto: 0 };
+var AN_BAD = 'This is not a Binance or MEXC coin and it is not a currency I know. Check the spelling.';
+// ----- MEXC candle sources (used only for the Analyst) -----
+function mexcC(sym, tf, n) {
+    var b = base(sym), iv = { '15m': 'Min15', '1h': 'Min60', '4h': 'Hour4', '1d': 'Day1' }[tf], step = { '15m': 900, '1h': 3600, '4h': 14400, '1d': 86400 }[tf], now = Math.floor(Date.now() / 1000);
+    return m7get('https://contract.mexc.com/api/v1/contract/kline/' + b + '_USDT?interval=' + iv + '&start=' + (now - step * (n + 2)) + '&end=' + now).then(function (j) {
+        var d = j && j.data; if (!d || !d.time || d.time.length < 30) { throw new Error('no data'); } var out = [], i; for (i = 0; i < d.time.length; i++) { out.push({ t: d.time[i] * 1000, o: +d.open[i], h: +d.high[i], l: +d.low[i], c: +d.close[i], v: +d.vol[i], q: +(d.amount ? d.amount[i] : 0) || +d.vol[i] * +d.close[i] }); } return out;
+    });
+}
+function mexcS(sym, tf, n) {
+    var iv = { '15m': '15m', '1h': '60m', '4h': '4h', '1d': '1d' }[tf];
+    return m7get('https://api.mexc.com/api/v3/klines?symbol=' + sym + '&interval=' + iv + '&limit=' + n).then(function (a) { if (!Array.isArray(a) || a.length < 30) { throw new Error('no data'); } return cxMap(a); });
+}
+var _kl113 = m7kl;
+m7kl = function (sym, tf, n) {
+    var inAn = S.win === 'analyst' && S.an && S.an.sym && anBodySym(S.an.sym) === sym, r = AR.route[sym];
+    if (!inAn) { return _kl113(sym, tf, n); }
+    if (r === 'mc') { return mexcC(sym, tf, n).then(function (k) { S.an.src = 'MEXC Futures'; return k; }); }
+    if (r === 'ms') { return mexcS(sym, tf, n).then(function (k) { S.an.src = 'MEXC Spot'; return k; }); }
+    return _kl113(sym, tf, n).then(function (k) { if (!AR.route[sym]) { AR.route[sym] = S.tick[sym] ? 'f' : 's'; } return k; }, function (e) {
+        return mexcC(sym, tf, n).then(function (k) { AR.route[sym] = 'mc'; S.an.src = 'MEXC Futures'; return k; }, function () { return mexcS(sym, tf, n).then(function (k) { AR.route[sym] = 'ms'; S.an.src = 'MEXC Spot'; return k; }); }).catch(function () { throw e; });
+    });
+};
+function anBodySym(s) { return S.an && S.an.inst && S.an.inst.sym && s === S.an.sym ? S.an.inst.sym : s; }
+// ----- what did the user type? -----
+var AN_FIAT = {}; try { RT_C.forEach(function (c) { AN_FIAT[c[2].toUpperCase()] = c[0]; }); } catch (e) {}
+['USD', 'EUR', 'GBP', 'AUD', 'NZD', 'CAD', 'CHF', 'JPY', 'CNY', 'TRY', 'RUB', 'BRL', 'MXN', 'ZAR', 'SEK', 'NOK', 'DKK', 'PLN', 'HKD', 'SGD', 'XAU', 'XAG', 'AED', 'SAR', 'PKR', 'INR', 'KWD', 'QAR', 'OMR', 'BHD', 'EGP', 'NGN', 'IDR', 'THB', 'KRW', 'MYR', 'BDT', 'LKR', 'NPR', 'AFN'].forEach(function (c) { if (!AN_FIAT[c]) { AN_FIAT[c] = c; } });
+var AN_NAMES = { EURO: 'EUR', POUND: 'GBP', STERLING: 'GBP', BRITAIN: 'GBP', UK: 'GBP', ENGLAND: 'GBP', DOLLAR: 'USD', USA: 'USD', AMERICA: 'USD', YEN: 'JPY', YUAN: 'CNY', RUPEE: 'PKR', DIRHAM: 'AED', UAE: 'AED', DUBAI: 'AED', RIYAL: 'SAR', SAUDI: 'SAR', FRANC: 'CHF', LIRA: 'TRY', TURKEY: 'TRY', RUBLE: 'RUB' };
+var AN_PROXY = { EURUSD: 'EURUSDT', GBPUSD: 'GBPUSDT', AUDUSD: 'AUDUSDT' };
+function anFiatCode(w) {
+    w = String(w || '').toUpperCase(); if (AN_FIAT[w] && w.length === 3) { return w; } if (AN_NAMES[w]) { return AN_NAMES[w]; }
+    var hit = null; try { RT_C.forEach(function (c) { if (!hit && c[0].toUpperCase().replace(/[^A-Z]/g, '') === w) { hit = c[2].toUpperCase(); } }); } catch (e) {} return hit;
+}
+function anInst(sym) {
+    var body = String(sym).replace(/USDT$/, ''), oil, i;
+    if (S.tick[sym]) { return { kind: 'cx', sym: sym, label: base(sym) === 'XAU' ? 'Gold (XAU/USD)' : base(sym) === 'XAG' ? 'Silver (XAG/USD)' : base(sym) }; }
+    if (/^(OIL|CRUDE|CRUDEOIL|WTI|BRENT|USOIL|UKOIL|WTIOIL|BRENTOIL|PETROL|NATGAS)$/.test(body)) { oil = Object.keys(S.tick).filter(function (k) { return /^(CL|BZ|WTI|BRENT|USOIL|UKOIL|OIL|NATGAS)USDT$/.test(k); })[0]; if (oil) { return { kind: 'cx', sym: oil, label: 'Oil (' + base(oil) + ')' }; } return { kind: 'oil', sym: sym, label: 'Crude oil' }; }
+    if (AN_PROXY[body]) { return { kind: 'cx', sym: AN_PROXY[body], label: body.slice(0, 3) + '/' + body.slice(3) + ' (Binance Spot ' + body.slice(0, 3) + '/USDT as a proxy)', proxy: 1 }; }
+    var a = null, b = null; if (body.length === 6 && anFiatCode(body.slice(0, 3)) && anFiatCode(body.slice(3))) { a = body.slice(0, 3); b = body.slice(3); }
+    else if (anFiatCode(body) && body !== 'BTC' && body !== 'ETH') { var c = anFiatCode(body); if (c === 'XAU' || c === 'XAG') { a = c; b = 'USD'; } else if (c === 'USD') { return { kind: 'fxhelp', sym: sym, label: 'US dollar' }; } else { a = 'USD'; b = c; } }
+    if (a && b && a !== b) { return { kind: 'fx', sym: sym, a: a, b: b, label: a + '/' + b }; }
+    return { kind: 'cx', sym: sym, label: body };
+}
+// ----- where can it be traded? -----
+var AN_EXNESS = { XAU: 1, XAG: 1, BTC: 1, ETH: 1, LTC: 1, XRP: 1, BCH: 1, OIL: 1, USOIL: 1, UKOIL: 1 };
+function anWhere(inst) {
+    var A = S.an, key = inst.sym, tok = ++AR.poll; A.where = { sym: key, rows: [], busy: true };
+    var bd = base(inst.sym), rows = [];
+    function done() { if (S.an.where && S.an.where.sym === key) { S.an.where.rows = rows; S.an.where.busy = false; } }
+    if (inst.kind === 'fx' || inst.kind === 'oil' || inst.kind === 'fxhelp') {
+        var ex = inst.kind === 'oil' || (inst.a && inst.b && (inst.b !== 'PKR' || true));
+        rows.push({ n: 'Exness', ok: true, note: inst.kind === 'oil' ? 'USOIL / UKOIL (CFD)' : (inst.a === 'XAU' || inst.a === 'XAG' ? inst.a + 'USD' : inst.a + inst.b + ' (forex CFD, confirm in your Exness app)') });
+        rows.push({ n: 'Binance / MEXC', ok: false, note: 'no candles for this one' }); done(); return Promise.resolve();
+    }
+    rows.push({ n: 'Binance Futures', ok: !!S.tick[inst.sym], note: S.tick[inst.sym] ? 'USDT perpetual' : 'not listed' });
+    var base1 = bd, ps = [
+        m7get('https://api.binance.com/api/v3/ticker/price?symbol=' + inst.sym).then(function (j) { return j && j.price ? 1 : 0; }).catch(function () { return 0; }),
+        m7get('https://contract.mexc.com/api/v1/contract/ticker?symbol=' + base1 + '_USDT').then(function (j) { return j && j.success && j.data && (j.data.lastPrice || (j.data[0] && j.data[0].lastPrice)) ? 1 : 0; }).catch(function () { return 0; }),
+        m7get('https://api.mexc.com/api/v3/ticker/price?symbol=' + inst.sym).then(function (j) { return j && j.price ? 1 : 0; }).catch(function () { return 0; })];
+    return Promise.all(ps).then(function (r) {
+        rows.push({ n: 'Binance Spot', ok: !!r[0], note: r[0] ? 'buy and hold, no leverage' : 'not listed' }); rows.push({ n: 'MEXC Futures', ok: !!r[1], note: r[1] ? 'perpetual' : 'not listed' }); rows.push({ n: 'MEXC Spot', ok: !!r[2], note: r[2] ? 'spot' : 'not listed' });
+        rows.push({ n: 'Exness', ok: !!AN_EXNESS[bd], note: AN_EXNESS[bd] ? 'CFD, confirm in your Exness app' : 'normally not offered' }); done();
+    });
+}
+function anWhereHTML() {
+    var W = S.an.where; if (!W || !W.rows.length) { return W && W.busy ? '<div class="note" style="margin:6px 0 0">Checking where it can be traded…</div>' : ''; }
+    return '<div style="margin-top:8px;font-size:12.5px;line-height:1.7"><b>📍 Where to trade it</b><br>' + W.rows.map(function (r) { return '<span style="white-space:nowrap;margin-right:10px">' + (r.ok ? '✅' : '▫️') + ' <b>' + esc(r.n) + '</b> <span class="mut">' + esc(r.note) + '</span></span>'; }).join(' ') + '</div>';
+}
+// ----- live value of the analysed instrument -----
+function anLiveVal() {
+    var A = S.an, r = A.res || A.keep; if (!r) { return null; } var sym = r.sym; if (r.kind === 'fxd') { return { p: r.price, chg: r.ch1d, lbl: 'vs yesterday', fx: true }; }
+    if (S.tick[sym]) { var c = chgOf(sym); return { p: S.tick[sym].p, chg: c.v, lbl: c.kind === 'today' ? 'since ' + anchorLbl() : '24h' }; }
+    if (A.live && A.live.sym === sym && Date.now() - A.live.at < 30000) { return { p: A.live.p, chg: A.live.chg, lbl: '24h' }; } return null;
+}
+function anPoll() {
+    var A = S.an, r = A.res || A.keep; if (S.win !== 'analyst' || !r || r.kind === 'fxd' || r.kind === 'info' || S.tick[r.sym]) { return; } var sym = r.sym, rt = AR.route[sym], u, f;
+    if (rt === 'mc') { u = 'https://contract.mexc.com/api/v1/contract/ticker?symbol=' + base(sym) + '_USDT'; f = function (j) { var d = j && j.data; d = d && d.length ? d[0] : d; return d ? { p: +d.lastPrice, chg: +d.riseFallRate * 100 } : null; }; }
+    else if (rt === 'ms') { u = 'https://api.mexc.com/api/v3/ticker/24hr?symbol=' + sym; f = function (j) { return j && +j.lastPrice ? { p: +j.lastPrice, chg: +j.openPrice ? (+j.lastPrice / +j.openPrice - 1) * 100 : 0 } : null; }; }
+    else { u = 'https://api.binance.com/api/v3/ticker/24hr?symbol=' + sym; f = function (j) { return j && +j.lastPrice ? { p: +j.lastPrice, chg: +j.priceChangePercent } : null; }; }
+    m7get(u).then(function (j) { var x = f(j); if (x && x.p) { A.live = { sym: sym, p: x.p, chg: x.chg, at: Date.now() }; } }).catch(function () {});
+}
+function anPxFmt(p, r) { return r && r.kind === 'fxd' ? anFxF(p) : fmtP(p, r.sym); }
+function anFxF(p) { return p >= 100 ? p.toFixed(3) : p >= 1 ? p.toFixed(4) : p.toFixed(6); }
+function anLive() {
+    if (S.win !== 'analyst' || !S.an) { return; } var A = S.an, r = A.res || A.keep; if (!r || r.kind === 'info') { return; } var v = document.getElementById('view'); if (!v) { return; }
+    var lv0 = anLiveVal(); if (!lv0) { return; }
+    var top = v.querySelector('.ph'), card = top && top.closest ? top.closest('.group') : null;
+    if (card && !card.getAttribute('data-anl') && r.kind !== 'fxd') { card.setAttribute('data-anl', '1'); var ps = fmtP(r.price, r.sym); Array.prototype.forEach.call(card.querySelectorAll('div'), function (el) { if (el.children.length === 0 && el.textContent.trim() === ps) { el.setAttribute('data-anpx', '1'); } }); }
+    var pe = v.querySelector('[data-anpx]'); if (pe) { var t = anPxFmt(lv0.p, r); if (pe.textContent !== t) { pe.textContent = t; } }
+    var box = document.getElementById('anlive');
+    if (!box) { var first = Array.prototype.filter.call(v.querySelectorAll('.sh'), function (e) { return /check on|Plans for|If you still want|Daily view/i.test(e.textContent); })[0] || (v.querySelector('.m7why')); if (!first) { return; } box = document.createElement('div'); box.id = 'anlive'; box.className = 'group pad'; first.parentNode.insertBefore(box, first); }
+    var d = r.price ? (lv0.p - r.price) / r.price * 100 : 0, at = A.at || r.at || Date.now(), ago = Math.round((Date.now() - at) / 1000), nxt = Math.max(0, 60 - Math.round((Date.now() - (AR.lastAuto || at)) / 1000));
+    box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span><b>' + (lv0.fx ? '🟡 Daily rate' : '🔴 Live now') + '</b> <b>' + anPxFmt(lv0.p, r) + '</b> <span class="badge ' + (lv0.chg >= 0 ? 'long' : 'short') + '">' + pct(lv0.chg) + '</span> <span class="mut" style="font-size:11.5px">' + esc(lv0.lbl || '') + '</span></span><span class="pfbtn" style="background:#0a84ff;color:#fff;border-radius:14px;padding:6px 12px;font-size:12.5px;cursor:pointer;white-space:nowrap" data-m12="anrefresh">🔄 Refresh</span></div>' +
+        '<div class="note" style="margin:6px 0 0">Levels were calculated ' + (ago < 90 ? ago + ' s' : Math.round(ago / 60) + ' min') + ' ago at ' + anPxFmt(r.price, r) + (lv0.fx ? '.' : '; the price is now ' + (d >= 0 ? '+' : '') + d.toFixed(2) + '% from that.') + (Math.abs(d) > 1.5 ? ' <b>It has moved a lot, so the levels are being recalculated.</b>' : '') + ' ' + (A.busy ? '<b>Updating…</b>' : 'Auto-refresh in about ' + nxt + ' s.') + (A.rfFail && Date.now() - A.rfFail < 60000 ? ' <span class="dn">(last refresh failed, showing the previous result)</span>' : '') + '</div>' + anWhereHTML();
+}
+setInterval(function () { try { anLive(); } catch (e) {} }, 1500);
+setInterval(function () { try { anPoll(); } catch (e) {} }, 4000);
+// ----- daily currency engine -----
+function anDay(d) { var x = new Date(Date.now() - d * 86400000); return x.getUTCFullYear() + '-' + ('0' + (x.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + x.getUTCDate()).slice(-2); }
+function anFxGet(date) {
+    if (AR.fxh[date]) { return Promise.resolve(AR.fxh[date]); }
+    var urls = ['https://' + date + '.currency-api.pages.dev/v1/currencies/usd.json', 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@' + date + '/v1/currencies/usd.json'];
+    return rtGet(urls).then(function (j) { if (j && j.usd) { AR.fxh[date] = j.usd; } return AR.fxh[date] || null; }).catch(function () { return null; });
+}
+function anFxRate(m, a, b) { var x = a === 'USD' ? 1 : m[a.toLowerCase()], y = b === 'USD' ? 1 : m[b.toLowerCase()]; return x && y ? y / x : null; }
+function anFxRun(inst, A) {
+    return rtGet(RT_URLS).then(function (j) { return j.usd; }).catch(function () { return S.rt && S.rt.data; }).then(function (latest) {
+        if (!latest) { throw new Error('rates unavailable'); } var days = [], i; for (i = 55; i >= 1; i--) { days.push(anDay(i)); }
+        var out = [], idx = 0; function worker() { if (idx >= days.length) { return Promise.resolve(); } var d = days[idx++]; return anFxGet(d).then(function () { return worker(); }); } var ws = [worker(), worker(), worker(), worker(), worker(), worker(), worker(), worker()];
+        return Promise.all(ws).then(function () {
+            var vals = []; days.forEach(function (d) { var m = AR.fxh[d]; if (m) { var r = anFxRate(m, inst.a, inst.b); if (r) { vals.push(r); } } }); var now = anFxRate(latest, inst.a, inst.b); if (now) { vals.push(now); }
+            if (vals.length < 30 || !now) { throw new Error('history unavailable'); }
+            var k = vals.map(function (c, n) { var o = n ? vals[n - 1] : c; return { t: Date.now() - (vals.length - n) * 86400000, o: o, h: Math.max(o, c), l: Math.min(o, c), c: c, v: 1, q: 1 }; }), sc = m7tfScore(k), n = vals.length - 1;
+            var ov = sc.sc, side = ov >= 1 ? 'LONG' : ov <= -1 ? 'SHORT' : 'WAIT', sig = sc.atr * 1.0, edge = side === 'WAIT' ? 0 : Math.min(0.08, 0.03 * Math.abs(ov));
+            var plan = { name: 'Whole day (daily data only)', sig: sig, a: { tp: 0.5 * sig, sl: sig, ch: m7chance(0.5 * sig, sig, edge) }, b: { tp: 0.8 * sig, sl: 0.8 * sig, ch: m7chance(0.8 * sig, 0.8 * sig, edge) } };
+            A.res = { kind: 'fxd', sym: inst.sym, inst: inst, label: inst.label, price: now, series: vals, sc: sc, ov: ov, side: side, plans: [plan], ch1d: (now / vals[n - 1] - 1) * 100, ch7: (now / vals[Math.max(0, n - 7)] - 1) * 100, ch30: (now / vals[Math.max(0, n - 30)] - 1) * 100, hi30: Math.max.apply(null, vals.slice(-30)), lo30: Math.min.apply(null, vals.slice(-30)), at: nowMs() };
+        });
+    });
+}
+function anFxCard(r) {
+    var sd = r.side === 'WAIT' ? 'LONG' : r.side, a = r.inst.a, b = r.inst.b, sideT = r.side === 'LONG' ? 'BUY ' + a : r.side === 'SHORT' ? 'SELL ' + a : 'WAIT', ent = r.price, p = r.plans[0], h = '';
+    h += '<div class="group pad"><div class="ph"><div class="who"><div><b>' + esc(a) + '/' + esc(b) + '</b><small>' + esc(r.label) + ' · daily data</small></div></div><div class="side"><span class="badge ' + (r.side === 'LONG' ? 'long' : r.side === 'SHORT' ? 'short' : 'wait') + '">' + sideT + '</span><div style="font-weight:800;margin-top:3px" data-anpx="1">' + anFxF(r.price) + '</div></div></div>';
+    h += '<div class="lv"><div><span>YESTERDAY</span><b class="' + (r.ch1d >= 0 ? 'up' : 'dn') + '">' + pct(r.ch1d) + '</b></div><div><span>7 DAYS</span><b class="' + (r.ch7 >= 0 ? 'up' : 'dn') + '">' + pct(r.ch7) + '</b></div><div><span>30 DAYS</span><b class="' + (r.ch30 >= 0 ? 'up' : 'dn') + '">' + pct(r.ch30) + '</b></div></div>';
+    h += '<div class="note" style="margin:8px 0 0">Daily trend ' + (r.sc.sc > 0.5 ? 'up' : r.sc.sc < -0.5 ? 'down' : 'sideways') + ' · RSI ' + r.sc.rsi.toFixed(0) + ' · 30-day range ' + anFxF(r.lo30) + ' to ' + anFxF(r.hi30) + '</div></div>';
+    var why = [];
+    if (r.side === 'WAIT') { why.push('The daily trend is not clear enough, so the bot says wait.'); } else { why.push('The daily chart points ' + (r.side === 'LONG' ? 'up' : 'down') + ': ' + (r.side === 'LONG' ? a + ' is expected to get stronger against ' + b : a + ' is expected to get weaker against ' + b) + '.'); }
+    why.push('For this currency the free source gives one rate per day, so there is no hour-by-hour timing. Use it for the day\'s direction and use your broker (for example Exness) for live prices.');
+    if (r.inst.b === 'PKR' || r.inst.a === 'PKR') { why.push('Pakistani rupee moves slowly and bank or open-market rates differ from this interbank figure. See Windows > Rates for the local view.'); }
+    h += '<div class="m7why"><b>Why?</b><br>' + why.map(function (x) { return '• ' + esc(x); }).join('<br>') + '</div>';
+    h += sh(r.side === 'WAIT' ? 'If you still want to trade (' + sd + ' for practice)' : 'Daily view: plans for ' + sideT);
+    function row(lbl, o) { var tpP = o.tp / ent * 100, slP = o.sl / ent * 100; return '<div class="blk"><div class="t"><span>' + lbl + '</span><span class="badge ' + (o.ch >= 0.62 ? 'long' : 'wait') + '">' + Math.round(o.ch * 100) + '% reaches target first</span></div>' + lv(sd, ent, o.sl, o.tp, r.sym) + plBox(sd, ent, o.sl, o.tp, r.sym) + '<div class="foot">Target about ' + tpP.toFixed(3) + '% away, stop about ' + slP.toFixed(3) + '% away.</div></div>'; }
+    h += '<div class="group pad"><div class="sh" style="margin:0 0 6px">' + esc(p.name) + '</div>' + row('Safer: smaller target, wider stop', p.a) + row('Balanced', p.b) + '</div>';
+    return h + '<div class="note">Data: free daily exchange rates (they update once a day). Currency moves are small, so profit needs leverage that also multiplies losses. Not financial advice.</div>';
+}
+// ----- main entry: everything the Analyst receives goes through here -----
+var _an113 = m7analyse;
+m7analyse = function (sym) {
+    var A = S.an, inst = anInst(sym); A.inst = inst; A.where = null; A.sym = sym;
+    if (inst.kind === 'oil' || inst.kind === 'fxhelp') {
+        A.res = { kind: 'info', sym: sym, label: inst.label }; A.busy = false; A.err = ''; A.at = Date.now(); anWhere(inst).then(function () { if (S.win === 'analyst') { renderView(true); } }); if (S.win === 'analyst') { renderView(true); } return Promise.resolve();
+    }
+    if (inst.kind === 'fx') {
+        A.busy = true; A.err = ''; if (!A.qm) { A.res = null; } if (S.win === 'analyst') { renderView(true); }
+        return anFxRun(inst, A).catch(function (e) { A.err = 'Could not load daily rates for ' + inst.label + ' (' + e.message + '). Check your connection and try again.'; }).then(function () { A.busy = false; A.at = Date.now(); anWhere(inst).then(function () { if (S.win === 'analyst') { renderView(true); } }); if (S.win === 'analyst') { renderView(true); } });
+    }
+    var real = inst.sym; A.sym = sym; A.inst = inst; var p = _an113(real === sym ? sym : real);
+    A.sym = sym; return p.then(function (x) {
+        A.at = Date.now(); AR.lastAuto = Date.now(); if (A.res) { A.res.kind = 'cx'; A.res.label = inst.label; var lv0 = null; try { lv0 = anLiveVal(); } catch (e) {} if (!S.tick[real] && A.live && A.live.sym === real) { A.res.price = A.live.p; } }
+        else if (A.err) { A.err = 'I could not find "' + base(sym) + '" on Binance (Futures or Spot) or MEXC. Check the spelling. For a currency type for example USD/PKR or EUR/USD; for gold XAU, silver XAG, oil OIL.'; }
+        if (!A.where || A.where.sym !== real) { anWhere(inst).then(function () { if (S.win === 'analyst') { renderView(true); } }); }
+        return x;
+    });
+};
+// ----- auto refresh and manual refresh -----
+function anRefresh(manual) {
+    var A = S.an; if (!A || !A.res || A.busy || A.res.kind === 'info') { return Promise.resolve(); } if (S.win !== 'analyst') { return Promise.resolve(); }
+    A.keep = A.res; A.qm = true; var keepRes = A.res; AR.lastAuto = Date.now();
+    return m7analyse(A.sym).catch(function () {}).then(function () { A.qm = false; if (!A.res || A.err) { A.res = keepRes; A.err = ''; A.rfFail = Date.now(); } A.keep = null; A.busy = false; renderView(true); });
+}
+setInterval(function () { try { var a = document.activeElement, A = S.an; if (S.win === 'analyst' && A && A.res && !A.busy && !(a && a.getAttribute && a.getAttribute('data-m7in')) && Date.now() - (AR.lastAuto || A.at || 0) >= 60000 && (A.res.kind !== 'fxd' || Date.now() - (A.at || 0) >= 300000)) { anRefresh(false); } } catch (e) {} }, 5000);
+document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-m12]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); if (el.getAttribute('data-m12') === 'anrefresh') { var b = document.getElementById('anlive'); if (b) { b.style.opacity = '.6'; } anRefresh(true); } }, true);
+var _rv113 = renderView; renderView = function () { if (S.an && S.an.qm && S.win === 'analyst') { return; } var r = _rv113.apply(this, arguments); try { anLive(); } catch (e) {} return r; };
+// ----- analyst screen -----
+function anIntro(h2) {
+    h2 = h2.replace('placeholder="Type any coin, e.g. XPIN, BTC, XAU"', 'placeholder="Coin, gold, silver, oil, currency or country"');
+    if (h2.indexOf('anq:USD/PKR') < 0) { h2 = h2.replace('<span data-m7="anq:DOGE">DOGE</span>', '<span data-m7="anq:DOGE">DOGE</span><span data-m7="anq:USD/PKR">USD/PKR</span><span data-m7="anq:EUR/USD">EUR/USD</span><span data-m7="anq:OIL">OIL</span><span data-m7="anq:India">India</span>'); }
+    return h2.replace('Ask the bot about any Binance Futures coin, gold (XAU) or silver (XAG).', 'Ask the bot about any coin on Binance (Futures or Spot) or MEXC, gold, silver, oil, or the currency of any country. It tells you where it can be traded and keeps refreshing by itself.');
+}
+var _vAn113 = vAnalyst;
+vAnalyst = function () {
+    var A = S.an, r = A.res;
+    if (r && (r.kind === 'fxd' || r.kind === 'info') && !A.busy) {
+        A.res = null; var h = anIntro(_vAn113()); A.res = r; h = h.replace(/<div class="group pad mut">Type[^<]*<\/div>/, '');
+        if (r.kind === 'fxd') { return h + anFxCard(r); }
+        return h + '<div class="group pad"><b>' + esc(r.label) + '</b><div class="note" style="margin:6px 0">' + (S.an.inst && S.an.inst.kind === 'fxhelp' ? 'Please type a pair or a country: for example USD/PKR, EUR/USD, GBP/USD, Pakistan, India, Japan.' : 'Oil is not listed on Binance or MEXC, so there are no candles for the bot to read here. Exness offers it as USOIL and UKOIL. The current oil price and fuel prices are in Windows > Rates.') + '</div><span class="pfbtn" style="background:#0a84ff;color:#fff;border-radius:14px;padding:6px 12px;cursor:pointer" data-act="win:rates">Open Rates ›</span>' + anWhereHTML() + '</div>';
+    }
+    var h2 = _vAn113();
+    h2 = anIntro(h2); var sl = { 'Spot': 'Binance Spot', 'MEXC Futures': 'MEXC Futures', 'MEXC Spot': 'MEXC Spot' }[A.src]; if (sl && A.res) { h2 = h2.replace('USDT Perpetual', sl); }
+    return h2;
+};
+VIEWS.analyst = vAnalyst;
+MW_HELP.analyst = 'Type any coin (Binance Futures, Binance Spot or MEXC), gold XAU, silver XAG, OIL, a currency pair like USD/PKR or EUR/USD, or a country name like Pakistan. The bot shows where it can be traded, reads real candles, and refreshes the values, levels and profit boxes about every minute (or tap Refresh). Currencies use free daily rates, so they give a daily view only.';
+/* ===== v10.8 build .5: Profile & shortcuts (blinking avatar on Home) + Professor knows exchange profile sections ===== */
+S.me = { pg: 0, edit: false };
+var ME_DEF = ['best', 'glance', 'scanner', 'plan', 'analyst', 'bot', 'market', 'movers', 'news', 'rates', 'wallet', 'terminal', 'copy', 'rbot', 'timez', 'alerts', 'account', 'plans', 'health', 'perms', 'help', 'lab', 'mexc', 'psx'];
+function meSc() { try { var a = JSON.parse(localStorage.getItem('mintoosuite_short') || 'null'); if (Array.isArray(a) && a.length) { return a.filter(function (id) { return (WINS || []).some(function (w) { return w.id === id; }); }); } } catch (e) {} return ME_DEF.filter(function (id) { return (WINS || []).some(function (w) { return w.id === id; }); }); }
+function meSaveSc(a) { try { localStorage.setItem('mintoosuite_short', JSON.stringify(a)); } catch (e) {} }
+function meWin(id) { return (WINS || []).filter(function (w) { return w.id === id; })[0]; }
+function meName() { var a = null; try { a = auAcct(); } catch (e) {} return a && a.name ? a.name : 'Trader'; }
+function meEmail() { var a = null; try { a = auAcct(); } catch (e) {} return a && a.email ? a.email : ''; }
+function meAvatar(sz, cls) { return '<div class="meav ' + (cls || '') + '" style="width:' + sz + 'px;height:' + sz + 'px">' + PF_AV + '</div>'; }
+function meCSS() {
+    if (document.getElementById('mecss')) { return; } if (!document.getElementById('pfcss')) { try { pfCSS(); } catch (e) {} }
+    var st = document.createElement('style'); st.id = 'mecss';
+    st.textContent = '.meav{border-radius:50%;background:radial-gradient(circle at 35% 30%,#c9f3e3,#7ad7b5 70%);overflow:hidden;flex:none;box-shadow:0 4px 12px rgba(0,0,0,.22),inset 0 0 0 3px #fff;animation:pfbob 3.2s ease-in-out infinite}.meav svg{width:100%;height:100%;display:block}.meav.wave{animation:pfwave .9s ease}' +
+        '.mehome{display:flex;align-items:center;gap:12px;margin:0 0 12px;cursor:pointer}.mehome b{font-size:16px}.mehome small{display:block;color:var(--mut,#777);font-size:12.5px}.mehome .go{margin-left:auto;font-size:20px;color:var(--mut,#999)}' +
+        '.mehd{display:flex;align-items:center;gap:14px;padding:6px 0 10px}.mehd h2{margin:0;font-size:20px}.mehd .em{color:var(--mut,#777);font-size:13px;word-break:break-all}.mech{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.mech span{font-size:11.5px;padding:3px 9px;border-radius:10px;background:var(--fill,#f0f0f3)}.mech span.ok{background:#e4f7ea;color:#1d8a3b}' +
+        '.mecar{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:2px 0 6px;scrollbar-width:none}.mecar::-webkit-scrollbar{display:none}.mecar>div{scroll-snap-align:start;flex:0 0 78%;background:var(--card,#fff);border-radius:16px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.08)}.mecar.pg>div{flex:0 0 100%}' +
+        '.mecar .k{color:var(--mut,#777);font-size:12.5px}.mecar .v{font-weight:700;font-size:15px;margin-top:4px}.medots{display:flex;gap:6px;justify-content:center;margin:2px 0 6px}.medots i{width:6px;height:6px;border-radius:3px;background:#c7c7cc}.medots i.on{width:16px;background:#0a84ff}' +
+        '.mesc{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 4px}.mesc .t{text-align:center;cursor:pointer;font-size:11.5px;line-height:1.25}.mesc .t .ic{width:46px;height:46px;border-radius:14px;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:22px}.mesc .t.off{opacity:.35}' +
+        '.meprog{height:8px;border-radius:4px;background:var(--fill,#e5e5ea);overflow:hidden;margin-top:6px}.meprog i{display:block;height:100%;background:#34c759}.merow{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-top:1px solid var(--line,#eee);cursor:pointer;font-size:14px}.merow:first-child{border-top:0}.merow small{color:var(--mut,#777)}';
+    document.head.appendChild(st);
+}
+function meCards() {
+    var c = [], nb = 0, nr = 0; try { nb = bpList('fh').length + bpList('day').length; } catch (e) {} nr = (S.risers || []).filter(function (r) { return !r.vetoed; }).length;
+    c.push('<div data-m13="go:best"><div class="k">⭐ Best Picks</div><div class="v">' + (nb ? nb + ' strong setup' + (nb > 1 ? 's' : '') + ' ready' : 'None right now: wait') + '</div><div class="k" style="margin-top:6px">Strictest list. Suggestion only.</div></div>');
+    c.push('<div data-m13="go:scanner"><div class="k">🚀 Top risers</div><div class="v">' + nr + ' coin' + (nr === 1 ? '' : 's') + ' climbing now</div><div class="k" style="margin-top:6px">Rising fast: check if stretched first.</div></div>');
+    var b = S.bot || {}, cl = b.closed || [];
+    c.push('<div data-m13="go:bot"><div class="k">🤖 Paper bot</div><div class="v">' + (b.on ? 'Running' : 'Stopped') + ' · ' + ((b.open || []).length) + ' open</div><div class="k" style="margin-top:6px">' + cl.length + ' closed trades. Judge after 50.</div></div>');
+    c.push('<div data-m13="go:glance"><div class="k">🗂 At a glance</div><div class="v">Every recommendation</div><div class="k" style="margin-top:6px">Timing and profit on $50/$100/$200.</div></div>');
+    return '<div class="mecar" id="mecar0">' + c.join('') + '</div>';
+}
+function meShortcuts() {
+    var all = meSc(), pages = [], i; for (i = 0; i < all.length; i += 8) { pages.push(all.slice(i, i + 8)); }
+    var titles = ['Shortcuts', 'More tools', 'Account and help']; if (!pages.length) { return '<div class="mut">No shortcuts selected. Tap Edit.</div>'; }
+    var h = '<div class="mecar pg" id="mecar1">' + pages.map(function (pg, n) { return '<div><div class="k" style="margin-bottom:10px;font-weight:600">' + (titles[n] || 'More') + '</div><div class="mesc">' + pg.map(function (id) { var w = meWin(id); return '<div class="t" data-m13="go:' + id + '"><div class="ic" style="background:' + (w.c || '#0a84ff') + '22">' + w.ic + '</div>' + esc((w.t || w.n).replace(/ \(.*$/, '')) + '</div>'; }).join('') + '</div></div>'; }).join('') + '</div>';
+    return h + '<div class="medots" id="medots1">' + pages.map(function (p, n) { return '<i class="' + (n === 0 ? 'on' : '') + '"></i>'; }).join('') + '</div>';
+}
+function meEdit() {
+    var sel = meSc(), h = '<div class="note" style="margin:0 0 8px">Tap windows to add or remove them from your shortcuts. Eight fit on each swipeable page.</div><div class="mesc">';
+    h += (WINS || []).filter(function (w) { return w.id !== 'tdet' && w.id !== 'me'; }).map(function (w) { var on = sel.indexOf(w.id) >= 0; return '<div class="t ' + (on ? '' : 'off') + '" data-m13="tog:' + w.id + '"><div class="ic" style="background:' + (w.c || '#0a84ff') + '22">' + w.ic + (on ? '' : '') + '</div>' + (on ? '✅ ' : '') + esc((w.t || w.n).replace(/ \(.*$/, '')) + '</div>'; }).join('');
+    return h + '</div><div style="margin-top:12px"><span class="pfbtn" style="background:#0a84ff;color:#fff;border-radius:14px;padding:8px 16px;cursor:pointer;display:inline-block" data-m13="done">Done</span> <span class="pfbtn" style="border-radius:14px;padding:8px 16px;cursor:pointer;display:inline-block;background:var(--fill,#eee)" data-m13="reset">Reset</span></div>';
+}
+function vMe() {
+    meCSS(); var b = S.bot || {}, cl = b.closed || [], wins = cl.filter(function (x) { return (x.pnl != null ? x.pnl : x.usd) > 0; }).length, bal = b.bal || 0, st = b.start || 1000, ch = st ? (bal / st - 1) * 100 : 0, em = meEmail(), signed = !!em;
+    var h = '<div class="group pad"><div class="mehd" data-m13="wave">' + meAvatar(78, '') + '<div style="min-width:0"><h2>' + esc(meName()) + '</h2>' + (em ? '<div class="em">' + esc(em) + '</div>' : '<div class="em">Not signed in on this phone</div>') + '<div class="mech"><span class="' + (signed ? 'ok' : '') + '">' + (signed ? '✔ Signed in' : 'Guest') + '</span><span>Plan: Free</span><span>' + (S.rbot && S.rbot.on ? 'Real bot ON' : 'Paper trader') + '</span></div></div><span class="mut" style="margin-left:auto;font-size:22px" data-m13="go:account">⚙️</span></div></div>';
+    h += '<div class="group pad" data-m13="ask" style="display:flex;align-items:center;gap:12px;cursor:pointer">' + meAvatar(42, '') + '<div><b>Professor Mintoo</b><div class="mut" style="font-size:12.5px">Ask about the app, coins, indicators or trading</div></div><span class="pfbtn" style="margin-left:auto;background:#0a84ff;color:#fff;border-radius:14px;padding:6px 14px;cursor:pointer">Ask</span></div>';
+    h += sh('For you') + meCards();
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><b style="font-size:15px">' + (S.me.edit ? 'Edit shortcuts' : 'Shortcuts') + '</b>' + (S.me.edit ? '' : '<span class="mut" style="font-size:13px;cursor:pointer" data-m13="edit">✏️ Edit</span>') + '</div><div class="group pad" style="margin-top:6px">' + (S.me.edit ? meEdit() : meShortcuts()) + '</div>';
+    h += sh('My paper account') + '<div class="group pad"><div class="row"><span>Virtual balance</span><b>$' + bal.toFixed(2) + '</b></div><div class="row"><span>Since the start ($' + st + ')</span><b class="' + (ch >= 0 ? 'up' : 'dn') + '">' + pct(ch) + '</b></div><div class="row"><span>Closed trades · win rate</span><b>' + cl.length + (cl.length ? ' · ' + Math.round(wins / cl.length * 100) + '%' : '') + '</b></div><div class="row"><span>Open trades</span><b>' + ((b.open || []).length) + '</b></div><div class="meprog" title="progress to 50 trades"><i style="width:' + Math.min(100, cl.length * 2) + '%"></i></div><div class="note" style="margin:6px 0 0">' + Math.min(50, cl.length) + ' of 50 trades needed before the result means anything. Virtual money only.</div></div>';
+    var chk = [['Signed in', signed], ['Change(%) time zone chosen (matches Binance)', S.anchor !== 'roll'], ['Paper bot has 50 closed trades', cl.length >= 50]];
+    h += sh('Setup checklist') + '<div class="group pad">' + chk.map(function (x) { return '<div class="row"><span>' + (x[1] ? '✅' : '⬜') + ' ' + esc(x[0]) + '</span><b class="mut"></b></div>'; }).join('') + (S.anchor === 'roll' ? '<div class="note" style="margin:6px 0 0"><span class="pfbtn" style="background:#0a84ff;color:#fff;border-radius:14px;padding:6px 12px;cursor:pointer" data-m13="go:timez">Choose time zone</span></div>' : '') + '</div>';
+    var th = ls('mintoosuite_theme', 'light');
+    h += sh('Settings') + '<div class="group pad"><div class="merow"><span>Theme</span><span class="m7row" style="margin:0"><span class="' + (th === 'light' ? 'on' : '') + '" data-act="theme:light">Light</span><span class="' + (th === 'dark' ? 'on' : '') + '" data-act="theme:dark">Dark</span><span class="' + (th === 'auto' ? 'on' : '') + '" data-act="theme:auto">Auto</span></span></div>' +
+        [['timez', '🕒 Time zone, clock and Change(%)'], ['alerts', '🔔 Alerts'], ['perms', '🛡 Permissions and background'], ['account', '👤 Account and sign-in'], ['plans', '⭐ Premium plans'], ['health', '🩺 Health and self-repair'], ['help', '📖 Help and contact']].map(function (x) { return '<div class="merow" data-m13="go:' + x[0] + '"><span>' + x[1] + '</span><small>›</small></div>'; }).join('') + '<div class="merow"><span>About</span><small>MintooSuite build ' + esc(typeof BUILD !== 'undefined' ? BUILD : '') + '</small></div></div>';
+    return h + '<div class="note">Everything on this page comes from your own phone and live data. Nothing here is a Binance or Bitget feature: your exchange accounts, rewards and vouchers stay in their own apps. Not financial advice.</div>';
+}
+WINS.push({ id: 'me', ic: '🧑', c: '#34c759', n: 'Profile & shortcuts', t: 'Profile', sub: 'Your avatar, shortcuts you can swipe and edit, paper account, checklist and settings' }); LIVE.me = 0; VIEWS.me = vMe;
+MW_HELP.me = 'Your home base: tap a shortcut to open that window, swipe the shortcut and "For you" cards sideways, tap Edit to choose your own shortcuts. It also shows your paper bot account, a setup checklist and the settings.';
+(function () { var g = MW_GROUPS[0][1]; if (g.indexOf('me') < 0) { g.splice(Math.min(g.length, g.indexOf('overview') + 1), 0, 'me'); } })();
+// Header: blinking avatar button (replaces the duplicate WINDOWS button; the bottom "More" tab already opens all windows)
+(function () {
+    meCSS(); var bw = document.getElementById('btnWin'); if (bw) { bw.style.display = 'none'; }
+    var bm = document.getElementById('btnMenu'); if (bm && !document.getElementById('btnMe')) {
+        var b = document.createElement('button'); b.id = 'btnMe'; b.className = 'nbtn'; b.setAttribute('data-m13', 'go:me'); b.setAttribute('aria-label', 'Profile'); b.style.cssText = 'padding:0;background:none;border-radius:50%';
+        b.innerHTML = meAvatar(40, 'hd'); bm.parentNode.insertBefore(b, bm);
+    }
+})();
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m13]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-m13'), i = a.indexOf(':'), v = i < 0 ? a : a.slice(0, i), x = i < 0 ? '' : a.slice(i + 1);
+    if (v === 'go') { if (x === 'me') { S.me.edit = false; } gotoWin(x); } else if (v === 'edit') { S.me.edit = true; renderView(true); } else if (v === 'done') { S.me.edit = false; renderView(true); } else if (v === 'reset') { try { localStorage.removeItem('mintoosuite_short'); } catch (er) {} renderView(true); }
+    else if (v === 'tog') { var sel = meSc(), k = sel.indexOf(x); if (k >= 0) { sel.splice(k, 1); } else { sel.push(x); } meSaveSc(sel); renderView(true); }
+    else if (v === 'ask') { PF.st.hide = false; pfSave(); pfBuild(); var m = document.getElementById('pfm'); if (m) { m.style.display = ''; } pfOpen(); }
+    else if (v === 'wave') { var av = el.querySelector('.meav'); if (av) { av.classList.add('wave'); setTimeout(function () { av.classList.remove('wave'); }, 950); } }
+}, true);
+document.addEventListener('scroll', function (e) { var t = e.target; if (t && t.id === 'mecar1') { var n = Math.round(t.scrollLeft / Math.max(1, t.clientWidth)), d = document.querySelectorAll('#medots1 i'); Array.prototype.forEach.call(d, function (x, k) { x.className = k === n ? 'on' : ''; }); } }, true);
+// ---- Professor knows the profile/exchange vocabulary ----
+PF_WIN['Profile and shortcuts'] = 'me';
+PF_APP.push(['profile|my profile|avatar|picture|shortcuts|shortcut|swipe', 'Profile and shortcuts', 'Tap your cartoon picture at the top right (next to MENU), or More > Profile & shortcuts. There you find: your name and sign-in, a Professor shortcut, "For you" cards, swipeable shortcut pages you can edit (tap ✏️ Edit), your paper account, a setup checklist and settings. Swipe left or right on the shortcut and "For you" cards.']);
+[
+['earn|savings|staking|stake', 'Earn / staking', 'Earn products let you lock or lend coins to receive interest or rewards. Rates are variable, locked coins may not be withdrawable early, and platform or token risk exists. This app does not run Earn: it lives in your Binance or Bitget app.'],
+['card|crypto card', 'Crypto card', 'A card that lets you spend crypto like a normal bank card (the exchange converts at payment). Availability depends on country. It is a Binance or Bitget service, not part of this app.'],
+['traders league|leaderboard|competition|tournament', 'Trading competitions', 'Exchanges run tournaments and leaderboards where traders compete on profit or volume for prizes. They can push people to over-trade, so join only if you want to, with money you can afford to lose. They are inside the exchange app.'],
+['rewards hub|vouchers|voucher|points|pts|tasks|task', 'Rewards, vouchers and tasks', 'Exchanges give vouchers (fee discounts, trading bonuses) and points for completing tasks. They are marketing rewards with conditions and expiry dates. They live in the exchange app; this app does not show them.'],
+['square|social feed|creator', 'Square / Creator', 'Square is Binance\'s social feed where users and "creators" post views and news. Treat posts as opinions: many are promotions or paid.'],
+['demo trading|demo|practice account', 'Demo trading', 'Practice with virtual money at real prices. In this app the Auto Bot is a paper (virtual) trader, and the Real bot starts on the Binance test network. Binance also has its own demo mode.'],
+['trading bots|grid bot|grid|dca bot|bot strategy|rebalancing', 'Trading bots (grid, DCA)', 'A grid bot places buy and sell orders in a price range and profits from sideways moves; a DCA bot buys in steps. They can do badly in strong trends. Your Auto Bot and Bot Pro here are paper bots, and no bot can promise profit.'],
+['learn and earn|learn & earn|academy|course', 'Learn and Earn', 'Short courses and quizzes that give small token rewards. Good for learning basics; the Professor in this app also explains terms on request.'],
+['pay|binance pay|payments', 'Pay', 'Exchange payment feature to send or receive crypto between users or pay merchants. It is an account feature of the exchange, not of this app.'],
+['options|option trading|call put', 'Options', 'Options give the right to buy (call) or sell (put) at a set price before an expiry. They are complex and can lose the whole premium quickly. Not recommended for beginners.'],
+['referral|refer|invite', 'Referral', 'Invite friends and earn a share of their fees or a bonus. Follow the exchange rules and never promise guaranteed profits to people you invite.'],
+['convert|swap|dust', 'Convert / swap', 'Convert swaps one coin for another at a quoted price without an order book, often with no trading fee but a spread. Good for small amounts.'],
+['launchpool|launchpad|hodler airdrop|new listing|listing', 'Launchpool / Launchpad / listings', 'Programs that distribute new tokens to people who stake or hold the exchange token. New listings are very volatile in the first hours; the app flags recent Binance listing news as a warning.'],
+['vip|fee tier|trading fee|fees|bnb discount', 'Fees and VIP level', 'Fees depend on your 30-day volume and BNB holding. Fees matter a lot for short trades: this app subtracts fees when it shows profit. Lower fees come from higher VIP levels or paying fees with BNB.'],
+['2fa|two factor|authenticator|anti phishing|anti-phishing|api key|api management', 'Account security', 'Turn on 2FA with an authenticator app (not SMS), set an anti-phishing code and, for API keys, disable withdrawals and restrict to your own IP. Never share an API secret or seed phrase.'],
+['sub account|sub-account|subaccount', 'Sub-accounts', 'Separate accounts under your main one, useful to keep a bot\'s money apart from your savings. They are created in the exchange website or app.'],
+['copy trading|copy trade|copytrading', 'Copy trading', 'Automatically copy the trades of a chosen trader. Past profits do not guarantee future results, and leader risk can be large. Windows > Copy trading explains the options in Binance, Bitget and XM.'],
+['verified|verification|regular user|user tier', 'Verified and Regular', '"Verified" means KYC identity checks are complete. "Regular" is the normal user tier (not VIP). These labels come from the exchange profile.']
+].forEach(function (e) { PF_KB.push(e); });
+PF_TIPS.me = 'Swipe the cards sideways. Tap ✏️ Edit to choose your own shortcuts.'; PF_TIPS.overview = 'Tap your picture at the top for your profile. Tap me for help.'; PF_APP.push(['windows button|more button|menu button|duplicate|where are all windows', 'Menu, More and your picture', 'Top right: your picture opens Profile & shortcuts, and MENU opens settings, language and about. Bottom right: More opens the full list of windows, grouped by purpose. The bottom row also has the four daily tools: Home, New Plan, Scanner and Auto Bot.']);
+/* ===== v10.8 build .6: no more flicker (DOM patching instead of rebuilding) + calmer quick buttons ===== */
+(function () {
+    if (typeof Element === 'undefined' || !Element.prototype) { return; } var desc = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+    function same(a, b) { return a.nodeType === b.nodeType && (a.nodeType !== 1 || a.nodeName === b.nodeName); }
+    function attrs(a, b) {
+        var i, n, v, keepOpen = a.nodeName === 'DETAILS';
+        for (i = a.attributes.length - 1; i >= 0; i--) { n = a.attributes[i].name; if (keepOpen && n === 'open') { continue; } if (!b.hasAttribute(n)) { a.removeAttribute(n); } }
+        for (i = 0; i < b.attributes.length; i++) { n = b.attributes[i].name; v = b.attributes[i].value; if (keepOpen && n === 'open') { continue; } if (a.getAttribute(n) !== v) { a.setAttribute(n, v); } }
+    }
+    function mf(o, n) {
+        var oc = o.childNodes, nc = n.childNodes, i, a, b;
+        for (i = 0; i < nc.length; i++) {
+            a = oc[i]; b = nc[i];
+            if (!a) { o.appendChild(b.cloneNode(true)); continue; }
+            if (!same(a, b)) { o.replaceChild(b.cloneNode(true), a); continue; }
+            if (a.nodeType !== 1) { if (a.nodeValue !== b.nodeValue) { a.nodeValue = b.nodeValue; } continue; }
+            if (a.getAttribute('data-svg')) { continue; }
+            if (a === document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(a.nodeName)) { continue; }
+            if (a.nodeName === 'CANVAS' || a.nodeName === 'IFRAME') { if (a.outerHTML !== b.outerHTML) { o.replaceChild(b.cloneNode(true), a); } continue; }
+            attrs(a, b);
+            if (a.nodeName === 'INPUT') { if (a.type === 'checkbox' || a.type === 'radio') { a.checked = b.checked; } else if (a.value !== b.getAttribute('value') && !a.__dirty) { a.value = b.getAttribute('value') || ''; } continue; }
+            if (a.nodeName === 'TEXTAREA') { continue; }
+            if (a.nodeName === 'SELECT') { mf(a, b); a.selectedIndex = b.selectedIndex; continue; }
+            mf(a, b);
+        }
+        while (oc.length > nc.length) { o.removeChild(o.lastChild); }
+    }
+    function patch(el, html) {
+        var t = document.createElement('template'); desc.set.call(t, html); mf(el, t.content);
+    }
+    function hook(el, keyFn, skipFn) {
+        if (!el || el.__mf) { return; } el.__mf = 1;
+        Object.defineProperty(el, 'innerHTML', { configurable: true, get: function () { return desc.get.call(this); }, set: function (h) {
+            var k = keyFn(), ok = false;
+            try { ok = this.__k === k && this.firstChild && !(skipFn && skipFn()); } catch (e) { ok = false; }
+            if (ok) { try { patch(this, String(h)); } catch (e) { desc.set.call(this, h); } } else { desc.set.call(this, h); }
+            this.__k = k;
+        } });
+    }
+    document.addEventListener('input', function (e) { var t = e.target; if (t && t.nodeName === 'INPUT') { t.__dirty = 1; } }, true);
+    hook(document.getElementById('view'), function () { return S.win; }, function () { return S.win === 'chart'; });
+    var tries = 0, iv = setInterval(function () { var h = document.getElementById('mwHome'); if (h) { hook(h, function () { return 'h'; }); clearInterval(iv); } else if (++tries > 40) { clearInterval(iv); } }, 500);
+    var st = document.createElement('style'); st.id = 'p9mcss';
+    st.textContent = '.mwmt .x{width:auto;height:auto;border-radius:0;background:none;color:inherit;font-size:10px;font-weight:600;cursor:inherit;opacity:.8;margin-top:2px}' +
+        '.mwq{gap:10px 8px;margin:6px 0 12px}.mwqt{border-radius:18px;padding:11px 2px 9px;font-size:11.5px;font-weight:600;letter-spacing:.1px;background:linear-gradient(165deg,var(--c1),var(--c2));box-shadow:0 6px 14px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .12s,box-shadow .12s}' +
+        '.mwqt:active{transform:scale(.95);box-shadow:0 2px 6px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.3)}' +
+        '.mwqt i{width:38px;height:38px;margin:0 auto 5px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;filter:none}.mwqt i svg{width:22px;height:22px}' +
+        '.mwmt{animation:none}.mwtm span{will-change:auto}';
+    document.head.appendChild(st);
+    // Home buttons: only what the bottom tabs do NOT already cover, grouped by the question a trader asks
+    var GRP = [['Find a trade', [['best', '#ffb300', '#c77700'], ['movers', '#ff453a', '#b3001b'], ['analyst', '#5e5ce6', '#3a2fb0'], ['glance', '#0a84ff', '#0050c8']]], ['Check before you trade', [['risk', '#ff375f', '#a3002a'], ['news', '#8e8e93', '#48484a'], ['rates', '#30b0c7', '#0b6b80'], ['alerts', '#ffd60a', '#b38a00']]]];
+    MW_Q = { map: function () {
+        return GRP.map(function (g) { return '<div class="mwql">' + g[0] + '</div>' + g[1].map(function (q) { var w = winDef(q[0]); return w ? '<div class="mwqt tap" style="--c1:' + q[1] + ';--c2:' + q[2] + '" data-act="win:' + w.id + '"><i>' + w.ic + '</i>' + esc(w.t || w.n) + '</div>' : ''; }).join(''); });
+    } };
+    var st2 = document.createElement('style'); st2.textContent = '#pfm .pfbub{pointer-events:none;max-width:170px}.mwql{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--mut,#777);letter-spacing:.4px;text-transform:uppercase;margin:4px 2px 0}.nbtn .meav.hd{box-shadow:0 0 0 2px #fff,0 2px 8px rgba(0,0,0,.25)}'; document.head.appendChild(st2);
+})();
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
