@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-20.5';
+var BUILD = '2026-10-29.5';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5486,10 +5486,10 @@ function pfWinName(id) { var w = (WINS || []).filter(function (x) { return x.id 
 var PF_TIPS = { overview: 'Tap me anytime: I can explain any screen.', scanner: 'Top risers are at the top. Tap the ☰ for a quick contents list.', plan: 'Tap a card to see its chart. I can explain the chance % if you ask.', best: 'Best Picks is often empty. That means wait, and it is normal.', bot: 'Judge the bot only after 50 closed trades.', analyst: 'Type any coin here, even a new one.', timez: 'Tap the Change(%) time zone line to match Binance.', chart: 'Tap a candle to see its details. Ask me what any indicator means.' };
 function pfCSS() {
     var st = document.createElement('style'); st.id = 'pfcss';
-    st.textContent = '#pfm{position:fixed;z-index:8500;width:64px;height:64px;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}' +
-        '#pfm .pfav{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c9f3e3,#7ad7b5 70%);box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 0 0 3px #fff;overflow:hidden;animation:pfbob 3.2s ease-in-out infinite}' +
+    st.textContent = '#pfm{position:fixed;z-index:8500;width:38px;height:38px;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}' +
+        '#pfm .pfav{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c9f3e3,#7ad7b5 70%);box-shadow:0 3px 8px rgba(0,0,0,.35),inset 0 0 0 2px #fff;overflow:hidden;animation:pfbob 3.2s ease-in-out infinite}' +
         '#pfm .pfav svg{width:100%;height:100%;display:block}#pfm.drag .pfav{animation:none;transform:scale(1.08)}#pfm.wave .pfav{animation:pfwave .9s ease}' +
-        '#pfm .pfbub{position:absolute;bottom:72px;right:0;max-width:210px;background:#fff;color:#111;font-size:12.5px;line-height:1.35;padding:8px 10px;border-radius:12px 12px 2px 12px;box-shadow:0 4px 14px rgba(0,0,0,.28);display:none}' +
+        '#pfm .pfbub{position:absolute;bottom:44px;right:0;max-width:210px;background:#fff;color:#111;font-size:12.5px;line-height:1.35;padding:8px 10px;border-radius:12px 12px 2px 12px;box-shadow:0 4px 14px rgba(0,0,0,.28);display:none}' +
         '#pfm.tip .pfbub{display:block;animation:pfpop .25s ease}#pfm .pfbadge{position:absolute;top:-2px;right:-2px;background:#ff375f;color:#fff;width:20px;height:20px;border-radius:50%;font:700 12px/20px sans-serif;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.3)}' +
         '.pf-eyes{transform-origin:50px 46px;animation:pfblink 4.5s infinite}.pf-pony{transform-origin:24px 52px;animation:pfsway 3.2s ease-in-out infinite}#pfm.talk .pf-mouth,#pfp.talk .pf-mouth{animation:pftalk .28s infinite}.pf-mouth{transform-origin:50px 66.5px}' +
         '@keyframes pfbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes pfblink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}@keyframes pfsway{0%,100%{transform:rotate(0)}50%{transform:rotate(5deg)}}' +
@@ -5505,7 +5505,7 @@ function pfCSS() {
 }
 function pfPos() {
     var m = document.getElementById('pfm'); if (!m) { return; } var W = window.innerWidth, H = window.innerHeight, x = PF.st.x, y = PF.st.y;
-    if (x == null || y == null) { x = W - 78; y = H - 160; } x = Math.max(4, Math.min(W - 68, x)); y = Math.max(60, Math.min(H - 150, y)); m.style.left = x + 'px'; m.style.top = y + 'px';
+    if (x == null || y == null) { x = W - 46; y = H - 150; } x = Math.max(4, Math.min(W - 42, x)); y = Math.max(60, Math.min(H - 150, y)); m.style.left = x + 'px'; m.style.top = y + 'px';
     var bub = m.querySelector('.pfbub'); if (bub) { if (x > W / 2) { bub.style.right = '0'; bub.style.left = 'auto'; } else { bub.style.left = '0'; bub.style.right = 'auto'; } }
 }
 function pfBuild() {
@@ -6091,6 +6091,500 @@ document.addEventListener('click', function (e) {
 // the old 'go:me' always lands on the Overview tab and the gear/duplicate rows are gone
 var _go114 = gotoWin; gotoWin = function (id, isBack) { if (id === 'me' && S.win !== 'me') { S.me.tab = 'home'; } return _go114.apply(this, arguments); };
 PF_APP.push(['where do i add my api key|api key|api secret|connect binance|connect exchange|connections|api tab', 'Connections (API keys)', 'Profile > Connections is the one place for your Binance Futures key and secret. Save, then tap Test connection to see your balance. Create the key in Binance > API Management with Futures ON and withdrawals OFF. MEXC is view-only here, Exness has no individual trading API (it uses MetaTrader), and Bitget, Bybit and OKX are not built yet.']);
+/* ===== Academy lessons: [id, level, title, minutes, body, quiz[[question,[options],correctIndex,why]], youtubeSearch, keywords] ===== */
+var AC_LEVELS = ['1 · Beginner: the basics', '2 · Reading the chart', '3 · Risk and money management', '4 · Crypto and futures', '5 · World markets', '6 · Advanced and mastery'];
+var AC = [
+[1, 0, 'What trading really is', 4, `Trading means buying and selling something (a coin, a currency, gold, a share) to profit from price changes over minutes, hours or days. Investing means holding for years.
+Most beginners lose money. Not because trading is magic, but because they risk too much, follow tips and have no plan. This course teaches you to avoid those mistakes.
+• You earn only when your winning trades are bigger than your losing trades plus fees.
+• You can profit from falling prices too (called short selling) in futures and CFDs.
+• Nobody can predict the market. Professionals survive by controlling risk, not by predicting.
+• Practise first with paper money: the Auto Bot and Bot Pro in this app trade with virtual money.`, [['What makes a trader profitable over time?', ['Predicting every move', 'Wins bigger than losses plus fees, with controlled risk', 'Using the highest leverage'], 1, 'Nobody predicts everything. Edge plus risk control plus costs under control is what lasts.'], ['What is the difference between trading and investing?', ['None', 'Trading is shorter-term, investing is held for years', 'Investing uses leverage'], 1, 'Time horizon is the main difference.']], 'what is trading for beginners', 'what is trading|trading basics|start trading|trading meaning|investing vs trading'],
+[2, 0, 'The markets: crypto, forex, stocks, gold and more', 5, `Different markets behave differently:
+• Crypto (Bitcoin, Ethereum...): open 24 hours, 7 days. Very volatile. Traded on exchanges such as Binance and MEXC.
+• Forex (currencies like EUR/USD, USD/PKR): open 24 hours on weekdays. Moves are small, so brokers allow leverage.
+• Stocks and indices (Apple, KSE-100, S&P 500): follow exchange hours. Prices react to company results and the economy.
+• Commodities (gold, silver, oil): react to the US dollar, interest rates, wars and supply.
+• Bonds and options: more advanced; they are about interest rates and time-limited bets.
+Pick ONE market to learn first. Crypto is easiest to start (24/7 data, small amounts), but it is also the most volatile.`, [['Which market is open 24 hours, 7 days a week?', ['Stocks', 'Crypto', 'Government bonds'], 1, 'Crypto never closes. Stocks follow exchange hours and forex closes at weekends.'], ['Why do forex brokers offer leverage?', ['Currency moves are small', 'It is free money', 'Because forex is illegal'], 0, 'Moves are tiny, so leverage magnifies them, and also magnifies losses.']], 'financial markets explained for beginners forex stocks crypto commodities', 'markets|types of markets|asset classes|forex vs crypto|stocks vs crypto|crypto vs forex|which market'],
+[3, 0, 'Exchanges, brokers and how a trade really works', 5, `An exchange (Binance, MEXC, Bitget, OKX, Bybit) matches buyers and sellers in an order book. A broker (Exness, XM) usually gives you CFDs: contracts that copy a price. Your trade is against the broker's pricing.
+• Spot: you buy the real coin. No liquidation. You can only profit when price rises.
+• Futures: you trade a contract with leverage. You can go long (bet up) or short (bet down). Can be liquidated.
+• CFD: a contract on forex, gold, stocks at a broker. Also leveraged.
+• Custody: coins on an exchange are held by the exchange. "Not your keys, not your coins". Use only well-known, regulated platforms and enable 2FA.
+Check the rules in your country before trading.`, [['What is spot trading?', ['Buying the real coin without leverage', 'A leveraged bet', 'Trading only gold'], 0, 'Spot means you own the asset.'], ['Which can get liquidated?', ['Spot holding', 'Leveraged futures position', 'A watchlist'], 1, 'Leverage creates liquidation risk.']], 'spot vs futures vs cfd explained', 'exchange|broker|spot|futures|cfd|how trading works|order book|custody'],
+[4, 0, 'Reading price charts and candles', 5, `A candlestick shows four prices for one time period: Open, High, Low, Close.
+• Body = distance between open and close. Green (up) closed higher than it opened; red (down) closed lower.
+• Wicks (shadows) show the highest and lowest price reached. Long wicks mean price was pushed back.
+• Time frame: a 15m candle covers 15 minutes, a 1d candle covers one day. Look at several.
+• The "day" candle opens at a certain time of day. Binance uses a time zone setting (for example UTC+5, 00:00), which is why % change can differ between apps. Set the same Change(%) time zone in this app (Time zone window).
+Start by asking: is price going up, down or sideways on the bigger time frame?`, [['What do the wicks of a candle show?', ['The highest and lowest prices in the period', 'The volume', 'The fee'], 0, 'Wicks mark the extremes.'], ['Why can % change differ between two apps?', ['They use a different day-start time zone', 'One app is broken', 'Random'], 0, 'The daily change depends on where the day begins.']], 'how to read candlestick charts for beginners', 'candle|candles|candlestick|ohlc|chart reading|read chart|wick|body|time frame|timeframe'],
+[5, 0, 'Order types: market, limit, stop and take profit', 5, `An order is your instruction to the exchange.
+• Market order: buy or sell now at the best available price. Fast, but you may get a worse price (slippage) and pay the higher taker fee.
+• Limit order: buy or sell only at your price or better. May not fill. Usually cheaper (maker fee).
+• Stop-loss: closes your trade if price goes against you to a level, so a loss stays small.
+• Take-profit: closes your trade when price reaches your target.
+• Bracket/OCO: entry plus stop plus target together; when one hits, the other is cancelled.
+Rule: never enter a leveraged trade without a stop-loss. The Terminal in this app always attaches a stop and a target.`, [['Which order may not fill at all?', ['Market order', 'Limit order', 'Liquidation'], 1, 'A limit order waits for your price.'], ['What does a stop-loss do?', ['Guarantees profit', 'Closes the trade at a set loss level', 'Reduces fees'], 1, 'It limits the loss. In very fast markets slippage can still happen.']], 'market order vs limit order stop loss take profit explained', 'order|orders|market order|limit order|stop loss|stop-loss|take profit|oco|bracket|slippage|maker|taker'],
+[6, 0, 'Safety first: scams, risk of ruin and common traps', 5, `Most losses come from avoidable mistakes:
+• Only trade money you can afford to lose. Never borrow to trade.
+• "Guaranteed profit", "90% win rate", signals sold by strangers, pump groups, fake giveaways and "recovery agents" are scams or marketing.
+• Binary options (Quotex, Olymp Trade style): you bet up or down in a fixed time. The maths is against you after the payout and many countries restrict them. Avoid.
+• Never share your seed phrase, passwords, OTP or API secret. Use 2FA with an authenticator app.
+• If someone you met online asks you to deposit into their platform, stop.
+• Start tiny. Survival is the first goal.`, [['Which is a red flag?', ['A free educational video', 'A stranger promising guaranteed profit', 'Using 2FA'], 1, 'Guarantees do not exist in trading.'], ['Who should ever get your seed phrase?', ['Support staff', 'A signal group admin', 'Nobody'], 2, 'Anyone asking for it is trying to steal your funds.']], 'crypto trading scams how to avoid them', 'scam|scams|safe|safety|guaranteed|fraud|ponzi|pump group|binary option|quotex|olymp trade|is it legit|beginner mistakes'],
+[7, 1, 'Support and resistance', 5, `Support is a price area where falling prices have often stopped and bounced. Resistance is an area where rising prices have often stopped and fallen.
+• The more times a level held, the more traders watch it.
+• When support breaks it often becomes resistance (and the other way around).
+• Do not treat a level as a single line. Think of a zone.
+• Good use: buy near support with a stop just below it; take profit near resistance.
+• A break with strong volume is more believable than a break on thin volume.`, [['What happens to broken support?', ['It disappears', 'It often becomes resistance', 'It doubles'], 1, 'Old support frequently turns into resistance.'], ['Is a level a single exact line?', ['Yes', 'No, treat it as a zone', 'Only on 1m charts'], 1, 'Price reacts around areas, not exact lines.']], 'support and resistance trading explained', 'support|resistance|support and resistance|key level|levels|zone'],
+[8, 1, 'Trends and trendlines', 5, `A trend is a series of higher highs and higher lows (uptrend) or lower highs and lower lows (downtrend). Sideways is a range.
+• Trade in the direction of the bigger trend whenever you can.
+• A trendline joins swing lows (uptrend) or swing highs (downtrend). A clean break of it is an early warning.
+• Do not try to catch every top or bottom.
+• Use the higher time frame (1h, 4h, 1d) for direction and the lower (15m) for entry.
+• The app's four time frame table (15m, 1h, 4h, 1d) shows if trends agree.`, [['What defines an uptrend?', ['Higher highs and higher lows', 'Lower highs', 'High volume only'], 0, 'That is the structure of an uptrend.'], ['Why use a higher time frame?', ['To see the main direction', 'To pay lower fees', 'To avoid stops'], 0, 'Direction first, entry timing second.']], 'trend and trendlines for beginners', 'trend|trendline|uptrend|downtrend|sideways|range|higher high|lower low'],
+[9, 1, 'Volume: the fuel behind moves', 4, `Volume is how much was traded. It tells you if many traders agree with a move.
+• Rising price with rising volume: a healthy move.
+• Rising price with falling volume: weak, may reverse.
+• A volume spike at a key level shows a fight between buyers and sellers.
+• Very low volume coins are risky: wide spreads, easy to manipulate.
+• Newly pumped coins show huge volume; late buyers often get trapped. The app marks "stretched" coins for this reason.`, [['Price breaks up on very low volume. What does it suggest?', ['A strong move', 'A possibly weak move', 'A guaranteed rise'], 1, 'Moves need participation to last.'], ['Why are tiny-volume coins risky?', ['Wide spreads and easy manipulation', 'They never move', 'They cost no fees'], 0, 'Thin markets are easy to push around.']], 'trading volume explained', 'volume|volume spike|low volume|liquidity|turnover'],
+[10, 1, 'Moving averages (MA and EMA)', 5, `A moving average smooths price by averaging the last N candles.
+• SMA treats all candles equally; EMA gives more weight to recent candles so it reacts faster.
+• Common lengths: 9/21 (short), 50 (medium), 200 (long).
+• Price above the 200 average is usually bullish; below is bearish.
+• A fast average crossing above a slow one (golden cross) is a bullish signal; the reverse is a death cross.
+• Averages lag. They help you stay with trends but lose in sideways markets.`, [['Which average reacts faster?', ['EMA', 'SMA', 'They are identical'], 0, 'EMA weights recent prices more.'], ['In a sideways market moving average crossovers tend to...', ['Work perfectly', 'Give many false signals', 'Stop working'], 1, 'Whipsaws are common in ranges.']], 'moving average EMA SMA explained', 'moving average|ma|sma|ema|golden cross|death cross|ma20|ma50|ema20|ema50'],
+[11, 1, 'RSI: momentum', 5, `RSI (Relative Strength Index) goes from 0 to 100 and measures how strong recent gains are compared with losses.
+• Above 70: overbought (price rose a lot). Below 30: oversold.
+• In a strong trend RSI can stay above 70 for a long time, so overbought does not mean "sell now".
+• Divergence: price makes a new high but RSI does not. It warns that momentum is fading.
+• The app uses RSI to mark stretched coins and to avoid chasing.
+• Use RSI to confirm, not as your only reason.`, [['RSI above 70 means...', ['Certain reversal', 'Price rose strongly; may be stretched', 'The coin is safe'], 1, 'It describes momentum, not a guaranteed reversal.'], ['What is bearish divergence?', ['Price new high but RSI lower high', 'RSI at 50', 'Falling volume'], 0, 'Momentum fails to confirm price.']], 'RSI indicator explained', 'rsi|relative strength|overbought|oversold|divergence'],
+[12, 1, 'MACD: trend and momentum', 5, `MACD has a MACD line (fast EMA minus slow EMA), a signal line and a histogram (the gap between them).
+• MACD crossing above the signal line: momentum turning up. Below: turning down.
+• Above the zero line suggests an uptrend; below suggests a downtrend.
+• A shrinking histogram warns that the move is slowing.
+• Like all indicators it lags and fails in sideways markets.
+• Best used together with trend and support/resistance.`, [['What does a MACD cross above the signal line suggest?', ['Momentum turning up', 'Guaranteed profit', 'High fees'], 0, 'It is a momentum shift signal, not a promise.'], ['What does a shrinking histogram mean?', ['Move is slowing', 'Move is accelerating', 'Nothing'], 0, 'The gap between lines is closing.']], 'MACD indicator explained simply', 'macd|histogram|signal line|zero line'],
+[13, 1, 'Bollinger Bands, ATR and volatility', 5, `Volatility is how much price moves. You must size your trade to it.
+• Bollinger Bands: a moving average with bands 2 standard deviations above and below. Price outside a band is stretched; a squeeze (narrow bands) often comes before a big move.
+• ATR (Average True Range): the average candle size. Put stops at about 1 to 2 ATR away so normal noise does not stop you.
+• High volatility = bigger chances and bigger risk. Cut position size when volatility is high.
+• Funding spikes and news raise volatility.`, [['What does ATR measure?', ['Average candle range (volatility)', 'Trend direction', 'Fees'], 0, 'ATR is a volatility measure.'], ['With high volatility you should usually...', ['Use more size', 'Use smaller size', 'Ignore stops'], 1, 'Same money risk needs smaller size when moves are bigger.']], 'bollinger bands and ATR explained', 'bollinger|bands|atr|average true range|volatility|squeeze|supertrend|sar|parabolic'],
+[14, 2, 'Stop-loss and take-profit: where to place them', 5, `A stop-loss is the price where your trade idea is proven wrong. Place it beyond a level that matters, not at a random percentage.
+• Long trade: stop just below support or the recent swing low (plus a little room for noise, for example 1 ATR).
+• Short trade: stop just above resistance.
+• Take-profit: near the next resistance (long) or support (short), or at a fixed multiple of the risk.
+• Never widen a stop because you hope. Moving it only closer to profit (trailing) is fine.
+• If the stop distance is too large for your risk limit, skip the trade or use less size.`, [['Where should a long trade stop usually go?', ['Just below a meaningful support or swing low', 'At a random 10%', 'Above the entry'], 0, 'It should invalidate the idea.'], ['You may safely widen your stop when losing.', ['True', 'False'], 1, 'Widening turns a small loss into a big one.']], 'where to place stop loss and take profit', 'stop loss|stoploss|sl|tp|take profit|trailing stop|breakeven|break even'],
+[15, 2, 'Risk/reward and expectancy', 6, `Risk/reward (R:R) compares what you risk with what you can gain. Risking 1 to make 2 is 1:2 (2R).
+Expectancy = (win rate x average win) minus (loss rate x average loss).
+• Win rate 40% with 2R wins: 0.4 x 2 = 0.8 minus 0.6 x 1 = 0.6 gives +0.2R per trade. Profitable even with 60% losers.
+• Win rate 80% but average win 0.2R and average loss 1R: 0.8 x 0.2 = 0.16 minus 0.2 x 1 = 0.2 gives -0.04R. A high win rate can still lose.
+• Fees reduce every win and increase every loss. Tiny targets are crushed by fees.
+Judge a strategy by expectancy, profit factor and drawdown, not by win rate alone.`, [['Can a strategy with a 40% win rate be profitable?', ['No', 'Yes, if wins are large enough', 'Only in crypto'], 1, 'Expectancy depends on win size and loss size.'], ['Can an 80% win rate lose money?', ['Never', 'Yes, if losses are much larger than wins', 'Only in forex'], 1, 'Small wins and big losses give negative expectancy.']], 'risk reward ratio and expectancy explained', 'risk reward|risk/reward|rr|r:r|expectancy|r multiple|win rate|profit factor'],
+[16, 2, 'Position sizing: how much to trade', 6, `Decide first how much you can lose on one trade (for beginners 0.5% to 1% of the account). Then size from the stop distance.
+Position size = (account x risk %) / stop distance %.
+Example: account $1,000, risk 1% = $10. Stop is 2% away. Position = $10 / 0.02 = $500 of coin (notional).
+• With 5x leverage you only need $100 margin for that $500 position, but your risk is still $10. Leverage changes the margin, not the risk.
+• A wider stop means a smaller position.
+• Never increase size to "win back" losses.`, [['Account $2,000, risk 1%, stop 2% away. Position size?', ['$500', '$1,000', '$2,000'], 1, '$20 / 0.02 = $1,000.'], ['Does higher leverage increase your risk if the position size is the same?', ['Yes always', 'No, margin changes but the loss at the stop is the same', 'It halves risk'], 1, 'Loss depends on position size and stop distance.']], 'position sizing for traders explained', 'position size|position sizing|how much to trade|how much to risk|risk per trade|1% rule|lot size'],
+[17, 2, 'Leverage and liquidation', 6, `Leverage lets you control a bigger position with less money. 10x means a 1% move changes your margin by about 10%.
+• Liquidation: when losses use up your margin, the exchange closes the position and you lose that margin. Roughly, at 10x a move of about 9-10% against you liquidates an isolated position; at 50x about 1.5-2%.
+• Isolated margin: only the money put into that trade is at risk. Cross margin: the whole futures wallet backs the trade.
+• Higher leverage means a closer liquidation price and more fee impact.
+• Beginners: 1x to 3x. A good stop-loss should trigger long before liquidation.
+• Never leave a leveraged trade without a stop.`, [['Roughly what move against you liquidates a 10x isolated position?', ['About 9-10%', 'About 50%', 'No move'], 0, 'Margin is about 10% of the position.'], ['Best leverage range for a beginner?', ['100x', '1x to 3x', 'As high as possible'], 1, 'Low leverage keeps you in the game.']], 'leverage and liquidation explained crypto futures', 'leverage|liquidation|liquidated|margin|isolated|cross margin|x leverage|maintenance'],
+[18, 2, 'Fees, funding and slippage: the hidden costs', 5, `Every trade has costs:
+• Trading fee: on Binance futures a standard taker fee is about 0.05% of the position (maker about 0.02%), both when you enter and exit. Check your own tier.
+• Example: $500 position, 0.05% in and out = $0.50 (0.1%). With 5x leverage and $100 margin that is 0.5% of your margin per round trip.
+• Slippage: you get a slightly worse price than you saw.
+• Funding: perpetual futures charge or pay a small amount every 8 hours between longs and shorts.
+• Spread: the gap between best buy and sell price.
+This is why a trade that closes at +0.07% can still be a loss after fees. Target moves that are clearly larger than the costs.`, [['Why can a +0.07% price move still lose money?', ['Fees and slippage exceed the gain', 'Exchanges cheat', 'It cannot'], 0, 'Round-trip costs can be bigger than a tiny move.'], ['Funding on perpetual futures is paid...', ['Between longs and shorts regularly', 'Only at expiry', 'Never'], 0, 'Typically every 8 hours.']], 'trading fees funding rate slippage explained', 'fees|fee|funding|slippage|spread|costs|hidden costs|commission|swap'],
+[19, 2, 'Your trading plan and journal', 5, `A plan is a list of rules written before you trade:
+• What you trade and when (market, time frame, hours).
+• Entry rules (what must be true), stop rule, target rule.
+• Risk per trade and a daily loss limit (for example stop trading after losing 3%).
+• Maximum trades per day.
+Journal every trade: date, coin, direction, entry, stop, target, result, a screenshot, and one sentence on what you did well or wrong. Review weekly.
+Your journal turns losses into lessons. This app's Auto Bot and Bot Pro keep results with "R" values so you can learn from them.`, [['What is a daily loss limit?', ['A point where you stop trading for the day', 'A fee', 'A bonus'], 0, 'It prevents revenge trading.'], ['Why keep a journal?', ['To find patterns in your mistakes', 'It is required by Binance', 'To pay less tax'], 0, 'You improve what you measure.']], 'trading plan and trading journal beginners', 'trading plan|journal|rules|daily loss|routine|discipline'],
+[20, 3, 'Spot, futures and perpetuals', 5, `Perpetual futures (perps) are the most traded crypto product. They have no expiry and use a funding payment to keep their price near spot.
+• Spot: slower, no liquidation, you own the coin. Good for holding.
+• Perpetual: leveraged, can go short, funding every 8 hours, liquidation risk.
+• Dated futures: expire on a date, price can differ from spot.
+• USDT-margined (USDⓈ-M) contracts are settled in USDT; coin-margined in the coin itself.
+Use spot to build positions you plan to hold and perps for short-term trades with strict risk control.`, [['Which product has liquidation risk?', ['Spot', 'Perpetual futures', 'Both equally'], 1, 'Spot holdings cannot be liquidated.'], ['Why does funding exist?', ['To keep the perp price near the spot price', 'To pay Binance', 'To stop trading'], 0, 'It is a balancing payment between longs and shorts.']], 'perpetual futures explained', 'perpetual|perp|perps|futures contract|usdt margined|coin margined|spot vs futures|spot and futures'],
+[21, 3, 'Funding rate and open interest', 5, `Funding rate: if it is positive, longs pay shorts (the market is leaning long); if negative, shorts pay longs.
+• Very high positive funding with a big rise often means a crowded long: a drop can be sharp.
+• Very negative funding can fuel a short squeeze.
+Open interest (OI) is the total value of open contracts.
+• Price up and OI up: new money entering, trend likely to continue.
+• Price up and OI down: shorts closing, rally may be weak.
+• Price down and OI up: new shorts, pressure continues.
+The app reads funding and open interest in the all-factors check.`, [['Positive funding means...', ['Longs pay shorts', 'Shorts pay longs', 'Nobody pays'], 0, 'The perp trades above spot.'], ['Price up with open interest down suggests...', ['Shorts closing; weaker rally', 'Strong new buying', 'Nothing'], 0, 'No new money is backing the rise.']], 'funding rate and open interest explained', 'funding rate|open interest|oi|squeeze|short squeeze|crowded'],
+[22, 3, 'Long/short ratio and liquidations', 5, `The long/short ratio shows how accounts are positioned. A very one-sided ratio means a crowded trade.
+• Crowds are often wrong at extremes, because there is nobody left to push price further and many stops sit in one place.
+• Liquidation cascades: when price hits many liquidation levels, forced orders push price further.
+• Do not trade only against the crowd; use it as a warning sign together with trend and levels.
+• Large liquidation spikes sometimes mark short-term turning points.`, [['A very one-sided long/short ratio is...', ['A sign of a crowded trade', 'A buy signal', 'Meaningless'], 0, 'Extremes raise reversal risk.'], ['What is a liquidation cascade?', ['Forced closes pushing price further', 'A fee refund', 'A type of order'], 0, 'Liquidations create more market orders.']], 'liquidation cascade long short ratio explained', 'long short ratio|longshort|liquidation heatmap|liquidations|crowd|cascade'],
+[23, 3, 'Order book, spread and liquidity', 5, `The order book lists waiting buy orders (bids) and sell orders (asks).
+• Spread: gap between best bid and best ask. A wide spread is a hidden cost.
+• Depth: how much can be traded near the price. Thin depth = big slippage.
+• Large walls can be real or fake (spoofing). Do not trust them alone.
+• Prefer coins with high 24h volume for market orders.
+• New listings and tiny coins often have thin books and sudden jumps.`, [['What is the spread?', ['Gap between best bid and ask', 'The fee', 'The leverage'], 0, 'It is a cost of crossing the market.'], ['Thin order books cause...', ['More slippage', 'Lower fees', 'Safer trades'], 0, 'Less depth means price moves more per order.']], 'order book depth and spread explained', 'order book|orderbook|bid|ask|depth|wall|spoofing|spread'],
+[24, 3, 'Wallets, stablecoins and security', 5, `• Stablecoins (USDT, USDC) track the dollar but carry issuer and depeg risk.
+• Exchange wallet: convenient, but the exchange holds the keys.
+• Self-custody wallet: you hold a 12 or 24 word seed phrase. Anyone with it controls the funds. Write it on paper, never photograph or type it online.
+• 2FA: use an authenticator app, not SMS. Set an anti-phishing code on the exchange.
+• API keys: enable only what you need (read, trade), never withdrawals, and restrict to your IP if possible.
+• Check website addresses; phishing copies of exchange sites are common.`, [['Which 2FA is better?', ['Authenticator app', 'SMS', 'None'], 0, 'SMS can be hijacked through SIM swaps.'], ['Should an API key used by a bot allow withdrawals?', ['Yes', 'No', 'Only on weekends'], 1, 'Never enable withdrawals for a trading key.']], 'crypto wallet security 2FA seed phrase explained', 'wallet|stablecoin|usdt|usdc|seed phrase|2fa|anti phishing|api key|security|self custody|private key'],
+[25, 4, 'Forex basics: pairs, pips and lots', 6, `Forex trades one currency against another. In EUR/USD, EUR is the base and USD the quote: the price says how many dollars one euro costs.
+• Pip: the usual smallest move: 0.0001 for most pairs (0.01 for yen pairs).
+• Lot: a standard lot is 100,000 units, a mini lot 10,000, a micro lot 1,000.
+• Example: 1 micro lot EUR/USD, a 10 pip move is about $1.
+• Sessions: Asian, London and New York. Most movement is during London and New York overlap.
+• Rates, inflation, jobs data and central bank speeches move currencies.
+• Spread and swap (overnight fee) are the costs. USD/PKR in this app is shown with daily data.`, [['What is a pip in EUR/USD?', ['0.0001', '1.0', '0.1'], 0, 'Most pairs quote 4 decimals.'], ['Which sessions usually move the most?', ['London and New York overlap', 'Weekend', 'Only Asian'], 0, 'Liquidity is highest then.']], 'forex trading basics pips lots explained', 'forex|fx|currency pair|eurusd|pip|pips|lot|lots|base currency|quote currency|usdpkr|currency trading'],
+[26, 4, 'Gold, silver and oil', 6, `Gold (XAU) and silver (XAG) are quoted in US dollars per ounce. In Pakistan gold is also quoted per tola (about 11.66 g); the Rates window converts.
+• Gold often rises when the dollar weakens (DXY down), when real interest rates fall, or in fear (wars, crises). It often falls when the dollar and yields rise.
+• Silver moves like gold but with larger swings and industrial demand.
+• Oil (WTI, Brent) depends on supply (OPEC decisions), stocks and growth outlook. Oil contracts expire, so brokers roll them.
+• Brokers like Exness offer XAUUSD and USOIL as CFDs. Binance also has gold-linked perps (XAUUSDT).
+• Trade gold with smaller leverage than crypto; spreads widen around news.`, [['Gold often reacts to a stronger dollar by...', ['Falling', 'Always rising', 'Staying fixed'], 0, 'They are often inversely related.'], ['Which is typically more volatile?', ['Silver', 'Gold', 'Identical'], 0, 'Silver moves are usually larger.']], 'gold and oil trading explained for beginners', 'gold|xau|xauusd|silver|xag|oil|wti|brent|crude|commodity|commodities|tola'],
+[27, 4, 'Stocks, indices and ETFs', 6, `A share is a small piece of ownership in a company. Prices follow profits, growth and mood.
+• Index: a basket measuring a market, like the KSE-100 (Pakistan), S&P 500 or Nasdaq 100 (USA).
+• ETF: a fund that trades like a share and tracks an index or theme.
+• Earnings reports and news cause gaps (price jumps when the market is closed).
+• Stocks trade only during exchange hours. Some crypto exchanges list stock-linked contracts that follow US stocks; when the US market is closed their price can behave oddly. The Auto Bot here skips them when the US market is closed.
+• Dividends, taxes and broker rules vary by country. In Pakistan stocks are traded through licensed brokers on the PSX.`, [['What is an index?', ['A basket measuring a market', 'A single company', 'A fee'], 0, 'Examples: KSE-100, S&P 500.'], ['Why are earnings risky?', ['They can cause big gaps', 'They stop trading', 'They are fixed'], 0, 'Prices can jump past your stop.']], 'stocks indices ETF explained for beginners', 'stock|stocks|share|shares|index|indices|etf|kse|kse100|psx|nasdaq|s&p|sp500|dow|earnings|dividend'],
+[28, 4, 'The economy and news: rates, inflation, Fed, yields, DXY', 6, `Big news moves every market:
+• Interest rates: higher rates usually strengthen the currency and pressure stocks, crypto and gold. Cuts do the opposite.
+• Inflation (CPI): hotter than expected means rates may stay high. Released monthly.
+• Central banks: the US Federal Reserve (the Fed) meets about every six weeks. The State Bank of Pakistan sets rates for PKR.
+• Jobs report (NFP): first Friday of the month, moves the dollar and gold.
+• Bond yields: rising yields often pressure gold and growth stocks.
+• DXY: the dollar index. Strong dollar usually means weak gold and weak crypto.
+Check the news window before big releases; spreads widen and stops slip. "Buy the rumour, sell the news" often happens.`, [['Hotter than expected inflation usually suggests...', ['Rates may stay higher', 'Rates will fall immediately', 'Nothing'], 0, 'It can delay rate cuts.'], ['A strong dollar (DXY up) is often bad for...', ['Gold', 'Nothing', 'Only oil exporters'], 0, 'Gold is priced in dollars.']], 'how interest rates inflation fed affect markets explained', 'fed|interest rate|rates|inflation|cpi|nfp|jobs|yield|yields|dxy|dollar index|state bank|macro|economy|fomc'],
+[29, 4, 'Options and other derivatives (basics)', 6, `An option gives the right (not the duty) to buy (call) or sell (put) at a set price (strike) before an expiry. You pay a premium.
+• Buyer risk is limited to the premium, but options lose value as time passes (time decay), and most expire worthless.
+• Sellers (writers) can lose much more than the premium.
+• Futures contracts oblige both sides to trade at expiry.
+• Binary options are NOT normal options: they are fixed-time bets with a payout below 100% and are widely banned for retail clients.
+• Options are an advanced tool. Learn spot and futures risk control first.`, [['What is the maximum loss for an option buyer?', ['The premium paid', 'Unlimited', 'Zero'], 0, 'Buyer risk is limited to the premium.'], ['Binary options are...', ['Identical to normal options', 'Fixed-time bets restricted in many countries', 'Risk free'], 1, 'Avoid them.']], 'options trading calls puts explained', 'option|options|call option|put option|strike|premium|expiry|derivative|derivatives|binary'],
+[30, 4, 'Halal trading, tax and regulation awareness', 6, `Muslim traders often ask whether trading is permissible. Scholars differ, so ask a qualified scholar you trust. Commonly raised concerns:
+• Riba (interest): swap/overnight fees and margin interest. Some brokers offer swap-free Islamic accounts (availability varies by country).
+• Leverage and borrowing, and uncertainty (gharar) in futures and options.
+• Short selling and derivatives are considered problematic by many scholars. Buying and holding permissible spot assets without leverage is accepted by more scholars.
+Tax: rules differ by country and change. Keep records of every trade (your journal and exchange exports) and ask a qualified tax adviser.
+Regulation: virtual-asset and broker rules are still developing in many countries, including Pakistan. Use regulated platforms, read the terms, and check current local rules before trading.
+This is general education, not religious, legal or tax advice.`, [['What should a Muslim trader do about permissibility questions?', ['Ask a qualified scholar', 'Ignore it', 'Ask a signal group'], 0, 'Opinions differ; get qualified guidance.'], ['Why keep records of trades?', ['For tax and your own review', 'To pay more fees', 'It is useless'], 0, 'Records help with taxes and learning.']], 'is trading halal or haram explained', 'halal|haram|islamic|riba|swap free|tax|taxes|regulation|legal|license|licence|sharia|shariah'],
+[31, 5, 'Multi-timeframe analysis', 6, `Look at three time frames: a big one for direction, a middle one for the setup and a small one for entry.
+• Example: 1d or 4h for trend, 1h for levels, 15m for entry.
+• Trade only in the big trend direction unless you are very experienced.
+• If time frames disagree, reduce size or wait. The app's "4 time frames agree" check is exactly this idea: 3 of 4 or 4 of 4 must agree for the strictest lists.
+• A trade entered against a higher time frame level (resistance on the 4h) has a worse chance.`, [['Why use several time frames?', ['Direction from big, entry from small', 'To trade more', 'To avoid fees'], 0, 'It improves context and timing.'], ['What if time frames disagree?', ['Wait or reduce size', 'Use maximum leverage', 'Ignore them'], 0, 'Conflicting signals mean lower confidence.']], 'multiple timeframe analysis trading', 'multi timeframe|multiple time frames|mtf|time frames agree|top down'],
+[32, 5, 'Chart patterns', 6, `Patterns are repeating shapes that show the fight between buyers and sellers:
+• Double top / double bottom: two failed attempts at a level; reversal after the middle point breaks.
+• Head and shoulders: three peaks with a higher middle; a neckline break signals a downtrend.
+• Triangles, flags and pennants: pauses inside a trend; a break usually continues the trend.
+• Breakouts need volume, and retests of the broken level are common.
+Patterns fail often. Confirm with trend, volume and levels, and always place a stop beyond the pattern.`, [['A flag pattern inside an uptrend usually...', ['Continues up on a breakout', 'Always reverses', 'Is random'], 0, 'It is a continuation pause.'], ['Patterns always work.', ['True', 'False'], 1, 'No pattern works always. Use stops.']], 'chart patterns head and shoulders double top flags explained', 'pattern|patterns|head and shoulders|double top|double bottom|triangle|flag|pennant|breakout|neckline|wedge'],
+[33, 5, 'Market structure and liquidity', 6, `Market structure is the series of swing highs and lows.
+• Break of structure (BOS): price breaks the last swing in the trend direction (trend continues).
+• Change of character: price breaks the opposite swing (trend may be turning).
+• Liquidity: stop-losses cluster above recent highs and below recent lows. Large players may push price through those areas (a "stop hunt") and then reverse.
+• Practical tip: avoid placing stops exactly at obvious highs/lows; give a little room and wait for a candle to close beyond a level before believing a breakout.`, [['A break of the last swing low in an uptrend suggests...', ['The trend may be changing', 'Certain profit', 'Nothing'], 0, 'It is a possible change of character.'], ['Where do many stops cluster?', ['Just beyond obvious highs and lows', 'In the middle of a range', 'Nowhere'], 0, 'Those are common stop-hunt areas.']], 'market structure and liquidity trading explained', 'market structure|bos|change of character|choch|liquidity|stop hunt|smart money|swing high|swing low'],
+[34, 5, 'Backtesting and statistics (and why 90% win rate claims mislead)', 7, `Before you trust any strategy, test it on past data and then on paper money.
+• Sample size: at least 50 to 100 trades. Five trades prove nothing.
+• Key numbers: win rate, average win, average loss, profit factor (total wins / total losses), expectancy per trade, maximum drawdown.
+• Overfitting: tuning a strategy until it fits the past perfectly usually fails live.
+• "90% win rate" bots: often use tiny targets with large stops, grids or martingale (doubling down). They win often and then lose a big chunk in one bad move. Ask for audited live results, profit factor and maximum drawdown, not the win rate.
+• No honest source promises profit. Good strategies often win 40% to 60% with larger winners.
+Use the Strategy Lab and the New Plan track record in this app, and judge the Auto Bot only after 50 closed trades.`, [['How many trades before judging a strategy?', ['5', 'At least 50 to 100', '1'], 1, 'Small samples are noise.'], ['A 90% win rate bot may hide...', ['Rare but very large losses', 'Nothing', 'A free profit'], 0, 'Tiny wins and huge losses often produce high win rates.']], 'backtesting trading strategy profit factor drawdown', 'backtest|backtesting|statistics|profit factor|drawdown|overfitting|90%|95%|win rate bot|martingale|grid bot|erinox'],
+[35, 5, 'Trading psychology', 6, `Most trading errors are emotional:
+• FOMO: chasing a coin that already pumped. Wait for a pullback or skip.
+• Revenge trading: taking bigger trades to win back a loss. Stop for the day instead.
+• Overtrading: more trades means more fees and more mistakes.
+• Moving stops or closing winners too early out of fear.
+• Overconfidence after a few wins.
+Tools: a written plan, fixed risk per trade, a daily loss limit, a journal, breaks after losses and never trading when angry, tired or short of money.`, [['What is revenge trading?', ['Bigger trades to win back losses', 'Trading with a friend', 'A strategy'], 0, 'It usually makes losses worse.'], ['Best response after hitting the daily loss limit?', ['Stop for the day', 'Double the size', 'Remove the stop'], 0, 'Protect the account and your mind.']], 'trading psychology fomo revenge trading discipline', 'psychology|fomo|revenge trading|emotion|emotions|discipline|greed|fear|overtrading|tilt'],
+[36, 5, 'Your training path with this app (from beginner to confident)', 7, `A safe path that uses every tool in this app:
+1. Finish this Academy and the quizzes.
+2. Use the Analyst on a few coins and read every reason it gives.
+3. Open Best Picks and At a glance. Remember: often there is nothing, and that is normal.
+4. Watch the Auto Bot (paper). Wait for 50 closed trades. Read the closed trades and the "R" results.
+5. Use the Terminal or the Real Bot only on the Binance test network first (TEST mode).
+6. Keep a journal. Fix one mistake at a time.
+7. Only after weeks of consistent paper and test results, try a very small live amount you can afford to lose, with a stop on every trade.
+No tool, bot or teacher can promise profit. Your edge is discipline.`, [['How many closed paper trades before judging the Auto Bot?', ['5', '50', '1'], 1, 'Small samples mislead.'], ['Where should the Real Bot start?', ['Binance test network (TEST mode)', 'Live with max size', 'Anywhere'], 0, 'Test with play money first.']], 'how to become a profitable trader step by step', 'become expert|become a trader|learning path|roadmap|from beginner|expert trader|teach me|learn trading|how to start']
+];
+/* ===== p9p: Academy window + smarter Professor ===== */
+var ACP = {}; try { ACP = JSON.parse(localStorage.getItem('mintoosuite_ac') || '{}') || {}; } catch (e) { ACP = {}; }
+ACP.done = ACP.done || {};
+function acSave() { try { localStorage.setItem('mintoosuite_ac', JSON.stringify(ACP)); } catch (e) {} }
+S.ac = S.ac || { lesson: 0, ans: {} };
+function acById(id) { for (var i = 0; i < AC.length; i++) { if (AC[i][0] === id) { return AC[i]; } } return null; }
+function acYT(l) { return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(l[6]); }
+function acGoog(t) { return 'https://www.google.com/search?q=' + encodeURIComponent(t); }
+function acBody(t) { return esc(t).replace(/\n/g, '<br>'); }
+function acBtn(act, txt, pri) { return '<span class="pfbtn" data-m16="' + act + '" style="display:inline-block;margin:3px 8px 3px 0;padding:9px 16px;border-radius:14px;cursor:pointer;font-weight:600;' + (pri ? 'background:#0a84ff;color:#fff' : 'background:var(--fill,#eee);color:inherit;border:1px solid var(--line,#ddd)') + '">' + txt + '</span>'; }
+function acLink(url, txt) { return '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin:3px 8px 3px 0;padding:9px 16px;border-radius:14px;font-weight:600;text-decoration:none;background:#ff3b30;color:#fff">' + txt + '</a>'; }
+function acNext() { for (var i = 0; i < AC.length; i++) { if (!ACP.done[AC[i][0]]) { return AC[i]; } } return null; }
+function vAcademy() {
+    var n = Object.keys(ACP.done).length, tot = AC.length, pc = Math.round(n * 100 / tot), cur = S.ac.lesson ? acById(S.ac.lesson) : null;
+    if (cur) { return acLesson(cur); }
+    var h = '<div class="group pad"><b style="font-size:17px">🎓 Mintoo Academy</b><div class="mut" style="font-size:13px;margin:4px 0 8px">From complete beginner to confident trader: ' + tot + ' short lessons, each with a quiz. Works offline. Videos open as YouTube searches.</div>' +
+        '<div style="height:10px;border-radius:5px;background:var(--fill,#eee);overflow:hidden"><div style="height:10px;width:' + pc + '%;background:#34c759"></div></div><div class="mut" style="font-size:12px;margin-top:4px">' + n + ' of ' + tot + ' lessons done (' + pc + '%)</div>';
+    var nx = acNext(); if (nx) { h += '<div style="margin-top:8px">' + acBtn('open:' + nx[0], (n ? '▶ Continue: ' : '▶ Start: ') + esc(nx[2]), true) + '</div>'; } else { h += '<div style="margin-top:8px"><b>🎉 You finished every lesson.</b> Now practise on paper money and keep a journal.</div>'; }
+    h += '</div>';
+    AC_LEVELS.forEach(function (lv, li) {
+        var rows = AC.filter(function (l) { return l[1] === li; }); if (!rows.length) { return; }
+        var d = rows.filter(function (l) { return ACP.done[l[0]]; }).length;
+        h += '<div class="sh">' + esc(lv) + ' (' + d + '/' + rows.length + ')</div><div class="group">';
+        rows.forEach(function (l) { h += '<div class="row tap" data-m16="open:' + l[0] + '"><span>' + (ACP.done[l[0]] ? '✅' : '📘') + ' ' + esc(l[2]) + '</span><b class="mut" style="font-size:12px">' + l[3] + ' min ›</b></div>'; });
+        h += '</div>';
+    });
+    return h + '<div class="note">Education only, not financial advice. No lesson, bot or teacher can promise profit. You can also ask Professor Mintoo (the helper) anything, for example "teach me trading" or "explain RSI".</div>';
+}
+function acLesson(l) {
+    var h = '<div class="group pad"><div class="mut" style="font-size:12px">' + esc(AC_LEVELS[l[1]]) + ' · ' + l[3] + ' min</div><b style="font-size:18px">' + esc(l[2]) + '</b><div style="line-height:1.55;margin-top:8px;font-size:14.5px">' + acBody(l[4]) + '</div>' +
+        '<div style="margin-top:10px">' + acLink(acYT(l), '▶ Watch videos') + acLink(acGoog(l[2] + ' explained'), '🔎 Read more') + '</div></div>';
+    h += '<div class="sh">Quick quiz</div>';
+    l[5].forEach(function (q, qi) {
+        var a = S.ac.ans[l[0] + '_' + qi]; h += '<div class="group pad"><b>' + (qi + 1) + '. ' + esc(q[0]) + '</b>';
+        q[1].forEach(function (o, oi) { var st = ''; if (a != null) { if (oi === q[2]) { st = 'background:#e4f7ea;color:#1d8a3b'; } else if (oi === a) { st = 'background:#fdecea;color:#d70015'; } } h += '<div class="row ' + (a == null ? 'tap' : '') + '" ' + (a == null ? 'data-m16="ans:' + l[0] + '_' + qi + '_' + oi + '"' : '') + ' style="' + st + '"><span>' + esc(o) + '</span></div>'; });
+        if (a != null) { h += '<div class="note" style="margin-top:6px">' + (a === q[2] ? '✔ Correct. ' : '✖ Not quite. ') + esc(q[3]) + '</div>'; } h += '</div>';
+    });
+    var all = l[5].every(function (q, qi) { return S.ac.ans[l[0] + '_' + qi] != null; });
+    h += '<div class="group pad">' + (all ? acBtn('done:' + l[0], '✔ Mark done and continue', true) : '<span class="mut" style="font-size:12.5px">Answer the questions to finish this lesson.</span> ') + acBtn('ask:' + l[0], '💬 Ask Professor') + acBtn('back:0', '‹ All lessons') + '</div>';
+    return h;
+}
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m16]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+    var a = el.getAttribute('data-m16'), i = a.indexOf(':'), v = a.slice(0, i), x = a.slice(i + 1);
+    if (v === 'open') { S.ac.lesson = +x; S.ac.ans = {}; } else if (v === 'back') { S.ac.lesson = 0; } else if (v === 'ans') { var p = x.split('_'); S.ac.ans[p[0] + '_' + p[1]] = +p[2]; } else if (v === 'done') { ACP.done[x] = 1; acSave(); var nx = acNext(); S.ac.ans = {}; S.ac.lesson = nx ? nx[0] : 0; } else if (v === 'ask') { var l = acById(+x); try { PF.st.hide = false; pfBuild(); document.getElementById('pfm').style.display = ''; pfOpen(); pfAsk('Explain more about ' + l[2]); } catch (er) {} return; }
+    renderView(true); try { window.scrollTo(0, 0); } catch (er) {}
+}, true);
+WINS.push({ id: 'academy', ic: '🎓', c: '#ff9500', n: 'Academy (learn trading step by step)', t: 'Academy', sub: '36 short lessons with quizzes: from beginner to confident trader' }); LIVE.academy = 0; VIEWS.academy = vAcademy;
+MW_HELP.academy = 'Do the lessons in order. Each has a short text, a video search button and a quiz. Your progress is saved on this phone.';
+PF_WIN['Academy'] = 'academy';
+(function () { var g = MW_GROUPS[0][1]; if (g.indexOf('academy') < 0) { var k = g.indexOf('prof'); g.splice(k < 0 ? g.length : k, 0, 'academy'); } })();
+/* --- comparison tables --- */
+var PF_CMP = {
+    binance: ['Binance', 'World’s largest crypto exchange. Spot, futures, earn, card. Very high liquidity, low fees (about 0.1% spot, 0.02/0.05% futures). Not available in every country; check local rules. API supported (used by this app).'],
+    mexc: ['MEXC', 'Large exchange known for listing many new/small coins early, high leverage and low fees. More small-cap risk, thinner books on small coins, less regulatory standing than the biggest exchanges. In this app: prices and analysis; order placing is being added.'],
+    bitget: ['Bitget', 'Derivatives-focused exchange with popular copy trading. Good futures liquidity. API supported by the exchange (passphrase required).'],
+    bybit: ['Bybit', 'Major derivatives exchange with deep futures liquidity, good API and a demo mode. Availability restricted in some countries.'],
+    okx: ['OKX', 'Large exchange with spot, futures, options and a Web3 wallet. Good API (passphrase required) and a demo trading mode.'],
+    exness: ['Exness', 'Forex/CFD broker (currencies, gold, oil, indices, crypto CFDs) on MetaTrader 4/5. Offers leverage and Islamic swap-free accounts in some regions. Not an exchange: you do not own the asset, and it has no public trading API for individuals, so apps cannot place orders on it directly.'],
+    quotex: ['Quotex / Olymp Trade (binary options)', 'Binary-options style platforms: you bet up or down in a fixed time for a fixed payout under 100%. Maths is against the trader over time, many regulators ban or warn against them, and withdrawals can be a problem. High risk. I recommend avoiding them; learn spot/futures with a regulated platform instead.'],
+    olymp: ['Quotex / Olymp Trade (binary options)', 'Binary-options style platforms: you bet up or down in a fixed time for a fixed payout under 100%. Maths is against the trader over time, many regulators ban or warn against them, and withdrawals can be a problem. High risk. I recommend avoiding them.'],
+    forex: ['Forex', 'Currency trading through brokers (CFDs), 24h on weekdays, small moves so leverage is used. Driven by interest rates and economic data. Costs: spread and swap.'],
+    crypto: ['Crypto', 'Digital assets on exchanges, 24/7, very volatile, high leverage available, driven by sentiment, liquidity and news. You can hold the real coin (spot).'],
+    stocks: ['Stocks', 'Shares of companies on exchanges (PSX in Pakistan, NYSE/Nasdaq in USA). Trading hours only, driven by company results and the economy. Usually lower volatility than crypto.'],
+    gold: ['Gold', 'A store of value traded as XAU/USD via CFDs or gold-linked contracts. Reacts to the dollar, interest rates and fear. Lower volatility than crypto but still leveraged when traded on margin.'],
+    spot: ['Spot', 'You buy the real asset. No liquidation, no funding, profit mainly when price rises.'],
+    futures: ['Futures', 'Leveraged contracts. You can go long or short, pay funding, and can be liquidated.'],
+    cfd: ['CFD', 'A contract with a broker that copies a price. Leveraged, you do not own the asset.']
+};
+function pfCmpKeys(q) { var ks = []; Object.keys(PF_CMP).forEach(function (k) { var r = new RegExp('(^|[^a-z0-9])' + k + '([^a-z0-9]|$)'); if (r.test(q)) { var nm = PF_CMP[k][0]; if (ks.map(function (z) { return PF_CMP[z][0]; }).indexOf(nm) < 0) { ks.push(k); } } }); return ks; }
+function pfCompare(q) {
+    var ks = pfCmpKeys(q); if (ks.length < 2 || !/ vs | versus |difference|differ|compare|comparison|better|or | and |between/.test(q)) { return null; }
+    var h = ''; ks.slice(0, 3).forEach(function (k) { h += '<b>' + esc(PF_CMP[k][0]) + '</b><br>' + esc(PF_CMP[k][1]) + '<br><br>'; });
+    h += '<b>My short view:</b> for a beginner the safest route is a large regulated exchange, spot first, tiny size, stop on every trade, and no binary options. This is education, not advice.<br>' + btn('win:academy', '🎓 Open Academy');
+    return { title: ks.slice(0, 3).map(function (k) { return PF_CMP[k][0].split(' / ')[0]; }).join(' vs '), html: h };
+}
+/* --- smarter routing --- */
+var _pfAnswer0 = pfAnswer, _pfAct0 = pfAct;
+pfAct = function (a) { var i = a.indexOf(':'), v = a.slice(0, i), x = a.slice(i + 1); if (v === 'lesson') { pfClose(); S.ac.lesson = +x; S.ac.ans = {}; try { gotoWin('academy'); } catch (e) {} } else { _pfAct0(a); } };
+var _lsS = 0;
+function pfLessonFor(q) { var best = null, bs = 0; AC.forEach(function (l) { var s = pfHit(l[7], q); if (s > bs) { bs = s; best = l; } }); _lsS = bs; return bs >= 1 ? best : null; }
+function pfLessonCard(l, full) {
+    var h = full ? acBody(l[4]) + '<br><br>' : esc(l[4].split('\n')[0]) + '<br><br>';
+    return h + btn('lesson:' + l[0], '🎓 Open full lesson & quiz') + '<a class="pfbtn" href="' + esc(acYT(l)) + '" target="_blank" rel="noopener noreferrer" style="background:#ff3b30;color:#fff;text-decoration:none">▶ Videos</a>';
+}
+pfAnswer = function (raw) {
+    var q = pfNorm(raw), out;
+    if (/(teach me|teach us|course|lesson|lessons|curriculum|learn (to )?trad|how (do i|to|can i) (start|begin|learn|become)|become (an? )?(expert|pro|professional|good)|beginner|from zero|step by step|academy|tutorial)/.test(q) && !/\b(rsi|macd|bollinger|ema|leverage)\b/.test(q)) {
+        var nx = acNext(), n = Object.keys(ACP.done).length;
+        return { title: 'Learn trading step by step', html: 'Great, let’s do it properly. The Academy has ' + AC.length + ' short lessons in 6 levels (basics, charts, risk, crypto/futures, world markets, advanced), each with a quiz and video links. You have finished ' + n + '.<br>' + (nx ? btn('lesson:' + nx[0], '▶ ' + (n ? 'Continue: ' : 'Start: ') + nx[2]) : '') + btn('win:academy', '📚 All lessons') + '<br><small>Tip: ask me anything while you learn, for example "explain RSI" or "binance vs mexc".</small>' };
+    }
+    var cmp = pfCompare(q); if (cmp) { return cmp; }
+    var lsn = pfLessonFor(q);
+    var ls = _lsS;
+    if (lsn && ls >= 2 && !/(^| )(open|go to|take me|price|chart)( |$)/.test(q) && !pfCoin(raw)) { return { title: lsn[2], html: pfLessonCard(lsn, true) }; }
+    out = _pfAnswer0(raw);
+    if (out.title === 'I am not sure') {
+        if (lsn) { return { title: lsn[2], html: pfLessonCard(lsn, true) }; }
+        var qq = raw.trim(); return { title: 'Let me point you to a good source', html: 'I do not have a full answer for that in my built-in lessons yet. Ask in other words, or check these trusted places:<br><a class="pfbtn" href="' + esc(acGoog(qq + ' trading explained')) + '" target="_blank" rel="noopener noreferrer" style="background:#0a84ff;color:#fff;text-decoration:none">🔎 Search the web</a><a class="pfbtn" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(qq + ' trading') + '" target="_blank" rel="noopener noreferrer" style="background:#ff3b30;color:#fff;text-decoration:none">▶ Videos</a><a class="pfbtn" href="https://www.investopedia.com/search?q=' + encodeURIComponent(qq) + '" target="_blank" rel="noopener noreferrer" style="background:#34c759;color:#fff;text-decoration:none">📖 Investopedia</a><br>' + btn('win:academy', '🎓 Open Academy') };
+    }
+    if (lsn && !/price|chart/.test(q) && out.title !== lsn[2] && !out.html.match(/data-pfgo="lesson/)) { out.html += '<br><br>' + btn('lesson:' + lsn[0], '🎓 Full lesson: ' + lsn[2]) + '<a class="pfbtn" href="' + esc(acYT(lsn)) + '" target="_blank" rel="noopener noreferrer" style="background:#ff3b30;color:#fff;text-decoration:none">▶ Videos</a>'; }
+    return out;
+};
+PF_APP.push(['academy|lessons|course|quiz', 'Academy', 'The Academy window has 36 short lessons in 6 levels, each with a quiz and video links. Progress is saved on your phone.']);
+PF_WIN['Academy'] = 'academy';
+/* --- bot fix: break-even / trailing stop must clear round-trip fees + slippage, else "protected" exits are net losses --- */
+botTrail = function (p, fav) {
+    var full = Math.abs(p.tp - p.entry), done = p.sg > 0 ? fav - p.entry : p.entry - fav, nsl, safe = 2 * BOT_FEE + BOT_SLIP + 0.0006;
+    if (!(full > 0) || done < 0.5 * full) { return false; }
+    if (full / p.entry < safe * 2) { return false; }
+    nsl = done >= 0.75 * full ? p.entry + p.sg * Math.max(0.4 * full, p.entry * safe) : p.entry * (1 + p.sg * safe);
+    if (p.sg > 0 ? nsl > p.sl : nsl < p.sl) { p.sl = nsl; p.trail = 1; return true; }
+    return false;
+};
+/* ===== p9q: other exchange connectors (read-only balance test: MEXC, Bybit, OKX, Bitget) ===== */
+var XC = {
+    mexc: { n: 'MEXC', ic: '🟦', pass: false, note: 'Create the key in MEXC > API Management with Read ON and Trade OFF (withdrawals always OFF).' },
+    bybit: { n: 'Bybit', ic: '🟧', pass: false, note: 'Bybit > API: create a key with Read-only permission, no withdrawals.' },
+    okx: { n: 'OKX', ic: '⬛', pass: true, note: 'OKX > API: create a key with Read-only permission. The passphrase is the one you choose when creating the key.' },
+    bitget: { n: 'Bitget', ic: '🟩', pass: true, note: 'Bitget > API Management: Read-only permission. The passphrase is the one you choose when creating the key.' }
+};
+function xcGet(x) { var o = {}; try { o = JSON.parse(localStorage.getItem('mintoosuite_x_' + x) || '{}') || {}; } catch (e) { o = {}; } return o; }
+function xcSet(x, o) { try { localStorage.setItem('mintoosuite_x_' + x, JSON.stringify(o)); } catch (e) {} }
+function xcHex(buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
+function xcMac(sec, msg, b64) { var enc = new TextEncoder(); return crypto.subtle.importKey('raw', enc.encode(sec), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']).then(function (k) { return crypto.subtle.sign('HMAC', k, enc.encode(msg)); }).then(function (b) { return b64 ? btoa(String.fromCharCode.apply(null, new Uint8Array(b))) : xcHex(b); }); }
+function xcJson(r) { return r.text().then(function (t) { var j; try { j = JSON.parse(t); } catch (e) { j = null; } return { ok: r.ok, status: r.status, j: j, t: t }; }); }
+function xcTest(x, c) {
+    var ts = Date.now(), f;
+    if (x === 'mexc') { var qs = 'timestamp=' + ts + '&recvWindow=10000'; f = xcMac(c.sec, qs).then(function (sg) { return fetch('https://api.mexc.com/api/v3/account?' + qs + '&signature=' + sg, { headers: { 'X-MEXC-APIKEY': c.key } }); }).then(xcJson).then(function (r) { if (!r.j || r.j.code || !r.j.balances) { throw new Error((r.j && (r.j.msg || r.j.code)) || 'MEXC refused the key (HTTP ' + r.status + ')'); } var u = r.j.balances.filter(function (z) { return z.asset === 'USDT'; })[0] || {}; return 'MEXC spot USDT free ' + (+u.free || 0).toFixed(2); }); }
+    else if (x === 'bybit') { var q = 'accountType=UNIFIED', rw = '10000'; f = xcMac(c.sec, ts + c.key + rw + q).then(function (sg) { return fetch('https://api.bybit.com/v5/account/wallet-balance?' + q, { headers: { 'X-BAPI-API-KEY': c.key, 'X-BAPI-TIMESTAMP': String(ts), 'X-BAPI-RECV-WINDOW': rw, 'X-BAPI-SIGN': sg } }); }).then(xcJson).then(function (r) { if (!r.j || r.j.retCode !== 0) { throw new Error((r.j && r.j.retMsg) || 'Bybit refused the key (HTTP ' + r.status + ')'); } var a = (r.j.result.list || [])[0] || {}; return 'Bybit unified account equity ' + (+a.totalEquity || 0).toFixed(2) + ' USD'; }); }
+    else if (x === 'okx') { var iso = new Date(ts).toISOString(), path = '/api/v5/account/balance'; f = xcMac(c.sec, iso + 'GET' + path, true).then(function (sg) { return fetch('https://www.okx.com' + path, { headers: { 'OK-ACCESS-KEY': c.key, 'OK-ACCESS-SIGN': sg, 'OK-ACCESS-TIMESTAMP': iso, 'OK-ACCESS-PASSPHRASE': c.pass } }); }).then(xcJson).then(function (r) { if (!r.j || r.j.code !== '0') { throw new Error((r.j && r.j.msg) || 'OKX refused the key (HTTP ' + r.status + ')'); } var a = (r.j.data || [])[0] || {}; return 'OKX total equity ' + (+a.totalEq || 0).toFixed(2) + ' USD'; }); }
+    else if (x === 'bitget') { var p2 = '/api/v2/spot/account/assets'; f = xcMac(c.sec, ts + 'GET' + p2, true).then(function (sg) { return fetch('https://api.bitget.com' + p2, { headers: { 'ACCESS-KEY': c.key, 'ACCESS-SIGN': sg, 'ACCESS-TIMESTAMP': String(ts), 'ACCESS-PASSPHRASE': c.pass, 'Content-Type': 'application/json' } }); }).then(xcJson).then(function (r) { if (!r.j || r.j.code !== '00000') { throw new Error((r.j && r.j.msg) || 'Bitget refused the key (HTTP ' + r.status + ')'); } var u = (r.j.data || []).filter(function (z) { return z.coin === 'USDT'; })[0] || {}; return 'Bitget spot USDT available ' + (+u.available || 0).toFixed(2); }); }
+    return f.catch(function (er) { if (/Failed to fetch|NetworkError|Load failed/i.test(er.message || '')) { throw new Error('The browser could not reach ' + XC[x].n + '. Either it blocks direct app connections (CORS) or there is no internet. Prices still work; this exchange may need a server connection (see roadmap).'); } throw er; });
+}
+function cnOther() {
+    var h = '', k;
+    for (k in XC) { var o = XC[k], c = xcGet(k), has = !!(c.key && c.sec); h += '<div class="group pad"><div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><span style="font-size:22px">' + o.ic + '</span><div style="flex:1"><b>' + o.n + '</b><div class="mut" style="font-size:12px">Read-only: balance check</div></div><span style="font-size:12px;padding:3px 10px;border-radius:10px;background:' + (has ? '#e4f7ea;color:#1d8a3b' : '#eee;color:#666') + '">' + (has ? 'Key saved' : 'Not connected') + '</span></div>' +
+            '<input class="inp" id="xk_' + k + '" placeholder="API key" autocomplete="off" style="width:100%;margin:3px 0"><input class="inp" id="xs_' + k + '" placeholder="API secret" type="password" autocomplete="off" style="width:100%;margin:3px 0">' + (o.pass ? '<input class="inp" id="xp_' + k + '" placeholder="API passphrase" type="password" autocomplete="off" style="width:100%;margin:3px 0">' : '') +
+            '<div class="mut" style="font-size:12px;margin:4px 0">' + o.note + '</div>' + mpBtn15('xsave:' + k, 'Save', 1) + mpBtn15('xtest:' + k, 'Test connection') + (has ? mpBtn15('xrm:' + k, 'Remove') : '') + '<div id="xm_' + k + '" style="font-size:12.5px;margin-top:4px"></div></div>';
+    }
+    h += '<div class="group pad"><b>🥇 Exness</b><div class="mut" style="font-size:12.5px;margin-top:4px">Exness gives individuals no trading API; it runs on MetaTrader 4/5. Apps cannot place Exness orders directly. The app shows gold plans and you trade in Exness.</div></div>';
+    return h + '<div class="note">These four are connected for <b>checking your balance only</b>. Order placing for them is not switched on: I cannot test orders against real exchange servers, and an untested order button could cost you real money. Orders on Binance (test network first) work in the Terminal. Keys stay on this phone only. Always create keys with withdrawals OFF.</div>';
+}
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m15^="x"]') : null; if (!el) { return; } var a = el.getAttribute('data-m15'), i = a.indexOf(':'); if (i < 0) { return; } var v = a.slice(0, i), x = a.slice(i + 1); if (!XC[x]) { return; }
+    e.preventDefault(); e.stopPropagation();
+    var msg = function (t, ok) { var m = document.getElementById('xm_' + x); if (m) { m.textContent = t; m.style.color = ok ? '#1d8a3b' : '#d70015'; } }, val = function (p) { var f = document.getElementById(p + '_' + x); return f ? f.value.trim() : ''; };
+    if (v === 'xsave') { var c = xcGet(x), kk = val('xk'), ss = val('xs'), pp = val('xp'); if (kk) { c.key = kk; } if (ss) { c.sec = ss; } if (pp) { c.pass = pp; } if (!c.key || !c.sec || (XC[x].pass && !c.pass)) { msg('Fill the key, the secret' + (XC[x].pass ? ' and the passphrase' : '') + '.', false); return; } xcSet(x, c); renderView(true); ['xk', 'xs', 'xp'].forEach(function (p) { var f = document.getElementById(p + '_' + x); if (f) { f.value = ''; f.__dirty = 0; } }); setTimeout(function () { msg('Saved on this phone. Tap Test connection.', true); }, 50); }
+    else if (v === 'xtest') { var cc = xcGet(x); if (!cc.key || !cc.sec) { msg('Save the key first.', false); return; } msg('Testing…', true); xcTest(x, cc).then(function (t) { msg('Connected. ' + t + '.', true); }).catch(function (er) { msg(er.message, false); }); }
+    else if (v === 'xrm') { if (window.confirm('Remove the saved ' + XC[x].n + ' key from this phone?')) { try { localStorage.removeItem('mintoosuite_x_' + x); } catch (er) {} renderView(true); } }
+}, true);
+PF_APP.push(['mexc api|bybit api|okx api|bitget api|connect mexc|connect bybit|connect okx|connect bitget|exness api|why exness|exness not possible', 'Other exchanges (API)', 'Profile > Connections now lets you save a read-only key for MEXC, Bybit, OKX and Bitget and test your balance. Order placing for them is not switched on because it cannot be tested safely without real servers. Exness has no individual API (MetaTrader), so apps cannot trade it directly.']);
+/* ===== p9r: "Trade this coin" panel under every chart (Binance in-app; other platforms: status + one-tap open) ===== */
+function trdPanel(sym) {
+    var b = base(sym), c = trCfg(), has = !!(c.key && c.sec), live = c.net === 'live', t = S.tick[sym], isGold = sym === 'XAUUSDT';
+    var row = function (ic, n, st, stc, btns) { return '<div class="row" style="display:block"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:20px">' + ic + '</span><b style="flex:1">' + n + '</b><small style="padding:3px 9px;border-radius:10px;font-weight:700;' + stc + '">' + st + '</small></div><div style="margin-top:6px">' + btns + '</div></div>'; };
+    var G = 'background:#e4f7ea;color:#1d8a3b', R = 'background:#fdecea;color:#d70015', N = 'background:#eee;color:#555';
+    var lnk = function (u, tx) { return '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin:2px 8px 2px 0;padding:8px 14px;border-radius:12px;font-weight:600;text-decoration:none;background:var(--fill,#eee);color:inherit;border:1px solid var(--line,#ddd)">' + tx + '</a>'; };
+    var bt = function (a, tx, col) { return '<span class="pfbtn" data-m17="' + a + '" style="display:inline-block;margin:2px 8px 2px 0;padding:9px 16px;border-radius:12px;cursor:pointer;font-weight:700;color:#fff;background:' + col + '">' + tx + '</span>'; };
+    var h = '<div class="sh">Trade ' + esc(isGold ? 'Gold' : b) + ' from here</div><div class="group">';
+    if (t) { h += row('🟡', 'Binance Futures', has ? (live ? '🔴 Ready · LIVE' : '🔵 Ready · TEST') : 'Not connected', has ? G : R, has ? bt('long:' + sym, '▲ Long', '#34c759') + bt('short:' + sym, '▼ Short', '#ff3b30') + '<div class="mut" style="font-size:12px;margin-top:4px">You see quantity, stop, target and money at risk, then confirm. ' + (live ? 'LIVE needs you to type TRADE.' : 'Test mode: fake money.') + '</div>' : bt('conn:0', 'Connect Binance key', '#0a84ff')); }
+    else { h += row('🟡', 'Binance Futures', 'Not listed', N, '<div class="mut" style="font-size:12px">This coin has no Binance Futures contract.</div>'); }
+    if (!isGold) {
+        var X = [['mexc', '🟦', 'MEXC', 'https://futures.mexc.com/exchange/' + b + '_USDT'], ['bitget', '🟩', 'Bitget', 'https://www.bitget.com/futures/usdt/' + b + 'USDT'], ['bybit', '🟧', 'Bybit', 'https://www.bybit.com/trade/usdt/' + b + 'USDT'], ['okx', '⬛', 'OKX', 'https://www.okx.com/trade-swap/' + b.toLowerCase() + '-usdt-swap']];
+        X.forEach(function (x) { var k = xcGet(x[0]), ok = !!(k.key && k.sec); h += row(x[1], x[2], ok ? 'Key saved · balance only' : 'Not connected', ok ? G : N, lnk(x[3], 'Open ' + b + ' on ' + x[2] + ' ›') + (ok ? '' : bt('conn:0', 'Add key', '#0a84ff'))); });
+    } else {
+        h += row('🥇', 'Exness (MetaTrader)', 'Trade in Exness app', N, bt('win:exness', 'Gold plan and lot sizes', '#ff9500') + lnk('https://my.exness.com/', 'Open Exness ›'));
+    }
+    h += '<div class="row" style="display:block"><div class="mut" style="font-size:12px">Why only Binance has Long/Short here: it is the only platform whose orders this app can place today. For the others one tap opens the same coin in their app so you do not waste time searching. Binary-option sites (Quotex, Olymp Trade) are not offered: they are high-risk bets, not real trading.</div></div></div>';
+    return h + '<div class="note">Not financial advice. Leveraged trades can lose your whole margin.</div>';
+}
+(function () { var _v = VIEWS.chart; VIEWS.chart = function () { var h = _v(), s = S.chart && S.chart.sym; try { if (s && /USDT$/.test(s)) { h += trdPanel(s); } } catch (e) {} return h; }; })();
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m17]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+    var a = el.getAttribute('data-m17'), i = a.indexOf(':'), v = a.slice(0, i), x = a.slice(i + 1);
+    if (v === 'long' || v === 'short') {
+        var t = S.tick[x]; if (!t) { return; } var L = v === 'long', p = t.p, f = S.filt[x] || {}, dt = f.tick ? decOf(f.tick) : 6;
+        var fake = { _a: { 'data-sym': x, 'data-side': L ? 'LONG' : 'SHORT', 'data-sl': (p * (L ? 0.985 : 1.015)).toFixed(dt), 'data-tp': (p * (L ? 1.03 : 0.97)).toFixed(dt), 'data-until': '' }, getAttribute: function (k) { return this._a[k]; } };
+        trOpen(fake);
+    } else if (v === 'conn') { S.me.tab = 'conn'; gotoWin('me'); S.me.tab = 'conn'; renderView(true); } else if (v === 'win') { gotoWin(x); }
+}, true);
+PF_APP.push(['trade from chart|trade this coin|trade from here|trade inside app|quick trade|one tap trade', 'Trade from the chart', 'Open any coin (tap it anywhere) and scroll below the chart: the Trade panel shows Binance Long/Short (ready if your key is saved), and one-tap links that open the same coin on MEXC, Bitget, Bybit and OKX. Gold shows the Exness plan.']);
+(function () { var st = document.createElement('style'); st.textContent = '#pfm .pfbub{width:max-content;min-width:120px}'; document.head.appendChild(st); })();
+/* ===== p9s: PSX data reader (several routes + diagnostics) and PSX order ticket / my-broker ===== */
+S.px.diag = []; S.px.tk = null;
+function pxNum(s) { return parseFloat(String(s == null ? '' : s).replace(/[,%\s+]/g, '')); }
+function pxTables(html) {
+    var doc = new DOMParser().parseFromString(html, 'text/html'), out = [], seen = [];
+    doc.querySelectorAll('table').forEach(function (tb) {
+        var hr = tb.querySelector('thead tr') || tb.querySelector('tr'); if (!hr) { return; }
+        var heads = Array.prototype.map.call(hr.querySelectorAll('th,td'), function (h) { return (h.textContent || '').trim().toUpperCase().replace(/\s+/g, ' '); });
+        seen.push(heads.slice(0, 12).join('|'));
+        var ix = function (re) { for (var i = 0; i < heads.length; i++) { if (re.test(heads[i])) { return i; } } return -1; };
+        var iS = ix(/^(SYMBOL|SCRIP|TICKER|SECURITY|COMPANY|NAME)/), iC = ix(/^(CURRENT|PRICE|LAST|CLOSE|LTP|RATE|CLOSING)/), iCh = ix(/^(CHANGE|CHG|NET CHANGE)$/), iP = ix(/(CHANGE.*%|%.*CHANGE|^%|CHG ?%)/), iV = ix(/VOLUME|VOL$/), iSec = ix(/SECTOR/), iL = ix(/LDCP|PREV/);
+        if (iS < 0 || iC < 0) { return; }
+        tb.querySelectorAll('tbody tr, tr').forEach(function (tr) {
+            var td = tr.querySelectorAll('td'); if (td.length <= Math.max(iS, iC)) { return; }
+            var sym = (td[iS].getAttribute('data-search') || td[iS].textContent || '').trim().split(/\s+/)[0].toUpperCase(), cur = pxNum(td[iC].textContent);
+            if (!sym || !/^[A-Z0-9]{2,12}$/.test(sym) || !isFinite(cur) || cur <= 0) { return; }
+            var chg = iCh >= 0 ? pxNum(td[iCh] && td[iCh].textContent) : NaN, pc = iP >= 0 ? pxNum(td[iP] && td[iP].textContent) : NaN, ld = iL >= 0 ? pxNum(td[iL] && td[iL].textContent) : NaN;
+            if (!isFinite(chg) && isFinite(ld)) { chg = cur - ld; } if (!isFinite(pc) && isFinite(chg) && cur - chg) { pc = chg / (cur - chg) * 100; }
+            out.push({ s: sym, p: cur, c: isFinite(chg) ? chg : 0, pc: isFinite(pc) ? pc : 0, v: (iV >= 0 ? pxNum(td[iV] && td[iV].textContent) : 0) || 0, sec: iSec >= 0 && td[iSec] ? td[iSec].textContent.trim() : '' });
+        });
+    });
+    out.seen = seen; return out;
+}
+function pxJson(t) {
+    var j; try { j = JSON.parse(t); } catch (e) { return []; } var a = Array.isArray(j) ? j : (j && (j.data || j.rows || j.result)) || []; if (!Array.isArray(a)) { return []; } var out = [];
+    a.forEach(function (o) { if (!o || typeof o !== 'object') { return; } var g = function (ks) { for (var i = 0; i < ks.length; i++) { if (o[ks[i]] != null) { return o[ks[i]]; } } }, s = g(['symbol', 'Symbol', 'SYMBOL', 's', 'scrip']), p = pxNum(g(['price', 'current', 'last', 'close', 'ltp', 'c', 'Current'])); if (!s || !isFinite(p)) { return; } var ch = pxNum(g(['change', 'chg', 'Change'])), pc = pxNum(g(['changePercent', 'pchange', 'change_pct', 'pc', 'percent'])); out.push({ s: String(s).toUpperCase(), p: p, c: isFinite(ch) ? ch : 0, pc: isFinite(pc) ? pc : (isFinite(ch) && p - ch ? ch / (p - ch) * 100 : 0), v: pxNum(g(['volume', 'vol', 'v'])) || 0, sec: g(['sector', 'Sector']) || '' }); });
+    return out;
+}
+function pxLoad() {
+    if (S.px.busy || Date.now() - S.px.at < 60000) { return; } S.px.busy = true; S.px.err = ''; S.px.diag = [];
+    var base = 'https://dps.psx.com.pk', paths = ['/market-watch', '/trading-board/REG/main', '/screener', '/trading-board/REG/all'], i = 0;
+    function next() {
+        if (i >= paths.length) { throw new Error('none'); } var u = base + paths[i++], tries = [fetchText(u, 12000)]; PROXIES.forEach(function (p) { tries.push(fetchText(p(u), 12000)); });
+        return firstOk(tries.map(function (p) { return p.then(function (t) { var r = /^\s*[\[{]/.test(t) ? pxJson(t) : pxTables(t); if (r.length < 20) { S.px.diag.push(u.replace(base, '') + ': ' + (r.length ? r.length + ' rows only' : 'no usable table') + (r.seen && r.seen.length ? ' (headers: ' + r.seen[0].slice(0, 80) + ')' : ' (' + String(t).length + ' bytes)')); throw new Error('empty'); } return r; }); })).catch(function (e) { if (!S.px.diag.filter(function (d) { return d.indexOf(u.replace(base, '')) === 0; }).length) { S.px.diag.push(u.replace(base, '') + ': could not be fetched'); } return next(); });
+    }
+    Promise.resolve().then(next).then(function (r) { S.px.rows = r; S.px.at = Date.now(); }).catch(function () { S.px.err = 'The PSX share list could not be read.'; S.px.at = Date.now() - 30000; }).then(function () { S.px.busy = false; if (S.win === 'psx') { renderView(true); } });
+    fetchText(base + '/timeseries/int/KSE100', 10000).then(function (t) { var j = JSON.parse(t), d = j && j.data; if (d && d.length) { var l = d[0], f = d[d.length - 1]; S.px.idx = { last: +(l[1] !== undefined ? l[1] : l.c), first: +(f[1] !== undefined ? f[1] : f.c), n: d.length }; } }).catch(function () {});
+}
+/* ---- my broker + order ticket ---- */
+function pbGet() { var o = {}; try { o = JSON.parse(localStorage.getItem('mintoosuite_pbk') || '{}') || {}; } catch (e) { o = {}; } return o; }
+function pbSet(o) { try { localStorage.setItem('mintoosuite_pbk', JSON.stringify(o)); } catch (e) {} }
+function pbCosts(side, v) { var br = Math.max(v * 0.0015, 0), cdc = v * 0.00005, fee = v * 0.0000565 + v * 0.0000125, tax = br * 0.15; return { br: br, other: cdc + fee, tax: tax, tot: br + cdc + fee + tax }; }
+function pbTicket() {
+    var T = S.px.tk, B = pbGet(); if (!T) { return ''; }
+    var row = (S.px.rows || []).filter(function (x) { return x.s === T.s; })[0], px = T.px > 0 ? T.px : (row ? row.p : 0), q = T.q > 0 ? T.q : 100, v = px * q, c = pbCosts(T.side, v), buy = T.side === 'BUY';
+    var inp = function (id, val, ph) { return '<input class="inp" id="' + id + '" value="' + esc(val == null ? '' : val) + '" placeholder="' + ph + '" inputmode="decimal" autocomplete="off" style="width:100%;margin:3px 0">'; };
+    var h = '<div class="group pad" style="border:2px solid ' + (buy ? '#34c759' : '#ff3b30') + '"><div style="display:flex;align-items:center"><b style="font-size:18px;flex:1">' + (buy ? '▲ BUY ' : '▼ SELL ') + esc(T.s) + '</b><span class="mut" data-m18="tkx" style="cursor:pointer;padding:4px 8px">✕</span></div>' +
+        '<div style="margin:6px 0">' + ['BUY', 'SELL'].map(function (s) { return '<span class="pfbtn" data-m18="side:' + s + '" style="display:inline-block;margin:2px 8px 2px 0;padding:8px 18px;border-radius:12px;cursor:pointer;font-weight:700;' + (T.side === s ? 'background:' + (s === 'BUY' ? '#34c759' : '#ff3b30') + ';color:#fff' : 'background:var(--fill,#eee)') + '">' + s + '</span>'; }).join('') + '</div>' +
+        '<div class="note" style="margin:0">Quantity (shares)</div>' + inp('pbQ', T.q || 100, 'e.g. 100') + '<div class="note" style="margin:6px 0 0">Limit price (Rs). Live price ' + (row ? row.p.toFixed(2) : 'n/a') + '</div>' + inp('pbP', T.px || (row ? row.p.toFixed(2) : ''), 'Limit price') +
+        '<div class="group" style="margin:8px 0"><div class="row"><span>Value</span><b>Rs ' + Math.round(v).toLocaleString() + '</b></div><div class="row"><span>Estimated costs (brokerage ~0.15%, CDC, SECP/PSX fees, tax on brokerage)</span><b>Rs ' + Math.round(c.tot).toLocaleString() + '</b></div><div class="row"><span>' + (buy ? 'Total to pay' : 'You receive about') + '</span><b>Rs ' + Math.round(buy ? v + c.tot : v - c.tot).toLocaleString() + '</b></div></div>' +
+        '<div class="note" style="margin:0 0 6px">These are estimates; your broker\'s rates differ. ' + (buy ? '' : 'Capital gains tax may apply on sales. ') + 'Prices may be delayed. Check the live price with your broker before confirming.</div>' +
+        '<span class="pfbtn" data-m18="copy" style="display:inline-block;margin:3px 8px 3px 0;padding:9px 16px;border-radius:14px;cursor:pointer;font-weight:700;background:#0a84ff;color:#fff">📋 Copy order</span>' +
+        (B.wa ? '<a href="https://wa.me/' + esc(B.wa.replace(/[^0-9]/g, '')) + '?text=' + encodeURIComponent(pbText(T, px, q)) + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin:3px 8px 3px 0;padding:9px 16px;border-radius:14px;font-weight:700;text-decoration:none;background:#25d366;color:#fff">💬 Send to my dealer</a>' : '') +
+        (B.url ? '<a href="' + esc(B.url) + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin:3px 8px 3px 0;padding:9px 16px;border-radius:14px;font-weight:700;text-decoration:none;background:#1f9d55;color:#fff">Open ' + esc(B.name || 'my broker') + ' ›</a>' : '') + '<div id="pbMsg" style="font-size:12.5px;margin-top:4px"></div></div>';
+    return h;
+}
+function pbText(T, px, q) { return (T.side === 'BUY' ? 'BUY ' : 'SELL ') + q + ' ' + T.s + ' @ limit Rs ' + (+px).toFixed(2) + ' (day order)'; }
+function pbBroker() {
+    var B = pbGet(), inp = function (id, v, ph) { return '<input class="inp" id="' + id + '" value="' + esc(v || '') + '" placeholder="' + ph + '" autocomplete="off" style="width:100%;margin:3px 0">'; };
+    return sh('My PSX broker') + '<div class="group pad"><div class="note" style="margin:0 0 6px">PSX orders can only be placed by a licensed broker. Save yours once; then every share has Buy and Sell buttons here that prepare the order and open your broker with one tap.</div>' + inp('pbN', B.name, 'Broker name, e.g. KTrade') + inp('pbU', B.url, 'Broker web/trading link (https://…)') + inp('pbW', B.wa, 'Dealer WhatsApp number with country code (optional)') + '<span class="pfbtn" data-m18="savebk" style="display:inline-block;margin:3px 8px 3px 0;padding:9px 16px;border-radius:14px;cursor:pointer;font-weight:700;background:#0a84ff;color:#fff">Save broker</span><div id="pbBm" style="font-size:12.5px;margin-top:4px"></div>' +
+        '<div class="note" style="margin:8px 0 0">Why not place the order inside the app? PSX has no retail order API. Only a broker with its own trading system can send orders, and no Pakistani retail broker publishes an open API. If your broker gives you API documentation and credentials, send them to me and I can connect it.</div></div>';
+}
+function m7pxList() {
+    var P = S.px; if (!P.rows) { return P.err ? '<div class="warn">' + esc(P.err) + (P.diag && P.diag.length ? '<br><small>Tried: ' + esc(P.diag.join(' · ')) + '</small>' : '') + '<br><small>This may be PSX blocking the request or a layout change. Tap Retry, and send me this message if it stays.</small><br><span class="pfbtn" data-m18="retry" style="display:inline-block;margin-top:6px;padding:8px 14px;border-radius:12px;background:#0a84ff;color:#fff;cursor:pointer;font-weight:700">Retry</span></div>' : skel(5, 56); }
+    var q = P.q.trim().toUpperCase(), rows = P.rows.filter(function (x) { return !q || x.s.indexOf(q) >= 0 || (x.sec || '').toUpperCase().indexOf(q) >= 0; }).sort(function (a, b) { return b.v - a.v; }).slice(0, 100);
+    return '<div class="group">' + rows.map(function (x) { return '<div class="m7r tap" data-m18="tk:' + x.s + '"><div class="l"><b>' + esc(x.s) + '</b><small>' + esc(x.sec) + (x.v ? ' · vol ' + m7vol(x.v) : '') + '</small></div><div class="r"><div>' + x.p.toFixed(2) + '</div><small>Rs</small></div><span class="m7chg ' + (x.pc >= 0 ? 'u' : 'd') + '">' + (x.pc >= 0 ? '+' : '') + x.pc.toFixed(2) + '%</span></div>'; }).join('') + '</div><div class="note" style="text-align:center">' + rows.length + ' of ' + P.rows.length + ' shares · updated ' + ago(P.at) + ' · tap a share to buy or sell</div>';
+}
+(function () { var _v = VIEWS.psx; VIEWS.psx = function () { var h = _v(); var i = h.indexOf('<div class="m7q">'); if (i > 0) { h = h.slice(0, i) + pbTicket() + h.slice(i); } return h.replace('Trade through a broker', 'No broker yet? Find a licensed one').replace(/<div class="note">Direct order placing[\s\S]*$/, '') + pbBroker() + '<div class="note">Not financial advice. Prices can be delayed; confirm with your broker.</div>'; }; })();
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m18]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+    var a = el.getAttribute('data-m18'), i = a.indexOf(':'), v = i < 0 ? a : a.slice(0, i), x = i < 0 ? '' : a.slice(i + 1), val = function (id) { var f = document.getElementById(id); return f ? f.value.trim() : ''; };
+    if (v === 'tk') { S.px.tk = { s: x, side: 'BUY', q: 100, px: 0 }; renderView(true); try { window.scrollTo(0, 0); } catch (er) {} }
+    else if (v === 'tkx') { S.px.tk = null; renderView(true); }
+    else if (v === 'side') { if (S.px.tk) { S.px.tk.q = +val('pbQ') || S.px.tk.q; S.px.tk.px = +val('pbP') || S.px.tk.px; S.px.tk.side = x; renderView(true); } }
+    else if (v === 'copy') { var T = S.px.tk; if (!T) { return; } T.q = +val('pbQ') || 100; T.px = +val('pbP') || 0; var tx = pbText(T, T.px, T.q), m = document.getElementById('pbMsg'); try { navigator.clipboard.writeText(tx).then(function () { if (m) { m.textContent = 'Copied: ' + tx; m.style.color = '#1d8a3b'; } }, function () { if (m) { m.textContent = tx; } }); } catch (er) { if (m) { m.textContent = tx; } } }
+    else if (v === 'savebk') { var u = val('pbU'), m2 = document.getElementById('pbBm'); if (u && !/^https:\/\//i.test(u)) { if (m2) { m2.textContent = 'The link must start with https://'; m2.style.color = '#d70015'; } return; } pbSet({ name: val('pbN'), url: u, wa: val('pbW') }); renderView(true); setTimeout(function () { var m3 = document.getElementById('pbBm'); if (m3) { m3.textContent = 'Saved on this phone.'; m3.style.color = '#1d8a3b'; } }, 50); }
+    else if (v === 'retry') { S.px.at = 0; S.px.rows = null; S.px.err = ''; renderView(true); }
+}, true);
+PF_APP.push(['buy psx|sell psx|trade psx|psx broker|trade shares|buy shares|stock broker|kse trading|why psx not working|psx not loading', 'Trade PSX shares', 'Open KSE / PSX, tap a share, choose Buy or Sell, enter quantity and price: the app shows costs and prepares the order text. Save your licensed broker once (link and optional dealer WhatsApp) and one tap sends or opens it. PSX has no retail order API, so the broker places the order.']);
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
