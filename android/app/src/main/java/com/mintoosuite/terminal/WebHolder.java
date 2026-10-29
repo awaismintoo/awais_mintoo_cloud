@@ -56,6 +56,16 @@ final class WebHolder {
                 Uri u = request.getUrl();
                 if (HOST.equals(u.getHost())) { return false; }
                 String sch = u.getScheme();
+                if ("mailto".equals(sch) || "tel".equals(sch) || "sms".equals(sch) || "smsto".equals(sch) || "whatsapp".equals(sch)) {
+                    try {
+                        Intent i = new Intent("mailto".equals(sch) ? Intent.ACTION_SENDTO : Intent.ACTION_VIEW, u);
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        app.startActivity(i);
+                    } catch (Exception e) {
+                        view.evaluateJavascript("window.__mwMailFail&&window.__mwMailFail();", null);
+                    }
+                    return true;
+                }
                 if ("http".equals(sch) || "https".equals(sch)) {
                     try {
                         Intent i = new Intent(Intent.ACTION_VIEW, u);

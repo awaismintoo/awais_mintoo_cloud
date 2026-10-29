@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.29';
+var BUILD = '2026-10-29.33';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5637,8 +5637,12 @@ m7kl = function (sym, tf, n) {
     if (!inAn) { return _kl113(sym, tf, n); }
     if (r === 'mc') { return mexcC(sym, tf, n).then(function (k) { S.an.src = 'MEXC Futures'; return k; }); }
     if (r === 'ms') { return mexcS(sym, tf, n).then(function (k) { S.an.src = 'MEXC Spot'; return k; }); }
+    if (r === 'bc') { return XCH.kl({ s: base(sym), fut: true, x: 'bitget' }, tf, n).then(function (k) { S.an.src = 'Bitget Futures'; return k; }); }
+    if (r === 'bs') { return XCH.kl({ s: base(sym), fut: false, x: 'bitget' }, tf, n).then(function (k) { S.an.src = 'Bitget Spot'; return k; }); }
     return _kl113(sym, tf, n).then(function (k) { if (!AR.route[sym]) { AR.route[sym] = S.tick[sym] ? 'f' : 's'; } return k; }, function (e) {
-        return mexcC(sym, tf, n).then(function (k) { AR.route[sym] = 'mc'; S.an.src = 'MEXC Futures'; return k; }, function () { return mexcS(sym, tf, n).then(function (k) { AR.route[sym] = 'ms'; S.an.src = 'MEXC Spot'; return k; }); }).catch(function () { throw e; });
+        return mexcC(sym, tf, n).then(function (k) { AR.route[sym] = 'mc'; S.an.src = 'MEXC Futures'; return k; }, function () { return mexcS(sym, tf, n).then(function (k) { AR.route[sym] = 'ms'; S.an.src = 'MEXC Spot'; return k; }); }).catch(function () {
+            return XCH.kl({ s: base(sym), fut: true, x: 'bitget' }, tf, n).then(function (k) { AR.route[sym] = 'bc'; S.an.src = 'Bitget Futures'; return k; }, function () { return XCH.kl({ s: base(sym), fut: false, x: 'bitget' }, tf, n).then(function (k) { AR.route[sym] = 'bs'; S.an.src = 'Bitget Spot'; return k; }); });
+        }).catch(function () { throw e; });
     });
 };
 function anBodySym(s) { return S.an && S.an.inst && S.an.inst.sym && s === S.an.sym ? S.an.inst.sym : s; }
@@ -5766,7 +5770,7 @@ m7analyse = function (sym) {
     var real = inst.sym; A.sym = sym; A.inst = inst; var p = _an113(real === sym ? sym : real);
     A.sym = sym; return p.then(function (x) {
         A.at = Date.now(); AR.lastAuto = Date.now(); if (A.res) { A.res.kind = 'cx'; A.res.label = inst.label; var lv0 = null; try { lv0 = anLiveVal(); } catch (e) {} if (!S.tick[real] && A.live && A.live.sym === real) { A.res.price = A.live.p; } }
-        else if (A.err) { A.err = 'I could not find "' + base(sym) + '" on Binance (Futures or Spot) or MEXC. Check the spelling. For a currency type for example USD/PKR or EUR/USD; for gold XAU, silver XAG, oil OIL.'; }
+        else if (A.err) { A.err = 'I could not find "' + base(sym) + '" on Binance (Futures, Spot), MEXC (Perp, Spot) or Bitget (Perp, Spot) right now. It may be delisted or spelled differently. Check the spelling. For a currency type for example USD/PKR or EUR/USD; for gold XAU, silver XAG, oil OIL.'; }
         if (!A.where || A.where.sym !== real) { anWhere(inst).then(function () { if (S.win === 'analyst') { renderView(true); } }); }
         return x;
     });
@@ -5795,7 +5799,7 @@ vAnalyst = function () {
         return h + '<div class="group pad"><b>' + esc(r.label) + '</b><div class="note" style="margin:6px 0">' + (S.an.inst && S.an.inst.kind === 'fxhelp' ? 'Please type a pair or a country: for example USD/PKR, EUR/USD, GBP/USD, Pakistan, India, Japan.' : 'Oil is not listed on Binance or MEXC, so there are no candles for the bot to read here. Exness offers it as USOIL and UKOIL. The current oil price and fuel prices are in Windows > Rates.') + '</div><span class="pfbtn" style="background:#0a84ff;color:#fff;border-radius:14px;padding:6px 12px;cursor:pointer" data-act="win:rates">Open Rates ›</span>' + anWhereHTML() + '</div>';
     }
     var h2 = _vAn113();
-    h2 = anIntro(h2); var sl = { 'Spot': 'Binance Spot', 'MEXC Futures': 'MEXC Futures', 'MEXC Spot': 'MEXC Spot' }[A.src]; if (sl && A.res) { h2 = h2.replace('USDT Perpetual', sl); }
+    h2 = anIntro(h2); var sl = { 'Spot': 'Binance Spot', 'MEXC Futures': 'MEXC Futures', 'MEXC Spot': 'MEXC Spot', 'Bitget Futures': 'Bitget Futures', 'Bitget Spot': 'Bitget Spot' }[A.src]; if (sl && A.res) { h2 = h2.replace('USDT Perpetual', sl); }
     return h2;
 };
 VIEWS.analyst = vAnalyst;
@@ -7946,7 +7950,8 @@ var idFcRaw = fcMini;
 function sticky(list, keyOf, store, holdMs) {
     var now = Date.now(), map = {}, out = [], seen = {};
     list.forEach(function (x) { map[keyOf(x)] = x; });
-    if (!store.keys || now - store.at > holdMs) { store.keys = list.map(keyOf); store.at = now; return list; }
+    var busy = (window.pageYOffset > 40) || (typeof IDS !== 'undefined' && IDS.open) || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
+    if (!store.keys || (!busy && now - store.at > holdMs)) { store.keys = list.map(keyOf); store.at = now; return list; }
     store.keys.forEach(function (k) { if (map[k]) { out.push(map[k]); seen[k] = 1; } });
     list.forEach(function (x) { if (!seen[keyOf(x)]) { out.push(x); } });
     store.keys = out.map(keyOf); return out;
@@ -8325,6 +8330,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
     }
     WINS.push({ id: 'support', ic: '🛟', c: '#0a84ff', n: 'Support desk', t: 'Support', sub: 'Ask Professor or write to the owner' }); LIVE.support = 0; VIEWS.support = vSupport;
     MW_HELP.support = 'Get help: instant answers from Professor, or write a message that opens your email app with the details filled in.';
+    window.__mwMailFail = function () { var t = window.__lastMail || ''; try { navigator.clipboard.writeText(t); } catch (e) { } try { toast('No email app found. Message copied: paste it into any app and send to awaisrajpoot2@yahoo.com, or use WhatsApp.'); } catch (e) { } };
     function supSend(copy, wa) {
         var tp = document.getElementById('kps'), ms = document.getElementById('kpm'), df = document.getElementById('kpd'); if (!ms) { return; }
         var msg = (ms.value || '').trim(); if (!msg) { try { toast('Please write a message first'); } catch (e) { } return; }
@@ -8332,7 +8338,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         SUPN.push([n, tp ? tp.value : '', msg, new Date().toISOString().slice(0, 10)]); try { localStorage.setItem(SUPK, JSON.stringify(SUPN.slice(-30))); } catch (e) { }
         if (copy) { try { navigator.clipboard.writeText(body); toast('Copied'); } catch (e) { var ta = document.createElement('textarea'); ta.value = body; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (er) { } document.body.removeChild(ta); } }
         else if (wa) { window.open('https://wa.me/' + SUP_WA + '?text=' + encodeURIComponent('MintooSuite support #' + n + ' (' + (tp ? tp.value : '') + ')\n' + body), '_blank'); }
-        else { window.location.href = 'mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite support #' + n + ': ' + (tp ? tp.value : '')) + '&body=' + encodeURIComponent(body); }
+        else { window.__lastMail = body; window.location.href = 'mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite support #' + n + ': ' + (tp ? tp.value : '')) + '&body=' + encodeURIComponent(body); }
         ms.value = ''; try { renderView(true); } catch (e) { }
     }
 
@@ -8536,7 +8542,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
     window.__huPush = push;
     function go(a) {
         if (!a) { return; } var i = a.indexOf(':'), v = a.slice(0, i), x = a.slice(i + 1);
-        try { if (v === 'win') { gotoWin(x); } else if (v === 'an' || v === 'chart') { pfAct(a); } else if (a === 'reconnect') { var b = document.querySelector('[data-act="reconnect"]'); if (b) { b.click(); } } } catch (er) { }
+        try { if (v === 'win') { gotoWin(x); } else if (v === 'mx') { window.__mxOpen && window.__mxOpen(x); } else if (v === 'an' || v === 'chart') { pfAct(a); } else if (a === 'reconnect') { var b = document.querySelector('[data-act="reconnect"]'); if (b) { b.click(); } } } catch (er) { }
     }
     /* ----- generic: important log events become popups ----- */
     var _al = addLog; addLog = function (type, text) { var r = _al.apply(this, arguments); try { var t = String(type); if (/BOT|ALERT|MASTER|MOVER|HEAL|FACTORS|TRADE|ORDER|RISK/.test(t)) { push('log:' + t + ':' + String(text).slice(0, 40), /ALERT|MOVER/.test(t) ? '🔔' : /BOT/.test(t) ? '🤖' : /HEAL/.test(t) ? '🩺' : '📣', t === 'ALERT' ? 'Price alert' : t === 'MOVER' ? 'Big mover' : t === 'BOT' ? 'Bot' : 'Notice', String(text).slice(0, 140), /BOT/.test(t) ? 'win:bot' : '', /BOT|HEAL/.test(t) ? 'warn' : 'info', 600000); } } catch (e) { } return r; };
@@ -8558,7 +8564,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
     }
     /* ----- MEXC radar: movers on MEXC (also those not on Binance) ----- */
     function mxList() { var M = S.mx || {}, a = [], seen = {}; ['spot', 'fut'].forEach(function (t) { (M[t] || []).forEach(function (x) { if (x.q >= 150000 && isFinite(x.c)) { var id = x.s; if (!seen[id] || x.c > seen[id].c) { seen[id] = { s: x.s, c: x.c, p: x.p, q: x.q, t: t, b: !!(S.tick && S.tick[x.s + 'USDT']) }; } } }); }); for (var k in seen) { a.push(seen[k]); } a.sort(function (p, q) { return q.c - p.c; }); return a; }
-    var mxAt = 0; function mxRadar() { if (now() - mxAt > 60000) { mxAt = now(); try { mxLoad(); } catch (e) { } } var l = mxList().filter(function (x) { return !x.b && x.c >= 15; })[0]; if (l) { push('mx:' + l.s, '🟦', 'MEXC mover: ' + l.s + ' +' + l.c.toFixed(0) + '%', 'Not on Binance Futures. Tap for the full analysis (charts, entry, stop, target).', 'an:' + l.s + 'USDT', 'info', 6 * 3600000); } }
+    var mxAt = 0; function mxRadar() { if (now() - mxAt > 60000) { mxAt = now(); try { mxLoad(); } catch (e) { } } var l = mxList().filter(function (x) { return !x.b && x.c >= 15; })[0]; if (l) { push('mx:' + l.s, '🟦', 'MEXC mover: ' + l.s + ' +' + l.c.toFixed(0) + '%', 'Not on Binance Futures. Tap for the full MEXC page (chart, plan, order book, funding).', 'mx:' + l.s, 'info', 6 * 3600000); } }
     var _vm = VIEWS.mexc; VIEWS.mexc = function () {
         var h = _vm.apply(this, arguments), L = mxList(), top = L.slice(0, 12), x;
         var r = '<div class="group pad"><b>🏁 MEXC top gainers (24h)</b><div class="note">Includes coins that are not on Binance. Tap Analyse for charts, indicators and a LONG/SHORT plan. Volume at least $150k. High gainers are risky.</div>';
@@ -8616,6 +8622,1067 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         try { _bs(); } finally { getActions = g; }
     };
     window.__botPick = pick;
+})();
+/* ===== v10.8 .30: Exchange layer: Binance / MEXC / Bitget data adapters, listing check, global exchange selector (S.xch) ===== */
+(function () {
+    function nowv() { return Date.now(); }
+    var LIST = [['binance', 'Binance'], ['mexc', 'MEXC'], ['bitget', 'Bitget']];
+    S.xch = (function () { var v = ls('mintoosuite_xch', 'all'); return /^(all|binance|mexc|bitget)$/.test(v) ? v : 'all'; })();
+    var BG = { spot: null, fut: null, at: 0, busy: false, err: '' };
+    function xget(url) { return nxReq('GET', url, {}).then(function (r) { if (!r.ok || !r.j) { throw new Error('HTTP ' + r.status); } return r.j; }); }
+    function bgNorm(arr, fut) {
+        if (!Array.isArray(arr)) { return null; }
+        return arr.filter(function (x) { return x && /USDT$/.test(x.symbol || ''); }).map(function (x) { return { s: x.symbol.replace(/USDT$/, ''), p: +x.lastPr, c: (+x.change24h) * 100, q: +x.usdtVolume || +x.quoteVolume || 0, fut: fut }; }).filter(function (x) { return x.p > 0 && x.q > 0 && isFinite(x.c); });
+    }
+    function bgLoad(force) {
+        if (BG.busy || (!force && nowv() - BG.at < 60000)) { return; } BG.busy = true; BG.err = '';
+        Promise.all([xget('https://api.bitget.com/api/v2/spot/market/tickers').then(function (j) { return bgNorm(j.data, false); }).catch(function (e) { BG.err = e.message; return null; }), xget('https://api.bitget.com/api/v2/mix/market/tickers?productType=USDT-FUTURES').then(function (j) { return bgNorm(j.data, true); }).catch(function (e) { BG.err = e.message; return null; })]).then(function (r) {
+            if (r[0]) { BG.spot = r[0]; } if (r[1]) { BG.fut = r[1]; } BG.at = nowv(); if (!r[0] && !r[1] && !BG.err) { BG.err = 'no data'; }
+        }).then(function () { BG.busy = false; IDX.at = 0; });
+    }
+    /* ----- listing index: is this coin REALLY on that exchange (live volume, same coin, not delisted)? ----- */
+    var IDX = { at: 0, mexc: {}, bitget: {}, key: '' };
+    function index() {
+        var M = S.mx || {}, key = (M.at || 0) + ':' + (BG.at || 0) + ':' + (M.spot ? M.spot.length : 0) + ':' + (M.fut ? M.fut.length : 0) + ':' + (BG.spot ? BG.spot.length : 0) + ':' + (BG.fut ? BG.fut.length : 0);
+        if (IDX.key === key && IDX.at) { return IDX; } IDX.key = key; IDX.at = nowv(); IDX.mexc = {}; IDX.bitget = {};
+        function live(x) { return x && x.q > 0 && x.p > 0; }
+        (M.spot || []).forEach(function (x) { if (live(x)) { IDX.mexc[x.s] = IDX.mexc[x.s] || { s: x }; } }); (M.fut || []).forEach(function (x) { if (live(x)) { IDX.mexc[x.s] = IDX.mexc[x.s] || {}; IDX.mexc[x.s].f = x; } });
+        (BG.spot || []).forEach(function (x) { if (live(x)) { IDX.bitget[x.s] = IDX.bitget[x.s] || { s: x }; } }); (BG.fut || []).forEach(function (x) { if (live(x)) { IDX.bitget[x.s] = IDX.bitget[x.s] || {}; IDX.bitget[x.s].f = x; } });
+        return IDX;
+    }
+    var PRE = [['1000000', 1e6], ['1000', 1000], ['1M', 1e6]];
+    /* Binance futures names such as 1000SHIBUSDT: find them from the plain name and scale the price */
+    function binFut(b) {
+        var t = S.tick || {}; if (t[b + 'USDT']) { return { sym: b + 'USDT', f: 1, t: t[b + 'USDT'] }; }
+        for (var i = 0; i < PRE.length; i++) { var k = PRE[i][0] + b + 'USDT'; if (t[k]) { return { sym: k, f: PRE[i][1], t: t[k] }; } } return null;
+    }
+    function binSpot(b) { var L = (S.m7 && S.m7.mk && S.m7.mk.spot) || [], i; for (i = 0; i < L.length; i++) { if (L[i].sym === b + 'USDT') { return L[i]; } } return null; }
+    /* everything we know about one coin name, with the "is it the same coin?" check */
+    function info(b) {
+        b = String(b || '').replace(/USDT$/, ''); var bf = binFut(b), bs = binSpot(b), I = index(), m = I.mexc[b] || {}, g = I.bitget[b] || {}, o = { b: b, bf: bf, bs: bs, mf: m.f || null, ms: m.s || null, gf: g.f || null, gs: g.s || null, ref: null, bad: {} };
+        var cand = []; if (bf) { cand.push(['binance', bf.t.p / bf.f]); } if (bs) { cand.push(['binance', bs.p]); } if (o.mf) { cand.push(['mexc', o.mf.p]); } if (o.ms) { cand.push(['mexc', o.ms.p]); } if (o.gf) { cand.push(['bitget', o.gf.p]); } if (o.gs) { cand.push(['bitget', o.gs.p]); }
+        if (cand.length) { o.ref = cand[0]; }
+        function chk(key, p, x) { if (!o.ref || o.ref[0] === x || !(p > 0)) { return; } var r = p / o.ref[1]; if (r > 1.2 || r < 1 / 1.2) { o.bad[key] = { p: p, ref: o.ref[1], rx: o.ref[0], pct: (r - 1) * 100 }; } }
+        chk('bs', bs && bs.p, 'binance'); chk('mf', o.mf && o.mf.p, 'mexc'); chk('ms', o.ms && o.ms.p, 'mexc'); chk('gf', o.gf && o.gf.p, 'bitget'); chk('gs', o.gs && o.gs.p, 'bitget');
+        return o;
+    }
+    /* returns 'f' (futures/perp), 's' (spot only) or '' (not listed or a different coin with the same name) */
+    function listed(x, b) {
+        b = String(b || '').replace(/USDT$/, '');
+        if (x === 'binance') { return binFut(b) ? 'f' : ''; }
+        var o = info(b); if (x === 'mexc') { return o.mf && !o.bad.mf ? 'f' : o.ms && !o.bad.ms ? 's' : ''; } if (x === 'bitget') { return o.gf && !o.bad.gf ? 'f' : o.gs && !o.bad.gs ? 's' : ''; } return 'f';
+    }
+    function where(b) { return LIST.filter(function (e) { return listed(e[0], b); }).map(function (e) { return e[1]; }); }
+    /* ----- candles ----- */
+    function mxKl(c, tf, n) {
+        if (c.fut) {
+            var iv = { '15m': 'Min15', '1h': 'Min60', '4h': 'Hour4', '1d': 'Day1' }[tf], step = { '15m': 900, '1h': 3600, '4h': 14400, '1d': 86400 }[tf], now = Math.floor(nowv() / 1000);
+            return mxJSON('https://contract.mexc.com/api/v1/contract/kline/' + c.s + '_USDT?interval=' + iv + '&start=' + (now - step * (n + 2)) + '&end=' + now).then(function (j) {
+                var d = j && j.data; if (!d || !d.time || d.time.length < 30) { throw new Error('no data'); } var out = [], i;
+                for (i = 0; i < d.time.length; i++) { out.push({ t: d.time[i] * 1000, o: +d.open[i], h: +d.high[i], l: +d.low[i], c: +d.close[i], v: +d.vol[i], q: +(d.amount ? d.amount[i] : 0) || +d.vol[i] * +d.close[i] }); } return out;
+            });
+        }
+        var iv2 = { '15m': '15m', '1h': '60m', '4h': '4h', '1d': '1d' }[tf];
+        return mxJSON('https://api.mexc.com/api/v3/klines?symbol=' + c.s + 'USDT&interval=' + iv2 + '&limit=' + n).then(function (a) { if (!Array.isArray(a) || a.length < 30) { throw new Error('no data'); } return cxMap(a); });
+    }
+    function bgKl(c, tf, n) {
+        var u = c.fut ? 'https://api.bitget.com/api/v2/mix/market/candles?symbol=' + c.s + 'USDT&productType=USDT-FUTURES&granularity=' + { '15m': '15m', '1h': '1H', '4h': '4H', '1d': '1D' }[tf] + '&limit=' + n
+            : 'https://api.bitget.com/api/v2/spot/market/candles?symbol=' + c.s + 'USDT&granularity=' + { '15m': '15min', '1h': '1h', '4h': '4h', '1d': '1day' }[tf] + '&limit=' + n;
+        return xget(u).then(function (j) {
+            var a = j && j.data; if (!Array.isArray(a) || a.length < 30) { throw new Error('no data'); }
+            var out = a.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5], q: +r[6] || (+r[5] * +r[4]) }; }); out.sort(function (p, q) { return p.t - q.t; }); return out;
+        });
+    }
+    function kl(c, tf, n) { return c.x === 'bitget' ? bgKl(c, tf, n) : mxKl(c, tf, n); }
+    /* ----- single price (used for open paper trades) ----- */
+    function price(x, b, fut) {
+        if (x === 'mexc') { var u = fut ? 'https://contract.mexc.com/api/v1/contract/ticker?symbol=' + b + '_USDT' : 'https://api.mexc.com/api/v3/ticker/price?symbol=' + b + 'USDT'; return mxJSON(u).then(function (j) { return fut ? +(j && j.data && j.data.lastPrice) : +(j && j.price); }); }
+        if (x === 'bitget') { var u2 = fut ? 'https://api.bitget.com/api/v2/mix/market/ticker?symbol=' + b + 'USDT&productType=USDT-FUTURES' : 'https://api.bitget.com/api/v2/spot/market/tickers?symbol=' + b + 'USDT'; return xget(u2).then(function (j) { var d = j && j.data; d = Array.isArray(d) ? d[0] : d; return +(d && d.lastPr); }); }
+        return Promise.reject(new Error('no source'));
+    }
+    /* ----- detail data for the coin window ----- */
+    function detail(c) {
+        var s = c.s, f = c.fut, o;
+        if (c.x === 'bitget') {
+            var pt = 'productType=USDT-FUTURES';
+            return Promise.all([xget(f ? 'https://api.bitget.com/api/v2/mix/market/ticker?symbol=' + s + 'USDT&' + pt : 'https://api.bitget.com/api/v2/spot/market/tickers?symbol=' + s + 'USDT').catch(function () { return null; }),
+                xget(f ? 'https://api.bitget.com/api/v2/mix/market/merge-depth?symbol=' + s + 'USDT&' + pt + '&limit=15' : 'https://api.bitget.com/api/v2/spot/market/orderbook?symbol=' + s + 'USDT&type=step0&limit=15').catch(function () { return null; }),
+                f ? xget('https://api.bitget.com/api/v2/mix/market/current-fund-rate?symbol=' + s + 'USDT&' + pt).catch(function () { return null; }) : Promise.resolve(null)]).then(function (r) {
+                o = { tk: null, book: null, fund: null }; var d = r[0] && r[0].data; d = Array.isArray(d) ? d[0] : d;
+                if (d) { o.tk = { p: +d.lastPr, hi: +d.high24h, lo: +d.low24h, chg: (+d.change24h) * 100, q: +d.usdtVolume || +d.quoteVolume || 0, oi: +d.holdingAmount || 0, fr: +d.fundingRate || 0 }; }
+                var bd = r[1] && r[1].data; if (bd && bd.bids && bd.asks) { o.book = { bids: bd.bids.slice(0, 10).map(function (x) { return [+x[0], +x[1]]; }), asks: bd.asks.slice(0, 10).map(function (x) { return [+x[0], +x[1]]; }) }; }
+                var fd = r[2] && r[2].data; fd = Array.isArray(fd) ? fd[0] : fd; if (fd && fd.fundingRate != null) { o.fund = { r: (+fd.fundingRate) * 100 }; } return o;
+            });
+        }
+        var tkU = f ? 'https://contract.mexc.com/api/v1/contract/ticker?symbol=' + s + '_USDT' : 'https://api.mexc.com/api/v3/ticker/24hr?symbol=' + s + 'USDT',
+            bkU = f ? 'https://contract.mexc.com/api/v1/contract/depth/' + s + '_USDT?limit=15' : 'https://api.mexc.com/api/v3/depth?symbol=' + s + 'USDT&limit=15';
+        return Promise.all([mxJSON(tkU).catch(function () { return null; }), mxJSON(bkU).catch(function () { return null; }), f ? mxJSON('https://contract.mexc.com/api/v1/contract/funding_rate/' + s + '_USDT').catch(function () { return null; }) : Promise.resolve(null)]).then(function (r) {
+            o = { tk: null, book: null, fund: null }, t = r[0];
+            if (f && t && t.data) { var d = t.data; o.tk = { p: +d.lastPrice, hi: +d.high24Price, lo: +d.lower24Price, chg: (+d.riseFallRate) * 100, q: +d.amount24 || +d.volume24 * +d.lastPrice, oi: +d.holdVol, fr: +d.fundingRate }; }
+            else if (!f && t && t.lastPrice) { var pc = +t.priceChangePercent; o.tk = { p: +t.lastPrice, hi: +t.highPrice, lo: +t.lowPrice, chg: pc * (Math.abs(pc) < 5 ? 100 : 1), q: +t.quoteVolume }; }
+            var b = r[1], bd = b && (f ? b.data : b); if (bd && bd.bids && bd.asks) { o.book = { bids: bd.bids.slice(0, 10).map(function (x) { return [+x[0], +x[f ? 2 : 1]]; }), asks: bd.asks.slice(0, 10).map(function (x) { return [+x[0], +x[f ? 2 : 1]]; }) }; }
+            var fd = r[2]; if (fd && fd.data) { o.fund = { r: (+fd.data.fundingRate) * 100 }; } return o;
+        });
+    }
+    var t;
+    /* ----- selector bar ----- */
+    function set(x) { S.xch = x; lss('mintoosuite_xch', x); try { IDS.at = 0; } catch (e) { } if (x === 'bitget') { bgLoad(true); } if (x === 'mexc') { try { mxLoad(); } catch (e) { } } if (window.__botSelect) { window.__botSelect(); } try { renderView(true); } catch (e) { } }
+    function bar(withAll) {
+        var chips = (withAll === false ? [] : [['all', 'All']]).concat(LIST), cur = S.xch === 'all' && withAll === false ? 'binance' : S.xch;
+        return '<div class="m7row xchb">' + chips.map(function (e) { return '<span class="' + (cur === e[0] ? 'on' : '') + '" data-xch="' + e[0] + '">' + e[1] + '</span>'; }).join('') + '</div>';
+    }
+    S.xgrp = ls('mintoosuite_xgrp', '0') === '1';
+    document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-xch]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var v = el.getAttribute('data-xch'); if (v.indexOf('grp:') === 0) { S.xgrp = v === 'grp:1'; lss('mintoosuite_xgrp', S.xgrp ? '1' : '0'); try { IDS.at = 0; renderView(true); } catch (er) { } return; } set(v); }, true);
+    setInterval(function () { try { if (document.hidden) { return; } if (S.xch === 'bitget' || (window.__mx2 && window.__mx2.on) || (window.__botNeed && window.__botNeed('bitget'))) { bgLoad(); } } catch (e) { } }, 15000);
+    window.XCH = { LIST: LIST, bg: BG, bgLoad: bgLoad, listed: listed, where: where, info: info, binFut: binFut, kl: kl, price: price, detail: detail, bar: bar, set: set, xget: xget };
+    var st = document.createElement('style'); st.textContent = '.xchb{margin:0 0 8px}.xchb span{font-weight:700}'; document.head.appendChild(st);
+    /* ----- Bitget window (list like the MEXC window) ----- */
+    var BGU = { tab: 'fut', q: '' };
+    function vBitget() {
+        var h = bar(), arr = BGU.tab === 'fut' ? BG.fut : BG.spot; bgLoad();
+        h += '<div class="m7row">' + [['fut', 'Perp (futures)'], ['spot', 'Spot']].map(function (x) { return '<span class="' + (BGU.tab === x[0] ? 'on' : '') + '" data-bg="tab:' + x[0] + '">' + x[1] + '</span>'; }).join('') + '</div><div class="m7q"><span>🔎</span><input data-bgin="q" placeholder="Search coin" value="' + esc(BGU.q) + '" autocomplete="off"></div>';
+        if (!arr) { return h + (BG.err ? '<div class="warn">Bitget data could not be read (' + esc(BG.err) + '). Check the internet and try again.</div>' : skel(5, 64)); }
+        var q = BGU.q.trim().toUpperCase(), rows = arr.filter(function (x) { return !q || x.s.indexOf(q) >= 0; });
+        var top = rows.filter(function (x) { return x.q >= 150000; }).sort(function (a, b) { return b.c - a.c; }).slice(0, 8);
+        if (!q && top.length) { h += '<div class="group pad"><b>🏁 Bitget top gainers (24h)</b><div class="note">Volume at least $150k. High gainers are risky.</div>' + top.map(function (x) { return '<div class="row tap" data-mx="det:' + esc(x.s) + '@bitget"><span><b>' + esc(x.s) + '</b> <span class="mut" style="font-size:12px">' + (x.fut ? 'Perp' : 'Spot') + ' · ' + m7vol(x.q) + ' USDT</span></span><b style="color:' + (x.c >= 0 ? '#1d8a3b' : '#d70015') + '">' + (x.c >= 0 ? '+' : '') + x.c.toFixed(1) + '%</b></div>'; }).join('') + '</div>'; }
+        rows = rows.sort(function (a, b) { return b.q - a.q; }).slice(0, 80);
+        return h + '<div class="group">' + rows.map(function (x) { return '<div class="m7r"><div class="l tap" data-mx="det:' + esc(x.s) + '@bitget"><b>' + esc(x.s) + '</b><span class="m7tag">' + (x.fut ? 'Perp' : 'Spot') + '</span><small>' + m7vol(x.q) + ' USDT · details ›</small></div><div class="r"><div>' + fmtP(x.p, x.s + 'USDT') + '</div></div><span class="m7chg ' + (x.c >= 0 ? 'u' : 'd') + '">' + (x.c >= 0 ? '+' : '') + x.c.toFixed(2) + '%</span></div>'; }).join('') + '</div><div class="note" style="text-align:center">' + rows.length + ' shown · tap a coin for chart, plan, order book and funding</div>';
+    }
+    WINS.push({ id: 'bitget', ic: '🟩', c: '#00c2a8', n: 'Bitget', t: 'Bitget', sub: 'Bitget coins: gainers, search, charts and plans' }); LIVE.bitget = 1; VIEWS.bitget = vBitget;
+    MW_HELP.bitget = 'Bitget prices, top gainers and a full page for every coin (chart, plan, order book, funding). Data comes straight from Bitget public servers.';
+    document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-bg]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-bg'), i = a.indexOf(':'); if (a.slice(0, i) === 'tab') { BGU.tab = a.slice(i + 1); renderView(true); } }, true);
+    document.addEventListener('input', function (e) { var t2 = e.target; if (t2 && t2.getAttribute && t2.getAttribute('data-bgin') === 'q') { BGU.q = t2.value; clearTimeout(BGU.tm); BGU.tm = setTimeout(function () { renderView(true); }, 350); } }, true);
+    /* ----- selector bars on the main windows; Markets follows the choice ----- */
+    function wrapBar(id, withAll) { var o = VIEWS[id]; if (!o) { return; } VIEWS[id] = function () { return bar(withAll) + o.apply(this, arguments); }; }
+    var _vi = VIEWS.ideas;
+    function sortBar() { return '<div class="m7row xchb"><span class="mut" style="font-weight:600">Sort:</span><span class="' + (!S.xgrp ? 'on' : '') + '" data-xch="grp:0">By rank</span><span class="' + (S.xgrp ? 'on' : '') + '" data-xch="grp:1">By market</span></div>'; }
+    function vIdeasGrouped() {
+        var all; window.__xf = 0; try { all = window.__idRows(); } catch (e) { all = []; }
+        var rows = all.filter(function (m) { return (IDS.f === 'all' || m.side === IDS.f) && (IDS.hz === 'all' || m.hz === IDS.hz) && (!IDS.best || m.R.best); }), h = '';
+        h += '<div class="m7row">' + [['all', 'All'], ['LONG', '▲ Long'], ['SHORT', '▼ Short']].map(function (x) { return '<span class="' + (IDS.f === x[0] ? 'on' : '') + '" data-m25="f:' + x[0] + '">' + x[1] + '</span>'; }).join('') + [['all', 'Any time'], ['fh', 'Few hours'], ['day', 'Whole day']].map(function (x) { return '<span class="' + (IDS.hz === x[0] ? 'on' : '') + '" data-m25="h:' + x[0] + '">' + x[1] + '</span>'; }).join('') + '<span class="' + (IDS.best ? 'on' : '') + '" data-m25="best:1">⭐ Best only</span></div>';
+        var used = {}, any = false;
+        LIST.forEach(function (e) {
+            if (S.xch !== 'all' && S.xch !== e[0]) { return; }
+            var part = rows.filter(function (m) { return listed(e[0], m.sym); }).slice(0, 25); part.forEach(function (m) { used[m.key] = 1; }); if (!part.length) { return; } any = true;
+            h += sh(e[1] + ' (' + part.length + ')') + '<div class="group">' + part.map(idRow).join('') + '</div>';
+        });
+        if (S.xch === 'all') { var oth = rows.filter(function (m) { return !used[m.key]; }).slice(0, 20); if (oth.length) { any = true; h += sh('Others / not on these three (' + oth.length + ')') + '<div class="group">' + oth.map(idRow).join('') + '</div>'; } }
+        if (!any) { h += '<div class="group pad mut">Nothing yet for this choice. The lists fill in a minute or two after the app opens.</div>'; }
+        return h + '<div class="note">A coin that is on several exchanges appears in each section. Rank numbers are the overall Trade Ideas rank.</div>';
+    }
+    VIEWS.ideas = function () {
+        if (S.xgrp) { return bar() + sortBar() + vIdeasGrouped(); }
+        var h0 = vIdeasPlain.apply(this, arguments); return h0.replace('</div>', '</div>' + sortBar(), 1);
+    };
+    var vIdeasPlain = function () { window.__xf = 1; try { return bar() + (S.xch !== 'all' ? '<div class="note" style="margin:0 0 8px">Showing only coins you can trade on <b>' + esc((LIST.filter(function (e) { return e[0] === S.xch; })[0] || [0, ''])[1]) + '</b>. Choose All to see everything. Analysis uses live candles; a coin listed on several exchanges shows once per exchange filter.</div>' : '') + _vi.apply(this, arguments); } finally { window.__xf = 0; } };
+    var _ir = idRows; idRows = function () { var l = _ir.apply(this, arguments); if (!window.__xf || S.xch === 'all') { return l; } return l.filter(function (m) { return listed(S.xch, m.sym); }); };
+    var _vm = VIEWS.market; VIEWS.market = function () { if (S.xch === 'mexc') { return bar() + VIEWS.mexc.apply(this, arguments); } if (S.xch === 'bitget') { return vBitget(); } return bar() + _vm.apply(this, arguments); };
+    var _ov = VIEWS.overview; VIEWS.overview = function () {
+        var h = _ov.apply(this, arguments); if (S.xch !== 'mexc' && S.xch !== 'bitget') { return bar() + h; }
+        var nm2 = S.xch === 'mexc' ? 'MEXC' : 'Bitget', arr = S.xch === 'mexc' ? ((S.mx && S.mx.fut) || []).concat((S.mx && S.mx.spot) || []) : (BG.fut || []).concat(BG.spot || []), seen = {}, top = [];
+        arr.filter(function (x) { return x.q >= 300000; }).sort(function (a, b) { return b.c - a.c; }).forEach(function (x) { if (!seen[x.s] && top.length < 6) { seen[x.s] = 1; top.push(x); } });
+        var picks = window.__idRows ? (function () { window.__xf = 1; try { return window.__idRows().slice(0, 5); } finally { window.__xf = 0; } })() : [];
+        var c = '<div class="group pad"><b>' + nm2 + ' now</b><div class="note">You chose ' + nm2 + '. The first block is ' + nm2 + '. Everything under "Binance live data" below is Binance.</div>';
+        if (picks.length) { c += '<div class="sh" style="margin:6px 0 2px">Best ideas you can trade here</div>' + picks.map(function (m) { return '<div class="row tap" data-mx="det:' + esc(m.sym.replace(/USDT$/, '')) + '@' + S.xch + '"><span><b>#' + m.rank + ' ' + esc(m.sym.replace(/USDT$/, '')) + '</b> <span class="badge ' + (m.side === 'LONG' ? 'long' : 'short') + '" style="font-size:10px">' + m.side + '</span></span><b>' + Math.round(m.R.p * 100) + '%' + (m.R.best ? ' ⭐' : '') + '</b></div>'; }).join(''); }
+        if (top.length) { c += '<div class="sh" style="margin:6px 0 2px">Top gainers (24h)</div>' + top.map(function (x) { return '<div class="row tap" data-mx="det:' + esc(x.s) + '@' + S.xch + '"><span><b>' + esc(x.s) + '</b> <span class="mut" style="font-size:12px">' + m7vol(x.q) + ' USDT</span></span><b style="color:' + (x.c >= 0 ? '#1d8a3b' : '#d70015') + '">' + (x.c >= 0 ? '+' : '') + x.c.toFixed(1) + '%</b></div>'; }).join(''); } else { c += '<div class="note">Loading ' + nm2 + ' data…</div>'; }
+        return bar() + c + '</div><div class="sh"><span>Binance live data</span></div>' + h;
+    };
+    try { MW_GROUPS.forEach(function (g) { if (g[1].indexOf('mexc') >= 0 && g[1].indexOf('bitget') < 0) { g[1].splice(g[1].indexOf('mexc') + 1, 0, 'bitget'); } }); mwHostSig = ''; } catch (e) { }
+    try { var mw = VIEWS.mexc; VIEWS.mexc = function () { return bar() + mw.apply(this, arguments); }; } catch (e) { }
+})();
+/* ===== v10.8 .30: MEXC and Bitget coins are scanned, scored and ranked in Trade Ideas like Binance coins ===== */
+var MX2 = { res: {}, busy: false, cand: [], candAt: 0, on: ls('mintoosuite_mxscan', '1') !== '0', lastErr: '', n: 0 }; window.__mx2 = MX2;
+(function () {
+    function nowv() { return Date.now(); }
+    function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+    function scoreTf(k) { return m7tfScore(k); }
+    /* one coin, 4 time frames, same maths as the Analyst */
+    function analyse(c) {
+        return Promise.all([XCH.kl(c, '15m', 200), XCH.kl(c, '1h', 200), XCH.kl(c, '4h', 200), XCH.kl(c, '1d', 120)]).then(function (r) {
+            var tf = {}, names = ['15m', '1h', '4h', '1d'], w = { '15m': 1, '1h': 2, '4h': 2, '1d': 1.5 }, tot = 0, wt = 0, up = 0, dn = 0, i, key;
+            for (i = 0; i < 4; i++) { try { tf[names[i]] = scoreTf(r[i]); if (!isFinite(tf[names[i]].sc)) { throw 0; } } catch (e) { tf[names[i]] = null; } }
+            if (!tf['15m'] || !tf['1h'] || !tf['4h']) { throw new Error('not enough candles'); }
+            if (!tf['1d']) { tf['1d'] = tf['4h']; }
+            for (key in tf) { tot += tf[key].sc * w[key]; wt += w[key]; if (tf[key].sc > 0.5) { up++; } else if (tf[key].sc < -0.5) { dn++; } }
+            var ov = tot / wt, side = ov >= 0.9 && up >= 3 ? 'LONG' : ov <= -0.9 && dn >= 3 ? 'SHORT' : 'WAIT', price = tf['15m'].price, t1 = tf['1h'], k1 = r[1];
+            return { s: c.s, sym: c.s + 'USDT', x: c.x || 'mexc', fut: c.fut, tf: tf, ov: ov, side: side, up: up, dn: dn, price: price, atr1: t1.atr, atr15: tf['15m'].atr, atr4: tf['4h'].atr, stretch: t1.stretch, rsi: t1.rsi, at: nowv(), q: c.q, chg: c.c,
+                hi20: Math.max.apply(null, k1.slice(-20).map(function (x) { return x.h; })), lo20: Math.min.apply(null, k1.slice(-20).map(function (x) { return x.l; })) };
+        });
+    }
+    window.__mxAnalyse = analyse;
+    /* coins that are NOT on Binance Futures but are on MEXC or Bitget */
+    function universe() {
+        var M = S.mx || {}, B = XCH.bg, map = {}, a = [];
+        function put(x, fut, ex) { if (!(x.q >= 300000) || !isFinite(x.c) || !(x.p > 0)) { return; } if (S.tick && S.tick[x.s + 'USDT']) { return; } var o = map[x.s]; if (o && (o.x === 'mexc' && ex === 'bitget') ) { return; } if (o && o.x === ex && !fut) { return; } map[x.s] = { s: x.s, sym: x.s + 'USDT', c: x.c, q: x.q, p: x.p, fut: fut, x: ex }; }
+        (B.spot || []).forEach(function (x) { put(x, false, 'bitget'); }); (B.fut || []).forEach(function (x) { put(x, true, 'bitget'); });
+        (M.spot || []).forEach(function (x) { put(x, false, 'mexc'); }); (M.fut || []).forEach(function (x) { put(x, true, 'mexc'); });
+        Object.keys(map).forEach(function (k) { a.push(map[k]); }); return a;
+    }
+    function pickCand() {
+        var u = universe(), g = u.slice().sort(function (x, y) { return y.c - x.c; }).slice(0, 10), l = u.filter(function (x) { return x.fut && x.c <= -4; }).sort(function (x, y) { return x.c - y.c; }).slice(0, 4), v = u.slice().sort(function (x, y) { return y.q - x.q; }).slice(0, 6), seen = {}, out = [];
+        g.concat(l, v).forEach(function (x) { if (!seen[x.s]) { seen[x.s] = 1; out.push(x); } }); return out.slice(0, 20);
+    }
+    var busyAt = 0;
+    function tick() {
+        if (!MX2.on || document.hidden) { return; } var M = S.mx || {};
+        if (nowv() - (M.at || 0) > 150000) { try { mxLoad(); } catch (e) { } }
+        try { XCH.bgLoad(); } catch (e) { }
+        if (MX2.busy && nowv() - busyAt < 40000) { return; }
+        if (!M.spot && !M.fut && !XCH.bg.spot && !XCH.bg.fut) { return; }
+        if (nowv() - MX2.candAt > 60000) { MX2.cand = pickCand(); MX2.candAt = nowv(); }
+        var best = null, bAge = 0; MX2.cand.forEach(function (c) { var r = MX2.res[c.sym], age = r ? nowv() - r.at : 1e12; if (age > 240000 && age > bAge) { best = c; bAge = age; } });
+        if (!best) { return; } MX2.busy = true; busyAt = nowv();
+        analyse(best).then(function (r) { MX2.res[r.sym] = r; MX2.n++; MX2.lastErr = ''; }, function (e) { MX2.res[best.sym] = { s: best.s, sym: best.sym, x: best.x, side: 'WAIT', at: nowv(), fut: best.fut, err: String(e && e.message || e) }; MX2.lastErr = best.s + ' (' + best.x + '): ' + (e && e.message || e); }).then(function () { MX2.busy = false; IDS.at = 0; });
+    }
+    setInterval(function () { try { tick(); } catch (e) { MX2.busy = false; } }, 7000);
+    /* rows for the Trade Ideas list */
+    function mxRows() {
+        var rows = [], now = nowv();
+        Object.keys(MX2.res).forEach(function (k) {
+            var r = MX2.res[k]; if (!r || r.err || r.side === 'WAIT' || now - r.at > 600000) { return; }
+            if (r.side === 'SHORT' && !r.fut) { return; }
+            if (r.stretch > 3.4) { return; }
+            var dir = r.side === 'LONG' ? 'up' : 'dn', ag = dir === 'up' ? r.up : r.dn, conf = clamp(Math.round(48 + ag * 10 + Math.min(10, Math.abs(r.ov) * 5)), 50, 96);
+            [['fh', 'few hours', r.atr1 * 2], ['day', 'whole day', r.atr4 * 2.45]].forEach(function (h) {
+                var sig = h[2], tp = 0.8 * sig, sl = 0.8 * sig; if (!(sig > 0) || !(r.price > 0)) { return; }
+                rows.push({ src: (r.x === 'bitget' ? 'Bitget' : 'MEXC') + ' scan', hz: h[0], hzl: h[1], sym: r.sym, side: r.side, conf: conf, tpP: tp / r.price * 100, slP: sl / r.price * 100, from: r.at, to: r.at + 5 * 60000 + (h[0] === 'day' ? 3600000 : 900000), win: 'mexcd', anchor: 'mx-' + r.sym, fx: null });
+            });
+        });
+        return rows;
+    }
+    window.__mxRows = mxRows;
+    var _ir = idRows;
+    idRows = function () {
+        var g = glRows; glRows = function () { return g().concat(mxRows()); };
+        try { return _ir.apply(this, arguments); } finally { glRows = g; }
+    };
+    window.__idRows = function () { return idRows(); };
+    var _if = idFactors;
+    idFactors = function (c) {
+        var F = _if(c), r = MX2.res[c.sym]; if (!r || r.err) { return F; }
+        var dir = c.side === 'SHORT' ? -1 : 1, q = r.q || 0;
+        F.push({ k: 'trd', ic: '🧭', name: 'Bigger trend', v: clamp(r.ov / 2 * dir, -1.5, 1), w: 0.8, note: '4 time frames: ' + (r.ov >= 0 ? 'up' : 'down') + ' (score ' + r.ov.toFixed(1) + ', ' + (dir > 0 ? r.up : r.dn) + ' of 4 agree)' });
+        F.push({ k: 'vol', ic: '💧', name: 'Volume', v: q >= 5e7 ? 0.6 : q >= 1e7 ? 0.1 : q >= 2e6 ? -0.5 : -0.9, w: 0.6, note: (r.x === 'bitget' ? 'Bitget' : 'MEXC') + ' 24h trading ' + m7vol(q) + ' USDT' + (q < 2e6 ? ' (thin)' : '') });
+        F.push({ k: 'vty', ic: '🌊', name: 'Volatility', v: r.stretch > 2.6 ? -0.8 : r.stretch > 1.8 ? -0.2 : 0.2, w: 0.5, note: 'price is ' + r.stretch.toFixed(1) + '× its normal swing from the average' + (r.stretch > 2.6 ? ' (stretched, may pull back)' : '') });
+        F.push({ k: 'mxn', ic: '🟦', name: 'Not on Binance', v: Math.abs(r.chg) > 40 ? -0.8 : Math.abs(r.chg) > 20 ? -0.3 : 0, w: 0.4, note: '24h move ' + (r.chg >= 0 ? '+' : '') + r.chg.toFixed(0) + '%' + (Math.abs(r.chg) > 20 ? ' (big move: reversals are common)' : '') });
+        return F;
+    };
+    var _irow = idRow;
+    idRow = function (m) {
+        var h = _irow(m), r = MX2.res[m.sym], b = base(m.sym), ex = XCH.where(b).join(' · ');
+        if (!r) { return ex ? h.replace('</b> <span class="badge', '</b> <span class="mut" style="font-size:10px">' + ex + '</span> <span class="badge') : h; }
+        h = h.replace('</b> <span class="badge', '</b> <span class="badge wait" style="font-size:10px">' + (r.x === 'bitget' ? 'Bitget' : 'MEXC') + (r.fut ? ' perp' : ' spot') + '</span> <span class="badge');
+        return h.split('data-m25="chart:' + m.sym + '"').join('data-mx="det:' + b + '@' + r.x + (r.fut ? '' : 's') + '"').split('data-m25="win:mexcd"').join('data-mx="det:' + b + '@' + r.x + (r.fut ? '' : 's') + '"');
+    };
+})();
+/* ===== v10.8 .30: full MEXC coin window (chart, indicators, order book, funding, news, plan) + MEXC window upgrades ===== */
+var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, fund: null, ana: null, err: '', busy: false, at: 0, tall: 0, pref: '', sel: -1 };
+(function () {
+    function nowv() { return Date.now(); }
+    function ex(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/USDT$/, ''); }
+    function find(s) {
+        var M = S.mx || {}, B = XCH.bg, L = function (arr) { return (arr || []).filter(function (x) { return x.s === s; })[0]; };
+        return { mf: L(M.fut), ms: L(M.spot), bf: L(B.fut), bs: L(B.spot) };
+    }
+    function num(x, d) { x = +x; return isFinite(x) ? x : (d || 0); }
+    function fp(p) { return fmtP(p, MXD.s + 'USDT'); }
+    function xname() { return MXD.x === 'bitget' ? 'Bitget' : 'MEXC'; }
+    function load(force) {
+        if (!MXD.s || MXD.busy && !force) { return; } MXD.busy = true; var s = MXD.s, tf = MXD.tf, fut = MXD.fut, x = MXD.x, c = { s: s, fut: fut, x: x };
+        Promise.all([XCH.kl(c, tf, 160).catch(function (e) { return e; }), XCH.detail(c).catch(function () { return null; })]).then(function (r) {
+            if (MXD.s !== s || MXD.tf !== tf || MXD.fut !== fut || MXD.x !== x) { return; }
+            if (r[0] instanceof Error) { MXD.err = 'Could not read ' + s + ' candles from ' + xname() + ' (' + r[0].message + '). Check the name, or try Spot / Perp.'; MXD.k = []; } else { MXD.k = r[0]; MXD.err = ''; }
+            if (r[1]) { MXD.tk = r[1].tk || MXD.tk; MXD.book = r[1].book || MXD.book; MXD.fund = r[1].fund || MXD.fund; if (!fut) { MXD.fund = null; } }
+            MXD.at = nowv();
+        }).then(function () { MXD.busy = false; paint(); if (S.win === 'mexcd') { renderView(true); } });
+        var ra = MX2.res[s + 'USDT']; if (!ra || nowv() - ra.at > 240000 || ra.fut !== fut || ra.x !== x) { window.__mxAnalyse({ s: s, fut: fut, x: x, q: (MXD.tk && MXD.tk.q) || 0, c: (MXD.tk && MXD.tk.chg) || 0 }).then(function (a) { MXD.ana = a; if (S.win === 'mexcd') { renderView(true); } }, function (e) { MXD.ana = { err: String(e && e.message || e) }; if (S.win === 'mexcd') { renderView(true); } }); } else { MXD.ana = ra; }
+    }
+    /* spec: "GTD", "GTD@mexc", "GTD@mexcs" (spot), "GTD@bitget", "GTD@bitgets" */
+    function openCoin(spec) {
+        var m = String(spec || '').split('@'), s = ex(m[0]); if (!s) { return; } var tag = (m[1] || '').toLowerCase(), f = find(s), x, fut;
+        if (tag) { x = /^bitget/.test(tag) ? 'bitget' : 'mexc'; fut = !/s$/.test(tag); }
+        else { x = S.xch === 'bitget' ? 'bitget' : S.xch === 'mexc' ? 'mexc' : (f.mf || f.ms ? 'mexc' : f.bf || f.bs ? 'bitget' : 'mexc'); fut = x === 'bitget' ? !!f.bf || !f.bs : !!f.mf || !f.ms; }
+        MXD.s = s; MXD.x = x; MXD.fut = fut; MXD.k = []; MXD.tk = null; MXD.book = null; MXD.fund = null; MXD.ana = null; MXD.err = ''; MXD.sel = -1;
+        try { gotoWin('mexcd'); } catch (e) { } load(true);
+    }
+    window.__mxOpen = openCoin;
+    /* ----- SVG candle chart ----- */
+    function chartSvg() {
+        var k = MXD.k.slice(-72), W = 360, H = MXD.tall ? 360 : 240, pad = 6, ph = H - 54, n = k.length, i;
+        if (n < 5) { return '<div class="note" style="padding:30px 10px;text-align:center">' + (MXD.busy ? 'Loading chart…' : 'No chart data') + '</div>'; }
+        var hi = Math.max.apply(null, k.map(function (x) { return x.h; })), lo = Math.min.apply(null, k.map(function (x) { return x.l; })), rg = (hi - lo) || hi * 0.01, cw = (W - 50) / n, vmx = Math.max.apply(null, k.map(function (x) { return x.v; })) || 1;
+        function y(v) { return pad + (hi - v) / rg * (ph - pad * 2); }
+        function ema(per) { var cs = MXD.k.map(function (x) { return x.c; }), kk = 2 / (per + 1), e = cs[0], out = []; for (var j = 0; j < cs.length; j++) { e = j ? cs[j] * kk + e * (1 - kk) : cs[0]; out.push(e); } return out.slice(-n); }
+        var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block;background:var(--card,#fff);border-radius:10px;touch-action:pan-y">';
+        for (i = 0; i <= 4; i++) { var gv = lo + rg * i / 4, gy = y(gv); s += '<line x1="0" x2="' + (W - 46) + '" y1="' + gy.toFixed(1) + '" y2="' + gy.toFixed(1) + '" stroke="#8e8e93" stroke-opacity=".18"/><text x="' + (W - 44) + '" y="' + (gy + 3).toFixed(1) + '" font-size="9" fill="#8e8e93">' + fp(gv) + '</text>'; }
+        for (i = 0; i < n; i++) {
+            var x = k[i], cx = 2 + i * cw + cw / 2, up = x.c >= x.o, col = up ? '#1fa95a' : '#e5383b', bt = y(Math.max(x.o, x.c)), bb = y(Math.min(x.o, x.c)), vh = x.v / vmx * 34;
+            s += '<line x1="' + cx.toFixed(1) + '" x2="' + cx.toFixed(1) + '" y1="' + y(x.h).toFixed(1) + '" y2="' + y(x.l).toFixed(1) + '" stroke="' + col + '"/><rect x="' + (cx - cw * 0.35).toFixed(1) + '" y="' + bt.toFixed(1) + '" width="' + (cw * 0.7).toFixed(1) + '" height="' + Math.max(1, bb - bt).toFixed(1) + '" fill="' + col + '"/><rect x="' + (cx - cw * 0.35).toFixed(1) + '" y="' + (H - 4 - vh).toFixed(1) + '" width="' + (cw * 0.7).toFixed(1) + '" height="' + vh.toFixed(1) + '" fill="' + col + '" opacity=".35"/>';
+        }
+        [[21, '#ff9f0a'], [50, '#0a84ff']].forEach(function (m) { var e = ema(m[0]); s += '<polyline fill="none" stroke="' + m[1] + '" stroke-width="1.4" points="' + e.map(function (v, j) { return (2 + j * cw + cw / 2).toFixed(1) + ',' + y(Math.min(hi, Math.max(lo, v))).toFixed(1); }).join(' ') + '"/>'; });
+        var last = k[n - 1], ly = y(last.c); s += '<line x1="0" x2="' + (W - 46) + '" y1="' + ly.toFixed(1) + '" y2="' + ly.toFixed(1) + '" stroke="' + (last.c >= last.o ? '#1fa95a' : '#e5383b') + '" stroke-dasharray="3 3"/><rect x="' + (W - 47) + '" y="' + (ly - 8).toFixed(1) + '" width="47" height="16" rx="3" fill="' + (last.c >= last.o ? '#1fa95a' : '#e5383b') + '"/><text x="' + (W - 44) + '" y="' + (ly + 3.5).toFixed(1) + '" font-size="9" fill="#fff" font-weight="700">' + fp(last.c) + '</text>';
+        var a = MXD.ana, pl = a && !a.err && a.side !== 'WAIT' ? a : null;
+        if (pl) { var sg = pl.side === 'LONG' ? 1 : -1, sig = pl.atr1 * 2 * 0.8, tpv = pl.price + sg * sig, slv = pl.price - sg * sig; [[tpv, '#1fa95a', 'TP'], [slv, '#e5383b', 'SL']].forEach(function (z) { if (z[0] > lo - rg * 0.3 && z[0] < hi + rg * 0.3) { var zy = Math.max(6, Math.min(ph - 6, y(z[0]))); s += '<line x1="0" x2="' + (W - 46) + '" y1="' + zy.toFixed(1) + '" y2="' + zy.toFixed(1) + '" stroke="' + z[1] + '" stroke-dasharray="6 4"/><text x="4" y="' + (zy - 3).toFixed(1) + '" font-size="9" font-weight="700" fill="' + z[1] + '">' + z[2] + ' ' + fp(z[0]) + '</text>'; } }); }
+        return s + '</svg>';
+    }
+    function paint() { var el = document.getElementById('mxcht'); if (el) { el.innerHTML = chartSvg(); } }
+    /* ----- window ----- */
+    function ind(a) {
+        if (!a || a.err) { return ''; } var h = '<div class="group"><div class="row" style="font-weight:700"><span>Time frame</span><span>Trend · RSI · Supertrend · MACD</span></div>';
+        ['15m', '1h', '4h', '1d'].forEach(function (f) { var t = a.tf[f]; if (!t) { return; } var up = t.sc > 0.5, dn = t.sc < -0.5; h += '<div class="row"><span>' + f + '</span><span class="' + (up ? 'up' : dn ? 'dn' : 'mut') + '">' + (up ? '▲ up' : dn ? '▼ down' : '● mixed') + ' · ' + Math.round(t.rsi) + ' · ' + (t.st === 'up' ? '▲' : t.st === 'down' ? '▼' : '?') + ' · ' + (t.hist > 0 ? '+' : '−') + '</span></div>'; });
+        return h + '</div>';
+    }
+    function plan(a) {
+        if (!a || a.err) { return a && a.err ? '<div class="warn">Analysis failed: ' + esc(a.err) + '</div>' : '<div class="group pad mut">Reading 4 time frames…</div>'; }
+        var sd = a.side, h = '<div class="group pad"><div style="display:flex;justify-content:space-between;align-items:center"><span class="badge ' + (sd === 'LONG' ? 'long' : sd === 'SHORT' ? 'short' : 'wait') + '" style="font-size:14px">' + (sd === 'LONG' ? '▲ BUY / LONG' : sd === 'SHORT' ? (a.fut ? '▼ SELL / SHORT' : '▼ SELL (Spot cannot short)') : 'WAIT') + '</span><b>' + fp(a.price) + '</b></div>';
+        if (sd === 'WAIT') { return h + '<div class="note">The 4 time frames do not agree enough. Waiting is a valid choice.</div></div>'; }
+        if (sd === 'SHORT' && !a.fut) { h += '<div class="warn">This coin has no MEXC futures market here, so you cannot go short. It only means: do not buy now.</div>'; }
+        var sg = sd === 'LONG' ? 1 : -1, edge = Math.min(0.08, 0.03 * Math.abs(a.ov));
+        [['Few hours (next 1 to 4 hours)', a.atr1 * 2], ['Whole day (next 24 hours)', a.atr4 * 2.45]].forEach(function (z) {
+            var sig = z[1], tp = 0.8 * sig, sl = 0.8 * sig, ch = m7chance(tp, sl, edge), amt = function (inv) { return '+$' + (inv * (tp / a.price) * (S.lev || 1) - inv * 0.001 * (S.lev || 1)).toFixed(2); };
+            h += '<div class="blk" style="margin-top:8px"><div class="t"><span>' + z[0] + '</span><span class="badge ' + (ch >= 0.6 ? 'long' : 'wait') + '">' + Math.round(ch * 100) + '% reaches target first</span></div><div class="lv"><div><span>ENTRY</span><b>' + fp(a.price) + '</b></div><div><span>STOP</span><b class="dn">' + fp(a.price - sg * sl) + '</b></div><div><span>TARGET</span><b class="up">' + fp(a.price + sg * tp) + '</b></div></div><div class="note" style="margin:4px 0 0">Target ' + (tp / a.price * 100).toFixed(1) + '% · stop ' + (sl / a.price * 100).toFixed(1) + '% · $100 at ' + (S.lev || 1) + '× gains about ' + amt(100) + ' at target (fees included roughly)</div></div>';
+        });
+        var row = (idRows() || []).filter(function (m) { return m.sym === a.sym; })[0]; if (row) { h += '<div class="note" style="margin-top:8px">Trade Ideas rank <b>#' + row.rank + '</b> · overall chance <b>' + Math.round(row.R.p * 100) + '%</b>' + (row.R.best ? ' · ⭐ BEST' : '') + '</div>'; }
+        if (a.stretch > 2.6) { h += '<div class="warn">Price already ran (' + a.stretch.toFixed(1) + '× its normal swing). Entering now is chasing; a pullback is likelier.</div>'; }
+        return h + '</div>';
+    }
+    function book() {
+        var b = MXD.book; if (!b) { return ''; } var mx = Math.max.apply(null, b.bids.concat(b.asks).map(function (x) { return x[1]; })) || 1, bv = b.bids.reduce(function (s, x) { return s + x[1] * x[0]; }, 0), av = b.asks.reduce(function (s, x) { return s + x[1] * x[0]; }, 0), imb = bv + av ? bv / (bv + av) : 0.5;
+        function line(x, c) { return '<div style="position:relative;display:flex;justify-content:space-between;padding:3px 8px;font-size:12px;font-variant-numeric:tabular-nums"><i style="position:absolute;right:0;top:0;bottom:0;width:' + Math.round(x[1] / mx * 100) + '%;background:' + c + ';opacity:.16"></i><span style="position:relative">' + fp(x[0]) + '</span><span style="position:relative">' + m7vol(x[1]) + '</span></div>'; }
+        return sh('Order book (top 10)', '<span class="' + (imb > 0.55 ? 'up' : imb < 0.45 ? 'dn' : 'mut') + '">buyers ' + Math.round(imb * 100) + '%</span>') + '<div class="group"><div style="display:grid;grid-template-columns:1fr 1fr"><div>' + b.bids.map(function (x) { return line(x, '#1fa95a'); }).join('') + '</div><div>' + b.asks.map(function (x) { return line(x, '#e5383b'); }).join('') + '</div></div></div><div class="note">Left = buy orders (bids), right = sell orders (asks). "Buyers %" compares the money waiting on each side.</div>';
+    }
+    function news() {
+        var re; try { re = new RegExp('\\b' + MXD.s.toLowerCase() + '\\b', 'i'); } catch (e) { return ''; } var l = (S.news || []).filter(function (x) { return x && x.title && re.test(x.title); }).slice(0, 5);
+        return sh('News about ' + MXD.s) + (l.length ? '<div class="group">' + l.map(function (x) { return '<div class="row" style="display:block"><b style="font-weight:600">' + esc(x.title) + '</b></div>'; }).join('') + '</div>' : '<div class="group pad mut">No headline in the app mentions ' + esc(MXD.s) + ' right now. Small coins often have none: check the coin\'s own channels before trading.</div>');
+    }
+    function vMexcd() {
+        var h = '', f = find(MXD.s), t = MXD.tk, k = MXD.k, lastc = k.length ? k[k.length - 1] : null;
+        h += '<div class="m7q"><span>' + (MXD.x === 'bitget' ? '🟩' : '🟦') + '</span><input data-mxin="go" placeholder="Any MEXC / Bitget coin, e.g. GTD" value="' + esc(MXD.s) + '" autocomplete="off"><button class="btn" style="width:auto;margin:0;padding:8px 14px" data-mx="go">Open</button></div>';
+        if (!MXD.s) { return h + '<div class="group pad mut">Type a MEXC coin above, or tap a coin in the MEXC window or Trade Ideas.</div>'; }
+        var px = t ? t.p : (lastc ? lastc.c : 0), chg = t ? t.chg : 0, hasF = MXD.x === 'bitget' ? !!f.bf : !!f.mf, hasS = MXD.x === 'bitget' ? !!f.bs : !!f.ms;
+        h += '<div class="group pad"><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:20px">' + esc(MXD.s) + '</b> <span class="badge wait" style="font-size:10px">' + xname() + ' ' + (MXD.fut ? 'perp' : 'spot') + '</span>' + (S.tick[MXD.s + 'USDT'] ? ' <span class="badge" style="font-size:10px">also Binance</span>' : '') + '<div class="mut" style="font-size:12px">' + (MXD.at ? 'updated ' + Math.max(0, Math.round((nowv() - MXD.at) / 1000)) + 's ago · auto-refresh 12s' : 'loading…') + '</div></div><div style="text-align:right"><b style="font-size:20px;font-variant-numeric:tabular-nums">' + (px ? fp(px) : '—') + '</b><div class="' + (chg >= 0 ? 'up' : 'dn') + '" style="font-weight:700">' + (chg >= 0 ? '+' : '') + chg.toFixed(2) + '% 24h</div></div></div>';
+        if (hasF && hasS) { h += '<div class="m7row" style="margin-top:8px"><span class="' + (MXD.fut ? 'on' : '') + '" data-mx="kind:fut">Perp (futures)</span><span class="' + (!MXD.fut ? 'on' : '') + '" data-mx="kind:spot">Spot</span></div>'; }
+        if (t) { h += '<div class="row"><span>24h high / low</span><b>' + fp(t.hi) + ' / ' + fp(t.lo) + '</b></div><div class="row"><span>24h volume</span><b>' + m7vol(t.q) + ' USDT</b></div>' + (t.oi ? '<div class="row"><span>Open interest</span><b>' + m7vol(t.oi) + ' contracts</b></div>' : ''); }
+        if (MXD.fund) { var fr = MXD.fund.r; h += '<div class="row"><span>Funding rate</span><b class="' + (Math.abs(fr) > 0.05 ? 'dn' : 'mut') + '">' + (fr >= 0 ? '+' : '') + fr.toFixed(4) + '%</b></div><div class="note" style="margin:0">' + (fr > 0.05 ? 'Longs are paying a lot: crowded long side, risk of a drop.' : fr < -0.05 ? 'Shorts are paying a lot: crowded short side, risk of a squeeze up.' : 'Funding is normal.') + '</div>'; }
+        h += '</div><div class="m7row">' + ['15m', '1h', '4h', '1d'].map(function (x) { return '<span class="' + (MXD.tf === x ? 'on' : '') + '" data-mx="tf:' + x + '">' + x + '</span>'; }).join('') + '<span data-mx="tall">' + (MXD.tall ? 'Smaller' : 'Taller') + '</span><span data-mx="refresh">↻</span></div>';
+        h += '<div id="mxcht" data-svg="1">' + chartSvg() + '</div><div class="note" style="margin:4px 0 8px"><span style="color:#ff9f0a">━ EMA 21</span> · <span style="color:#0a84ff">━ EMA 50</span> · dashed green/red = target and stop of the plan below. Bars at the bottom = volume.</div>';
+        if (MXD.err) { h += '<div class="warn">' + esc(MXD.err) + '</div>'; }
+        h += sh('Plan and indicators') + plan(MXD.ana) + ind(MXD.ana) + book() + news();
+        h += '<div class="idbt" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><a class="btn tap" style="text-decoration:none;text-align:center" href="' + (MXD.fut ? 'https://futures.mexc.com/exchange/' : 'https://www.mexc.com/exchange/') + MXD.s + '_USDT" target="_blank" rel="noopener">Open on ' + xname() + '</a><span class="btn sec tap" data-mx="an">Full analysis</span><span class="btn sec tap" data-mx="ord">Order ticket</span></div>';
+        return h + '<div class="note">Data comes straight from ' + xname() + '. This is an estimate, not advice: risky coins can move 20% in minutes. Always use a stop.</div>';
+    }
+    WINS.push({ id: 'mexcd', ic: '🟦', c: '#0a84ff', n: 'Coin details (MEXC / Bitget)', t: 'Coin details', sub: 'Chart, plan, order book, funding and news for any MEXC or Bitget coin' }); LIVE.mexcd = 1; VIEWS.mexcd = vMexcd;
+    MW_HELP.mexcd = 'Everything about one MEXC or Bitget coin: live chart with EMA lines, the plan with target and stop, indicators on 4 time frames, order book, funding rate, open interest and news. It refreshes itself every 12 seconds.';
+    try { MW_GROUPS.forEach(function (g) { if (/^Detail pages/.test(g[0]) && g[1].indexOf('mexcd') < 0) { g[1].push('mexcd'); } }); mwHostSig = ''; } catch (e) { }
+    setInterval(function () { try { if (S.win === 'mexcd' && MXD.s && !document.hidden && !MXD.busy && nowv() - MXD.at > 11000) { load(); } } catch (e) { } }, 4000);
+    /* ----- upgrades of the MEXC window ----- */
+    var _lst = m7mxList;
+    m7mxList = function () { var h = _lst.apply(this, arguments); var sfx = (S.mx && S.mx.tab === 'spot') ? '@mexcs' : '@mexc'; return h.replace(/<div class="l "><b>([A-Z0-9]+)<\/b>/g, '<div class="l tap" data-mx="det:$1' + sfx + '"><b>$1</b>').replace(/(<div class="l tap" data-mx="det:[^"]+"><b>[^<]+<\/b><span class="m7tag">[^<]+<\/span><small>[^<]*)<\/small>/g, '$1 · details ›</small>'); };
+    var _vm = VIEWS.mexc;
+    VIEWS.mexc = function () {
+        var h = _vm.apply(this, arguments).split('data-hu="an:').join('data-mx="det:').replace(/>Analyse<\/span>/g, '>Open ›</span>').replace(/data-mx="det:([A-Z0-9]+)USDT"/g, 'data-mx="det:$1"');
+        var n = Object.keys(MX2.res).filter(function (k) { return MX2.res[k] && !MX2.res[k].err; }).length, top = (idRows() || []).filter(function (m) { return MX2.res[m.sym]; }).slice(0, 6), s = '<div class="group pad"><b>🟦 MEXC scanner</b> <span class="m7tag">' + (MX2.on ? 'ON' : 'OFF') + '</span><div class="note">Reads MEXC-only coins (not on Binance) on 4 time frames and ranks them inside Trade Ideas with the same factors as Binance coins. ' + n + ' coins analysed so far' + (MX2.lastErr ? ' · last problem: ' + esc(MX2.lastErr) : '') + '.</div><div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sec tap kpb" data-mx="scan">' + (MX2.on ? 'Turn scanner off' : 'Turn scanner on') + '</span><span class="btn sec tap kpb" data-mx="det:">Open any coin</span><span class="btn sec tap kpb" data-mx="ideas">Trade Ideas</span></div>';
+        if (top.length) { s += top.map(function (m) { var R = m.R; return '<div class="row"><span><b>#' + m.rank + ' ' + esc(base(m.sym)) + '</b> <span class="badge ' + (m.side === 'LONG' ? 'long' : 'short') + '" style="font-size:10px">' + m.side + '</span> <span class="mut" style="font-size:12px">' + m.hzl + '</span></span><span style="display:flex;gap:8px;align-items:center"><b>' + Math.round(R.p * 100) + '%</b>' + (R.best ? '⭐' : '') + '<span class="btn tap kpb" data-mx="det:' + esc(base(m.sym)) + '">Open ›</span></span></div>'; }).join(''); } else { s += '<div class="note">No MEXC idea passes the filters yet. It looks at about 18 coins, one every few seconds.</div>'; }
+        return s + '</div>' + h;
+    };
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('[data-mx]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+        var a = el.getAttribute('data-mx'), i = a.indexOf(':'), v = i < 0 ? a : a.slice(0, i), x = i < 0 ? '' : a.slice(i + 1);
+        if (v === 'det') { if (x) { openCoin(x); } else { MXD.s = ''; try { gotoWin('mexcd'); } catch (er) { } } }
+        else if (v === 'tf') { MXD.tf = x; MXD.k = []; load(true); renderView(true); }
+        else if (v === 'kind') { openCoin(MXD.s + '@' + MXD.x + (x === 'fut' ? '' : 's')); }
+        else if (v === 'tall') { MXD.tall = MXD.tall ? 0 : 1; paint(); renderView(true); }
+        else if (v === 'refresh') { load(true); }
+        else if (v === 'go') { var inp = document.querySelector('[data-mxin="go"]'); openCoin((inp ? inp.value : MXD.s)); }
+        else if (v === 'an') { S.an = S.an || {}; S.an.sym = MXD.s + 'USDT'; try { gotoWin('analyst'); m7analyse(MXD.s + 'USDT'); } catch (er) { } }
+        else if (v === 'ord') { try { gotoWin('xtrade'); } catch (er) { } }
+        else if (v === 'ideas') { try { gotoWin('ideas'); } catch (er) { } }
+        else if (v === 'scan') { MX2.on = !MX2.on; lss('mintoosuite_mxscan', MX2.on ? '1' : '0'); renderView(true); }
+    }, true);
+    document.addEventListener('keydown', function (e) { var t = e.target; if (e.key === 'Enter' && t && t.getAttribute && t.getAttribute('data-mxin') === 'go') { e.preventDefault(); t.blur(); openCoin(t.value); } });
+})();
+/* ===== v10.8 .30: Search tells you which markets a coin is on (Binance Futures / Spot / COIN-M, MEXC, Bitget) ===== */
+(function () {
+    function nowv() { return Date.now(); }
+    function allBases() {
+        var set = {}, M = S.m7 && S.m7.mk || {}, X = S.mx || {}, B = XCH.bg;
+        Object.keys(S.tick || {}).forEach(function (k) { var b = k.replace(/USDT$/, ''); set[b] = 1; var m = /^(1000000|1000|1M)([A-Z0-9]+)$/.exec(b); if (m) { set[m[2]] = 1; } });
+        (M.spot || []).forEach(function (x) { set[x.sym.replace(/USDT$/, '')] = 1; });
+        (M.coinm || []).forEach(function (x) { var m = /^([A-Z0-9]+)USD_/.exec(x.sym); if (m) { set[m[1]] = 1; } });
+        (X.spot || []).concat(X.fut || []).forEach(function (x) { set[x.s] = 1; }); (B.spot || []).concat(B.fut || []).forEach(function (x) { set[x.s] = 1; });
+        return Object.keys(set);
+    }
+    function fnd(arr, key, v) { for (var i = 0; arr && i < arr.length; i++) { if (arr[i][key] === v) { return arr[i]; } } return null; }
+    function cell(name, o, act, extra) {
+        if (!o) { return '<div class="row" style="opacity:.55"><span>' + name + '</span><span class="mut">✗ not listed</span></div>'; }
+        return '<div class="row' + (act ? ' tap' : '') + '"' + (act ? ' data-mx="' + act + '"' : '') + '><span>' + name + ' <span class="up">✓</span></span><span style="text-align:right">' + (o.p ? fmtP(o.p, extra || 'XUSDT') : '') + (isFinite(o.c) ? ' <b style="color:' + (o.c >= 0 ? '#1d8a3b' : '#d70015') + '">' + (o.c >= 0 ? '+' : '') + o.c.toFixed(1) + '%</b>' : '') + (act ? ' ›' : '') + '</span></div>';
+    }
+    function locate(q) {
+        q = q.toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/USDT$/, ''); if (q.length < 2) { return ''; }
+        var M = S.m7 && S.m7.mk || {}, X = S.mx || {}, B = XCH.bg, bases = allBases(), ex = [], pre = [], inc = [];
+        bases.forEach(function (b) { if (b === q) { ex.push(b); } else if (b.indexOf(q) === 0) { pre.push(b); } else if (b.indexOf(q) >= 0) { inc.push(b); } });
+        pre.sort(); inc.sort(); var list = ex.concat(pre, inc).slice(0, 6);
+        var loading = !M.spot || !X.spot && !X.fut || !B.spot && !B.fut;
+        if (!M.spot || !M.coinm) { try { m7mkFetch('spot'); m7mkFetch('coinm'); } catch (e) { } } try { if (!X.spot && !X.fut) { mxLoad(); } } catch (e) { } try { XCH.bgLoad(); } catch (e) { }
+        var h = sh('Where is “' + esc(q) + '” listed?') ;
+        if (!list.length) { h += '<div class="group pad"><b>' + esc(q) + '</b> was not found on Binance (Futures, Spot, COIN-M), MEXC or Bitget' + (loading ? ' <span class="mut">(still loading some lists…)</span>' : '') + '.<div class="note">It may be delisted, spelled differently, or only on another exchange. Check the spelling without USDT.</div></div>'; if (loading) { setTimeout(function () { try { if (S.win === 'find') { m7findRefresh(); } } catch (e) { } }, 2500); } return h; }
+        list.forEach(function (b) {
+            var o = XCH.info(b), cm = (M.coinm || []).filter(function (x) { return x.sym.indexOf(b + 'USD_') === 0; })[0], stock = S.tradfi && (S.tradfi[b + 'USDT'] || (o.bf && S.tradfi[o.bf.sym])),
+                bf = o.bf ? { p: o.bf.t.p / o.bf.f, c: o.bf.t.chg } : null, bsx = o.bs ? { p: o.bs.p, c: o.bs.chg } : null,
+                n = [bf, bsx, cm, o.mf, o.ms, o.gf, o.gs].filter(Boolean).length, bad = Object.keys(o.bad).length;
+            function flag(k) { var d = o.bad[k]; return d ? '<div class="warn" style="margin:2px 0">⚠ Same name, probably a DIFFERENT coin: price is ' + (d.pct > 0 ? '+' : '') + d.pct.toFixed(0) + '% away from ' + esc(d.rx) + '. Do not mix them up. Check the contract/project before trading.</div>' : ''; }
+            h += '<div class="group"><div class="row" style="font-weight:800"><span>' + esc(b) + (stock ? ' <span class="m7tag">🏦 stock-linked</span>' : '') + '</span><span class="mut" style="font-weight:600">on ' + n + ' market' + (n === 1 ? '' : 's') + '</span></div>' +
+                cell('Binance USDⓈ-M Futures', bf, bf ? 'chartb:' + o.bf.sym.replace(/USDT$/, '') : '', b + 'USDT') + cell('Binance Spot', bsx, '', b + 'USDT') + flag('bs') + (cm ? cell('Binance COIN-M', { p: cm.p, c: cm.chg }, '', b + 'USDT') : '') +
+                cell('MEXC Perp', o.mf, o.mf ? 'det:' + b + '@mexc' : '', b + 'USDT') + flag('mf') + cell('MEXC Spot', o.ms, o.ms ? 'det:' + b + '@mexcs' : '', b + 'USDT') + flag('ms') + cell('Bitget Perp', o.gf, o.gf ? 'det:' + b + '@bitget' : '', b + 'USDT') + flag('gf') + cell('Bitget Spot', o.gs, o.gs ? 'det:' + b + '@bitgets' : '', b + 'USDT') + flag('gs') +
+                '<div class="row tap" data-wl="' + esc(b) + '"><span>🌍 Other exchanges, wallets and DEX</span><span class="mut">check ›</span></div></div>';
+        });
+        var more = bases.filter(function (b) { return b.indexOf(q) >= 0; }).length - list.length; if (more > 0) { h += '<div class="note">+' + more + ' more names contain “' + esc(q) + '”. Type more letters to narrow.</div>'; }
+        if (loading) { h += '<div class="note">Some exchange lists are still loading; this refreshes in a moment.</div>'; setTimeout(function () { try { if (S.win === 'find') { m7findRefresh(); } } catch (e) { } }, 2500); }
+        return h + '<div class="note">Only USDT markets are checked. A coin missing everywhere is usually delisted or renamed. Tap a ✓ row with › for the chart and plan.</div>';
+    }
+    var _fh = m7findHTML; m7findHTML = function () { var q = (S.m7.fq || '').trim(); return (q ? locate(q) : '') + _fh(); };
+    document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-mx^="chartb:"]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var b = el.getAttribute('data-mx').slice(7); try { gotoWin('chart'); S.chart.sym = b + 'USDT'; lss('mintoosuite_chart', b + 'USDT'); loadChart(); drawChart(); } catch (er) { } }, true);
+
+    /* ----- Analyst: also say where the coin is listed (adds Bitget and COIN-M) and fix the "USDT Perpetual" label ----- */
+    var _aw = anWhere;
+    anWhere = function (inst) {
+        var p = _aw.apply(this, arguments); if (!inst || inst.kind !== 'cx') { return p; } var key = inst.sym, bd = key.replace(/USDT$/, '');
+        return Promise.resolve(p).then(function () {
+            var W = S.an && S.an.where; if (!W || W.sym !== key || W.rows.some(function (r) { return /Bitget/.test(r.n); })) { return; }
+            return Promise.all([XCH.price('bitget', bd, true).catch(function () { return 0; }), XCH.price('bitget', bd, false).catch(function () { return 0; })]).then(function (r) {
+                var W2 = S.an && S.an.where; if (!W2 || W2.sym !== key) { return; } var ix = W2.rows.map(function (x) { return x.n; }).indexOf('Exness'); if (ix < 0) { ix = W2.rows.length; }
+                var cm = ((S.m7 && S.m7.mk && S.m7.mk.coinm) || []).filter(function (x) { return x.sym.indexOf(bd + 'USD_') === 0; }).length;
+                var add = [{ n: 'Bitget Futures', ok: r[0] > 0, note: r[0] > 0 ? 'perpetual' : 'not listed' }, { n: 'Bitget Spot', ok: r[1] > 0, note: r[1] > 0 ? 'spot' : 'not listed' }]; if (cm) { add.unshift({ n: 'Binance COIN-M', ok: true, note: 'coin-margined' }); }
+                W2.rows.splice.apply(W2.rows, [ix, 0].concat(add)); try { if (S.win === 'analyst') { renderView(true); } } catch (e) { }
+            });
+        });
+    };
+    var _va = VIEWS.analyst;
+    VIEWS.analyst = function () {
+        var h = _va.apply(this, arguments), A = S.an; if (!A || !A.res || A.res.kind === 'fxd' || A.res.kind === 'info' || A.busy) { return h; }
+        var sym = A.res.sym, b = String(sym).replace(/USDT$/, ''), mk = [];
+        if (S.tick && S.tick[sym]) { mk.push('Binance Futures'); } else { var W = A.where, rows = W && W.sym === sym ? W.rows : []; rows.forEach(function (r) { if (r.ok && /^(Binance Spot|MEXC|Bitget|Binance COIN)/.test(r.n)) { mk.push(r.n); } }); }
+        var lab = S.tick && S.tick[sym] ? 'Binance USDT Perpetual' : (mk.length ? mk.join(' · ') : (A.src === 'Spot' ? 'Binance Spot' : A.src || 'listing being checked'));
+        return h.replace('USDT Perpetual', esc(lab));
+    };
+
+    /* ----- Markets rows say which exchange and market each coin belongs to ----- */
+    var _mr = m7mkRow;
+    m7mkRow = function (r) {
+        var h = _mr(r), b = String(r.sym || '').replace(/USDT$/, '').replace(/USD_.*$/, ''), lab = r.src === 'f' ? 'Binance Perp' : r.src === 'd' ? 'Binance COIN-M' : r.src === 's' ? 'Binance Spot' : null;
+        if (lab) { h = h.replace('<span class="m7tag">' + esc(r.tag) + '</span>', '<span class="m7tag">' + lab + '</span>'); }
+        var oth = []; try { if (XCH.listed('mexc', b)) { oth.push('MEXC'); } if (XCH.listed('bitget', b)) { oth.push('Bitget'); } } catch (e) { }
+        if (oth.length) { h = h.replace(' USDT</small>', ' USDT · also ' + oth.join(', ') + '</small>'); }
+        return h;
+    };
+
+    /* typing SHIB finds Binance's 1000SHIB perpetual */
+    var _as = anSym; anSym = function (x) { var s = _as(x); try { if (S.tick && !S.tick[s]) { var b = s.replace(/USDT$/, ''), f = XCH.binFut(b); if (f) { s = f.sym; } } } catch (e) { } return s; };
+    /* Where-to-trade rows use real listings (live volume, same coin), not just "a price came back" */
+    var _aw2 = anWhere;
+    anWhere = function (inst) {
+        var p = _aw2.apply(this, arguments); if (!inst || inst.kind !== 'cx') { return p; } var key = inst.sym, bd = key.replace(/USDT$/, '');
+        try { if (!S.m7.mk.spot) { m7mkFetch('spot'); } mxLoad(); XCH.bgLoad(); } catch (e) { }
+        return Promise.resolve(p).then(function () {
+            var W = S.an && S.an.where; if (!W || W.sym !== key) { return; } var o = XCH.info(bd), rows = W.rows; if (!S.m7.mk.spot || !(S.mx && (S.mx.spot || S.mx.fut))) { return; }
+            function fix(name, obj, badKey, note) { var r = rows.filter(function (x) { return x.n === name; })[0]; if (!r) { return; } var bad = o.bad[badKey]; if (!obj) { r.ok = false; r.note = 'not listed (no live trading)'; } else if (bad) { r.ok = false; r.note = '⚠ same name but a different coin (price ' + (bad.pct > 0 ? '+' : '') + bad.pct.toFixed(0) + '% off ' + bad.rx + ')'; } else { r.ok = true; r.note = note; } }
+            fix('Binance Spot', o.bs, 'bs', 'buy and hold, no leverage'); fix('MEXC Futures', o.mf, 'mf', 'perpetual'); fix('MEXC Spot', o.ms, 'ms', 'spot'); fix('Bitget Futures', o.gf, 'gf', 'perpetual'); fix('Bitget Spot', o.gs, 'gs', 'spot');
+            try { if (S.win === 'analyst') { renderView(true); } } catch (e) { }
+        });
+    };
+    window.__locate = locate;
+})();
+/* ===== v10.8 .30: World lookup (other exchanges, wallets/DEX tokens) via CoinGecko and DexScreener public data ===== */
+(function () {
+    var WL = { q: '', busy: false, res: null, err: '', at: 0 };
+    function jget(u) { return fetch(u, { cache: 'no-store' }).then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); }); }
+    function usd(v) { v = +v; return v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'K' : String(Math.round(v || 0)); }
+    function run(q) {
+        q = String(q || '').toUpperCase().replace(/USDT$/, ''); if (!q) { return; } WL.q = q; WL.busy = true; WL.res = null; WL.err = ''; refresh();
+        Promise.all([jget('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(q)).catch(function (e) { WL.err = 'CoinGecko: ' + e.message; return null; }), jget('https://api.dexscreener.com/latest/dex/search?q=' + encodeURIComponent(q)).catch(function (e) { WL.err += (WL.err ? ' · ' : '') + 'DexScreener: ' + e.message; return null; })]).then(function (r) {
+            var coins = ((r[0] && r[0].coins) || []).filter(function (c) { return c.symbol && c.symbol.toUpperCase() === q; }).slice(0, 3), pairs = ((r[1] && r[1].pairs) || []).filter(function (p) { return p.baseToken && p.baseToken.symbol && p.baseToken.symbol.toUpperCase() === q; }).sort(function (a, b) { return ((b.liquidity && b.liquidity.usd) || 0) - ((a.liquidity && a.liquidity.usd) || 0); }).slice(0, 6);
+            WL.res = { coins: coins, pairs: pairs, near: ((r[0] && r[0].coins) || []).filter(function (c) { return c.symbol && c.symbol.toUpperCase() !== q; }).slice(0, 4) };
+            return Promise.all(coins.map(function (c) { return jget('https://api.coingecko.com/api/v3/coins/' + encodeURIComponent(c.id) + '/tickers?order=volume_desc').then(function (j) { var seen = {}; c.ex = ((j && j.tickers) || []).filter(function (t) { var k = t.market && t.market.name; if (!k || seen[k]) { return false; } seen[k] = 1; return true; }).slice(0, 8); }).catch(function () { c.ex = null; }); }));
+        }).then(function () { WL.busy = false; WL.at = Date.now(); refresh(); }, function (e) { WL.busy = false; WL.err = String(e && e.message || e); refresh(); });
+    }
+    function refresh() { try { if (S.win === 'find') { m7findRefresh(); } else if (S.win === 'analyst') { renderView(true); } } catch (e) { } }
+    function html(q) {
+        if (WL.q !== q) { return ''; }
+        var h = sh('🌍 World lookup: ' + esc(q));
+        if (WL.busy) { return h + '<div class="group pad mut">Asking CoinGecko and DexScreener…</div>'; }
+        var R = WL.res; if (!R) { return h + '<div class="warn">Could not reach the lookup services (' + esc(WL.err || 'no answer') + '). Check your internet and try again.</div>'; }
+        if (!R.coins.length && !R.pairs.length) { h += '<div class="group pad">Nothing named <b>' + esc(q) + '</b> was found on CoinGecko or on any decentralised exchange.' + (R.near.length ? '<div class="note">Similar names: ' + R.near.map(function (c) { return esc(c.symbol.toUpperCase() + ' (' + c.name + ')'); }).join(', ') + '</div>' : '') + '<div class="note">It may be a stock or an exchange-only product (for example Binance Stocks), or spelled differently.</div></div>'; }
+        R.coins.forEach(function (c) {
+            h += '<div class="group"><div class="row" style="font-weight:800"><span>' + esc(c.name) + ' <span class="mut">(' + esc(c.symbol.toUpperCase()) + ')</span></span><span class="mut" style="font-weight:600">' + (c.market_cap_rank ? 'rank #' + c.market_cap_rank : 'unranked') + '</span></div>';
+            if (c.ex && c.ex.length) { h += c.ex.map(function (t) { return '<div class="row"><span>' + esc(t.market.name) + ' <span class="mut" style="font-size:12px">' + esc(t.base + '/' + t.target) + '</span></span><span class="mut">' + (t.converted_volume && t.converted_volume.usd ? '$' + usd(t.converted_volume.usd) + ' 24h' : '') + '</span></div>'; }).join(''); } else if (c.ex === null) { h += '<div class="note" style="padding:6px 12px">Exchange list could not be read right now.</div>'; } else { h += '<div class="note" style="padding:6px 12px">No exchange lists it with trading volume.</div>'; }
+            h += '</div>';
+        });
+        if (R.pairs.length) { h += '<div class="group"><div class="row" style="font-weight:800"><span>On-chain (DEX) pools</span><span class="mut" style="font-weight:600">wallet tokens</span></div>' + R.pairs.map(function (p) { var liq = (p.liquidity && p.liquidity.usd) || 0, ch = p.priceChange && p.priceChange.h24; return '<div class="row" style="display:block"><b>' + esc(p.baseToken.name || p.baseToken.symbol) + '</b> <span class="mut">on ' + esc(p.chainId) + ' · ' + esc(p.dexId) + '</span><div class="note" style="margin:2px 0 0">$' + esc(p.priceUsd || '?') + (ch != null ? ' · 24h ' + (ch >= 0 ? '+' : '') + ch + '%' : '') + ' · liquidity $' + usd(liq) + ' · 24h volume $' + usd(p.volume && p.volume.h24) + '</div>' + (liq < 50000 ? '<div class="warn" style="margin:4px 0 0">Very low liquidity: easy to get stuck or scammed.</div>' : '') + '<div class="note" style="margin:2px 0 0;word-break:break-all">Contract: ' + esc(p.baseToken.address || '') + '</div></div>'; }).join('') + '</div>'; }
+        return h + '<div class="note">Data: CoinGecko and DexScreener public services. The same name can be different coins: always compare the contract address. Not financial advice.</div>';
+    }
+    var _fh = m7findHTML; m7findHTML = function () { var q = (S.m7.fq || '').trim().toUpperCase().replace(/USDT$/, ''); return _fh() + html(q); };
+    var _va = VIEWS.analyst; VIEWS.analyst = function () { var h = _va.apply(this, arguments), A = S.an; if (A && A.err && /could not find/i.test(A.err)) { var b = String(A.sym || '').toUpperCase().replace(/USDT$/, ''); h += '<div class="group pad"><div class="row tap" data-wl="' + esc(b) + '"><span>🌍 Look for <b>' + esc(b) + '</b> on other exchanges, wallets and DEX</span><span class="mut">check ›</span></div></div>' + html(b); } return h; };
+    document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-wl]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); run(el.getAttribute('data-wl')); }, true);
+    window.__wl = { run: run, state: WL };
+})();
+/* ===== v10.8 .30: Auto Bot sections: a separate paper account (virtual $1000) for Binance, MEXC and Bitget ===== */
+(function () {
+    function nowv() { return Date.now(); }
+    var IDS_X = ['binance', 'mexc', 'bitget'], NAMES = { binance: 'Binance', mexc: 'MEXC', bitget: 'Bitget' };
+    function fresh() { return { v: 1, on: true, start: 1000, bal: 1000, open: [], closed: [], peak: 1000, maxDd: 0, created: nowv(), risk: 0.01, maxOpen: 3, lev: 5, lastTrade: {} }; }
+    function loadX(x) { try { var b = JSON.parse(ls('mintoosuite_bot_' + x, '')); if (b && b.v === 1) { b.xid = x; return b; } } catch (e) { } var b2 = fresh(); b2.xid = x; return b2; }
+    var XB = { binance: S.bot, mexc: loadX('mexc'), bitget: loadX('bitget') }; XB.binance.xid = 'binance'; window.__XB = XB;
+    function acctFor(x) { return x === 'mexc' || x === 'bitget' ? x : 'binance'; }
+    window.__botSelect = function () { S.bot = XB[acctFor(S.xch)]; };
+    S.bot = XB[acctFor(S.xch)];
+    var _bsave = botSave; botSave = function () { var b = S.bot, id = b && b.xid || 'binance'; lss('mintoosuite_bot' + (id === 'binance' ? '' : '_' + id), JSON.stringify(b)); };
+    var _breset = botReset; botReset = function () { var id = S.bot && S.bot.xid || 'binance'; if (id === 'binance') { _breset(); S.bot.xid = 'binance'; XB.binance = S.bot; return; } S.bot = fresh(); S.bot.xid = id; XB[id] = S.bot; botSave(); };
+    /* ----- prices from the exchange itself ----- */
+    var XP = { mexc: {}, bitget: {} };
+    function px(x, b, maxAge) { var o = XP[x] && XP[x][b]; return o && nowv() - o.at < (maxAge || 45000) ? o.p : 0; }
+    function poll(x, b) { var o = XP[x][b]; if (o && nowv() - o.at < 6000) { return; } if (o && o.busy && nowv() - o.busy < 8000) { return; } XP[x][b] = o || { p: 0, at: 0 }; XP[x][b].busy = nowv(); XCH.price(x, b, true).then(function (v) { if (v > 0) { XP[x][b] = { p: v, at: nowv() }; } else { XP[x][b].busy = 0; } }, function () { XP[x][b].busy = 0; }); }
+    function candidates(x) {
+        var out = []; try {
+            window.__xf = 0; (window.__idRows() || []).forEach(function (m) {
+                var b = base(m.sym); if (m.hz !== 'fh' || !m.R || !m.R.best || m.R.p < 0.62) { return; } if (S.tradfi && S.tradfi[m.sym]) { return; } if (b === 'XAU' || b === 'XAG') { return; }
+                if (XCH.listed(x, b) !== 'f') { return; } out.push(m);
+            });
+        } catch (e) { } return out;
+    }
+    setInterval(function () {
+        try {
+            if (document.hidden) { return; }
+            ['mexc', 'bitget'].forEach(function (x) { var b = XB[x]; b.open.forEach(function (p) { poll(x, base(p.sym)); }); if (b.on && b.open.length < b.maxOpen) { candidates(x).slice(0, 3).forEach(function (m) { poll(x, base(m.sym)); }); } });
+        } catch (e) { }
+    }, 4000);
+    window.__botNeed = function (x) { return XB[x] && XB[x].on; };
+    /* ----- equity of a section uses that exchange's prices ----- */
+    var _be = botEquity;
+    botEquity = function () {
+        var b = S.bot, id = b && b.xid; if (!id || id === 'binance') { return _be(); }
+        var u = 0; b.open.forEach(function (p) { var v = px(id, base(p.sym), 600000); if (v) { u += p.notional * (p.sg * (v - p.entry) / p.entry); } }); return b.bal + u;
+    };
+    var _log = addLog; addLog = function (type, text) { var id = S.bot && S.bot.xid; if (id && id !== 'binance' && String(type) === 'BOT') { text = '[' + NAMES[id] + '] ' + text; } return _log.call(this, type, text); };
+    /* ----- one background step for a MEXC / Bitget account ----- */
+    function xStep(x) {
+        var b = S.bot, now = nowv(), i; if (!b) { return; }
+        for (i = b.open.length - 1; i >= 0; i--) {
+            var p = b.open[i], v = px(x, base(p.sym), 45000); if (!v) { continue; }
+            var hitSL = p.sg > 0 ? v <= p.sl : v >= p.sl, hitTP = p.sg > 0 ? v >= p.tp : v <= p.tp;
+            if (hitSL) { botClose(i, p.sl * (1 - p.sg * BOT_SLIP), p.trail ? 'trailing stop' : 'stop'); }
+            else if (hitTP) { botClose(i, p.tp, 'target'); }
+            else if (now - p.at > 3 * 3600000 + 600000) { botClose(i, v, 'time limit'); }
+            else if (botTrail(p, v)) { botSave(); }
+        }
+        if (!b.on || b.open.length >= b.maxOpen || botGate()) { return; }
+        var eq = botEquity(); if (eq <= b.start * 0.5) { b.on = false; botSave(); addLog('BOT', 'Paper bot paused: equity fell below half of the starting amount'); return; }
+        var rows = candidates(x).filter(function (m) { return !b.open.some(function (p) { return p.sym === m.sym; }) && !(b.lastTrade[m.sym] && now - b.lastTrade[m.sym] < 60 * 60000); }).slice(0, 2);
+        rows.forEach(function (m) {
+            if (b.open.length >= b.maxOpen) { return; } var v = px(x, base(m.sym), 20000); if (!v) { return; }
+            var sg = m.side === 'LONG' ? 1 : -1, entry = v * (1 + sg * BOT_SLIP), sl = entry * (1 - sg * m.slP / 100), tp = entry * (1 + sg * m.tpP / 100), slPct = Math.abs(entry - sl) / entry;
+            if (!(slPct > 0.002 && slPct < 0.15)) { return; }
+            var cost = slPct + 2 * BOT_FEE + BOT_SLIP, notional = eq * b.risk / cost, lev = Math.max(1, Math.min(b.lev, Math.floor(100 / (slPct * 100 * 1.6 + 0.5)))), margin = notional / lev;
+            var used = b.open.reduce(function (s, p) { return s + p.margin; }, 0), avail = b.bal - used; if (margin > avail) { margin = avail * 0.95; notional = margin * lev; } if (notional < 10) { return; }
+            b.open.push({ sym: m.sym, side: m.side, sg: sg, entry: entry, sl: sl, tp: tp, notional: notional, margin: margin, lev: lev, at: now, pct: Math.round(m.R.p * 100), score: Math.round(m.R.p * 100), risk: notional * cost, x: x, fut: 1, bf: 1 });
+            b.lastTrade[m.sym] = now; botSave(); addLog('BOT', 'Paper trade opened: ' + nm(m.sym) + ' ' + m.side + ' at ' + fmtP(entry, m.sym) + ' (chance ' + Math.round(m.R.p * 100) + '%, ranked #' + m.rank + ', price from ' + NAMES[x] + ')');
+        });
+    }
+    var _bs = botStep;
+    botStep = function () {
+        var sel = S.bot;
+        try { S.bot = XB.binance; _bs.apply(this, arguments); ['mexc', 'bitget'].forEach(function (x) { S.bot = XB[x]; try { xStep(x); } catch (e) { } }); }
+        finally { S.bot = sel && XB[sel.xid || 'binance'] ? XB[sel.xid || 'binance'] : XB[acctFor(S.xch)]; }
+    };
+    /* ----- screen: section chooser + all-accounts summary; shows the chosen account's own numbers ----- */
+    function stat(b) { var n = b.closed.length, w = b.closed.filter(function (c) { return c.pnl >= 0; }).length, sv = S.bot; S.bot = b; var eq; try { eq = botEquity(); } finally { S.bot = sv; } return { n: n, wr: n ? Math.round(w / n * 100) : 0, eq: eq, ret: (eq - b.start) / b.start * 100, open: b.open.length, on: b.on }; }
+    var _vb = VIEWS.bot;
+    VIEWS.bot = function () {
+        if (S.bt && S.bt.tab === 'real') { return _vb.apply(this, arguments); }
+        var b = S.bot, id = b.xid || 'binance', saved = {}, added = [];
+        if (id !== 'binance') { b.open.forEach(function (p) { var v = px(id, base(p.sym), 600000); if (v) { saved[p.sym] = S.tick[p.sym]; added.push(p.sym); S.tick[p.sym] = { p: v, at: nowv(), chg: 0, q: 0, h: v, l: v }; } }); }
+        var body; try { body = _vb.apply(this, arguments); } finally { added.forEach(function (s) { if (saved[s]) { S.tick[s] = saved[s]; } else { delete S.tick[s]; } }); }
+        var h = XCH.bar() + '<div class="group pad"><b>Paper accounts</b><div class="note">Each exchange has its own virtual $1000 account, its own trades and its own on/off switch. Tap one to see it.</div>' +
+            IDS_X.map(function (x) { var s = stat(XB[x]); return '<div class="row tap" data-xch="' + x + '" style="' + (x === id ? 'background:rgba(10,132,255,.10);border-radius:10px;padding:6px 8px' : '') + '"><span><b>' + NAMES[x] + '</b> <span class="mut" style="font-size:12px">' + (s.on ? 'running' : 'stopped') + ' · ' + s.open + ' open · ' + s.n + ' trades · win ' + s.wr + '%</span></span><b class="' + (s.ret >= 0 ? 'up' : 'dn') + '">$' + s.eq.toFixed(2) + '</b></div>'; }).join('') + '</div>';
+        h += '<div class="warn" style="margin-top:0;background:rgba(10,132,255,.10);color:var(--tx)">Showing the <b>' + NAMES[id] + '</b> account' + (id === 'binance' ? '. It follows the top 2 Binance picks.' : '. It trades only the best-ranked ideas for coins listed on ' + NAMES[id] + ' as perpetual futures, with prices taken from ' + NAMES[id] + '. Paper money only.') + '</div>';
+        return h + body;
+    };
+})();
+/* ===== Professor: extra offline encyclopedia (finance, crypto, forex, stocks, safety, this app) ===== */
+(function () {
+    var K = [
+        ['stablecoin|usdt|usdc|tether|stable coin', 'Stablecoins', 'A stablecoin is a coin designed to stay at one dollar (USDT, USDC and similar). Traders park money in them between trades. Risks: the issuer may not hold enough reserves and the coin can slip below $1 (a "depeg"), and some countries restrict them.'],
+        ['halving|bitcoin halving', 'Bitcoin halving', 'About every four years the reward miners get for each new Bitcoin block is cut in half. New supply grows slower, which some people think supports price over the long run. Price can still fall; it is not a guarantee.'],
+        ['blockchain|block chain|miner|mining|validator', 'Blockchain and mining', 'A blockchain is a shared record book copied on thousands of computers. Transactions are grouped into blocks and chained together, so past records are very hard to change. Miners (proof of work) or validators (proof of stake) check and add the blocks.'],
+        ['proof of work|proof of stake|pow|pos', 'Proof of work vs proof of stake', 'Proof of work (Bitcoin) uses powerful computers solving puzzles and a lot of electricity. Proof of stake (Ethereum) uses people who lock coins as a deposit to validate blocks and uses far less energy.'],
+        ['gas fee|network fee|gas|transaction fee', 'Gas / network fees', 'Every blockchain transfer costs a small network fee, paid in that chain\'s coin (ETH on Ethereum, BNB on BNB Chain). Always keep a little of the native coin in your wallet, or your tokens get stuck. Fees are higher when the network is busy.'],
+        ['seed phrase|recovery phrase|private key|12 words|secret words', 'Seed phrase and private key', 'The 12 or 24 recovery words ARE your money. Anyone who has them can take everything. Write them on paper, keep them offline, never type them into a website, never photograph them, and never share them with anyone, including "support".'],
+        ['cold wallet|hot wallet|hardware wallet|ledger|trezor', 'Hot vs cold wallet', 'A hot wallet is connected to the internet (phone app, exchange) and is convenient but easier to attack. A cold wallet (hardware device or paper) is offline and much safer for large amounts. Common advice: small trading money hot, long-term savings cold.'],
+        ['smart contract|smart contracts', 'Smart contracts', 'A smart contract is a program stored on a blockchain that runs by itself when conditions are met, for example swapping tokens without a company in the middle. Bugs or fake contracts can drain funds, so only use well-known projects.'],
+        ['defi|liquidity pool|impermanent loss|yield farming|dex|uniswap|pancakeswap', 'DeFi, DEX and liquidity pools', 'DeFi means finance apps that run on blockchains without a company, such as DEX exchanges (Uniswap, PancakeSwap). Liquidity providers deposit two coins into a pool and earn fees, but "impermanent loss" can leave them with less value than just holding. High yields often mean high risk.'],
+        ['nft|nfts', 'NFTs', 'An NFT is a unique token that records who owns a digital item (art, game item, ticket). Most NFTs are very illiquid and many lose nearly all value. Treat them as high-risk collectibles.'],
+        ['airdrop|airdrops', 'Airdrops', 'An airdrop is a free token giveaway from a project. Real ones never ask for your seed phrase or for you to send coins first. Many "airdrops" are scams: do not connect your wallet to random links.'],
+        ['rug pull|rugpull|honeypot|pump and dump|scam coin|scam token', 'Rug pulls and pump-and-dumps', 'A rug pull is when creators drain the money and disappear. A honeypot token lets you buy but not sell. A pump-and-dump is a group hyping a tiny coin, then selling to latecomers. Warning signs: sudden huge gain, tiny liquidity, anonymous team, promises of guaranteed profit.'],
+        ['market cap|marketcap|market capitalization|circulating supply|fdv|fully diluted|tokenomics|token unlock|supply', 'Market cap, supply and unlocks', 'Price alone says nothing about size. Market cap = price × circulating supply. FDV counts all future tokens too. If a coin has a low float and big unlocks coming, new tokens can hit the market and push price down. Check these before buying a small coin.'],
+        ['slippage', 'Slippage', 'Slippage is the difference between the price you expected and the price you really got, common on thin coins and fast markets. Use limit orders on small coins and avoid trading right at big news.'],
+        ['spread|bid ask|bid-ask|bid and ask', 'Bid, ask and spread', 'The bid is the highest price buyers offer, the ask is the lowest price sellers want. The gap is the spread, a hidden trading cost. Wide spreads mean thin trading.'],
+        ['liquidity|illiquid|thin market|low volume', 'Liquidity and volume', 'Liquidity means how easily you can buy or sell without moving the price. High 24h volume and a deep order book mean good liquidity. Low-volume coins can jump or trap you, so use small size and wide stops.'],
+        ['dca|dollar cost|dollar-cost', 'Dollar-cost averaging (DCA)', 'DCA means buying a fixed amount at regular times (for example $20 every week) instead of all at once. It reduces the risk of buying at one bad moment. It does not guarantee profit.'],
+        ['hodl|swing trading|scalping|day trading|position trading|trading style', 'Trading styles', 'Scalping: seconds to minutes, many trades, high stress and fees. Day trading: in and out within a day. Swing trading: days to weeks. Position/HODL: months to years. Shorter styles need more time, discipline and low fees. Pick one that fits your life.'],
+        ['bull market|bear market|bullish|bearish|fomo|fud', 'Bull, bear, FOMO, FUD', 'Bull market = prices trending up, bear market = trending down. FOMO is fear of missing out (buying because everyone is). FUD is fear, uncertainty and doubt (selling because of scary news). Emotional decisions usually lose money.'],
+        ['whale|whales', 'Whales', 'A whale is a person or fund holding a very large amount. Their big orders can move small markets. Watching sudden huge volume or order-book walls can hint at whale activity, but walls are often fake and get pulled.'],
+        ['fibonacci|fib retracement|fib levels', 'Fibonacci retracement', 'Traders draw Fibonacci levels (38.2%, 50%, 61.8%) between a swing low and high to guess where a pullback may stop. It is a guide, not a law: use it together with support/resistance and trend.'],
+        ['bollinger|bollinger bands|bands', 'Bollinger Bands', 'Bollinger Bands put an upper and lower line around a moving average, based on volatility. Narrow bands mean a quiet market that may break out soon; price hugging the upper band shows strong momentum but also stretch.'],
+        ['atr|average true range|volatility', 'ATR and volatility', 'ATR (Average True Range) measures how much a coin normally moves per candle. Stops are often placed 1 to 2 ATR away so normal noise does not hit them. Bigger ATR = bigger swings = smaller position size.'],
+        ['vwap|volume weighted', 'VWAP', 'VWAP is the average price weighted by volume during the day. Many traders see price above VWAP as bullish and below as bearish, and use it as a fair-price reference.'],
+        ['stochastic|stoch rsi|stochrsi', 'Stochastic oscillator', 'Stochastic compares the close with the recent high-low range. Above 80 is "overbought", below 20 "oversold". Like RSI, in a strong trend it can stay extreme for a long time, so do not use it alone.'],
+        ['obv|on balance volume', 'On-Balance Volume (OBV)', 'OBV adds volume on up candles and subtracts it on down candles. If price makes a new high but OBV does not, buying pressure may be weak.'],
+        ['head and shoulders|double top|double bottom|triangle|flag pattern|chart pattern|wedge', 'Chart patterns', 'Head and shoulders and double tops often warn of a reversal down; double bottoms of a reversal up. Triangles, flags and wedges show a pause before a move. Patterns fail often: wait for a confirmed break and use a stop.'],
+        ['doji|hammer|engulfing|shooting star|candlestick pattern|candle pattern', 'Candlestick patterns', 'Doji = indecision. Hammer (long lower wick) near a low can signal buyers returning. Shooting star (long upper wick) near a high warns of sellers. Engulfing = a candle that fully covers the previous one, a stronger reversal hint. They matter most at support/resistance.'],
+        ['pip|lot size|forex lot|swap fee|forex basics|forex', 'Forex basics', 'Forex trades currency pairs (EUR/USD). A pip is the 4th decimal move (0.0001) for most pairs. A standard lot is 100,000 units, a mini 10,000, a micro 1,000. Brokers charge spread and sometimes overnight swap. Leverage makes small moves big, in both directions.'],
+        ['inflation|interest rate|fed|cpi|nfp|fomc|central bank|rate cut|rate hike', 'Rates, inflation and the Fed', 'Higher interest rates usually strengthen a currency and pressure gold and risky assets; rate cuts often do the opposite. Big releases (CPI inflation, NFP jobs, Fed/FOMC decisions) cause fast spikes: many traders stay out or use small size around them.'],
+        ['gold price|why gold|xau|safe haven', 'What moves gold', 'Gold often rises when the dollar weakens, real interest rates fall, or fear rises (war, crisis); it often falls when rates and the dollar rise. It is called a safe haven, but it can still fall sharply.'],
+        ['oil price|crude|brent|wti|opec', 'What moves oil', 'Oil depends on supply (OPEC decisions, wars, sanctions), demand (economy, season) and the dollar. Weekly inventory reports and OPEC news cause sudden moves.'],
+        ['stock|shares|psx|kse|kse-100|ipo|dividend|pe ratio|p/e|equity', 'Stocks, PSX and basics', 'A share is a small ownership piece of a company. In Pakistan the exchange is PSX and its main index is KSE-100. A dividend is a share of profit paid out; P/E ratio = price ÷ earnings per share (high can mean expensive or fast-growing). Buy through a licensed broker.'],
+        ['etf|exchange traded fund|bitcoin etf|index fund', 'ETFs', 'An ETF is a basket traded like a share. A spot Bitcoin ETF holds real Bitcoin so people can invest through a normal brokerage account. Large ETF inflows can support price; outflows can pressure it.'],
+        ['kyc|aml|verification|identity verification', 'KYC and AML', 'KYC (know your customer) means an exchange checks your ID. AML (anti-money-laundering) rules force exchanges to watch suspicious activity. Only upload ID to official apps or websites you typed yourself.'],
+        ['p2p|peer to peer|easypaisa|jazzcash|sadapay|bank transfer scam', 'P2P trading safety', 'On P2P you trade directly with another person while the exchange holds the coins in escrow. Only release coins after the money is really in YOUR account (not just a screenshot). Never trade outside the platform chat, beware of third-party payers and reversed transfers.'],
+        ['pakistan crypto|crypto legal|is crypto legal|pvara|sbp|crypto law|regulation', 'Crypto rules in Pakistan', 'Rules are changing: Pakistan has been setting up a regulator for virtual assets (PVARA) and licensing. Check the latest State Bank (SBP) and regulator announcements, use licensed platforms where required, and ask a qualified adviser about your situation.'],
+        ['tax|crypto tax|capital gains|income tax on crypto', 'Taxes on trading', 'Many countries tax trading profits. Keep records of every buy, sell, fee and date (the app history helps). Ask a qualified local tax adviser; I cannot give tax advice.'],
+        ['position size|position sizing|1% rule|risk reward|risk-reward|risk per trade|drawdown|how much to risk', 'Position sizing and risk', 'Risk a small fixed part of your account per trade, commonly 1%. Position size = money you accept to lose ÷ distance to your stop. Aim for rewards at least as big as the risk (1:1.5 or better) and stop when your daily loss limit is hit. Surviving matters more than any single trade.'],
+        ['revenge trading|overtrading|psychology|emotion|discipline|tilt', 'Trading psychology', 'Typical traps: revenge trading (trying to win back a loss immediately), overtrading, moving the stop away, and sizing up after wins. Write rules before the trade, take breaks after losses, and keep a journal.'],
+        ['backtest|backtesting|paper trading|demo account|practice', 'Backtesting and paper trading', 'Backtesting tests a plan on past data; paper trading tests it live with virtual money. Both are free ways to learn. Past results do not guarantee future results, and you need at least 50 trades before trusting the numbers.'],
+        ['open interest|long short ratio|liquidation map|liquidations|long/short', 'Open interest and long/short ratio', 'Open interest is the total money in open futures contracts. Rising OI with rising price shows new money entering; rising OI with falling price shows shorts piling in. An extreme long/short ratio means a crowded side that can be squeezed.'],
+        ['mark price|index price|last price|fair price', 'Mark, index and last price', 'Last price is the latest trade. Index price averages several exchanges. Mark price (used for liquidation and PnL) blends them to stop manipulation. Your position can be liquidated by mark price even if last price never touched that level.'],
+        ['hedge mode|one-way mode|position mode', 'Hedge vs one-way mode', 'One-way mode keeps one net position per coin. Hedge mode lets you hold a long and a short on the same coin at the same time. Orders must match your account mode or the exchange rejects them.'],
+        ['maker|taker|trading fee|fees|bnb discount|fee discount', 'Maker and taker fees', 'A maker order waits in the order book (adds liquidity) and pays a lower fee; a taker order trades immediately and pays more. Fees and slippage eat profit, especially when scalping. Paying fees with the exchange coin often gives a discount.'],
+        ['staking|apy|apr|earn|launchpool|savings product|yield', 'Staking, APR and APY', 'Staking locks coins to help run a network and earn rewards. APR is simple yearly interest, APY includes compounding. Very high yields usually mean high risk; locked coins may not be sellable during a crash.'],
+        ['layer 1|layer 2|l2|rollup|arbitrum|optimism|base network|polygon', 'Layer 1 and Layer 2', 'Layer 1 is a main blockchain (Bitcoin, Ethereum, Solana). Layer 2 networks (Arbitrum, Optimism, Base, Polygon) run on top to make transactions cheaper and faster. Always send to the same network the receiver expects.'],
+        ['bridge|wrapped|wbtc|erc-20|erc20|bep-20|bep20|trc-20|trc20|token standard|network selection', 'Networks and token standards', 'The same coin can exist on many networks (USDT on ERC-20, BEP-20, TRC-20 and more). Sending on the wrong network can lose the funds forever. Always match the network, send a small test first, and check the address.'],
+        ['memecoin|meme coin|shiba|pepe|doge|bonk', 'Memecoins', 'Memecoins are driven by hype, not usage. Moves of 50% in a day are normal in both directions and most fade to near zero. Only risk money you can afford to lose entirely.'],
+        ['cex|centralized exchange|exchange vs dex|proof of reserves|exchange safety|exchange hack', 'Exchange safety', 'Centralized exchanges (Binance, MEXC, Bitget) hold your coins for you, so you rely on them. Keep only trading money there, turn on 2FA, use withdrawal whitelists, and move long-term savings to your own wallet.'],
+        ['2fa|two factor|phishing|fake app|security|hacked|safe', 'Staying safe', 'Turn on 2FA with an authenticator app (not SMS only), use a unique password, install apps only from the official store, never click links from DMs, and never share codes. No real support person ever asks for your password or seed phrase.'],
+        ['api key|api keys|withdraw permission|ip whitelist|read only key', 'API key safety', 'When you create an API key, give it only the rights needed: reading and trading, NEVER withdrawal. Restrict it to your IP if possible. If you think a key leaked, delete it at once. Keys saved in this app are encrypted on this phone.'],
+        ['market session|trading session|weekend|24/7|forex session|market hours|when to trade', 'Market sessions and timing', 'Crypto trades 24/7, but weekends and late night hours are thinner and jumpier. Forex has Asia, London and New York sessions; London/New York overlap is the busiest. US stock-linked contracts are thin when the US market is closed.'],
+        ['which exchange is best|best exchange|binance vs mexc|binance or bitget|mexc vs bitget', 'Which exchange?', 'There is no single best one. Binance has the deepest liquidity and strongest reputation; MEXC and Bitget list many more small coins (more risk) and have futures and copy-trading. Check fees, withdrawal options, rules in your country and whether the coin you want is truly live there. Use the exchange chips in this app to see each one separately.'],
+        ['guaranteed|guarantee|get rich|sure profit|double my money|100% win|never lose|risk free|risk-free', 'Can I get guaranteed profit?', 'No honest tool can promise profit. Even good strategies lose often; success comes from small risk per trade, patience and many trades. Be careful with anyone promising fixed or guaranteed returns: that is the most common scam.'],
+        ['trade ideas|best badge|what does best mean|ranking|chance score|how are ideas ranked', 'How Trade Ideas ranks', 'Trade Ideas merges every plan into one list. Each idea gets an estimated chance that the target is hit before the stop, based on the odds the target/stop distances give, then moved up or down by indicators, volume, volatility, trend, Bitcoin, news and the history of the paper bot. ⭐ BEST ideas pass all checks. It is an estimate, not a promise.'],
+        ['exchange chips|exchange selector|choose exchange|binance mexc bitget|separate exchange', 'Exchange selector', 'The chips All / Binance / MEXC / Bitget near the top of Ideas, Markets, Home and Auto Bot let you look at one exchange at a time. A coin is shown under an exchange only if it is really trading there (live volume) and has the same price as the same name elsewhere. A name with a very different price is a different coin and is flagged.'],
+        ['paper bot sections|bot sections|separate bot|bot accounts|paper accounts', 'Auto Bot sections', 'Each exchange has its own virtual $1000 paper account with its own trades and start/stop switch. Binance follows the top Binance picks; MEXC and Bitget take only top-ranked ideas for perpetual coins really listed on that exchange, priced from that exchange. It is all virtual money.'],
+        ['same name different coin|same ticker|ticker clash|wrong coin|duplicate ticker|pnt|pntg', 'Same name, different coin', 'Tickers are not unique. Two different projects can use the same letters on different exchanges (and exchanges also list tokenised stocks with stock tickers, like PNTG for the Pennant Group). Check price and the contract address. If one exchange\'s price is very different from another\'s, they are different coins.'],
+        ['tokenized stock|tokenised stock|stock token|tradfi|stocks on binance|xstocks|stock perpetual', 'Stocks on crypto exchanges', 'Some exchanges now offer stock-linked contracts or tokens (for example Tesla or Nvidia). They follow the stock price but trade 24/7 on crypto rails and are thin when the real market is closed. This app marks them as TradFi / stock-linked and the bots skip them.'],
+        ['chinese|china exchange|okx|kucoin|gate io|gate.io|htx|huobi|bybit|world exchange|other exchange', 'Other exchanges', 'Beyond Binance, MEXC and Bitget there are OKX, Bybit, KuCoin, Gate and HTX. The World lookup in Search shows which exchanges list a coin and its on-chain pools, using public CoinGecko and DexScreener data.']
+    ];
+    try { K.forEach(function (e) { PF_KB.push(e); }); } catch (e) { }
+    window.__pfExtraKb = K.length;
+})();
+/* ===== v10.8 .31: Professor brain: voice, attachments, online AI engine, web knowledge, self-learning ===== */
+(function () {
+    function nowv() { return Date.now(); }
+    var PBK = 'mintoosuite_pb', LRN = 'mintoosuite_pf_learn', KBP = 'mintoosuite_pf_kbpack';
+    var PB = { engine: 'free', model: '', base: '', consent: false, lang: 'en-US', auto: false, ctx: 'pc', pend: { pc: [], pf: [] }, rec: null, say: [], busy: false, test: '', kbAt: 0, kbN: 0 };
+    try { var sv = JSON.parse(ls(PBK, '{}')); ['engine', 'model', 'base', 'consent', 'lang', 'auto'].forEach(function (k) { if (sv[k] != null) { PB[k] = sv[k]; } }); } catch (e) { }
+    function save() { lss(PBK, JSON.stringify({ engine: PB.engine, model: PB.model, base: PB.base, consent: PB.consent, lang: PB.lang, auto: PB.auto })); }
+    function key() { return ls('mintoosuite_x_aikey', ''); }
+    var DEF = { anthropic: 'claude-sonnet-5-5', openai: 'gpt-4o-mini', gemini: 'gemini-2.0-flash', custom: '' };
+    var LABEL = { free: 'Free online engine (no key)', anthropic: 'Anthropic (your key)', openai: 'OpenAI (your key)', gemini: 'Google Gemini (your key)', custom: 'Other OpenAI-style service (your key)' };
+    function plain(h) { return String(h || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+\n/g, '\n').replace(/[ \t]+/g, ' ').trim(); }
+    function norm(q) { return ' ' + String(q).toLowerCase().replace(/[^a-z0-9؀-ۿ ]/g, ' ').replace(/\s+/g, ' ').trim() + ' '; }
+    /* ----- learned answers (works offline afterwards) ----- */
+    function learned() { try { return JSON.parse(ls(LRN, '[]')) || []; } catch (e) { return []; } }
+    function learn(q, a, src) { try { var L = learned().filter(function (x) { return norm(x.q) !== norm(q); }); L.unshift({ q: q, a: a, t: nowv(), s: src }); lss(LRN, JSON.stringify(L.slice(0, 120))); } catch (e) { } }
+    function findLearned(q) {
+        var qs = norm(q).trim().split(' ').filter(function (w) { return w.length > 2; }); if (qs.length < 2) { return null; } var best = null, bs = 0;
+        learned().forEach(function (x) { var xs = norm(x.q).trim().split(' ').filter(function (w) { return w.length > 2; }), inter = qs.filter(function (w) { return xs.indexOf(w) >= 0; }).length, uni = qs.length + xs.length - inter, j = uni ? inter / uni : 0; if (j > bs) { bs = j; best = x; } });
+        return bs >= 0.75 ? best : null;
+    }
+    /* ----- context sent along with a question (public market facts only, never keys or balances) ----- */
+    function liveCtx() {
+        var o = []; try { ['BTCUSDT', 'ETHUSDT', 'XAUUSDT'].forEach(function (s) { var t = S.tick && S.tick[s]; if (t) { o.push(base(s) + ' ' + fmtP(t.p, s) + ' (' + (t.chg >= 0 ? '+' : '') + t.chg.toFixed(1) + '% 24h)'); } }); } catch (e) { }
+        try { var r = window.__idRows ? (window.__xf = 0, window.__idRows().slice(0, 3)) : []; if (r.length) { o.push('top ideas: ' + r.map(function (m) { return base(m.sym) + ' ' + m.side + ' ' + Math.round(m.R.p * 100) + '%'; }).join(', ')); } } catch (e) { }
+        return o.join('; ');
+    }
+    function system() { return 'You are Professor, the built-in tutor inside the MintooSuite trading app. The user is a beginner. Answer in simple plain English (or Roman Urdu / Urdu if the user writes in it), short and step by step, with a small example when useful. You can answer any question, also outside trading. Never promise profit or certainty about price direction; for trade questions give educational reasoning and risks and say it is not financial advice. For questions about the app, name the window to open. If you are not sure, say so. Live data now: ' + (liveCtx() || 'not available') + '. Time: ' + new Date().toISOString().slice(0, 16) + ' UTC.'; }
+    function history(n) { var out = []; try { var arr = (PB.ctx === 'pf' ? PF.msgs : PCH.msgs) || []; arr.slice(-n * 2 - 2, -2).forEach(function (m) { var t = plain(m.html).slice(0, 700); if (t && !/pfdots/.test(m.html)) { out.push({ role: m.who === 'me' ? 'user' : 'assistant', content: t }); } }); } catch (e) { } return out; }
+    /* ----- AI engines ----- */
+    function post(url, headers, body) { return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body) }).then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) { } if (!r.ok) { var m = j && (j.error && (j.error.message || j.error) || j.message) || t.slice(0, 120); throw new Error('HTTP ' + r.status + ': ' + (typeof m === 'string' ? m : JSON.stringify(m)).slice(0, 160)); } return j || { raw: t }; }); }); }
+    function oaMsgs(q, atts) {
+        var msgs = [{ role: 'system', content: system() }].concat(history(6)), parts = [], img = (atts || []).filter(function (a) { return a.kind === 'image' || a.kind === 'video'; }), txt = (atts || []).filter(function (a) { return a.kind === 'text'; }), pre = '';
+        txt.forEach(function (a) { pre += '\n\n[Attached file ' + a.name + ']\n' + a.text; });
+        if (img.length) { parts.push({ type: 'text', text: (q || 'Please look at the attached picture and explain what it shows in simple words.') + pre }); img.forEach(function (a) { (a.frames || [a.dataUrl]).forEach(function (u) { parts.push({ type: 'image_url', image_url: { url: u } }); }); }); msgs.push({ role: 'user', content: parts }); }
+        else { msgs.push({ role: 'user', content: (q || 'Please read the attached file and explain it simply.') + pre }); }
+        return msgs;
+    }
+    function callAI(q, atts) {
+        var eng = PB.engine, k = key(), model = PB.model || DEF[eng] || '', img = (atts || []).filter(function (a) { return a.kind === 'image' || a.kind === 'video'; }), aud = (atts || []).filter(function (a) { return a.kind === 'audio'; }), txt = (atts || []).filter(function (a) { return a.kind === 'text'; });
+        if (aud.length && eng !== 'gemini') { return Promise.reject(new Error('Listening to an audio file needs the Google Gemini key (Professor settings). The microphone button works without it.')); }
+        if (eng === 'free') {
+            if (aud.length) { return Promise.reject(new Error('Audio files need an AI key. Tap the microphone and speak instead, or add a key in Professor settings.')); }
+            return post('https://text.pollinations.ai/openai', { 'content-type': 'application/json' }, { model: 'openai', messages: oaMsgs(q, atts), max_tokens: 900 }).then(function (j) { var t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; if (!t) { throw new Error('empty answer'); } return t; });
+        }
+        if (!k) { return Promise.reject(new Error('No AI key saved. Open Professor settings and paste your key, or switch to the free engine.')); }
+        if (eng === 'anthropic') {
+            var content = []; (img.length ? img : []).forEach(function (a) { (a.frames || [a.dataUrl]).forEach(function (u) { var m = /^data:([^;]+);base64,(.*)$/.exec(u); if (m) { content.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } }); } }); });
+            var pre = ''; txt.forEach(function (a) { pre += '\n\n[Attached file ' + a.name + ']\n' + a.text; }); content.push({ type: 'text', text: (q || 'Please explain the attachment simply.') + pre });
+            return post('https://api.anthropic.com/v1/messages', { 'content-type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, { model: model, max_tokens: 900, system: system(), messages: history(6).concat([{ role: 'user', content: content }]) }).then(function (j) { var t = j && j.content && j.content.map(function (c) { return c.text || ''; }).join(''); if (!t) { throw new Error('empty answer'); } return t; });
+        }
+        if (eng === 'gemini') {
+            var parts = [{ text: (q || 'Please explain the attachment simply.') + txt.map(function (a) { return '\n\n[Attached file ' + a.name + ']\n' + a.text; }).join('') }];
+            img.concat(aud).forEach(function (a) { (a.frames || [a.dataUrl]).forEach(function (u) { var m = /^data:([^;]+);base64,(.*)$/.exec(u); if (m) { parts.push({ inlineData: { mimeType: m[1], data: m[2] } }); } }); });
+            var contents = history(6).map(function (h) { return { role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] }; }).concat([{ role: 'user', parts: parts }]);
+            return post('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(k), { 'content-type': 'application/json' }, { systemInstruction: { parts: [{ text: system() }] }, contents: contents }).then(function (j) { var t = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts.map(function (p) { return p.text || ''; }).join(''); if (!t) { throw new Error('empty answer'); } return t; });
+        }
+        var url = eng === 'openai' ? 'https://api.openai.com/v1/chat/completions' : (PB.base || '').replace(/\/+$/, '') + '/chat/completions'; if (eng === 'custom' && !PB.base) { return Promise.reject(new Error('Add the service address in Professor settings.')); }
+        return post(url, { 'content-type': 'application/json', 'authorization': 'Bearer ' + k }, { model: model, messages: oaMsgs(q, atts), max_tokens: 900 }).then(function (j) { var t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; if (!t) { throw new Error('empty answer'); } return t; });
+    }
+    function fmt(t) {
+        var h = esc(String(t)).replace(/```([\s\S]*?)```/g, '<code style="display:block;white-space:pre-wrap">$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/^#{1,4}\s*(.+)$/gm, '<b>$1</b>').replace(/^\s*[-*]\s+/gm, '• ').replace(/\n/g, '<br>');
+        return h;
+    }
+    /* ----- web knowledge: any crypto project (CoinGecko) and general topics (Wikipedia) ----- */
+    function jget(u) { return fetch(u).then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); }); }
+    function coinInfo(name) {
+        return jget('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(name)).then(function (j) {
+            var c = (j.coins || [])[0]; if (!c) { throw new Error('none'); } return jget('https://api.coingecko.com/api/v3/coins/' + encodeURIComponent(c.id) + '?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false').then(function (d) {
+                var t = ((d.description && d.description.en) || '').replace(/<[^>]+>/g, '').trim().slice(0, 700); if (!t) { throw new Error('none'); }
+                return '<b>' + esc(d.name) + ' (' + esc((d.symbol || '').toUpperCase()) + ')</b>' + (d.market_cap_rank ? ' · rank #' + d.market_cap_rank : '') + '<br>' + esc(t) + (d.links && d.links.homepage && d.links.homepage[0] ? '<br><small>Website: ' + esc(d.links.homepage[0]) + '</small>' : '') + '<br><small>Source: CoinGecko</small>';
+            });
+        });
+    }
+    function wiki(q) {
+        return jget('https://en.wikipedia.org/w/api.php?action=opensearch&search=' + encodeURIComponent(q) + '&limit=1&format=json&origin=*').then(function (r) {
+            var t = r && r[1] && r[1][0]; if (!t) { throw new Error('none'); } return jget('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(t)).then(function (d) { if (!d.extract) { throw new Error('none'); } return '<b>' + esc(d.title) + '</b><br>' + esc(d.extract.slice(0, 900)) + '<br><small>Source: Wikipedia</small>'; });
+        });
+    }
+    function newsHtml() { var l = (S.news || []).slice(0, 6); if (!l.length) { return null; } return '<b>Latest headlines in the app</b><br>' + l.map(function (n) { return '• ' + esc(n.title); }).join('<br>'); }
+    /* ----- the brain ----- */
+    function notSure(a) { return !a || /not sure|point you to/i.test(a.title || ''); }
+    function aiChip(q) { return '<span class="pfbtn" data-pb="ai:' + esc(q).slice(0, 300) + '">🧠 Ask the online AI too</span>'; }
+    function ensureConsent() {
+        if (PB.consent) { return true; } return false;
+    }
+    function brain(q, atts, ctx) {
+        var low = String(q || '').toLowerCase(), hasAtt = atts && atts.length, local = null;
+        if (!hasAtt) { try { local = pfAnswer(q); } catch (e) { local = null; } }
+        if (!hasAtt && /^ai[: ]/.test(low)) { q = q.replace(/^ai[: ]\s*/i, ''); local = null; }
+        if (!hasAtt && local && !notSure(local)) { var h0 = ctx === 'pc' ? pcBotHtml(q) : '<b>' + esc(local.title || '') + '</b><br>' + local.html; return Promise.resolve({ html: h0 + (/^(what|how|why|explain|tell)/.test(low) && low.split(' ').length > 5 ? aiChip(q) : ''), local: 1 }); }
+        if (!hasAtt) {
+            var L = findLearned(q); if (L) { return Promise.resolve({ html: L.a + '<br><small>Learned earlier (' + esc(L.s || 'web') + ')</small>', local: 1 }); }
+            if (/(news|headline|what happened|latest)/.test(low) && /(crypto|market|bitcoin|today|binance|news)/.test(low)) { var nh = newsHtml(); if (nh) { return Promise.resolve({ html: nh, local: 1 }); } }
+        }
+        if (!ensureConsent()) { return Promise.resolve({ html: 'I can answer this with an <b>online AI engine</b>. Your question text and any attachment you add will be sent to that online service (never your keys, passwords or balances). Allow it?<br><span class="pfbtn" data-pb="consent:yes:' + esc(q).slice(0, 300) + '">✅ Allow and answer</span><span class="pfbtn" data-pb="consent:no">Not now</span><br><small>You can change this any time in Professor settings.</small>', pending: 1 }); }
+        return callAI(q, atts).then(function (t) { var html = fmt(t) + '<div class="note" style="margin:6px 0 0">Answered by an online AI engine. It can make mistakes; check important facts. Not financial advice.</div>'; if (!hasAtt) { learn(q, html, 'AI'); } return { html: html }; }, function (err) {
+            if (hasAtt) { return { html: '⚠️ ' + esc(err.message) + '<br><small>Without a working AI engine I cannot look inside pictures, videos or audio. Text files, the microphone and typed questions still work.</small>' }; }
+            var m = /^(what is|who is|what are|tell me about|explain|meaning of)\s+(.{2,40})$/.exec(low.trim().replace(/[?.!]+$/, ''));
+            var p = m ? coinInfo(m[2]).catch(function () { return wiki(m[2]); }) : wiki(q.replace(/[?.!]+$/, ''));
+            return p.then(function (h) { learn(q, h, 'web'); return { html: h }; }, function () { return { html: '⚠️ The AI engine did not answer (' + esc(err.message) + ') and I found nothing on the web for that.<br>' + btn('win:pbrain', 'Open Professor settings ›') + '<a class="pfbtn" href="https://www.google.com/search?q=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">🔎 Search the web</a>' }; });
+        });
+    }
+    /* ----- sending (both the chat window and the floating panel) ----- */
+    function thumbs(atts) { return (atts || []).map(function (a) { return a.kind === 'image' ? '<br><img src="' + a.dataUrl + '" style="max-width:100%;max-height:140px;border-radius:10px;margin-top:4px">' : '<br><span class="pfbtn" style="pointer-events:none">' + (a.kind === 'audio' ? '🎧' : a.kind === 'video' ? '🎬' : '📄') + ' ' + esc(a.name) + '</span>'; }).join(''); }
+    function go(ctx, q) {
+        q = (q || '').trim(); var atts = PB.pend[ctx].slice(); if ((!q && !atts.length) || PB.busy) { return; } PB.busy = true; PB.ctx = ctx; PB.pend[ctx] = []; trayDraw(ctx);
+        var M = ctx === 'pc' ? PCH.msgs : PF.msgs, draw = ctx === 'pc' ? function () { pcSave(); pcDraw(); } : function () { pfRender(); };
+        M.push({ who: 'me', html: esc(q || '(attachment)') + thumbs(atts) }); M.push({ who: 'bot', html: '<span class="pfdots"><i></i><i></i><i></i></span>', typing: 1 }); draw(); try { STS.ch = (STS.ch || 0) + 1; stSave(); } catch (e) { }
+        var el = document.getElementById(ctx === 'pc' ? 'pcmsgs' : 'pfmsgs'); void el;
+        brain(q, atts, ctx).then(function (r) { return r; }, function (e) { return { html: 'Sorry, I had a small problem: ' + esc(e && e.message || e) }; }).then(function (r) {
+            M.pop(); var id = PB.say.push(plain(r.html)) - 1; M.push({ who: 'bot', html: r.html + '<div><span class="pbsay" data-pb="say:' + id + '">🔊</span></div>' }); PB.busy = false; draw(); if (PB.auto && !r.pending) { speak(plain(r.html)); }
+        });
+    }
+    var _pa = pcAsk; pcAsk = function (q) { go('pc', q); };
+    var _pf = pfAsk; pfAsk = function (txt) { var inp = document.getElementById('pfq'), q = txt || (inp && inp.value.trim()) || ''; if (inp) { inp.value = ''; } go('pf', q); };
+    /* the existing send handlers read the input themselves; allow attachment-only sends */
+    document.addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-pcs],[data-pf="send"]') : null; if (!b) { return; } var isPc = b.hasAttribute('data-pcs'), inp = document.getElementById(isPc ? 'pcq' : 'pfq'); if (inp && !inp.value.trim() && PB.pend[isPc ? 'pc' : 'pf'].length) { e.preventDefault(); e.stopPropagation(); go(isPc ? 'pc' : 'pf', ''); } }, true);
+    /* ----- speech (microphone) and read-aloud ----- */
+    function inputOf(ctx) { return document.getElementById(ctx === 'pc' ? 'pcq' : 'pfq'); }
+    function micBtns(on) { [].forEach.call(document.querySelectorAll('[data-pb^="mic:"]'), function (b) { b.classList.toggle('rec', !!on); }); }
+    window.__mwSp = function (kind, text) {
+        var inp = inputOf(PB.ctx);
+        if (kind === 'ready' || kind === 'begin') { micBtns(true); if (inp) { inp.placeholder = 'Listening… speak now'; } }
+        else if (kind === 'partial') { if (inp) { inp.value = text; } }
+        else if (kind === 'final') { micBtns(false); if (inp) { inp.placeholder = 'Ask anything…'; inp.value = text; } if (text) { go(PB.ctx, text); if (inp) { inp.value = ''; } } PB.rec = null; }
+        else if (kind === 'end') { micBtns(false); }
+        else if (kind === 'err') { micBtns(false); PB.rec = null; if (inp) { inp.placeholder = 'Ask anything…'; } var M = PB.ctx === 'pc' ? PCH.msgs : PF.msgs; M.push({ who: 'bot', html: '🎤 ' + esc(text) }); if (PB.ctx === 'pc') { pcDraw(); } else { pfRender(); } }
+    };
+    function listen(ctx) {
+        PB.ctx = ctx; var n = (typeof mwNat === 'function') ? mwNat() : null;
+        if (PB.rec) { try { if (n && n.speechStop) { n.speechStop(window.__mwTok); } else if (PB.rec.stop) { PB.rec.stop(); } } catch (e) { } PB.rec = null; micBtns(false); return; }
+        if (n && n.speechStart) { PB.rec = { native: 1 }; try { n.speechStart(window.__mwTok, PB.lang); } catch (e) { PB.rec = null; window.__mwSp('err', 'Could not start the microphone.'); } return; }
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SR) { window.__mwSp('err', 'Voice input is not available here. Please type, or use the installed Android app.'); return; }
+        var r = new SR(); r.lang = PB.lang; r.interimResults = true; r.onstart = function () { window.__mwSp('ready', ''); }; r.onresult = function (ev) { var t = '', fin = false; for (var i = 0; i < ev.results.length; i++) { t += ev.results[i][0].transcript; if (ev.results[i].isFinal) { fin = true; } } window.__mwSp(fin ? 'final' : 'partial', t); }; r.onerror = function (ev) { window.__mwSp('err', 'Could not hear you (' + (ev.error || 'error') + ').'); }; r.onend = function () { micBtns(false); PB.rec = null; };
+        PB.rec = r; try { r.start(); } catch (e) { PB.rec = null; }
+    }
+    function speak(t) { try { if (!window.speechSynthesis) { return; } speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(String(t).slice(0, 1500)); u.lang = PB.lang; speechSynthesis.speak(u); } catch (e) { } }
+    /* ----- attachments ----- */
+    function readAs(f, how) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = function () { rej(new Error('Could not read ' + f.name)); }; r[how](f); }); }
+    function shrink(url, max) { return new Promise(function (res) { var im = new Image(); im.onload = function () { var s = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.width * s)); c.height = Math.max(1, Math.round(im.height * s)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.82)); }; im.onerror = function () { res(url); }; im.src = url; }); }
+    function frames(f) {
+        return new Promise(function (res) {
+            var v = document.createElement('video'), u = URL.createObjectURL(f), out = [], i = 0; v.muted = true; v.preload = 'auto'; v.src = u;
+            v.onloadedmetadata = function () { var d = v.duration || 1, ts = [0.1, 0.35, 0.6, 0.85].map(function (p) { return Math.max(0, Math.min(d - 0.1, d * p)); }); (function next() { if (i >= ts.length) { URL.revokeObjectURL(u); res(out); return; } v.currentTime = ts[i++]; })(); v.onseeked = function () { try { var s = Math.min(1, 800 / Math.max(v.videoWidth, v.videoHeight)), c = document.createElement('canvas'); c.width = Math.round(v.videoWidth * s); c.height = Math.round(v.videoHeight * s); c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); out.push(c.toDataURL('image/jpeg', 0.7)); } catch (e) { } if (i >= ts.length) { URL.revokeObjectURL(u); res(out); } else { v.currentTime = ts[i++]; } }; };
+            v.onerror = function () { res([]); }; setTimeout(function () { res(out); }, 20000);
+        });
+    }
+    function prep(f) {
+        var t = f.type || '', n = f.name || 'file';
+        if (/^image\//.test(t)) { return readAs(f, 'readAsDataURL').then(function (u) { return shrink(u, 1200); }).then(function (u) { return { kind: 'image', name: n, dataUrl: u }; }); }
+        if (/^video\//.test(t)) { return frames(f).then(function (fr) { return { kind: 'video', name: n, frames: fr, dataUrl: fr[0] || '' }; }); }
+        if (/^audio\//.test(t)) { if (f.size > 12e6) { return Promise.reject(new Error('Audio is too big (max 12 MB).')); } return readAs(f, 'readAsDataURL').then(function (u) { return { kind: 'audio', name: n, dataUrl: u }; }); }
+        if (/^text\/|json|csv|xml|log|markdown/.test(t) || /\.(txt|csv|json|log|md|xml)$/i.test(n)) { return readAs(f, 'readAsText').then(function (x) { return { kind: 'text', name: n, text: String(x).slice(0, 12000) }; }); }
+        return Promise.reject(new Error(n + ': this file type cannot be read here (use a picture, video, audio, or a text/CSV/JSON/log file).'));
+    }
+    function trayDraw(ctx) {
+        var el = document.getElementById(ctx === 'pc' ? 'pcatt' : 'pfatt'); if (!el) { return; }
+        el.innerHTML = PB.pend[ctx].map(function (a, i) { return '<span class="pbchip">' + (a.kind === 'image' ? '🖼' : a.kind === 'video' ? '🎬' : a.kind === 'audio' ? '🎧' : '📄') + ' ' + esc(a.name.slice(0, 18)) + ' <b data-pb="rm:' + ctx + ':' + i + '">✕</b></span>'; }).join('');
+    }
+    function pick(ctx, cam) {
+        PB.ctx = ctx; var inp = document.getElementById('pbfile' + (cam ? 'c' : ''));
+        if (!inp) { inp = document.createElement('input'); inp.type = 'file'; inp.id = 'pbfile' + (cam ? 'c' : ''); inp.multiple = !cam; inp.accept = cam ? 'image/*' : 'image/*,video/*,audio/*,.txt,.csv,.json,.log,.md,.xml'; if (cam) { inp.setAttribute('capture', 'environment'); } inp.style.display = 'none'; document.body.appendChild(inp);
+            inp.addEventListener('change', function () { var fs = [].slice.call(inp.files || []); inp.value = ''; var c = PB.ctx; fs.slice(0, 4).forEach(function (f) { prep(f).then(function (a) { PB.pend[c].push(a); trayDraw(c); }, function (er) { var M = c === 'pc' ? PCH.msgs : PF.msgs; M.push({ who: 'bot', html: '📎 ' + esc(er.message) }); if (c === 'pc') { pcDraw(); } else { pfRender(); } }); }); }); }
+        inp.click();
+    }
+    /* ----- toolbar injected into both chat boxes ----- */
+    function toolbar(ctx) { return '<div class="pbtools"><span class="pbt" data-pb="mic:' + ctx + '" title="Speak">🎤</span><span class="pbt" data-pb="attach:' + ctx + '" title="Attach picture, screen recording, audio or file">📎</span><span class="pbt" data-pb="cam:' + ctx + '" title="Take a photo">📷</span><span class="pbt" data-pb="lang" title="Voice language">' + (PB.lang === 'ur-PK' ? 'اردو' : 'EN') + '</span><span class="pbt' + (PB.auto ? ' on' : '') + '" data-pb="auto" title="Read answers aloud">🔊</span><span class="pbt" data-pb="set" title="Professor settings">⚙</span></div><div class="pbtray" id="' + (ctx === 'pc' ? 'pcatt' : 'pfatt') + '"></div>'; }
+    var _vp = VIEWS.pchat; VIEWS.pchat = function () { var h = _vp.apply(this, arguments); return h.replace('<div id="pcmsgs" class="pcmsgs"></div>', '<div id="pcmsgs" class="pcmsgs"></div>' + toolbar('pc')); };
+    setInterval(function () { try { var p = document.getElementById('pfp'); if (p && !document.getElementById('pftools')) { var inn = p.querySelector('.pfin'); if (inn) { var d = document.createElement('div'); d.id = 'pftools'; d.innerHTML = toolbar('pf'); inn.parentNode.insertBefore(d, inn); trayDraw('pf'); } } trayDraw('pc'); } catch (e) { } }, 1000);
+    /* ----- knowledge pack from the web (updates itself once a day) ----- */
+    function loadPack(force) {
+        var P = null; try { P = JSON.parse(ls(KBP, 'null')); } catch (e) { }
+        if (P && P.items) { P.items.forEach(function (x) { try { PF_KB.push([x.k, x.t, x.x]); } catch (e) { } }); PB.kbN = P.items.length; PB.kbAt = P.at; }
+        if (!force && P && nowv() - P.at < 86400000) { return Promise.resolve(); }
+        return fetch('https://raw.githubusercontent.com/awaismintoo/awais_mintoo_cloud/main/professor_kb.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); }).then(function (j) { var items = (Array.isArray(j) ? j : j.items || []).filter(function (x) { return x && x.k && x.t && x.x; }).slice(0, 400); lss(KBP, JSON.stringify({ at: nowv(), items: items })); if (!P || !P.items) { items.forEach(function (x) { PF_KB.push([x.k, x.t, x.x]); }); } PB.kbN = items.length; PB.kbAt = nowv(); PB.kbErr = ''; }, function (e) { PB.kbErr = e.message; if (!P) { lss(KBP, JSON.stringify({ at: nowv(), items: [] })); } });
+    }
+    setTimeout(function () { loadPack(false); }, 4000);
+    /* ----- settings window ----- */
+    function vSet() {
+        var h = '<div class="group pad"><b>Online AI engine</b><div class="note">Professor answers from his built-in encyclopedia first. For anything else he can ask an online AI engine. Only your question text and attachments are sent, never keys, passwords or balances.</div>' +
+            '<div class="row"><span>Allow online AI</span><span class="btn sec tap kpb" data-pb="consent:' + (PB.consent ? 'toggle-off' : 'toggle-on') + '">' + (PB.consent ? 'ON · tap to turn off' : 'OFF · tap to turn on') + '</span></div>' +
+            '<div class="note" style="margin:8px 0 2px">Engine</div><select class="tin" id="pbEng">' + Object.keys(LABEL).map(function (k) { return '<option value="' + k + '"' + (PB.engine === k ? ' selected' : '') + '>' + LABEL[k] + '</option>'; }).join('') + '</select>' +
+            (PB.engine !== 'free' ? '<div class="note" style="margin:8px 0 2px">Your key (stored encrypted on this phone)</div><input class="tin" id="pbKey" type="password" placeholder="' + (key() ? '•••••••• saved' : 'paste key') + '" autocomplete="off"><div class="note" style="margin:8px 0 2px">Model (leave empty for default: ' + esc(DEF[PB.engine] || '') + ')</div><input class="tin" id="pbModel" value="' + esc(PB.model) + '" autocomplete="off">' : '') +
+            (PB.engine === 'custom' ? '<div class="note" style="margin:8px 0 2px">Service address, for example https://api.groq.com/openai/v1</div><input class="tin" id="pbBase" value="' + esc(PB.base) + '" autocomplete="off">' : '') +
+            '<div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><span class="btn tap kpb" data-pb="save">Save</span><span class="btn sec tap kpb" data-pb="test">Test the engine</span></div>' + (PB.test ? '<div class="note">' + PB.test + '</div>' : '') +
+            '<div class="note"><b>Advanced level (Anthropic Claude):</b> 1) open console.anthropic.com and sign in, 2) add a few dollars under Billing, 3) API keys > Create key and copy it, 4) here choose "Anthropic (your key)", paste the key, tap Save, then Test. Hard questions then get Claude-level answers; you pay Anthropic only for what you use (usually cents).</div><div class="note">The free engine needs no key but is a public community service: it can be slow or busy and cannot always read pictures. With your own key you get faster, better answers and can attach pictures, screen-recording frames and (Gemini) audio files.</div></div>';
+        h += '<div class="group pad"><b>Voice</b><div class="row"><span>Microphone language</span><span class="btn sec tap kpb" data-pb="lang">' + (PB.lang === 'ur-PK' ? 'اردو (Urdu)' : 'English') + '</span></div><div class="row"><span>Read answers aloud</span><span class="btn sec tap kpb" data-pb="auto">' + (PB.auto ? 'ON' : 'OFF') + '</span></div><div class="note">The microphone uses your phone\'s speech service (Google) and needs the internet. Android will ask for microphone permission the first time.</div></div>';
+        h += '<div class="group pad"><b>What Professor knows</b><div class="row"><span>Built-in encyclopedia</span><b>' + (PF_KB.length) + ' topics</b></div><div class="row"><span>Learned answers on this phone</span><b>' + learned().length + '</b></div><div class="row"><span>Online knowledge pack</span><b>' + (PB.kbN ? PB.kbN + ' topics' : 'none yet') + '</b></div><div class="note">' + (PB.kbAt ? 'Checked ' + new Date(PB.kbAt).toLocaleString() : 'Not checked yet') + (PB.kbErr ? ' · ' + esc(PB.kbErr) : '') + '. The pack updates itself once a day from the owner\'s file professor_kb.json.</div><div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sec tap kpb" data-pb="pack">Update now</span><span class="btn sec tap kpb" data-pb="forget">Clear learned answers</span></div></div>';
+        return h;
+    }
+    WINS.push({ id: 'pbrain', ic: '🧠', c: '#af52de', n: 'Professor settings', t: 'Professor', sub: 'Voice, attachments, online AI engine and learning' }); LIVE.pbrain = 0; VIEWS.pbrain = vSet;
+    MW_HELP.pbrain = 'Choose how Professor answers questions outside the app: a free online engine or your own AI key. Set the voice language, read-aloud, and see what he has learned.';
+    try { MW_GROUPS.forEach(function (g) { if (/^Account/.test(g[0]) && g[1].indexOf('pbrain') < 0) { g[1].push('pbrain'); } }); mwHostSig = ''; } catch (e) { }
+    document.addEventListener('change', function (e) { var t = e.target; if (t && t.id === 'pbEng') { PB.engine = t.value; save(); renderView(true); } });
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('[data-pb]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+        var a = el.getAttribute('data-pb'), i = a.indexOf(':'), v = i < 0 ? a : a.slice(0, i), x = i < 0 ? '' : a.slice(i + 1);
+        if (v === 'mic') { listen(x); } else if (v === 'attach') { pick(x, false); } else if (v === 'cam') { pick(x, true); }
+        else if (v === 'lang') { PB.lang = PB.lang === 'ur-PK' ? 'en-US' : 'ur-PK'; save(); [].forEach.call(document.querySelectorAll('[data-pb="lang"]'), function (b) { if (b.classList.contains('pbt')) { b.textContent = PB.lang === 'ur-PK' ? 'اردو' : 'EN'; } }); if (S.win === 'pbrain') { renderView(true); } }
+        else if (v === 'auto') { PB.auto = !PB.auto; save(); [].forEach.call(document.querySelectorAll('.pbt[data-pb="auto"]'), function (b) { b.classList.toggle('on', PB.auto); }); if (S.win === 'pbrain') { renderView(true); } if (!PB.auto) { try { speechSynthesis.cancel(); } catch (er) { } } }
+        else if (v === 'set') { try { pfClose(); } catch (er) { } gotoWin('pbrain'); }
+        else if (v === 'say') { speak(PB.say[+x] || ''); }
+        else if (v === 'rm') { var p = x.split(':'); PB.pend[p[0]].splice(+p[1], 1); trayDraw(p[0]); }
+        else if (v === 'ai') { go(PB.ctx, 'ai: ' + x); }
+        else if (v === 'consent') {
+            if (x === 'toggle-on') { PB.consent = true; save(); renderView(true); } else if (x === 'toggle-off') { PB.consent = false; save(); renderView(true); }
+            else if (x === 'no') { var M = PB.ctx === 'pc' ? PCH.msgs : PF.msgs; M.push({ who: 'bot', html: 'OK. I will only use my built-in knowledge and the web encyclopedia until you allow the online AI.' }); if (PB.ctx === 'pc') { pcDraw(); } else { pfRender(); } }
+            else if (x.indexOf('yes:') === 0) { PB.consent = true; save(); go(PB.ctx, x.slice(4)); }
+        }
+        else if (v === 'save') { var k = document.getElementById('pbKey'), m = document.getElementById('pbModel'), b = document.getElementById('pbBase'); if (k && k.value.trim()) { lss('mintoosuite_x_aikey', k.value.trim()); } if (m) { PB.model = m.value.trim(); } if (b) { PB.base = b.value.trim(); } PB.consent = true; save(); PB.test = 'Saved.'; renderView(true); }
+        else if (v === 'test') { var k2 = document.getElementById('pbKey'); if (k2 && k2.value.trim()) { lss('mintoosuite_x_aikey', k2.value.trim()); } var m2 = document.getElementById('pbModel'); if (m2) { PB.model = m2.value.trim(); } var b2 = document.getElementById('pbBase'); if (b2) { PB.base = b2.value.trim(); } save(); PB.test = 'Testing…'; renderView(true); callAI('Reply with the single word OK.', []).then(function (t) { PB.test = '✅ Engine answered: ' + esc(String(t).slice(0, 80)); }, function (er) { PB.test = '⚠️ ' + esc(er.message); }).then(function () { if (S.win === 'pbrain') { renderView(true); } }); }
+        else if (v === 'pack') { PB.kbErr = ''; loadPack(true).then(function () { if (S.win === 'pbrain') { renderView(true); } }); }
+        else if (v === 'forget') { lss(LRN, '[]'); renderView(true); }
+    }, true);
+    var st = document.createElement('style'); st.textContent = '.pbtools{display:flex;gap:6px;margin:6px 0 0;flex-wrap:wrap}.pbt{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:36px;padding:0 10px;border-radius:12px;background:var(--fill,#e8e8ee);font-size:17px;cursor:pointer;user-select:none}.pbt.on{background:#34c759;color:#fff}.pbt.rec{background:#ff3b30;color:#fff;animation:pbp 1s infinite}@keyframes pbp{50%{opacity:.55}}.pbtray{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}.pbchip{background:var(--fill,#e8e8ee);border-radius:10px;padding:4px 8px;font-size:12px}.pbchip b{margin-left:4px;cursor:pointer}.pbsay{cursor:pointer;opacity:.7;font-size:14px}#pftools{padding:0 8px}'; document.head.appendChild(st);
+    window.__pb = { PB: PB, brain: brain, go: go, callAI: callAI };
+})();
+/* ===== p9zsg: AI Signals (stocks, forex, metals, crypto) with track record, paper account, sector map ===== */
+(function () {
+    var STK = 'AAPL MSFT NVDA AMZN GOOGL META TSLA AVGO BRK-B JPM LLY V UNH XOM MA COST HD PG JNJ ABBV WMT NFLX BAC CRM ORCL CVX MRK KO AMD PEP TMO ADBE LIN MCD ACN CSCO ABT WFC IBM GE DHR TXN QCOM CAT INTU VZ AMGN NOW PM ISRG DIS GS SPGI NEE UBER BKNG RTX LOW HON T AXP PFE BLK UNP SYK ELV TJX MS LMT BSX COP VRTX PLD MDT C ADP DE MMC SBUX GILD CB MU PANW INTC ADI REGN SCHW LRCX KLAC AMAT BA PYPL NKE SO CVS UPS MO DUK PNC USB'.split(' ');
+    var FXL = [['EURUSD=X', 'EUR/USD'], ['GBPUSD=X', 'GBP/USD'], ['JPY=X', 'USD/JPY'], ['AUDUSD=X', 'AUD/USD'], ['CAD=X', 'USD/CAD'], ['CHF=X', 'USD/CHF'], ['NZDUSD=X', 'NZD/USD']];
+    var MTL = [['GC=F', 'Gold'], ['SI=F', 'Silver'], ['PL=F', 'Platinum'], ['PA=F', 'Palladium'], ['HG=F', 'Copper']];
+    var CRY = [['BTC-USD', 'Bitcoin'], ['ETH-USD', 'Ethereum'], ['BNB-USD', 'BNB'], ['XRP-USD', 'XRP'], ['SOL-USD', 'Solana'], ['ADA-USD', 'Cardano'], ['DOGE-USD', 'Dogecoin'], ['AVAX-USD', 'Avalanche'], ['LINK-USD', 'Chainlink'], ['DOT-USD', 'Polkadot']];
+    var RIB = [['^GSPC', 'S&P 500'], ['^IXIC', 'Nasdaq'], ['^DJI', 'Dow'], ['^VIX', 'VIX'], ['GC=F', 'Gold'], ['BTC-USD', 'Bitcoin']];
+    var SEC = [['XLK', 'Tech'], ['XLF', 'Financials'], ['XLE', 'Energy'], ['XLV', 'Health'], ['XLY', 'Discretionary'], ['XLP', 'Staples'], ['XLI', 'Industrials'], ['XLB', 'Materials'], ['XLU', 'Utilities'], ['XLRE', 'Real estate'], ['XLC', 'Communication']];
+    var UNI = []; STK.forEach(function (s) { UNI.push({ y: s, n: s, tab: 'st' }); }); FXL.forEach(function (a) { UNI.push({ y: a[0], n: a[1], tab: 'fx' }); }); MTL.forEach(function (a) { UNI.push({ y: a[0], n: a[1], tab: 'mt' }); }); CRY.forEach(function (a) { UNI.push({ y: a[0], n: a[1], tab: 'cr' }); });
+    var EXTRA = RIB.concat(SEC).map(function (a) { return { y: a[0], n: a[1], tab: 'x' }; });
+    var K = 'mintoosuite_sg', KT = 'mintoosuite_sgt', KP = 'mintoosuite_sgp';
+    var SG = { tab: 'st', f: 'all', q: '', sort: 'score', open: '', sec: 'sig', rows: {}, at: 0, busy: 0, done: 0, total: 0, msg: '', ohlc: {}, ai: {}, ledger: { open: [], closed: [] }, paper: { cash: 100000, pos: [], hist: [] } };
+    try { var c = JSON.parse(localStorage.getItem(K) || 'null'); if (c && c.rows) { SG.rows = c.rows; SG.at = c.at; } } catch (e) { }
+    try { var l = JSON.parse(localStorage.getItem(KT) || 'null'); if (l && l.open) { SG.ledger = l; } } catch (e) { }
+    try { var p = JSON.parse(localStorage.getItem(KP) || 'null'); if (p && p.pos) { SG.paper = p; } } catch (e) { }
+    function sv(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+    function f2(v) { var n = +v; return !isFinite(n) ? '–' : Math.abs(n) >= 1000 ? n.toFixed(2) : Math.abs(n) >= 10 ? n.toFixed(2) : Math.abs(n) >= 1 ? n.toFixed(3) : n.toFixed(5); }
+    function hash(s) { var h1 = 0xdeadbeef, h2 = 0x41c6ce57, i, ch; for (i = 0; i < s.length; i++) { ch = s.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); } h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909); return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16); }
+    /* ----- data ----- */
+    function yget(sym, range) {
+        var hs = ['query1', 'query2'], i = 0;
+        function one() {
+            var u = 'https://' + hs[i] + '.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=' + (range || '1y') + '&includePrePost=false';
+            return fetchText(u, 12000).then(function (t) {
+                var j = JSON.parse(t), r = j && j.chart && j.chart.result && j.chart.result[0]; if (!r || !r.timestamp) { throw new Error('no data'); }
+                var q = r.indicators.quote[0], o = [], k; for (k = 0; k < r.timestamp.length; k++) { if (q.close[k] != null && q.open[k] != null && q.high[k] != null && q.low[k] != null) { o.push([r.timestamp[k] * 1000, q.open[k], q.high[k], q.low[k], q.close[k], q.volume && q.volume[k] || 0]); } }
+                if (o.length < 40) { throw new Error('no data'); } return o;
+            }).catch(function (e) { if (i < hs.length - 1) { i++; return one(); } throw e; });
+        }
+        return one();
+    }
+    function sma(a, n, e) { e = e == null ? a.length : e; if (e < n) { return null; } var s = 0, i; for (i = e - n; i < e; i++) { s += a[i]; } return s / n; }
+    function emaS(a, n) { var k = 2 / (n + 1), o = [], e = a[0], i; for (i = 0; i < a.length; i++) { e = i ? a[i] * k + e * (1 - k) : a[0]; o.push(e); } return o; }
+    function rsi(c, n) { if (c.length <= n) { return 50; } var g = 0, l = 0, i, d; for (i = 1; i <= n; i++) { d = c[i] - c[i - 1]; if (d > 0) { g += d; } else { l -= d; } } g /= n; l /= n; for (i = n + 1; i < c.length; i++) { d = c[i] - c[i - 1]; g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n; } return l === 0 ? 100 : 100 - 100 / (1 + g / l); }
+    function atr(b, n) { var t = [], i; for (i = 1; i < b.length; i++) { t.push(Math.max(b[i][2] - b[i][3], Math.abs(b[i][2] - b[i - 1][4]), Math.abs(b[i][3] - b[i - 1][4]))); } return sma(t, Math.min(n, t.length)); }
+    function analyse(b, u) {
+        var c = b.map(function (x) { return x[4]; }), n = c.length, px = c[n - 1], prev = c[n - 2], A = atr(b, 14) || px * 0.01, ind = [], hasV = u.tab === 'st' || u.tab === 'cr';
+        var s50 = sma(c, Math.min(50, n)), s200 = n >= 200 ? sma(c, 200) : sma(c, Math.min(100, n)), e12 = emaS(c, 12), e26 = emaS(c, 26), mac = e12.map(function (v, i) { return v - e26[i]; }), sig = emaS(mac, 9), r = rsi(c, 14);
+        var hh = Math.max.apply(null, b.slice(-14).map(function (x) { return x[2]; })), ll = Math.min.apply(null, b.slice(-14).map(function (x) { return x[3]; })), st = hh > ll ? (px - ll) / (hh - ll) * 100 : 50, roc = (px / c[Math.max(0, n - 11)] - 1) * 100;
+        var vol = 0, o1 = 0, o2 = 0, i; if (hasV) { var ob = 0, obs = []; for (i = 1; i < n; i++) { ob += c[i] > c[i - 1] ? b[i][5] : c[i] < c[i - 1] ? -b[i][5] : 0; obs.push(ob); } vol = obs.length > 11 ? obs[obs.length - 1] - obs[obs.length - 11] : 0; }
+        ind.push(['Price above 50-day average', px > s50]); ind.push(['50-day above long average', s50 > s200]); ind.push(['Fast average above slow (12/26)', e12[n - 1] > e26[n - 1]]); ind.push(['MACD above its signal line', mac[n - 1] > sig[n - 1]]);
+        ind.push(['RSI above 50 (' + r.toFixed(0) + ')', r > 50]); ind.push(['Stochastic above 50 (' + st.toFixed(0) + ')', st > 50]); ind.push(['10-day momentum positive (' + roc.toFixed(1) + '%)', roc > 0]);
+        ind.push([hasV ? 'Volume flow rising (OBV)' : 'Price above 20-day average', hasV ? vol > 0 : px > sma(c, Math.min(20, n))]);
+        var bull = ind.filter(function (x) { return x[1]; }).length, side = bull >= 6 ? 'BUY' : bull <= 2 ? 'SELL' : 'HOLD', buy = side !== 'SELL', score = Math.round(50 + 50 * Math.abs(bull - 4) / 4);
+        if (side === 'BUY' && r > 80) { side = 'HOLD'; } if (side === 'SELL' && r < 20) { side = 'HOLD'; }
+        var d = side === 'SELL' ? -1 : 1;
+        return { y: u.y, n: u.n, tab: u.tab, side: side, score: score, bull: bull, px: px, ch: (px / prev - 1) * 100, atr: A, lo: px - d * 0.3 * A, hi: px + d * 0.1 * A, stop: px - d * 1.5 * A, tgt: px + d * 2.25 * A, rr: 1.5, ind: ind, t: b[n - 1][0], spark: c.slice(-60).map(function (v) { return +v.toPrecision(6); }) };
+    }
+    function track(row, bars) {
+        var L = SG.ledger, now = row.t, o = L.open, i, k;
+        for (i = o.length - 1; i >= 0; i--) {
+            var p = o[i]; if (p.y !== row.y) { continue; } var res = null, ex = 0, t1 = 0, cnt = 0;
+            for (k = 0; k < bars.length; k++) { var x = bars[k]; if (x[0] <= p.t0) { continue; } cnt++; var d = p.side === 'BUY' ? 1 : -1, hitS = d > 0 ? x[3] <= p.stop : x[2] >= p.stop, hitT = d > 0 ? x[2] >= p.tgt : x[3] <= p.tgt; if (hitS) { res = 'loss'; ex = p.stop; t1 = x[0]; break; } if (hitT) { res = 'win'; ex = p.tgt; t1 = x[0]; break; } if (cnt >= 20) { ex = x[4]; res = (ex - p.entry) * d > 0 ? 'win' : 'loss'; t1 = x[0]; break; } }
+            if (res) { var prev = L.closed.length ? L.closed[L.closed.length - 1].h : 'genesis', rec = { y: p.y, side: p.side, entry: p.entry, exit: ex, res: res, t0: p.t0, t1: t1, pct: (ex / p.entry - 1) * 100 * (p.side === 'BUY' ? 1 : -1) }; rec.h = hash(prev + JSON.stringify(rec)); L.closed.push(rec); o.splice(i, 1); }
+        }
+        if ((row.side === 'BUY' || row.side === 'SELL') && !o.some(function (p) { return p.y === row.y; }) && !L.closed.some(function (z) { return z.y === row.y && z.t0 === row.t; })) { o.push({ y: row.y, n: row.n, side: row.side, entry: row.px, stop: row.stop, tgt: row.tgt, t0: row.t }); }
+        L.open = o; L.closed = L.closed.slice(-300);
+    }
+    function paperTick() {
+        var P = SG.paper, i; for (i = P.pos.length - 1; i >= 0; i--) { var p = P.pos[i], r = SG.rows[p.y]; if (!r) { continue; } var d = p.side === 'BUY' ? 1 : -1; if ((d > 0 && r.px <= p.stop) || (d < 0 && r.px >= p.stop)) { closePos(i, p.stop, 'stop'); } else if ((d > 0 && r.px >= p.tgt) || (d < 0 && r.px <= p.tgt)) { closePos(i, p.tgt, 'target'); } }
+    }
+    function closePos(i, px, why) { var P = SG.paper, p = P.pos[i], d = p.side === 'BUY' ? 1 : -1, pl = (px - p.entry) * p.qty * d; P.cash += p.qty * p.entry + pl; P.hist.unshift({ y: p.y, side: p.side, entry: p.entry, exit: px, pl: pl, why: why, t: Date.now() }); P.hist = P.hist.slice(0, 50); P.pos.splice(i, 1); sv(KP, P); }
+    function equity() { var P = SG.paper, e = P.cash; P.pos.forEach(function (p) { var r = SG.rows[p.y], px = r ? r.px : p.entry, d = p.side === 'BUY' ? 1 : -1; e += p.qty * p.entry + (px - p.entry) * p.qty * d; }); return e; }
+    var q = [], running = 0, lastDraw = 0;
+    function draw(force) { var n = Date.now(); if (S.win === 'signals' && (force || n - lastDraw > 1500)) { lastDraw = n; renderView(true); } }
+    function refresh(force) {
+        if (SG.busy) { return; } if (!force && SG.at && Date.now() - SG.at < 1800000) { return; }
+        SG.busy = 1; SG.done = 0; SG.msg = ''; q = UNI.concat(EXTRA); SG.total = q.length; var okc = 0, bad = 0, fresh = {};
+        function next() {
+            var u = q.shift(); if (!u) { if (--running === 0) { SG.busy = 0; if (okc) { SG.rows = Object.assign({}, SG.rows, fresh); SG.at = Date.now(); sv(K, { at: SG.at, rows: SG.rows }); } else { SG.msg = 'Could not reach the Yahoo Finance price feed. Check the internet and tap Refresh.'; } sv(KT, SG.ledger); paperTick(); draw(true); } return; }
+            yget(u.y, '1y').then(function (b) { var r = analyse(b, u); fresh[u.y] = r; okc++; SG.ohlc[u.y] = b.slice(-130); if (u.tab !== 'x') { track(r, b.slice(-30)); } }).catch(function () { bad++; }).then(function () { SG.done++; var pe = document.getElementById('sgprog'); if (pe) { pe.textContent = 'Loading prices… ' + SG.done + ' / ' + SG.total; } next(); });
+        }
+        var w = 4; running = w; while (w--) { next(); }
+    }
+    /* ----- view ----- */
+    function ring(s, col) { var a = Math.round(s * 3.6); return '<span class="sgring" style="background:conic-gradient(' + col + ' ' + a + 'deg,rgba(128,128,128,.25) 0)"><i>' + s + '</i></span>'; }
+    function candles(b, r) {
+        var W = 320, H = 150, a = b.slice(-70), hi = Math.max.apply(null, a.map(function (x) { return x[2]; }).concat([r.tgt, r.stop])), lo = Math.min.apply(null, a.map(function (x) { return x[3]; }).concat([r.tgt, r.stop])), pad = (hi - lo) * 0.05; hi += pad; lo -= pad;
+        var y = function (v) { return (H - 4 - (v - lo) / (hi - lo) * (H - 8)).toFixed(1); }, w = W / a.length, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="background:rgba(128,128,128,.08);border-radius:10px">';
+        a.forEach(function (x, i) { var up = x[4] >= x[1], col = up ? '#34c759' : '#ff3b30', cx = (i * w + w / 2).toFixed(1); s += '<line x1="' + cx + '" x2="' + cx + '" y1="' + y(x[2]) + '" y2="' + y(x[3]) + '" stroke="' + col + '"/><rect x="' + (i * w + w * 0.15).toFixed(1) + '" width="' + (w * 0.7).toFixed(1) + '" y="' + y(Math.max(x[1], x[4])) + '" height="' + Math.max(1, Math.abs(y(x[1]) - y(x[4]))).toFixed(1) + '" fill="' + col + '"/>'; });
+        var e = emaS(b.map(function (x) { return x[4]; }), 20).slice(-a.length); s += '<polyline fill="none" stroke="#ff9f0a" stroke-width="1.2" points="' + e.map(function (v, i) { return (i * w + w / 2).toFixed(1) + ',' + y(v); }).join(' ') + '"/>';
+        [[r.tgt, '#34c759', 'Target'], [r.stop, '#ff3b30', 'Stop'], [r.px, '#0a84ff', 'Now']].forEach(function (L) { s += '<line x1="0" x2="' + W + '" y1="' + y(L[0]) + '" y2="' + y(L[0]) + '" stroke="' + L[1] + '" stroke-dasharray="4 3"/><text x="3" y="' + (+y(L[0]) - 2) + '" font-size="9" fill="' + L[1] + '">' + L[2] + ' ' + f2(L[0]) + '</text>'; });
+        return s + '</svg>';
+    }
+    function ago(t) { var d = Math.round((Date.now() - t) / 86400000); return d <= 0 ? 'today' : d === 1 ? '1d ago' : d + 'd ago'; }
+    function card(r) {
+        var col = r.side === 'BUY' ? '#34c759' : r.side === 'SELL' ? '#ff3b30' : '#ff9f0a', op = SG.open === r.y, h = '<div class="sgcard" style="border-color:' + col + '55"><div class="sgtop"><div><b class="sgsym">' + esc(r.n) + '</b><br><span class="note" style="margin:0">' + (r.tab === 'st' ? 'US stock' : r.tab === 'fx' ? 'Forex' : r.tab === 'mt' ? 'Metal' : 'Crypto') + ' · ' + f2(r.px) + ' <span style="color:' + (r.ch >= 0 ? '#34c759' : '#ff3b30') + '">' + (r.ch >= 0 ? '+' : '') + r.ch.toFixed(2) + '%</span></span></div>' + ring(r.score, col) + '</div>';
+        h += '<div class="sgtag" style="background:' + col + '22;color:' + col + '">' + r.side + '</div><span class="note" style="margin:0 0 0 8px">' + r.bull + '/8 indicators bullish · daily close ' + ago(r.t) + '</span>';
+        if (r.side !== 'HOLD') { h += '<div class="sgg"><div><small>Entry zone</small><b>' + f2(Math.min(r.lo, r.hi)) + '–' + f2(Math.max(r.lo, r.hi)) + '</b></div><div><small>Stop</small><b style="color:#ff3b30">' + f2(r.stop) + '</b></div><div><small>Target</small><b style="color:#34c759">' + f2(r.tgt) + '</b></div><div><small>Risk : reward</small><b>1 : ' + r.rr.toFixed(2) + '</b></div></div>'; } else { h += '<div class="note">No clear edge: the indicators disagree. Wait.</div>'; }
+        h += '<div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><span class="btn sec tap kpb" data-sg="open:' + esc(r.y) + '">' + (op ? 'Collapse' : 'Expand') + '</span>' + (r.side !== 'HOLD' ? '<span class="btn tap kpb" data-sg="take:' + esc(r.y) + '">Paper trade</span>' : '') + '</div>';
+        if (op) {
+            var ai = SG.ai[r.y];
+            h += '<div style="margin-top:8px">' + (SG.ohlc[r.y] ? candles(SG.ohlc[r.y], r) : '<div class="note">Chart loads on the next refresh.</div>') + '</div><div class="note" style="margin:8px 0 2px"><b>Why this signal</b></div>' + r.ind.map(function (x) { return '<div class="row" style="padding:3px 0"><span>' + esc(x[0]) + '</span><b style="color:' + (x[1] ? '#34c759' : '#ff3b30') + '">' + (x[1] ? '✔ bullish' : '✘ bearish') + '</b></div>'; }).join('') + '<div class="note">Daily-close rules with ATR(' + f2(r.atr) + ') based levels. Educational, not advice.</div><div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sec tap kpb" data-sg="why:' + esc(r.y) + '">🧠 Ask Professor why</span><a class="btn sec tap kpb" style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(r.y.replace('-USD', 'USD').replace('=X', '').replace('=F', '')) + '">Open on TradingView</a></div>';
+        }
+        return h + '</div>';
+    }
+    function sector() {
+        var h = '<div class="sgsec">'; SEC.forEach(function (s) { var r = SG.rows[s[0]], c = r ? r.ch : 0, a = Math.min(1, Math.abs(c) / 2.5), bg = !r ? 'rgba(128,128,128,.2)' : c >= 0 ? 'rgba(52,199,89,' + (0.2 + a * 0.6) + ')' : 'rgba(255,59,48,' + (0.2 + a * 0.6) + ')'; h += '<div style="background:' + bg + '"><b>' + s[1] + '</b><br><small>' + (r ? (c >= 0 ? '+' : '') + c.toFixed(2) + '%' : '…') + '</small></div>'; }); return h + '</div>';
+    }
+    function ribbon() { return '<div class="sgrib">' + RIB.map(function (s) { var r = SG.rows[s[0]]; return '<span><b>' + s[1] + '</b> ' + (r ? f2(r.px) + ' <i style="color:' + (r.ch >= 0 ? '#34c759' : '#ff3b30') + '">' + (r.ch >= 0 ? '+' : '') + r.ch.toFixed(2) + '%</i>' : '…') + '</span>'; }).join('') + '</div>'; }
+    function vSig() {
+        if (!SG.at && !SG.busy) { setTimeout(function () { refresh(false); }, 50); } else if (!SG.busy && Date.now() - SG.at > 1800000) { setTimeout(function () { refresh(false); }, 50); }
+        var rows = UNI.map(function (u) { return SG.rows[u.y]; }).filter(Boolean), act = rows.filter(function (r) { return r.side !== 'HOLD'; }), buys = act.filter(function (r) { return r.side === 'BUY'; }).length, avg = act.length ? Math.round(act.reduce(function (s, r) { return s + r.score; }, 0) / act.length) : 0, cl = SG.ledger.closed, w = cl.filter(function (z) { return z.res === 'win'; }).length;
+        var h = ribbon() + '<div class="group pad"><b>AI Signals</b><div class="note">Rules-based BUY / SELL signals from eight indicators on daily closes, for 100 big US stocks, forex, metals and crypto. Every signal shows an entry zone, stop, target and risk : reward. Educational, not financial advice.</div>';
+        h += '<div class="sgstat"><div><small>Active signals</small><b>' + act.length + '</b></div><div><small>Buy</small><b style="color:#34c759">' + buys + '</b></div><div><small>Sell</small><b style="color:#ff3b30">' + (act.length - buys) + '</b></div><div><small>Average score</small><b>' + avg + '</b></div><div><small>Track record</small><b>' + w + 'W–' + (cl.length - w) + 'L</b></div></div>';
+        h += '<div class="note" id="sgprog">' + (SG.busy ? 'Loading prices… ' + SG.done + ' / ' + SG.total : SG.at ? 'Updated ' + new Date(SG.at).toLocaleTimeString() : '') + (SG.msg ? ' · ' + esc(SG.msg) : '') + '</div><div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sec tap kpb" data-sg="refresh">↻ Refresh</span></div></div>';
+        h += '<div class="xchb" style="margin:8px 0">' + [['sig', 'Signals'], ['map', 'Market'], ['rec', 'Track record'], ['pap', 'Paper $100k']].map(function (s) { return '<span class="' + (SG.sec === s[0] ? 'on' : '') + '" data-sg="sec:' + s[0] + '">' + s[1] + '</span>'; }).join('') + '</div>';
+        if (SG.sec === 'map') { return h + '<div class="group pad"><b>Sector heat map (today)</b>' + sector() + '<div class="note">Sector funds from Yahoo Finance. Green = up, red = down.</div></div>' + '<div class="group pad"><b>Strongest and weakest signals today</b>' + act.sort(function (a, b) { return b.score - a.score; }).slice(0, 6).map(function (r) { return '<div class="row"><span>' + esc(r.n) + ' <small>' + r.side + '</small></span><b>' + r.score + '</b></div>'; }).join('') + '</div>'; }
+        if (SG.sec === 'rec') {
+            var L = SG.ledger, ok = true, pv = 'genesis'; L.closed.forEach(function (z) { var c = Object.assign({}, z); delete c.h; if (hash(pv + JSON.stringify(c)) !== z.h) { ok = false; } pv = z.h; });
+            return h + '<div class="group pad"><b>Track record (paper, includes losers)</b><div class="note">Every BUY/SELL signal is logged when it first appears and closed when the target or stop is touched (or after 20 daily bars). Each entry is hash-chained to the previous one on this phone, so any later edit is detected. Chain check: <b style="color:' + (ok ? '#34c759' : '#ff3b30') + '">' + (ok ? 'intact' : 'BROKEN') + '</b>.</div>' + (L.closed.length ? L.closed.slice(-30).reverse().map(function (z) { return '<div class="row"><span>' + esc(z.y) + ' <small>' + z.side + ' · ' + ago(z.t1) + ' · #' + esc(z.h.slice(0, 6)) + '</small></span><b style="color:' + (z.res === 'win' ? '#34c759' : '#ff3b30') + '">' + (z.pct >= 0 ? '+' : '') + z.pct.toFixed(2) + '%</b></div>'; }).join('') : '<div class="note">No closed signals yet. Results appear after signals reach a target or stop on later days.</div>') + '<div class="note">Open now: ' + L.open.length + ' signals.</div></div>';
+        }
+        if (SG.sec === 'pap') {
+            var P = SG.paper, eq = equity();
+            return h + '<div class="group pad"><b>Paper trading</b><div class="row"><span>Account value</span><b>$' + eq.toFixed(0) + '</b></div><div class="row"><span>Cash</span><b>$' + P.cash.toFixed(0) + '</b></div><div class="note">Virtual $100,000. Risks 1% of the account per trade from each signal\'s stop distance. No real money.</div>' + (P.pos.length ? P.pos.map(function (p, i) { var r = SG.rows[p.y], px = r ? r.px : p.entry, d = p.side === 'BUY' ? 1 : -1, pl = (px - p.entry) * p.qty * d; return '<div class="row"><span>' + esc(p.y) + ' <small>' + p.side + ' ' + p.qty.toFixed(2) + ' @ ' + f2(p.entry) + '</small></span><b style="color:' + (pl >= 0 ? '#34c759' : '#ff3b30') + '">' + (pl >= 0 ? '+' : '') + pl.toFixed(0) + '</b><span class="btn sec tap kpb" data-sg="close:' + i + '">Close</span></div>'; }).join('') : '<div class="note">No open paper positions. Tap "Paper trade" on a signal.</div>') + (P.hist.length ? '<div class="note" style="margin-top:8px"><b>Closed</b></div>' + P.hist.slice(0, 10).map(function (z) { return '<div class="row"><span>' + esc(z.y) + ' <small>' + z.why + '</small></span><b style="color:' + (z.pl >= 0 ? '#34c759' : '#ff3b30') + '">' + (z.pl >= 0 ? '+' : '') + z.pl.toFixed(0) + '</b></div>'; }).join('') : '') + '<div class="idbt" style="display:flex;gap:8px;margin-top:8px"><span class="btn sec tap kpb" data-sg="preset">Reset to $100,000</span></div></div>';
+        }
+        h += '<div class="xchb" style="margin:8px 0">' + [['st', 'Stocks'], ['fx', 'Forex'], ['mt', 'Metals'], ['cr', 'Crypto']].map(function (s) { return '<span class="' + (SG.tab === s[0] ? 'on' : '') + '" data-sg="tab:' + s[0] + '">' + s[1] + '</span>'; }).join('') + '</div><div class="xchb" style="margin:8px 0">' + [['all', 'All'], ['BUY', 'Buy'], ['SELL', 'Sell'], ['HOLD', 'Hold']].map(function (s) { return '<span class="' + (SG.f === s[0] ? 'on' : '') + '" data-sg="f:' + s[0] + '">' + s[1] + '</span>'; }).join('') + '<span class="' + (SG.sort === 'score' ? 'on' : '') + '" data-sg="sort:score">Best score</span><span class="' + (SG.sort === 'ch' ? 'on' : '') + '" data-sg="sort:ch">Biggest move</span></div><input class="tin" id="sgq" placeholder="Search a symbol…" value="' + esc(SG.q) + '" autocomplete="off">';
+        var list = rows.filter(function (r) { return r.tab === SG.tab && (SG.f === 'all' || r.side === SG.f) && (!SG.q || (r.n + ' ' + r.y).toLowerCase().indexOf(SG.q.toLowerCase()) >= 0); }).sort(function (a, b) { return SG.sort === 'ch' ? Math.abs(b.ch) - Math.abs(a.ch) : (b.score - a.score) || (a.side === 'HOLD') - (b.side === 'HOLD'); });
+        h += list.length ? list.slice(0, 60).map(card).join('') : '<div class="group pad"><div class="note">' + (SG.busy ? 'Loading… signals appear as prices arrive.' : 'Nothing here yet. Tap Refresh.') + '</div></div>';
+        return h + '<div class="note" style="margin:10px 0">Signals are produced by fixed rules on end-of-day data and are not predictions. Past results (see Track record) do not promise future results.</div>';
+    }
+    WINS.push({ id: 'signals', ic: '📡', c: '#0a84ff', n: 'AI Signals', t: 'AI Signals', sub: 'Stocks, forex, metals, crypto: entry, stop, target, track record' }); LIVE.signals = 0; VIEWS.signals = vSig;
+    MW_HELP.signals = 'Buy/sell signals for 100 US stocks, 7 forex pairs, metals and 10 crypto coins from eight indicators, with entry zone, stop, target, risk:reward, a public-style track record, sector heat map and a $100,000 paper account.';
+    try { var g = MW_GROUPS[1][1]; if (g.indexOf('signals') < 0) { g.unshift('signals'); } mwHostSig = ''; } catch (e) { }
+    document.addEventListener('input', function (e) { var t = e.target; if (t && t.id === 'sgq') { SG.q = t.value; clearTimeout(SG.tq); SG.tq = setTimeout(function () { var s = t.selectionStart; renderView(true); var n = document.getElementById('sgq'); if (n) { n.focus(); try { n.setSelectionRange(s, s); } catch (er) { } } }, 350); } });
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('[data-sg]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+        var a = el.getAttribute('data-sg'), i = a.indexOf(':'), v = i < 0 ? a : a.slice(0, i), x = i < 0 ? '' : a.slice(i + 1), r = SG.rows[x];
+        if (v === 'tab') { SG.tab = x; } else if (v === 'f') { SG.f = x; } else if (v === 'sort') { SG.sort = x; } else if (v === 'sec') { SG.sec = x; }
+        else if (v === 'open') { SG.open = SG.open === x ? '' : x; if (SG.open && !SG.ohlc[x]) { yget(x, '1y').then(function (b) { SG.ohlc[x] = b.slice(-130); draw(true); }).catch(function () { }); } }
+        else if (v === 'refresh') { SG.at = 0; refresh(true); }
+        else if (v === 'take' && r) { var P = SG.paper, eq = equity(), risk = eq * 0.01, qty = risk / (1.5 * r.atr), cost = qty * r.px; if (cost > eq * 0.25) { qty = eq * 0.25 / r.px; cost = qty * r.px; } if (cost > P.cash) { SG.msg = 'Not enough paper cash.'; } else if (P.pos.some(function (p) { return p.y === x; })) { SG.msg = 'You already hold ' + x + ' in paper.'; } else { P.cash -= cost; P.pos.push({ y: x, side: r.side, qty: qty, entry: r.px, stop: r.stop, tgt: r.tgt, t: Date.now() }); sv(KP, P); SG.sec = 'pap'; } }
+        else if (v === 'close') { var p = SG.paper.pos[+x]; if (p) { var rr = SG.rows[p.y]; closePos(+x, rr ? rr.px : p.entry, 'manual'); } }
+        else if (v === 'preset') { SG.paper = { cash: 100000, pos: [], hist: [] }; sv(KP, SG.paper); SG.msg = 'Paper account reset.'; }
+        else if (v === 'why' && r) { var qn = 'Explain in simple words why the ' + r.side + ' signal for ' + r.n + ' (' + r.y + ') fired. Indicators: ' + r.ind.map(function (z) { return z[0] + ' = ' + (z[1] ? 'bullish' : 'bearish'); }).join('; ') + '. Price ' + f2(r.px) + ', entry zone ' + f2(r.lo) + ' to ' + f2(r.hi) + ', stop ' + f2(r.stop) + ', target ' + f2(r.tgt) + '. What are the risks and what would cancel it?'; gotoWin('pchat'); setTimeout(function () { try { window.__pb.go('pc', 'ai: ' + qn); } catch (er) { } }, 600); return; }
+        renderView(true);
+    }, true);
+    var st = document.createElement('style'); st.textContent = '.sgcard{border:1px solid;border-radius:16px;padding:12px;margin:8px 0;background:var(--card,rgba(128,128,128,.07))}.sgtop{display:flex;justify-content:space-between;align-items:center}.sgsym{font-size:17px}.sgring{width:46px;height:46px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}.sgring i{font-style:normal;font-weight:700;font-size:14px;width:36px;height:36px;border-radius:50%;background:var(--bg,#fff);display:flex;align-items:center;justify-content:center}.sgtag{display:inline-block;font-weight:700;padding:3px 10px;border-radius:10px;font-size:12px}.sgg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.sgg div,.sgstat div{background:rgba(128,128,128,.1);border-radius:10px;padding:6px 8px}.sgg small,.sgstat small{display:block;opacity:.65;font-size:11px}.sgstat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}.sgsec{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.sgsec div{border-radius:10px;padding:8px;font-size:12px;text-align:center}.sgrib{display:flex;gap:14px;overflow-x:auto;white-space:nowrap;font-size:12px;padding:6px 2px}';
+    document.head.appendChild(st);
+    function single(y) { var u = { y: y, n: y, tab: 'st' }; return yget(y, '1y').then(function (b) { var r = analyse(b, u); SG.rows[y] = r; SG.ohlc[y] = b.slice(-130); SG.tab = 'st'; SG.sec = 'sig'; SG.q = y; SG.f = 'all'; sv(K, { at: SG.at || Date.now(), rows: SG.rows }); }); }
+    window.__sg = { SG: SG, analyse: analyse, refresh: refresh, single: single };
+})();
+/* ===== p9zsb: US stocks and Binance Stocks lookup; Professor answers "where is X listed" ===== */
+(function () {
+    var SL = { q: '', busy: 0, res: null, err: '' }, BST = { list: null, at: 0, err: '' };
+    function jget(u) { return fetch(u, { cache: 'no-store' }).then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); }); }
+    function loadBST() {
+        if (BST.list && Date.now() - BST.at < 3600000) { return Promise.resolve(BST.list); }
+        var u = 'https://www.binance.com/bapi/defi/v1/public/wallet-direct/buw/wallet/market/token/rwa/stock/detail/list/ai?type=1';
+        return nxReq('GET', u, { 'Accept-Encoding': 'identity', 'User-Agent': 'binance-web3/1.1 (Skill)' }).then(function (r) { var j = r.j, a = j && (Array.isArray(j.data) ? j.data : (j.data && (j.data.list || j.data.rows || j.data.items))) || []; if (!Array.isArray(a) || !a.length) { throw new Error('no list (' + r.status + ')'); } BST.list = a; BST.at = Date.now(); BST.err = ''; return a; }).catch(function (e) { BST.err = e.message; return []; });
+    }
+    function run(q) {
+        q = String(q || '').toUpperCase().replace(/USDT$/, '').replace(/[^A-Z0-9.\-]/g, ''); if (!q) { return; }
+        SL.q = q; SL.busy = 1; SL.res = null; SL.err = ''; refresh();
+        Promise.all([loadBST(), jget('https://query1.finance.yahoo.com/v1/finance/search?q=' + encodeURIComponent(q) + '&quotesCount=6&newsCount=0').catch(function (e) { SL.err = 'Yahoo: ' + e.message; return null; })]).then(function (r) {
+            var bl = (r[0] || []).filter(function (x) { var t = String(x.ticker || '').toUpperCase(), s = String(x.symbol || '').toUpperCase(); return t === q || s === q || s.replace(/ON$/, '') === q || t.indexOf(q) === 0 && q.length >= 3; }).slice(0, 4);
+            var ys = ((r[1] && r[1].quotes) || []).filter(function (x) { return x.symbol && /EQUITY|ETF/i.test(x.quoteType || ''); }).slice(0, 4);
+            SL.res = { b: bl, y: ys, bn: (r[0] || []).length };
+        }).then(function () { SL.busy = 0; refresh(); }, function (e) { SL.busy = 0; SL.err = String(e && e.message || e); refresh(); });
+    }
+    function refresh() { try { if (S.win === 'find') { m7findRefresh(); } else if (S.win === 'analyst') { renderView(true); } } catch (e) { } }
+    function html(q) {
+        var h = '';
+        if (SL.q !== q) { return '<div class="group pad"><span class="pfbtn" data-sl="' + esc(q) + '">🏦 Check US stocks and Binance Stocks for ' + esc(q) + '</span><div class="note">Some names are shares, not coins (for example PNTG in the Binance app is in the Stocks section).</div></div>'; }
+        h += sh('🏦 Stocks: ' + esc(q));
+        if (SL.busy) { return h + '<div class="group pad mut">Asking Binance and Yahoo Finance…</div>'; }
+        var R = SL.res; if (!R) { return h + '<div class="warn">Could not reach the stock lookup (' + esc(SL.err || 'no answer') + ').</div>'; }
+        if (R.b.length) { h += '<div class="group"><div class="row" style="font-weight:800"><span>Binance tokenized stocks</span><span class="mut" style="font-weight:600">on-chain (wallet)</span></div>' + R.b.map(function (x) { return '<div class="row"><span>' + esc(x.ticker || '') + ' <span class="mut" style="font-size:12px">' + esc(x.symbol || '') + ' · chain ' + esc(String(x.chainId || '')) + '</span></span><span class="mut">1 token ≈ ' + esc(String(x.multiplier || 1)) + ' share</span></div>'; }).join('') + '</div>'; }
+        else { h += '<div class="group pad mut">' + (R.bn ? 'Not in Binance\'s public tokenized-stock list (' + R.bn + ' stocks checked).' : 'Binance\'s tokenized-stock list could not be read' + (BST.err ? ' (' + esc(BST.err) + ')' : '') + '.') + ' The separate "Binance Stocks" product in the Binance app has no public list: check the Binance app search for it.</div>'; }
+        if (R.y.length) { h += '<div class="group"><div class="row" style="font-weight:800"><span>Listed share (Yahoo Finance)</span></div>' + R.y.map(function (x) { return '<div class="row"><span>' + esc(x.symbol) + ' <span class="mut" style="font-size:12px">' + esc(x.shortname || x.longname || '') + ' · ' + esc(x.exchDisp || x.exchange || '') + '</span></span><span class="pfbtn" data-sl2="' + esc(x.symbol) + '">Analyse ›</span></div>'; }).join('') + '</div>'; }
+        else { h += '<div class="group pad mut">No listed share or ETF with this ticker was found.</div>'; }
+        return h + '<div class="note">A share is not a coin: it trades on a stock market (or as a tokenized/Stocks product on an exchange). Not financial advice.</div>';
+    }
+    var _fh = m7findHTML; m7findHTML = function () { var q = (S.m7.fq || '').trim().toUpperCase().replace(/USDT$/, ''); return _fh() + (q.length >= 2 ? html(q) : ''); };
+    var _va = VIEWS.analyst; VIEWS.analyst = function () { var h = _va.apply(this, arguments), A = S.an; if (A && A.err && /could not find/i.test(A.err)) { var b = String(A.sym || '').toUpperCase().replace(/USDT$/, ''); if (b) { h += '<div class="group pad">' + html(b) + '</div>'; } } return h; };
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('[data-sl],[data-sl2]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+        if (el.hasAttribute('data-sl')) { run(el.getAttribute('data-sl')); return; }
+        var y = el.getAttribute('data-sl2'); try { window.__sg.single(y).then(function () { gotoWin('signals'); }, function () { alert('Could not load prices for ' + y); }); } catch (er) { }
+    }, true);
+    /* Professor: "where is X listed / which market" */
+    var _pa = pfAnswer;
+    pfAnswer = function (q) {
+        var low = String(q || '').toLowerCase();
+        if (/(where is|where can i (find|buy|trade)|where do i find|which (market|exchange)|listed on|belongs? to|available on|is \S{2,15} (on|in) (binance|mexc|bitget))/.test(low) && (/\b[A-Z0-9]{2,12}\b/.test(String(q).replace(/\b(I|A|PNL|RSI|MACD|EMA|SMA|ATR|API|USD|KYC|OK)\b/g, '')) || /usdt/.test(low) || low.split(/\s+/).length <= 6)) {
+            var w = String(q).replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(function (t) { return t.length >= 2 && t.length <= 14 && !/^(where|which|market|exchange|listed|available|can|buy|trade|find|belongs|belong|the|and|for|this|that|coin|token|stock|share|how|what|does|have|has|him|you|tell|about|binance|mexc|bitget|on|in|is|to|of|a|an|me|i|do|it|my|app|symbol|pair|usdt|name|called|any|else|also|world|search|please|here|there|from)$/i.test(t); });
+            var t = w.length ? w[w.length - 1].toUpperCase() : '';
+            if (t) { var loc = ''; try { loc = window.__locate ? window.__locate(t) : ''; } catch (e) { } return { title: 'Where is ' + t + ' listed?', html: (loc || '<div class="note">Not found on Binance, MEXC or Bitget lists yet (lists may still be loading).</div>') + '<div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><span class="pfbtn" data-wl="' + esc(t) + '">🌍 Other exchanges and wallets</span><span class="pfbtn" data-sl="' + esc(t) + '">🏦 US stocks / Binance Stocks</span></div>' }; }
+        }
+        return _pa(q);
+    };
 })();
 
 function renderView(keep) {

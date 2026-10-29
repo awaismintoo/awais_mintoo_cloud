@@ -218,7 +218,7 @@ final class Bridge {
                 try {
                     java.net.URL u = new java.net.URL(url);
                     String h = u.getHost();
-                    boolean allowed = "https".equals(u.getProtocol()) && ("api.bitget.com".equals(h) || "api.mexc.com".equals(h) || "api.bybit.com".equals(h) || "www.okx.com".equals(h) || "fapi.binance.com".equals(h) || "api.binance.com".equals(h) || "testnet.binancefuture.com".equals(h));
+                    boolean allowed = "https".equals(u.getProtocol()) && ("api.bitget.com".equals(h) || "api.mexc.com".equals(h) || "api.bybit.com".equals(h) || "www.okx.com".equals(h) || "www.binance.com".equals(h) || "fapi.binance.com".equals(h) || "api.binance.com".equals(h) || "testnet.binancefuture.com".equals(h));
                     if (!allowed) { throw new Exception("host not allowed"); }
                     String m = "POST".equals(method) ? "POST" : ("DELETE".equals(method) ? "DELETE" : "GET");
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
