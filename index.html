@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.17';
+var BUILD = '2026-10-29.19';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -6618,22 +6618,24 @@ function secBadge() { var s = window.__mwSecState ? window.__mwSecState() : { na
 PF_APP.push(['are my keys safe|api key safe|key security|keystore|encrypt|keys encrypted|is my api key secure|security risk api', 'API key safety', 'In the Android app your API keys are encrypted with the phone\'s secure Keystore (AES-256) and stay on this phone only. Keep withdrawals OFF on every key, use test mode first, keep a small balance in the API account, turn on the app lock and 2FA on the exchange, and delete the key on the exchange if you ever doubt it.']);
 /* ===== p9u: swipe-down to close More/Menu sheets; honest "Trading" wording ===== */
 (function () {
-    var y0 = null, dy = 0, sh = null, inn = null, t0 = 0;
+    var y0 = null, dy = 0, sh = null, inn = null, t0 = 0, drag = false;
     document.addEventListener('touchstart', function (e) {
         if (!e.touches || e.touches.length !== 1) { return; } var t = e.target.closest ? e.target.closest('.sheet.open .sheet-in') : null; if (!t) { sh = null; return; }
         var onGrab = !!(e.target.closest('.grab') || e.target.closest('.sheet-t'));
-        if (!onGrab && t.scrollTop > 0) { sh = null; return; }
-        inn = t; sh = t.parentNode; y0 = e.touches[0].clientY; dy = 0; t0 = Date.now(); inn.style.transition = 'none'; inn.style.animation = 'none';
+        if (!onGrab) { sh = null; return; }
+        inn = t; sh = t.parentNode; y0 = e.touches[0].clientY; dy = 0; t0 = Date.now(); drag = false;
     }, { passive: true });
     document.addEventListener('touchmove', function (e) {
         if (!sh || y0 === null) { return; } dy = e.touches[0].clientY - y0;
-        if (dy < 0) { dy = 0; } if (dy > 0 && inn) { inn.style.transform = 'translateY(' + dy + 'px)'; sh.style.background = 'rgba(0,0,0,' + Math.max(0.05, 0.45 - dy / 900) + ')'; }
+        if (dy < 0) { dy = 0; }
+        if (dy > 8 && inn) { if (!drag) { drag = true; inn.style.transition = 'none'; inn.style.animation = 'none'; } inn.style.transform = 'translateY(' + dy + 'px)'; sh.style.background = 'rgba(0,0,0,' + Math.max(0.05, 0.45 - dy / 900) + ')'; }
     }, { passive: true });
     function end() {
-        if (!sh || !inn) { return; } var fast = dy > 40 && (Date.now() - t0) < 280, close = dy > 110 || fast;
+        if (!sh || !inn) { return; } if (!drag) { sh = null; inn = null; y0 = null; dy = 0; return; }
+        var fast = dy > 40 && (Date.now() - t0) < 280, close = dy > 110 || fast;
         inn.style.transition = 'transform .18s ease-out'; inn.style.transform = close ? 'translateY(100%)' : 'translateY(0)';
-        var s = sh, i = inn; setTimeout(function () { if (close) { try { closeSheets(); } catch (er) { } } i.style.transition = ''; i.style.transform = ''; i.style.animation = ''; s.style.background = ''; }, 190);
-        sh = null; inn = null; y0 = null; dy = 0;
+        var s = sh, i = inn; setTimeout(function () { if (close) { try { closeSheets(); } catch (er) { } } i.style.transition = ''; i.style.transform = ''; s.style.background = ''; }, 190);
+        sh = null; inn = null; y0 = null; dy = 0; drag = false;
     }
     document.addEventListener('touchend', end, { passive: true }); document.addEventListener('touchcancel', end, { passive: true });
 })();
@@ -7564,7 +7566,7 @@ function fcMini(sym) {
     var _pc = pickCard; pickCard = function (p) { var h = _pc(p), m = ''; try { m = fcMini(p.sym); } catch (e) { } return m ? h.replace(/<\/div>$/, m + '</div>') : h; };
     var _hp = heroPick; heroPick = function (p) { var h = _hp(p), m = ''; try { m = fcMini(p.sym); } catch (e) { } return m ? h.replace(/<\/div>$/, m + '</div>') : h; };
     var _vc = VIEWS.chart; VIEWS.chart = function () { var h = _vc.apply(this, arguments); return h + '<div id="fcc"></div>'; };
-    setInterval(function () { try { var el = document.getElementById('fcc'), c = S.chart; if (!el || S.win !== 'chart' || !c || !c.k || c.k.length < 60) { return; } var key = c.sym + c.tf + c.k.length + ':' + Math.floor(Date.now() / 30000); if (el.getAttribute('data-k') === key) { return; } if (S.fsKey) { return; } el.setAttribute('data-k', key); el.innerHTML = fcCard(c.k.map(function (k) { return [k.t, k.o, k.h, k.l, k.c]; }), 'Projected path for ' + c.sym.replace('USDT', '') + ' (' + c.tf + ' candles)'); } catch (e) { } }, 1000);
+    setInterval(function () { try { var el = document.getElementById('fcc'), c = S.chart; if (!el || S.win !== 'chart' || !c || !c.k || c.k.length < 60) { return; } var key = c.sym + c.tf + c.k.length + ':' + Math.floor(Date.now() / 30000); if (el.getAttribute('data-k') === key) { return; } if (S.fsKey) { return; } el.setAttribute('data-k', key); el.innerHTML = fcCard(c.k.map(function (k) { return [k.t, k.o, k.h, k.l, k.c]; }), 'Projected path for ' + c.sym.replace('USDT', '') + ' (' + c.tf + ' candles)') + (typeof idUpLine === 'function' ? idUpLine(c.sym) : ''); } catch (e) { } }, 1000);
     if (VIEWS.exness) { var _vx = VIEWS.exness; VIEWS.exness = function () { var h = _vx.apply(this, arguments); try { h += '<div class="group pad">' + fcMini('XAUUSDT') + '</div>'; } catch (e) { } return h; }; }
     if (VIEWS.xtrade) { var _vn = VIEWS.xtrade; VIEWS.xtrade = function () { var h = _vn.apply(this, arguments); try { if (S.nx && S.nx.mk !== 'spot' && S.nx.mk !== 's') { h += '<div class="group pad">' + fcMini(S.nx.sym) + '</div>'; } } catch (e) { } return h; }; }
 })();
@@ -7827,6 +7829,132 @@ function avPanel() {
         els = document.querySelectorAll('[data-chip]');
         for (i = 0; i < els.length; i++) { el = els[i]; s = el.getAttribute('data-chip'); if (S.tick[s]) { cq = chgOf(s); v = pct(cq.v); k = 'badge ' + (cq.v >= 0 ? 'long' : 'short'); if (el.textContent !== v) { el.textContent = v; } if (el.className !== k) { el.className = k; } } }
     };
+})();
+/* ===== p9zl: Trade Ideas = one ranked list (Best on top) that merges New Plan, Scanner, Master pick, Best Picks and At a glance; chance score from many factors ===== */
+var IDS = { f: 'all', hz: 'all', best: 0, open: '', at: 0, rows: [] };
+var ID_POS = /(surge|soar|rally|record high|all-time high|approv|inflow|lists |listing|partnership|upgrade|adopt|bullish|breakout|buy rating|launch)/i;
+var ID_NEG = /(hack|exploit|stolen|delist|lawsuit|sues|\bban\b|banned|crash|plunge|bearish|outflow|investigation|fraud|halt|outage|liquidat|sell-?off|dump|warning)/i;
+var ID_NAMES = { BTC: 'bitcoin', ETH: 'ethereum', XAU: 'gold', BNB: 'binance coin|bnb', SOL: 'solana', XRP: 'ripple|xrp', DOGE: 'dogecoin', ADA: 'cardano', TRX: 'tron', LTC: 'litecoin', LINK: 'chainlink', AVAX: 'avalanche', DOT: 'polkadot', XAG: 'silver' };
+function idClamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+function idNews(sym) {
+    var b = base(sym).toUpperCase(), now = nowMs(), re, pos = 0, neg = 0, n = 0, list = S.news || [];
+    try { re = new RegExp('\\b(' + b.toLowerCase() + (ID_NAMES[b] ? '|' + ID_NAMES[b] : '') + ')\\b', 'i'); } catch (e) { return null; }
+    list.forEach(function (it) { if (!it || !it.title) { return; } if (it.t && now - it.t > 36 * 3600000) { return; } if (!re.test(it.title)) { return; } n++; if (ID_NEG.test(it.title)) { neg++; } else if (ID_POS.test(it.title)) { pos++; } });
+    if (!n) { return null; } return { n: n, v: (pos + neg) ? (pos - neg) / (pos + neg) : 0, pos: pos, neg: neg };
+}
+function idTrend(sym) {
+    var x = S.tech[sym], t = S.tick[sym]; if (x && isFinite(x.e20) && isFinite(x.e50)) { var up = (x.e20 > x.e50 ? 1 : -1) + (x.h4 > 0 ? 1 : x.h4 < 0 ? -1 : 0); return { up: up > 0 ? 1 : up < 0 ? -1 : 0, txt: (x.e20 > x.e50 ? 'uptrend' : 'downtrend') + ', 4h ' + (x.h4 >= 0 ? '+' : '') + x.h4.toFixed(2) + '%' }; }
+    if (t && isFinite(t.chg)) { return { up: t.chg >= 1 ? 1 : t.chg <= -1 ? -1 : 0, txt: '24h ' + (t.chg >= 0 ? '+' : '') + t.chg.toFixed(1) + '%', weak: 1 }; }
+    return null;
+}
+/* each factor: k (short key), ic, name, v (-1..1), w (weight), note */
+function idFactors(c) {
+    var F = [], dir = c.side === 'SHORT' ? -1 : 1, t = S.tick[c.sym], e, A, tr, nw, i, ob, w2, l;
+    function add(k, ic, name, v, w, note) { F.push({ k: k, ic: ic, name: name, v: idClamp(v, -1.5, 1), w: w, note: note }); }
+    if (c.conf != null) { add('ind', '📊', 'Indicators', (c.conf - 62) / 30, 1, c.conf + '% of the indicator checks agree'); }
+    if (c.fx) { e = c.fx; add('fx', '🧮', 'All-factors check', e.veto ? -1.5 : e.support ? 1 : e.against ? -1 : 0, 1, typeof fxVerdictTxt === 'function' ? fxVerdictTxt(e) : 'checked'); }
+    try { e = FC.cache[c.sym]; if (e && e.ks) { A = fcAn(e.ks); if (A) { add('prj', '📈', 'Projection line', (A.dirUp === (dir > 0) ? 1 : -1) * idClamp((A.pct - 45) / 25, 0.2, 1), 0.8, 'line points ' + (A.dirUp ? 'up' : 'down') + ', right ' + A.pct + '% of past times'); } } } catch (er) { }
+    if (t) { var q = t.q || 0; add('vol', '💧', 'Volume', q >= 3e8 ? 1 : q >= 5e7 ? 0.4 : q >= 2e7 ? 0 : -0.8, 0.5, '24h trading ' + (q >= 1e9 ? (q / 1e9).toFixed(1) + 'B' : (q / 1e6).toFixed(0) + 'M') + ' USDT' + (q < 2e7 ? ' (thin)' : '')); }
+    if (t && t.h > t.l && c.slP > 0) { var rg = (t.h - t.l) / t.p * 100, r = c.slP / rg; add('vty', '🌊', 'Volatility vs stop', r < 0.08 ? -0.7 : r < 0.2 ? 0 : 0.3, 0.5, 'stop is ' + Math.round(r * 100) + '% of today\'s range' + (r < 0.08 ? ' (price noise may hit it)' : '')); }
+    tr = idTrend(c.sym); if (tr) { add('trd', '🧭', 'Bigger trend', tr.up * dir * (tr.weak ? 0.4 : 1), tr.weak ? 0.4 : 0.6, tr.txt); }
+    if (/USDT$/.test(c.sym) && c.sym !== 'BTCUSDT') { var bt = idTrend('BTCUSDT'); if (bt && !bt.weak) { add('btc', '₿', 'Bitcoin trend', bt.up * dir * 0.5, 0.4, 'Bitcoin: ' + bt.txt); } }
+    nw = idNews(c.sym); if (nw) { add('nws', '📰', 'News', nw.v * dir, 0.6, nw.n + ' headline' + (nw.n > 1 ? 's' : '') + ': ' + nw.pos + ' positive, ' + nw.neg + ' negative'); }
+    if (c.srcN > 1) { add('src', '🤝', 'Sources agree', c.srcN >= 3 ? 1 : 0.5, 0.7, c.srcN + ' separate lists point the same way'); }
+    try { ob = (S.bot && S.bot.closed || []).filter(function (x) { return x.sym === c.sym; }); if (ob.length >= 3) { w2 = ob.filter(function (x) { return x.pnl >= 0; }).length / ob.length; add('his', '🕘', 'History here', (w2 - 0.5) * 2, 0.4, 'paper bot won ' + Math.round(w2 * 100) + '% of ' + ob.length + ' trades on this coin'); } } catch (er) { }
+    try { l = getActions().filter(function (a) { return a.sym === c.sym && a.side === c.side; })[0]; if (l) { var late = (l.warns || []).some(function (x) { return /late|against the signal/i.test(x); }); add('tim', '🕒', 'Timing', late ? -1 : l.tier === 'NOW' ? 0.8 : 0.1, 0.8, late ? 'price already moved: wait for a pullback' : l.tier === 'NOW' ? 'passes the Do-now checks' : 'listed, but not at Do-now level yet'); } } catch (er) { }
+    if (c.to && c.to - nowMs() < 10 * 60000) { add('exp', '⏳', 'Time left', -0.5, 0.4, 'this idea ends within 10 minutes'); }
+    return F;
+}
+function idEdge(F) { var sw = 0, s = 0; F.forEach(function (f) { sw += f.w; s += f.w * f.v; }); return sw ? s / sw : 0; }
+function idCalc(c) {
+    var F = idFactors(c), edge = idEdge(F), fee = 0.1, tp = Math.max(0.01, c.tpP - fee), sl = c.slP + fee, p0 = sl / (tp + sl), p = idClamp(p0 + edge * 0.12, 0.25, 0.75), n = 0, sup = 0, ag = 0, tw = 0;
+    F.forEach(function (f) { n++; if (f.v > 0.15) { sup++; } tw += f.w; });
+    var expR = p * (tp / sl) - (1 - p), blocked = c.fx && c.fx.hard;
+    return { F: F, p: p, p0: p0, edge: edge, expR: expR, sup: sup, n: n, blocked: !!blocked, best: !blocked && p >= 0.62 && expR > 0.1 && sup >= Math.ceil(n * 0.7) && !F.some(function (f) { return f.k === 'fx' && f.v < 0 || f.k === 'tim' && f.v < 0; }) };
+}
+function idRows() {
+    var now = nowMs(); if (IDS.rows.length && now - IDS.at < 9000) { return IDS.rows; }
+    var map = {}, out = [];
+    glRows().forEach(function (r) {
+        if (!r.sym || (r.to && r.to < now)) { return; } var k = r.sym + '|' + r.side + '|' + r.hz, m = map[k];
+        if (!m) { map[k] = { sym: r.sym, side: r.side, hz: r.hz, hzl: r.hzl, conf: r.conf, tpP: r.tpP, slP: r.slP, from: r.from, to: r.to, fx: r.fx, win: r.win, anchor: r.anchor, srcs: [r.src], key: k }; }
+        else { if (m.srcs.indexOf(r.src) < 0) { m.srcs.push(r.src); } if (r.conf > m.conf) { m.conf = r.conf; m.tpP = r.tpP; m.slP = r.slP; m.fx = r.fx || m.fx; m.win = r.win; m.anchor = r.anchor; } if (r.to && (!m.to || r.to > m.to)) { m.to = r.to; } }
+    });
+    Object.keys(map).forEach(function (k) { var m = map[k]; m.srcN = m.srcs.length; m.R = idCalc(m); if (!m.R.blocked) { out.push(m); } });
+    out.sort(function (a, b) { if (a.R.best !== b.R.best) { return a.R.best ? -1 : 1; } return b.R.p - a.R.p || b.R.expR - a.R.expR; });
+    var nb = 0; out.forEach(function (m) { if (m.R.best) { nb++; if (nb > 8) { m.R.best = false; } } });
+    out.sort(function (a, b) { if (a.R.best !== b.R.best) { return a.R.best ? -1 : 1; } return b.R.p - a.R.p || b.R.expR - a.R.expR; });
+    out.forEach(function (m, i) { m.rank = i + 1; });
+    IDS.rows = out; IDS.at = now; return out;
+}
+function idChips(R) { return '<span class="idch">' + R.F.map(function (f) { return '<i class="' + (f.v > 0.15 ? 'up' : f.v < -0.15 ? 'dn' : 'mut') + '" title="' + esc(f.name) + '">' + f.ic + '</i>'; }).join('') + '</span>'; }
+function idRow(m) {
+    var R = m.R, open = IDS.open === m.key, pc = Math.round(R.p * 100), t = S.tick[m.sym], px = t ? fmtP(t.p, m.sym) : '';
+    var h = '<div class="idr' + (R.best ? ' idb' : '') + '"><div class="idh tap" data-m25="open:' + m.key + '"><span class="idn">' + m.rank + '</span><div class="idm"><div><b>' + esc(base(m.sym)) + '</b> <span class="badge ' + (m.side === 'LONG' ? 'long' : 'short') + '">' + (m.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + '</span>' + (R.best ? ' <span class="idst">⭐ BEST</span>' : '') + '</div><div class="note" style="margin:2px 0 0">' + m.hzl + ' · until ' + (m.to ? fmtT(m.to) : '—') + ' · now ' + px + '</div><div class="note" style="margin:2px 0 0">Target +' + m.tpP.toFixed(2) + '% · Stop −' + m.slP.toFixed(2) + '% · expected ' + (R.expR >= 0 ? '+' : '') + R.expR.toFixed(2) + 'R</div>' + idChips(R) + '</div><div class="idp ' + (pc >= 60 ? 'up' : pc >= 50 ? '' : 'mut') + '"><b>' + pc + '%</b><span>chance</span></div></div>';
+    if (open) {
+        h += '<div class="idx">' + R.F.map(function (f) { return '<div class="idf"><span>' + f.ic + ' ' + esc(f.name) + '</span><span class="' + (f.v > 0.15 ? 'up' : f.v < -0.15 ? 'dn' : 'mut') + '">' + (f.v > 0.15 ? 'supports' : f.v < -0.15 ? 'against' : 'neutral') + ' · ' + esc(f.note) + '</span></div>'; }).join('') +
+            '<div class="note">Start: ' + Math.round(R.p0 * 100) + '% (the odds a coin flip gives for this target and stop). The factors above moved it ' + (R.edge >= 0 ? 'up' : 'down') + ' to ' + pc + '%. Sources: ' + esc(m.srcs.join(', ')) + '.</div>';
+        try { h += fcMini(m.sym); } catch (e) { }
+        h += '<div class="idbt"><span class="btn tap" data-m25="chart:' + m.sym + '">Open chart</span><span class="btn sec tap" data-m25="win:' + (m.win || 'scanner') + '">Detail page</span></div></div>';
+    }
+    return h + '</div>';
+}
+function vIdeas() {
+    var rows = idRows().filter(function (m) { return (IDS.f === 'all' || m.side === IDS.f) && (IDS.hz === 'all' || m.hz === IDS.hz) && (!IDS.best || m.R.best); }).slice(0, 60);
+    var h = '<div class="note" style="margin:0 0 8px">One list for every idea (New Plan, Scanner, Master picks, Best Picks, Early Movers). Ranked by estimated chance: the <b>⭐ BEST</b> ones first, then the rest from high to low. The chance mixes the indicators, past accuracy of the projection line, volume, volatility, bigger trend, Bitcoin trend, news and your paper-bot history. It is an estimate, not a promise.</div>';
+    h += '<div class="m7row">' + [['all', 'All'], ['LONG', '▲ Long'], ['SHORT', '▼ Short']].map(function (x) { return '<span class="' + (IDS.f === x[0] ? 'on' : '') + '" data-m25="f:' + x[0] + '">' + x[1] + '</span>'; }).join('') + [['all', 'Any time'], ['fh', 'Few hours'], ['day', 'Whole day']].map(function (x) { return '<span class="' + (IDS.hz === x[0] ? 'on' : '') + '" data-m25="h:' + x[0] + '">' + x[1] + '</span>'; }).join('') + '<span class="' + (IDS.best ? 'on' : '') + '" data-m25="best:1">⭐ Best only</span></div>';
+    if (!rows.length) { return h + '<div class="group pad mut">' + (IDS.best ? 'No idea passes every check right now. That is normal: waiting is a valid choice.' : 'Nothing yet. The lists fill in a minute or two after the app opens.') + '</div>'; }
+    var nb = rows.filter(function (m) { return m.R.best; }).length;
+    h += sh(nb ? '⭐ Best now (' + nb + ')' : 'Ideas (no ⭐ Best right now)', rows.length) + '<div class="group">' + rows.map(idRow).join('') + '</div>';
+    return h + '<div class="note">Icons: 📊 indicators · 🧮 all-factors · 📈 projection · 💧 volume · 🌊 volatility · 🧭 trend · ₿ Bitcoin · 📰 news · 🤝 sources · 🕘 history · 🕒 timing. Green supports, red is against, grey neutral. Not financial advice.</div>';
+}
+WINS.push({ id: 'ideas', ic: '⭐', c: '#ff9f0a', n: 'Trade Ideas', t: 'Ideas', sub: 'All ideas in one list, best chance on top' }); LIVE.ideas = 1; VIEWS.ideas = vIdeas;
+MW_HELP.ideas = 'One ranked list that replaces New Plan, Scanner, Master pick, Best Picks and At a glance. ⭐ BEST ideas pass every check. Tap a line to see why, the projection line, and open the chart. The chance is an estimate from many factors, not a promise.';
+(function () {
+    var st = document.createElement('style'); st.id = 'p9zlcss';
+    st.textContent = '.idr{border-bottom:1px solid var(--line,#e5e5ea);padding:10px 12px}.idr.idb{background:linear-gradient(90deg,rgba(255,159,10,.12),transparent)}.idh{display:flex;gap:10px;align-items:flex-start}.idn{flex:0 0 26px;height:26px;border-radius:8px;background:var(--fill,#eee);display:grid;place-items:center;font-size:12px;font-weight:800}.idm{flex:1;min-width:0}.idp{flex:0 0 58px;text-align:center}.idp b{font-size:22px;display:block;line-height:1.1;font-variant-numeric:tabular-nums}.idp span{font-size:10px;opacity:.65}.idst{background:#ff9f0a;color:#fff;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:800}.idch i{font-style:normal;font-size:13px;margin-right:4px;padding:1px 3px;border-radius:6px}.idch i.up{background:rgba(48,209,88,.22)}.idch i.dn{background:rgba(255,69,58,.22)}.idch i.mut{background:rgba(142,142,147,.18)}.idx{margin:8px 0 0 36px}.idf{display:flex;flex-direction:column;font-size:12px;padding:3px 0}.idbt{display:flex;gap:8px;margin-top:8px}';
+    document.head.appendChild(st);
+    /* menu / bottom tabs: Home, Ideas, Auto Bot, More */
+    var gone = { morning: 1, plan: 1, scanner: 1, best: 1, glance: 1, candles: 1 };
+    MW_GROUPS.forEach(function (g) { g[1] = g[1].filter(function (id) { return !gone[id]; }); });
+    MW_GROUPS[0][1].splice(1, 0, 'ideas');
+    MW_GROUPS.push(['Detail pages (opened from Trade Ideas)', ['morning', 'plan', 'scanner', 'best', 'glance', 'candles']]);
+    try { for (var i = MW_Q.length - 1; i >= 0; i--) { if (MW_Q[i][0] === 'scanner') { MW_Q.splice(i, 1); } else if (MW_Q[i][0] === 'morning') { MW_Q[i][0] = 'ideas'; } } mwHostSig = ''; } catch (e) { }
+    var _gw = gotoWin; gotoWin = function (id, isBack) { if (id === 'best' || id === 'glance') { id = 'ideas'; } return _gw.call(this, id, isBack); };
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('[data-m25]') : null; if (!el) { return; } e.stopPropagation(); e.preventDefault();
+        var a = el.getAttribute('data-m25'), i = a.indexOf(':'), v = a.slice(0, i), x = a.slice(i + 1);
+        if (v === 'open') { IDS.open = IDS.open === x ? '' : x; } else if (v === 'f') { IDS.f = x; } else if (v === 'h') { IDS.hz = x; } else if (v === 'best') { IDS.best = IDS.best ? 0 : 1; }
+        else if (v === 'chart') { gotoWin('chart'); try { S.chart.sym = x; lss('mintoosuite_chart', x); loadChart(); drawChart(); } catch (er) { } return; } else if (v === 'win') { gotoWin(x); return; }
+        IDS.at = 0; renderView(true);
+    }, true);
+    setTimeout(function () { try { if (!TABS.some(function (t) { return t[0] === 'ideas'; })) { TABS.splice(1, 2, ['ideas', 'Ideas', '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>']); } buildNav(); renderView(); } catch (e) { } }, 0);
+})();
+/* overall chance line for a coin (used under the projection line) */
+function idUpLine(sym) {
+    try {
+        if (!/USDT$/.test(sym || '')) { return ''; } try { idFcRaw(sym); } catch (e0) { } var F = idFactors({ sym: sym, side: 'LONG' }), e = idEdge(F), p = idClamp(0.5 + e * 0.12, 0.3, 0.7), n = 0; F.forEach(function (f) { if (f.v > 0.15) { n++; } });
+        if (F.length < 2) { return ''; }
+        return '<div class="note" style="margin-top:6px">Overall chance of a <b>higher</b> price in the next ~12 h: <b>' + Math.round(p * 100) + '%</b> (lower: ' + Math.round((1 - p) * 100) + '%). Built from ' + F.length + ' factors (' + n + ' lean up): ' + F.map(function (f) { return f.ic; }).join(' ') + '. An estimate, not a promise.</div>';
+    } catch (er) { return ''; }
+}
+var idFcRaw = fcMini;
+(function () { var _fm = idFcRaw; fcMini = function (sym) { var h = _fm(sym); if (h && h.indexOf('loading') < 0 && h.indexOf('not available') < 0) { h = h.replace(/<\/div>$/, idUpLine(sym) + '</div>'); } return h; }; })();
+/* ===== p9zm: keep the order of the idea cards steady (no constant shuffling) ===== */
+function sticky(list, keyOf, store, holdMs) {
+    var now = Date.now(), map = {}, out = [], seen = {};
+    list.forEach(function (x) { map[keyOf(x)] = x; });
+    if (!store.keys || now - store.at > holdMs) { store.keys = list.map(keyOf); store.at = now; return list; }
+    store.keys.forEach(function (k) { if (map[k]) { out.push(map[k]); seen[k] = 1; } });
+    list.forEach(function (x) { if (!seen[keyOf(x)]) { out.push(x); } });
+    store.keys = out.map(keyOf); return out;
+}
+var STK = { act: {}, ide: {} };
+(function () {
+    var _ga = getActions;
+    getActions = function () { var l = _ga(); try { return sticky(l, function (a) { return a.sym + '|' + a.side; }, STK.act, 60000); } catch (e) { return l; } };
+    var _ir = idRows;
+    idRows = function () { var l = _ir(), out; try { out = sticky(l, function (m) { return m.key; }, STK.ide, 45000); out.forEach(function (m, i) { m.rank = i + 1; }); return out; } catch (e) { return l; } };
 })();
 
 function renderView(keep) {
