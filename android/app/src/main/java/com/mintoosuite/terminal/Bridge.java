@@ -34,6 +34,13 @@ final class Bridge {
     @JavascriptInterface
     public void adsShow(String tok, boolean show) { if (ok(tok)) { AdsHelper.show(show); } }
 
+    /* ----- optional usage statistics (off until the user agrees) ----- */
+    @JavascriptInterface
+    public void anaEnable(String tok, boolean on) { if (ok(tok)) { AnalyticsHelper.enable(ctx, on); } }
+
+    @JavascriptInterface
+    public void anaEvent(String tok, String name, String item) { if (ok(tok)) { AnalyticsHelper.event(ctx, name, item); } }
+
     /* ----- Professor microphone (speech to text) ----- */
     @JavascriptInterface
     public void speechStart(String tok, String lang) { if (ok(tok)) { Media.listen(lang); } }
