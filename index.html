@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-20.5';
+var BUILD = '2026-10-29.5';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5898,13 +5898,16 @@ PF_TIPS.me = 'Swipe the cards sideways. Tap ✏️ Edit to choose your own short
 (function () {
     if (typeof Element === 'undefined' || !Element.prototype) { return; } var desc = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
     function same(a, b) { return a.nodeType === b.nodeType && (a.nodeType !== 1 || a.nodeName === b.nodeName); }
+    function keepAttr(a, n) { return n === 'data-ixs' || n === 'data-pc' || n === 'data-chip' || (n === 'id' && /^sec-\d+$/.test(a.getAttribute('id') || '')); }
+    function foreign(n) { return n.nodeType === 1 && (n.classList.contains('tzchip') || n.classList.contains('mwind') || n.hasAttribute('data-chip')); }
+    function kids(n) { var r = [], c = n.childNodes, i; for (i = 0; i < c.length; i++) { if (!foreign(c[i])) { r.push(c[i]); } } return r; }
     function attrs(a, b) {
         var i, n, v, keepOpen = a.nodeName === 'DETAILS';
-        for (i = a.attributes.length - 1; i >= 0; i--) { n = a.attributes[i].name; if (keepOpen && n === 'open') { continue; } if (!b.hasAttribute(n)) { a.removeAttribute(n); } }
+        for (i = a.attributes.length - 1; i >= 0; i--) { n = a.attributes[i].name; if (keepOpen && n === 'open') { continue; } if (!b.hasAttribute(n) && !keepAttr(a, n)) { a.removeAttribute(n); } }
         for (i = 0; i < b.attributes.length; i++) { n = b.attributes[i].name; v = b.attributes[i].value; if (keepOpen && n === 'open') { continue; } if (a.getAttribute(n) !== v) { a.setAttribute(n, v); } }
     }
     function mf(o, n) {
-        var oc = o.childNodes, nc = n.childNodes, i, a, b;
+        var oc = kids(o), nc = n.childNodes, i, a, b;
         for (i = 0; i < nc.length; i++) {
             a = oc[i]; b = nc[i];
             if (!a) { o.appendChild(b.cloneNode(true)); continue; }
@@ -5919,7 +5922,7 @@ PF_TIPS.me = 'Swipe the cards sideways. Tap ✏️ Edit to choose your own short
             if (a.nodeName === 'SELECT') { mf(a, b); a.selectedIndex = b.selectedIndex; continue; }
             mf(a, b);
         }
-        while (oc.length > nc.length) { o.removeChild(o.lastChild); }
+        for (i = nc.length; i < oc.length; i++) { o.removeChild(oc[i]); }
     }
     function patch(el, html) {
         var t = document.createElement('template'); desc.set.call(t, html); mf(el, t.content);
@@ -5933,6 +5936,7 @@ PF_TIPS.me = 'Swipe the cards sideways. Tap ✏️ Edit to choose your own short
             this.__k = k;
         } });
     }
+    window.__mwMorphHook = hook;
     document.addEventListener('input', function (e) { var t = e.target; if (t && t.nodeName === 'INPUT') { t.__dirty = 1; } }, true);
     hook(document.getElementById('view'), function () { return S.win; }, function () { return S.win === 'chart'; });
     var tries = 0, iv = setInterval(function () { var h = document.getElementById('mwHome'); if (h) { hook(h, function () { return 'h'; }); clearInterval(iv); } else if (++tries > 40) { clearInterval(iv); } }, 500);
@@ -6635,6 +6639,9 @@ PF_APP.push(['are my keys safe|api key safe|key security|keystore|encrypt|keys e
     var _ra = renderAbout; renderAbout = function () { _ra(); try { var b = $('aboutBox'); if (b) { b.innerHTML = b.innerHTML.replace('<b class="up">Recommendations only</b>', '<b class="up">Signals + Binance orders (test or live)</b>'); } } catch (e) { } };
     var _vh = VIEWS.help; VIEWS.help = function () { return _vh.apply(this, arguments).replace('Recommendations only: this app cannot place trades on any account.', 'Trading: orders can be placed on Binance Futures with your own API key (test mode first). MEXC, Bybit, OKX and Bitget are balance-check only; PSX shares go through your licensed broker; Exness is traded in its own app. The app never holds your money.'); };
 })();
+
+/* sheets: patch in place instead of rebuilding, so Menu / More do not flicker */
+(function () { function go() { var h = window.__mwMorphHook; if (!h) { return; } var a = document.getElementById('aboutBox'), t = document.getElementById('tiles'); if (a) { h(a, function () { return 'about'; }); } if (t) { h(t, function () { return 'tiles'; }); } } go(); setTimeout(go, 1500); })();
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
