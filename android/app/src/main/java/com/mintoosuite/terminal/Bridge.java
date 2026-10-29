@@ -30,6 +30,10 @@ final class Bridge {
 
     private boolean ok(String tok) { return tok != null && tok.equals(WebHolder.TOKEN); }
 
+    /* ----- ads: the page tells us whether a banner may be shown on the current screen ----- */
+    @JavascriptInterface
+    public void adsShow(String tok, boolean show) { if (ok(tok)) { AdsHelper.show(show); } }
+
     /* ----- wallet fingerprint ----- */
     @JavascriptInterface
     public boolean bioAvailable(String tok) {

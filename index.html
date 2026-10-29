@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.19';
+var BUILD = '2026-10-29.27';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -7912,7 +7912,7 @@ WINS.push({ id: 'ideas', ic: '⭐', c: '#ff9f0a', n: 'Trade Ideas', t: 'Ideas', 
 MW_HELP.ideas = 'One ranked list that replaces New Plan, Scanner, Master pick, Best Picks and At a glance. ⭐ BEST ideas pass every check. Tap a line to see why, the projection line, and open the chart. The chance is an estimate from many factors, not a promise.';
 (function () {
     var st = document.createElement('style'); st.id = 'p9zlcss';
-    st.textContent = '.idr{border-bottom:1px solid var(--line,#e5e5ea);padding:10px 12px}.idr.idb{background:linear-gradient(90deg,rgba(255,159,10,.12),transparent)}.idh{display:flex;gap:10px;align-items:flex-start}.idn{flex:0 0 26px;height:26px;border-radius:8px;background:var(--fill,#eee);display:grid;place-items:center;font-size:12px;font-weight:800}.idm{flex:1;min-width:0}.idp{flex:0 0 58px;text-align:center}.idp b{font-size:22px;display:block;line-height:1.1;font-variant-numeric:tabular-nums}.idp span{font-size:10px;opacity:.65}.idst{background:#ff9f0a;color:#fff;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:800}.idch i{font-style:normal;font-size:13px;margin-right:4px;padding:1px 3px;border-radius:6px}.idch i.up{background:rgba(48,209,88,.22)}.idch i.dn{background:rgba(255,69,58,.22)}.idch i.mut{background:rgba(142,142,147,.18)}.idx{margin:8px 0 0 36px}.idf{display:flex;flex-direction:column;font-size:12px;padding:3px 0}.idbt{display:flex;gap:8px;margin-top:8px}';
+    st.textContent = '.tabs{grid-template-columns:repeat(5,1fr)!important}.tab{justify-content:flex-start;height:56px;box-sizing:border-box;padding-top:7px}.tab svg{flex:none}.idr{border-bottom:1px solid var(--line,#e5e5ea);padding:10px 12px}.idr.idb{background:linear-gradient(90deg,rgba(255,159,10,.12),transparent)}.idh{display:flex;gap:10px;align-items:flex-start}.idn{flex:0 0 26px;height:26px;border-radius:8px;background:var(--fill,#eee);display:grid;place-items:center;font-size:12px;font-weight:800}.idm{flex:1;min-width:0}.idp{flex:0 0 58px;text-align:center}.idp b{font-size:22px;display:block;line-height:1.1;font-variant-numeric:tabular-nums}.idp span{font-size:10px;opacity:.65}.idst{background:#ff9f0a;color:#fff;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:800}.idch i{font-style:normal;font-size:13px;margin-right:4px;padding:1px 3px;border-radius:6px}.idch i.up{background:rgba(48,209,88,.22)}.idch i.dn{background:rgba(255,69,58,.22)}.idch i.mut{background:rgba(142,142,147,.18)}.idx{margin:8px 0 0 36px}.idf{display:flex;flex-direction:column;font-size:12px;padding:3px 0}.idbt{display:flex;gap:8px;margin-top:8px}';
     document.head.appendChild(st);
     /* menu / bottom tabs: Home, Ideas, Auto Bot, More */
     var gone = { morning: 1, plan: 1, scanner: 1, best: 1, glance: 1, candles: 1 };
@@ -7928,7 +7928,7 @@ MW_HELP.ideas = 'One ranked list that replaces New Plan, Scanner, Master pick, B
         else if (v === 'chart') { gotoWin('chart'); try { S.chart.sym = x; lss('mintoosuite_chart', x); loadChart(); drawChart(); } catch (er) { } return; } else if (v === 'win') { gotoWin(x); return; }
         IDS.at = 0; renderView(true);
     }, true);
-    setTimeout(function () { try { if (!TABS.some(function (t) { return t[0] === 'ideas'; })) { TABS.splice(1, 2, ['ideas', 'Ideas', '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>']); } buildNav(); renderView(); } catch (e) { } }, 0);
+    setTimeout(function () { try { if (!TABS.some(function (t) { return t[0] === 'ideas'; })) { TABS.splice(1, 2, ['ideas', 'Ideas', '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>'], ['market', 'Markets', '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>']); } buildNav(); renderView(); } catch (e) { } }, 0);
 })();
 /* overall chance line for a coin (used under the projection line) */
 function idUpLine(sym) {
@@ -7955,6 +7955,555 @@ var STK = { act: {}, ide: {} };
     getActions = function () { var l = _ga(); try { return sticky(l, function (a) { return a.sym + '|' + a.side; }, STK.act, 60000); } catch (e) { return l; } };
     var _ir = idRows;
     idRows = function () { var l = _ir(), out; try { out = sticky(l, function (m) { return m.key; }, STK.ide, 45000); out.forEach(function (m, i) { m.rank = i + 1; }); return out; } catch (e) { return l; } };
+})();
+/* ===== p9zn: polish round: pictures, Live Chat (Professor), Help centre, welcome tour, badges + private stats, more avatars, animated icons ===== */
+var ILN = '<svg viewBox="0 0 320 150" xmlns="http://www.w3.org/2000/svg" role="img" style="width:100%;height:auto;display:block;font:11px system-ui,sans-serif" aria-label="';
+var ILG = '#30d158', ILR = '#ff453a', ILB = '#0a84ff', ILY = '#ff9f0a', ILM = '#8e8e93';
+function ilT(x, y, t, c, a) { return '<text x="' + x + '" y="' + y + '" fill="' + (c || 'currentColor') + '" text-anchor="' + (a || 'start') + '">' + t + '</text>'; }
+function ilBox(x, y, w, h, c, r) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (r || 3) + '" fill="' + c + '"/>'; }
+var ILL = {
+    candle: function () { return ILN + 'Candlestick"><line x1="90" y1="14" x2="90" y2="132" stroke="' + ILG + '" stroke-width="2"/>' + ilBox(76, 40, 28, 62, ILG) + ilT(116, 20, 'High', ILM) + ilT(116, 46, 'Close (up candle)', ILG) + ilT(116, 100, 'Open', ILG) + ilT(116, 132, 'Low', ILM) + '<line x1="230" y1="30" x2="230" y2="130" stroke="' + ILR + '" stroke-width="2"/>' + ilBox(216, 52, 28, 56, ILR) + ilT(252, 56, 'Open', ILR) + ilT(252, 106, 'Close', ILR) + ilT(200, 20, 'Down candle', ILR, 'middle') + '</svg>'; },
+    trend: function () { return ILN + 'Trends">' + '<polyline points="10,120 30,100 45,108 70,70 85,78 105,40" fill="none" stroke="' + ILG + '" stroke-width="3"/>' + ilT(58, 140, 'Uptrend', ILG, 'middle') + '<polyline points="118,40 138,62 152,54 178,92 192,84 212,122" fill="none" stroke="' + ILR + '" stroke-width="3"/>' + ilT(165, 140, 'Downtrend', ILR, 'middle') + '<polyline points="225,80 245,60 260,92 280,62 295,90 312,70" fill="none" stroke="' + ILM + '" stroke-width="3"/>' + ilT(268, 140, 'Sideways', ILM, 'middle') + '</svg>'; },
+    sr: function () { return ILN + 'Support and resistance"><line x1="10" y1="34" x2="310" y2="34" stroke="' + ILR + '" stroke-dasharray="5 4" stroke-width="2"/><line x1="10" y1="112" x2="310" y2="112" stroke="' + ILG + '" stroke-dasharray="5 4" stroke-width="2"/><polyline points="12,100 50,40 90,108 130,38 170,110 210,36 250,100 290,60" fill="none" stroke="' + ILB + '" stroke-width="2.5"/>' + ilT(14, 26, 'Resistance: price struggles to go higher', ILR) + ilT(14, 132, 'Support: price tends to bounce here', ILG) + '</svg>'; },
+    sltp: function () { return ILN + 'Entry, target and stop"><line x1="10" y1="30" x2="310" y2="30" stroke="' + ILG + '" stroke-width="2"/>' + ilT(14, 22, 'Target (take profit)', ILG) + '<line x1="10" y1="78" x2="310" y2="78" stroke="' + ILB + '" stroke-width="2"/>' + ilT(14, 70, 'Entry', ILB) + '<line x1="10" y1="118" x2="310" y2="118" stroke="' + ILR + '" stroke-width="2"/>' + ilT(14, 134, 'Stop (you accept being wrong here)', ILR) + ilBox(230, 31, 60, 46, 'rgba(48,209,88,.25)') + ilBox(230, 79, 60, 38, 'rgba(255,69,58,.25)') + ilT(260, 58, 'Reward', ILG, 'middle') + ilT(260, 102, 'Risk', ILR, 'middle') + '</svg>'; },
+    leverage: function () { return ILN + 'Leverage"><rect x="20" y="86" width="60" height="40" rx="4" fill="' + ILB + '"/>' + ilT(50, 110, 'Your $100', '#fff', 'middle') + '<rect x="110" y="26" width="200" height="100" rx="4" fill="rgba(10,132,255,.2)" stroke="' + ILB + '"/>' + ilT(210, 70, 'Position worth $1,000 (10×)', ILB, 'middle') + ilT(210, 88, 'A 10% move against you', ILR, 'middle') + ilT(210, 104, '= your $100 is gone (liquidation)', ILR, 'middle') + '</svg>'; },
+    rsi: function () { return ILN + 'RSI"><rect x="14" y="52" width="292" height="30" rx="8" fill="rgba(142,142,147,.25)"/>' + ilBox(14, 52, 88, 30, 'rgba(48,209,88,.45)', 8) + ilBox(218, 52, 88, 30, 'rgba(255,69,58,.45)', 8) + ilT(58, 72, 'Below 30', '#fff', 'middle') + ilT(262, 72, 'Above 70', '#fff', 'middle') + ilT(58, 44, 'Oversold: may bounce', ILG, 'middle') + ilT(262, 44, 'Overbought: may pause', ILR, 'middle') + ilT(160, 72, '50 = neutral', ILM, 'middle') + ilT(160, 118, 'RSI measures how fast price moved lately (0 to 100)', ILM, 'middle') + '</svg>'; },
+    ma: function () { return ILN + 'Moving averages"><polyline points="10,100 40,80 70,92 100,60 130,70 160,40 190,52 220,34 250,48 310,20" fill="none" stroke="' + ILM + '" stroke-width="2"/><polyline points="10,104 60,92 110,76 160,62 210,50 260,40 310,34" fill="none" stroke="' + ILY + '" stroke-width="3"/><polyline points="10,110 60,106 110,98 160,88 210,76 260,66 310,58" fill="none" stroke="' + ILB + '" stroke-width="3"/>' + ilT(14, 140, 'Price (grey)  ·  fast average (orange)  ·  slow average (blue)', ILM) + ilT(160, 18, 'Fast above slow = uptrend', ILG, 'middle') + '</svg>'; },
+    macd: function () { var b = '', i, v = [-6, -14, -22, -16, -6, 8, 20, 30, 24, 14, 4]; for (i = 0; i < v.length; i++) { b += ilBox(24 + i * 26, v[i] >= 0 ? 74 - v[i] : 74, 16, Math.abs(v[i]), v[i] >= 0 ? ILG : ILR, 2); } return ILN + 'MACD"><line x1="10" y1="74" x2="310" y2="74" stroke="' + ILM + '"/>' + b + '<polyline points="20,86 80,92 140,80 200,60 300,50" fill="none" stroke="' + ILB + '" stroke-width="2"/><polyline points="20,80 80,90 140,84 200,68 300,56" fill="none" stroke="' + ILY + '" stroke-width="2"/>' + ilT(160, 140, 'Bars turning green and growing = momentum turning up', ILM, 'middle') + '</svg>'; },
+    volume: function () { var b = '', i, h = [10, 14, 8, 30, 46, 22, 12, 9, 40, 18]; for (i = 0; i < h.length; i++) { b += ilBox(20 + i * 29, 134 - h[i], 18, h[i], i % 3 === 1 ? ILR : ILG, 2); } return ILN + 'Volume"><polyline points="20,60 60,50 100,56 140,30 180,22 220,44 260,36 300,26" fill="none" stroke="' + ILB + '" stroke-width="2.5"/>' + b + ilT(160, 14, 'Big volume = many people agree on this move', ILM, 'middle') + '</svg>'; },
+    funding: function () { return ILN + 'Funding rate">' + ilBox(14, 40, 100, 56, 'rgba(48,209,88,.25)', 10) + ilT(64, 64, 'Longs', ILG, 'middle') + ilT(64, 82, '(betting up)', ILG, 'middle') + ilBox(206, 40, 100, 56, 'rgba(255,69,58,.25)', 10) + ilT(256, 64, 'Shorts', ILR, 'middle') + ilT(256, 82, '(betting down)', ILR, 'middle') + '<path d="M120 58h80M190 52l10 6-10 6" fill="none" stroke="' + ILB + '" stroke-width="2.5"/><path d="M200 82h-80M130 76l-10 6 10 6" fill="none" stroke="' + ILB + '" stroke-width="2.5"/>' + ilT(160, 120, 'Every 8 h the crowded side pays the other side', ILM, 'middle') + ilT(160, 136, 'High positive funding = too many longs', ILM, 'middle') + '</svg>'; },
+    orderbook: function () { var b = '', i; for (i = 0; i < 6; i++) { b += ilBox(150 - (40 + i * 18), 20 + i * 18, 40 + i * 18, 14, 'rgba(48,209,88,.6)', 2) + ilBox(170, 20 + i * 18, 80 - i * 10, 14, 'rgba(255,69,58,.6)', 2); } return ILN + 'Order book">' + b + ilT(60, 140, 'Buyers (bids)', ILG, 'middle') + ilT(250, 140, 'Sellers (asks)', ILR, 'middle') + ilT(160, 14, 'Price', ILM, 'middle') + '</svg>'; },
+    risk: function () { return ILN + 'Risk per trade">' + ilBox(20, 30, 280, 24, 'rgba(142,142,147,.25)', 6) + ilBox(20, 30, 14, 24, ILR, 4) + ilT(160, 46, 'Account: $1,000', ILM, 'middle') + ilT(27, 72, 'Risk 1% = $10 per trade', ILR) + ilT(20, 100, 'Ten losses in a row still leave about 90% of the account.', ILM) + ilT(20, 118, 'Size the trade so the stop costs only that 1%.', ILM) + '</svg>'; },
+    diversify: function () { return ILN + 'Diversify">' + [0, 1, 2, 3].map(function (i) { return ilBox(20 + i * 74, 50, 60, 60, ['rgba(10,132,255,.3)', 'rgba(255,159,10,.3)', 'rgba(48,209,88,.3)', 'rgba(191,90,242,.3)'][i], 10) + ilT(50 + i * 74, 84, ['Gold', 'Coins', 'Cash', 'Other'][i], 'currentColor', 'middle'); }).join('') + ilT(160, 30, 'Do not put everything in one basket', ILM, 'middle') + '</svg>'; },
+    shield: function () { return ILN + 'Safety"><path d="M160 14l56 20v40c0 34-24 54-56 66-32-12-56-32-56-66V34z" fill="rgba(10,132,255,.2)" stroke="' + ILB + '" stroke-width="3"/><rect x="142" y="66" width="36" height="30" rx="5" fill="' + ILB + '"/><path d="M148 66v-8a12 12 0 0 1 24 0v8" fill="none" stroke="' + ILB + '" stroke-width="4"/></svg>'; },
+    sleep: function () { return ILN + 'Waiting is fine"><circle cx="130" cy="64" r="34" fill="rgba(255,159,10,.35)"/><circle cx="146" cy="56" r="30" fill="var(--card,#fff)"/>' + ilT(210, 50, 'z', ILM) + ilT(224, 38, 'Z', ILM) + ilT(160, 130, 'No clear idea right now. Waiting is a valid trade.', ILM, 'middle') + '</svg>'; },
+    home: function () { return ILN + 'Home">' + ilBox(40, 20, 240, 110, 'rgba(10,132,255,.12)', 12) + ilBox(54, 34, 66, 40, '#14264a', 8) + ilBox(127, 34, 66, 40, '#14264a', 8) + ilBox(200, 34, 66, 40, '#14264a', 8) + ilBox(54, 86, 50, 34, ILY, 8) + ilBox(114, 86, 50, 34, ILR, 8) + ilBox(174, 86, 50, 34, ILB, 8) + ilBox(234, 86, 32, 34, ILG, 8) + '</svg>'; },
+    ideas: function () { return ILN + 'Trade ideas">' + [0, 1, 2, 3].map(function (i) { return ilBox(30, 14 + i * 34, 260, 28, i ? 'rgba(142,142,147,.2)' : 'rgba(255,159,10,.3)', 8) + ilT(44, 33 + i * 34, i ? '#' + (i + 1) + '  COIN  ·  chance ' + (72 - i * 6) + '%' : '#1  ⭐ BEST  ·  chance 74%', i ? ILM : ILY); }).join('') + '</svg>'; },
+    proj: function () { return ILN + 'Projection line"><polyline points="10,100 40,86 70,92 100,70 130,76 160,60" fill="none" stroke="' + ILM + '" stroke-width="2.5"/><path d="M160 60L310 30L310 100Z" fill="rgba(0,229,255,.2)"/><polyline points="160,60 310,65" fill="none" stroke="#00e5ff" stroke-width="3" stroke-dasharray="6 4"/>' + ilT(240, 22, 'Shaded neon band: where price may go', '#00b8d4', 'middle') + ilT(160, 136, 'A trend extension, not a prediction', ILM, 'middle') + '</svg>'; },
+    prof: function () { return '<div style="width:90px;height:90px;border-radius:50%;margin:0 auto;overflow:hidden;background:radial-gradient(circle at 35% 30%,#c9f3e3,#7ad7b5 70%)">' + (typeof PF_AV !== 'undefined' ? PF_AV : '') + '</div>'; }
+};
+function ill(id) { try { return ILL[id] ? '<div class="ilw">' + ILL[id]() + '</div>' : ''; } catch (e) { return ''; } }
+/* topic map: [regex, picture, title, YouTube search] */
+var CH_TOPICS = [
+    [/candle|candlestick|ohlc/, 'candle', 'Candlestick basics', 'candlestick charts explained for beginners'],
+    [/uptrend|downtrend|sideways|\btrend\b/, 'trend', 'Trends', 'how to identify trends in trading'],
+    [/support|resistance/, 'sr', 'Support and resistance', 'support and resistance trading explained'],
+    [/stop.?loss|take.?profit|target|risk.?reward|\bentry\b/, 'sltp', 'Entry, target and stop', 'stop loss take profit risk reward explained'],
+    [/leverage|liquidat|margin/, 'leverage', 'Leverage and liquidation', 'leverage and liquidation explained crypto futures'],
+    [/\brsi\b|overbought|oversold|relative strength/, 'rsi', 'RSI', 'RSI indicator explained'],
+    [/moving average|\bema\b|\bsma\b|\bma\b|golden cross|death cross/, 'ma', 'Moving averages', 'moving averages explained trading'],
+    [/macd/, 'macd', 'MACD', 'MACD indicator explained'],
+    [/volume/, 'volume', 'Volume', 'trading volume explained'],
+    [/funding/, 'funding', 'Funding rate', 'funding rate perpetual futures explained'],
+    [/order ?book|depth|\bbids?\b|\basks?\b|spread/, 'orderbook', 'Order book', 'order book explained crypto'],
+    [/position size|money management|risk management|1%|risk per trade|how much (to|should i) (risk|trade)/, 'risk', 'Risk management', 'position sizing risk management trading'],
+    [/diversif|portfolio|basket/, 'diversify', 'Diversification', 'portfolio diversification explained'],
+    [/safe|scam|security|hack|phishing|password|2fa/, 'shield', 'Staying safe', 'how to stay safe trading crypto scams']
+];
+function chTopic(q) { var s = (q || '').toLowerCase(), i; for (i = 0; i < CH_TOPICS.length; i++) { if (CH_TOPICS[i][0].test(s)) { return CH_TOPICS[i]; } } return null; }
+/* ---------- stats (private, only on this phone) ---------- */
+var STS = { d: [], w: {}, c: 0, ch: 0, ts: 0 };
+try { STS = Object.assign(STS, JSON.parse(localStorage.getItem('mintoosuite_stats') || '{}')); } catch (e) { }
+function stSave() { try { localStorage.setItem('mintoosuite_stats', JSON.stringify(STS)); } catch (e) { } }
+function stDay(ms) { var d = new Date(ms); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function stStreak() { var n = 0, t = Date.now(), set = {}; (STS.d || []).forEach(function (x) { set[x] = 1; }); if (!set[stDay(t)]) { t -= 86400000; } while (set[stDay(t)]) { n++; t -= 86400000; } return n; }
+(function () { var d = stDay(Date.now()); if ((STS.d || []).indexOf(d) < 0) { STS.d.push(d); if (STS.d.length > 400) { STS.d.shift(); } stSave(); } })();
+function stWins() { return Object.keys(STS.w || {}).length; }
+var BADGES = [
+    ['first', '🚀', 'First steps', 'Open the app', function () { return 1; }, 1],
+    ['s3', '🔥', '3-day streak', 'Open the app 3 days in a row', function () { return stStreak(); }, 3],
+    ['s7', '🌟', '7-day streak', 'Open the app 7 days in a row', function () { return stStreak(); }, 7],
+    ['exp', '🧭', 'Explorer', 'Visit 10 different windows', stWins, 10],
+    ['chart', '📈', 'Chart reader', 'Open 10 charts', function () { return STS.c || 0; }, 10],
+    ['idea', '⭐', 'Idea hunter', 'Open Trade Ideas 5 times', function () { return (STS.w || {}).ideas || 0; }, 5],
+    ['less', '🎓', 'Student', 'Finish 3 Academy lessons', function () { try { return Object.keys(ACP.done || {}).length; } catch (e) { return 0; } }, 3],
+    ['less2', '🏅', 'Scholar', 'Finish 15 Academy lessons', function () { try { return Object.keys(ACP.done || {}).length; } catch (e) { return 0; } }, 15],
+    ['chat', '💬', 'Curious', 'Ask Professor 10 questions', function () { return STS.ch || 0; }, 10],
+    ['safe', '🛡', 'Safety first', 'Open the Risk meter', function () { return (STS.w || {}).risk || 0; }, 1],
+    ['tour', '🗺', 'Tour done', 'Finish the welcome tour', function () { return STS.ts ? 1 : 0; }, 1],
+    ['paper', '🧪', 'Practice first', 'Look at the paper bot', function () { return (STS.w || {}).bot || 0; }, 1]
+];
+/* ---------- Live Chat (Professor) ---------- */
+var PCH = { msgs: [], busy: 0 };
+try { PCH.msgs = JSON.parse(localStorage.getItem('mintoosuite_pchat') || '[]') || []; } catch (e) { PCH.msgs = []; }
+function pcSave() { try { localStorage.setItem('mintoosuite_pchat', JSON.stringify(PCH.msgs.slice(-40))); } catch (e) { } }
+var PC_CHIPS = [['Basics', ['What is a candle?', 'What is leverage?', 'What is a stop loss?', 'What is support and resistance?']], ['Indicators', ['What is RSI?', 'What is MACD?', 'What is a moving average?', 'What is volume?']], ['Risk', ['How much should I risk per trade?', 'What is liquidation?', 'How do I stay safe from scams?']], ['App', ['Explain this screen', 'What is Trade Ideas?', 'Why is the paper bot paused?', 'What does the projection line mean?']]];
+function pcBotHtml(q) {
+    var a, t, h = '', less = null, i, ws; try { a = pfAnswer(q); } catch (e) { a = { title: 'Oops', html: 'Something went wrong. Please try again.' }; }
+    t = chTopic(q + ' ' + (a.title || '')); h = (a.title ? '<b>' + esc(a.title) + '</b><br>' : '') + a.html;
+    if (t) { h += ill(t[1]) + (a.html.indexOf('youtube.com') >= 0 ? '' : '<a class="pfbtn" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(t[3]) + '" target="_blank" rel="noopener noreferrer" style="background:#ff3b30;color:#fff;text-decoration:none">▶ Watch videos (YouTube search)</a>'); }
+    try { ws = (q + ' ' + (a.title || '')).toLowerCase().split(/[^a-z0-9]+/).filter(function (w) { return w.length > 3; }); for (i = 0; i < AC.length && !less; i++) { var tt = AC[i][2].toLowerCase(); if (ws.some(function (w) { return tt.indexOf(w) >= 0; })) { less = AC[i]; } } } catch (e) { }
+    if (less) { h += '<span class="pfbtn" data-pcgo="lesson:' + less[0] + '">🎓 Lesson: ' + esc(less[2]) + '</span>'; }
+    if (/not sure/i.test(a.title || '') && !t) { h += '<a class="pfbtn" href="https://www.google.com/search?q=' + encodeURIComponent(q + ' trading explained') + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">🔎 Search the web</a>'; }
+    return h + '<div class="note" style="margin:6px 0 0">Educational information, not financial advice.</div>';
+}
+function pcAsk(q) {
+    q = (q || '').trim(); if (!q || PCH.busy) { return; } PCH.busy = 1; STS.ch = (STS.ch || 0) + 1; stSave();
+    PCH.msgs.push({ who: 'me', html: esc(q) }); PCH.msgs.push({ who: 'bot', html: '<span class="pfdots"><i></i><i></i><i></i></span>', typing: 1 }); pcDraw();
+    setTimeout(function () { var h; try { h = pcBotHtml(q); } catch (e) { h = 'Sorry, I had a small problem. Please ask again.'; } PCH.msgs.pop(); PCH.msgs.push({ who: 'bot', html: h }); PCH.busy = 0; pcSave(); pcDraw(); }, 450);
+}
+function pcDraw() {
+    var box = document.getElementById('pcmsgs'); if (!box) { return; }
+    box.innerHTML = PCH.msgs.map(function (m) { return '<div class="pcm ' + m.who + '">' + m.html + '</div>'; }).join('');
+    try { box.scrollTop = box.scrollHeight; } catch (e) { }
+}
+function vPchat() {
+    var h = '<div class="group pad" style="padding:8px 10px"><div id="pcmsgs" class="pcmsgs"></div><div style="display:flex;gap:8px;margin-top:8px"><input id="pcq" class="tin" placeholder="Ask anything: RSI, leverage, a coin, this screen…" autocomplete="off" style="flex:1 1 auto;min-width:0;width:auto"><span class="btn tap" data-pcs="1" style="flex:0 0 auto;width:auto;padding:11px 20px;display:inline-block">Send</span></div></div>';
+    h += '<div class="group pad"><b>Quick topics</b>' + PC_CHIPS.map(function (g) { return '<div class="note" style="margin:8px 0 2px"><b>' + g[0] + '</b></div><div class="pcch">' + g[1].map(function (q) { return '<span data-pcq="' + esc(q) + '">' + esc(q) + '</span>'; }).join('') + '</div>'; }).join('') + '</div>';
+    h += '<div class="note">Professor works inside the app (no internet needed for explanations). Videos open as a YouTube search, so you always get fresh results. Never financial advice.</div>';
+    setTimeout(function () { if (!PCH.msgs.length) { PCH.msgs.push({ who: 'bot', html: 'Hello! I am <b>Professor</b>, your built-in guide. Ask me about candles, indicators, risk, coins, or any screen of this app. I will add a picture and a video link when it helps.' }); } pcDraw(); }, 0);
+    return h;
+}
+WINS.push({ id: 'pchat', ic: '💬', c: '#34c759', n: 'Live Chat (Professor)', t: 'Chat', sub: 'Ask anything: answers with pictures, lessons and video links' }); LIVE.pchat = 0; VIEWS.pchat = vPchat;
+MW_HELP.pchat = 'Chat with Professor. Ask about trading words, indicators, risk, any coin or any screen. Answers come with a picture, a matching Academy lesson and a video search link when available.';
+/* ---------- Help centre ---------- */
+function hcAll() { var out = [], seen = {}; (PF_APP || []).concat(PF_KB || []).forEach(function (e) { if (!seen[e[1]]) { seen[e[1]] = 1; out.push(e); } }); return out; }
+function hcResults(q) {
+    var all = hcAll(), s = (q || '').toLowerCase().trim(), r = s ? all.filter(function (e) { return (e[0] + ' ' + e[1] + ' ' + e[2]).toLowerCase().indexOf(s) >= 0; }) : all.slice(0, 12);
+    if (!r.length) { return '<div class="note">Nothing found. Try the Chat with Professor button above.</div>'; }
+    return r.slice(0, 25).map(function (e) { return '<div class="row hcq"><span><b>' + esc(e[1]) + '</b><div class="note" style="margin:3px 0 0">' + esc(e[2]).slice(0, 320) + (e[2].length > 320 ? '…' : '') + '</div></span></div>'; }).join('');
+}
+function vHelpc() {
+    var h = '<div class="group pad">' + ill('shield') + '<div style="display:flex;flex-wrap:wrap;gap:8px"><span class="btn tap" data-hc="win:pchat">💬 Chat with Professor</span><span class="btn sec tap" data-hc="tour">🗺 Replay the welcome tour</span><span class="btn sec tap" data-hc="win:academy">🎓 Academy</span><span class="btn sec tap" data-hc="win:badges">🏅 Achievements</span></div></div>';
+    h += '<div class="group pad"><input id="hcq" class="tin" placeholder="Search help: leverage, RSI, install, bot…" autocomplete="off"><div id="hcres" style="margin-top:8px">' + hcResults('') + '</div></div>';
+    h += '<div class="group pad"><b>Contact us</b><div class="note">Email goes to the app owner. Please do not send passwords or keys.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><a class="btn tap" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite question (build ' + BUILD + ')') + '" style="text-decoration:none">✉ Email support</a><a class="btn sec tap" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite problem report (build ' + BUILD + ')') + '&body=' + encodeURIComponent('What happened:\n\nWhich window:\n\nBuild: ' + BUILD) + '" style="text-decoration:none">🐞 Report a problem</a></div></div>';
+    return h + '<div class="note">Live human chat is not available yet; Professor answers instantly, day and night.</div>';
+}
+WINS.push({ id: 'helpc', ic: '🛟', c: '#0a84ff', n: 'Help centre', t: 'Help', sub: 'Search answers, replay the tour, chat, contact us' }); LIVE.helpc = 0; VIEWS.helpc = vHelpc;
+MW_HELP.helpc = 'Search the built-in help, chat with Professor, replay the tour, or email the app owner.';
+/* ---------- Achievements + private stats ---------- */
+function vBadges() {
+    var got = 0, h = '', rows = BADGES.map(function (b) { var v = Math.min(b[5], b[4]()), ok = v >= b[5]; if (ok) { got++; } return '<div class="bdg' + (ok ? ' on' : '') + '"><div class="bi">' + b[1] + '</div><b>' + esc(b[2]) + '</b><div class="note" style="margin:2px 0 4px">' + esc(b[3]) + '</div><div class="bpb"><i style="width:' + Math.round(v / b[5] * 100) + '%"></i></div><div class="note" style="margin:2px 0 0">' + v + ' / ' + b[5] + '</div></div>'; }).join('');
+    h = '<div class="group pad"><b style="font-size:17px">🏅 Achievements</b><div class="note">' + got + ' of ' + BADGES.length + ' unlocked. Badges reward learning and safe habits, never trading volume or profit.</div><div class="note">🔥 Current streak: <b>' + stStreak() + '</b> day(s) · Days used: <b>' + (STS.d || []).length + '</b></div></div><div class="bdgs">' + rows + '</div>';
+    h += '<div class="group pad"><b>Your activity (private)</b><div class="note">Counted only on this phone. Nothing is sent anywhere, and there are no analytics trackers.</div>' + [['Windows visited', stWins()], ['Charts opened', STS.c || 0], ['Questions asked', STS.ch || 0], ['Lessons finished', (function () { try { return Object.keys(ACP.done || {}).length; } catch (e) { return 0; } })()]].map(function (r) { return '<div class="row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join('') + '<div style="margin-top:8px"><span class="btn sec tap" data-hc="resetstats">Reset my activity</span></div></div>';
+    return h;
+}
+WINS.push({ id: 'badges', ic: '🏅', c: '#ff9f0a', n: 'Achievements', t: 'Badges', sub: 'Badges, streak and your private activity' }); LIVE.badges = 0; VIEWS.badges = vBadges;
+MW_HELP.badges = 'Badges for learning and safe habits, your daily streak, and activity counts that stay on this phone.';
+/* ---------- welcome tour ---------- */
+var TOUR = [['home', 'Welcome to MintooSuite', 'Home shows live Gold, Bitcoin and Ethereum, quick buttons and the news tapes. Everything starts here.'], ['ideas', 'Trade Ideas', 'One ranked list. ⭐ BEST ideas pass every check. Tap a line to see why, the neon projection line and the chart.'], ['proj', 'The neon projection line', 'A shaded neon line extends the trend. It is a guide with an honest past-accuracy number, never a promise.'], ['prof', 'Meet Professor', 'Tap the cartoon helper or open Chat. Ask anything and get a picture, a lesson and a video link.'], ['shield', 'Stay safe', 'Start with the paper bot and small amounts. Use stops. Never share passwords or keys. Nobody can guarantee profit.']];
+var WT = { i: 0 };
+function wtShow() {
+    var o = document.getElementById('wtour'); if (o) { o.remove(); } var s = TOUR[WT.i], last = WT.i === TOUR.length - 1;
+    o = document.createElement('div'); o.id = 'wtour'; o.setAttribute('data-mwkeep', '1');
+    o.innerHTML = '<div class="wtc"><div class="wti">' + ill(s[0]) + '</div><h3>' + esc(s[1]) + '</h3><p>' + esc(s[2]) + '</p><div class="wtd">' + TOUR.map(function (x, i) { return '<i class="' + (i === WT.i ? 'on' : '') + '"></i>'; }).join('') + '</div><div class="wtb"><span data-wt="skip">Skip</span>' + (WT.i ? '<span data-wt="back">Back</span>' : '') + '<span class="pri" data-wt="' + (last ? 'done' : 'next') + '">' + (last ? 'Start' : 'Next') + '</span></div></div>';
+    document.body.appendChild(o);
+}
+function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove(); } try { localStorage.setItem('mintoosuite_tour', '1'); } catch (e) { } }
+/* ---------- more avatars ---------- */
+(function () {
+    function add(id, n, bg, body) { AV_ICONS.push({ id: id, n: n, svg: AV_OPEN + '<rect width="100" height="100" fill="' + bg + '"/>' + body + '</svg>' }); }
+    add('shark', 'Shark', '#d6ecff', '<path d="M12 62c14-26 44-34 76-14-8 4-12 10-12 18-20 8-46 6-64-4z" fill="#5b7a99"/><path d="M52 34l8-18 8 22z" fill="#46627d"/><circle cx="70" cy="50" r="3" fill="#fff"/><path d="M20 66c10 6 28 8 44 2" fill="none" stroke="#fff" stroke-width="2.5"/>');
+    add('wolf', 'Wolf', '#e5e7ee', '<path d="M22 24l14 16h28l14-16 6 36c0 18-14 30-34 30S16 78 16 60z" fill="#7c8596"/><path d="M36 60h28l-14 22z" fill="#e8ebf2"/><circle cx="38" cy="52" r="3.5" fill="#222"/><circle cx="62" cy="52" r="3.5" fill="#222"/><path d="M46 68h8l-4 5z" fill="#222"/>');
+    add('lion', 'Lion', '#ffe9c2', '<circle cx="50" cy="52" r="38" fill="#c9822b"/><circle cx="50" cy="54" r="26" fill="#f1c27a"/><circle cx="41" cy="50" r="3" fill="#222"/><circle cx="59" cy="50" r="3" fill="#222"/><path d="M45 60h10l-5 6z" fill="#6b3f12"/><path d="M42 70c4 3 12 3 16 0" fill="none" stroke="#6b3f12" stroke-width="2"/>');
+    add('eagle', 'Eagle', '#dff1ff', '<path d="M14 56c14-6 22-24 36-24s22 18 36 24c-10 4-20 2-28 10-2-4-6-6-8-6s-6 2-8 6c-8-8-18-6-28-10z" fill="#6b4a2a"/><circle cx="50" cy="40" r="14" fill="#f4ead2"/><path d="M46 44h12l-6 10z" fill="#ff9f0a"/><circle cx="46" cy="38" r="2.4" fill="#222"/><circle cx="56" cy="38" r="2.4" fill="#222"/>');
+    add('robot', 'Robot', '#e2e6ff', '<rect x="24" y="30" width="52" height="46" rx="10" fill="#8a94b8"/><circle cx="40" cy="52" r="7" fill="#fff"/><circle cx="60" cy="52" r="7" fill="#fff"/><circle cx="40" cy="52" r="3" fill="#0a84ff"/><circle cx="60" cy="52" r="3" fill="#0a84ff"/><path d="M50 30V18" stroke="#8a94b8" stroke-width="4"/><circle cx="50" cy="16" r="4" fill="#ff453a"/><rect x="38" y="64" width="24" height="5" rx="2" fill="#fff"/>');
+    add('astro', 'Astronaut', '#14183a', '<circle cx="50" cy="50" r="30" fill="#f2f4fa"/><rect x="32" y="38" width="36" height="26" rx="12" fill="#1b2a52"/><circle cx="42" cy="50" r="2.4" fill="#9ad"/><path d="M58 44c4 2 5 6 3 10" fill="none" stroke="#6af" stroke-width="2"/><circle cx="20" cy="20" r="1.5" fill="#fff"/><circle cx="82" cy="30" r="1.2" fill="#fff"/>');
+    add('ninja', 'Ninja', '#e8e8e8', '<circle cx="50" cy="52" r="32" fill="#222"/><rect x="24" y="44" width="52" height="16" rx="8" fill="#f3d2b3"/><circle cx="40" cy="52" r="3" fill="#222"/><circle cx="60" cy="52" r="3" fill="#222"/><path d="M78 40l14 6-12 6z" fill="#ff453a"/>');
+    add('crown', 'Crown', '#ffeaa8', '<path d="M20 70l-4-36 22 18 12-26 12 26 22-18-4 36z" fill="#ffb800" stroke="#c98400" stroke-width="3"/><circle cx="50" cy="48" r="5" fill="#ff453a"/><circle cx="30" cy="56" r="3.5" fill="#0a84ff"/><circle cx="70" cy="56" r="3.5" fill="#30d158"/><rect x="20" y="72" width="60" height="8" rx="3" fill="#c98400"/>');
+    add('globe', 'Globe', '#d6efff', '<circle cx="50" cy="50" r="32" fill="#3a8be0"/><path d="M30 38c8-6 16-2 18 6s-8 10-8 18-10 4-12-8 0-12 2-16zM58 30c10 0 18 8 18 18-8 0-14-2-16-8z" fill="#30d158"/><ellipse cx="50" cy="50" rx="14" ry="32" fill="none" stroke="#fff" stroke-width="1.5" opacity=".6"/>');
+    add('fire', 'Fire', '#ffe3d2', '<path d="M50 14c2 16 22 22 22 44 0 16-10 28-22 28S28 74 28 58c0-10 6-16 10-22 2 8 6 10 8 10 2-12 0-20 4-32z" fill="#ff7a1a"/><path d="M50 46c2 10 12 14 12 26 0 8-6 12-12 12s-12-4-12-12c0-8 6-12 12-26z" fill="#ffd60a"/>');
+    add('bolt', 'Lightning', '#ece6ff', '<path d="M56 10L24 56h22l-6 34 34-48H52z" fill="#ffd60a" stroke="#c98400" stroke-width="3" stroke-linejoin="round"/>');
+    add('shield', 'Shield', '#dfeaff', '<path d="M50 12l32 12v26c0 20-14 32-32 40-18-8-32-20-32-40V24z" fill="#0a84ff"/><path d="M50 24v56c-12-6-22-16-22-30V32z" fill="#4da3ff"/><path d="M38 52l9 9 16-18" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>');
+})();
+/* ---------- styles, wiring ---------- */
+(function () {
+    var st = document.createElement('style'); st.id = 'p9zncss';
+    st.textContent = '.ilw{margin:8px 0;padding:6px 8px;border-radius:12px;background:var(--fill,#f2f2f7);color:var(--tx,#111)}.pcmsgs{height:46vh;min-height:240px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:4px;overscroll-behavior:contain}.pcm{max-width:92%;padding:9px 12px;border-radius:16px;font-size:14px;line-height:1.4;word-wrap:break-word}.pcm.me{align-self:flex-end;background:#0a84ff;color:#fff}.pcm.bot{align-self:flex-start;background:var(--fill,#f2f2f7);color:var(--tx,#111)}.pcm .pfbtn{display:inline-block;margin:6px 6px 0 0;padding:8px 14px;border-radius:14px;background:#0a84ff;color:#fff;font-weight:600;cursor:pointer;font-size:13px}.pcch{display:flex;flex-wrap:wrap;gap:6px}.pcch span{padding:7px 12px;border-radius:14px;background:var(--fill,#f2f2f7);font-size:13px;cursor:pointer}.hcq{padding:8px 0;border-bottom:1px solid var(--line,#e5e5ea)}.bdgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.bdg{background:var(--card,#fff);border-radius:16px;padding:12px;text-align:center;opacity:.55;box-shadow:var(--shadow)}.bdg.on{opacity:1;box-shadow:0 0 0 2px #ff9f0a inset,var(--shadow)}.bdg .bi{font-size:30px}.bpb{height:6px;border-radius:3px;background:var(--fill,#eee);overflow:hidden}.bpb i{display:block;height:6px;background:#ff9f0a}#wtour{position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:18px}.wtc{background:var(--card,#fff);color:var(--tx,#111);border-radius:24px;max-width:420px;width:100%;padding:18px;text-align:center}.wtc h3{margin:10px 0 6px;font-size:20px}.wtc p{margin:0 0 12px;font-size:14px;line-height:1.45;opacity:.85}.wtd{display:flex;gap:6px;justify-content:center;margin-bottom:12px}.wtd i{width:8px;height:8px;border-radius:4px;background:var(--fill,#ccc)}.wtd i.on{background:#0a84ff;width:20px}.wtb{display:flex;gap:10px;justify-content:center}.wtb span{padding:10px 18px;border-radius:14px;background:var(--fill,#eee);font-weight:600;cursor:pointer}.wtb .pri{background:#0a84ff;color:#fff}.tab.on svg{animation:tabpop .45s ease-out}@keyframes tabpop{0%{transform:scale(.8)}60%{transform:scale(1.18)}100%{transform:scale(1)}}.idst{animation:twinkle 2.4s ease-in-out infinite}@keyframes twinkle{0%,100%{opacity:1}50%{opacity:.72}}';
+    document.head.appendChild(st);
+    var gone = {};
+    MW_GROUPS[0][1].splice(Math.max(1, MW_GROUPS[0][1].indexOf('prof') + 1), 0, 'pchat');
+    var tools = null; MW_GROUPS.forEach(function (g) { if (/Account/.test(g[0])) { tools = g; } }); if (!tools) { tools = MW_GROUPS[MW_GROUPS.length - 2]; } tools[1].push('helpc', 'badges');
+    try { MW_SVG.pchat = '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>'; MW_SVG.helpc = '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/>'; MW_SVG.badges = '<circle cx="12" cy="9" r="5"/><path d="M8.5 13l-2 8 5.5-3 5.5 3-2-8"/>'; if (!MW_SVG.ideas) { MW_SVG.ideas = '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>'; } } catch (e) { }
+    /* counters */
+    var _gw2 = gotoWin; gotoWin = function (id, isBack) { try { STS.w = STS.w || {}; STS.w[id] = (STS.w[id] || 0) + 1; if (id === 'chart') { STS.c = (STS.c || 0) + 1; } stSave(); } catch (e) { } return _gw2.call(this, id, isBack); };
+    /* clicks */
+    document.addEventListener('click', function (e) {
+        var el, a, i;
+        if (e.target.closest) {
+            if ((el = e.target.closest('[data-pcs]'))) { var inp = document.getElementById('pcq'); if (inp) { var v = inp.value; inp.value = ''; pcAsk(v); } e.preventDefault(); e.stopPropagation(); return; }
+            if ((el = e.target.closest('[data-pcq]'))) { pcAsk(el.getAttribute('data-pcq')); e.preventDefault(); e.stopPropagation(); return; }
+            if ((el = e.target.closest('#pcmsgs [data-pfgo]'))) { try { pfAct(el.getAttribute('data-pfgo')); } catch (er) { } e.preventDefault(); e.stopPropagation(); return; }
+            if ((el = e.target.closest('[data-pcgo]'))) { a = el.getAttribute('data-pcgo'); if (a.indexOf('lesson:') === 0) { try { S.ac.lesson = a.slice(7); } catch (er) { } gotoWin('academy'); } e.preventDefault(); e.stopPropagation(); return; }
+            if ((el = e.target.closest('[data-hc]'))) { a = el.getAttribute('data-hc'); if (a.indexOf('win:') === 0) { gotoWin(a.slice(4)); } else if (a === 'tour') { WT.i = 0; wtShow(); } else if (a === 'resetstats') { STS = { d: [stDay(Date.now())], w: {}, c: 0, ch: 0, ts: STS.ts }; stSave(); renderView(true); } e.preventDefault(); e.stopPropagation(); return; }
+            if ((el = e.target.closest('[data-wt]'))) { a = el.getAttribute('data-wt'); if (a === 'next') { WT.i++; wtShow(); } else if (a === 'back') { WT.i = Math.max(0, WT.i - 1); wtShow(); } else { if (a === 'done') { STS.ts = 1; stSave(); } wtEnd(); } e.preventDefault(); e.stopPropagation(); return; }
+        }
+    }, true);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target && e.target.id === 'pcq') { e.preventDefault(); var v = e.target.value; e.target.value = ''; pcAsk(v); } });
+    document.addEventListener('input', function (e) { if (e.target && e.target.id === 'hcq') { var r = document.getElementById('hcres'); if (r) { r.innerHTML = hcResults(e.target.value); } } });
+    setInterval(function () { try { var b = document.getElementById('pcmsgs'); if (b && PCH.msgs.length && b.children.length !== PCH.msgs.length) { pcDraw(); } } catch (e) { } }, 1000);
+    /* tour: first launch, after sign-up / agree screens are gone */
+    var tcnt = 0, ti = setInterval(function () {
+        try {
+            if (localStorage.getItem('mintoosuite_tour')) { clearInterval(ti); return; } if (++tcnt > 300) { clearInterval(ti); return; }
+            if (document.getElementById('mwAgree') || document.getElementById('m7gate') || document.getElementById('wtour') || document.querySelector('.sheet.open')) { return; }
+            if (!Object.keys(S.tick).length) { return; } WT.i = 0; wtShow(); clearInterval(ti);
+        } catch (e) { clearInterval(ti); }
+    }, 2000);
+    /* empty-state picture on Trade Ideas */
+    var _vi = VIEWS.ideas; VIEWS.ideas = function () { var h = _vi.apply(this, arguments); if (h.indexOf('No idea passes') >= 0) { h = h.replace('<div class="group pad mut">', '<div class="group pad mut">' + ill('sleep')); } return h; };
+    /* ideas: small picture in the help text */
+    var _vp = VIEWS.prof; if (_vp) { VIEWS.prof = function () { return _vp.apply(this, arguments) + '<div class="group pad"><div class="row tap" data-hc="win:pchat"><span>💬 Open the full Live Chat</span><b>›</b></div></div>'; }; }
+})();
+/* ===== p9zo: Video lessons (animated clips + in-app player), art for every lesson, promo banners on Home, Support desk, Verify (KYC) guide ===== */
+(function () {
+    var G = '#30d158', R = '#ff453a', B = '#0a84ff', Y = '#ff9f0a', M = '#8e8e93', P = '#bf5af2';
+    function f1(n) { return Math.round(n * 10) / 10; }
+    function lerp(a, b, u) { return a + (b - a) * u; }
+    function cl(u) { return u < 0 ? 0 : u > 1 ? 1 : u; }
+    /* sample a piecewise-linear path [[u,y],...] at u */
+    function ps(pts, u) { var i; u = cl(u); for (i = 1; i < pts.length; i++) { if (u <= pts[i][0]) { var a = pts[i - 1], b = pts[i], k = (u - a[0]) / ((b[0] - a[0]) || 1); return lerp(a[1], b[1], k); } } return pts[pts.length - 1][1]; }
+    function line(pts, u, x0, x1, c, w, n) {
+        var s = '', i, k = n || 60, m = Math.max(1, Math.floor(k * cl(u)));
+        for (i = 0; i <= m; i++) { var uu = cl(u) * i / m; s += f1(lerp(x0, x1, uu)) + ',' + f1(ps(pts, uu)) + ' '; }
+        return '<polyline points="' + s + '" fill="none" stroke="' + c + '" stroke-width="' + (w || 3) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+    }
+    function T(x, y, t, c, a, sz) { return '<text x="' + x + '" y="' + y + '" fill="' + (c || 'currentColor') + '" text-anchor="' + (a || 'start') + '"' + (sz ? ' font-size="' + sz + '"' : '') + '>' + t + '</text>'; }
+    function Rc(x, y, w, h, c, r) { return '<rect x="' + f1(x) + '" y="' + f1(y) + '" width="' + f1(Math.max(0, w)) + '" height="' + f1(Math.max(0, h)) + '" rx="' + (r || 3) + '" fill="' + c + '"/>'; }
+    function Ln(x1, y1, x2, y2, c, w, d) { return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + c + '" stroke-width="' + (w || 2) + '"' + (d ? ' stroke-dasharray="5 4"' : '') + '/>'; }
+    function Ci(x, y, r, c) { return '<circle cx="' + f1(x) + '" cy="' + f1(y) + '" r="' + r + '" fill="' + c + '"/>'; }
+
+    /* ---------- the clips: id, title, seconds, captions [[t,text]], draw(t) ---------- */
+    var CLIPS = [
+        { id: 'candle', t: 'How a candle is born', d: 12, lesson: 4, cap: [[0, 'A candle shows what price did during one period, for example 5 minutes.'], [3, 'It opens at a price. Here price starts at the dotted line.'], [6, 'Price moves up and down. The thin lines are the "wicks": the highest and lowest points reached.'], [9, 'It closes. Green = closed higher than it opened. Red = closed lower.']],
+          draw: function (t) {
+              var path = [[0, 90], [.2, 70], [.4, 100], [.6, 50], [.8, 62], [1, 44]], u = cl(t / 10), p = ps(path, u), hi = 999, lo = 0, i, y;
+              for (i = 0; i <= 40; i++) { y = ps(path, u * i / 40); if (y < hi) { hi = y; } if (y > lo) { lo = y; } }
+              var c = p < 90 ? G : R;
+              return Ln(40, 90, 280, 90, M, 1, 1) + T(44, 84, 'Open', M) + Ln(160, hi, 160, lo, c, 3) + Rc(140, Math.min(90, p), 40, Math.abs(90 - p) + 1, c, 4) + (u > .1 ? T(190, hi + 4, 'High', M) + T(190, lo, 'Low', M) : '') + (t > 10 ? T(160, 170, p < 90 ? 'Closed higher: green' : 'Closed lower: red', c, 'middle', 14) : '') + Ci(160, p, 4, '#fff');
+          } },
+        { id: 'trend', t: 'Trends: up, down, sideways', d: 12, lesson: 8, cap: [[0, 'An uptrend makes higher highs and higher lows.'], [4, 'A downtrend makes lower highs and lower lows.'], [8, 'Sideways: price bounces in a box. Wait for a clear break.']],
+          draw: function (t) {
+              var a = [[0, 150], [.25, 120], [.4, 132], [.65, 90], [.8, 104], [1, 60]], b = [[0, 40], [.25, 70], [.4, 58], [.65, 100], [.8, 88], [1, 130]], c = [[0, 90], [.2, 70], [.4, 108], [.6, 72], [.8, 106], [1, 90]];
+              if (t < 4) { return line(a, t / 3.5, 30, 290, G, 3.5) + T(160, 172, 'Uptrend: higher highs, higher lows', G, 'middle', 13); }
+              if (t < 8) { return line(b, (t - 4) / 3.5, 30, 290, R, 3.5) + T(160, 172, 'Downtrend: lower highs, lower lows', R, 'middle', 13); }
+              return Rc(30, 60, 260, 60, 'rgba(142,142,147,.15)', 6) + line(c, (t - 8) / 3.5, 30, 290, Y, 3.5) + T(160, 172, 'Sideways: wait for a break', Y, 'middle', 13);
+          } },
+        { id: 'sr', t: 'Support and resistance', d: 12, lesson: 7, cap: [[0, 'Resistance = a ceiling where price often stops rising.'], [4, 'Support = a floor where price often stops falling.'], [8, 'When a ceiling breaks, it often becomes the new floor.']],
+          draw: function (t) {
+              var path = [[0, 100], [.15, 45], [.3, 98], [.45, 46], [.6, 100], [.75, 40], [.85, 24], [1, 30]], u = cl(t / 10.5);
+              return Ln(20, 40, 300, 40, R, 2, 1) + T(24, 34, 'Resistance', R) + Ln(20, 100, 300, 100, G, 2, 1) + T(24, 118, 'Support', G) + line(path, u, 20, 300, B, 3.5) + (t > 8.5 ? T(200, 18, 'Broke out!', G, 'middle', 13) : '');
+          } },
+        { id: 'sltp', t: 'Entry, target and stop-loss', d: 14, lesson: 14, cap: [[0, 'You buy at the entry line. Before you trade, decide two exits.'], [3, 'Target (take profit) above, to lock in gain. Stop-loss below, to cap the loss.'], [6, 'Scenario 1: price rises and hits the target. A planned win.'], [10, 'Scenario 2: price falls and hits the stop. A small, planned loss. This is how you survive.']],
+          draw: function (t) {
+              var w = [[0, 90], [.3, 80], [.5, 86], [.8, 50], [1, 32]], l = [[0, 90], [.3, 96], [.5, 90], [.8, 118], [1, 128]], base = Ln(30, 90, 290, 90, B, 2) + T(34, 84, 'Entry', B) + Ln(30, 32, 290, 32, G, 2, 1) + T(34, 26, 'Target', G) + Ln(30, 128, 290, 128, R, 2, 1) + T(34, 144, 'Stop-loss', R);
+              if (t < 3) { return Ln(30, 90, 290, 90, B, 2) + T(34, 84, 'Entry', B); }
+              if (t < 10) { return base + line(w, (t - 3) / 5, 30, 290, G, 3.5) + (t > 8.2 ? T(200, 70, '+ Profit', G, 'middle', 16) : ''); }
+              return base + line(l, (t - 10) / 3, 30, 290, R, 3.5) + (t > 12.6 ? T(200, 70, '- Small loss', R, 'middle', 16) : '');
+          } },
+        { id: 'leverage', t: 'Leverage and liquidation', d: 14, lesson: 17, cap: [[0, 'You put in $100 of your own money.'], [3, 'With 10x leverage you control $1,000. Gains are 10 times bigger...'], [7, '...and so are losses. A 5% fall costs you half of your $100.'], [10, 'At a 10% fall, your $100 is gone. That is liquidation. Use low leverage and always a stop-loss.']],
+          draw: function (t) {
+              var drop = cl((t - 3) / 9) * 10, eq = Math.max(0, 100 - drop * 10), col = eq > 50 ? G : eq > 20 ? Y : R;
+              return T(160, 20, 'Price change: -' + f1(drop) + '%', M, 'middle', 13) + Rc(40, 40, 240, 26, 'rgba(142,142,147,.25)', 8) + Rc(40, 40, 240 * eq / 100, 26, col, 8) + T(160, 58, 'Your $100: $' + Math.round(eq) + ' left', '#fff', 'middle', 13) + (t > 3 ? T(160, 96, 'Position size $1,000 (10x)', B, 'middle', 13) : '') + (eq <= 0 ? '<rect x="60" y="106" width="200" height="40" rx="10" fill="' + R + '"/>' + T(160, 132, 'LIQUIDATED', '#fff', 'middle', 18) : T(160, 132, drop < 5 ? 'Small move, big effect' : 'Danger zone', col, 'middle', 14));
+          } },
+        { id: 'rsi', t: 'RSI: overbought and oversold', d: 12, lesson: 11, cap: [[0, 'RSI is a 0 to 100 gauge of how strong the recent move was.'], [4, 'Above 70 = "overbought": rally may be tired.'], [8, 'Below 30 = "oversold": drop may be tired. It is a hint, not a promise.']],
+          draw: function (t) {
+              var v = ps([[0, 50], [.25, 80], [.45, 50], [.7, 20], [1, 50]], t / 12), c = v > 70 ? R : v < 30 ? G : B, a = Math.PI * (1 - v / 100), x = 160 + 90 * Math.cos(a), y = 130 - 90 * Math.sin(a);
+              return '<path d="M70 130A90 90 0 0 1 250 130" fill="none" stroke="rgba(142,142,147,.35)" stroke-width="16"/>' + '<path d="M70 130A90 90 0 0 1 97 66" fill="none" stroke="' + G + '" stroke-width="16"/>' + '<path d="M223 66A90 90 0 0 1 250 130" fill="none" stroke="' + R + '" stroke-width="16"/>' + Ln(160, 130, f1(x), f1(y), c, 4) + Ci(160, 130, 7, c) + T(160, 160, 'RSI ' + Math.round(v) + (v > 70 ? ' overbought' : v < 30 ? ' oversold' : ''), c, 'middle', 15);
+          } },
+        { id: 'ma', t: 'Moving averages cross', d: 12, lesson: 10, cap: [[0, 'The moving average is a smooth line: the average price of the last N candles.'], [4, 'A fast line crossing above the slow line is a bullish "golden cross".'], [8, 'Crossing below is a bearish "death cross". Signals lag, so combine with other tools.']],
+          draw: function (t) {
+              var pr = [[0, 120], [.2, 100], [.4, 70], [.6, 50], [.8, 90], [1, 130]], fa = [[0, 124], [.25, 106], [.5, 66], [.7, 60], [.85, 88], [1, 126]], sl = [[0, 110], [.3, 106], [.5, 86], [.7, 70], [.85, 80], [1, 98]], u = t / 10.5;
+              return line(pr, u, 20, 300, M, 2) + line(sl, u, 20, 300, Y, 3) + line(fa, u, 20, 300, B, 3) + T(24, 20, 'Price', M) + T(70, 20, 'Fast MA', B) + T(140, 20, 'Slow MA', Y) + (t > 4.4 && t < 8 ? T(170, 150, 'Golden cross', G, 'middle', 13) : '') + (t > 9 ? T(250, 150, 'Death cross', R, 'middle', 13) : '');
+          } },
+        { id: 'macd', t: 'MACD: momentum', d: 12, lesson: 12, cap: [[0, 'MACD compares two moving averages. The bars show momentum.'], [4, 'Bars turning green and growing = momentum turning up.'], [8, 'Bars shrinking toward zero = the move is losing strength.']],
+          draw: function (t) {
+              var v = [-6, -14, -22, -16, -6, 8, 20, 30, 24, 14, 4, -4], n = Math.min(v.length, Math.floor(t / 0.9) + 1), i, s = Ln(20, 90, 300, 90, M, 1);
+              for (i = 0; i < n; i++) { s += Rc(26 + i * 23, v[i] >= 0 ? 90 - v[i] * 2 : 90, 15, Math.abs(v[i]) * 2, v[i] >= 0 ? G : R, 2); }
+              return s;
+          } },
+        { id: 'funding', t: 'Funding rate', d: 12, lesson: 21, cap: [[0, 'Perpetual futures never expire, so a small fee keeps them close to the real price.'], [4, 'Positive funding: people betting UP (longs) pay people betting DOWN (shorts).'], [8, 'Negative funding: shorts pay longs. Extremes can mean a crowded trade.']],
+          draw: function (t) {
+              var fl = t < 8 ? 1 : -1, k = (t * 1.2) % 1, x = fl > 0 ? lerp(90, 230, k) : lerp(230, 90, k);
+              return Rc(20, 50, 80, 60, 'rgba(48,209,88,.25)', 10) + T(60, 76, 'Longs', G, 'middle', 13) + T(60, 94, '(up)', G, 'middle') + Rc(220, 50, 80, 60, 'rgba(255,69,58,.25)', 10) + T(260, 76, 'Shorts', R, 'middle', 13) + T(260, 94, '(down)', R, 'middle') + (t > 3 ? Ci(x, 80, 10, Y) + T(x, 84, '$', '#000', 'middle', 11) : '') + T(160, 150, t < 4 ? 'Perpetual contract' : fl > 0 ? 'Funding > 0: longs pay shorts' : 'Funding < 0: shorts pay longs', Y, 'middle', 13);
+          } },
+        { id: 'orderbook', t: 'Order book and spread', d: 12, lesson: 23, cap: [[0, 'The order book lists waiting orders. Green = buyers (bids), red = sellers (asks).'], [4, 'The gap between the best bid and best ask is the spread: a hidden cost.'], [8, 'Thin books mean price can jump when you trade. Prefer liquid coins.']],
+          draw: function (t) {
+              var s = '', i, w = Math.sin(t * 1.5);
+              for (i = 0; i < 6; i++) { var bw = 40 + i * 20 + w * 8 * (i % 2 ? 1 : -1), aw = 120 - i * 16 + w * 6; s += Rc(158 - bw, 28 + i * 20, bw, 15, 'rgba(48,209,88,.65)', 2) + Rc(162, 28 + i * 20, aw, 15, 'rgba(255,69,58,.65)', 2); }
+              return s + Ln(160, 22, 160, 150, M, 1, 1) + T(80, 16, 'Bids (buy)', G, 'middle') + T(240, 16, 'Asks (sell)', R, 'middle') + (t > 4 ? '<rect x="150" y="62" width="20" height="16" fill="none" stroke="' + Y + '" stroke-width="2"/>' + T(160, 164, 'Spread: the gap between best bid and ask', Y, 'middle', 12) : '');
+          } },
+        { id: 'risk', t: 'Risk 1% per trade', d: 14, lesson: 16, cap: [[0, 'Rule: risk only 1% of your account on one trade.'], [4, 'Even 7 losses in a row only cost about 7% of the account.'], [9, 'Compare: risking 20% per trade, 5 losses in a row wipes out two thirds. Small risk keeps you in the game.']],
+          draw: function (t) {
+              var n1 = Math.min(7, Math.floor(t / 0.6)), i, s = '', a1 = 100 * Math.pow(0.99, n1), n2 = t < 9 ? 0 : Math.min(5, Math.floor((t - 9) / 0.8) + 1), a2 = 100 * Math.pow(0.8, n2);
+              s += T(20, 24, 'Risk 1% each trade', G) + Rc(20, 32, 280, 22, 'rgba(142,142,147,.25)', 6) + Rc(20, 32, 280 * a1 / 100, 22, G, 6) + T(160, 48, 'Account ' + f1(a1) + '%  (' + n1 + ' losses in a row)', '#000', 'middle', 12);
+              if (t >= 9) { s += T(20, 96, 'Risk 20% each trade', R) + Rc(20, 104, 280, 22, 'rgba(142,142,147,.25)', 6) + Rc(20, 104, 280 * a2 / 100, 22, R, 6) + T(160, 120, 'Account ' + f1(a2) + '%  (' + n2 + ' losses)', '#fff', 'middle', 12); }
+              return s;
+          } },
+        { id: 'ideas', t: 'How Trade Ideas ranks', d: 12, lesson: 36, cap: [[0, 'Each idea is checked: indicators, volume, volatility, trend, news, timing.'], [4, 'Each check adds or subtracts from the chance score. The score is an estimate between 25% and 75%.'], [8, 'The best ideas rise to the top (max 8 get the star). No score is a promise.']],
+          draw: function (t) {
+              var rows = [['BTC', 52], ['SOL', 66], ['ETH', 58], ['XRP', 47]], k = cl((t - 6) / 3), order = [1, 2, 0, 3], s = '', i;
+              for (i = 0; i < 4; i++) { var r = rows[i], pos = lerp(i, order.indexOf(i), k), y = 22 + pos * 34, w = (r[1] - 25) / 50 * 150 * cl(t / 4); s += Rc(30, y, 260, 28, r[1] >= 62 && k > .9 ? 'rgba(255,159,10,.3)' : 'rgba(142,142,147,.2)', 8) + T(42, y + 19, (r[1] >= 62 && k > .9 ? '★ ' : '') + r[0], 'currentColor', 'start', 13) + Rc(110, y + 9, w, 10, r[1] >= 62 ? G : B, 5) + T(280, y + 19, Math.round(25 + (r[1] - 25) * cl(t / 4)) + '%', 'currentColor', 'end', 12); }
+              return s;
+          } },
+        { id: 'diversify', t: 'Do not put all eggs in one basket', d: 10, lesson: 16, cap: [[0, 'One coin, one trade: if it fails, everything fails.'], [4, 'Spreading across several coins and sizes means one mistake cannot sink you.']],
+          draw: function (t) {
+              var n = t < 4 ? 1 : 4, s = '', i, w = n === 1 ? 240 : 54; for (i = 0; i < n; i++) { s += Rc(40 + i * (n === 1 ? 0 : 62), 50, w, 60, ['rgba(10,132,255,.35)', 'rgba(255,159,10,.35)', 'rgba(48,209,88,.35)', 'rgba(191,90,242,.35)'][i], 10); }
+              return s + T(160, 150, n === 1 ? 'All in one: all or nothing' : 'Spread out: steadier', n === 1 ? R : G, 'middle', 14);
+          } }
+    ];
+    function clipById(id) { var i; for (i = 0; i < CLIPS.length; i++) { if (CLIPS[i].id === id) { return CLIPS[i]; } } return null; }
+    function clipForLesson(n) { var i, r = null; for (i = 0; i < CLIPS.length; i++) { if (+CLIPS[i].lesson === +n) { r = r || CLIPS[i]; } } return r; }
+
+    /* ---------- the player ---------- */
+    var PL = { id: '', t: 0, play: false, sp: 1, tm: 0, last: 0 };
+    function plCap(c, t) { var i, r = c.cap[0][1]; for (i = 0; i < c.cap.length; i++) { if (t >= c.cap[i][0]) { r = c.cap[i][1]; } } return r; }
+    function plDraw() {
+        var c = clipById(PL.id), st = document.getElementById('kplst'); if (!c || !st) { plStop(); return; }
+        var sv = document.getElementById('kpsvg'), cp = document.getElementById('kpcap'), rg = document.getElementById('kprg'), tm = document.getElementById('kptm'), pb = document.getElementById('kpbtn');
+        try { if (sv) { sv.innerHTML = '<rect x="0" y="0" width="320" height="180" fill="none"/>' + c.draw(PL.t); } } catch (e) { }
+        if (cp) { var tx = plCap(c, PL.t); if (cp.textContent !== tx) { cp.textContent = tx; } }
+        if (rg && document.activeElement !== rg) { rg.value = Math.round(PL.t / c.d * 1000); }
+        if (tm) { tm.textContent = Math.floor(PL.t) + ' / ' + c.d + ' s'; }
+        if (pb) { var l = PL.play ? '⏸ Pause' : (PL.t >= c.d ? '↺ Replay' : '▶ Play'); if (pb.textContent !== l) { pb.textContent = l; } }
+    }
+    function plStop() { PL.play = false; if (PL.tm) { clearInterval(PL.tm); PL.tm = 0; } }
+    function plStart() {
+        var c = clipById(PL.id); if (!c) { return; } if (PL.t >= c.d) { PL.t = 0; } PL.play = true; PL.last = Date.now();
+        if (PL.tm) { clearInterval(PL.tm); }
+        PL.tm = setInterval(function () { var n = Date.now(), dt = (n - PL.last) / 1000 * PL.sp; PL.last = n; PL.t = Math.min(c.d, PL.t + dt); if (PL.t >= c.d) { PL.play = false; clearInterval(PL.tm); PL.tm = 0; } plDraw(); }, 60);
+        plDraw();
+    }
+    function vVideos() {
+        var c = PL.id ? clipById(PL.id) : null, h, i, k;
+        if (c) {
+            h = '<div class="group pad"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:16px">🎬 ' + esc(c.t) + '</b><span class="btn sec tap kpb" data-kp="close">✕ Close</span></div>' +
+                '<div id="kplst" data-svg="1" class="kpstage"><svg id="kpsvg" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;font:11px system-ui,sans-serif"></svg></div>' +
+                '<div id="kpcap" class="kpcap" data-svg="1"></div>' +
+                '<div class="kpctl"><span id="kpbtn" class="btn tap kpb" data-kp="toggle" data-svg="1">▶ Play</span><span class="btn sec tap kpb" data-kp="back5">⏪ 5s</span><span class="btn sec tap kpb" data-kp="sp">Speed ' + PL.sp + 'x</span></div><div id="kptm" class="mut" data-svg="1" style="font-size:12px;text-align:right"></div>' +
+                '<input id="kprg" type="range" min="0" max="1000" value="0" style="width:100%" data-svg="1">' +
+                '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">' + (c.lesson ? '<span class="btn sec tap" data-kp="lesson:' + c.lesson + '">🎓 Read the lesson</span>' : '') + '<span class="btn sec tap" data-kp="next">⏭ Next clip</span></div></div>';
+            setTimeout(function () { plDraw(); if (!PL.play && PL.t === 0) { plStart(); } }, 30);
+            return h + '<div class="note">These clips are drawn by the app itself, so they work offline and start instantly. Education only, not financial advice.</div>';
+        }
+        h = '<div class="group pad">' + '<b style="font-size:17px">🎬 Video lessons</b><div class="note">' + CLIPS.length + ' short animated lessons with captions, a play/pause button, speed control and a slider. They run inside the app with no internet. Tap one to watch.</div></div><div class="group">';
+        for (i = 0; i < CLIPS.length; i++) { k = CLIPS[i]; h += '<div class="row tap" data-kp="open:' + k.id + '"><span>▶ ' + esc(k.t) + '</span><b class="mut" style="font-size:12px">' + k.d + ' s ›</b></div>'; }
+        h += '</div><div class="group pad"><b>Play your own video</b><div class="note">Pick any video file from your phone (for example a trading lesson you saved). It plays here inside the app. Nothing is uploaded.</div><input id="kpfile" type="file" accept="video/*" style="margin-top:6px"><div id="kpuv" data-svg="1"></div></div>';
+        h += '<div class="group pad"><b>More videos</b><div class="note">Search real-world videos on YouTube (opens in your browser).</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">' + ['candlestick charts for beginners', 'risk management trading', 'how leverage works crypto', 'technical analysis crash course'].map(function (q) { return '<a class="btn sec tap" style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(q) + '">▶ ' + esc(q) + '</a>'; }).join('') + '</div></div>';
+        return h;
+    }
+    WINS.push({ id: 'videos', ic: '🎬', c: '#ff3b30', n: 'Video lessons', t: 'Videos', sub: 'Animated lessons with a built-in player' }); LIVE.videos = 0; VIEWS.videos = vVideos;
+    MW_HELP.videos = 'Short animated lessons with captions. Play, pause, change speed or drag the slider. You can also play a video file from your phone.';
+    function openClip(id) { plStop(); PL.id = id; PL.t = 0; PL.play = false; gotoWin('videos'); try { renderView(); } catch (e) { } }
+
+    /* ---------- art for every lesson ---------- */
+    var LART = { 4: 'candle', 5: 'sltp', 6: 'shield', 7: 'sr', 8: 'trend', 9: 'volume', 10: 'ma', 11: 'rsi', 12: 'macd', 14: 'sltp', 15: 'sltp', 16: 'risk', 17: 'leverage', 21: 'funding', 23: 'orderbook', 36: 'ideas', 19: 'risk', 35: 'sleep', 24: 'shield', 3: 'home' };
+    var LICON = { 1: '📈', 2: '🌍', 3: '🏦', 13: '〰️', 18: '💸', 20: '♾️', 22: '⚖️', 25: '💱', 26: '🥇', 27: '🏢', 28: '📰', 29: '🧩', 30: '🕌', 31: '⏱', 32: '🔺', 33: '🧭', 34: '🧪', 35: '🧠' };
+    function lessonArt(l) {
+        var id = l[0], x = '', hue = (id * 47) % 360, c = clipForLesson(id);
+        if (LART[id] && typeof ill === 'function') { x = ill(LART[id]); }
+        if (!x) { x = '<div class="kart" style="background:linear-gradient(135deg,hsl(' + hue + ',70%,45%),hsl(' + ((hue + 50) % 360) + ',70%,35%))"><span class="kai">' + (LICON[id] || '📘') + '</span><span class="kat">Lesson ' + id + '</span></div>'; }
+        return x + (c ? '<div style="margin:6px 0"><span class="btn tap" data-kp="open:' + c.id + '">🎬 Watch the animated clip (' + c.d + ' s)</span></div>' : '');
+    }
+    var _acL = acLesson; acLesson = function (l) { var h = _acL.call(this, l), i = h.indexOf('<div style="line-height'); try { if (i > 0) { return h.slice(0, i) + lessonArt(l) + h.slice(i); } } catch (e) { } return h; };
+
+    /* ---------- promo banners (the app's own, no outside ads) ---------- */
+    var PROMOS = [
+        ['learn', 'Learn to trade, step by step', '36 lessons + 13 animated clips. Free.', 'win:academy', 210, '🎓'],
+        ['ideas', 'Today\'s ranked Trade Ideas', 'Best first, with the reasons shown.', 'win:ideas', 30, '⭐'],
+        ['safe', 'Safety first', 'Use a stop-loss. Risk 1%. Never share keys.', 'clip:risk', 140, '🛡'],
+        ['chat', 'Ask Professor anything', 'Answers with pictures and videos.', 'win:pchat', 280, '💬'],
+        ['verify', 'Get verified the safe way', 'Checklist for exchange identity checks.', 'win:verify', 195, '🪪']
+    ];
+    function promoHtml() {
+        return '<div class="kpr" data-svg="1">' + PROMOS.map(function (p) { return '<div class="kpc tap" data-kp="' + p[3] + '" style="background:linear-gradient(135deg,hsl(' + p[4] + ',75%,48%),hsl(' + ((p[4] + 45) % 360) + ',70%,32%))"><span class="kpi">' + p[5] + '</span><b>' + esc(p[1]) + '</b><span>' + esc(p[2]) + '</span></div>'; }).join('') + '</div>';
+    }
+    var _ovK = VIEWS.overview; VIEWS.overview = function () { var h = _ovK.apply(this, arguments); try { return promoHtml() + h; } catch (e) { return h; } };
+
+    /* ---------- Support desk ---------- */
+    var SUPK = 'mintoosuite_support', SUPN = []; try { SUPN = JSON.parse(localStorage.getItem(SUPK) || '[]') || []; } catch (e) { SUPN = []; }
+    var SUP_WA = '923122602811';
+    var SUP_TOPICS = ['Question about the app', 'Something is not working', 'Notifications problem', 'Idea or suggestion', 'Security concern'];
+    function supInfo() { var u = ''; try { u = navigator.userAgent.replace(/\s+/g, ' ').slice(0, 120); } catch (e) { } return 'App build: ' + (typeof BUILD !== 'undefined' ? BUILD : '?') + '\nScreen: ' + S.win + '\nPhone: ' + u; }
+    function vSupport() {
+        var h = '<div class="group pad"><b style="font-size:17px">🛟 Support desk</b><div class="note">Instant help: ask Professor (answers any time). For a human, send a message below; it opens WhatsApp or your email app with everything filled in. Please never include passwords, seed words or API keys.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="win:pchat">💬 Ask Professor now</span><span class="btn sec tap" data-kp="win:helpc">🔎 Search help</span><a class="btn tap" style="background:#25d366;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://wa.me/' + SUP_WA + '">💬 WhatsApp</a></div></div>';
+        h += '<div class="group pad"><b>Write to support</b><select id="kps" class="tin" style="margin-top:8px">' + SUP_TOPICS.map(function (t) { return '<option>' + esc(t) + '</option>'; }).join('') + '</select><textarea id="kpm" class="tin" rows="4" placeholder="Describe what happened, in your own words" style="margin-top:8px;width:100%;box-sizing:border-box"></textarea><label class="note" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input id="kpd" type="checkbox" checked> Include app version and screen name (no personal data)</label><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="sendmail">✉ Send by email</span><span class="btn tap" style="background:#25d366" data-kp="sendwa">💬 Send by WhatsApp</span><span class="btn sec tap" data-kp="copymsg">📋 Copy message</span></div></div>';
+        if (SUPN.length) { h += '<div class="sh">Your recent messages (this phone only)</div><div class="group">' + SUPN.slice(-5).reverse().map(function (m) { return '<div class="row"><span><b>#' + m[0] + ' ' + esc(m[1]) + '</b><div class="note" style="margin:3px 0 0">' + esc(m[2]).slice(0, 160) + '</div></span><b class="mut" style="font-size:11px">' + esc(m[3]) + '</b></div>'; }).join('') + '</div>'; }
+        return h + '<div class="note">There is no live chat inside the app (that needs a staffed team and a server). WhatsApp and email reach the app owner, who replies when available.</div>';
+    }
+    WINS.push({ id: 'support', ic: '🛟', c: '#0a84ff', n: 'Support desk', t: 'Support', sub: 'Ask Professor or write to the owner' }); LIVE.support = 0; VIEWS.support = vSupport;
+    MW_HELP.support = 'Get help: instant answers from Professor, or write a message that opens your email app with the details filled in.';
+    function supSend(copy, wa) {
+        var tp = document.getElementById('kps'), ms = document.getElementById('kpm'), df = document.getElementById('kpd'); if (!ms) { return; }
+        var msg = (ms.value || '').trim(); if (!msg) { try { toast('Please write a message first'); } catch (e) { } return; }
+        var n = (SUPN.length ? +SUPN[SUPN.length - 1][0] : 1000) + 1, body = msg + (df && df.checked ? '\n\n---\n' + supInfo() : '') + '\n\nTicket #' + n;
+        SUPN.push([n, tp ? tp.value : '', msg, new Date().toISOString().slice(0, 10)]); try { localStorage.setItem(SUPK, JSON.stringify(SUPN.slice(-30))); } catch (e) { }
+        if (copy) { try { navigator.clipboard.writeText(body); toast('Copied'); } catch (e) { var ta = document.createElement('textarea'); ta.value = body; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (er) { } document.body.removeChild(ta); } }
+        else if (wa) { window.open('https://wa.me/' + SUP_WA + '?text=' + encodeURIComponent('MintooSuite support #' + n + ' (' + (tp ? tp.value : '') + ')\n' + body), '_blank'); }
+        else { window.location.href = 'mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite support #' + n + ': ' + (tp ? tp.value : '')) + '&body=' + encodeURIComponent(body); }
+        ms.value = ''; try { renderView(true); } catch (e) { }
+    }
+
+    /* ---------- Verify (KYC) guide ---------- */
+    var VK = 'mintoosuite_verify', VS = {}; try { VS = JSON.parse(localStorage.getItem(VK) || '{}') || {}; } catch (e) { VS = {}; }
+    var VSTEPS = [
+        ['Have your documents ready', 'Your original CNIC (or passport), front and back. Make sure it is not expired. Use a plain, well-lit table.'],
+        ['Take clear photos', 'All four corners visible, no glare, no filters, text readable. Do not edit the photo.'],
+        ['Prepare a selfie', 'Face clearly visible, good light, no hat or sunglasses. Many exchanges ask you to move your head or hold your ID.'],
+        ['Address proof (if asked)', 'A recent utility bill or bank statement with your name and address (usually under 3 months old).'],
+        ['Verify only on the official site or app', 'Type the exchange address yourself or use its official store app. Never use a link from a message or a stranger.'],
+        ['Turn on two-factor login', 'Use an authenticator app (not only SMS) and set an anti-phishing code if the exchange offers it.'],
+        ['Check the rules for Pakistan', 'Rules for crypto change. Read the exchange\'s notice for your country and your local law before depositing money.']
+    ];
+    var VEX = [['Binance', 'https://www.binance.com'], ['Bitget', 'https://www.bitget.com'], ['MEXC', 'https://www.mexc.com'], ['Bybit', 'https://www.bybit.com'], ['OKX', 'https://www.okx.com']];
+    function vVerify() {
+        var n = VSTEPS.filter(function (s, i) { return VS[i]; }).length;
+        var h = '<div class="group pad"><b style="font-size:17px">🪪 Get verified the safe way</b><div class="note">Exchanges must check who you are (called KYC). MintooSuite does <b>not</b> collect, store or send your ID. You verify inside the exchange itself. This page is a preparation checklist so it goes smoothly.</div><div style="height:10px;border-radius:5px;background:var(--fill,#eee);overflow:hidden;margin-top:6px"><div style="height:10px;width:' + Math.round(n * 100 / VSTEPS.length) + '%;background:#34c759"></div></div><div class="note">' + n + ' of ' + VSTEPS.length + ' ready</div></div><div class="group">';
+        VSTEPS.forEach(function (s, i) { h += '<div class="row tap" data-kp="vs:' + i + '"><span>' + (VS[i] ? '✅' : '⬜') + ' <b>' + esc(s[0]) + '</b><div class="note" style="margin:3px 0 0">' + esc(s[1]) + '</div></span></div>'; });
+        h += '</div><div class="group pad"><b>Open an exchange (official sites)</b><div class="note">Check the address bar after opening.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">' + VEX.map(function (e) { return '<a class="btn sec tap" style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="' + e[1] + '">' + e[0] + '</a>'; }).join('') + '</div></div>';
+        return h + '<div class="note">Warning: nobody from MintooSuite or an exchange will ever ask for your password, seed words or one-time codes. Real identity verification needs a licensed provider and a server; this app does not do it for you.</div>';
+    }
+    WINS.push({ id: 'verify', ic: '🪪', c: '#34c759', n: 'Get verified (KYC guide)', t: 'Verify', sub: 'Safe checklist before exchange identity checks' }); LIVE.verify = 0; VIEWS.verify = vVerify;
+    MW_HELP.verify = 'A checklist for getting verified on an exchange. The app never stores your ID.';
+
+    /* ---------- placement ---------- */
+    (function () {
+        var g, i, k;
+        for (i = 0; i < MW_GROUPS.length; i++) { if (/Account/.test(MW_GROUPS[i][0])) { g = MW_GROUPS[i][1]; } }
+        if (!g) { g = MW_GROUPS[MW_GROUPS.length - 1][1]; }
+        ['support', 'verify'].forEach(function (id) { if (g.indexOf(id) < 0) { g.push(id); } });
+        for (i = 0; i < MW_GROUPS.length; i++) { if (MW_GROUPS[i][1].indexOf('academy') >= 0) { k = MW_GROUPS[i][1]; if (k.indexOf('videos') < 0) { k.splice(k.indexOf('academy') + 1, 0, 'videos'); } } }
+        if (!k) { g.push('videos'); }
+        try { MW_SVG.videos = '<path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM10 9l5 3-5 3z"/>'; MW_SVG.support = '<path d="M4 13v-2a8 8 0 0 1 16 0v2M4 13h3v5H4zM17 13h3v5h-3zM17 18c0 2-2 3-5 3"/>'; MW_SVG.verify = '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.5 16c.6-1.7 2-2.5 3.5-2.5s2.9.8 3.5 2.5M14 10h5M14 13h4"/>'; } catch (e) { }
+    })();
+
+    /* ---------- Help centre + chat hooks ---------- */
+    var _hc = vHelpc; vHelpc = function () { var h = _hc.apply(this, arguments); return h.replace('<div class="note">Live human chat is not available yet', '<div class="group pad"><b>More help</b><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="win:support">🛟 Support desk</span><span class="btn sec tap" data-kp="win:videos">🎬 Video lessons</span><span class="btn sec tap" data-kp="win:verify">🪪 Get verified guide</span></div></div><div class="note">Live human chat is not available yet'); }; VIEWS.helpc = vHelpc;
+    var _pb = pcBotHtml; pcBotHtml = function (q) { var h = _pb.apply(this, arguments), t; try { t = chTopic(q); } catch (e) { } if (t) { var m = { candle: 'candle', trend: 'trend', sr: 'sr', sltp: 'sltp', leverage: 'leverage', rsi: 'rsi', ma: 'ma', macd: 'macd', funding: 'funding', orderbook: 'orderbook', risk: 'risk', diversify: 'diversify' }[t[1]]; if (m && clipById(m)) { h = h.replace('<div class="note" style="margin:6px 0 0">Educational', '<span class="pfbtn" data-kp="open:' + m + '">🎬 Watch the clip</span><div class="note" style="margin:6px 0 0">Educational'); } } return h; };
+
+    /* ---------- clicks + CSS ---------- */
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('[data-kp]') : null; if (!el) { return; }
+        var a = el.getAttribute('data-kp'), i = a.indexOf(':'), v = i < 0 ? a : a.slice(0, i), x = i < 0 ? '' : a.slice(i + 1), c, j;
+        e.preventDefault(); e.stopPropagation();
+        if (v === 'open') { openClip(x); } else if (v === 'close') { plStop(); PL.id = ''; renderView(); }
+        else if (v === 'toggle') { if (PL.play) { plStop(); plDraw(); } else { plStart(); } }
+        else if (v === 'back5') { PL.t = Math.max(0, PL.t - 5); plDraw(); }
+        else if (v === 'sp') { PL.sp = PL.sp === 1 ? 0.5 : PL.sp === 0.5 ? 2 : 1; el.textContent = 'Speed ' + PL.sp + 'x'; }
+        else if (v === 'next') { for (j = 0; j < CLIPS.length; j++) { if (CLIPS[j].id === PL.id) { break; } } openClip(CLIPS[(j + 1) % CLIPS.length].id); }
+        else if (v === 'lesson') { plStop(); S.ac.lesson = +x; S.ac.ans = {}; gotoWin('academy'); }
+        else if (v === 'win') { plStop(); gotoWin(x); }
+        else if (v === 'clip') { openClip(x); }
+        else if (v === 'sendmail') { supSend(false); } else if (v === 'sendwa') { supSend(false, true); } else if (v === 'copymsg') { supSend(true); }
+        else if (v === 'vs') { VS[+x] = VS[+x] ? 0 : 1; try { localStorage.setItem(VK, JSON.stringify(VS)); } catch (er) { } renderView(true); }
+    }, true);
+    document.addEventListener('input', function (e) {
+        var t = e.target; if (!t) { return; }
+        if (t.id === 'kprg') { var c = clipById(PL.id); if (c) { PL.t = (+t.value) / 1000 * c.d; PL.last = Date.now(); plDraw(); } }
+    });
+    document.addEventListener('change', function (e) {
+        var t = e.target; if (t && t.id === 'kpfile' && t.files && t.files[0]) { var u = document.getElementById('kpuv'); if (u) { try { u.innerHTML = '<video controls playsinline style="width:100%;margin-top:8px;border-radius:12px;background:#000" src="' + URL.createObjectURL(t.files[0]) + '"></video>'; } catch (er) { } } }
+    });
+    setTimeout(function () { try { var st = document.createElement('style'); st.id = 'p9zocss'; st.textContent = '.kpb{flex:none!important;width:auto!important;white-space:nowrap;padding:9px 14px!important;min-height:0!important;height:auto!important;line-height:1.2}.kpstage{margin:10px 0;padding:6px;border-radius:14px;background:var(--fill,#f2f2f7);color:var(--tx,#111)}.kpcap{min-height:44px;font-size:14.5px;line-height:1.45;margin:4px 0 8px}.kpctl{display:flex;gap:8px;align-items:center;margin:6px 0}.kart{display:flex;align-items:center;gap:12px;height:110px;border-radius:14px;margin:8px 0;padding:0 16px;color:#fff}.kai{font-size:46px}.kat{font-size:18px;font-weight:700}.kpr{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 10px;margin:0 0 6px;-webkit-overflow-scrolling:touch}.kpc{flex:0 0 78%;scroll-snap-align:start;border-radius:16px;padding:14px;color:#fff;display:flex;flex-direction:column;gap:3px;min-height:92px;position:relative}.kpc b{font-size:15.5px}.kpc span:last-child{font-size:12.5px;opacity:.92}.kpi{font-size:28px;position:absolute;right:12px;top:8px;opacity:.95}'; document.head.appendChild(st); } catch (e) { } }, 0);
+    window.__kClips = CLIPS; window.__kDbg = { rv: function (k) { renderView(k); }, S: S, G: MW_GROUPS };
+})();
+/* ===== p9zp: Ads (Google AdMob banner, only on safe screens) + "Ads & privacy" page ===== */
+(function () {
+    /* Screens where a banner may appear. Never trading, wallet, charts, orders, lock, chat typing, sign-in or legal screens. */
+    var ADOK = { overview: 1, ideas: 1, news: 1, market: 1, academy: 1, videos: 1, badges: 1, helpc: 1, movers: 1, rates: 1, timez: 1, find: 1, hist: 1, calib: 1, newc: 1 };
+    var lastW = null;
+    function overlayOpen() {
+        try {
+            if (document.getElementById('wtour') || document.getElementById('mwAgree') || document.getElementById('m7gate')) { return true; }
+            var m = document.getElementById('sheetMenu'); if (m && m.offsetHeight > 0 && /open|show|on/.test(m.className + ' ' + (m.getAttribute('data-open') || ''))) { return true; }
+            if (document.querySelector('.modal.on,.modal.show,#modal.show,.sheet.open,.sheet.on')) { return true; }
+        } catch (e) { }
+        return false;
+    }
+    function want() { try { return !!ADOK[S.win] && !overlayOpen(); } catch (e) { return false; } }
+    function push() {
+        var n = null; try { n = mwNat(); } catch (e) { }
+        if (!n || !n.adsShow) { return; }
+        var w = want(); if (w === lastW) { return; } lastW = w;
+        try { n.adsShow(window.__mwTok, w); } catch (e) { }
+    }
+    window.__mwAdH = function (h) {
+        try { var h2 = Math.max(0, +h || 0); document.documentElement.style.setProperty('--adh', h2 + 'px'); } catch (e) { }
+    };
+    setInterval(push, 1500);
+    var _gwA = gotoWin; gotoWin = function (id, isBack) { var r = _gwA.call(this, id, isBack); setTimeout(push, 120); return r; };
+
+    function vAds() {
+        var h = '<div class="group pad"><b style="font-size:17px">📢 Ads &amp; privacy</b><div class="note">MintooSuite is free. To keep it free, a small banner ad from Google AdMob may appear at the bottom of some learning and information screens (Home, Ideas, Markets, news, Academy, videos).</div></div>';
+        h += '<div class="group pad"><b>What we promise</b><div class="note">• Ads never appear on trading, wallet, chart, order, lock, sign-in or legal screens, so you cannot tap an ad by accident while placing a trade.<br>• Your API keys, wallet, trades and personal details are never given to advertisers.<br>• Ads are not recommendations. We do not endorse any advertiser. Be careful with any ad that promises profit.<br>• In Europe and the UK, Google shows a consent form first and respects your choice.</div></div>';
+        h += '<div class="group pad"><b>Control your ads</b><div class="note">On your phone: Settings → Google → Ads. There you can reset your advertising ID or opt out of personalised ads.</div></div>';
+        h += '<div class="group pad"><b>Technical note</b><div class="note">Ads are provided by Google AdMob and use your phone\'s advertising ID. Your private activity statistics inside the app stay on your phone.</div></div>';
+        return h;
+    }
+    WINS.push({ id: 'adsinfo', ic: '📢', c: '#8e8e93', n: 'Ads & privacy', t: 'Ads', sub: 'How ads work, where they appear, how to control them' }); LIVE.adsinfo = 0; VIEWS.adsinfo = vAds;
+    MW_HELP.adsinfo = 'Explains the small banner ads, where they never appear, and how to control ad personalisation.';
+    (function () {
+        var g, i; for (i = 0; i < MW_GROUPS.length; i++) { if (/Account/.test(MW_GROUPS[i][0])) { g = MW_GROUPS[i][1]; } }
+        if (!g) { g = MW_GROUPS[MW_GROUPS.length - 1][1]; } if (g.indexOf('adsinfo') < 0) { g.push('adsinfo'); }
+        try { MW_SVG.adsinfo = '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 14l2-4 2 4M7.8 12.6h2.4M14 10h3M14 14h3"/>'; } catch (e) { }
+    })();
+    setTimeout(function () { try { var st = document.createElement('style'); st.id = 'p9zpcss'; st.textContent = '.tabbar{bottom:var(--adh,0px)!important}#view{margin-bottom:var(--adh,0px)}'; document.head.appendChild(st); } catch (e) { } }, 0);
+})();
+/* ===== p9zq: "About MintooSuite" page, written like an app-store listing ===== */
+(function () {
+    function sec(ic, title, body) { return '<div class="group pad"><b style="font-size:16px">' + ic + ' ' + esc(title) + '</b><div style="line-height:1.55;font-size:14.2px;margin-top:6px">' + body + '</div></div>'; }
+    function ul(a) { return '<ul style="margin:6px 0 0 18px;padding:0">' + a.map(function (x) { return '<li style="margin:3px 0">' + x + '</li>'; }).join('') + '</ul>'; }
+    function vAboutApp() {
+        var b = ''; try { b = BUILD; } catch (e) { }
+        var h = '<div class="group pad" style="text-align:center"><div style="font-size:46px">📊</div><b style="font-size:21px">MintooSuite Terminal</b><div class="mut" style="font-size:13px;margin-top:2px">Your all-in-one trading companion</div><div class="note" style="margin-top:6px">Live markets · ranked trade ideas · learning · safety tools</div></div>';
+        h += sec('ℹ️', 'About this app', 'MintooSuite Terminal brings crypto, gold, currencies, world markets and news into one clean app. It shows live prices, ranks the day\'s trade ideas with the reasons, teaches you trading step by step, and lets you practise safely with a paper-money bot before you risk real money.<br><br>It was built by one independent developer in Islamabad, Pakistan, for traders who want clear information instead of noise.');
+        h += sec('⭐', 'Key features', ul([
+            '<b>Live markets:</b> Binance futures and spot prices, 700+ coins, gainers and losers, a time-zone-aware Change %, news and Markets tabs.',
+            '<b>Trade Ideas:</b> one ranked list. Best first, with a chance estimate (25% to 75%) built from indicators, volume, volatility, trend, history, news and timing, and the reasons shown for each idea.',
+            '<b>Charts:</b> candles with indicators, a projection line, full screen, and your live profit/loss and a Close button on the chart page.',
+            '<b>Exness Desk:</b> 25 markets (gold, silver, currencies, oil, indices, crypto) with entry, stop-loss, take-profit and lot size from your risk.',
+            '<b>Auto Bots:</b> a paper-money bot for safe practice, and an optional real-money bot on your own Binance keys (test mode by default, safety limits, kill switch).',
+            '<b>Order tickets:</b> Binance Futures and Spot, plus Bitget, MEXC, Bybit and OKX connections (your own API keys).',
+            '<b>My Wallet:</b> a self-custody wallet where you hold the keys. Receive and send on supported networks.',
+            '<b>Professor:</b> a built-in helper and live chat that explains trading words, indicators and every screen, with pictures, lessons and video links.',
+            '<b>Academy and Video lessons:</b> 36 lessons with quizzes and 13 animated video lessons with a built-in player.',
+            '<b>Alerts and background run:</b> price alerts and notifications that keep working when you switch the Background run option on.',
+            '<b>Security:</b> fingerprint or PIN app lock, API keys encrypted with the Android Keystore, show/hide password.',
+            '<b>Extras:</b> achievements, 27 avatars, dark and light looks, swipe navigation, help centre, support desk and a KYC preparation guide.'
+        ]));
+        h += sec('🧭', 'How it works', ul([
+            '<b>1. Look:</b> open Home for the live overview, or Ideas for the ranked list.',
+            '<b>2. Understand:</b> tap an idea to see why it ranks where it does. Ask Professor if a word is new.',
+            '<b>3. Practise:</b> try the idea with the paper-money bot or on paper first.',
+            '<b>4. Decide:</b> trade on your own exchange if you choose to. You stay in control. The app never moves your money without your setup and confirmation.'
+        ]));
+        h += sec('👤', 'Who it is for', 'Beginners who want to learn with guidance, and active traders who want live data, a clear ranking and fast tickets in one place. Nothing here replaces your own judgement.');
+        h += sec('🛡️', 'Safety and honesty', ul([
+            'Trading, especially with leverage, can lose all of your money. <b>No tool, bot or score can promise profit.</b>',
+            'Chance scores are estimates, not guarantees. A high score still loses often.',
+            'Real-money features use your own exchange keys, small default limits and test mode first. Test with small amounts.',
+            'This app provides information and tools only. It is not financial advice and is not a broker or exchange.'
+        ]));
+        h += sec('🔒', 'Data and privacy', ul([
+            'Your keys, wallet words, settings and activity stay on your phone. API keys are encrypted with the Android Keystore.',
+            'The app talks to public market-data and exchange servers to get prices and place orders you request.',
+            'Small banner ads (Google AdMob) may appear on learning and information screens, never on trading, wallet or chart screens. See <b>Ads &amp; privacy</b>.',
+            'We do not sell your personal data. You can delete data any time with the reset options in the app.'
+        ]));
+        h += sec('🔑', 'Permissions explained', ul([
+            '<b>Internet:</b> live prices, news and orders.',
+            '<b>Notifications:</b> price alerts and the bot status notification.',
+            '<b>Background run / battery:</b> optional, keeps alerts and the bot running when the app is closed.',
+            '<b>Fingerprint / screen lock:</b> optional app lock and wallet protection.'
+        ]));
+        h += sec('🆕', 'What\'s new', ul([
+            'Trade Ideas: five old windows merged into one ranked list.',
+            'Calmer screens, fixes for flicker.',
+            'Live Chat with Professor, Help centre, welcome tour, achievements.',
+            '13 animated video lessons with a built-in player, art for every lesson, support desk with WhatsApp and email.',
+            'Optional banner ads and an Ads &amp; privacy page.'
+        ]));
+        h += '<div class="group pad"><b style="font-size:16px">📞 Contact</b><div class="note">Muhammad Awais, Islamabad, Pakistan<br>Email: awaisrajpoot2@yahoo.com<br>WhatsApp: +92 312 2602811</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="win:support">🛟 Support desk</span><span class="btn sec tap" data-kp="win:helpc">🔎 Help centre</span><span class="btn sec tap" data-kp="win:legal">📜 Legal</span><span class="btn sec tap" data-kp="win:adsinfo">📢 Ads &amp; privacy</span></div></div>';
+        h += '<div class="note" style="text-align:center">Version 10.8 · build ' + esc(b) + '<br>© MintooSuite. Educational information, not financial advice.</div>';
+        return h;
+    }
+    WINS.push({ id: 'aboutapp', ic: 'ℹ️', c: '#0a84ff', n: 'About MintooSuite', t: 'About', sub: 'What the app does, features, safety, privacy, contact' }); LIVE.aboutapp = 0; VIEWS.aboutapp = vAboutApp;
+    MW_HELP.aboutapp = 'A full description of the app: features, how it works, who it is for, safety, privacy, permissions, what is new and how to contact us.';
+    (function () {
+        var g = MW_GROUPS[MW_GROUPS.length - 1][1], i; for (i = 0; i < MW_GROUPS.length; i++) { if (/Account/.test(MW_GROUPS[i][0])) { g = MW_GROUPS[i][1]; } }
+        if (g.indexOf('aboutapp') < 0) { g.unshift('aboutapp'); }
+        try { MW_SVG.aboutapp = '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'; } catch (e) { }
+    })();
 })();
 
 function renderView(keep) {

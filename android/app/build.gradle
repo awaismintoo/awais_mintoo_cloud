@@ -12,6 +12,11 @@ android {
         targetSdk 36
         versionCode (System.getenv('VERSION_CODE') ? System.getenv('VERSION_CODE').toInteger() : 1)
         versionName '10.8'
+        def adProps = new Properties()
+        def adFile = rootProject.file('ads.properties')
+        if (adFile.exists()) { adFile.withInputStream { adProps.load(it) } }
+        manifestPlaceholders = [admobAppId: adProps.getProperty('ADMOB_APP_ID', 'ca-app-pub-3940256099547665~3347511713')]
+        resValue 'string', 'admob_banner_id', adProps.getProperty('ADMOB_BANNER_ID', 'ca-app-pub-3940256099547665/6300978111')
     }
 
     signingConfigs {
@@ -43,4 +48,7 @@ dependencies {
     implementation 'androidx.webkit:webkit:1.12.1'
     implementation 'androidx.biometric:biometric:1.1.0'
     implementation 'androidx.work:work-runtime:2.9.0'
+    implementation 'com.google.android.gms:play-services-ads:23.6.0'
+    implementation 'com.google.android.ump:user-messaging-platform:3.1.0'
+    implementation 'com.google.guava:guava:33.3.1-android'
 }

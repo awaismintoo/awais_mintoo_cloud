@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         });
         createChannel();
         WebHolder.attach(this, root);
+        try { AdsHelper.start(this, root); } catch (Throwable ignored) { }
         if (lockOn()) { showLock(); }
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -67,6 +68,18 @@ public class MainActivity extends AppCompatActivity {
                 if (w != null && w.canGoBack()) { w.goBack(); } else { finish(); }
             }
         });
+    }
+
+    @Override
+    protected void onPause() {
+        AdsHelper.pause();
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        AdsHelper.resume();
     }
 
     @Override
@@ -85,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (cur == this) { cur = null; }
+        AdsHelper.destroy();
         WebHolder.detach();
         if (!BotService.isOn(this)) { WebHolder.destroy(); }
         super.onDestroy();
