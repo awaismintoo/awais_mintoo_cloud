@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-20.5';
+var BUILD = '2026-10-29.6';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -6642,6 +6642,50 @@ PF_APP.push(['are my keys safe|api key safe|key security|keystore|encrypt|keys e
 
 /* sheets: patch in place instead of rebuilding, so Menu / More do not flicker */
 (function () { function go() { var h = window.__mwMorphHook; if (!h) { return; } var a = document.getElementById('aboutBox'), t = document.getElementById('tiles'); if (a) { h(a, function () { return 'about'; }); } if (t) { h(t, function () { return 'tiles'; }); } } go(); setTimeout(go, 1500); })();
+/* ===== p9v: scroll lock: the page stays exactly where you left it until YOU scroll or open another window ===== */
+(function () {
+    var lockY = window.pageYOffset || 0, lastWin = S.win, until = 0, touching = false;
+    function act(ms) { until = Date.now() + (ms || 1800); }
+    function el() { return document.scrollingElement || document.documentElement; }
+    try { var st = document.createElement('style'); st.textContent = 'html,body{overflow-anchor:none;scroll-behavior:auto}'; document.head.appendChild(st); } catch (e) { }
+    document.addEventListener('touchstart', function () { touching = true; act(60000); }, { passive: true, capture: true });
+    document.addEventListener('touchend', function () { touching = false; act(1800); }, { passive: true, capture: true });
+    document.addEventListener('touchcancel', function () { touching = false; act(1800); }, { passive: true, capture: true });
+    ['wheel', 'keydown', 'click', 'focusin', 'mousedown'].forEach(function (t) { document.addEventListener(t, function () { act(2500); }, { passive: true, capture: true }); });
+    window.addEventListener('scroll', function () { if (touching || Date.now() < until) { lockY = window.pageYOffset || 0; } }, { passive: true });
+    setInterval(function () {
+        try {
+            if (S.win !== lastWin) { lastWin = S.win; lockY = window.pageYOffset || 0; act(1500); return; }
+            if (touching || Date.now() < until) { lockY = window.pageYOffset || 0; return; }
+            var y = window.pageYOffset || 0; if (Math.abs(y - lockY) > 1) { var max = Math.max(0, el().scrollHeight - window.innerHeight); if (lockY <= max + 1) { window.scrollTo(0, lockY); } }
+        } catch (e) { }
+    }, 200);
+})();
+/* ===== p9w: update notice with "what's new", remind-me-later and a manual "Check for update" ===== */
+var MW_NEWS = 'Academy lessons and smarter Professor; Trade panel under every chart; PSX buy/sell ticket; encrypted API keys; swipe-down sheets; no more flicker or scroll drift.';
+function updSnoozed(b) { try { var o = JSON.parse(localStorage.getItem('mintoosuite_updsnooze') || '{}'); return o.b === b && Date.now() < o.t; } catch (e) { return false; } }
+var _updNews = '', _updMsg = 'tap';
+function updNewsFetch() { try { fetch('https://awaismintoo.github.io/awais_mintoo_cloud/index.html?_n=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) { var m = /var MW_NEWS = '([^']*)'/.exec(t); if (m) { _updNews = m[1]; } }).catch(function () { }); } catch (e) { } }
+setTimeout(updNewsFetch, 7000); setInterval(updNewsFetch, 1800000);
+(function () {
+    var _chk = mwUpdCheck; mwUpdCheck = function () {
+        _chk();
+        updNewsFetch();
+    };
+    mwUpdBanner = function () {
+        var L = S.upd.latest; if (!L || mwBuildNum(L) <= mwBuildNum(BUILD) || updSnoozed(L)) { return ''; }
+        return '<div class="mwupd" style="display:block"><b>⬆️ New version ' + esc(L) + ' is ready</b> (you have ' + esc(BUILD) + ')' + (_updNews ? '<div style="font-size:12.5px;margin-top:3px;opacity:.9">What\'s new: ' + esc(_updNews) + '</div>' : '') +
+            '<div style="margin-top:6px"><a href="https://github.com/awaismintoo/awais_mintoo_cloud/releases/latest" target="_blank" rel="noopener" style="display:inline-block;padding:8px 14px;border-radius:12px;background:#fff;color:#0a84ff;font-weight:700;text-decoration:none;margin-right:8px">Download new app</a><span data-m19="later:' + esc(L) + '" style="display:inline-block;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.25);color:inherit;font-weight:700;cursor:pointer">Remind me tomorrow</span></div>' +
+            '<div style="font-size:11.5px;margin-top:4px;opacity:.85">After the download finishes, open the file and tap Install. Your data stays.</div></div>';
+    };
+    var _ra = renderAbout; renderAbout = function () { _ra(); try { var b = $('aboutBox'); if (b && b.innerHTML.indexOf('data-m19="chk"') < 0) { b.innerHTML = b.innerHTML + '<div class="row tap" data-m19="chk"><span>🔄 Check for a new version</span><b id="updMsg" class="mut">' + esc(_updMsg) + '</b></div>'; } } catch (e) { } };
+})();
+document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-m19]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+    var a = el.getAttribute('data-m19'), i = a.indexOf(':'), v = i < 0 ? a : a.slice(0, i), x = i < 0 ? '' : a.slice(i + 1);
+    if (v === 'later') { try { localStorage.setItem('mintoosuite_updsnooze', JSON.stringify({ b: x, t: Date.now() + 86400000 })); } catch (er) { } mwHostSig = ''; try { mwHome(); } catch (er) { } }
+    else if (v === 'chk') { var m = document.getElementById('updMsg'); _updMsg = 'checking…'; if (m) { m.textContent = _updMsg; } try { localStorage.removeItem('mintoosuite_updsnooze'); } catch (er) { } mwUpdCheck(); setTimeout(function () { var m2 = document.getElementById('updMsg'); _updMsg = S.upd.latest && mwBuildNum(S.upd.latest) > mwBuildNum(BUILD) ? 'New version ' + S.upd.latest + ' ready (see Home)' : (S.upd.latest ? 'You have the latest (' + BUILD + ')' : 'Could not check. Try again.'); if (m2) { m2.textContent = _updMsg; } if (0) { m2.textContent = S.upd.latest && mwBuildNum(S.upd.latest) > mwBuildNum(BUILD) ? 'New version ' + S.upd.latest + ' ready (see Home)' : (S.upd.latest ? 'You have the latest (' + BUILD + ')' : 'Could not check. Try again.'); } mwHostSig = ''; try { mwHome(); } catch (er) { } }, 2500); }
+}, true);
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
