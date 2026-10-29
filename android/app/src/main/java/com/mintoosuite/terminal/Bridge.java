@@ -269,7 +269,7 @@ final class Bridge {
                     java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
                     byte[] buf = new byte[8192];
                     int n, total = 0;
-                    while (in != null && (n = in.read(buf)) > 0 && total < 2000000) { bo.write(buf, 0, n); total += n; }
+                    while (in != null && (n = in.read(buf)) > 0 && total < 9000000) { bo.write(buf, 0, n); total += n; }
                     out = bo.toString("UTF-8");
                     good = code >= 200 && code < 300;
                 } catch (Exception e) { out = String.valueOf(e.getMessage()); }
