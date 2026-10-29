@@ -80,7 +80,7 @@ public class BotService extends Service {
                 .setContentIntent(openPi)
                 .setDeleteIntent(repostPi)
                 .addAction(R.drawable.ic_stat, paused ? "Resume bot" : "Pause bot", pausePi)
-                .addAction(R.drawable.ic_stat, "Stop background run", stopPi);
+                .addAction(R.drawable.ic_stat, "Stop bots", stopPi);
         if (Build.VERSION.SDK_INT < 26) { b.setPriority(Notification.PRIORITY_LOW); }
         return b.build();
     }

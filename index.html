@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.45';
+var BUILD = '2026-10-29.46';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -10214,6 +10214,60 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     var _bd = VIEWS.botdoc; if (_bd) { VIEWS.botdoc = function () { return '<div class="group pad tap" data-act="win:btest" style="border-left:5px solid #5856d6"><b>🧪 History Test</b><div class="note" style="margin:2px 0 0">Check which rules would have made money on past candles ›</div></div>' + _bd.apply(this, arguments); }; }
     document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-bt]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); runAll(); renderView(true); }, true);
     window.__btest = { ST: ST, prep: prep, sim: sim, stats: stats, B: B };
+})();
+/* ===== p9zsl: real-money lock, "trade this plan" ticket prefill (Binance + other exchanges), always-visible STOP pill, notification stop, P/L popups ===== */
+(function () {
+    var LK = { un: false, msg: '' }, RK = 'mintoosuite_planrisk', risk = 1;
+    try { var rv = parseFloat(localStorage.getItem(RK)); if (rv > 0) { risk = rv; } } catch (e) { }
+    function f(v, d) { var n = +v; return isFinite(n) ? n.toFixed(d == null ? 2 : d) : '–'; }
+    function openWin(id) { try { if (typeof gotoWin === 'function') { gotoWin(id); return; } } catch (e) { } var b = document.createElement('button'); b.setAttribute('data-act', 'win:' + id); document.body.appendChild(b); b.click(); b.remove(); }
+    /* ---- 1) real-money lock ---- */
+    function rbHalt(why) { try { var R = S.rb; if (R && (R.running || R.wasRunning)) { R.running = false; R.paused = false; R.wasRunning = false; if (typeof rbLog === 'function') { rbLog(why); } rbSave(); mwSvcPush(); } } catch (e) { } }
+    rbHalt('Real bot stayed OFF: real trading is locked until you unlock it');
+    var _rs = rbStart; rbStart = function () { if (!LK.un) { LK.msg = 'Real trading is locked. Unlock it first, then start the bot yourself.'; try { renderView(true); } catch (e) { } return; } return _rs.apply(this, arguments); };
+    setInterval(function () { if (!LK.un) { rbHalt('Real bot stopped: real trading is locked'); } }, 3000);
+    var _rc = rbCard; rbCard = function () {
+        var h = LK.un ? '<div class="group pad" style="border-left:5px solid #ff3b30"><b>🔓 Real trading is UNLOCKED</b><div class="note">The real bot may start only when you press Start. It locks again every time the app is closed and reopened.</div><div class="idbt" style="display:flex;gap:8px"><span class="btn sec tap kpb" data-lk="lock">🔒 Lock again</span></div></div>'
+            : '<div class="group pad" style="border-left:5px solid #34c759"><b>🔒 Real trading is LOCKED</b><div class="note">The real bot cannot start, auto-start or place orders on its own. Orders you place yourself in a ticket still ask for your confirmation. To let the real bot work, type UNLOCK below.</div><input class="tin" id="lkIn" placeholder="Type UNLOCK"><div class="idbt" style="display:flex;gap:8px;margin-top:6px"><span class="btn tap kpb" data-lk="unlock">Unlock real bot</span></div>' + (LK.msg ? '<div class="warn">' + esc(LK.msg) + '</div>' : '') + '</div>';
+        return h + _rc.apply(this, arguments);
+    };
+    document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-lk]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-lk'); if (a === 'lock') { LK.un = false; LK.msg = ''; rbHalt('Real trading locked by you'); } else { var v = ((document.getElementById('lkIn') || {}).value || '').trim().toUpperCase(); if (v === 'UNLOCK') { LK.un = true; LK.msg = ''; } else { LK.msg = 'Type the word UNLOCK exactly.'; } } renderView(true); }, true);
+    /* ---- 2) trade this plan: fill the ticket ---- */
+    function planFor(sym) { var l = []; try { l = getActions() || []; } catch (e) { } var a = l.filter(function (x) { return x.sym === sym; })[0], t = S.tick && S.tick[sym]; if (!a || !t || !(a.stopLvl > 0) || !(a.tgtLvl > 0)) { return null; } var e0 = t.p, sp = Math.abs(e0 - a.stopLvl) / e0 * 100; if (!(sp > 0)) { return null; } var lev = Math.max(1, Math.min(10, Math.floor(33 / sp))), notional = risk / (sp / 100), margin = Math.max(1, notional / lev); return { side: a.side, entry: e0, sl: a.stopLvl, tp: a.tgtLvl, sp: sp, lev: lev, margin: margin, notional: notional, pct: a.pct }; }
+    function dec(sym, v) { try { return (+v).toFixed(S.filt[sym] && S.filt[sym].tick ? decOf(S.filt[sym].tick) : (v >= 100 ? 2 : v >= 1 ? 4 : 6)); } catch (e) { return String(v); } }
+    function fillBinance(sym, P) { var T = S.tp; T.sym = sym; T.side = P.side; T.type = 'MARKET'; T.mode = 'ISOLATED'; T.lev = P.lev; T.sizeBy = 'margin'; T.margin = f(P.margin, 2); T.slOn = true; T.tpOn = true; T.slP = dec(sym, P.sl); T.tpP = dec(sym, P.tp); T.conf = ''; T.log = []; T.at = 0; T.maxLev = 125; openWin('tpro'); }
+    function fillOther(x, sym, P) { var N = S.nx; N.x = x; N.mk = x === 'mexc' ? 'spot' : 'fut'; N.sym = sym; N.side = P.side === 'LONG' ? 'buy' : 'sell'; N.type = 'market'; N.mode = 'isolated'; N.lev = P.lev; N.amt = f(P.margin, 2); N.sl = x === 'mexc' ? '' : dec(sym, P.sl); N.tp = x === 'mexc' ? '' : dec(sym, P.tp); N.ack = 0; N.log = []; openWin('xtrade'); }
+    function planCard(sym) {
+        var P = planFor(sym), b = (sym || '').replace(/USDT$/, ''), h = '';
+        if (!P) { return '<div class="sh">Trade the recommendation</div><div class="group pad"><div class="note">No active recommendation with a stop and target for ' + esc(b) + ' right now. You can still use the order buttons below and set your own stop.</div></div>'; }
+        var long = P.side === 'LONG', col = long ? '#34c759' : '#ff3b30';
+        h += '<div class="sh">Trade the recommendation</div><div class="group pad" style="border-left:5px solid ' + col + '"><b style="color:' + col + ';font-size:17px">' + (long ? '▲ LONG' : '▼ SHORT') + ' ' + esc(b) + '</b><span class="mut"> · indicators agree ' + Math.round(P.pct || 0) + '%</span>';
+        h += '<div class="row"><span>Entry (now)</span><b>' + dec(sym, P.entry) + '</b></div><div class="row"><span>Stop loss</span><b style="color:#ff3b30">' + dec(sym, P.sl) + '</b><small class="mut">' + f(P.sp) + '% away</small></div><div class="row"><span>Take profit</span><b style="color:#34c759">' + dec(sym, P.tp) + '</b></div><div class="row"><span>Suggested leverage</span><b>' + P.lev + '×</b></div><div class="row"><span>Margin to use</span><b>$' + f(P.margin) + '</b><small class="mut">position ≈ $' + f(P.notional) + '</small></div>';
+        h += '<div class="note">Risk per trade: ' + [1, 2, 5].map(function (r) { return '<span class="tap" data-plr="' + r + '" style="padding:3px 9px;border-radius:12px;margin-right:4px;background:' + (risk === r ? '#0a84ff;color:#fff' : 'rgba(128,128,128,.16)') + '">$' + r + '</span>'; }).join('') + ' If the stop is hit you lose about $' + f(risk) + ' plus fees. Leverage is kept low so liquidation is about 3× further than your stop (max 10×).</div>';
+        h += '<div class="note"><b>Fill the ticket on:</b> you can change everything on the next screen, and nothing is sent until you confirm there.</div><div style="display:flex;gap:6px;flex-wrap:wrap">';
+        if (S.tick[sym]) { h += '<span class="btn tap kpb" data-plan="bin:' + sym + '">Binance Futures</span>'; }
+        [['bitget', 'Bitget'], ['bybit', 'Bybit'], ['okx', 'OKX'], ['mexc', long ? 'MEXC Spot' : null]].forEach(function (x) { if (!x[1]) { return; } var ok = true; try { ok = window.XCH ? !!XCH.listed(x[0], b) : true; } catch (e) { } if (ok || x[0] === 'bybit' || x[0] === 'okx') { h += '<span class="btn sec tap kpb" data-plan="' + x[0] + ':' + sym + '">' + x[1] + '</span>'; } });
+        return h + '</div></div>';
+    }
+    var _tp = trdPanel; trdPanel = function (sym) { var o = _tp.apply(this, arguments); try { return planCard(sym) + o; } catch (e) { return o; } };
+    document.addEventListener('click', function (e) {
+        var r = e.target.closest ? e.target.closest('[data-plr]') : null; if (r) { e.preventDefault(); e.stopPropagation(); risk = +r.getAttribute('data-plr'); try { localStorage.setItem(RK, String(risk)); } catch (er) { } renderView(true); return; }
+        var el = e.target.closest ? e.target.closest('[data-plan]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-plan').split(':'), P = planFor(a[1]); if (!P) { return; } if (a[0] === 'bin') { fillBinance(a[1], P); } else { fillOther(a[0], a[1], P); }
+    }, true);
+    window.__plan = { planFor: planFor, fillBinance: fillBinance, fillOther: fillOther };
+    /* ---- 3) always-visible STOP pill ---- */
+    var pill = document.createElement('div'); pill.id = 'stopPill'; pill.style.cssText = 'position:fixed;left:8px;bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:2147483000;display:none;align-items:center;gap:6px;background:#1c1c1e;color:#fff;border-radius:22px;padding:5px 6px 5px 11px;font:600 11.5px/1.2 -apple-system,Roboto,sans-serif;box-shadow:0 3px 12px rgba(0,0,0,.35)'; document.body.appendChild(pill);
+    function bots() { var R = S.rb || {}, B = S.bot || {}, o = []; if (R.armed && R.running) { var pl = +R.dayPnl || 0; o.push({ k: 'real', t: '💵 Real ' + (R.paused ? 'paused' : 'ON') + ' ' + (pl >= 0 ? '+' : '') + f(pl) + ' USDT', c: pl >= 0 ? '#30d158' : '#ff453a' }); } if (B.on) { var pp = (+B.bal || 0) - (+B.start || 1000); o.push({ k: 'paper', t: '🧪 Paper ON ' + (pp >= 0 ? '+' : '') + f(pp), c: pp >= 0 ? '#30d158' : '#ff453a' }); } return o; }
+    function paint() { var o = bots(), sig = o.map(function (x) { return x.t; }).join('|'); if (pill.__s === sig) { return; } pill.__s = sig; if (!o.length) { pill.style.display = 'none'; return; } pill.style.display = 'flex'; pill.innerHTML = o.map(function (x) { return '<span style="color:' + x.c + '">' + x.t + '</span>'; }).join('<span style="opacity:.4">·</span>') + '<span data-stopall="1" style="background:#ff3b30;color:#fff;border-radius:16px;padding:6px 11px;font-weight:800;cursor:pointer">⏹ STOP</span>'; }
+    setInterval(paint, 1500); paint();
+    function stopAll() { try { if (S.rb && S.rb.running) { rbStop(); } } catch (e) { } try { if (S.bot && S.bot.on) { S.bot.on = false; botSave(); addLog('BOT', 'Paper bot stopped with the STOP button'); } } catch (e) { } try { window.__huPush('stopall' + Date.now(), '⏹', 'Bots stopped', 'No new trades will be opened. Trades already open keep their stop-loss and take-profit on the exchange.', '', 'info', 1000); } catch (e) { } pill.__s = ''; paint(); try { renderView(true); } catch (e) { } }
+    pill.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-stopall]')) { e.preventDefault(); e.stopPropagation(); stopAll(); } }, true);
+    window.__stopAll = stopAll;
+    /* ---- 4) notification: Stop button stops bots; text shows paper P/L too ---- */
+    var _sc = window.__mwSvcCmd; window.__mwSvcCmd = function (c) { var r = _sc && _sc.apply(this, arguments); if (c === 'svcoff') { stopAll(); } return r; };
+    var _ms = mwSvcStatus; mwSvcStatus = function () { var s = _ms.apply(this, arguments); try { var B = S.bot; if (B && B.on) { var pp = (+B.bal || 0) - (+B.start || 1000); s.text += ' · paper ' + (pp >= 0 ? '+' : '') + f(pp) + ' (' + (B.open || []).length + ' open)'; s.wake = true; } } catch (e) { } return s; };
+    /* ---- 5) popups with P/L when a paper trade closes ---- */
+    var _bc = botClose; botClose = function () { var r = _bc.apply(this, arguments); try { var t = S.bot.closed[0]; if (t) { window.__huPush('pc' + t.ct + t.sym, t.pnl >= 0 ? '✅' : '❌', 'Paper trade closed: ' + (t.sym || '').replace(/USDT$/, '') + ' ' + t.side, (t.pnl >= 0 ? '+' : '') + f(t.pnl) + ' USD (' + (t.why || '') + ') · balance $' + f(S.bot.bal), 'win:bot', t.pnl >= 0 ? 'good' : 'bad', 1000); } } catch (e) { } return r; };
 })();
 
 function renderView(keep) {
