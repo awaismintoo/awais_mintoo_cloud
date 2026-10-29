@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.54';
+var BUILD = '2026-10-29.55';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5243,7 +5243,7 @@ function pcAddAll() {
     var v = document.getElementById('view'); if (!v) { return; }
     Array.prototype.forEach.call(v.querySelectorAll('.ph'), function (ph) { var cs = ph.querySelectorAll('[data-chip]'); if (cs.length > 1) { var seen = {}; Array.prototype.forEach.call(cs, function (c) { var k = c.getAttribute('data-chip'); if (seen[k]) { c.remove(); } else { seen[k] = 1; } }); } });
     Array.prototype.forEach.call(v.querySelectorAll('[data-act^="chart:"]'), function (el) {
-        if (el.querySelector('[data-chg],[data-chip],.m7chg')) { return; } var sym = el.getAttribute('data-act').slice(6), t = S.tick[sym]; if (!t) { return; }
+        if (el.querySelector('[data-chg],[data-chip],.m7chg') || (el.closest && el.closest('.m7r'))) { return; } var sym = el.getAttribute('data-act').slice(6), t = S.tick[sym]; if (!t) { return; }
         var b = el.querySelector('b'); if (!b || b.getAttribute('data-pc')) { return; } b.setAttribute('data-pc', '1'); b.insertAdjacentHTML('afterend', ' ' + chgChip(sym));
     });
 }
