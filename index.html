@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.55';
+var BUILD = '2026-10-29.57';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -6616,22 +6616,22 @@ PF_APP.push(['buy psx|sell psx|trade psx|psx broker|trade shares|buy shares|stoc
 /* ===== p9t: API keys and secrets are encrypted with the Android Keystore (when running in the Android app) ===== */
 (function () {
     if (typeof Storage === 'undefined' || !Storage.prototype) { return; }
-    var SENS = /^mintoosuite_(tk|ts|x_[a-z]+)$/, G = Storage.prototype.getItem, St = Storage.prototype.setItem, Rm = Storage.prototype.removeItem;
+    var KC = {}, SENS = /^mintoosuite_(tk|ts|x_[a-z]+)$/, G = Storage.prototype.getItem, St = Storage.prototype.setItem, Rm = Storage.prototype.removeItem;
     function nat() { var n = null; try { n = mwNat(); } catch (e) { } return n && n.secSet && n.secGet && n.secDel ? n : null; }
     Storage.prototype.setItem = function (k, v) {
-        if (this === window.localStorage && SENS.test(k)) { var n = nat(); if (n) { try { if (n.secSet(window.__mwTok, k, String(v))) { return St.call(this, k, 'enc:1'); } } catch (e) { } } }
+        if (this === window.localStorage && SENS.test(k)) { var n = nat(); if (n) { try { if (n.secSet(window.__mwTok, k, String(v))) { KC[k] = String(v); return St.call(this, k, 'enc:1'); } } catch (e) { } } }
         return St.call(this, k, v);
     };
     Storage.prototype.getItem = function (k) {
         var v = G.call(this, k);
         if (this === window.localStorage && SENS.test(k) && v !== null) {
             var n = nat();
-            if (v === 'enc:1') { if (!n) { return null; } try { var d = n.secGet(window.__mwTok, k); return d === '' ? null : d; } catch (e) { return null; } }
-            if (n && v) { try { if (n.secSet(window.__mwTok, k, v)) { St.call(this, k, 'enc:1'); } } catch (e) { } }
+            if (v === 'enc:1') { if (Object.prototype.hasOwnProperty.call(KC, k)) { return KC[k]; } if (!n) { return null; } try { var d = n.secGet(window.__mwTok, k); KC[k] = (d === '' ? null : d); return KC[k]; } catch (e) { return null; } }
+            if (n && v) { try { if (n.secSet(window.__mwTok, k, v)) { KC[k] = v; St.call(this, k, 'enc:1'); } } catch (e) { } }
         }
         return v;
     };
-    Storage.prototype.removeItem = function (k) { if (this === window.localStorage && SENS.test(k)) { var n = nat(); if (n) { try { n.secDel(window.__mwTok, k); } catch (e) { } } } return Rm.call(this, k); };
+    Storage.prototype.removeItem = function (k) { if (this === window.localStorage && SENS.test(k)) { delete KC[k]; var n = nat(); if (n) { try { n.secDel(window.__mwTok, k); } catch (e) { } } } return Rm.call(this, k); };
     window.__mwSecState = function () { var n = nat(), on = 0, plain = 0; try { Object.keys(localStorage).forEach(function (k) { if (SENS.test(k)) { if (G.call(localStorage, k) === 'enc:1') { on++; } else { plain++; } } }); } catch (e) { } return { native: !!n, encrypted: on, plain: plain }; };
     setTimeout(function () { try { Object.keys(localStorage).forEach(function (k) { if (SENS.test(k)) { localStorage.getItem(k); } }); } catch (e) { } }, 4000);
 })();
@@ -10289,7 +10289,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     function fillBinance(sym, P) { var T = S.tp; T.sym = sym; T.side = P.side; T.type = 'MARKET'; T.mode = 'ISOLATED'; T.lev = P.lev; T.sizeBy = 'margin'; T.margin = f(P.margin, 2); T.slOn = true; T.tpOn = true; T.slP = dec(sym, P.sl); T.tpP = dec(sym, P.tp); T.conf = ''; T.log = []; T.at = 0; T.maxLev = 125; openWin('tpro'); }
     function fillOther(x, sym, P, fut) { var N = S.nx, spot = x === 'mexc' || fut === false; N.x = x; N.mk = spot ? 'spot' : 'fut'; N.sym = sym; N.side = P.side === 'LONG' ? 'buy' : 'sell'; N.type = 'market'; N.mode = 'isolated'; N.lev = spot ? 1 : P.lev; N.amt = f(spot ? Math.min(10, P.notional) : P.margin, 2); N.sl = spot ? '' : dec(sym, P.sl); N.tp = spot ? '' : dec(sym, P.tp); N.ack = 0; N.log = []; openWin('xtrade'); }
     function pack(P, ex) { return [ex, P.sym, P.side, P.entry, P.sl, P.tp, Math.round(P.pct || 0), P.fut ? 1 : 0].join('|'); }
-    var CSS = '.tcd{margin:10px 0;border-radius:20px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18);background:var(--card,#fff);border:1px solid rgba(128,128,128,.18)}.tcd .th{padding:14px 16px;color:#fff;display:flex;justify-content:space-between;align-items:center}.tcd .th b{font-size:18px;letter-spacing:.2px}.tcd .th small{opacity:.92;font-size:12px}.tcd .pc{background:rgba(255,255,255,.22);border-radius:14px;padding:5px 11px;font-weight:800;font-size:14px}.tcd .tb{padding:12px 16px 14px}.tcd .lv3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.tcd .lv3>div{background:rgba(128,128,128,.10);border-radius:12px;padding:8px 6px;text-align:center}.tcd .lv3 span{display:block;font-size:10.5px;letter-spacing:.6px;opacity:.65}.tcd .lv3 b{font-size:14.5px}.tcd .kv{display:flex;justify-content:space-between;padding:5px 0;font-size:13.5px}.tcd .cta{display:block;text-align:center;color:#fff;font-weight:800;font-size:16.5px;padding:14px;border-radius:16px;margin:10px 0 6px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.25)}.tcd .alt{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}.tcd .alt span.c{padding:6px 11px;border-radius:14px;background:rgba(128,128,128,.16);font-weight:600;cursor:pointer}.tcd .rk span{padding:3px 9px;border-radius:12px;margin-left:4px;cursor:pointer}';
+    var CSS = '.tcd{min-height:190px;margin:10px 0;border-radius:20px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18);background:var(--card,#fff);border:1px solid rgba(128,128,128,.18)}.tcd .th{padding:14px 16px;color:#fff;display:flex;justify-content:space-between;align-items:center}.tcd .th b{font-size:18px;letter-spacing:.2px}.tcd .th small{opacity:.92;font-size:12px}.tcd .pc{background:rgba(255,255,255,.22);border-radius:14px;padding:5px 11px;font-weight:800;font-size:14px}.tcd .tb{padding:12px 16px 14px}.tcd .lv3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.tcd .lv3>div{background:rgba(128,128,128,.10);border-radius:12px;padding:8px 6px;text-align:center}.tcd .lv3 span{display:block;font-size:10.5px;letter-spacing:.6px;opacity:.65}.tcd .lv3 b{font-size:14.5px}.tcd .kv{display:flex;justify-content:space-between;padding:5px 0;font-size:13.5px}.tcd .cta{display:block;text-align:center;color:#fff;font-weight:800;font-size:16.5px;padding:14px;border-radius:16px;margin:10px 0 6px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.25)}.tcd .alt{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}.tcd .alt span.c{padding:6px 11px;border-radius:14px;background:rgba(128,128,128,.16);font-weight:600;cursor:pointer}.tcd .rk span{padding:3px 9px;border-radius:12px;margin-left:4px;cursor:pointer}';
     try { var st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st); } catch (e) { }
     function tcard(P, title) {
         if (!P) { return ''; } var b = (P.sym || '').replace(/USDT$/, ''), long = P.side === 'LONG', g = long ? 'linear-gradient(135deg,#0a9d4f,#34c759)' : 'linear-gradient(135deg,#d62839,#ff6b6b)', ex = P.ex, spot = ex === 'mexc' || !P.fut;
@@ -10313,7 +10313,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     /* hook 1: Trade Ideas, open card */
     try { var _ir = idRow; idRow = function (m) { var h = _ir.apply(this, arguments); try { if (IDS.open === m.key && (m.R.p >= 0.5)) { var px = priceOf(m.sym), sg = m.side === 'LONG' ? 1 : -1, ex = S.tick[m.sym] ? 'bin' : (S.xch === 'bitget' ? 'bitget' : 'mexc'), P = px ? mkPlan(m.sym, m.side, px, px * (1 - sg * m.slP / 100), px * (1 + sg * m.tpP / 100), m.R.p * 100, ex, true) : null; var i = h.lastIndexOf('<div class="idbt">'); if (P && i > 0) { h = h.slice(0, i) + tcard(P, m.R.best ? 'BEST idea' : 'idea') + h.slice(i); } } } catch (e) { } return h; }; } catch (e) { }
     /* hook 2: Analyst result */
-    try { var _va = VIEWS.analyst; VIEWS.analyst = function () { var h = _va.apply(this, arguments); try { var r = S.an && S.an.res; if (r && r.side !== 'WAIT' && r.plans && r.plans[0] && /USDT$/.test(r.sym)) { var o = r.plans[0].b || r.plans[0].a, sg = r.side === 'LONG' ? 1 : -1, P = mkPlan(r.sym, r.side, r.price, r.price - sg * o.sl, r.price + sg * o.tp, o.ch * 100, S.tick[r.sym] ? 'bin' : 'mexc', true), i = h.indexOf('<div class="m7why">'); if (P && i > 0) { h = h.slice(0, i) + tcard(P, 'Analyst') + h.slice(i); } } } catch (e) { } return h; }; } catch (e) { }
+    try { var _va = VIEWS.analyst; VIEWS.analyst = function () { var h = _va.apply(this, arguments); try { var r = S.an && S.an.res; if (r && r.side !== 'WAIT' && r.plans && r.plans[0] && /USDT$/.test(r.sym)) { var o = r.plans[0].b || r.plans[0].a, sg = r.side === 'LONG' ? 1 : -1, P = mkPlan(r.sym, r.side, r.price, r.price - sg * o.sl, r.price + sg * o.tp, o.ch * 100, S.tick[r.sym] ? 'bin' : 'mexc', true), i = h.indexOf('<div class="m7why">'); if (P && i > 0) { h = h.slice(0, i) + tcard(P, 'Analyst') + h.slice(i); } } else if (r && /USDT$/.test(r.sym)) { var j = h.indexOf('<div class="m7why">'); if (j > 0) { h = h.slice(0, j) + '<div class="tcd" style="min-height:190px"><div class="th" style="background:linear-gradient(135deg,#6e6e73,#98989d)"><span><small>⚪ WAIT</small><br><b>No trade card right now</b></span></div><div style="padding:14px 16px;font-size:13px;opacity:.8">The signal is not clear enough. This box stays here so the screen does not jump; a trade card appears in it when the signal is clear.</div></div>' + h.slice(j); } } } catch (e) { } return h; }; } catch (e) { }
     /* hook 3: MEXC / Bitget coin page */
     try { var _vm = VIEWS.mexcd; if (_vm) { VIEWS.mexcd = function () { var h = _vm.apply(this, arguments); try { var M = window.__MXD, a = M && M.ana; if (a && !a.err && a.side !== 'WAIT' && a.atr1) { var sg = a.side === 'LONG' ? 1 : -1, sig = a.atr1 * 2 * 0.8, ch = typeof m7chance === 'function' ? m7chance(sig, sig, Math.min(0.08, 0.03 * Math.abs(a.ov))) * 100 : 0, P = mkPlan(a.sym, a.side, a.price, a.price - sg * sig, a.price + sg * sig, ch, a.x === 'bitget' ? 'bitget' : 'mexc', !!a.fut), i = h.indexOf('>Plan and indicators<'); if (P) { var j = i > 0 ? h.lastIndexOf('<div', i) : -1; var c = tcard(P, a.x === 'bitget' ? 'Bitget' : 'MEXC'); h = j > 0 ? h.slice(0, j) + c + h.slice(j) : h + c; } } } catch (e) { } return h; }; } } catch (e) { }
     /* ---- 3) always-visible STOP pill ---- */
@@ -10857,7 +10857,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 if (e.hadRecentInput || e.value < 0.002) { return; }
                 var s = (e.sources || [])[0], nm = s && s.node ? ((s.node.id ? '#' + s.node.id : '') + (s.node.className && typeof s.node.className === 'string' ? '.' + s.node.className.split(' ')[0] : '') || s.node.nodeName) : '?';
                 LOG.push(new Date().toTimeString().slice(0, 8) + ' ' + (S.win || '') + ' ' + nm + ' ' + (s ? Math.round(s.previousRect.y) + '→' + Math.round(s.currentRect.y) : ''));
-                if (LOG.length > 6) { LOG.shift(); }
+                if (LOG.length > 6) { LOG.shift(); } if (e.value >= 0.01) { try { window.__mwRec && window.__mwRec('jump', LOG[LOG.length - 1]); } catch (er) { } }
             });
         }).observe({ type: 'layout-shift', buffered: true });
     } catch (e) { }
@@ -10866,6 +10866,66 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             _ra2(); try { var b = $('aboutBox'); if (b && b.innerHTML.indexOf('data-jl="1"') < 0) { b.innerHTML = b.innerHTML + '<div class="row" data-jl="1" style="align-items:flex-start"><span>Screen jumps</span><span style="font-size:11px;text-align:right">' + (LOG.length ? LOG.slice(-4).map(esc).join('<br>') : 'none seen') + '</span></div>'; } } catch (e) { }
         };
     } catch (e) { }
+})();
+/* press feedback on EVERY tappable thing (ticket buttons, trade card, chips), plus a recorder for slow moments and errors shown in Menu > About */
+(function () {
+    try {
+        var st = document.createElement('style');
+        st.textContent = '.mwprs{transform:scale(.94)!important;filter:brightness(.8) saturate(1.15)!important;opacity:.9!important;transition:transform .06s,filter .06s}';
+        document.head.appendChild(st);
+    } catch (e) { }
+    var last = '', cur = null, tmr = 0;
+    function tappable(el) {
+        while (el && el !== document.body && el.nodeType === 1) {
+            var a = el.attributes, i;
+            for (i = 0; a && i < a.length; i++) { if (/^data-(act|m\d+|mx|lk|sm|tc|ai|an|st|jl)/.test(a[i].name) && a[i].name !== 'data-jl') { return el; } }
+            if (el.tagName === 'BUTTON' || el.tagName === 'A' || (el.className && typeof el.className === 'string' && /(^|\s)(btn|tap|pfbtn|kpb|chip)(\s|$)/.test(el.className))) { return el; }
+            el = el.parentNode;
+        }
+        return null;
+    }
+    function clear() { clearTimeout(tmr); if (cur) { cur.classList.remove('mwprs'); cur = null; } }
+    document.addEventListener('pointerdown', function (e) {
+        try {
+            var t = tappable(e.target); if (!t || (t.id === 'cv')) { return; } clear(); cur = t; t.classList.add('mwprs'); tmr = setTimeout(clear, 220);
+            var d = []; for (var i = 0; i < t.attributes.length && d.length < 2; i++) { if (/^data-/.test(t.attributes[i].name)) { d.push(t.attributes[i].name.slice(5) + '=' + String(t.attributes[i].value).slice(0, 24)); } }
+            last = d.join(' ') || (t.tagName + '.' + String(t.className).slice(0, 14));
+        } catch (er) { }
+    }, true);
+    ['pointerup', 'pointercancel', 'scroll'].forEach(function (n) { document.addEventListener(n, function () { clearTimeout(tmr); tmr = setTimeout(clear, 120); }, true); });
+    var SLOW = [], ERR = [];
+    var LK = 'mintoosuite_errlog';
+    function recLog(kind, txt) { try { var a = []; try { a = JSON.parse(localStorage.getItem(LK) || '[]') || []; } catch (e) { } a.push(new Date().toLocaleString() + ' [' + kind + '] ' + txt + ' (' + (S.win || '') + ', build ' + BUILD + ')'); if (a.length > 150) { a = a.slice(-150); } localStorage.setItem(LK, JSON.stringify(a)); } catch (e) { } }
+    window.__mwRec = recLog;
+    try { new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { if (e.duration >= 600) { SLOW.push(new Date().toTimeString().slice(0, 8) + ' ' + Math.round(e.duration) + 'ms after ' + (last || '-') + ' (' + (S.win || '') + ')'); if (SLOW.length > 4) { SLOW.shift(); } recLog('slow', Math.round(e.duration) + 'ms after ' + (last || '-')); } }); }).observe({ entryTypes: ['longtask'] }); } catch (e) { }
+    window.addEventListener('error', function (e) { ERR.push(new Date().toTimeString().slice(0, 8) + ' ' + String(e.message || '').slice(0, 70) + ' @' + String(e.filename || '').split('/').pop().slice(0, 12) + ':' + (e.lineno || '')); if (ERR.length > 3) { ERR.shift(); } recLog('error', String(e.message || '') + ' @' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '') + ':' + (e.colno || '')); });
+    window.addEventListener('unhandledrejection', function (e) { ERR.push(new Date().toTimeString().slice(0, 8) + ' promise: ' + String(e.reason && e.reason.message || e.reason).slice(0, 70)); if (ERR.length > 3) { ERR.shift(); } recLog('promise', String(e.reason && e.reason.message || e.reason).slice(0, 200)); });
+    try {
+        var _ra3 = renderAbout; renderAbout = function () {
+            _ra3(); try { var b = $('aboutBox'); if (b && b.innerHTML.indexOf('data-jl="2"') < 0) { b.innerHTML = b.innerHTML + '<div class="row" data-jl="2" style="align-items:flex-start"><span>Slow moments</span><span style="font-size:11px;text-align:right">' + (SLOW.length ? SLOW.map(esc).join('<br>') : 'none seen') + '</span></div><div class="row" data-jl="2" style="align-items:flex-start"><span>Last errors</span><span style="font-size:11px;text-align:right">' + (ERR.length ? ERR.map(esc).join('<br>') : 'none seen') + '</span></div>'; } } catch (e) { }
+        };
+    } catch (e) { }
+})();
+
+/* Menu > "Problem log": every error, slow moment and screen jump saved on this phone, with Copy and Email buttons */
+(function () {
+    var LK = 'mintoosuite_errlog';
+    function get() { try { return JSON.parse(localStorage.getItem(LK) || '[]') || []; } catch (e) { return []; } }
+    function vErr() {
+        var a = get().slice().reverse(), h = '<div class="group pad"><b>🧯 Problem log</b><div class="note">Every error, slow moment and screen jump the app noticed is saved here on this phone (last 150). Nothing is sent anywhere unless you press Email. If something freezes, restart the app, open this page and send me the log.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap kpb" data-el="copy">📋 Copy all</span><span class="btn sec tap kpb" data-el="mail">✉️ Email to developer</span><span class="btn sec tap kpb" data-el="clear">🗑 Clear</span></div></div>';
+        h += '<div class="group">' + (a.length ? a.slice(0, 80).map(function (x) { return '<div class="row" style="align-items:flex-start;font-size:12px"><span style="word-break:break-word">' + esc(x) + '</span></div>'; }).join('') : '<div class="row"><span class="mut">Nothing recorded yet. That is good news.</span></div>') + '</div>';
+        return h;
+    }
+    try { WINS.push({ id: 'errlog', ic: '🧯', c: '#ff9500', n: 'Problem log', t: 'Problem log', sub: 'Every error and freeze the app noticed, with copy and email' }); LIVE.errlog = 0; VIEWS.errlog = vErr; MW_HELP.errlog = 'A record of every error, slow moment and screen jump on this phone. Copy it or email it to the developer.'; } catch (e) { }
+    try { var G = MW_GROUPS.filter(function (x) { return /^Tools|^Account|^Help/.test(x[0]); })[0] || MW_GROUPS[MW_GROUPS.length - 1]; G[1].push('errlog'); mwHostSig = ''; } catch (e) { }
+    function addBtn() { try { var m = document.getElementById('sheetMenu'); if (!m || m.querySelector('[data-act="win:errlog"]')) { return; } var a = m.querySelector('.btn[data-act="win:alerts"]') || m.querySelector('.btn[data-act]'); if (a) { a.insertAdjacentHTML('beforebegin', '<button class="btn sec" data-act="win:errlog">🧯 Problem log (every error)</button>'); } } catch (e) { } }
+    setInterval(addBtn, 2500); setTimeout(addBtn, 1200);
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('[data-el]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var v = el.getAttribute('data-el'), txt = get().join('\n');
+        if (v === 'copy') { try { navigator.clipboard.writeText(txt); toast('Copied'); } catch (er) { var ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Copied'); } catch (e2) { } ta.remove(); } }
+        else if (v === 'mail') { try { navigator.clipboard.writeText(txt); } catch (er) { } window.__lastMail = txt; window.location.href = 'mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite problem log (build ' + BUILD + ')') + '&body=' + encodeURIComponent(txt.slice(-1800)); }
+        else if (v === 'clear') { try { localStorage.setItem(LK, '[]'); } catch (er) { } renderView(true); }
+    }, true);
 })();
 
 function renderView(keep) {
