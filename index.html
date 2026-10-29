@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.53';
+var BUILD = '2026-10-29.54';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -8945,6 +8945,14 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var last = k[n - 1], ly = y(last.c); s += '<line x1="0" x2="' + (W - 46) + '" y1="' + ly.toFixed(1) + '" y2="' + ly.toFixed(1) + '" stroke="' + (last.c >= last.o ? '#1fa95a' : '#e5383b') + '" stroke-dasharray="3 3"/><rect x="' + (W - 47) + '" y="' + (ly - 8).toFixed(1) + '" width="47" height="16" rx="3" fill="' + (last.c >= last.o ? '#1fa95a' : '#e5383b') + '"/><text x="' + (W - 44) + '" y="' + (ly + 3.5).toFixed(1) + '" font-size="9" fill="#fff" font-weight="700">' + fp(last.c) + '</text>';
         var a = MXD.ana, pl = a && !a.err && a.side !== 'WAIT' ? a : null;
         if (pl) { var sg = pl.side === 'LONG' ? 1 : -1, sig = pl.atr1 * 2 * 0.8, tpv = pl.price + sg * sig, slv = pl.price - sg * sig; [[tpv, '#1fa95a', 'TP'], [slv, '#e5383b', 'SL']].forEach(function (z) { if (z[0] > lo - rg * 0.3 && z[0] < hi + rg * 0.3) { var zy = Math.max(6, Math.min(ph - 6, y(z[0]))); s += '<line x1="0" x2="' + (W - 46) + '" y1="' + zy.toFixed(1) + '" y2="' + zy.toFixed(1) + '" stroke="' + z[1] + '" stroke-dasharray="6 4"/><text x="4" y="' + (zy - 3).toFixed(1) + '" font-size="9" font-weight="700" fill="' + z[1] + '">' + z[2] + ' ' + fp(z[0]) + '</text>'; } }); }
+        if (MXD.sel >= 0 && MXD.sel < n) {
+            var sk = k[MXD.sel], scx = 2 + MXD.sel * cw + cw / 2, sup = sk.c >= sk.o, scl = sup ? '#1fa95a' : '#e5383b', sch = sk.c - sk.o, spc = sk.o ? sch / sk.o * 100 : 0;
+            var rows = [['Time', new Date(sk.t).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })], ['Open', fp(sk.o)], ['High', fp(sk.h)], ['Low', fp(sk.l)], ['Close', fp(sk.c)], ['Change', (spc >= 0 ? '+' : '') + spc.toFixed(2) + '%'], ['Vol', sk.v >= 1e6 ? (sk.v / 1e6).toFixed(2) + 'M' : sk.v >= 1e3 ? (sk.v / 1e3).toFixed(1) + 'K' : String(Math.round(sk.v))]];
+            var bx = scx > (W - 46) / 2 ? 6 : W - 46 - 112, bh2 = rows.length * 13 + 8;
+            s += '<line x1="' + scx.toFixed(1) + '" x2="' + scx.toFixed(1) + '" y1="0" y2="' + (H - 2) + '" stroke="#8e8e93" stroke-dasharray="3 3"/><line x1="0" x2="' + (W - 46) + '" y1="' + y(sk.c).toFixed(1) + '" y2="' + y(sk.c).toFixed(1) + '" stroke="#8e8e93" stroke-opacity=".6" stroke-dasharray="3 3"/>';
+            s += '<rect x="' + bx + '" y="4" width="112" height="' + bh2 + '" rx="6" fill="#14161c" fill-opacity=".55"/>';
+            rows.forEach(function (r, ri) { s += '<text x="' + (bx + 6) + '" y="' + (17 + ri * 13) + '" font-size="9" fill="#c5c9d1">' + r[0] + '</text><text x="' + (bx + 106) + '" y="' + (17 + ri * 13) + '" font-size="9" font-weight="700" text-anchor="end" fill="' + (r[0] === 'Change' || r[0] === 'Close' ? scl : '#ffffff') + '">' + r[1] + '</text>'; });
+        }
         return s + '</svg>';
     }
     function paint() { var el = document.getElementById('mxcht'); if (el) { el.innerHTML = chartSvg(); } }
@@ -8996,6 +9004,28 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     WINS.push({ id: 'mexcd', ic: '🟦', c: '#0a84ff', n: 'Coin details (MEXC / Bitget)', t: 'Coin details', sub: 'Chart, plan, order book, funding and news for any MEXC or Bitget coin' }); LIVE.mexcd = 1; VIEWS.mexcd = vMexcd;
     MW_HELP.mexcd = 'Everything about one MEXC or Bitget coin: live chart with EMA lines, the plan with target and stop, indicators on 4 time frames, order book, funding rate, open interest and news. It refreshes itself every 12 seconds.';
     try { MW_GROUPS.forEach(function (g) { if (/^Detail pages/.test(g[0]) && g[1].indexOf('mexcd') < 0) { g[1].push('mexcd'); } }); mwHostSig = ''; } catch (e) { }
+    /* tap or drag on the chart = crosshair with a small see-through info box; chart also refreshes the last candle every 3 s */
+    (function () {
+        var down = false;
+        function pick(e) {
+            var host = document.getElementById('mxcht'); if (!host || !MXD.k.length) { return -1; } var sv = host.querySelector('svg'); if (!sv) { return -1; } var r = sv.getBoundingClientRect(), n = Math.min(72, MXD.k.length), cw = (360 - 50) / n, sc = r.width / 360;
+            var x = (e.clientX - r.left) / sc, i = Math.floor((x - 2) / cw); return (x < 0 || x > 360 - 46 || i < 0 || i >= n) ? -1 : i;
+        }
+        document.addEventListener('pointerdown', function (e) { if (!(e.target.closest && e.target.closest('#mxcht'))) { return; } down = true; var i = pick(e); MXD.sel = (i === MXD.sel) ? -1 : i; paint(); });
+        document.addEventListener('pointermove', function (e) { if (!down) { return; } var i = pick(e); if (i >= 0 && i !== MXD.sel) { MXD.sel = i; paint(); } });
+        function up() { down = false; } document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+        var lb = false;
+        setInterval(function () {
+            try {
+                if (S.win !== 'mexcd' || !MXD.s || document.hidden || MXD.busy || lb || MXD.k.length < 5) { return; } lb = true; var s = MXD.s, tf = MXD.tf, fut = MXD.fut, x = MXD.x;
+                XCH.kl({ s: s, fut: fut, x: x }, tf, 32).then(function (a) {
+                    if (MXD.s !== s || MXD.tf !== tf || MXD.fut !== fut || MXD.x !== x || !a || !a.length) { return; }
+                    a.slice(-3).forEach(function (c) { var L = MXD.k[MXD.k.length - 1]; if (L && L.t === c.t) { MXD.k[MXD.k.length - 1] = c; } else if (L && c.t > L.t) { MXD.k.push(c); if (MXD.sel >= 0 && MXD.sel > 0) { MXD.sel -= 0; } } else { for (var j = MXD.k.length - 2; j >= 0 && j > MXD.k.length - 6; j--) { if (MXD.k[j].t === c.t) { MXD.k[j] = c; } } } });
+                    paint();
+                }).catch(function () { }).then(function () { lb = false; });
+            } catch (e) { lb = false; }
+        }, 3000);
+    })();
     setInterval(function () { try { if (S.win === 'mexcd' && MXD.s && !document.hidden && !MXD.busy && nowv() - MXD.at > 11000) { load(); } } catch (e) { } }, 4000);
     /* ----- upgrades of the MEXC window ----- */
     var _lst = m7mxList;
@@ -10747,6 +10777,94 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         setInterval(function () { try { ask(); } catch (e) { } }, 3500);
         // the analytics question waits until this one is answered
         var _qs = document.getElementById; // (no-op reference, keeps minifiers quiet)
+    } catch (e) { }
+})();
+/* ===== .54: Binance-style chart info box (small, see-through, drag crosshair), flat candles, live backup when the stream is blocked ===== */
+(function () {
+    try {
+        var st = document.createElement('style');
+        st.textContent = '.m7pop{background:rgba(20,22,28,.72)!important;min-width:0!important;width:132px;padding:5px 7px!important;font-size:10px!important;line-height:1.35!important;border-radius:6px!important;box-shadow:none!important;color:#d8dbe2!important}.m7pop b{color:#fff!important;font-weight:600!important}.m7pop .r{display:flex;justify-content:space-between;gap:6px;white-space:nowrap}.m7pop .u{color:#2ebd85!important}.m7pop .d{color:#ff6b7d!important}.m7pop .u{color:#3ddc97!important}';
+        st.textContent += '#banner{height:0!important;min-height:0!important;overflow:visible!important;padding:0!important;margin:0!important}.bn{position:fixed!important;left:10px;right:10px;top:auto!important;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:3000;border-radius:14px;padding:8px 12px!important;font-size:12.5px!important;box-shadow:0 6px 20px rgba(0,0,0,.25)}';
+        document.head.appendChild(st);
+    } catch (e) { }
+    function row(a, b, c) { return '<div class="r"><span>' + a + '</span><b' + (c ? ' class="' + c + '"' : '') + '>' + b + '</b></div>'; }
+    function vf(v) { return v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'K' : String(Math.round(v)); }
+    /* compact info box like Binance's */
+    try {
+        cxInfo = function (k, i, closes, ind) {
+            var sym = S.chart.sym, chg = k.c - k.o, cp = k.o ? chg / k.o * 100 : 0, amp = k.l ? (k.h - k.l) / k.l * 100 : 0, cl = chg >= 0 ? 'u' : 'd';
+            var r = row('Time', m7fmt(k.t, 'dt')) + row('Open', fmtP(k.o, sym)) + row('High', fmtP(k.h, sym)) + row('Low', fmtP(k.l, sym)) + row('Close', fmtP(k.c, sym), cl)
+                + row('Chg', (chg >= 0 ? '+' : '-') + fmtP(Math.abs(chg), sym), cl) + row('%Chg', (cp >= 0 ? '+' : '') + cp.toFixed(2) + '%', cl) + row('Range', amp.toFixed(2) + '%') + row('Vol', vf(k.v)) + row('Turnover', vf(k.q || k.v * k.c));
+            var rs = iRSI(closes, 14)[i]; if (rs !== null && rs !== undefined) { r += row('RSI(14)', rs.toFixed(1)); }
+            return r;
+        };
+    } catch (e) { }
+    /* flat candles (no 3D shading), and put the box at the top corner away from the finger */
+    try {
+        var od = drawChart;
+        drawChart = function () {
+            var P = CanvasRenderingContext2D.prototype, oc = P.createLinearGradient;
+            P.createLinearGradient = function (x0, y0, x1, y1) {
+                var g = oc.apply(this, arguments);
+                if (y0 === 0 && y1 === 0 && x0 !== x1) { var oa = g.addColorStop.bind(g); g.addColorStop = function (p, c) { if (p === 0.45) { oa(0, c); oa(1, c); } }; }
+                return g;
+            };
+            try { od.apply(this, arguments); } finally { P.createLinearGradient = oc; }
+            try {
+                var pop = document.getElementById('m7pop'), cv = document.getElementById('cv');
+                if (pop && pop.style.display !== 'none' && cv) { var C = S.cx, K = S.chart.k, w = cv.clientWidth, n = Math.max(15, Math.min(C.n, K.length)), per = (w - 62) / (n + 2), end = K.length - Math.min(C.off, Math.max(0, K.length - n)), start = Math.max(0, end - n), sx = (C.sel - start + 0.5) * per; pop.style.left = (sx > (w - 62) / 2 ? 6 : w - 62 - 138) + 'px'; pop.style.top = '6px'; }
+            } catch (e) { }
+        };
+        window.drawChart = drawChart;
+    } catch (e) { }
+    /* press-and-drag shows the crosshair under the finger (short press-and-slide, like Binance) */
+    (function () {
+        var mode = false, timer = 0, sx = 0, sy = 0, id = -1;
+        function idx(e) {
+            var cv = document.getElementById('cv'), K = S.chart.k, C = S.cx; if (!cv || !K.length) { return -1; } var r = cv.getBoundingClientRect(), x = e.clientX - r.left, W = r.width - 62, n = Math.max(15, Math.min(C.n, K.length)), end = K.length - Math.min(C.off, Math.max(0, K.length - n)), start = Math.max(0, end - n), per = W / (n + 2);
+            var j = start + Math.floor(x / per); return (x < 0 || x > W || j < start || j >= end) ? -1 : j;
+        }
+        document.addEventListener('pointerdown', function (e) { if (!e.target || e.target.id !== 'cv') { return; } mode = false; sx = e.clientX; sy = e.clientY; id = e.pointerId; clearTimeout(timer); timer = setTimeout(function () { mode = true; var j = idx({ clientX: sx, clientY: sy }); if (j >= 0) { S.cx.sel = j; cxDraw(); } try { navigator.vibrate && navigator.vibrate(8); } catch (er) { } }, 260); }, true);
+        document.addEventListener('pointermove', function (e) {
+            if (e.pointerId !== id) { return; }
+            if (!mode) { if (Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) > 10) { clearTimeout(timer); } return; }
+            e.stopImmediatePropagation(); var j = idx(e); if (j >= 0 && j !== S.cx.sel) { S.cx.sel = j; cxDraw(); }
+        }, true);
+        function end(e) { clearTimeout(timer); if (mode) { e.stopImmediatePropagation(); } mode = false; id = -1; }
+        document.addEventListener('pointerup', end, true); document.addEventListener('pointercancel', end, true);
+    })();
+    /* when Binance's live stream is blocked, refresh the last candles every 2 s so the chart still moves */
+    var busy = false;
+    setInterval(function () {
+        try {
+            var c = S.chart; if (S.win !== 'chart' || !c || !c.sym || !c.k || !c.k.length || document.hidden || busy) { return; }
+            if (c.liveAt && Date.now() - c.liveAt < 5000) { return; }
+            busy = true; var sym = c.sym, tf = c.tf;
+            fetch(cxURL(sym, tf).replace('limit=500', 'limit=3'), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (rows) {
+                if (!Array.isArray(rows) || sym !== c.sym || tf !== c.tf) { return; }
+                cxMap(rows).forEach(function (cd) { var L = c.k[c.k.length - 1]; if (L && L.t === cd.t) { c.k[c.k.length - 1] = cd; } else if (L && cd.t > L.t) { c.k.push(cd); } else { for (var j = c.k.length - 2; j >= 0 && j > c.k.length - 5; j--) { if (c.k[j].t === cd.t) { c.k[j] = cd; } } } });
+                c.pollAt = Date.now(); cxDraw();
+            }).catch(function () { }).then(function () { busy = false; });
+        } catch (e) { busy = false; }
+    }, 2000);
+})();
+/* screen-jump recorder: remembers what moved and shows it in Menu > About, so a flicker can be traced exactly */
+(function () {
+    var LOG = [];
+    try {
+        new PerformanceObserver(function (l) {
+            l.getEntries().forEach(function (e) {
+                if (e.hadRecentInput || e.value < 0.002) { return; }
+                var s = (e.sources || [])[0], nm = s && s.node ? ((s.node.id ? '#' + s.node.id : '') + (s.node.className && typeof s.node.className === 'string' ? '.' + s.node.className.split(' ')[0] : '') || s.node.nodeName) : '?';
+                LOG.push(new Date().toTimeString().slice(0, 8) + ' ' + (S.win || '') + ' ' + nm + ' ' + (s ? Math.round(s.previousRect.y) + '→' + Math.round(s.currentRect.y) : ''));
+                if (LOG.length > 6) { LOG.shift(); }
+            });
+        }).observe({ type: 'layout-shift', buffered: true });
+    } catch (e) { }
+    try {
+        var _ra2 = renderAbout; renderAbout = function () {
+            _ra2(); try { var b = $('aboutBox'); if (b && b.innerHTML.indexOf('data-jl="1"') < 0) { b.innerHTML = b.innerHTML + '<div class="row" data-jl="1" style="align-items:flex-start"><span>Screen jumps</span><span style="font-size:11px;text-align:right">' + (LOG.length ? LOG.slice(-4).map(esc).join('<br>') : 'none seen') + '</span></div>'; } } catch (e) { }
+        };
     } catch (e) { }
 })();
 
