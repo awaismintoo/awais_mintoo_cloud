@@ -11,6 +11,8 @@ import android.view.ViewGroup;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -67,6 +69,12 @@ final class WebHolder {
             @Override
             public void onPageFinished(WebView view, String url) {
                 view.evaluateJavascript("window.__mwTok='" + TOKEN + "';", null);
+            }
+        });
+        w.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> cb, FileChooserParams params) {
+                return Media.chooser(cb, params);
             }
         });
         web = w;

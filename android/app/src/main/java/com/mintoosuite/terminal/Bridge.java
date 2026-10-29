@@ -34,6 +34,13 @@ final class Bridge {
     @JavascriptInterface
     public void adsShow(String tok, boolean show) { if (ok(tok)) { AdsHelper.show(show); } }
 
+    /* ----- Professor microphone (speech to text) ----- */
+    @JavascriptInterface
+    public void speechStart(String tok, String lang) { if (ok(tok)) { Media.listen(lang); } }
+
+    @JavascriptInterface
+    public void speechStop(String tok) { if (ok(tok)) { Media.stop(); } }
+
     /* ----- wallet fingerprint ----- */
     @JavascriptInterface
     public boolean bioAvailable(String tok) {

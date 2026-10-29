@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.27';
+var BUILD = '2026-10-29.29';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5523,11 +5523,13 @@ function pfBuild() {
     if (PF.st.hide) { m.style.display = 'none'; }
 }
 function pfDrag(m) {
-    var sx, sy, ox, oy, moved = false, down = false;
+    var sx, sy, ox, oy, moved = false, down = false, lastT = 0;
     m.addEventListener('pointerdown', function (e) { down = true; moved = false; sx = e.clientX; sy = e.clientY; var r = m.getBoundingClientRect(); ox = r.left; oy = r.top; try { m.setPointerCapture(e.pointerId); } catch (x) {} });
-    m.addEventListener('pointermove', function (e) { if (!down) { return; } var dx = e.clientX - sx, dy = e.clientY - sy; if (!moved && Math.abs(dx) + Math.abs(dy) > 7) { moved = true; m.classList.add('drag'); m.classList.remove('tip'); } if (moved) { PF.st.x = ox + dx; PF.st.y = oy + dy; pfPos(); } });
-    function end() { if (!down) { return; } down = false; m.classList.remove('drag'); if (moved) { var W = window.innerWidth; PF.st.x = PF.st.x > W / 2 ? W - 70 : 6; pfPos(); pfSave(); } else { pfToggle(); } }
-    m.addEventListener('pointerup', end); m.addEventListener('pointercancel', function () { down = false; m.classList.remove('drag'); });
+    m.addEventListener('pointermove', function (e) { if (!down) { return; } var dx = e.clientX - sx, dy = e.clientY - sy; if (!moved && Math.abs(dx) + Math.abs(dy) > 16) { moved = true; m.classList.add('drag'); m.classList.remove('tip'); } if (moved) { PF.st.x = ox + dx; PF.st.y = oy + dy; pfPos(); } });
+    function end() { if (!down) { return; } down = false; lastT = Date.now(); m.classList.remove('drag'); if (moved) { var W = window.innerWidth; PF.st.x = PF.st.x > W / 2 ? W - 70 : 6; pfPos(); pfSave(); } else { pfToggle(); } }
+    m.addEventListener('pointerup', end); m.addEventListener('pointercancel', function () { if (down && !moved) { down = false; lastT = Date.now(); m.classList.remove('drag'); pfToggle(); return; } down = false; m.classList.remove('drag'); });
+    m.addEventListener('click', function () { if (Date.now() - lastT > 700) { lastT = Date.now(); pfToggle(); } });
+    try { m.style.touchAction = 'none'; } catch (e) { }
 }
 function pfToggle() { if (PF.open) { pfClose(); } else { pfOpen(); } }
 function pfOpen() {
@@ -8504,6 +8506,116 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         if (g.indexOf('aboutapp') < 0) { g.unshift('aboutapp'); }
         try { MW_SVG.aboutapp = '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'; } catch (e) { }
     })();
+})();
+/* ===== p9zr: Heads-up popups everywhere (alerts + per-screen tips), MEXC radar, Professor tap fix ===== */
+(function () {
+    var HK = 'mintoosuite_hu', H = { on: true, tips: true, hist: [], mute: {}, unseen: 0 };
+    try { var o = JSON.parse(localStorage.getItem(HK) || 'null'); if (o) { H.on = o.on !== false; H.tips = o.tips !== false; H.hist = o.hist || []; H.mute = o.mute || {}; H.unseen = o.unseen || 0; } } catch (e) { }
+    function save() { try { localStorage.setItem(HK, JSON.stringify({ on: H.on, tips: H.tips, hist: H.hist.slice(0, 40), mute: H.mute, unseen: H.unseen })); } catch (e) { } }
+    var Q = [], shownAt = 0, cur = null, tmr = 0, t0 = Date.now();
+    var COL = { bad: '#ff453a', warn: '#ff9f0a', good: '#30d158', info: '#0a84ff' };
+    function now() { return Date.now(); }
+    function badge() { try { var m = document.getElementById('pfm'); if (m) { var b = m.querySelector('.hudot'); if (H.unseen > 0) { if (!b) { b = document.createElement('i'); b.className = 'hudot'; m.appendChild(b); } b.textContent = H.unseen > 9 ? '9+' : H.unseen; } else if (b) { b.remove(); } } } catch (e) { } }
+    function hide() { var p = document.getElementById('huPop'); if (p) { p.remove(); } cur = null; if (tmr) { clearTimeout(tmr); tmr = 0; } setTimeout(drain, 700); }
+    function show(e) {
+        var p = document.getElementById('huPop'); if (p) { p.remove(); }
+        p = document.createElement('div'); p.id = 'huPop'; p.setAttribute('role', 'alert');
+        p.style.borderLeftColor = COL[e.lv] || COL.info;
+        p.innerHTML = '<span class="hui">' + e.ic + '</span><span class="hub"><b>' + esc(e.title) + '</b><span>' + esc(e.body) + '</span></span>' + (e.act ? '<span class="hubtn" data-hu="go">Open</span>' : '') + '<span class="hux" data-hu="x">✕</span>';
+        document.body.appendChild(p); cur = e; shownAt = now();
+        tmr = setTimeout(hide, e.lv === 'bad' ? 16000 : e.lv === 'warn' ? 12000 : 8000);
+    }
+    function drain() { if (cur || !Q.length || now() - shownAt < 3000) { return; } show(Q.shift()); }
+    function push(key, ic, title, body, act, lv, cool, tip) {
+        if (tip ? !H.tips : false) { return; }
+        var c = cool || 1800000; if (H.mute[key] && now() - H.mute[key] < c) { return; } H.mute[key] = now();
+        var e = { t: now(), ic: ic, title: title, body: body, act: act || '', lv: lv || 'info', key: key, tip: !!tip };
+        if (!tip) { H.hist.unshift(e); H.unseen++; } save(); badge();
+        if (H.on) { if (Q.length > 4) { Q.shift(); } Q.push(e); drain(); }
+    }
+    window.__huPush = push;
+    function go(a) {
+        if (!a) { return; } var i = a.indexOf(':'), v = a.slice(0, i), x = a.slice(i + 1);
+        try { if (v === 'win') { gotoWin(x); } else if (v === 'an' || v === 'chart') { pfAct(a); } else if (a === 'reconnect') { var b = document.querySelector('[data-act="reconnect"]'); if (b) { b.click(); } } } catch (er) { }
+    }
+    /* ----- generic: important log events become popups ----- */
+    var _al = addLog; addLog = function (type, text) { var r = _al.apply(this, arguments); try { var t = String(type); if (/BOT|ALERT|MASTER|MOVER|HEAL|FACTORS|TRADE|ORDER|RISK/.test(t)) { push('log:' + t + ':' + String(text).slice(0, 40), /ALERT|MOVER/.test(t) ? '🔔' : /BOT/.test(t) ? '🤖' : /HEAL/.test(t) ? '🩺' : '📣', t === 'ALERT' ? 'Price alert' : t === 'MOVER' ? 'Big mover' : t === 'BOT' ? 'Bot' : 'Notice', String(text).slice(0, 140), /BOT/.test(t) ? 'win:bot' : '', /BOT|HEAL/.test(t) ? 'warn' : 'info', 600000); } } catch (e) { } return r; };
+    /* ----- watchers ----- */
+    var staleSince = 0;
+    function watch() {
+        if (now() - t0 < 9000) { return; }
+        try {
+            var st = document.querySelector('.bn.stale'); if (st) { if (!staleSince) { staleSince = now(); } else if (now() - staleSince > 20000) { push('stale', '📡', 'Live data paused', 'Prices are hidden until the feed reconnects. Check your internet or tap Retry.', 'reconnect', 'bad', 300000); } } else { staleSince = 0; }
+            if (navigator.onLine === false) { push('offline', '✈️', 'You are offline', 'Prices cannot update until the internet is back.', '', 'bad', 300000); }
+            if (S.fb && S.fb.lockUntil > now()) { push('fblock', '🛑', 'Bot paused by protection', (S.fb.note || 'The bot paused itself after a loss limit.').slice(0, 120), 'win:botpro', 'warn', 6 * 3600000); }
+            var rows = []; try { rows = idRows(); } catch (e) { }
+            var b = rows.filter(function (r) { return r.R && r.R.best; })[0];
+            if (b) { var sd = (b.side > 0 || /long|buy/i.test(String(b.side))) ? 'LONG' : 'SHORT'; push('best:' + b.sym + b.side, '⭐', 'Best idea: ' + b.sym.replace(/USDT$/, '') + ' ' + sd, 'Chance estimate ' + Math.round(b.R.p * 100) + '%. Not a guarantee. Tap to see the reasons.', 'win:ideas', 'good', 4 * 3600000); }
+            var tk = S.tick || {}, top = null, k; for (k in tk) { var c = 0; try { c = chgOf(k); } catch (e) { } if (c > 25 && (tk[k].q || 0) > 5e6 && (!top || c > top.c)) { top = { s: k, c: c }; } }
+            if (top) { push('mv:' + top.s, '🚀', top.s.replace(/USDT$/, '') + ' up ' + top.c.toFixed(0) + '% today', 'Big moves are risky: they can reverse fast. Check the chart first.', 'chart:' + top.s, 'info', 6 * 3600000); }
+            mxRadar();
+        } catch (e) { }
+    }
+    /* ----- MEXC radar: movers on MEXC (also those not on Binance) ----- */
+    function mxList() { var M = S.mx || {}, a = [], seen = {}; ['spot', 'fut'].forEach(function (t) { (M[t] || []).forEach(function (x) { if (x.q >= 150000 && isFinite(x.c)) { var id = x.s; if (!seen[id] || x.c > seen[id].c) { seen[id] = { s: x.s, c: x.c, p: x.p, q: x.q, t: t, b: !!(S.tick && S.tick[x.s + 'USDT']) }; } } }); }); for (var k in seen) { a.push(seen[k]); } a.sort(function (p, q) { return q.c - p.c; }); return a; }
+    var mxAt = 0; function mxRadar() { if (now() - mxAt > 60000) { mxAt = now(); try { mxLoad(); } catch (e) { } } var l = mxList().filter(function (x) { return !x.b && x.c >= 15; })[0]; if (l) { push('mx:' + l.s, '🟦', 'MEXC mover: ' + l.s + ' +' + l.c.toFixed(0) + '%', 'Not on Binance Futures. Tap for the full analysis (charts, entry, stop, target).', 'an:' + l.s + 'USDT', 'info', 6 * 3600000); } }
+    var _vm = VIEWS.mexc; VIEWS.mexc = function () {
+        var h = _vm.apply(this, arguments), L = mxList(), top = L.slice(0, 12), x;
+        var r = '<div class="group pad"><b>🏁 MEXC top gainers (24h)</b><div class="note">Includes coins that are not on Binance. Tap Analyse for charts, indicators and a LONG/SHORT plan. Volume at least $150k. High gainers are risky.</div>';
+        if (!top.length) { r += '<div class="note">Loading MEXC data…</div>'; }
+        top.forEach(function (x) { r += '<div class="row"><span><b>' + esc(x.s) + '</b> <span class="mut" style="font-size:12px">' + (x.t === 'spot' ? 'Spot' : 'Perp') + (x.b ? ' · also on Binance' : ' · MEXC only') + ' · ' + m7vol(x.q) + ' USDT</span></span><span style="display:flex;gap:8px;align-items:center"><b style="color:' + (x.c >= 0 ? '#1d8a3b' : '#d70015') + '">' + (x.c >= 0 ? '+' : '') + x.c.toFixed(1) + '%</b><span class="btn tap kpb" data-hu="an:' + esc(x.s) + 'USDT">Analyse</span></span></div>'; });
+        return r + '</div>' + h;
+    }; try { VIEWS.mexc = VIEWS.mexc; } catch (e) { }
+    /* ----- per-screen tips (each at most once a day) ----- */
+    var TIPS = { ideas: ['Ideas are estimates', 'A high chance score still loses often. Use a stop-loss and risk 1%.', 'info'], market: ['Markets are live', 'Prices can jump quickly. Check the time zone for Change %.', 'info'], chart: ['Before you trade', 'Set a stop-loss first. Never risk more than you can lose.', 'warn'], tpro: ['Order ticket', 'Check TEST or LIVE at the top. LIVE uses real money.', 'warn'], xtrade: ['Order ticket', 'Start small. Confirm the exchange, market and size before sending.', 'warn'], rbot: ['Real-money bot', 'It trades your own exchange account. Keep TEST mode until you trust it.', 'bad'], botpro: ['Bot Pro', 'Backtests do not guarantee results. Use small size.', 'warn'], bot: ['Paper bot', 'This is practice money. Results here do not guarantee real results.', 'info'], wallet: ['Wallet safety', 'Never share your 12 words. Send a small test amount first.', 'bad'], me: ['Your profile', 'Keep your keys private. Use read/trade keys, never withdrawal keys.', 'warn'], news: ['News', 'Headlines can move prices fast. Verify before acting.', 'info'], analyst: ['Analyst', 'A plan is a suggestion, not advice. Check the risk before you trade.', 'info'], exdesk: ['Exness Desk', 'Gold and forex move fast on news. Mind the spread and lot size.', 'warn'], mexc: ['MEXC', 'Small coins can be very risky and thin. Check volume and spread.', 'warn'], academy: ['Learning', 'Take your time. Finish a lesson, then try on paper first.', 'info'], pchat: ['Professor', 'Ask anything. Answers are educational, not financial advice.', 'info'] };
+    var _gw = gotoWin; gotoWin = function (id, isBack) { var r = _gw.call(this, id, isBack); try { var t = TIPS[id]; if (t) { setTimeout(function () { push('tip:' + id, t[2] === 'bad' ? '⚠️' : t[2] === 'warn' ? '⚠️' : '💡', t[0], t[1], '', t[2], 86400000, true); }, 900); } } catch (e) { } return r; };
+    /* ----- Heads-up window ----- */
+    function ago(t) { var m = Math.round((now() - t) / 60000); return m < 1 ? 'now' : m < 60 ? m + ' min' : Math.round(m / 60) + ' h'; }
+    function vHu() {
+        H.unseen = 0; save(); badge();
+        var h = '<div class="group pad"><b style="font-size:17px">🔔 Heads-up alerts</b><div class="note">Pop-ups appear on any screen when something needs your attention: live data stops, the bot pauses, a best idea appears, a big mover (including MEXC coins), or a safety warning.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap kpb" data-hu="tog:on">Pop-ups: ' + (H.on ? 'ON' : 'OFF') + '</span><span class="btn sec tap kpb" data-hu="tog:tips">Screen tips: ' + (H.tips ? 'ON' : 'OFF') + '</span><span class="btn sec tap kpb" data-hu="test">Show a test pop-up</span></div></div>';
+        h += '<div class="sh">Recent</div><div class="group">' + (H.hist.length ? H.hist.slice(0, 25).map(function (e, i) { return '<div class="row ' + (e.act ? 'tap' : '') + '"' + (e.act ? ' data-hu="hist:' + i + '"' : '') + '><span>' + e.ic + ' <b>' + esc(e.title) + '</b><div class="note" style="margin:3px 0 0">' + esc(e.body) + '</div></span><b class="mut" style="font-size:11px">' + ago(e.t) + '</b></div>'; }).join('') : '<div class="row"><span class="mut">Nothing yet. Alerts appear here too.</span></div>') + '</div>';
+        return h;
+    }
+    WINS.push({ id: 'hu', ic: '🔔', c: '#ff9f0a', n: 'Heads-up alerts', t: 'Alerts', sub: 'Pop-ups, warnings and history' }); LIVE.hu = 0; VIEWS.hu = vHu;
+    MW_HELP.hu = 'Shows important pop-ups on any screen. You can switch pop-ups and screen tips on or off here.';
+    (function () { var g, i; for (i = 0; i < MW_GROUPS.length; i++) { if (/Account/.test(MW_GROUPS[i][0])) { g = MW_GROUPS[i][1]; } } if (!g) { g = MW_GROUPS[MW_GROUPS.length - 1][1]; } if (g.indexOf('hu') < 0) { g.unshift('hu'); } try { MW_SVG.hu = '<path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4zM10 20h4"/>'; } catch (e) { } })();
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('[data-hu]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+        var a = el.getAttribute('data-hu');
+        if (a === 'x') { hide(); } else if (a === 'go') { var c = cur; hide(); if (c) { go(c.act); } }
+        else if (a === 'test') { push('test' + now(), '🔔', 'Test pop-up', 'This is how alerts look. Tap Open to try the button.', 'win:ideas', 'good', 1000); }
+        else if (a.indexOf('tog:') === 0) { var k = a.slice(4); H[k] = !H[k]; save(); try { renderView(true); } catch (er) { } }
+        else if (a.indexOf('hist:') === 0) { var h = H.hist[+a.slice(5)]; if (h) { go(h.act); } }
+        else if (a.indexOf('an:') === 0) { try { pfAct(a); } catch (er) { } }
+    }, true);
+    setInterval(watch, 6000);
+    setTimeout(function () { try { var st = document.createElement('style'); st.id = 'p9zrcss'; st.textContent = '#huPop{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 66px);z-index:9000;display:flex;align-items:center;gap:10px;background:var(--card,#fff);color:var(--tx,#111);border:1px solid var(--line,#e5e5ea);border-left:6px solid #0a84ff;border-radius:14px;padding:10px 12px;box-shadow:0 8px 28px rgba(0,0,0,.22);animation:huin .25s ease-out;max-width:560px;margin:0 auto}@keyframes huin{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}}.hui{font-size:22px}.hub{display:flex;flex-direction:column;flex:1;min-width:0;font-size:13px;line-height:1.35}.hub b{font-size:14px}.hubtn{background:#0a84ff;color:#fff;border-radius:10px;padding:7px 12px;font-weight:600;font-size:13px;flex:none}.hux{padding:4px 8px;color:#8e8e93;flex:none}.hudot{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:9px;background:#ff3b30;color:#fff;font:700 11px/18px system-ui;text-align:center;font-style:normal;padding:0 4px;box-sizing:border-box}'; document.head.appendChild(st); } catch (e) { } badge(); }, 0);
+    setInterval(badge, 4000);
+})();
+/* ===== v10.8 .29: Auto Bot picks only the best-ranked, liquid, non-stock coins ===== */
+(function () {
+    var _bs = botStep;
+    function pick(list) {
+        var now = [];
+        try {
+            list.forEach(function (a) {
+                if (a.tier !== 'NOW') { return; }
+                if ((S.tradfi && S.tradfi[a.sym]) || a.sym === 'XAUUSDT' || a.sym === 'PAXGUSDT') { return; }          /* no stock/gold-linked contracts */
+                if ((+a.pct || 0) < 75) { return; }                   /* indicators must really agree */
+                now.push(a);
+            });
+            now.sort(function (x, y) { return (+y.score || 0) - (+x.score || 0); });
+            now = now.slice(0, 2);                                    /* only the top 2 ranked picks */
+        } catch (e) { return []; }
+        return now;
+    }
+    botStep = function () {
+        var g = getActions;
+        getActions = function () { return pick(g()); };
+        try { _bs(); } finally { getActions = g; }
+    };
+    window.__botPick = pick;
 })();
 
 function renderView(keep) {
