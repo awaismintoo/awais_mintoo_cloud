@@ -139,6 +139,104 @@ final class Bridge {
         BotService.update(ctx, title == null ? "MintooSuite" : title, text == null ? "" : text, paused, wake);
     }
 
+    /* ----- mw-v109: API keys encrypted with a hardware-backed Android Keystore key (AES-256-GCM) ----- */
+    private javax.crypto.SecretKey ksKey() throws Exception {
+        java.security.KeyStore ks = java.security.KeyStore.getInstance("AndroidKeyStore");
+        ks.load(null);
+        if (!ks.containsAlias("mw_secret_key")) {
+            javax.crypto.KeyGenerator g = javax.crypto.KeyGenerator.getInstance(android.security.keystore.KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+            g.init(new android.security.keystore.KeyGenParameterSpec.Builder("mw_secret_key", android.security.keystore.KeyProperties.PURPOSE_ENCRYPT | android.security.keystore.KeyProperties.PURPOSE_DECRYPT)
+                    .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .setKeySize(256).build());
+            g.generateKey();
+        }
+        return (javax.crypto.SecretKey) ks.getKey("mw_secret_key", null);
+    }
+
+    @JavascriptInterface
+    public boolean secSet(String tok, String name, String val) {
+        if (!ok(tok) || name == null || val == null) { return false; }
+        try {
+            javax.crypto.Cipher c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+            c.init(javax.crypto.Cipher.ENCRYPT_MODE, ksKey());
+            byte[] ct = c.doFinal(val.getBytes("UTF-8"));
+            String out = android.util.Base64.encodeToString(c.getIV(), android.util.Base64.NO_WRAP) + ":" + android.util.Base64.encodeToString(ct, android.util.Base64.NO_WRAP);
+            return ctx.getSharedPreferences("mw_sec", Context.MODE_PRIVATE).edit().putString(name, out).commit();
+        } catch (Throwable e) { return false; }
+    }
+
+    @JavascriptInterface
+    public String secGet(String tok, String name) {
+        if (!ok(tok) || name == null) { return ""; }
+        try {
+            String v = ctx.getSharedPreferences("mw_sec", Context.MODE_PRIVATE).getString(name, null);
+            if (v == null) { return ""; }
+            int i = v.indexOf(':');
+            byte[] iv = android.util.Base64.decode(v.substring(0, i), android.util.Base64.NO_WRAP);
+            byte[] ct = android.util.Base64.decode(v.substring(i + 1), android.util.Base64.NO_WRAP);
+            javax.crypto.Cipher c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+            c.init(javax.crypto.Cipher.DECRYPT_MODE, ksKey(), new javax.crypto.spec.GCMParameterSpec(128, iv));
+            return new String(c.doFinal(ct), "UTF-8");
+        } catch (Throwable e) { return ""; }
+    }
+
+    @JavascriptInterface
+    public void secDel(String tok, String name) {
+        if (!ok(tok) || name == null) { return; }
+        try { ctx.getSharedPreferences("mw_sec", Context.MODE_PRIVATE).edit().remove(name).commit(); } catch (Throwable e) { }
+    }
+
+
+    @JavascriptInterface
+    public void exitApp(String tok) {
+        if (!ok(tok)) { return; }
+        final MainActivity a = MainActivity.cur;
+        if (a != null) { a.runOnUiThread(new Runnable() { @Override public void run() { a.finishAffinity(); } }); }
+    }
+
+    /* signed exchange requests (GET/POST/DELETE) - only to the exchanges the app supports; returns status + body to the page */
+    @JavascriptInterface
+    public void httpReq(String tok, final String method, final String url, final String headersJson, final String body, final String cb) {
+        if (!ok(tok)) { return; }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int code = 0;
+                String out;
+                try {
+                    java.net.URL u = new java.net.URL(url);
+                    String h = u.getHost();
+                    boolean allowed = "https".equals(u.getProtocol()) && ("api.bitget.com".equals(h) || "api.mexc.com".equals(h) || "api.bybit.com".equals(h) || "www.okx.com".equals(h) || "fapi.binance.com".equals(h) || "api.binance.com".equals(h) || "testnet.binancefuture.com".equals(h));
+                    if (!allowed) { throw new Exception("host not allowed"); }
+                    String m = "POST".equals(method) ? "POST" : ("DELETE".equals(method) ? "DELETE" : "GET");
+                    java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
+                    c.setRequestMethod(m);
+                    c.setConnectTimeout(8000);
+                    c.setReadTimeout(12000);
+                    c.setRequestProperty("User-Agent", "MintooSuite/10.8");
+                    org.json.JSONObject hj = new org.json.JSONObject(headersJson == null || headersJson.length() == 0 ? "{}" : headersJson);
+                    java.util.Iterator<String> it = hj.keys();
+                    while (it.hasNext()) { String k = it.next(); c.setRequestProperty(k, hj.getString(k)); }
+                    if ("POST".equals(m) && body != null) {
+                        c.setDoOutput(true);
+                        byte[] bb = body.getBytes("UTF-8");
+                        c.getOutputStream().write(bb);
+                        c.getOutputStream().flush();
+                    }
+                    code = c.getResponseCode();
+                    java.io.InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
+                    java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+                    byte[] buf = new byte[8192];
+                    int n, total = 0;
+                    while (in != null && (n = in.read(buf)) > 0 && total < 1000000) { bo.write(buf, 0, n); total += n; }
+                    out = bo.toString("UTF-8");
+                } catch (Exception e) { out = String.valueOf(e.getMessage()); }
+                WebHolder.js("window.__mwHttp2&&window.__mwHttp2(" + org.json.JSONObject.quote(cb) + "," + code + "," + org.json.JSONObject.quote(out) + ");");
+            }
+        }).start();
+    }
+
     /* ----- network, alerts, notifications (unchanged from v10.4) ----- */
     @JavascriptInterface
     public void httpGet(String tok, final String url, final String cb) {
