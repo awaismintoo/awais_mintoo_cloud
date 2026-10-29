@@ -435,7 +435,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-20.5';
+var BUILD = '2026-10-29.5';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -6585,6 +6585,56 @@ document.addEventListener('click', function (e) {
     else if (v === 'retry') { S.px.at = 0; S.px.rows = null; S.px.err = ''; renderView(true); }
 }, true);
 PF_APP.push(['buy psx|sell psx|trade psx|psx broker|trade shares|buy shares|stock broker|kse trading|why psx not working|psx not loading', 'Trade PSX shares', 'Open KSE / PSX, tap a share, choose Buy or Sell, enter quantity and price: the app shows costs and prepares the order text. Save your licensed broker once (link and optional dealer WhatsApp) and one tap sends or opens it. PSX has no retail order API, so the broker places the order.']);
+/* ===== p9t: API keys and secrets are encrypted with the Android Keystore (when running in the Android app) ===== */
+(function () {
+    if (typeof Storage === 'undefined' || !Storage.prototype) { return; }
+    var SENS = /^mintoosuite_(tk|ts|x_[a-z]+)$/, G = Storage.prototype.getItem, St = Storage.prototype.setItem, Rm = Storage.prototype.removeItem;
+    function nat() { var n = null; try { n = mwNat(); } catch (e) { } return n && n.secSet && n.secGet && n.secDel ? n : null; }
+    Storage.prototype.setItem = function (k, v) {
+        if (this === window.localStorage && SENS.test(k)) { var n = nat(); if (n) { try { if (n.secSet(window.__mwTok, k, String(v))) { return St.call(this, k, 'enc:1'); } } catch (e) { } } }
+        return St.call(this, k, v);
+    };
+    Storage.prototype.getItem = function (k) {
+        var v = G.call(this, k);
+        if (this === window.localStorage && SENS.test(k) && v !== null) {
+            var n = nat();
+            if (v === 'enc:1') { if (!n) { return null; } try { var d = n.secGet(window.__mwTok, k); return d === '' ? null : d; } catch (e) { return null; } }
+            if (n && v) { try { if (n.secSet(window.__mwTok, k, v)) { St.call(this, k, 'enc:1'); } } catch (e) { } }
+        }
+        return v;
+    };
+    Storage.prototype.removeItem = function (k) { if (this === window.localStorage && SENS.test(k)) { var n = nat(); if (n) { try { n.secDel(window.__mwTok, k); } catch (e) { } } } return Rm.call(this, k); };
+    window.__mwSecState = function () { var n = nat(), on = 0, plain = 0; try { Object.keys(localStorage).forEach(function (k) { if (SENS.test(k)) { if (G.call(localStorage, k) === 'enc:1') { on++; } else { plain++; } } }); } catch (e) { } return { native: !!n, encrypted: on, plain: plain }; };
+    setTimeout(function () { try { Object.keys(localStorage).forEach(function (k) { if (SENS.test(k)) { localStorage.getItem(k); } }); } catch (e) { } }, 4000);
+})();
+function secBadge() { var s = window.__mwSecState ? window.__mwSecState() : { native: false }; return '<div class="note" style="margin:6px 0 0">' + (s.native ? '🔐 Keys are encrypted with your phone\'s secure Android Keystore (AES-256). They are not readable as plain text.' : 'Keys are stored in this browser/app storage without extra encryption (the encrypted vault is only available in the Android app).') + '</div>'; }
+(function () { var _c = cnBinance; cnBinance = function () { return _c() + secBadge(); }; })();
+PF_APP.push(['are my keys safe|api key safe|key security|keystore|encrypt|keys encrypted|is my api key secure|security risk api', 'API key safety', 'In the Android app your API keys are encrypted with the phone\'s secure Keystore (AES-256) and stay on this phone only. Keep withdrawals OFF on every key, use test mode first, keep a small balance in the API account, turn on the app lock and 2FA on the exchange, and delete the key on the exchange if you ever doubt it.']);
+/* ===== p9u: swipe-down to close More/Menu sheets; honest "Trading" wording ===== */
+(function () {
+    var y0 = null, dy = 0, sh = null, inn = null, t0 = 0;
+    document.addEventListener('touchstart', function (e) {
+        if (!e.touches || e.touches.length !== 1) { return; } var t = e.target.closest ? e.target.closest('.sheet.open .sheet-in') : null; if (!t) { sh = null; return; }
+        var onGrab = !!(e.target.closest('.grab') || e.target.closest('.sheet-t'));
+        if (!onGrab && t.scrollTop > 0) { sh = null; return; }
+        inn = t; sh = t.parentNode; y0 = e.touches[0].clientY; dy = 0; t0 = Date.now(); inn.style.transition = 'none'; inn.style.animation = 'none';
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+        if (!sh || y0 === null) { return; } dy = e.touches[0].clientY - y0;
+        if (dy < 0) { dy = 0; } if (dy > 0 && inn) { inn.style.transform = 'translateY(' + dy + 'px)'; sh.style.background = 'rgba(0,0,0,' + Math.max(0.05, 0.45 - dy / 900) + ')'; }
+    }, { passive: true });
+    function end() {
+        if (!sh || !inn) { return; } var fast = dy > 40 && (Date.now() - t0) < 280, close = dy > 110 || fast;
+        inn.style.transition = 'transform .18s ease-out'; inn.style.transform = close ? 'translateY(100%)' : 'translateY(0)';
+        var s = sh, i = inn; setTimeout(function () { if (close) { try { closeSheets(); } catch (er) { } } i.style.transition = ''; i.style.transform = ''; i.style.animation = ''; s.style.background = ''; }, 190);
+        sh = null; inn = null; y0 = null; dy = 0;
+    }
+    document.addEventListener('touchend', end, { passive: true }); document.addEventListener('touchcancel', end, { passive: true });
+})();
+(function () {
+    var _ra = renderAbout; renderAbout = function () { _ra(); try { var b = $('aboutBox'); if (b) { b.innerHTML = b.innerHTML.replace('<b class="up">Recommendations only</b>', '<b class="up">Signals + Binance orders (test or live)</b>'); } } catch (e) { } };
+    var _vh = VIEWS.help; VIEWS.help = function () { return _vh.apply(this, arguments).replace('Recommendations only: this app cannot place trades on any account.', 'Trading: orders can be placed on Binance Futures with your own API key (test mode first). MEXC, Bybit, OKX and Bitget are balance-check only; PSX shares go through your licensed broker; Exness is traded in its own app. The app never holds your money.'); };
+})();
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
