@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-30.98';
+var BUILD = '2026-10-30.101';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -10982,7 +10982,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
 (function () {
     try {
         function e2(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-        function fm(p) { if (!isFinite(p)) { return '—'; } var a = Math.abs(p); if (a >= 100) { return p.toFixed(2); } if (a >= 1) { return p.toFixed(3); } var d = Math.min(10, Math.max(4, 3 - Math.floor(Math.log10(a || 1e-9)))); return p.toFixed(d); }
+        var CURSYM = '';
+        function fm(p) { if (!isFinite(p)) { return '—'; } var a = Math.abs(p); if (a >= 100) { return p.toFixed(2); } try { return fmtP(p, CURSYM || undefined); } catch (e) { } if (a >= 1) { return p.toFixed(3); } var d = Math.min(10, Math.max(5, 4 - Math.floor(Math.log10(a || 1e-9)))); return p.toFixed(d); }
         function pc(x) { return (x >= 0 ? '+' : '') + (x * 100).toFixed(Math.abs(x) >= 0.1 ? 0 : 1) + '%'; }
         function ago(h) { return h < 1 ? 'less than an hour ago' : h < 2 ? 'about an hour ago' : h < 48 ? Math.round(h) + ' hours ago' : Math.round(h / 24) + ' days ago'; }
         var YMAP = { GOLD: 'GC=F', XAU: 'GC=F', XAUUSD: 'GC=F', SILVER: 'SI=F', XAG: 'SI=F', XAGUSD: 'SI=F', OIL: 'CL=F', USOIL: 'CL=F', DXY: 'DX-Y.NYB', EURUSD: 'EURUSD=X', GBPUSD: 'GBPUSD=X', USDJPY: 'USDJPY=X', USDPKR: 'PKR=X', USDINR: 'INR=X', AUDUSD: 'AUDUSD=X', USDCAD: 'CAD=X', USDCHF: 'CHF=X' };
@@ -11029,7 +11030,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             return { D: D, now: now, lo: lo, hi: hi, runup: runup, hrsHi: hrsSinceHi, hrsLo: hrsSinceLo, fromHi: fromHi, fromLo: fromLo, pos: pos, E20: E20, stretch: stretch, r14: r14, c24: c24, vr: vr, sup: sup, phase: phase, sc: sc, why: why, lean: lean, rng6: rng6 };
         }
         function story(A, compact) {
-            var D = A.D, nm = D.name, rg = A.hi - A.lo, lv618 = A.hi - rg * 0.382, lv50 = A.hi - rg * 0.5, lv382 = A.hi - rg * 0.618;
+            var D = A.D, nm = D.name; CURSYM = String(nm || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/USDT$/, '') + 'USDT'; var rg = A.hi - A.lo, lv618 = A.hi - rg * 0.382, lv50 = A.hi - rg * 0.5, lv382 = A.hi - rg * 0.618;
             var col = /SELL/.test(A.lean) ? '#ff453a' : /BUY/.test(A.lean) ? '#30d158' : '#ff9f0a';
             var h = '';
             h += '<div class="stbox"><div class="stl" style="color:' + col + '">' + e2(A.lean) + '</div><div class="stp">' + e2(A.phase) + '</div></div>';
@@ -11045,20 +11046,36 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         var CSS = document.createElement('style'); CSS.setAttribute('data-mwkeep', '1'); CSS.textContent = '.stbox{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(128,128,128,.1);margin-bottom:8px}.stl{font-size:18px;font-weight:900}.stp{font-size:13px;opacity:.85;text-align:right}.stx p{margin:8px 0;font-size:14px;line-height:1.4}.stx ul{margin:4px 0 4px 18px;padding:0;font-size:14px;line-height:1.4}';
         document.head.appendChild(CSS);
-        window.__mwStory = { load: loadCandles, analyse: analyse, html: story };
+        window.__mwStory = { load: loadCandles, analyse: analyse, html: story, final: function (A) { return finalCard(A); } };
         /* ---------- window ---------- */
         var ST = { sym: '', html: '', busy: 0, err: '' };
         function run(sym) {
             ST.sym = sym; ST.busy = 1; ST.err = ''; ST.html = ''; try { renderView(true); } catch (e) { }
-            loadCandles(sym).then(function (D) { ST.html = '<div class="stx"><div class="pchead" style="margin:0 0 6px"><b>' + e2(D.name) + '</b> <small class="mut">' + e2(D.quote || sym) + '</small></div>' + story(analyse(D)) + '</div>'; ST.busy = 0; try { if (S.win === 'story') { renderView(true); } } catch (e) { } })
+            loadCandles(sym).then(function (D) { var A0 = analyse(D); ST.A = A0; ST.html = '<div class="stx"><div class="pchead" style="margin:0 0 6px"><b>' + e2(D.name) + '</b> <small class="mut">' + e2(D.quote || sym) + '</small></div>' + story(A0) + '</div>'; ST.busy = 0; try { if (S.win === 'story') { renderView(true); } } catch (e) { } })
                 .catch(function () { ST.busy = 0; ST.err = 'I could not load candles for "' + sym + '". Check the spelling (for example QI, BTC, GOLD, EURUSD) or your internet.'; try { if (S.win === 'story') { renderView(true); } } catch (e) { } });
+        }
+
+        function finalCard(A) {
+            try {
+                if (!A) { return ''; }
+                var nm = String(A.D.name || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/USDT$/, ''), sym = nm + 'USDT', TP = window.__tplan, lean = String(A.lean || ''), side = /BUY/.test(lean) ? 'LONG' : /SELL/.test(lean) ? 'SHORT' : 'WAIT';
+                var px = TP ? TP.priceOf(sym) : 0, h = '<div class="sh">Final recommendation</div>', K2 = window.__kx, acts = '';
+                if (K2) { acts = '<div class="group pad" data-noswipe="1"><div class="note" style="margin:0 0 4px">Look closer:</div>' + (px > 0 ? '<button class="btn sec" data-act="chart:' + sym + '" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">📈 Open chart</button>' : '') + K2.go('Signal Lab', 'siglab') + K2.go('Analyst', 'analyst') + K2.go('Radar', 'radar') + K2.go('Briefing', 'brief') + K2.go('Exness Desk', 'exdesk') + '</div>'; }
+                var vt = null; try { vt = window.__brief && window.__brief.veto ? window.__brief.veto(sym, side === 'WAIT' ? 'LONG' : side) : null; } catch (e) { }
+                if (side === 'WAIT') { return h + acts + '<div class="group pad"><b>⏸ WAIT: no trade now.</b><div class="note" style="margin:4px 0 0">The reading is mixed. Waiting is also a position. Come back when price reaches a level above, or use a price alert.</div></div>'; }
+                h += '<div class="group pad"><b style="color:' + (side === 'LONG' ? '#16a34a' : '#dc2626') + '">' + (side === 'LONG' ? '🟢 Lean BUY / LONG' : '🔴 Lean SELL / SHORT') + '</b>' + (vt && vt.vetoBest && vt.notes && vt.notes.length ? '<div class="note" style="margin:4px 0 0">⚠ Caution: ' + e2(vt.notes.join('; ')) + '</div>' : '') + '<div class="note" style="margin:4px 0 0">This is the same reading as above, turned into numbers. The stop is based on how far this coin normally moves (about 3% to 6%) and the target is 1.5 times the stop distance. Not a promise.</div></div>';
+                if (!TP || !(px > 0)) { return h + acts + '<div class="group pad"><div class="note" style="margin:0">This market is not listed for trading inside the app, so there is no order button. For gold, silver, oil and currencies use Exness Desk.</div>' + (window.__kx ? window.__kx.go('Exness Desk', 'exdesk') : '') + '</div>'; }
+                var d = Math.max(0.03, Math.min(0.06, side === 'LONG' ? (px - (A.sup || px * 0.97)) / px : 0.045)), sl = side === 'LONG' ? px * (1 - d) : px * (1 + d), tp = side === 'LONG' ? px * (1 + 1.5 * d) : px * (1 - 1.5 * d);
+                var ex = S.tick && S.tick[sym] ? 'bin' : (S.xch === 'bitget' ? 'bitget' : 'mexc'), P = TP.mkPlan(sym, side, px, sl, tp, 0, ex, !!(S.tick && S.tick[sym]));
+                return h + (P ? TP.tcard(P, 'Market story') : '') + acts;
+            } catch (e) { return ''; }
         }
         function vStory() {
             var def = ST.sym || ((S.chart && S.chart.sym) || 'BTCUSDT').replace(/USDT$/, '');
             var h = '<div class="group pad"><b style="font-size:17px">🧭 Market story: why?</b><div class="note" style="margin:4px 0 8px">Type any coin (QI, BTC, SOL…), gold (GOLD) or a currency (EURUSD, USDPKR, DXY). You get a plain-language story: what happened, where it stands, levels to watch and what would change the view.</div><div style="display:flex;gap:8px"><input class="m7inp" id="stin" value="' + e2(def) + '" autocapitalize="characters" autocomplete="off" style="flex:1"><button class="btn" data-stq="go" style="flex:none;width:96px">Explain</button></div></div>';
             if (ST.busy) { h += '<div class="group pad"><div class="note">Reading the chart…</div></div>'; }
             else if (ST.err) { h += '<div class="group pad"><div class="note">' + e2(ST.err) + '</div></div>'; }
-            else if (ST.html) { h += '<div class="group pad">' + ST.html + '</div>'; }
+            else if (ST.html) { h += '<div class="group pad">' + ST.html + '</div>' + finalCard(ST.A); }
             return h;
         }
         WINS.push({ id: 'story', ic: '🧭', c: '#bf5af2', n: 'Market story (why)', t: 'Story', sub: 'Plain explanation for any coin, gold or currency' }); LIVE.story = 0; VIEWS.story = vStory;
@@ -12888,7 +12905,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     function priceOf(sym) { var t = S.tick && S.tick[sym]; if (t && t.p > 0) { return t.p; } var b = (sym || '').replace(/USDT$/, ''); try { var X = S.mx || {}, r = (X.fut || []).concat(X.spot || []).filter(function (x) { return x.s === b; })[0]; if (r) { return r.p; } var B = (window.XCH && XCH.bg) || {}; r = (B.fut || []).concat(B.spot || []).filter(function (x) { return x.s === b; })[0]; if (r) { return r.p; } } catch (e) { } return null; }
     function mkPlan(sym, side, entry, sl, tp, pct, ex, fut) { if (!(entry > 0) || !(sl > 0) || !(tp > 0)) { return null; } var sp = Math.abs(entry - sl) / entry * 100; if (!(sp > 0)) { return null; } var lev = Math.max(1, Math.min(10, Math.floor(33 / sp))), notional = risk / (sp / 100), margin = Math.max(1, notional / lev); return { sym: sym, side: side, entry: entry, sl: sl, tp: tp, sp: sp, tpp: Math.abs(tp - entry) / entry * 100, lev: lev, margin: margin, notional: notional, pct: pct, ex: ex || 'bin', fut: fut !== false }; }
     function planFor(sym) { var l = []; try { l = getActions() || []; } catch (e) { } var a = l.filter(function (x) { return x.sym === sym; })[0], p = priceOf(sym); if (!a || !p) { return null; } return mkPlan(sym, a.side, p, a.stopLvl, a.tgtLvl, a.pct, S.tick[sym] ? 'bin' : (S.xch === 'bitget' ? 'bitget' : 'mexc'), true); }
-    function dec(sym, v) { try { return (+v).toFixed(S.filt[sym] && S.filt[sym].tick ? decOf(S.filt[sym].tick) : (v >= 100 ? 2 : v >= 1 ? 4 : v >= 0.01 ? 5 : 7)); } catch (e) { return String(v); } }
+    function dec(sym, v) { try { return fmtP(+v, sym); } catch (e) { return String(v); } }
     function fillBinance(sym, P) { var T = S.tp; T.sym = sym; T.side = P.side; T.type = 'MARKET'; T.mode = 'ISOLATED'; T.lev = P.lev; T.sizeBy = 'margin'; T.margin = f(P.margin, 2); T.slOn = true; T.tpOn = true; T.slP = dec(sym, P.sl); T.tpP = dec(sym, P.tp); T.conf = ''; T.log = []; T.at = 0; T.maxLev = 125; openWin('tpro'); }
     function fillOther(x, sym, P, fut) { var N = S.nx, spot = x === 'mexc' || fut === false; N.x = x; N.mk = spot ? 'spot' : 'fut'; N.sym = sym; N.side = P.side === 'LONG' ? 'buy' : 'sell'; N.type = 'market'; N.mode = 'isolated'; N.lev = spot ? 1 : P.lev; N.amt = f(spot ? Math.min(10, P.notional) : P.margin, 2); N.sl = spot ? '' : dec(sym, P.sl); N.tp = spot ? '' : dec(sym, P.tp); N.ack = 0; N.log = []; openWin('xtrade'); }
     function pack(P, ex) { return [ex, P.sym, P.side, P.entry, P.sl, P.tp, Math.round(P.pct || 0), P.fut ? 1 : 0].join('|'); }
@@ -15217,6 +15234,45 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             WINS.push({ id: 'siglab', ic: '🔬', c: '#0a84ff', n: 'Signal Lab', t: 'Signal Lab', sub: 'Honest accuracy test of UT Bot, Supertrend, RSI and Bot Baba on past candles' });
         } catch (e) { }
 
+
+        /* ---------- Analyst window: more options (chart, why, trade, Bot Baba reading, Baba AI) ---------- */
+        (function () {
+            function base(sym) { return String(sym || '').replace(/USDT$/, ''); }
+            var _va = VIEWS.analyst;
+            VIEWS.analyst = function () {
+                var h = _va.apply(this, arguments);
+                try {
+                    var r = S.an && S.an.res; if (!r || !r.sym) { return h; }
+                    var sym = r.sym, b = base(sym), isC = /USDT$/.test(sym), bt = 'display:inline-block;width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px';
+                    var c = '<div class="sh">More options for ' + e2(b) + '</div><div class="group pad" data-noswipe="1">';
+                    if (isC) { c += '<button class="btn sec" data-act="chart:' + e2(sym) + '" style="' + bt + '">📈 Open chart (with UT Bot)</button><button class="btn sec" data-xk="anTP:' + e2(sym) + '" style="' + bt + '">⚙ Trade Pro ticket</button>'; }
+                    c += '<button class="btn sec" data-stq="sym:' + e2(b) + '" style="' + bt + '">🧭 Why? (Market story + final recommendation)</button>';
+                    c += '<button class="btn sec" data-xk="anBot:' + e2(sym) + '" style="' + bt + '">🤖 Ask Bot Baba</button><button class="btn sec" data-xk="anBaba:' + e2(sym) + '" style="' + bt + '">🧓 Ask Baba AI</button>';
+                    c += X.go('Real Bot', 'rbot') + X.go('Paper bot', 'botpro') + X.go('Signal Lab', 'siglab') + X.go('Radar', 'radar') + X.go('Briefing', 'brief') + X.go('Proof', 'proof') + X.go('Exness Desk', 'exdesk') + '</div>';
+                    var o = KX.anOut && KX.anOut.sym === sym ? KX.anOut : null;
+                    if (o) { c += '<div class="group pad"><b>' + e2(o.title) + '</b><div style="margin-top:6px">' + o.html + '</div></div>'; }
+                    return h + c;
+                } catch (e) { return h; }
+            };
+            X.on('anTP', function (v) { try { S.tp.sym = v; gotoWin('tpro'); } catch (e) { } });
+            X.on('anBot', function (v) {
+                KX.anOut = { sym: v, title: '🤖 Bot Baba reading', html: '<div class="note">Reading the last candles…</div>' }; X.again();
+                load([base(v), v, base(v) + '-USD'], '1h').then(function (d) {
+                    if (!d) { KX.anOut.html = '<div class="note">Could not load candles for ' + e2(v) + '.</div>'; return X.again(); }
+                    var m = mk([base(v), v, ''], d), u = m.st.ut2.pos, st = m.st.st.pos, bb = m.st.baba.pos, u1 = m.st.ut1.pos;
+                    var wd = function (p) { return p > 0 ? 'BUY side' : p < 0 ? 'SELL side' : 'no signal'; }, sb = m.st.baba.s, su = m.st.ut1.s;
+                    KX.anOut.html = '<div>UT Bot (1,10): <b>' + wd(u1) + '</b> · calmer UT Bot: <b>' + wd(u) + '</b> · Supertrend: <b>' + wd(st) + '</b></div><div style="margin-top:6px"><b>Bot Baba says: ' + (bb > 0 ? '🟢 BUY lean' : bb < 0 ? '🔴 SELL lean' : '⏸ WAIT') + '</b> <span class="note">(needs UT Bot, Supertrend and EMA50 to agree)</span></div><div class="note" style="margin:6px 0 0">On this coin\'s last ' + d.K.length + ' hourly candles (about ' + m.days + ' days), the Bot Baba rule made ' + sb.n + ' trades, ' + Math.round(sb.win * 100) + '% winners, ' + (sb.avg >= 0 ? '+' : '') + sb.avg.toFixed(2) + '% average per trade after fees; plain UT Bot: ' + su.n + ' trades, ' + Math.round(su.win * 100) + '% winners, ' + (su.avg >= 0 ? '+' : '') + su.avg.toFixed(2) + '%. Past only, not a promise. Source: ' + e2(d.src) + '.</div>';
+                    X.again();
+                }).catch(function () { KX.anOut.html = '<div class="note">Could not read the candles now. Try again.</div>'; X.again(); });
+            });
+            X.on('anBaba', function (v) {
+                var r = S.an && S.an.res; if (!r) { return; }
+                KX.anOut = { sym: v, title: '🧓 Baba AI says', html: '<div class="note">Baba is thinking…</div>' }; X.again();
+                if (!window.__babaAi || !(window.__babaConsent && window.__babaConsent())) { KX.anOut.html = '<div class="note">Online AI is off. Turn it on in Baba AI › Settings, then ask again.</div>' + X.go('Open Baba AI', 'baba'); return X.again(); }
+                var q = 'Explain in simple words for a beginner, in at most 8 short lines, what a trader should consider for ' + base(v) + ' now. Use ONLY these facts: the app reading is ' + r.side + '; price ' + r.price + '; 20-candle high ' + r.hi20 + '; 20-candle low ' + r.lo20 + '. Mention risks and a stop-loss. Do not promise profit.';
+                window.__babaAi(q, false).then(function (x) { KX.anOut.html = e2(x.t).replace(/\n/g, '<br>') + '<div class="note" style="margin:6px 0 0">Written by a free AI service from the facts above. It can be wrong. Not financial advice.</div>'; X.again(); }, function (er) { KX.anOut.html = '<div class="note">Baba could not answer now: ' + e2(er && er.message ? er.message : 'try again') + '.</div>'; X.again(); });
+            });
+        })();
         /* ---------- Bot Baba + Baba AI: product and sale-readiness page ---------- */
         function proof() {
             var b = S.bot || {}, c = b.closed || [], n = c.length, w = 0, gp = 0, gl = 0, first = 0;
@@ -15242,6 +15298,103 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             VIEWS.bsale = vSale; LIVE.bsale = 0;
             WINS.push({ id: 'bsale', ic: '🛍', c: '#af52de', n: 'Sell Bot Baba', t: 'Bot Baba and Baba AI', sub: 'Product page, sale-readiness checks and your real track record' });
         } catch (e) { }
+
+        /* ---------- Pro chart page: price header, period performance, Order book / Depth / Trades, Bots & AI tab, Long/Short bar (our own design) ---------- */
+        (function () {
+            var PERF = {}, OB = {}, FIN = {}, CSS = document.createElement('style');
+            CSS.setAttribute('data-mwkeep', '1');
+            CSS.textContent = '.cph{border-radius:16px}.cph .pr{font-size:28px;font-weight:800;line-height:1.1}.cph .st{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}.cph .st div{font-size:11px;opacity:.75}.cph .st b{display:block;font-size:13px;opacity:1}.cpp{display:flex;gap:4px;overflow-x:auto;padding:6px 0}.cpp div{flex:1 0 auto;text-align:center;font-size:11px;min-width:54px}.cpp b{display:block;font-size:13px}.cpbar{position:sticky;bottom:66px;z-index:30;display:flex;gap:8px;padding:8px;border-radius:16px;background:var(--card,#fff);box-shadow:0 -4px 18px rgba(0,0,0,.18);margin:10px 0}.cpbar .lg,.cpbar .sh2{flex:1;text-align:center;font-weight:800;color:#fff;padding:12px 0;border-radius:12px;font-size:15px}.cpbar .lg{background:#16a34a}.cpbar .sh2{background:#dc2626}.cpbar .ic{padding:8px 10px;border-radius:12px;background:rgba(128,128,128,.16);font-size:12px;text-align:center;font-weight:700}.cpob{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px}.cpob .r{display:flex;justify-content:space-between;padding:2px 4px;position:relative}.cpob .r i{position:absolute;top:0;bottom:0;right:0;opacity:.18}';
+            document.head.appendChild(CSS);
+            function sym0() { return (S.chart && S.chart.sym) || ''; }
+            function isUSDT(s) { return /USDT$/.test(s); }
+            function pc(v) { return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
+            function colr(v) { return v >= 0 ? '#16a34a' : '#dc2626'; }
+            function vol(v) { return v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'K' : String(Math.round(v)); }
+            function header(sym) {
+                var t = S.tick && S.tick[sym]; if (!t) { return ''; }
+                return '<div class="group pad cph"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:16px">' + e2(sym) + '</b>' + X.pill('Perp', '#0a84ff') + '</div><div class="pr" style="color:' + colr(t.chg) + '">' + fp(t.p, sym) + ' <span style="font-size:14px">' + pc(t.chg) + '</span></div>' +
+                    '<div class="st"><div>24h High<b>' + fp(t.h, sym) + '</b></div><div>24h Low<b>' + fp(t.l, sym) + '</b></div><div>24h Vol (USDT)<b>' + vol(t.q) + '</b></div></div><div id="cpPerf" class="cpp">' + perfHtml(sym) + '</div></div>';
+            }
+            function perfHtml(sym) {
+                var p = PERF[sym]; if (!p) { return '<div class="note" style="margin:0">Loading performance…</div>'; }
+                return [['Today', p.d0], ['7 days', p.d7], ['30 days', p.d30], ['90 days', p.d90], ['180 days', p.d180], ['1 year', p.d365]].map(function (r) { return '<div>' + r[0] + '<b style="color:' + (r[1] == null ? 'inherit' : colr(r[1])) + '">' + (r[1] == null ? '–' : pc(r[1])) + '</b></div>'; }).join('');
+            }
+            function loadPerf(sym) {
+                if (!isUSDT(sym) || (PERF[sym] && Date.now() - PERF[sym].at < 600000) || PERF[sym + '~']) { return; }
+                PERF[sym + '~'] = 1;
+                fetchText('https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=1d&limit=400', 12000).then(function (tx) {
+                    var a = JSON.parse(tx); if (!Array.isArray(a) || a.length < 3) { throw 0; } var c = a.map(function (r) { return +r[4]; }), n = c.length, last = c[n - 1];
+                    function ch(d) { return n > d ? (last / c[n - 1 - d] - 1) * 100 : null; }
+                    var t = S.tick && S.tick[sym];
+                    PERF[sym] = { at: Date.now(), d0: t ? t.chg : ch(1), d7: ch(7), d30: ch(30), d90: ch(90), d180: ch(180), d365: ch(365) };
+                }).catch(function () { }).then(function () { delete PERF[sym + '~']; var el = document.getElementById('cpPerf'); if (el && sym0() === sym) { el.innerHTML = perfHtml(sym); } });
+            }
+            function tabs() { return [['bots', '🤖 Bots & AI'], ['ob', 'Order book'], ['depth', 'Depth'], ['trades', 'Trades']]; }
+            function curTab() { var t = g('cpt', 'bots'); return ['bots', 'ob', 'depth', 'trades'].indexOf(t) >= 0 ? t : 'bots'; }
+            function obHtml(sym, d) {
+                if (!d || !d.bids) { return '<div class="note">Loading…</div>'; }
+                var mx = 0; d.bids.concat(d.asks).forEach(function (r) { mx = Math.max(mx, +r[1]); });
+                function col(rows, c) { return rows.slice(0, 12).map(function (r) { return '<div class="r"><i style="background:' + c + ';width:' + Math.round(+r[1] / (mx || 1) * 100) + '%"></i><span style="color:' + c + '">' + fp(+r[0], sym) + '</span><span>' + vol(+r[1]) + '</span></div>'; }).join(''); }
+                return '<div class="cpob"><div><div class="note" style="margin:0 4px 2px">Buyers (bids)</div>' + col(d.bids, '#16a34a') + '</div><div><div class="note" style="margin:0 4px 2px">Sellers (asks)</div>' + col(d.asks, '#dc2626') + '</div></div>';
+            }
+            function depthHtml(sym, d) {
+                if (!d || !d.bids) { return '<div class="note">Loading…</div>'; }
+                var W = 300, H = 120, b = d.bids.map(function (r) { return [+r[0], +r[1]]; }), a = d.asks.map(function (r) { return [+r[0], +r[1]]; }), cb = 0, ca = 0;
+                var B = b.map(function (r) { cb += r[1]; return [r[0], cb]; }).reverse(), A = a.map(function (r) { ca += r[1]; return [r[0], ca]; });
+                var lo = B[0][0], hi = A[A.length - 1][0], mxv = Math.max(cb, ca) || 1;
+                function X1(p) { return (p - lo) / ((hi - lo) || 1) * W; } function Y1(v) { return H - v / mxv * (H - 6); }
+                function path(P, c) { var dd = 'M' + X1(P[0][0]) + ',' + H + ' ' + P.map(function (r) { return 'L' + X1(r[0]).toFixed(1) + ',' + Y1(r[1]).toFixed(1); }).join(' ') + ' L' + X1(P[P.length - 1][0]) + ',' + H + ' Z'; return '<path d="' + dd + '" fill="' + c + '" fill-opacity=".25" stroke="' + c + '"/>'; }
+                return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:150px">' + path(B, '#16a34a') + path(A, '#dc2626') + '</svg><div class="note" style="margin:2px 0 0">Green: total buy orders waiting below the price. Red: total sell orders waiting above it. A taller wall can hold price back, but walls can be pulled at any time.</div>';
+            }
+            function trHtml(sym, d) {
+                if (!Array.isArray(d)) { return '<div class="note">Loading…</div>'; }
+                return '<div class="cpob" style="grid-template-columns:1fr;gap:0">' + d.slice(-30).reverse().map(function (r) { var up = !r.m; return '<div class="r"><span style="color:' + (up ? '#16a34a' : '#dc2626') + '">' + fp(+r.p, sym) + '</span><span>' + vol(+r.q) + '</span><span class="note" style="margin:0">' + new Date(r.T).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '</span></div>'; }).join('') + '</div>';
+            }
+            function botsHtml(sym) {
+                var K = S.chart && S.chart.k, h = '';
+                if (K && K.length > 40) { var C = calc(K), u = C.u, p = u.pos[u.pos.length - 1]; h += '<div>UT Bot (' + keyOf() + ', ATR 10): <b style="color:' + (p > 0 ? '#16a34a' : p < 0 ? '#dc2626' : 'inherit') + '">' + (p > 0 ? 'BUY side' : p < 0 ? 'SELL side' : 'no signal') + '</b> · stop ' + fp(u.stop[u.stop.length - 1], sym) + '</div>'; }
+                h += '<div style="margin:8px 0" data-noswipe="1"><button class="btn" data-xk="anBot:' + e2(sym) + '" style="display:inline-block;width:auto;padding:8px 12px;margin:3px 4px 3px 0">🤖 Ask Bot Baba</button><button class="btn" data-xk="anBaba2:' + e2(sym) + '" style="display:inline-block;width:auto;padding:8px 12px;margin:3px 4px 3px 0">🧓 Ask Baba AI</button>' + X.go('🩺 Bot Doctor', 'botdoc') + X.go('Real Bot', 'rbot') + X.go('Paper bot', 'botpro') + X.go('Signal Lab', 'siglab') + X.go('Proof', 'proof') + '</div>';
+                var o = KX.anOut && KX.anOut.sym === sym ? KX.anOut : null; if (o) { h += '<div class="group pad" style="margin:6px 0"><b>' + e2(o.title) + '</b><div style="margin-top:6px">' + o.html + '</div></div>'; }
+                var A = FIN[sym]; h += A ? (window.__mwStory ? window.__mwStory.final(A) : '') : '<div class="note">Preparing the final recommendation…</div>';
+                return h;
+            }
+            function bodyHtml(sym) {
+                var t = curTab(); if (t === 'bots') { return botsHtml(sym); } if (!isUSDT(sym)) { return '<div class="note">Order book, depth and trades are shown for Binance coins only.</div>'; }
+                return t === 'ob' ? obHtml(sym, OB[sym]) : t === 'depth' ? depthHtml(sym, OB[sym]) : trHtml(sym, OB[sym + '~t']);
+            }
+            function refresh() { var el = document.getElementById('cpBody'), s = sym0(); if (el && S.win === 'chart') { el.innerHTML = bodyHtml(s); } }
+            function poll() {
+                var s = sym0(), t = curTab(); if (S.win !== 'chart' || !s || !isUSDT(s) || t === 'bots' || document.hidden) { return; }
+                var u = t === 'trades' ? 'https://fapi.binance.com/fapi/v1/trades?symbol=' + s + '&limit=30' : 'https://fapi.binance.com/fapi/v1/depth?symbol=' + s + '&limit=' + (t === 'depth' ? 50 : 15);
+                fetchText(u, 6000).then(function (tx) { var j = JSON.parse(tx); if (t === 'trades') { OB[s + '~t'] = j; } else { OB[s] = j; } if (curTab() === t && sym0() === s) { refresh(); } }).catch(function () { });
+            }
+            setInterval(poll, 2500);
+            function loadFin(sym) {
+                if (FIN[sym] || FIN[sym + '~'] || !window.__mwStory) { return; } FIN[sym + '~'] = 1;
+                window.__mwStory.load(sym.replace(/USDT$/, '')).then(function (D) { FIN[sym] = window.__mwStory.analyse(D); }).catch(function () { }).then(function () { delete FIN[sym + '~']; if (curTab() === 'bots') { refresh(); } });
+            }
+            var _vc2 = VIEWS.chart;
+            VIEWS.chart = function () {
+                var h = _vc2.apply(this, arguments), sym = sym0(); if (!sym) { return h; }
+                try {
+                    loadPerf(sym); if (curTab() === 'bots') { loadFin(sym); } else { setTimeout(poll, 50); }
+                    var sec = '<div class="sh">Tools</div><div class="group pad" style="padding:8px">' + X.seg('cpt', tabs(), curTab()) + '<div id="cpBody">' + bodyHtml(sym) + '</div></div>';
+                    var bar = '<div class="cpbar" data-noswipe="1">' + (isUSDT(sym) ? '<div class="lg" data-xk="cpTrade:LONG">Long</div><div class="sh2" data-xk="cpTrade:SHORT">Short</div>' : '') + '<div class="ic" data-xk="cpt:bots">🤖<br>Bots</div><div class="ic" data-xk="anBaba2:' + e2(sym) + '">🧓<br>Baba AI</div></div>';
+                    var key = '<div class="group pad"><div class="sh" style="margin:0 0 6px">Why this chart';
+                    var k = h.indexOf(key); h = k >= 0 ? h.slice(0, k) + sec + h.slice(k) : h + sec;
+                    return header(sym) + h + bar;
+                } catch (e) { return h; }
+            };
+            X.on('cpTrade', function (v) { try { S.tp.sym = sym0(); S.tp.side = v; gotoWin('tpro'); } catch (e) { } });
+            X.on('anBaba2', function (v) {
+                KX.cpt = 'bots'; X.save();
+                var K = S.chart && S.chart.k, A = FIN[v], side = A ? (/BUY/.test(A.lean) ? 'BUY' : /SELL/.test(A.lean) ? 'SELL' : 'WAIT') : 'unknown', t = S.tick && S.tick[v], px = t ? t.p : (K && K.length ? K[K.length - 1].c : 0);
+                KX.anOut = { sym: v, title: '🧓 Baba AI says', html: '<div class="note">Baba is thinking…</div>' }; X.again();
+                if (!window.__babaAi || !(window.__babaConsent && window.__babaConsent())) { KX.anOut.html = '<div class="note">Online AI is off. Turn it on in Baba AI › Settings, then ask again.</div>' + X.go('Open Baba AI', 'baba'); return X.again(); }
+                var q = 'Explain in simple words for a beginner, in at most 8 short lines, what a trader should consider for ' + v.replace(/USDT$/, '') + ' now. Use ONLY these facts: price ' + px + '; the app reading is ' + side + '; 24h change ' + (t ? t.chg.toFixed(1) + '%' : 'unknown') + '. Mention risks and a stop-loss. Do not promise profit.';
+                window.__babaAi(q, false).then(function (x) { KX.anOut.html = e2(x.t).replace(/\n/g, '<br>') + '<div class="note" style="margin:6px 0 0">Written by a free AI service from the facts above. It can be wrong. Not financial advice.</div>'; X.again(); }, function (er) { KX.anOut.html = '<div class="note">Baba could not answer now: ' + e2(er && er.message ? er.message : 'try again') + '.</div>'; X.again(); });
+            });
+        })();
         window.__siglab = { utbot: utbot, strategies: strategies, sim: sim, stats: stats, levels: levels, runLab: runLab, LAB: LAB };
     } catch (e) { try { console.error('p9zszzj', e); } catch (e3) { } }
 })();
