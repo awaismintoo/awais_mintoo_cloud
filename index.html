@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.111';
+var BUILD = '2026-10-31.113';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -8108,7 +8108,7 @@ function vBadges() {
 WINS.push({ id: 'badges', ic: '🏅', c: '#ff9f0a', n: 'Achievements', t: 'Badges', sub: 'Badges, streak and your private activity' }); LIVE.badges = 0; VIEWS.badges = vBadges;
 MW_HELP.badges = 'Badges for learning and safe habits, your daily streak, and activity counts that stay on this phone.';
 /* ---------- welcome tour ---------- */
-var TOUR = [['home', 'Welcome to MintooSuite', 'Home shows live markets, the market mood, the best setup to review right now (Do Now) and the news tapes. Everything starts here.'], ['ideas', 'Trade Ideas', 'One ranked list. ⭐ BEST ideas pass every check. Tap a line to see why, the neon projection line and the chart.'], ['proj', 'The neon projection line', 'A shaded neon line extends the trend. It is a guide with an honest past-accuracy number, never a promise.'], ['prof', 'Meet Baba AI', 'Tap the cartoon helper or open Chat. Ask anything and get a picture, a lesson and a video link.'], ['shield', 'Stay safe', 'Start with the paper bot and small amounts. Use stops. Never share passwords or keys. Nobody can guarantee profit.']];
+var TOUR = [['home', 'Welcome to MintooSuite', 'Home shows live markets, the market mood, the best setup to review right now (Do Now) and the news tapes. Everything starts here.'], ['ideas', 'Trade Ideas', 'One ranked list. ⭐ BEST ideas pass every check. Tap a line to see why, the neon projection line and the chart.'], ['proj', 'The neon projection line', 'A shaded neon line extends the trend. It is a guide with an honest past-accuracy number, never a promise.'], ['prof', 'Meet Baba AI', 'Tap the cartoon helper or open Chat. Ask anything and get a picture, a lesson and a video link.'], ['agent', 'Strategy Agent', 'Describe a plan in words. Baba builds it, you confirm, it runs with practice money. Use Baba Bot, AI signals and Best Picks to choose well.'], ['shield', 'Stay safe', 'Start with the paper bot and small amounts. Use stops. Never share passwords or keys. Nobody can guarantee profit.']];
 var WT = { i: 0 };
 function wtShow() {
     var o = document.getElementById('wtour'); if (o) { o.remove(); } var s = TOUR[WT.i], last = WT.i === TOUR.length - 1;
@@ -10472,6 +10472,9 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             { t: 'Menu', b: 'Menu has Look & mode (themes), Premium plans, Lock screen, Problem log and the Guided tour.', el: function () { return byText('header button, header .btn, header [data-act], header span', 'MENU'); }, dir: 'down' },
             { t: 'Your profile', b: 'Tap your picture to open your profile, change your avatar and save your exchange connections.', el: function () { var a = document.querySelector('.meav.hd'); return a ? (a.closest('button') || a) : null; }, dir: 'down' },
             { t: 'Ask the Baba AI', b: 'The round helper answers anything: how to make an API key on Binance, what a stop-loss is, why a trade lost.', el: function () { return document.getElementById('pfm'); }, dir: 'up' },
+            { t: 'Strategy Agent', b: 'Type a plan in plain words, for example “Buy BTC below 74,000, max 500 USDT a month”. Baba shows a confirm card, runs it with practice money, and you can Pause or Terminate any time. Open it from More.', el: function () { return document.querySelector('.tab[data-act="openwin"]'); }, dir: 'up' },
+            { t: 'Practice trading and Baba Bot', b: 'Under every chart: practice trades with limit and stop orders, entry/stop/target lines, results and advice. The “🤖 Baba Bot says” card gives LONG, SHORT or WAIT with stop and target. Baba Bot can also practise by itself.', el: function () { return document.querySelector('.tab[data-act="win:chart"]'); }, dir: 'up' },
+            { t: 'Safety and alerts', b: 'Turn on Alerts when the app is closed, Fingerprint login, and the stop-loss guard. Play Money Quest 🏆 Challenges to train: Today’s Chart, Spot the Fake Breakout, and you versus your past self.', el: null },
             { t: 'You are ready', b: 'Golden rules: practice first, never risk more than 1-2% on one trade, always use a stop-loss. No tool can promise profit.', el: null }
         ];
         var ov = null, idx = 0, steps = [];
@@ -13405,7 +13408,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             if (g(MK) !== null || document.getElementById('mwMode') || document.getElementById('mwAgree') || !agreed()) { return; }
             var d = document.createElement('div'); d.id = 'mwMode'; d.setAttribute('data-mwkeep', '1');
             d.style.cssText = 'position:fixed;left:10px;right:10px;bottom:10px;z-index:2147482500;padding:16px;border-radius:18px;background:var(--card,#fff);color:var(--tx,#111);box-shadow:0 6px 30px rgba(0,0,0,.45);font-size:14px;line-height:1.45;border:1px solid var(--line,#ddd)';
-            d.innerHTML = '<b style="font-size:16px">Welcome 👋 How do you trade?</b><div style="margin:4px 0 10px;opacity:.85">This only changes how many buttons you see. You can switch any time in Menu &gt; Look &amp; mode.</div><button id="mdB" style="width:100%;padding:13px;border:0;border-radius:14px;background:linear-gradient(135deg,#5b8cff,#a05bff);color:#fff;font-weight:800;font-size:15px">🌱 I am new: keep it simple</button><button id="mdP" style="width:100%;margin-top:8px;padding:13px;border:0;border-radius:14px;background:rgba(128,128,128,.25);color:inherit;font-weight:800;font-size:15px">⚡ I trade already: show everything</button>';
+            d.innerHTML = '<b style="font-size:16px">Welcome 👋 How do you trade?</b><div style="margin:4px 0 10px;opacity:.85">This only changes how many buttons you see. You can switch any time in Menu &gt; Look &amp; mode.</div><div style="margin:0 0 10px;font-size:13px;line-height:1.6"><b>Your first week:</b><br>1. Play Money Quest (virtual money)<br>2. Practice trades under any chart<br>3. Read the “🤖 Baba Bot says” card<br>4. Try the Strategy Agent in Paper mode<br>5. Only then think about small real size</div><button id="mdB" style="width:100%;padding:13px;border:0;border-radius:14px;background:linear-gradient(135deg,#5b8cff,#a05bff);color:#fff;font-weight:800;font-size:15px">🌱 I am new: keep it simple</button><button id="mdP" style="width:100%;margin-top:8px;padding:13px;border:0;border-radius:14px;background:rgba(128,128,128,.25);color:inherit;font-weight:800;font-size:15px">⚡ I trade already: show everything</button>';
             document.body.appendChild(d);
             var done = function (m) { sv(MK, m); if (g(LK) === null && m === 'beginner') { sv(LK, 'neon'); sv('mintoosuite_theme', 'dark'); try { applyTheme(); } catch (er) { } } d.remove(); try { mwHostSig = ''; buildNav(); renderView(true); } catch (er) { } };
             d.querySelector('#mdB').onclick = function () { done('beginner'); }; d.querySelector('#mdP').onclick = function () { done('pro'); };
@@ -16472,8 +16475,9 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             if (typeof FB_KINDS !== 'undefined') { FB_KINDS.push(['ut', 'UT Bot flip'], ['babarule', 'Baba rule (UT + trend)']); }
         } catch (e) { }
         function journalCalls() { try { return JSON.parse(localStorage.getItem('mintoosuite_journal') || '[]') || []; } catch (e) { return []; } }
-        function gates(s, sg) {
+        function gates(s, sg, src) {
             var R = S.rb, now = Date.now(), cl = (R.closed || []);
+            if (src === 'practice') { try { cl = window.__pt.PT.hist.filter(function (t) { return t.by === 'Baba Bot'; }).map(function (t) { return { pnl: t.net, t1: t.t1 }; }); } catch (e) { cl = []; } }
             if (P.bb.sg) {
                 var lo = cl.filter(function (t) { return t.pnl <= 0 && now - t.t1 < 12 * 3600000; }), last = lo.reduce(function (a, t) { return Math.max(a, t.t1); }, 0);
                 if (lo.length >= 3 && now - last < 2 * 3600000) { return Promise.resolve('Stoploss guard: ' + lo.length + ' losses in 12 hours, resting until ' + new Date(last + 2 * 3600000).toLocaleTimeString()); }
@@ -16559,13 +16563,78 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 '<div class="note" style="margin:6px 0 0">New strategies to pick below: <b>UT Bot flip</b> and <b>Baba rule (UT + trend)</b>. Already built in: take-profit schedule, trailing profit, cool-downs, daily loss limit, exchange-side stop, UNLOCK each launch.</div></div>';
         }
         try {
-            var _vr = VIEWS.rbot; VIEWS.rbot = function () { var h = typeof _vr === 'function' ? _vr.apply(this, arguments) : ''; return bbBox() + h + simBox(); };
+            var _vr = VIEWS.rbot; VIEWS.rbot = function () { var h = typeof _vr === 'function' ? _vr.apply(this, arguments) : ''; return paBox() + bbBox() + h + simBox(); };
         } catch (e) { }
         X.on('bbtg', function (v) { P.bb[v] = P.bb[v] ? 0 : 1; sv(); X.again(); });
         X.on('bbgr', function (v) { P.gr = +v || 5; sv(); X.again(); });
         X.on('bbtp', function (v) { P.tp = +v || 2; sv(); X.again(); });
         X.on('bbsim', function (v) { if (v === 'gstart') { gridStart(); } else if (v === 'gstop') { if (P.grid) { P.grid.on = 0; } } else if (v === 'dstart') { dcaStart(); } else if (v === 'dstop') { if (P.dca) { P.dca.on = 0; } } sv(); X.again(); });
         try { var w = winDef('rbot'); if (w) { w.n = 'Baba Bot (real trading)'; w.t = 'Baba Bot'; w.sub = 'Baba Bot by Awais Mintoo: UT Bot, journal learning, grid and DCA practice, all safety locks'; } } catch (e) { }
+
+
+        /* ---------- Baba Bot practice mode (auto) and the recommendation for manual trades ---------- */
+        if (P.pa == null) { P.pa = 0; } if (!P.palog) { P.palog = []; }
+        function plog(t) { P.palog.unshift({ t: Date.now(), m: t }); P.palog = P.palog.slice(0, 15); sv(); }
+        function paScan(force) {
+            if (!force && !P.pa) { return; }
+            var R = S.rb, ms = ((typeof CX_MS !== 'undefined' && CX_MS[R.tf]) || 900) * 1000, bucket = Math.floor(Date.now() / ms);
+            if (!force && P.paLast === bucket) { return; } P.paLast = bucket;
+            var t = S.tick || {}, syms = Object.keys(t).filter(function (s) { return /USDT$/.test(s) && !/^(USDC|FDUSD|TUSD|BUSD)/.test(s); }).sort(function (a, b) { return t[b].q - t[a].q; }).slice(0, R.pairs || 12);
+            syms.forEach(function (s) {
+                m7kl(s, R.tf, 160).then(function (k) {
+                    var PT = window.__pt && window.__pt.PT; if (!PT) { return; }
+                    var mine = PT.pos.filter(function (p) { return p.by === 'Baba Bot'; });
+                    if (mine.length >= (R.maxOpen || 2) || PT.pos.some(function (p) { return p.sym === s; })) { return; }
+                    var today = new Date().toDateString(), n = PT.hist.concat(PT.pos).filter(function (x) { return x.by === 'Baba Bot' && new Date(x.t0).toDateString() === today; }).length; if (n >= (R.maxDay || 6)) { return; }
+                    var closed = k.slice(0, -1); if (closed.length < 70) { return; } var sig = labSignals(closed, R.strat), l0 = sig[sig.length - 1]; if (!l0) { return; }
+                    var sg = l0 > 0 ? 1 : -1; if (sg < 0 && !R.shorts) { return; }
+                    plog('Signal ' + bs(s) + ' ' + (sg > 0 ? 'LONG' : 'SHORT') + ' (' + R.strat + ' ' + R.tf + ')');
+                    return gates(s, sg, 'practice').then(function (why) {
+                        if (why) { plog('Skipped ' + bs(s) + ': ' + why); return; }
+                        var p = window.__pt.openAt(s, sg, { px: t[s] && t[s].p, mg: +R.margin || 10, lev: +R.lev || 3, sl: +R.slp || 2, tp: +R.tpp || 3, by: 'Baba Bot' });
+                        if (p) { plog('Opened practice ' + bs(s) + ' ' + (sg > 0 ? 'LONG' : 'SHORT') + ' · stop ' + (R.slp || 2) + '% · target ' + (R.tpp || 3) + '%'); }
+                    });
+                }).catch(function () { });
+            });
+        }
+        setInterval(function () { try { paScan(false); } catch (e) { } }, 20000);
+        function paBox() {
+            var R = S.rb, on = !!P.pa;
+            return '<div class="group pad"><b>🧪 Baba Bot practice mode</b> <span class="mut" style="font-size:12px">paper money, real prices</span><div class="note" style="margin:4px 0 8px">Baba Bot scans with the same strategy and checks as the real bot (strategy ' + e2(R.strat) + ', ' + e2(R.tf) + ', stop ' + e2(R.slp) + '%, target ' + e2(R.tpp) + '%) but trades only in the Practice account, which lives under every chart. No exchange keys needed. Use this to test Baba Bot, by itself or next to your own practice trades.</div>' +
+                X.seg('pa', [['1', 'Auto practice ON'], ['0', 'OFF']], on ? '1' : '0') +
+                '<button class="btn sec" style="width:auto;display:inline-block;margin:0 6px 6px 0" data-xk="pascan:1">Scan now</button>' +
+                (P.palog.length ? P.palog.slice(0, 6).map(function (d) { return '<div class="note" style="margin:2px 0;font-size:12px">' + new Date(d.t).toLocaleTimeString() + ' · ' + e2(d.m) + '</div>'; }).join('') : '<div class="note">No decisions yet. It checks at every closed candle.</div>') + '</div>';
+        }
+        X.on('pa', function (v) { P.pa = v === '1' ? 1 : 0; P.paLast = 0; sv(); X.again(); if (P.pa) { setTimeout(function () { paScan(false); }, 300); } });
+        X.on('pascan', function () { paScan(true); say('Scanning…'); setTimeout(X.again, 2500); });
+        /* Baba Bot says: a plain recommendation under the chart for people who trade by hand */
+        var recKey = '';
+        function recommend(K, sym) {
+            var u = ut(K), n = K.length - 1, p = u.pos[n], a = atr(K, 10), c = K[n].c; if (!p || !(a > 0)) { return null; }
+            var e = early(K), c50 = K.map(function (x) { return x.c; }), e50 = iEMA(c50, 50)[n], rs = iRSI(c50, 14)[n];
+            var side = p, stop = u.stop[n], slPct = Math.min(5, Math.max(0.5, Math.abs(c - stop) / c * 100)), tpPct = slPct * 1.5, why = [], wait = '';
+            var age = 0; for (var i = n; i > 0 && u.pos[i - 1] === p; i--) { age++; }
+            why.push('UT Bot is on the ' + (p > 0 ? 'BUY' : 'SELL') + ' side for ' + age + ' candle(s)');
+            why.push('Price is ' + ((c > e50) === (p > 0) ? 'with' : 'against') + ' the 50 average');
+            why.push('RSI ' + Math.round(rs));
+            if (e && e.side === -p) { wait = 'UT Bot may flip soon (early warning). Better to wait.'; }
+            else if ((c > e50) !== (p > 0)) { wait = 'Price is against the bigger trend. Safer to wait.'; }
+            else if ((p > 0 && rs > 75) || (p < 0 && rs < 25)) { wait = 'RSI is stretched. Late entry, wait for a pullback.'; }
+            else if (age > 12) { wait = 'The move is already old (' + age + ' candles). Late entry, wait.'; }
+            return { side: side, slPct: +slPct.toFixed(2), tpPct: +tpPct.toFixed(2), why: why, wait: wait, c: c };
+        }
+        setInterval(function () {
+            try {
+                var el0 = document.getElementById('p9Info'), sym = S.chart && S.chart.sym; if (!el0 || !sym || !LM || !LM.K || LM.K.length < 60) { return; }
+                var rc = recommend(LM.K, sym); var el = document.getElementById('p9Rec');
+                if (!el) { el = document.createElement('div'); el.id = 'p9Rec'; el.className = 'note'; el.style.cssText = 'margin:6px 0 0;padding:8px 10px;border-radius:12px;border:1px solid rgba(124,58,237,.35);font-size:12px'; el0.parentNode.insertBefore(el, el0.nextSibling); recKey = ''; }
+                var key = rc ? [sym, rc.side, rc.slPct, rc.wait].join('|') : 'none'; if (key === recKey) { return; } recKey = key;
+                if (!rc) { el.innerHTML = '<b>🤖 Baba Bot says:</b> no clear side right now. Wait.'; return; }
+                el.innerHTML = '<b>🤖 Baba Bot says:</b> ' + (rc.wait ? '<b style="color:#f59e0b">WAIT</b> · ' + e2(rc.wait) : '<b style="color:' + (rc.side > 0 ? '#16a34a' : '#dc2626') + '">' + (rc.side > 0 ? 'LONG' : 'SHORT') + '</b> idea · stop ' + rc.slPct + '% · target ' + rc.tpPct + '% (1.5 to 1)') + '<br><span class="mut">' + e2(rc.why.join(' · ')) + '. ' + e2(recTxt(record(sym))) + '.</span><br>' +
+                    '<span class="pfbtn" data-xk="recprac:' + rc.side + '|' + rc.slPct + '|' + rc.tpPct + '">🧪 Practice this</span> <span class="pfbtn" data-act="win:trade">💵 Real: open Trade window</span> <span class="mut">Not advice. You decide.</span>';
+            } catch (er) { }
+        }, 3000);
+        X.on('recprac', function (v) { var a = v.split('|'), s = S.chart && S.chart.sym; if (!s || !window.__pt) { return; } var rp = window.__cf && window.__cf.R && window.__cf.R.on; var px = rp ? 0 : (S.tick[s] && S.tick[s].p); var o = { sl: +a[1], tp: +a[2], by: 'Baba Bot' }; if (rp) { say('Replay: use the buttons in the Practice card.'); return; } o.px = px; window.__pt.openAt(s, +a[0], o); });
 
         /* early / fast switches inside Alerts */
         try {
@@ -16649,7 +16718,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         } catch (e) { }
 
         /* ---------- 7. offline language packs (English, Urdu, Arabic, Chinese, French) ---------- */
-        var PACKS = [['en', 'English'], ['ur', 'Urdu · اردو'], ['ar', 'Arabic · العربية'], ['zh', 'Chinese · 中文'], ['fr', 'French · Français']], TQ = {}, tseq = 0, busyPack = {}, haveRaw = null;
+        var PACKS = [['en', 'English'], ['ur', 'Urdu · اردو'], ['ar', 'Arabic · العربية'], ['zh', 'Chinese · 中文'], ['fr', 'French · Français'], ['hi', 'Hindi · हिन्दी'], ['es', 'Spanish · Español'], ['de', 'German · Deutsch'], ['fa', 'Persian · فارسی'], ['tr', 'Turkish · Türkçe'], ['ru', 'Russian · Русский'], ['pt', 'Portuguese · Português'], ['bn', 'Bengali · বাংলা'], ['id', 'Indonesian'], ['ms', 'Malay'], ['it', 'Italian · Italiano'], ['ja', 'Japanese · 日本語'], ['ko', 'Korean · 한국어'], ['vi', 'Vietnamese'], ['th', 'Thai · ไทย'], ['nl', 'Dutch'], ['pl', 'Polish'], ['uk', 'Ukrainian'], ['sv', 'Swedish'], ['el', 'Greek'], ['he', 'Hebrew'], ['sw', 'Swahili'], ['ta', 'Tamil'], ['te', 'Telugu'], ['mr', 'Marathi'], ['gu', 'Gujarati'], ['kn', 'Kannada'], ['ro', 'Romanian'], ['cs', 'Czech'], ['hu', 'Hungarian'], ['da', 'Danish'], ['fi', 'Finnish'], ['no', 'Norwegian'], ['bg', 'Bulgarian'], ['hr', 'Croatian'], ['sk', 'Slovak'], ['tl', 'Filipino']], TQ = {}, tseq = 0, busyPack = {}, haveRaw = null;
         var _mt = window.__mwTr;
         window.__mwTr = function (id, ok, data) { var c = TQ[id]; if (c) { delete TQ[id]; c(ok, data); } else if (_mt) { _mt(id, ok, data); } };
         function tcall(fn, args, cb) { var n = nat(); if (!n || !n[fn]) { return cb(false, 'Language packs work in the installed Android app.'); } var id = 't' + (++tseq); TQ[id] = cb; try { n[fn].apply(n, [window.__mwTok].concat(args, [id])); } catch (e) { delete TQ[id]; cb(false, 'Not available.'); } }
@@ -16657,12 +16726,13 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         function refreshPacks() { if (!trOk()) { return; } tcall('trHave', [], function (ok, data) { if (ok) { haveRaw = String(data || ''); P.packs = {}; haveRaw.split(',').forEach(function (c) { if (c) { P.packs[c] = 1; } }); sv(); if (S.win === 'look') { X.again(); } } }); }
         function has(l) { return l === 'en' ? true : !!P.packs[l]; }
         function packBox() {
-            var ok = trOk(), h = '<div class="group pad"><b>📴 Offline languages</b><div class="note" style="margin:4px 0 8px">Download a language once (about 30 MB each, needs internet). After that, typed text can be translated with no internet. ' + (ok ? '' : '<b>Not set up in this copy of the app.</b> ') + 'Reading text from the camera still needs internet. Offline reading of Urdu and Arabic pictures is not available on Android.</div>';
+            var ok = trOk(), h = '<div class="group pad"><b>📴 Offline languages</b> <span class="mut" style="font-size:12px">' + PACKS.length + ' languages</span><div class="note" style="margin:4px 0 8px">Download a language once (about 30 MB each, needs internet). After that, typed text can be translated with no internet. ' + (ok ? '' : '<b>Not set up in this copy of the app.</b> ') + 'Reading text from the camera still needs internet. Offline reading of Urdu and Arabic pictures is not available on Android.</div>';
+            h += '<div style="max-height:340px;overflow:auto" data-noswipe="1">';
             PACKS.forEach(function (p) {
                 var ready = p[0] === 'en' || P.packs[p[0]], bz = busyPack[p[0]];
                 h += '<div class="row"><span>' + e2(p[1]) + '</span><span>' + (ready ? '<span style="color:#16a34a;font-weight:800">✅ Ready</span>' : bz ? '<span class="mut">Downloading…</span>' : ok ? '<button class="btn sec" style="width:auto;padding:6px 12px;font-size:13px" data-xk="trdl:' + p[0] + '">⬇ Download</button>' : '<span class="mut">–</span>') + '</span></div>';
             });
-            return h + '</div>';
+            return h + '</div></div><div class="note" style="margin:6px 0 0">Pashto, Sindhi and Punjabi are not available offline (Google does not offer them). Baba AI still translates them online.</div>';
         }
         try { var _vl = VIEWS.look; VIEWS.look = function () { setTimeout(refreshPacks, 50); return _vl.apply(this, arguments) + packBox(); }; } catch (e) { }
         X.on('trdl', function (l) {
@@ -16670,7 +16740,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             tcall('trDownload', [l], function (ok, data) { busyPack[l] = 0; if (ok) { P.packs[l] = 1; sv(); say('Ready: ' + l.toUpperCase()); } else { say(String(data || 'Download failed. Check the internet and try again.')); } X.again(); });
         });
         function guess(t) { if (/[؀-ۿ]/.test(t)) { return /[ٹڈڑںےہھی]/.test(t) ? 'ur' : 'ar'; } if (/[一-鿿]/.test(t)) { return 'zh'; } if (/[àâçéèêëîïôûùüÿœ]|\b(le|la|les|des|est|une|bonjour|merci|je|vous)\b/i.test(t)) { return 'fr'; } return 'en'; }
-        var LN = { english: 'en', urdu: 'ur', arabic: 'ar', chinese: 'zh', french: 'fr' };
+        var LN = { english: 'en', urdu: 'ur', arabic: 'ar', chinese: 'zh', french: 'fr', hindi: 'hi', spanish: 'es', german: 'de', persian: 'fa', farsi: 'fa', turkish: 'tr', russian: 'ru', portuguese: 'pt', bengali: 'bn', indonesian: 'id', malay: 'ms', italian: 'it', japanese: 'ja', korean: 'ko', vietnamese: 'vi', thai: 'th', dutch: 'nl', polish: 'pl', ukrainian: 'uk', swedish: 'sv', greek: 'el', hebrew: 'he', swahili: 'sw', tamil: 'ta', telugu: 'te', marathi: 'mr', gujarati: 'gu', kannada: 'kn' };
         window.__offTr = function (text, to) {
             return new Promise(function (res, rej) {
                 var from = guess(text); if (from === to) { return res(text); } if (!trOk() || !has(from) || !has(to)) { return rej(new Error('Download both languages first (Settings > look and language).')); }
@@ -16700,15 +16770,16 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 return r;
             };
         } catch (e) { }
-        window.__p9p = { kl: function (a, b, c) { return m7kl(a, b, c); }, ls: function (k, kind) { return labSignals(k, kind); }, kinds: function () { return typeof FB_KINDS !== 'undefined' ? FB_KINDS.map(function (x) { return x[0]; }).join() : ''; }, au: { gate: function () { return auGate(); }, done: function (e, n) { return auDone(e, n); }, sess: function () { return auSess(); }, AU: AU, clear: function () { lss('mintoosuite_sess', 'null'); } }, offer: offerFp, FIRED: FIRED, KL: KL, P: P, early: early, forming: forming, record: record, gates: gates, simTick: simTick, fastTick: fastTick, guess: guess };
+        window.__p9p = { get: function (u) { return m7get(u); }, map: function (a) { return cxMap(a); }, paScan: function () { return paScan(true); }, kl: function (a, b, c) { return m7kl(a, b, c); }, ls: function (k, kind) { return labSignals(k, kind); }, kinds: function () { return typeof FB_KINDS !== 'undefined' ? FB_KINDS.map(function (x) { return x[0]; }).join() : ''; }, au: { gate: function () { return auGate(); }, done: function (e, n) { return auDone(e, n); }, sess: function () { return auSess(); }, AU: AU, clear: function () { lss('mintoosuite_sess', 'null'); } }, offer: offerFp, FIRED: FIRED, KL: KL, P: P, early: early, forming: forming, record: record, gates: gates, simTick: simTick, fastTick: fastTick, guess: guess };
     } catch (err) { try { console.log('cg', err); } catch (e) { } }
 })();
 /* ===== CG: p9zszzq: Practice trading (virtual account on real prices, live and Replay) with statistics, weakness report and advice ===== */
 (function () {
     try {
         var X = window.__kx, e2 = X.e2, KEY = 'mintoosuite_pt', FEE = 0.0005, SLIP = 0.0002, FUND = 0.0001;
-        var PT = { start: 1000, bal: 1000, pos: [], hist: [], set: { mg: 100, lev: 3, sl: 2, tp: 4 }, show: 0, rs: 0 };
+        var PT = { start: 1000, bal: 1000, pos: [], hist: [], ord: [], set: { mg: 100, lev: 3, sl: 2, tp: 4, ot: 'market', off: 0.5, trail: 0 }, ex: 0, show: 0, rs: 0 };
         try { var o = JSON.parse(localStorage.getItem(KEY) || 'null'); if (o && o.pos) { for (var k in o) { PT[k] = o[k]; } } } catch (e) { }
+        if (!PT.ord) { PT.ord = []; } if (PT.set.ot == null) { PT.set.ot = 'market'; PT.set.off = 0.5; PT.set.trail = 0; }
         function sv() { try { if (PT.hist.length > 500) { PT.hist = PT.hist.slice(-500); } localStorage.setItem(KEY, JSON.stringify(PT)); } catch (e) { } }
         function say(t) { try { toast(t); } catch (e) { } }
         function f(v, d) { var n = +v; return isFinite(n) ? n.toFixed(d == null ? 2 : d) : '–'; }
@@ -16728,15 +16799,29 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         /* ---------- orders ---------- */
         function open(side) {
             var s = chartSym(); if (!/USDT$/.test(s || '')) { return say('Open a coin chart first.'); }
+            var rp = RP(), S0 = PT.set;
+            if (rp) { var c = replayCandle(); if (!c) { return say('Replay is not ready.'); } return openAt(s, side, { px: c.c.c, ct: c.c.t, src: 'replay', by: 'you' }); }
+            var px = liveP(s); if (!(px > 0)) { return say('Waiting for the live price…'); }
+            if (S0.ot !== 'market') {
+                if (PT.pos.some(function (p) { return p.sym === s; }) || PT.ord.some(function (o) { return o.sym === s; })) { return say('You already have a trade or order on ' + nmS(s) + '.'); }
+                var lim = S0.ot === 'limit', off = (+S0.off || 0.5) / 100, opx = lim ? px * (1 - side * off) : px * (1 + side * off);
+                if (S0.mg > PT.bal - used() - PT.ord.reduce(function (a, o) { return a + o.mg; }, 0) - 0.01) { return say('Not enough free practice money.'); }
+                PT.ord.push({ sym: s, side: side, type: S0.ot, px: opx, mg: S0.mg, lev: S0.lev, sl: S0.sl, tp: S0.tp, trail: S0.trail, t: Date.now(), by: 'you' }); sv(); X.again();
+                return say((lim ? 'Limit' : 'Stop') + ' order placed at ' + f(opx, opx < 1 ? 5 : 2));
+            }
+            return openAt(s, side, { px: px, src: 'live', by: 'you' });
+        }
+        /* openAt: used by the buttons, pending orders and Baba Bot. o = { px, ct, src, by, mg, lev, sl (percent), tp (percent), trail } */
+        function openAt(s, side, o) {
             if (PT.pos.some(function (p) { return p.sym === s; })) { return say('You already have a practice trade on ' + nmS(s) + '. Close it first.'); }
-            var S0 = PT.set, rp = RP(), px, ct = 0, src = 'live';
-            if (rp) { var c = replayCandle(); if (!c) { return say('Replay is not ready.'); } px = c.c.c; ct = c.c.t; src = 'replay'; } else { px = liveP(s); }
-            if (!(px > 0)) { return say('Waiting for the live price…'); }
-            var free = PT.bal - used(); if (S0.mg > free - 0.01) { return say('Not enough free practice money (' + f(free) + ' USDT free).'); }
-            var e = px * (1 + side * SLIP), q = S0.mg * S0.lev / e, fee = q * e * FEE;
+            var S0 = PT.set, mg = o.mg != null ? o.mg : S0.mg, lev = o.lev != null ? o.lev : S0.lev, slp = o.sl != null ? o.sl : S0.sl, tpp = o.tp != null ? o.tp : S0.tp, tr = o.trail != null ? o.trail : S0.trail;
+            var px = o.px || liveP(s); if (!(px > 0)) { say('Waiting for the live price…'); return null; }
+            var free = PT.bal - used(); if (mg > free - 0.01) { say('Not enough free practice money (' + f(free) + ' USDT free).'); return null; }
+            var src = o.src || 'live', e = px * (1 + side * SLIP), q = mg * lev / e, fee = q * e * FEE;
             PT.bal -= fee;
-            PT.pos.push({ sym: s, side: side, e: e, q: q, mg: S0.mg, lev: S0.lev, sl: S0.sl ? e * (1 - side * S0.sl / 100) : 0, tp: S0.tp ? e * (1 + side * S0.tp / 100) : 0, liq: e * (1 - side * (1 / S0.lev - 0.005)), t0: src === 'replay' ? ct : Date.now(), ct: ct, src: src, fee: fee, lastc: px, mfe: 0, mae: 0, bal0: PT.bal + fee });
-            sv(); X.again(); say('Practice ' + (side > 0 ? 'LONG' : 'SHORT') + ' opened at ' + f(e, e < 1 ? 5 : 2));
+            var p = { sym: s, side: side, e: e, q: q, mg: mg, lev: lev, sl: slp ? e * (1 - side * slp / 100) : 0, tp: tpp ? e * (1 + side * tpp / 100) : 0, liq: e * (1 - side * (1 / lev - 0.005)), t0: src === 'replay' ? o.ct : Date.now(), ct: o.ct || 0, src: src, fee: fee, lastc: px, mfe: 0, mae: 0, bal0: PT.bal + fee, by: o.by || 'you', trail: tr || 0, best: e };
+            PT.pos.push(p);
+            sv(); X.again(); say('Practice ' + (side > 0 ? 'LONG' : 'SHORT') + ' opened at ' + f(e, e < 1 ? 5 : 2) + (o.by && o.by !== 'you' ? ' by ' + o.by : '')); return p;
         }
         function close(p, x, why, t1) {
             var i = PT.pos.indexOf(p); if (i < 0) { return; } PT.pos.splice(i, 1);
@@ -16744,11 +16829,24 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             var hold = Math.max(0, (t1 || Date.now()) - p.t0), g = why === 'LIQUIDATED' ? -p.mg : upnl(p, x), fee = p.q * x * FEE, fund = p.src === 'live' ? p.q * p.e * FUND * (hold / 28800000) * p.side : 0;
             var net = g - fee - fund; if (net < -p.mg - fee) { net = -p.mg - fee; }
             PT.bal += net;
-            PT.hist.push({ sym: p.sym, side: p.side, e: p.e, x: x, mg: p.mg, lev: p.lev, sl: p.sl ? 1 : 0, risk: p.sl ? p.q * Math.abs(p.e - p.sl) : 0, t0: p.t0, t1: t1 || Date.now(), net: net, fees: p.fee + fee + Math.max(0, fund), why: why, src: p.src, bal0: p.bal0 });
+            PT.hist.push({ sym: p.sym, side: p.side, e: p.e, x: x, mg: p.mg, lev: p.lev, sl: p.sl ? 1 : 0, risk: p.sl ? p.q * Math.abs(p.e - p.sl) : 0, t0: p.t0, t1: t1 || Date.now(), net: net, fees: p.fee + fee + Math.max(0, fund), why: why, src: p.src, bal0: p.bal0, by: p.by || 'you' });
             sv();
         }
+        function partial(p, frac) {
+            if (frac >= 0.99 || p.q * (1 - frac) * p.e < 1) { return; }
+            var x = curPx(p) * (1 - p.side * SLIP), part = p.q * frac, g = part * (x - p.e) * p.side, fee = part * x * FEE, mgp = p.mg * frac;
+            PT.bal += g - fee; p.q -= part; p.mg -= mgp; p.fee += fee;
+            PT.hist.push({ sym: p.sym, side: p.side, e: p.e, x: x, mg: mgp, lev: p.lev, sl: p.sl ? 1 : 0, risk: 0, t0: p.t0, t1: Date.now(), net: g - fee, fees: fee, why: 'partial ' + Math.round(frac * 100) + '%', src: p.src, bal0: p.bal0, by: p.by || 'you' }); sv();
+        }
+        function fillOrders() {
+            PT.ord.slice().forEach(function (o) {
+                var px = liveP(o.sym); if (!px) { return; }
+                var hit = o.type === 'limit' ? (o.side > 0 ? px <= o.px : px >= o.px) : (o.side > 0 ? px >= o.px : px <= o.px);
+                if (hit) { PT.ord.splice(PT.ord.indexOf(o), 1); openAt(o.sym, o.side, { px: o.px, src: 'live', by: o.by, mg: o.mg, lev: o.lev, sl: o.sl, tp: o.tp, trail: o.trail }); }
+            });
+        }
         function check() {
-            var ch = false, R = RP();
+            var ch = false, R = RP(); try { fillOrders(); } catch (e) { }
             PT.pos.slice().forEach(function (p) {
                 var bars = [];
                 if (p.src === 'live') { var px = liveP(p.sym); if (px) { bars.push({ h: px, l: px, c: px, t: Date.now() }); } }
@@ -16758,6 +16856,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 for (var i = 0; i < bars.length; i++) {
                     var b = bars[i], hit = '';
                     p.lastc = b.c; p.mfe = Math.max(p.mfe, (p.side > 0 ? b.h - p.e : p.e - b.l) / p.e * 100); p.mae = Math.max(p.mae, (p.side > 0 ? p.e - b.l : b.h - p.e) / p.e * 100);
+                    if (p.trail) { p.best = p.side > 0 ? Math.max(p.best || p.e, b.h) : Math.min(p.best || p.e, b.l); var ns = p.best * (1 - p.side * p.trail / 100); if (!p.sl || (p.side > 0 ? ns > p.sl : ns < p.sl)) { p.sl = ns; } }
                     if (p.side > 0 ? b.l <= p.liq : b.h >= p.liq) { close(p, p.liq, 'LIQUIDATED', b.t); ch = true; break; }
                     if (p.sl && (p.side > 0 ? b.l <= p.sl : b.h >= p.sl)) { close(p, p.sl, 'stop', b.t); ch = true; break; }
                     if (p.tp && (p.side > 0 ? b.h >= p.tp : b.l <= p.tp)) { close(p, p.tp, 'target', b.t); ch = true; break; }
@@ -16821,37 +16920,65 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         function posHtml() {
             return PT.pos.map(function (p) {
                 var px = curPx(p), pn = upnl(p, px), pc = pn / p.mg * 100;
-                return '<div class="row" style="align-items:center"><span><b>' + e2(nmS(p.sym)) + '</b> ' + (p.side > 0 ? 'LONG' : 'SHORT') + ' ' + p.lev + 'x @ ' + f(p.e, p.e < 1 ? 5 : 2) + (p.src === 'replay' ? ' <small class="mut">replay</small>' : '') + '<br><small class="mut">stop ' + (p.sl ? f(p.sl, p.sl < 1 ? 5 : 2) : 'none') + ' · target ' + (p.tp ? f(p.tp, p.tp < 1 ? 5 : 2) : 'none') + ' · liquidation ' + f(p.liq, p.liq < 1 ? 5 : 2) + '</small></span><span style="text-align:right"><b style="color:' + (pn >= 0 ? '#16a34a' : '#dc2626') + '">' + (pn >= 0 ? '+' : '') + f(pn) + ' (' + f(pc, 1) + '%)</b><br><button class="btn sec" style="width:auto;padding:5px 12px;font-size:13px" data-xk="ptclose:' + p.sym + '">Close</button></span></div>';
+                return '<div class="row" style="align-items:center"><span><b>' + e2(nmS(p.sym)) + '</b> ' + (p.side > 0 ? 'LONG' : 'SHORT') + ' ' + p.lev + 'x @ ' + f(p.e, p.e < 1 ? 5 : 2) + (p.src === 'replay' ? ' <small class="mut">replay</small>' : '') + '<br><small class="mut">stop ' + (p.sl ? f(p.sl, p.sl < 1 ? 5 : 2) : 'none') + ' · target ' + (p.tp ? f(p.tp, p.tp < 1 ? 5 : 2) : 'none') + ' · liquidation ' + f(p.liq, p.liq < 1 ? 5 : 2) + '</small></span><span style="text-align:right"><b style="color:' + (pn >= 0 ? '#16a34a' : '#dc2626') + '">' + (pn >= 0 ? '+' : '') + f(pn) + ' (' + f(pc, 1) + '%)</b><br><button class="btn sec" style="width:auto;padding:5px 12px;font-size:13px" data-xk="ptclose:' + p.sym + '">Close</button>' + (PT.ex ? ' <button class="btn sec" style="width:auto;padding:5px 10px;font-size:12px" data-xk="ptpart:' + p.sym + '">Take 50%</button> <button class="btn sec" style="width:auto;padding:5px 10px;font-size:12px" data-xk="ptbe:' + p.sym + '">Stop to entry</button>' : '') + (p.by && p.by !== 'you' ? '<br><small class="mut">by ' + e2(p.by) + '</small>' : '') + '</span></div>';
             }).join('');
         }
         function resultsHtml() {
             var o = stats(), h = '<div style="margin-top:8px"><b>📊 My practice results</b>';
-            if (!o.n) { return h + '<div class="note">No closed practice trades yet.</div>' + advHtml(o) + '</div>'; }
+            if (!o.n) { return h + '<div class="note">No closed practice trades yet.</div>' + badgeHtml(o) + advHtml(o) + '</div>'; }
             function cell(a, b, c) { return '<div style="flex:1 1 30%;min-width:90px;margin:3px 0"><div class="mut" style="font-size:11px">' + a + '</div><b' + (c ? ' style="color:' + c + '"' : '') + '>' + b + '</b></div>'; }
             h += '<div style="display:flex;flex-wrap:wrap">' + cell('Trades', o.n + ' (' + o.live + ' live, ' + o.rpl + ' replay)') + cell('Win rate', f(o.win, 0) + '%') + cell('Net result', (o.net >= 0 ? '+' : '') + f(o.net) + ' USDT', o.net >= 0 ? '#16a34a' : '#dc2626') + cell('Profit factor', f(o.pf)) + cell('Average win', f(o.avgW)) + cell('Average loss', f(o.avgL)) + cell('Per trade', (o.exp >= 0 ? '+' : '') + f(o.exp)) + cell('Biggest drawdown', f(o.dd, 0) + '%') + cell('Fees paid', f(o.fees)) + cell('Best / worst', f(o.best) + ' / ' + f(o.worst)) + cell('LONG', o.lg[0] + (o.lg[1] != null ? ' · ' + f(o.lg[1], 0) + '%' : '')) + cell('SHORT', o.sh[0] + (o.sh[1] != null ? ' · ' + f(o.sh[1], 0) + '%' : '')) + cell('Hold win / loss', dur(o.holdW) + ' / ' + dur(o.holdL)) + cell('No stop-loss', o.noSl + ' trades') + cell('Avg leverage', f(o.lev, 1) + 'x') + '</div>';
-            h += advHtml(o);
+            h += bySplit() + badgeHtml(o) + advHtml(o);
             h += '<div class="note" style="margin:8px 0 2px"><b>Last trades</b></div>' + PT.hist.slice(-8).reverse().map(function (t) { return '<div class="row"><span>' + e2(nmS(t.sym)) + ' ' + (t.side > 0 ? 'LONG' : 'SHORT') + ' <small class="mut">' + e2(t.why) + (t.src === 'replay' ? ' · replay' : '') + '</small></span><b style="color:' + (t.net >= 0 ? '#16a34a' : '#dc2626') + '">' + (t.net >= 0 ? '+' : '') + f(t.net) + '</b></div>'; }).join('');
             return h + '</div>';
         }
+        function badges(o) {
+            var H = PT.hist, n = o.n || 0, run = 0, bestRun = 0, tgt = 0, bestT = 0;
+            H.forEach(function (t) { if (t.net > 0) { run++; bestRun = Math.max(bestRun, run); } else { run = 0; } if (t.why === 'target') { tgt++; bestT = Math.max(bestT, tgt); } else { tgt = 0; } });
+            var allSl = n >= 20 && H.slice(-20).every(function (t) { return t.sl; }), noLiq = n >= 50 && !H.slice(-50).some(function (t) { return t.why === 'LIQUIDATED'; });
+            return [['🐣', 'First trade', 'Close your first practice trade', n >= 1], ['🔟', 'Ten trades', 'Close 10 trades', n >= 10], ['🏅', 'Fifty trades', 'Close 50 trades', n >= 50], ['🔥', 'Hot streak', '5 winning trades in a row', bestRun >= 5], ['🎯', 'Sniper', '3 targets hit in a row', bestT >= 3],
+                ['🛡', 'Safe hands', 'Last 20 trades all had a stop-loss', allSl], ['🧗', 'Survivor', '50 trades with no liquidation', noLiq], ['📈', 'In profit', 'Profit factor 1.3+ after 30 trades', n >= 30 && o.pf >= 1.3], ['🤖', 'Baba Bot fan', 'Close a trade placed by Baba Bot', H.some(function (t) { return t.by && t.by !== 'you'; })], ['⚡', 'Expert', 'Use expert mode', !!PT.ex]];
+        }
+        function badgeHtml(o) { var b = badges(o); return '<div class="note" style="margin:8px 0 2px"><b>Badges ' + b.filter(function (x) { return x[3]; }).length + '/' + b.length + '</b></div><div style="display:flex;flex-wrap:wrap;gap:6px">' + b.map(function (x) { return '<span title="' + e2(x[2]) + '" style="padding:4px 9px;border-radius:12px;font-size:12px;' + (x[3] ? 'background:#7c3aed22;color:#7c3aed;font-weight:700' : 'opacity:.45;border:1px dashed currentColor') + '">' + x[0] + ' ' + e2(x[1]) + '</span>'; }).join('') + '</div>'; }
+        function bySplit() {
+            var A = PT.hist.filter(function (t) { return !t.by || t.by === 'you'; }), B = PT.hist.filter(function (t) { return t.by && t.by !== 'you'; });
+            if (!B.length) { return ''; }
+            function w(a) { return a.length ? f(a.filter(function (t) { return t.net > 0; }).length / a.length * 100, 0) + '% wins, ' + (a.reduce(function (s, t) { return s + t.net; }, 0) >= 0 ? '+' : '') + f(a.reduce(function (s, t) { return s + t.net; }, 0)) + ' USDT' : 'no trades'; }
+            return '<div class="note" style="margin:8px 0 2px"><b>You versus Baba Bot</b></div><div class="note" style="margin:2px 0">🙋 You: ' + A.length + ' trades, ' + w(A) + '</div><div class="note" style="margin:2px 0">🤖 Baba Bot: ' + B.length + ' trades, ' + w(B) + '</div>';
+        }
         function advHtml(o) { return '<div class="note" style="margin:8px 0 2px"><b>What to improve (do these first)</b></div>' + advice(o).slice(0, 5).map(function (a, i) { return '<div class="note" style="margin:3px 0">' + (a[1] >= 3 ? '🔴 ' : a[1] === 2 ? '🟠 ' : a[1] === 1 ? '🟡 ' : '🟢 ') + e2(a[0]) + '</div>'; }).join(''); }
+        function ordHtml() {
+            return PT.ord.map(function (o) {
+                return '<div class="row"><span>⏳ ' + e2(nmS(o.sym)) + ' ' + (o.side > 0 ? 'LONG' : 'SHORT') + ' ' + o.type + ' @ ' + f(o.px, o.px < 1 ? 5 : 2) + ' <small class="mut">waiting</small></span><button class="btn sec" style="width:auto;padding:4px 10px;font-size:12px" data-xk="ptcx:' + PT.ord.indexOf(o) + '">Cancel</button></div>';
+            }).join('');
+        }
         function card() {
             var s = chartSym(), rp = RP(), S0 = PT.set;
             return '<div class="group pad" id="ptCard"><b>🎮 Practice trading</b> <span class="mut" style="font-size:12px">' + (rp ? 'Replay prices (past candles)' : 'live prices') + ' · virtual money</span>' +
                 '<div class="note" id="ptEq" style="margin:4px 0 6px">' + eqHtml() + '</div>' +
-                '<div class="note" style="margin:0 0 3px">Size (margin, USDT)</div>' + chips('mg', [50, 100, 250, 500], S0.mg, '') + '<div class="note" style="margin:0 0 3px">Leverage</div>' + chips('lev', [1, 3, 5, 10, 20], S0.lev, 'x') +
+                '<div class="note" style="margin:0 0 3px">Size (margin, USDT)</div>' + chips('mg', [50, 100, 250, 500], S0.mg, '') + '<div class="note" style="margin:0 0 3px">Leverage</div>' + chips('lev', PT.ex ? [3, 10, 20, 50, 100] : [1, 3, 5, 10, 20], S0.lev, 'x') +
                 '<div class="note" style="margin:0 0 3px">Stop-loss</div>' + chips('sl', [0, 1, 2, 3], S0.sl, '%') + '<div class="note" style="margin:0 0 3px">Target</div>' + chips('tp', [0, 2, 4, 6], S0.tp, '%') +
+                (PT.ex ? '<div class="note" style="margin:0 0 3px">Trailing stop (follows the price)</div>' + chips('trail', [0, 0.5, 1, 2], S0.trail, '%') : '') +
+                '<div class="note" style="margin:0 0 3px">Order type' + (rp ? ' (Replay uses market orders)' : '') + '</div>' + X.seg('ptot', [['market', 'Market'], ['limit', 'Limit'], ['stop', 'Stop']], rp ? 'market' : S0.ot) +
+                (!rp && S0.ot !== 'market' ? '<div class="note" style="margin:0 0 3px">Distance from the price</div>' + chips('off', [0.3, 0.5, 1, 2], S0.off, '%') : '') +
                 '<div style="display:flex;gap:8px;margin:4px 0 6px"><button class="btn" style="background:#16a34a;flex:1" data-xk="ptbuy:1">▲ Buy / Long ' + e2(nmS(s || '')) + '</button><button class="btn" style="background:#dc2626;flex:1" data-xk="ptbuy:-1">▼ Sell / Short</button></div>' +
-                '<div id="ptPos">' + posHtml() + '</div>' +
+                '<div id="ptPos">' + posHtml() + '</div>' + ordHtml() +
+                '<div class="note" style="margin:6px 0 0">Expert mode (more leverage, trailing stop, partial close): ' + X.pill(PT.ex ? 'On' : 'Off', PT.ex ? '#7c3aed' : '#8e8e93') + ' <span style="text-decoration:underline;cursor:pointer" data-xk="ptex:1">' + (PT.ex ? 'turn off' : 'turn on') + '</span></div>' +
                 '<div style="margin-top:6px"><button class="btn sec" style="width:auto;display:inline-block;margin-right:6px" data-xk="ptres:1">' + (PT.show ? 'Hide results' : '📊 Results and advice') + '</button><button class="btn sec" style="width:auto;display:inline-block" data-xk="ptreset:1">' + (PT.rs ? 'Tap again to reset' : 'Reset account') + '</button></div>' +
                 (PT.show ? resultsHtml() : '') +
                 '<div class="note" style="margin:8px 0 0;font-size:11px">How real is it? Real prices, 0.05% fee each side, small slippage, funding on live trades, stops, targets and liquidation. Not copied from a real exchange: orders fill instantly at the last price and big orders would slip more in real life. Practice results do not guarantee real results.</div></div>';
         }
         try { var _v = VIEWS.chart; VIEWS.chart = function () { var h = _v.apply(this, arguments), sig = ''; return h + card(); }; } catch (e) { }
         X.on('ptset', function (v) { var a = v.split(':'); PT.set[a[0]] = +a[1]; sv(); X.again(); });
+        X.on('ptot', function (v) { PT.set.ot = v; sv(); X.again(); });
+        X.on('ptex', function () { PT.ex = PT.ex ? 0 : 1; if (!PT.ex) { PT.set.trail = 0; if (PT.set.lev > 20) { PT.set.lev = 10; } } sv(); X.again(); });
+        X.on('ptcx', function (i) { PT.ord.splice(+i, 1); sv(); X.again(); });
+        X.on('ptpart', function (sym) { PT.pos.filter(function (p) { return p.sym === sym; }).forEach(function (p) { partial(p, 0.5); }); X.again(); });
+        X.on('ptbe', function (sym) { PT.pos.filter(function (p) { return p.sym === sym; }).forEach(function (p) { p.sl = p.e; }); sv(); X.again(); say('Stop moved to your entry price'); });
         X.on('ptbuy', function (v) { open(+v > 0 ? 1 : -1); });
         X.on('ptclose', function (sym) { PT.pos.filter(function (p) { return p.sym === sym; }).forEach(function (p) { var px = curPx(p), r = p.src === 'replay' && RP() ? replayCandle() : null; close(p, px, 'closed by you', p.src === 'replay' && r ? r.c.t : Date.now()); }); X.again(); });
         X.on('ptres', function () { PT.show = PT.show ? 0 : 1; sv(); X.again(); });
-        X.on('ptreset', function () { if (!PT.rs) { PT.rs = 1; X.again(); setTimeout(function () { PT.rs = 0; }, 4000); return; } PT.rs = 0; PT.bal = PT.start; PT.pos = []; PT.hist = []; sv(); say('Practice account reset to 1000 USDT'); X.again(); });
+        X.on('ptreset', function () { if (!PT.rs) { PT.rs = 1; X.again(); setTimeout(function () { PT.rs = 0; }, 4000); return; } PT.rs = 0; PT.bal = PT.start; PT.pos = []; PT.hist = []; PT.ord = []; sv(); say('Practice account reset to 1000 USDT'); X.again(); });
         try {
             var _pb = pfAnswer;
             pfAnswer = function (raw) {
@@ -16863,8 +16990,328 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 return _pb.apply(this, arguments);
             };
         } catch (e) { }
-        window.__pt = { PT: PT, open: open, check: check, stats: stats, advice: advice, equity: equity, save: sv, close: close };
+        var _co = window.__cxOver;
+        window.__cxOver = function (c, m) {
+            if (_co) { _co(c, m); }
+            try {
+                var items = [], Y = m.yr || m.y;
+                PT.pos.forEach(function (p) { if (p.sym === m.sym) { items.push([p.e, (p.side > 0 ? 'ENTRY ▲ ' : 'ENTRY ▼ ') + f(p.e, p.e < 1 ? 5 : 2), '#3b82f6', []]); if (p.sl) { items.push([p.sl, 'STOP', '#dc2626', [5, 4]]); } if (p.tp) { items.push([p.tp, 'TARGET', '#16a34a', [5, 4]]); } items.push([p.liq, 'LIQ', '#f59e0b', [2, 4]]); } });
+                PT.ord.forEach(function (o) { if (o.sym === m.sym) { items.push([o.px, o.type.toUpperCase() + ' ' + (o.side > 0 ? '▲' : '▼'), '#8e8e93', [6, 3]]); } });
+                if (!items.length) { return; }
+                c.save(); c.beginPath(); c.rect(0, m.padT, m.W, m.ph); c.clip(); c.font = '700 9px -apple-system,Segoe UI,sans-serif'; c.textAlign = 'right'; c.lineWidth = 1.2;
+                items.forEach(function (it) { var y = Y(it[0]); if (!isFinite(y)) { return; } c.strokeStyle = it[2]; c.setLineDash(it[3]); c.beginPath(); c.moveTo(0, y); c.lineTo(m.W, y); c.stroke(); c.setLineDash([]); c.fillStyle = it[2]; c.fillText(it[1], m.W - 4, y - 3); });
+                c.restore();
+            } catch (e) { }
+        };
+        window.__pt = { openAt: openAt, partial: partial, fill: fillOrders, badges: function () { return badges(stats()); }, PT: PT, open: open, check: check, stats: stats, advice: advice, equity: equity, save: sv, close: close };
     } catch (err) { try { console.log('pt', err); } catch (e) { } }
+})();
+/* ===== CH: p9zszzr: Money Quest challenges: Today's Chart (daily, same for everyone), Spot the Fake Breakout, You versus your past self. XP, animals, badges. Virtual only. ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2, K0 = 'mintoosuite_ch';
+        var C = { xp: 0, days: {}, fb: { n: 0, ok: 0, best: 0, cur: 0 }, bd: {} };
+        try { var o = JSON.parse(localStorage.getItem(K0) || 'null'); if (o && o.days) { C = o; } } catch (e) { }
+        if (!C.fb) { C.fb = { n: 0, ok: 0, best: 0, cur: 0 }; } if (!C.bd) { C.bd = {}; }
+        function sv() { try { localStorage.setItem(K0, JSON.stringify(C)); } catch (e) { } }
+        var TOP = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'LINK', 'DOT', 'LTC', 'NEAR', 'UNI', 'ATOM', 'APT', 'ARB', 'OP', 'SUI', 'AAVE', 'INJ'];
+        var LV = [[0, '🐣', 'Chick'], [60, '🐱', 'Kitten'], [150, '🐯', 'Tiger'], [300, '🦁', 'Lion'], [550, '🐺', 'Wolf'], [900, '🦅', 'Eagle'], [1400, '🐉', 'Dragon'], [2100, '🧞', 'Baba Genie'], [3000, '🦈', 'Shark'], [4500, '🐋', 'Whale'], [7000, '👑', 'Market King']];
+        function lvl() { var i = 0; LV.forEach(function (l, k) { if (C.xp >= l[0]) { i = k; } }); return { i: i, ic: LV[i][1], name: LV[i][2], from: LV[i][0], to: LV[i + 1] ? LV[i + 1][0] : null }; }
+        function say(t) { try { toast(t); } catch (e) { } }
+        function calm() { return KX.calm === '1' || (window.__safe && window.__safe()); }
+        function addXp(n) { var a = lvl().i; C.xp += n; var b = lvl(); if (b.i > a) { say('🎉 LEVEL UP! You are now a ' + b.ic + ' ' + b.name); boom(); } sv(); }
+        function day(d) { d = d || new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+        function rngOf(str) { var h = 1779033703 ^ str.length, i; for (i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; } return function () { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; }; }
+        function f(v, d) { var n = +v; return isFinite(n) ? n.toFixed(d == null ? 1 : d) : '–'; }
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = '@keyframes chPop{0%{transform:translateY(0) scale(.6);opacity:1}100%{transform:translateY(-220px) scale(1.4);opacity:0}}.chBig{font-size:18px!important;padding:14px!important;border-radius:16px!important;font-weight:800}.chCard{border-radius:18px;padding:14px;color:#fff;background:linear-gradient(135deg,#7c3aed,#ec4899 60%,#f59e0b)}'; document.head.appendChild(st);
+        function boom() { if (calm()) { return; } try { var d = document.createElement('div'); d.setAttribute('data-mwkeep', '1'); d.style.cssText = 'position:fixed;left:0;right:0;bottom:30%;z-index:9500;pointer-events:none;text-align:center;font-size:30px'; var em = ['🎉', '⭐', '💎', '🚀', '🪙', '✨']; for (var i = 0; i < 14; i++) { var s = document.createElement('span'); s.textContent = em[i % em.length]; s.style.cssText = 'display:inline-block;margin:0 ' + (4 + i % 5) + 'px;animation:chPop ' + (0.9 + (i % 5) * 0.12) + 's ease-out forwards'; d.appendChild(s); } document.body.appendChild(d); setTimeout(function () { d.remove(); }, 1800); } catch (e) { } }
+
+        /* ---------- chart painter ---------- */
+        function paint(id, K, upto, lines) {
+            var cv = document.getElementById(id); if (!cv || !K) { return; }
+            var W = cv.clientWidth || 340, H = 210, dpr = window.devicePixelRatio || 1; if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+            var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+            var vis = K.slice(0, upto), lo = Infinity, hi = -Infinity; vis.forEach(function (k) { lo = Math.min(lo, k.l); hi = Math.max(hi, k.h); }); (lines || []).forEach(function (l) { lo = Math.min(lo, l.p); hi = Math.max(hi, l.p); });
+            var pad = (hi - lo) * 0.06 || 1; lo -= pad; hi += pad; var n = K.length, bw = W / (n + 2), Y = function (p) { return H - 14 - (p - lo) / (hi - lo) * (H - 28); };
+            (lines || []).forEach(function (l) { c.strokeStyle = l.c; c.lineWidth = 1.2; c.setLineDash(l.d || []); c.beginPath(); c.moveTo(0, Y(l.p)); c.lineTo(W, Y(l.p)); c.stroke(); c.setLineDash([]); c.fillStyle = l.c; c.font = '700 10px sans-serif'; c.textAlign = 'right'; c.fillText(l.t, W - 3, Y(l.p) - 3); });
+            vis.forEach(function (k, i) { var x = (i + 1) * bw, up = k.c >= k.o, col = up ? '#16a34a' : '#dc2626'; c.strokeStyle = col; c.fillStyle = col; c.lineWidth = 1; c.beginPath(); c.moveTo(x + bw / 2, Y(k.h)); c.lineTo(x + bw / 2, Y(k.l)); c.stroke(); var y1 = Y(Math.max(k.o, k.c)), y2 = Y(Math.min(k.o, k.c)); c.fillRect(x + 1, y1, Math.max(1, bw - 2), Math.max(1, y2 - y1)); });
+        }
+        function fetchK(sym, startMs, n) { return window.__p9p.get('https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + 'USDT&interval=1h&startTime=' + startMs + '&limit=' + n).then(function (a) { if (!Array.isArray(a)) { throw new Error('no data'); } return window.__p9p.map(a); }); }
+        var G = { dc: null, fb: null, busy: '', msg: '' }, dirty = 0;
+
+        /* ---------- 1. Today's Chart (same coin and time window for everybody on the same day) ---------- */
+        function dcLoad() {
+            if (G.busy) { return; } G.busy = 'dc'; G.msg = ''; X.again();
+            var r = rngOf('baba-' + day()), coin = TOP[Math.floor(r() * TOP.length)], start = Date.now() - (20 + Math.floor(r() * 100)) * 86400000; start = Math.floor(start / 3600000) * 3600000;
+            fetchK(coin, start, 104).then(function (K) { if (K.length < 100) { throw new Error('short'); } G.dc = { coin: coin, K: K.slice(0, 104), side: 1, sl: 2, tp: 4, phase: 'ask', rev: 80, res: null }; G.busy = ''; X.again(); setTimeout(function () { dirty = 1; }, 60); })
+                .catch(function () { G.busy = ''; G.msg = 'Could not load today’s chart. Check the internet and try again.'; X.again(); });
+        }
+        function dcPlay() {
+            var D = G.dc, K = D.K, e = K[80].o, sl = D.sl, tp = D.tp, ex = null, why = 'closed at the end', i;
+            var slp = e * (1 - D.side * sl / 100), tpp = e * (1 + D.side * tp / 100);
+            for (i = 80; i < 104; i++) { var k = K[i], hitS = D.side > 0 ? k.l <= slp : k.h >= slp, hitT = D.side > 0 ? k.h >= tpp : k.l <= tpp; if (hitS) { ex = slp; why = 'stop hit'; D.end = i; break; } if (hitT) { ex = tpp; why = 'target hit'; D.end = i; break; } }
+            if (ex == null) { ex = K[103].c; D.end = 103; }
+            var pnl = D.side * (ex - e) / e * 100 - 0.1, score = Math.max(-100, Math.min(300, Math.round(pnl * 50) + (sl ? 20 : 0) + (tp / sl >= 1.5 ? 10 : 0)));
+            D.res = { pnl: pnl, score: score, why: why, e: e, slp: slp, tpp: tpp }; D.phase = 'reveal'; D.rev = 80;
+            var t = setInterval(function () { D.rev++; dirty = 1; if (D.rev >= D.end + 1 || calm()) { D.rev = D.end + 1; clearInterval(t); finishDc(); } }, calm() ? 10 : 260);
+        }
+        function finishDc() {
+            var D = G.dc, d = day(); D.phase = 'done'; var rec = C.days[d] || (C.days[d] = {}); if (rec.dc == null) { rec.dc = D.res.score; rec.coin = D.coin; addXp(Math.max(5, 10 + Math.round(D.res.score / 10))); if (D.res.score > 0) { boom(); } } else { D.res.again = 1; } sv(); X.again(); setTimeout(function () { dirty = 1; }, 60);
+        }
+        function dcHtml() {
+            var D = G.dc, d = day(), done = C.days[d] && C.days[d].dc != null, h = '<div class="group pad"><b>📅 Today’s Chart</b> <span class="mut" style="font-size:12px">same chart for every player today</span>';
+            if (!D) { return h + '<div class="note" style="margin:6px 0 8px">Read the chart, pick a side, set your stop and target, then see what the market did next. ' + (done ? 'You scored <b>' + C.days[d].dc + '</b> today. You can play again for fun (no extra score).' : 'One scored try per day.') + '</div>' + (G.msg ? '<div class="note" style="color:#dc2626">' + e2(G.msg) + '</div>' : '') + '<button class="btn chBig" data-xk="dc:load">' + (G.busy === 'dc' ? 'Loading…' : '🎮 Play today’s chart') + '</button></div>'; }
+            h += '<div class="note" style="margin:6px 0 2px">Coin: <b>' + e2(D.coin) + '</b> · hourly candles · you see the last 80 hours. The next 24 hours are hidden.</div><canvas id="chDc" style="width:100%;height:210px;border-radius:12px;background:rgba(128,128,128,.08)"></canvas>';
+            if (D.phase === 'ask') {
+                h += X.seg('dcs', [['1', '🟢 LONG (up)'], ['-1', '🔴 SHORT (down)']], String(D.side)) + '<div class="note" style="margin:0 0 3px">Stop-loss (safety)</div>' + X.seg('dcsl', [['1', '1%'], ['2', '2%'], ['3', '3%']], String(D.sl)) + '<div class="note" style="margin:0 0 3px">Target (goal)</div>' + X.seg('dctp', [['2', '2%'], ['4', '4%'], ['6', '6%']], String(D.tp)) + '<button class="btn chBig" data-xk="dc:go">🚀 Start!</button>';
+            } else if (D.phase === 'reveal') { h += '<div class="note" style="margin:6px 0 0">⏳ The market is moving…</div>'; }
+            else { var R = D.res; h += '<div class="chCard" style="margin-top:8px"><div style="font-size:22px;font-weight:800">' + (R.score > 0 ? '🎉 ' : '🤔 ') + 'Score ' + R.score + '</div><div>' + e2(R.why) + ' · ' + (R.pnl >= 0 ? '+' : '') + f(R.pnl, 2) + '% price move' + (R.again ? ' · practice round' : '') + '</div></div><div class="note" style="margin:6px 0">Tip: ' + (R.score < 0 ? 'A stop-loss kept the loss small. Try waiting for a clearer move next time.' : 'Nice. Keep the stop and a target at least 1.5 times the stop.') + '</div><button class="btn sec" data-xk="dc:reset">Close</button>'; }
+            return h + '</div>';
+        }
+        X.on('dc', function (v) { if (v === 'load') { dcLoad(); } else if (v === 'go') { dcPlay(); X.again(); setTimeout(function () { dirty = 1; }, 60); } else { G.dc = null; X.again(); } });
+        X.on('dcs', function (v) { G.dc.side = +v; X.again(); setTimeout(function () { dirty = 1; }, 60); }); X.on('dcsl', function (v) { G.dc.sl = +v; X.again(); setTimeout(function () { dirty = 1; }, 60); }); X.on('dctp', function (v) { G.dc.tp = +v; X.again(); setTimeout(function () { dirty = 1; }, 60); });
+
+        /* ---------- 2. Spot the Fake Breakout ---------- */
+        function atrOf(K, i) { var s = 0, n = 0, j; for (j = Math.max(1, i - 13); j <= i; j++) { s += Math.max(K[j].h - K[j].l, Math.abs(K[j].h - K[j - 1].c), Math.abs(K[j].l - K[j - 1].c)); n++; } return n ? s / n : 0; }
+        function findBreak(K) {
+            var out = [], i, j;
+            for (i = 25; i < K.length - 13; i++) {
+                var hi = -Infinity, lo = Infinity; for (j = i - 20; j < i; j++) { hi = Math.max(hi, K[j].h); lo = Math.min(lo, K[j].l); }
+                var a = atrOf(K, i), dir = K[i].c > hi ? 1 : K[i].c < lo ? -1 : 0; if (!dir || !(a > 0)) { continue; }
+                var lv = dir > 0 ? hi : lo, end = K[i + 12].c, mn = Infinity, mx = -Infinity; for (j = i + 1; j <= i + 12; j++) { mn = Math.min(mn, K[j].l); mx = Math.max(mx, K[j].h); }
+                var real = dir > 0 ? (end > lv + 0.5 * a && mn > lv - 0.3 * a) : (end < lv - 0.5 * a && mx < lv + 0.3 * a), fake = dir > 0 ? end < lv : end > lv;
+                if (real || fake) { out.push({ i: i, dir: dir, lv: lv, real: real }); }
+            }
+            return out;
+        }
+        function fbLoad(tries) {
+            if (G.busy) { return; } G.busy = 'fb'; G.msg = ''; if (tries == null) { tries = 5; } X.again();
+            var coin = TOP[Math.floor(Math.random() * TOP.length)], start = Math.floor((Date.now() - (10 + Math.floor(Math.random() * 150)) * 86400000) / 3600000) * 3600000;
+            fetchK(coin, start, 200).then(function (K) {
+                var br = findBreak(K); if (!br.length) { throw new Error('none'); } var b = br[Math.floor(Math.random() * br.length)], from = Math.max(0, b.i - 55);
+                G.busy = ''; var F = G.fb || { round: 0, score: 0, ok: 0 }; G.fb = { round: F.round, score: F.score, ok: F.ok, q: { coin: coin, K: K.slice(from, b.i + 13), b: b.i - from, dir: b.dir, lv: b.lv, real: b.real }, phase: 'ask', rev: 0 }; X.again(); setTimeout(function () { dirty = 1; }, 60);
+            }).catch(function () { G.busy = ''; if (tries > 0) { fbLoad(tries - 1); } else { G.msg = 'Could not load a chart. Check the internet and try again.'; X.again(); } });
+        }
+        function fbAnswer(realGuess) {
+            var F = G.fb, q = F.q, ok = realGuess === q.real; F.phase = 'reveal'; F.ok1 = ok; F.rev = q.b + 1; F.round++;
+            C.fb.n++; if (ok) { C.fb.ok++; C.fb.cur++; C.fb.best = Math.max(C.fb.best, C.fb.cur); F.ok++; F.score += 10 + Math.min(10, C.fb.cur); addXp(8 + Math.min(8, C.fb.cur)); if (!calm()) { boom(); } } else { C.fb.cur = 0; addXp(2); } sv();
+            var t = setInterval(function () { F.rev++; dirty = 1; if (F.rev >= q.K.length || calm()) { F.rev = q.K.length; F.phase = 'done'; clearInterval(t); dirty = 1; X.again(); setTimeout(function () { dirty = 1; }, 60); } }, calm() ? 10 : 200);
+            X.again(); setTimeout(function () { dirty = 1; }, 60);
+        }
+        function fbHtml() {
+            var F = G.fb, h = '<div class="group pad"><b>🪤 Spot the Fake Breakout</b> <span class="mut" style="font-size:12px">5 rounds · real past charts</span>';
+            if (!F || !F.q) { var acc = C.fb.n ? Math.round(C.fb.ok / C.fb.n * 100) : null; return h + '<div class="note" style="margin:6px 0 8px">Price just broke above (or below) the last 20 candles. Will it <b>keep going (real)</b> or <b>fall back (fake)</b>? Traders lose lots of money on fake breakouts. Train your eye.' + (acc != null ? ' Your accuracy so far: <b>' + acc + '%</b> over ' + C.fb.n + ' charts · best streak ' + C.fb.best + '.' : '') + '</div>' + (G.msg ? '<div class="note" style="color:#dc2626">' + e2(G.msg) + '</div>' : '') + '<button class="btn chBig" data-xk="fb:new">' + (G.busy === 'fb' ? 'Loading…' : '🎯 Start round 1') + '</button></div>'; }
+            var q = F.q; h += '<div class="note" style="margin:6px 0 2px">Round ' + (F.round + (F.phase === 'ask' ? 1 : 0)) + ' of 5 · score ' + F.score + ' · streak ' + C.fb.cur + ' 🔥 · ' + e2(q.coin) + ' · last candle just broke ' + (q.dir > 0 ? 'ABOVE' : 'BELOW') + ' the dotted line</div><canvas id="chFb" style="width:100%;height:210px;border-radius:12px;background:rgba(128,128,128,.08)"></canvas>';
+            if (F.phase === 'ask') { h += '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn chBig" style="background:#16a34a;flex:1" data-xk="fb:real">✅ Real</button><button class="btn chBig" style="background:#dc2626;flex:1" data-xk="fb:fake">🪤 Fake</button></div>'; }
+            else if (F.phase === 'reveal') { h += '<div class="note" style="margin:6px 0">⏳ Let’s see the next 12 candles…</div>'; }
+            else { h += '<div class="chCard" style="margin-top:8px"><div style="font-size:20px;font-weight:800">' + (F.ok1 ? '🎉 Correct!' : '😅 Not this time') + '</div><div>It was <b>' + (q.real ? 'REAL' : 'FAKE') + '</b>: ' + (q.real ? 'price held above the line and kept going.' : 'price slipped back through the line.') + '</div></div><div class="note" style="margin:6px 0">Clue: real breakouts hold the line when price comes back to test it. Fake ones close back inside the old range.</div>' + (F.round >= 5 ? '<div class="note"><b>Finished! ' + F.ok + ' of 5 right · ' + F.score + ' points.</b></div><button class="btn chBig" data-xk="fb:end">🏁 Done</button>' : '<button class="btn chBig" data-xk="fb:next">▶ Next round</button>'); }
+            return h + '</div>';
+        }
+        X.on('fb', function (v) { if (v === 'new') { G.fb = null; fbLoad(); } else if (v === 'next') { var F = G.fb; G.fb = { round: F.round, score: F.score, ok: F.ok, q: null }; fbLoad(); } else if (v === 'real') { fbAnswer(true); } else if (v === 'fake') { fbAnswer(false); } else { var s = G.fb ? G.fb.score : 0; var d = day(), rec = C.days[d] || (C.days[d] = {}); rec.fb = Math.max(rec.fb || 0, s); sv(); G.fb = null; X.again(); } });
+
+        /* ---------- 3. You versus your past self + badges ---------- */
+        function streakDays() { var n = 0, d = new Date(); for (var i = 0; i < 60; i++) { var k = day(d); if (C.days[k] && C.days[k].dc != null) { n++; } else if (i > 0) { break; } d = new Date(d.getTime() - 86400000); } return n; }
+        function pastHtml() {
+            var l = lvl(), ds = Object.keys(C.days).sort(), sc = ds.filter(function (k) { return C.days[k].dc != null; }).map(function (k) { return C.days[k].dc; }), today = C.days[day()] && C.days[day()].dc;
+            var avg = sc.length ? sc.reduce(function (a, b) { return a + b; }, 0) / sc.length : null, best = sc.length ? Math.max.apply(null, sc) : null, h = '<div class="group pad"><div class="chCard"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:40px">' + l.ic + '</span><div><div style="font-size:20px;font-weight:800">' + e2(l.name) + '</div><div style="font-size:12px;opacity:.9">' + C.xp + ' XP' + (l.to ? ' · next level at ' + l.to : ' · top level!') + ' · 🔥 ' + streakDays() + ' day streak</div></div></div><div style="height:9px;border-radius:5px;background:rgba(255,255,255,.3);margin-top:10px"><div style="height:9px;border-radius:5px;background:#fff;width:' + (l.to ? Math.round((C.xp - l.from) / (l.to - l.from) * 100) : 100) + '%"></div></div></div>';
+            h += '<div class="note" style="margin:10px 0 4px"><b>You versus your past self</b></div>';
+            if (!sc.length) { h += '<div class="note">Play Today’s Chart to start your record. Then you can race your own best.</div>'; }
+            else {
+                var last7 = []; for (var i = 6; i >= 0; i--) { var k = day(new Date(Date.now() - i * 86400000)); last7.push([k.slice(5), C.days[k] && C.days[k].dc != null ? C.days[k].dc : null]); }
+                var mx = Math.max(50, Math.max.apply(null, last7.map(function (x) { return Math.abs(x[1] || 0); })));
+                h += '<div style="display:flex;align-items:flex-end;gap:6px;height:80px;margin:4px 0">' + last7.map(function (x) { var v = x[1]; return '<div style="flex:1;text-align:center;font-size:10px"><div style="height:' + (v == null ? 2 : Math.max(3, Math.round(Math.abs(v) / mx * 60))) + 'px;border-radius:5px;background:' + (v == null ? 'rgba(128,128,128,.3)' : v >= 0 ? '#16a34a' : '#dc2626') + '"></div>' + x[0] + '<br>' + (v == null ? '–' : v) + '</div>'; }).join('') + '</div>';
+                h += '<div class="note">Your average: <b>' + f(avg, 0) + '</b> · your best: <b>' + best + '</b>' + (today != null ? ' · today: <b>' + today + '</b> ' + (today >= best ? '🏆 new best!' : today > avg ? '⬆ above your average' : '⬇ below your average') : ' · today: not played yet') + '</div>';
+            }
+            var acc = C.fb.n ? Math.round(C.fb.ok / C.fb.n * 100) : null; h += '<div class="note" style="margin:4px 0">Breakout spotting: ' + (acc != null ? '<b>' + acc + '%</b> right over ' + C.fb.n + ' charts (best streak ' + C.fb.best + ')' : 'not played yet') + '</div>';
+            var B = [['🌅', 'First day', sc.length >= 1], ['🔥', '3-day streak', streakDays() >= 3], ['🌟', '7-day streak', streakDays() >= 7], ['🦅', 'Eagle eye (5 in a row)', C.fb.best >= 5], ['🧠', 'Sharp mind (80% over 20)', C.fb.n >= 20 && C.fb.ok / C.fb.n >= 0.8], ['💎', 'Score 150+', best != null && best >= 150], ['🐋', 'Reach Whale', lvl().i >= 9]];
+            h += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">' + B.map(function (b) { return '<span style="padding:4px 9px;border-radius:12px;font-size:12px;' + (b[2] ? 'background:#ec489922;color:#ec4899;font-weight:700' : 'opacity:.45;border:1px dashed currentColor') + '">' + b[0] + ' ' + b[1] + '</span>'; }).join('') + '</div>';
+            return h + '<div class="note" style="margin:8px 0 0;font-size:11px">Virtual game, no money and no prizes. Charts are real past prices. Scores stay on this phone.</div></div>';
+        }
+        try {
+            var _q = VIEWS.quest;
+            VIEWS.quest = function () {
+                var tab = KX.qT || 'play';
+                if (tab === 'ch') { return X.seg('qT', [['play', '🎮 Arcade'], ['quest', '🗺 Missions'], ['ch', '🏆 Challenges']], 'ch') + pastHtml() + dcHtml() + fbHtml(); }
+                var h = _q ? _q.apply(this, arguments) : '', re = /(<span[^>]*data-xk="qT:quest"[^>]*>[^<]*<\/span>)/;
+                return re.test(h) ? h.replace(re, '$1<span data-xk="qT:ch" style="flex:1 1 auto;text-align:center;white-space:nowrap">🏆 Challenges</span>') : h;
+            };
+        } catch (e) { }
+        setInterval(function () { try { if (!dirty) { return; } dirty = 0; if (G.dc) { var D = G.dc, up = D.phase === 'ask' ? 80 : D.rev, ln = D.phase === 'ask' ? [] : [{ p: D.res.e, c: '#3b82f6', t: 'ENTRY', d: [] }, { p: D.res.slp, c: '#dc2626', t: 'STOP', d: [5, 4] }, { p: D.res.tpp, c: '#16a34a', t: 'TARGET', d: [5, 4] }]; paint('chDc', D.K, up, ln); } if (G.fb && G.fb.q) { var F = G.fb, q = F.q; paint('chFb', q.K, F.phase === 'ask' ? q.b + 1 : F.rev, [{ p: q.lv, c: '#8e8e93', t: 'LINE', d: [2, 4] }]); } } catch (e) { } }, 150);
+        window.__ch = { C: C, G: G, findBreak: findBreak, lvl: lvl, dcPlay: dcPlay };
+    } catch (err) { try { console.log('ch', err); } catch (e) { } }
+})();
+/* ===== CI: p9zszzs: Strategy Agent. Type a plan in plain words, confirm it, choose Paper (or Live, locked), run it with Pause / Terminate. Paper only: no real orders are ever sent from here. ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2, K0 = 'mintoosuite_sa';
+        var A = { list: [], seq: 0 };
+        try { var o = JSON.parse(localStorage.getItem(K0) || 'null'); if (o && o.list) { A = o; } } catch (e) { }
+        function sv() { try { localStorage.setItem(K0, JSON.stringify(A)); } catch (e) { } }
+        var G = { text: '', phase: 'ask', draft: null, mode: 'paper', err: '', ans: null, think: 0, tab: 'new', done: null };
+        function say(t) { try { toast(t); } catch (e) { } }
+        function f(v, d) { var n = +v; return isFinite(n) ? n.toFixed(d == null ? 2 : d) : '–'; }
+        function px(c) { var t = S.tick && S.tick[c + 'USDT']; return t && t.p > 0 ? +t.p : 0; }
+        function mkey(t) { var d = new Date(t || Date.now()); return d.getFullYear() + '-' + (d.getMonth() + 1); }
+        function fmtP(p) { return p >= 100 ? f(p, 0) : p >= 1 ? f(p, 2) : f(p, 5); }
+        var COINS = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'LINK', 'DOT', 'LTC', 'NEAR', 'UNI', 'ATOM', 'APT', 'ARB', 'OP', 'SUI', 'AAVE', 'INJ', 'TRX', 'TON', 'PEPE', 'SHIB'];
+        var WORDS = { bitcoin: 'BTC', ethereum: 'ETH', solana: 'SOL', ripple: 'XRP', dogecoin: 'DOGE', cardano: 'ADA', binance: 'BNB', litecoin: 'LTC', chainlink: 'LINK', polkadot: 'DOT', tron: 'TRX' };
+
+        /* ---------- 1. understand the sentence (works offline, no AI server) ---------- */
+        function num(s) { var n = parseFloat(String(s).replace(/[, ]/g, '').replace(/k$/i, '')); if (/k$/i.test(String(s).trim())) { n *= 1000; } return n; }
+        function parse(raw) {
+            var t = String(raw || '').trim(), q = t.toLowerCase(), r = { text: t, ok: false }, m, i;
+            var coin = ''; for (i = 0; i < COINS.length; i++) { if (new RegExp('\\b' + COINS[i].toLowerCase() + '\\b').test(q)) { coin = COINS[i]; break; } }
+            if (!coin) { for (var w in WORDS) { if (q.indexOf(w) > -1) { coin = WORDS[w]; break; } } }
+            if (!coin) { r.why = 'I could not see a coin name. Try for example: “Buy BTC in tranches below 74,000, max 500 USDT a month.”'; return r; }
+            if (/\b(sell|short)\b/.test(q) && !/\bbuy\b/.test(q)) { r.why = 'Right now the Agent can only buy (dip buying, breakout buying, or regular DCA). Selling and shorting are done in the Practice account under any chart.'; return r; }
+            r.coin = coin;
+            var cap = 0; m = q.match(/(?:max(?:imum)?|cap|up to|budget|limit|total|not more than|at most)[^0-9$]{0,14}\$?\s*([0-9][0-9,\.]*\s*k?)/); if (m) { cap = num(m[1]); }
+            if (!cap) { m = q.match(/\$?\s*([0-9][0-9,\.]*\s*k?)\s*(?:usdt|usd|dollars?|\$)\s*(?:a|per|each|every|\/)\s*(?:month|week|day)/); if (m) { cap = num(m[1]); } }
+            if (!cap) { m = q.match(/([0-9][0-9,\.]*\s*k?)\s*(?:usdt|usd|dollars?)/); if (m) { cap = num(m[1]); } }
+            var pm = q.match(/(?:usdt|usd|dollars?|\$)\s*(?:a|per|each|every|\/)\s*(week|day|month)/), per = pm ? pm[1] : 'month';
+            r.period = per;
+            var below = q.match(/(?:below|under|beneath|lower than|less than|dips? to|drops? to|falls? to|at or below)\s*\$?\s*([0-9][0-9,\.]*\s*k?)/), above = q.match(/(?:above|over|breaks? (?:above|over)|higher than|more than|crosses?)\s*\$?\s*([0-9][0-9,\.]*\s*k?)/);
+            if (below) { r.kind = 'dip'; r.trig = num(below[1]); } else if (above) { r.kind = 'brk'; r.trig = num(above[1]); }
+            else if (/\b(dca|every|each|daily|weekly|regular|monthly|schedule)\b/.test(q)) { r.kind = 'dca'; r.trig = 0; }
+            else { r.why = 'I need either a price (“below 74,000”) or a rhythm (“every week”). Example: “Buy ETH every week, 50 USDT, max 200 USDT a month.”'; return r; }
+            if (r.trig && !(r.trig > 0)) { r.why = 'I could not read the price. Write it like 74,000.'; return r; }
+            if (!(cap > 0)) { r.why = 'Every plan needs a safety limit. Add something like “max 500 USDT a month”.'; return r; }
+            if (per === 'week') { cap *= 4; } else if (per === 'day') { cap *= 30; }
+            r.capM = Math.round(cap * 100) / 100; r.capO = Math.round(r.capM / 3 * 100) / 100;
+            if (r.kind === 'dca') { m = q.match(/([0-9][0-9,\.]*\s*k?)\s*(?:usdt|usd|dollars?)\s*(?:every|each|per|a)\s*(day|week)/); if (m) { r.capO = Math.min(num(m[1]), r.capM); } r.every = /week/.test(q) ? 7 * 864e5 : /day|daily/.test(q) ? 864e5 : 7 * 864e5; }
+            r.ok = true;
+            r.title = r.kind === 'dip' ? 'Buy ' + coin + ' on dips below ' + fmtP(r.trig) : r.kind === 'brk' ? 'Buy ' + coin + ' on a break above ' + fmtP(r.trig) : 'Buy ' + coin + ' regularly (DCA)';
+            r.say = r.kind === 'dip' ? 'You want a staged dip-buying plan. I will buy ' + coin + ' in tranches of up to ' + fmtP(r.capO) + ' USDT, only while the price is at or below ' + fmtP(r.trig) + ', and each next tranche needs the price at least 1% lower than the last one. I stop once ' + fmtP(r.capM) + ' USDT is filled this month.'
+                : r.kind === 'brk' ? 'You want a breakout plan. I will buy ' + coin + ' in tranches of up to ' + fmtP(r.capO) + ' USDT while the price is at or above ' + fmtP(r.trig) + ', waiting at least 30 minutes between tranches. I stop once ' + fmtP(r.capM) + ' USDT is filled this month.'
+                : 'You want regular buying. I will buy ' + fmtP(r.capO) + ' USDT of ' + coin + ' every ' + (r.every < 2 * 864e5 ? 'day' : 'week') + ', and stop once ' + fmtP(r.capM) + ' USDT is filled this month.';
+            return r;
+        }
+
+        /* ---------- 2. the engine (paper): checks every 20 s, fills at the live price ---------- */
+        function spent(s) { var k = mkey(), n = 0; s.orders.forEach(function (o) { if (mkey(o.t) === k) { n += o.usd; } }); return n; }
+        function invested(s) { var n = 0; s.orders.forEach(function (o) { n += o.usd; }); return n; }
+        function qty(s) { var n = 0; s.orders.forEach(function (o) { n += o.q; }); return n; }
+        function tick() {
+            var changed = 0; A.list.forEach(function (s) {
+                if (s.status !== 'running') { return; }
+                var p = px(s.coin); if (!(p > 0)) { return; } s.last = p; var inv0 = invested(s); if (s.guard && inv0 > 0 && (qty(s) * p - inv0) / inv0 * 100 <= -s.guard) { s.status = 'paused'; s.why = 'Safety guard: down more than ' + s.guard + '%, paused for you to decide'; changed = 1; say('🛡 Strategy #' + ('0' + s.id).slice(-2) + ' paused by the safety guard (down ' + s.guard + '%)'); return; } var now = Date.now(), lo = s.orders[s.orders.length - 1], left = s.capM - spent(s), usd = Math.min(s.capO, left);
+                if (usd < 1) { return; }
+                var go = false;
+                if (s.kind === 'dip') { go = p <= s.trig && (!lo || (now - lo.t > 30 * 60000 && p <= lo.p * 0.99)); }
+                else if (s.kind === 'brk') { go = p >= s.trig && (!lo || now - lo.t > 30 * 60000); }
+                else { go = !lo || now - lo.t >= s.every; }
+                if (go) {
+                    var fee = usd * 0.001, q = (usd - fee) / p; s.orders.push({ t: now, p: p, usd: usd, q: q });
+                    changed = 1; say('🧠 Strategy #' + ('0' + s.id).slice(-2) + ': bought ' + f(usd, 0) + ' USDT of ' + s.coin + ' at ' + fmtP(p) + ' (paper)');
+                    try { if (window.Notification && Notification.permission === 'granted' && document.hidden) { new Notification('AI Baba Strategy Agent', { body: 'Paper buy ' + f(usd, 0) + ' USDT ' + s.coin + ' at ' + fmtP(p) }); } } catch (e) { }
+                    if (spent(s) >= s.capM - 0.99) { say('🧠 Strategy #' + ('0' + s.id).slice(-2) + ': monthly limit reached, waiting for next month'); }
+                }
+            });
+            if (changed) { sv(); try { if (curWin() === 'agent') { X.again(); } } catch (e) { } }
+        }
+        function curWin() { try { return window.__curWin ? window.__curWin() : (typeof CUR !== 'undefined' ? CUR : ''); } catch (e) { return ''; } }
+        setInterval(function () { try { tick(); } catch (e) { } }, 20000);
+
+        /* ---------- 3. the screens ---------- */
+        var CHIPS = ['Buy BTC in tranches below 74,000, max 500 USDT a month.', 'Buy ETH every week, 50 USDT, max 200 USDT a month.', 'Buy SOL when it breaks above 200, max 300 USDT a month.'];
+        var QS = ['What happened in crypto today?', 'How is BTC doing right now?'];
+        function btn(t, k, sec) { return '<button class="btn' + (sec ? ' sec' : '') + '" data-xk="' + k + '" style="margin:6px 0 0">' + e2(t) + '</button>'; }
+        function dots() { var ph = { ask: 1, think: 2, confirm: 2, mode: 3, fund: 4, started: 5 }[G.phase] || 1, h = '<div style="display:flex;gap:5px;justify-content:center;margin:12px 0 4px">'; for (var i = 1; i <= 5; i++) { h += '<span style="width:' + (i === ph ? 26 : 16) + 'px;height:4px;border-radius:3px;background:' + (i === ph ? '#111' : '#d4d4d8') + '"></span>'; } return h + '</div>'; }
+        function card(h) { return '<div class="group pad" style="border-radius:18px;background:var(--card,#fff)">' + h + '</div>'; }
+        function row(a, b, c) { return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #8883"><span class="mut">' + a + '</span><b style="text-align:right;color:' + (c || 'inherit') + '">' + b + '</b></div>'; }
+        function boost(D) {
+            var t = D.kind === 'dip' ? 'Dip-buying works best when the market is calm, not falling hard. Before the Agent starts, open the ' + D.coin + ' chart: if the “🤖 Baba Bot says” card shows SHORT, or Early warning shows a drop forming, wait or lower your cap.' : D.kind === 'brk' ? 'Breakouts often fail. Use “Spot the fake breakout” in Money Quest, and wait for the Baba Bot card to agree before you go live.' : 'Regular buying removes the guessing. Keep the amount small and check your results every week.';
+            return '<div style="border-radius:14px;background:#8b5cf611;border:1px solid #8b5cf644;padding:10px 12px;margin:10px 0"><b>🧞 Baba’s advice: use all our tools</b><div style="font-size:13px;margin:4px 0">' + e2(t) + '</div><div style="font-size:13px;line-height:1.6">'
+                + '1️⃣ <b>AI signals:</b> check Best Picks and the signals list for ' + e2(D.coin) + ' first.<br>2️⃣ <b>Baba Bot:</b> the card under the chart gives LONG / SHORT / WAIT with stop and target. Use Auto practice to test it with no risk.<br>3️⃣ <b>Safety:</b> the stop-loss guard rests trading after 3 losses; this Agent pauses itself at -15%.<br>4️⃣ <b>Alerts:</b> switch on “Alerts when the app is closed” so you hear every move.<br>5️⃣ <b>Practice first:</b> make at least 30 practice trades and read the weakness report before any real money.<br>6️⃣ <b>Journal:</b> write why you started this plan; Baba learns from your results.</div>'
+                + '<div style="margin-top:4px">' + X.go('⭐ Best Picks', 'best') + X.go('📈 Chart', 'chart') + X.go('🤖 Baba Bot', 'rbot') + X.go('🎮 Money Quest', 'quest') + X.go('🎓 Ask Baba AI', 'prof') + '</div></div>';
+        }
+        function newView() {
+            var h = '', D = G.draft, n = A.list.length;
+            if (G.phase === 'ask' || G.phase === 'think') {
+                h += '<div style="font-size:15px;color:#8b5cf6">Hi there,</div><div style="font-size:22px;font-weight:800;color:#8b5cf6;line-height:1.2;margin:2px 0 6px">' + (n ? 'You have ' + n + ' strateg' + (n > 1 ? 'ies' : 'y') + '.' : 'You don’t have a strategy of your own yet.') + '</div><div class="mut" style="margin-bottom:10px">What’s the market doing right now? Prices, flows, and what just broke: just ask. Or describe a plan and I will build it.</div>';
+                QS.forEach(function (q, i) { h += '<div data-xk="saq:' + i + '" style="padding:11px 13px;border-radius:14px;background:#8881;margin:6px 0;cursor:pointer;display:flex;justify-content:space-between"><span>' + e2(q) + '</span><span class="mut">›</span></div>'; });
+                if (G.ans) { h += '<div class="group pad" style="margin:8px 0;border-radius:14px"><b>' + e2(G.ans.title || 'Answer') + '</b><div style="margin-top:4px">' + G.ans.html + '</div></div>'; }
+                CHIPS.forEach(function (q, i) { h += '<div data-xk="sac:' + i + '" style="padding:9px 13px;border-radius:14px;border:1px dashed #8886;margin:6px 0;font-size:13px;cursor:pointer">✨ ' + e2(q) + '</div>'; });
+                h += '<div style="border-radius:16px;background:#8881;padding:10px 12px;margin-top:10px"><textarea class="m7inp" data-xin="satx" rows="3" placeholder="Describe your plan, for example: Buy BTC in tranches below 74,000, max 500 USDT a month." style="width:100%;box-sizing:border-box;background:transparent;border:0;resize:none;font-size:15px">' + e2(G.text) + '</textarea><div style="display:flex;justify-content:space-between;align-items:center"><span class="mut" style="font-size:12px">Baba Strategy Agent · works offline</span><button class="btn" data-xk="sasend:1" style="width:auto;margin:0;padding:8px 16px;border-radius:12px">Send ➤</button></div></div>';
+                if (G.err) { h += '<div class="note" style="margin-top:8px;color:#dc2626">' + e2(G.err) + '</div>'; }
+                if (G.phase === 'think') { h = '<div style="text-align:center;padding:30px 0"><div style="font-size:42px;animation:chPop 1.2s ease infinite">🧠</div><div style="font-weight:700;margin-top:8px">Thinking…</div><div class="mut">Reading your plan and checking the limits</div></div>'; }
+            } else if (G.phase === 'confirm') {
+                h += '<div style="background:#fef9e7;color:#111;border-radius:14px;padding:11px 14px;margin:0 0 10px 30px">' + e2(D.text) + '</div><div class="mut" style="margin-bottom:8px">🧠 Thought for 2s</div><div style="margin-bottom:10px">' + e2(D.say) + '</div>'
+                    + '<div style="background:#8881;border-radius:14px;padding:6px 14px"><div style="font-weight:800;font-size:17px;padding:8px 0 2px">Confirm</div>' + row('Monthly cap', f(D.capM, 0) + ' USDT') + row('Per-order cap', f(D.capO, 0) + ' USDT') + row('Authorised scope', D.coin + '/USDT') + row('Permissions required', 'Paper orders · market data') + row('Safety guard', 'Pauses at -15%', '#16a34a') + '</div>'
+                    + boost(D) + btn('Confirm and start building', 'sacf:1') + btn('Change my words', 'sacf:0', 1);
+            } else if (G.phase === 'mode') {
+                h += '<div style="font-weight:800;font-size:17px;margin-bottom:8px">Execution mode</div>' + '<div data-xk="samode:paper" style="padding:12px;border-radius:12px;border:2px solid ' + (G.mode === 'paper' ? '#111' : '#8884') + ';margin:6px 0;text-align:center">Paper trading</div>'
+                    + '<div data-xk="samode:live" style="padding:12px;border-radius:12px;border:2px solid ' + (G.mode === 'live' ? '#111' : '#8884') + ';margin:6px 0;text-align:center">Live</div>'
+                    + '<div class="note" style="margin-top:6px">Paper Mode (Beginner): uses live market data, no real funds.<br>Live Mode: trades with real capital. ' + (G.mode === 'live' ? '<b style="color:#dc2626">Live auto-buying is not switched on in this version.</b> Use Paper here, then place real orders yourself in the Trade window or with Baba Bot (UNLOCK).' : '') + '</div>' + btn('Confirm', 'samo:1');
+            } else if (G.phase === 'fund') {
+                h += '<div style="background:#8881;border-radius:14px;padding:8px 14px"><div style="font-weight:800;font-size:17px;padding:6px 0">Capital transfer <span class="mut" style="float:right;font-size:13px">1 / 1</span></div>' + row('Strategy account', '#' + ('0' + (A.seq + 1)).slice(-2)) + row('Spot account minimum', '50 USDT') + row('Paper money', 'No transfer needed', '#16a34a') + '</div><div class="note" style="margin-top:6px">No transfer needed for Paper Mode. The Agent uses an imaginary 10,000 USDT account, so nothing real is touched.</div>' + btn('Confirm and create', 'sacreate:1');
+            } else if (G.phase === 'started') {
+                var s = G.done; h += '<div style="background:#fef9e7;color:#111;border-radius:14px;padding:11px 14px;margin:0 0 10px 30px">Transfer settled, live execution running</div><div style="background:#8881;border-radius:12px;padding:10px 14px;margin:8px 0;font-weight:700">✅ Live execution started</div><div style="margin:8px 0">A few more steps and the strategy is ready.</div>'
+                    + '<div style="background:#8881;border-radius:14px;padding:6px 14px">' + row('Strategy account', 'Strategy account #' + ('0' + s.id).slice(-2)) + row('Monthly cap', f(s.capM, 0) + ' USDT') + row('Status', '<span style="background:#16a34a22;color:#16a34a;padding:2px 8px;border-radius:6px">Running</span>') + '</div>'
+                    + '<div style="display:flex;gap:8px;margin-top:8px">' + btn('Build another', 'sanew:1', 1) + btn('Open dashboard', 'satab:dash') + '</div><div class="note" style="margin-top:8px">The dashboard shows balance, limits, orders and exceptions. Pause or terminate at any time.</div>';
+            }
+            return card(h + dots());
+        }
+        function dashView() {
+            if (!A.list.length) { return card('<div class="mut" style="text-align:center;padding:14px 0">No strategies yet.</div>' + btn('Build my first', 'satab:new')); }
+            var h = '';
+            A.list.slice().reverse().forEach(function (s) {
+                var p = px(s.coin) || s.last || 0, inv = invested(s), q = qty(s), val = q * p, pl = inv ? val - inv : 0, pct = inv ? pl / inv * 100 : 0, sp = spent(s), c = s.status === 'running' ? '#16a34a' : s.status === 'paused' ? '#d97706' : '#8b8b8b';
+                h += card('<div style="display:flex;justify-content:space-between"><b>#' + ('0' + s.id).slice(-2) + ' · ' + e2(s.title) + '</b><span style="background:' + c + '22;color:' + c + ';padding:2px 9px;border-radius:8px;font-size:12px;font-weight:700">' + (s.status === 'running' ? 'Running' : s.status === 'paused' ? 'Paused' : 'Ended') + '</span></div>'
+                    + (s.why ? '<div class="note" style="color:#d97706">' + e2(s.why) + '</div>' : '') + '<div class="mut" style="font-size:12px;margin:2px 0 8px">🛡 Safety guard ' + (s.guard || 0) + '% · Paper · ' + e2(s.coin) + '/USDT · now ' + (p ? fmtP(p) : '–') + '</div>'
+                    + '<div style="height:8px;background:#8883;border-radius:5px;overflow:hidden"><div style="width:' + Math.min(100, sp / s.capM * 100) + '%;height:100%;background:#8b5cf6"></div></div><div class="mut" style="font-size:12px;margin:3px 0 6px">Used this month ' + f(sp, 0) + ' / ' + f(s.capM, 0) + ' USDT</div>'
+                    + row('Orders filled', String(s.orders.length)) + row('Invested', f(inv, 2) + ' USDT') + row('Now worth', f(val, 2) + ' USDT') + row('Profit / loss', (pl >= 0 ? '+' : '') + f(pl, 2) + ' USDT (' + f(pct, 1) + '%)', inv ? (pl >= 0 ? '#16a34a' : '#dc2626') : '')
+                    + (s.orders.length ? '<div style="font-size:12px;margin-top:6px" class="mut">' + s.orders.slice(-3).reverse().map(function (o) { return new Date(o.t).toLocaleString() + ': ' + f(o.usd, 0) + ' USDT @ ' + fmtP(o.p); }).join('<br>') + '</div>' : '<div class="mut" style="font-size:12px;margin-top:6px">No order yet. The Agent waits for your condition.</div>')
+                    + '<div style="display:flex;gap:6px;margin-top:6px">' + (s.status === 'ended' ? '' : (s.status === 'running' ? btn('Pause', 'sap:' + s.id + 'p', 1) : btn('Resume', 'sap:' + s.id + 'r')) + btn('Terminate', 'sap:' + s.id + 't', 1)) + btn('Delete', 'sap:' + s.id + 'd', 1) + '</div><div style="margin-top:4px">' + X.go('📈 Chart', 'chart') + X.go('🤖 Baba Bot', 'rbot') + X.go('🎓 Ask Baba AI', 'prof') + '</div>');
+                h += '<div style="height:8px"></div>';
+            });
+            return h + boost({ kind: 'dca', coin: 'your coin' }) + '<div class="note">Paper results use live prices and a 0.1% fee. Real exchanges can fill at slightly different prices. Not financial advice.</div>';
+        }
+        function vAgent() {
+            var h = '<div style="display:flex;gap:6px;margin-bottom:10px">' + [['new', '✨ New'], ['dash', '📊 Dashboard (' + A.list.length + ')']].map(function (t) { return '<span data-xk="satab:' + t[0] + '" style="flex:1;text-align:center;padding:9px;border-radius:12px;font-weight:700;background:' + (G.tab === t[0] ? '#111;color:#fff' : '#8881') + '">' + t[1] + '</span>'; }).join('') + '</div>';
+            return h + (G.tab === 'dash' ? dashView() : newView());
+        }
+        WINS.push({ id: 'agent', ic: '🧠', c: '#8b5cf6', n: 'Strategy Agent (AI)', t: 'Agent', sub: 'Describe a plan in words. Baba builds it, you confirm, it runs in Paper mode with Pause and Terminate' }); LIVE.agent = 0; VIEWS.agent = vAgent;
+
+        /* ---------- 4. buttons ---------- */
+        document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-xin') === 'satx') { G.text = t.value; } });
+        X.on('satab', function (v) { G.tab = v; if (v === 'new' && G.phase === 'started') { G.phase = 'ask'; } X.again(); });
+        X.on('sac', function (v) { G.text = CHIPS[+v] || ''; G.err = ''; X.again(); });
+        X.on('saq', function (v) { try { G.ans = pfAnswer(QS[+v]); } catch (e) { G.ans = { title: 'Sorry', html: 'I could not answer that now. Open Baba AI and ask there.' }; } X.again(); });
+        X.on('sasend', function () {
+            var ta = document.querySelector('[data-xin="satx"]'); if (ta && ta.value) { G.text = ta.value; }
+            var r = parse(G.text); if (!r.ok) { G.err = r.why || 'Please describe a plan with a coin, a rule and a monthly limit.'; G.ans = null; X.again(); return; }
+            G.err = ''; G.draft = r; G.phase = 'think'; X.again(); setTimeout(function () { G.phase = 'confirm'; X.again(); }, 900);
+        });
+        X.on('sacf', function (v) { G.phase = v === '1' ? 'mode' : 'ask'; X.again(); });
+        X.on('samode', function (v) { G.mode = v; X.again(); });
+        X.on('samo', function () { if (G.mode === 'live') { G.mode = 'paper'; say('Live auto-buying is not switched on. Using Paper mode.'); } G.phase = 'fund'; X.again(); });
+        X.on('sacreate', function () {
+            var D = G.draft; A.seq++; var s = { id: A.seq, title: D.title, text: D.text, coin: D.coin, kind: D.kind, trig: D.trig, every: D.every, capM: D.capM, capO: D.capO, status: 'running', mode: 'paper', guard: 15, created: Date.now(), orders: [] };
+            A.list.push(s); sv(); G.done = s; G.phase = 'started'; G.text = ''; X.again(); setTimeout(tick, 400);
+        });
+        X.on('sanew', function () { G.phase = 'ask'; G.tab = 'new'; G.draft = null; G.ans = null; X.again(); });
+        X.on('sap', function (v) {
+            var m = String(v).match(/^(\d+)([prtd])$/); if (!m) { return; } var id = +m[1], s = A.list.filter(function (x) { return x.id === id; })[0]; if (!s) { return; }
+            if (m[2] === 'p') { s.status = 'paused'; } else if (m[2] === 'r') { s.status = 'running'; s.why = ''; } else if (m[2] === 't') { s.status = 'ended'; say('Strategy ended. Your paper orders stay in the list.'); } else { A.list = A.list.filter(function (x) { return x.id !== id; }); }
+            sv(); X.again();
+        });
+        /* Baba AI can open it */
+        window.__sa = { A: A, G: G, parse: parse, tick: tick, vAgent: vAgent };
+    } catch (e) { try { console.error('p9zszzs', e); } catch (e2) { } }
+})();
+/* ===== CI: p9zszzt: Baba AI knowledge for the newest features, so "how do I..." questions get a plain answer with an Open button ===== */
+(function () {
+    try {
+        PF_WIN['Strategy Agent'] = 'agent';
+        PF_APP.push(['strategy|agent|automatic|auto buy|dca|tranche|dip|plan in words|build a strategy', 'Strategy Agent', 'Open More > Strategy Agent. Type your plan in plain words, like “Buy BTC in tranches below 74,000, max 500 USDT a month”. Baba shows a Confirm card (monthly cap, per-order cap, scope). Choose Paper trading (practice money, live prices). Then it runs: you see orders, profit and loss, and Pause, Resume or Terminate buttons. It pauses itself at -15%. For best results also use AI signals, Best Picks and the Baba Bot card first. Nobody can promise profit.']);
+        PF_APP.push(['practice trading|paper trading|practise|limit order|stop order|badge|expert mode', 'Practice trading', 'Under every chart there is a practice panel: market, limit and stop orders, stop-loss and target lines on the chart, trailing stop, partial close, results, weakness report and advice, and 10 badges. Expert mode adds 50x and 100x. It uses a virtual 1,000 USDT. Make 30 trades before you judge yourself.']);
+        PF_APP.push(['baba bot says|recommendation|long or short|what should i trade|manual trade', 'Baba Bot recommendation', 'Under each chart the “🤖 Baba Bot says” card shows LONG, SHORT or WAIT, with stop, target and reasons. Tap “Practice this” to try it with practice money. It is a guide, not advice or a promise.']);
+        PF_APP.push(['challenge|today chart|fake breakout|past self|money quest|game', 'Money Quest challenges', 'Money Quest > 🏆 Challenges: Today’s Chart (same chart for everybody, you set side, stop and target), Spot the Fake Breakout (5 rounds), and You versus your past self with levels from Chick to Market King. All virtual.']);
+        PF_APP.push(['offline language|download language|translate offline|language pack', 'Offline languages', 'Look and language > Offline languages: download any of about 40 languages once, then Baba AI translates without internet. Pashto, Sindhi and Punjabi are not offered offline by Google, so they work online only.']);
+        PF_APP.push(['fingerprint|biometric|login fast', 'Fingerprint login', 'After your first login the app offers fingerprint login. You can turn it on or off in Account. Your password is never stored as plain text.']);
+        PF_APP.push(['alerts closed|app closed|notification when closed|push alerts', 'Alerts when the app is closed', 'Alerts > “Alerts when the app is closed” gives you Baba pick alerts even when the app is shut. It needs the push setup that is already done in your build.']);
+    } catch (e) { try { console.error('p9zszzt', e); } catch (e2) { } }
 })();
 
 function renderView(keep) {
