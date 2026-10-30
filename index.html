@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-30.70';
+var BUILD = '2026-10-30.71';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -10705,7 +10705,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
 /* ---------- news tapes: white neon label with official icon, source column, full stop + gap between items ---------- */
 (function () {
     try {
-        var css = '.mwtape{height:36px!important;align-items:stretch!important}.mwtt{background:#fff!important;color:#000!important;display:flex!important;align-items:center;gap:6px;padding:0 11px!important;font-weight:900!important;letter-spacing:.08em!important;position:relative;z-index:2;animation:mwneonlbl 2.4s ease-in-out infinite;border-right:2px solid rgba(255,255,255,.9)}' +
+        var css = '.mwtape{height:36px!important;align-items:stretch!important}.mwtt{background:#fff!important;color:#000!important;display:flex!important;align-items:center;gap:6px;padding:0 11px!important;font-weight:900!important;letter-spacing:.08em!important;position:relative;z-index:2;animation:mwneonlbl 7s ease-in-out infinite;border-right:2px solid rgba(255,255,255,.9)}' +
             '@keyframes mwneonlbl{0%,100%{text-shadow:0 0 3px #19c3e6,0 0 8px #19c3e6;box-shadow:0 0 6px rgba(25,195,230,.7)}50%{text-shadow:0 0 3px #ff3df0,0 0 10px #ff3df0;box-shadow:0 0 12px rgba(255,61,240,.75)}}html.mwcalm .mwtt{animation:none}' +
             '.mwtt svg{width:16px;height:16px;flex:none}.mwtm .mwit{display:inline-flex;align-items:center;margin:0!important;font-size:13px}.mwtm .msrc{display:inline-block;padding:2px 8px;margin-right:9px;border-radius:6px;background:rgba(255,255,255,.22);border-right:3px solid #ffd60a;font-weight:900;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#fff!important}.mwtm .msrc b{color:#fff!important}' +
             '.mwtm .mttl{font-style:normal;color:#fff!important}.mwtm .mgap{display:inline-block;width:70px;text-align:center;opacity:.7;color:#fff!important}';
@@ -10828,6 +10828,31 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function addMenu() { try { var mb = document.querySelector('#sheetMenu .btn[data-act="win:alerts"]'); if (mb && !document.querySelector('#sheetMenu [data-act="win:safety"]')) { mb.insertAdjacentHTML('beforebegin', '<button class="btn sec" data-act="win:safety">🛡 Safety & anti-theft</button><button class="btn sec" data-act="win:around">📍 Around you (local markets)</button>'); } } catch (e) { } }
         setInterval(addMenu, 2600);
     } catch (e) { try { console.log('safety', e); } catch (er) { } }
+})();
+/* ===== .71: calm layer. Background refreshes never run while a finger is scrolling, never shrink the page, and always keep the scroll place ===== */
+(function () {
+    try {
+        var _rvC = renderView, lastMove = 0, lastClick = 0, timer = 0;
+        function now() { return Date.now(); }
+        ['scroll', 'touchmove', 'wheel'].forEach(function (n) { window.addEventListener(n, function () { lastMove = now(); }, { capture: true, passive: true }); });
+        window.addEventListener('click', function () { lastClick = now(); }, true);
+        window.addEventListener('touchend', function () { lastClick = now() - 100; }, { capture: true, passive: true });
+        function flush() { timer = 0; if (now() - lastMove < 450) { timer = setTimeout(flush, 500); return; } try { renderView(true); } catch (e) { } }
+        renderView = function (keep) {
+            var v = document.getElementById('view');
+            if (keep === true && v) {
+                if (now() - lastMove < 450 && now() - lastClick > 350) { if (!timer) { timer = setTimeout(flush, 500); } return; }
+                var h = v.offsetHeight, y = window.pageYOffset, mh = parseFloat(v.style.minHeight) || 0;
+                if (h > mh) { v.style.minHeight = h + 'px'; }
+                var r = _rvC.apply(this, arguments);
+                if (Math.abs(window.pageYOffset - y) > 1) { window.scrollTo(0, y); requestAnimationFrame(function () { if (Math.abs(window.pageYOffset - y) > 1) { window.scrollTo(0, y); } }); }
+                return r;
+            }
+            if (v) { v.style.minHeight = ''; }
+            return _rvC.apply(this, arguments);
+        };
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = 'html,body{overflow-anchor:none!important}#view{overflow-anchor:none}'; document.head.appendChild(st);
+    } catch (e) { try { console.log('calm', e); } catch (er) { } }
 })();
 /* ===== p9zsd: Bot Doctor: honest loss analysis of the paper bot + protective rules (cool-down, anti-chase, daily cap) ===== */
 (function () {
@@ -11667,7 +11692,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 s + ' .nav{background:' + p.bg + '!important}';
         });
 
-        css += 'html.mwfx-soft #view.mwswap,html.mwfx-rich #view.mwswap{animation:mwin .38s cubic-bezier(.2,.8,.2,1)}@keyframes mwin{from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:none}}' +
+        css += '#view.mwswap{animation:none!important}@keyframes mwin{from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:none}}' +
             'html.mwfx-soft .tile:active,html.mwfx-rich .tile:active,html.mwfx-soft .btn:active,html.mwfx-rich .btn:active{transform:scale(.96)}' +
             'html.mwfx-rich #mwfxbg{display:block}#mwfxbg{display:none;position:fixed;inset:-25%;z-index:0;pointer-events:none;mix-blend-mode:screen;opacity:.30;background:radial-gradient(520px 420px at 20% 20%,var(--fxA,#5b8cff),transparent 65%),radial-gradient(560px 460px at 80% 75%,var(--fxB,#a05bff),transparent 62%);animation:mwdrift 18s ease-in-out infinite alternate;will-change:transform}@keyframes mwdrift{from{transform:translate3d(-4%,-3%,0) scale(1)}to{transform:translate3d(4%,4%,0) scale(1.15)}}' +
             'html.mwfx-rich .tab.on svg{animation:mwtabp 2.6s ease-in-out infinite}@keyframes mwtabp{50%{transform:scale(1.12)}}' +
@@ -11683,7 +11708,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 var neon = g('mintoosuite_palon') === '1', k = g(PK) || 'violet', h = document.documentElement;
                 if (neon && PAL[k] && PAL[k].bg) { h.setAttribute('data-mwl', k); } else { h.removeAttribute('data-mwl'); }
                 h.classList.toggle('mwcalm', g(CK) === '1');
-                var fx = g('mintoosuite_fx') || 'soft'; h.classList.toggle('mwfx-soft', fx === 'soft'); h.classList.toggle('mwfx-rich', fx === 'rich');
+                var fx = g('mintoosuite_fx') || 'off'; h.classList.toggle('mwfx-soft', fx === 'soft'); h.classList.toggle('mwfx-rich', fx === 'rich');
                 var bg = document.getElementById('mwfxbg'); if (!bg) { bg = document.createElement('div'); bg.id = 'mwfxbg'; bg.setAttribute('data-mwkeep', '1'); document.body.appendChild(bg); }
                 var pk = (neon && PAL[k]) ? PAL[k] : PAL.violet; bg.style.setProperty('--fxA', pk.a); bg.style.setProperty('--fxB', pk.b);
             } catch (e) { }
@@ -11712,14 +11737,14 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                     '<div class="note">Only colours change. Every screen, button and menu stays exactly where it is. You can change back any time (Default).</div>' +
                     '<div class="mwprev" style="border:0;padding:0"><div class="row2"><span style="background:linear-gradient(135deg,' + q.a + ',' + q.b + ');color:' + (q.bt || '#fff') + '" data-lpgo="' + S.lpPrev + '">✅ Apply this theme</span><span style="background:var(--fill,#eee)" data-lpx="1">Cancel</span></div></div></div>';
             }
-            var fxc = g('mintoosuite_fx') || 'soft';
+            var fxc = g('mintoosuite_fx') || 'off';
             var mo = '<div class="group pad"><b>Motion effects</b><div class="note" style="margin:2px 0 6px">How lively the app feels. None of these move buttons or change the layout.</div><div class="mwlk">' +
                 [['off', '⏸ Off', 'No extra effects'], ['soft', '✨ Soft', 'Smooth window changes and press feedback'], ['rich', '🌈 Rich', 'Glowing moving background in your theme colours, shine on buttons, pulsing active tab']].map(function (o) { return '<div class="o' + (fxc === o[0] ? ' on' : '') + '" data-lf="' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div><div class="note">Calm screen (below) switches every animation off, whatever you pick here.</div></div>';
             var x = '<div class="group pad"><b>Colour theme</b><div class="note" style="margin:2px 0 0">Sixteen dark colour themes. They change colours only: every screen, button and menu stays exactly where it is.</div><div class="mwpal">' + pal + '<div class="o' + (!neon ? ' on' : '') + '" data-lp="off">↺ Default<i style="background:linear-gradient(90deg,#888,#ccc)"></i></div></div></div>' +
                 mo + '<div class="group pad"><b>More modes</b><div class="mwlk"><div class="o' + (m === 'trader' ? ' on' : '') + '" data-lm="trader">📈 Trader focus<small>Only trading tools in the Menu</small></div><div class="o' + (calm ? ' on' : '') + '" data-lm="calm">🧘 Calm screen<small>' + (calm ? 'On: no animations' : 'Off: tap to turn on') + '</small></div></div><div class="note">Trader focus hides the learning, wallet and fun tiles. Tap Pro or Beginner above to leave it. Calm screen switches off all animations and glow, which also saves battery.</div></div>';
             var i = h.lastIndexOf('<div class="note">Beginner mode only hides'); return pv + (i > 0 ? h.slice(0, i) + x + h.slice(i) : h + x);
         };
-        var lastW = ''; setInterval(function () { try { if (S.win !== lastW) { lastW = S.win; var v = document.getElementById('view'); if (v) { v.classList.remove('mwswap'); void v.offsetWidth; v.classList.add('mwswap'); setTimeout(function () { v.classList.remove('mwswap'); }, 420); } } } catch (e) { } }, 250);
+        var lastW = ''; setInterval(function () { try { if (S.win !== lastW) { lastW = S.win; var v = document.getElementById('view'); if (v) {  } } } catch (e) { } }, 250);
         document.addEventListener('click', function (e) {
             var el = e.target.closest ? e.target.closest('[data-lp],[data-lm],[data-lpgo],[data-lpx],[data-lf]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
             if (el.hasAttribute('data-lpx')) { S.lpPrev = ''; try { renderView(true); } catch (er) { } return; }
