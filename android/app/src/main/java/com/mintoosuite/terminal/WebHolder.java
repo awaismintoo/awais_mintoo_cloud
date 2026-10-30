@@ -83,6 +83,11 @@ final class WebHolder {
         });
         w.setWebChromeClient(new WebChromeClient() {
             @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, android.webkit.GeolocationPermissions.Callback cb) {
+                Media.geo(origin, cb);
+            }
+
+            @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> cb, FileChooserParams params) {
                 return Media.chooser(cb, params);
             }

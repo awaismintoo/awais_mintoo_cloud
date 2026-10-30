@@ -16,7 +16,9 @@ import java.util.ArrayList;
 
 /* File picker for the web page (pictures, videos, audio, any file) and speech-to-text for the Professor microphone. */
 final class Media {
-    static final int REQ_FILE = 7711, REQ_MIC = 7712;
+    static final int REQ_FILE = 7711, REQ_MIC = 7712, REQ_GEO = 7713;
+    private static android.webkit.GeolocationPermissions.Callback geoCb;
+    private static String geoOrigin;
     private static ValueCallback<Uri[]> fileCb;
     private static SpeechRecognizer sr;
     private static String lang = "en-US";
@@ -56,7 +58,22 @@ final class Media {
         a.runOnUiThread(new Runnable() { @Override public void run() { begin(a); } });
     }
 
+    static void geo(String origin, android.webkit.GeolocationPermissions.Callback cb) {
+        Activity a = MainActivity.cur;
+        if (a == null) { cb.invoke(origin, false, false); return; }
+        if (a.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            || a.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) { cb.invoke(origin, true, false); return; }
+        geoCb = cb; geoOrigin = origin;
+        a.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, REQ_GEO);
+    }
+
     static void onPerm(int req, int[] grants) {
+        if (req == REQ_GEO) {
+            boolean g = false;
+            if (grants != null) { for (int x : grants) { if (x == PackageManager.PERMISSION_GRANTED) { g = true; } } }
+            if (geoCb != null) { geoCb.invoke(geoOrigin, g, false); geoCb = null; }
+            return;
+        }
         if (req != REQ_MIC) { return; }
         boolean ok = grants != null && grants.length > 0 && grants[0] == PackageManager.PERMISSION_GRANTED;
         if (ok && MainActivity.cur != null) { begin(MainActivity.cur); } else { say("err", "Microphone permission is off. Turn it on in Android Settings > Apps > MintooSuite > Permissions."); }
