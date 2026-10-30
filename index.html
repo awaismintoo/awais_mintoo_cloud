@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.107';
+var BUILD = '2026-10-31.109';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -14922,7 +14922,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         try { WINS.push({ id: 'brief', ic: '🗞', c: '#5e5ce6', n: 'Briefing', t: 'Briefing', sub: 'Why markets are moving: news, world headlines, Bitcoin, gold, dollar' }); } catch (e) { }
         VIEWS.radar = vRadar; LIVE.radar = 0;
         try { WINS.push({ id: 'radar', ic: '📡', c: '#ff9f0a', n: 'Radar', t: 'Radar', sub: 'Early breakouts, dip bounces and new coins with a plan and a track record' }); } catch (e) { }
-        setInterval(function () { try { scan(); judge(); } catch (e) { } }, 30000); setTimeout(function () { try { scan(); } catch (e) { } }, 20000);
+        setInterval(function () { try { if (window.__safe && window.__safe()) { return; } scan(); judge(); } catch (e) { } }, 30000); setTimeout(function () { try { scan(); } catch (e) { } }, 20000);
         window.__radar = { R: R, an: an, scan: scan };
     } catch (e) { try { console.log('p9zszzg', e); } catch (er) { } }
 })();
@@ -15013,7 +15013,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         VIEWS.compare = function () { return block(); }; LIVE.compare = 0;
         try { WINS.push({ id: 'compare', ic: '📊', c: '#0a84ff', n: 'Compare', t: 'Compare', sub: 'Live Gold, Dollar index, Silver, Bitcoin, S&P 500, Oil, EUR and US yield with trend lines' }); } catch (e) { }
         ['exness', 'exdesk'].forEach(function (id) { var f = VIEWS[id]; if (typeof f === 'function') { VIEWS[id] = function () { var h = f.apply(this, arguments); return typeof h === 'string' ? block() + h : h; }; } });
-        setInterval(function () { try { if (['compare', 'exness', 'exdesk'].indexOf(S.win) >= 0) { refresh(false); paint(); } } catch (e) { } }, 15000);
+        setInterval(function () { try { if (window.__safe && window.__safe()) { return; } if (['compare', 'exness', 'exdesk'].indexOf(S.win) >= 0) { refresh(false); paint(); } } catch (e) { } }, 15000);
         window.__cmp = { D: D, refresh: refresh, get: function (k) { var d = D[k]; return d && d.pct != null && Date.now() - d.at < 600000 ? d : null; } };
     } catch (e) { try { console.log('p9zszzi', e); } catch (er) { } }
 })();
@@ -15366,7 +15366,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             }
             function refresh() { var el = document.getElementById('cpBody'), s = sym0(); if (el && S.win === 'chart') { el.innerHTML = bodyHtml(s); } }
             function poll() {
-                var s = sym0(), t = curTab(); if (S.win !== 'chart' || !s || !isUSDT(s) || t === 'bots' || document.hidden) { return; }
+                var s = sym0(), t = curTab(); if ((window.__safe && window.__safe()) || S.win !== 'chart' || !s || !isUSDT(s) || t === 'bots' || document.hidden) { return; }
                 var u = t === 'trades' ? 'https://fapi.binance.com/fapi/v1/trades?symbol=' + s + '&limit=30' : 'https://fapi.binance.com/fapi/v1/depth?symbol=' + s + '&limit=' + (t === 'depth' ? 50 : 15);
                 fetchText(u, 6000).then(function (tx) { var j = JSON.parse(tx); if (t === 'trades') { OB[s + '~t'] = j; } else { OB[s] = j; } if (curTab() === t && sym0() === s) { refresh(); } }).catch(function () { });
             }
@@ -15694,7 +15694,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function priceOf(sym) { try { var t = S.tick && S.tick[sym]; if (t && t.p > 0) { return { p: t.p, ex: 'bin' }; } var p = window.__tplan ? window.__tplan.priceOf(sym) : 0; return p > 0 ? { p: p, ex: 'other' } : null; } catch (e) { return null; } }
         function record() {
             try {
-                if (document.hidden || typeof idRows !== 'function') { return; }
+                if (document.hidden || typeof idRows !== 'function' || (window.__safe && window.__safe())) { return; }
                 var rows = idRows() || [], now = Date.now(), n = 0;
                 rows.slice(0, 16).forEach(function (m) {
                     if (!m || !m.R || m.R.blocked || (m.side !== 'LONG' && m.side !== 'SHORT') || !(+m.tpP > 0) || !(+m.slP > 0)) { return; }
@@ -15732,7 +15732,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         var busy = 0;
         function gradeAll() {
-            if (busy || document.hidden) { return; } var q = J.filter(function (c) { return c.st === 'open' && Date.now() - c.t0 > 360000; }).slice(0, 6); if (!q.length) { return; } busy = 1;
+            if (busy || document.hidden || (window.__safe && window.__safe())) { return; } var q = J.filter(function (c) { return c.st === 'open' && Date.now() - c.t0 > 360000; }).slice(0, 6); if (!q.length) { return; } busy = 1;
             q.reduce(function (p, c) { return p.then(function () { return grade(c); }); }, Promise.resolve()).then(function () { busy = 0; sv(); try { if (S.win === 'review') { X.again(); } } catch (e) { } });
         }
         setInterval(record, 120000); setInterval(gradeAll, 180000); setTimeout(record, 20000); setTimeout(gradeAll, 40000);
@@ -15740,7 +15740,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function agg(a) { var n = a.length, w = a.filter(function (c) { return c.r > 0; }).length, s = 0; a.forEach(function (c) { s += c.r; }); return { n: n, w: w, win: n ? w / n : 0, avg: n ? s / n : 0, sum: s }; }
         /* learning: only tightens */
         function learn() {
-            var from = Date.now() - 48 * 3600000, a = done(from), L = { block: {}, notes: [] };
+            var from = Date.now() - 48 * 3600000, a = done(from), L = { block: {}, notes: [] }; if (KX.learnOff === '1') { return L; }
             ['LONG', 'SHORT'].forEach(function (sd) { var g = agg(a.filter(function (c) { return c.side === sd; })); if (g.n >= 8 && g.win < 0.4 && g.avg < 0) { L.block[sd] = 1; L.notes.push('Last 48 h: ' + sd + ' calls won only ' + Math.round(g.win * 100) + '% of ' + g.n + ' (avg ' + g.avg.toFixed(2) + '%). BEST badge is removed for ' + sd + ' until it recovers.'); } });
             var losses = a.filter(function (c) { return c.r <= 0; }), late = losses.filter(function (c) { return (c.why || []).some(function (w) { return /late entry/.test(w); }); }).length, tight = losses.filter(function (c) { return (c.why || []).some(function (w) { return /too tight/.test(w); }); }).length;
             if (losses.length >= 5 && late / losses.length >= 0.4) { L.notes.push('Lesson: ' + late + ' of ' + losses.length + ' losses were late entries (price had already run). Wait for a pullback; do not chase.'); }
@@ -15779,6 +15779,96 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         });
         window.__review = { view: view, J: function () { return J; }, learn: learn, grade: grade, record: record, gradeAll: gradeAll };
     } catch (e) { try { console.error('p9zszzk', e); } catch (e3) { } }
+})();
+/* ===== BY2: self-healing (freeze check, error-burst and boot-loop safe mode, quiet repair log) + Baba AI "do it for me" controls (hide/show windows, switches, fix now). Only flips switches the app already has; never writes code. ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2, HK = 'mintoosuite_heal', BK = 'mintoosuite_boot', SK = 'mintoosuite_safeuntil';
+        var LOG = []; try { LOG = JSON.parse(localStorage.getItem(HK) || '[]') || []; } catch (e) { LOG = []; }
+        var safeUntil = 0; try { safeUntil = +localStorage.getItem(SK) || 0; } catch (e) { }
+        function say(t) { try { toast(t); } catch (e) { } }
+        function note(t) { LOG.push({ t: Date.now(), m: t }); if (LOG.length > 40) { LOG = LOG.slice(-40); } try { localStorage.setItem(HK, JSON.stringify(LOG)); } catch (e) { } }
+        window.__safe = function () { return Date.now() < safeUntil; };
+        var css = document.createElement('style'); css.setAttribute('data-mwkeep', '1'); document.head.appendChild(css);
+        function safeCss() { css.textContent = (window.__safe() ? '*{animation:none!important;transition:none!important}' : '') + hideCss(); }
+        function setSafe(min, why) { safeUntil = Date.now() + min * 60000; try { localStorage.setItem(SK, String(safeUntil)); } catch (e) { } note('Safe mode ' + min + ' min: ' + why); safeCss(); say('Calm mode on for ' + min + ' min (' + why + ')'); }
+        function safeOff() { safeUntil = 0; try { localStorage.setItem(SK, '0'); } catch (e) { } note('Safe mode off'); safeCss(); }
+
+        /* ---- boot-loop guard: if the app did not stay up twice in a row, start calm ---- */
+        try {
+            var b = JSON.parse(localStorage.getItem(BK) || '{}') || {}, now = Date.now(), n = (b.ok === false && now - (b.t || 0) < 180000) ? (b.n || 0) + 1 : 0;
+            localStorage.setItem(BK, JSON.stringify({ t: now, ok: false, n: n }));
+            if (n >= 2) { safeUntil = now + 30 * 60000; localStorage.setItem(SK, String(safeUntil)); note('Calm mode 30 min: app restarted ' + n + ' times quickly'); }
+            setTimeout(function () { try { localStorage.setItem(BK, JSON.stringify({ t: Date.now(), ok: true, n: 0 })); } catch (e) { } }, 25000);
+        } catch (e) { }
+
+        /* ---- repair actions ---- */
+        function heal(why) {
+            var did = [];
+            try { if (typeof wsWatchdog === 'function') { wsWatchdog(); did.push('live feed check'); } } catch (e) { }
+            try { if (typeof dataAge === 'function' && dataAge() > 60000 && navigator.onLine && typeof connectWS === 'function') { connectWS(); did.push('live feed restarted'); } } catch (e) { }
+            try { var sh = document.querySelectorAll('.sheet.open,.overlay.open'); } catch (e) { }
+            try { if (typeof renderView === 'function') { renderView(true); did.push('screen refreshed'); } } catch (e) { }
+            note('Repair (' + why + '): ' + (did.join(', ') || 'nothing needed')); return did;
+        }
+        /* ---- freeze check: timers stop while the screen is frozen, so a long gap means it just froze ---- */
+        var last = Date.now(), frz = [];
+        setInterval(function () {
+            var n = Date.now(), gap = n - last; last = n;
+            if (document.hidden || gap < 7000 || gap > 600000) { return; }
+            frz.push(n); frz = frz.filter(function (t) { return n - t < 300000; });
+            note('Freeze of ' + Math.round(gap / 1000) + ' s detected'); heal('freeze'); say('Baba repaired a short freeze');
+            if (frz.length >= 3) { setSafe(10, 'repeated freezes'); frz = []; }
+        }, 1000);
+        /* ---- error burst ---- */
+        var er = [];
+        window.addEventListener('error', function () { var n = Date.now(); er.push(n); er = er.filter(function (t) { return n - t < 30000; }); if (er.length >= 8) { er = []; note('Many errors in 30 s'); heal('errors'); setSafe(10, 'many errors'); } });
+        /* ---- a screen that failed to draw gets one automatic retry ---- */
+        var retried = 0;
+        setInterval(function () { try { var v = document.getElementById('view'); if (v && /Something went wrong showing this window/.test(v.innerText || '') && Date.now() - retried > 20000) { retried = Date.now(); note('Screen error on ' + S.win + ': retried'); renderView(true); } } catch (e) { } }, 4000);
+        /* ---- keep storage tidy ---- */
+        setInterval(function () { try { var q = document.getElementById('view'); if (LOG.length > 40) { LOG = LOG.slice(-40); } } catch (e) { } }, 600000);
+
+        /* ---- hidden windows (switches only) ---- */
+        var PROT = ['overview', 'account', 'plans', 'legal', 'health', 'help', 'baba', 'perms', 'alerts', 'risk'];
+        function hid() { return Array.isArray(KX.hidw) ? KX.hidw : []; }
+        function hideCss() { return hid().map(function (id) { return '#sheetMenu [data-act="win:' + id + '"],.fmstrip [data-act="win:' + id + '"],.tile[data-act="win:' + id + '"]{display:none!important}'; }).join(''); }
+        safeCss();
+        function findWin(text) {
+            var best = null, bl = 0, low = text.toLowerCase();
+            WINS.forEach(function (w) { [w.n, w.t, w.id].forEach(function (nm) { nm = String(nm || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').trim(); if (nm.length >= 3 && (' ' + low + ' ').indexOf(' ' + nm + ' ') >= 0 && nm.length > bl) { best = w; bl = nm.length; } }); });
+            return best;
+        }
+        function reply(title, html, q) { return { title: title, html: html + '<div class="note" style="margin:6px 0 0">You said: ' + e2(q) + '</div>', score: 9 }; }
+        var _pa = pfAnswer;
+        pfAnswer = function (raw) {
+            try {
+                var q = String(raw || '').trim(), low = q.toLowerCase().replace(/[?.!,]+$/g, '');
+                if (/^(please |baba |hey baba |can you |could you )?(add|write|create|build|make) ((a|an|the|new|another|extra) )*(function|feature|window|code|bot|button|screen)/.test(low)) { return reply('I cannot change the app code', 'I can switch things on or off, hide or show windows, and repair freezes. New functions and code changes are made by the developer, tested, and delivered as an update, because this app handles real money.', q); }
+                if (/^(?:please |baba |hey baba )*(?:turn on |switch on |enable |start )?(calm|safe) mode( on)?$/.test(low)) { setSafe(30, 'you asked'); return reply('Calm mode on', 'Background scans pause and animations stop for 30 minutes. Prices still update. Say "turn off calm mode" to end it.', q); }
+                var m = /^(?:please |baba |hey baba |can you |could you )*(hide|remove|disable|turn off|switch off|stop showing)\s+(.+)$/.exec(low), s = /^(?:please |baba |hey baba |can you |could you )*(show|unhide|restore|bring back|enable|turn on|switch on)\s+(.+)$/.exec(low);
+                var opn = /^(?:please |baba |hey baba |can you |could you )*(open|go to|take me to)\s+(.+)$/.exec(low);
+                function feat(t) { return /ut bot|buy.?sell|signal/.test(t) ? 'ut' : /support|resistance/.test(t) ? 'sr' : /learn|journal|daily review/.test(t) ? 'learn' : /safe mode|calm mode/.test(t) ? 'safe' : ''; }
+                if (m || s) {
+                    var on = !!s, t = (m || s)[2], f = feat(t);
+                    if (f === 'ut' || f === 'sr') { KX[f] = on ? 'on' : 'off'; X.save(); X.again(); return reply((on ? 'Shown: ' : 'Hidden: ') + (f === 'ut' ? 'UT Bot signals' : 'Support/Resistance lines'), 'Done on every chart. Say "' + (on ? 'hide' : 'show') + ' ' + (f === 'ut' ? 'UT Bot' : 'support lines') + '" to undo.', q); }
+                    if (f === 'learn') { KX.learnOff = on ? '0' : '1'; X.save(); return reply(on ? 'Learning is on' : 'Learning is off', on ? 'The app will again remove BEST badges from a side that keeps losing.' : 'The app keeps recording but will not change any BEST badges.', q); }
+                    if (f === 'safe') { if (on) { setSafe(30, 'you asked'); } else { safeOff(); } return reply(on ? 'Calm mode on' : 'Calm mode off', on ? 'Background scans pause and animations stop for 30 minutes. Prices still update.' : 'Everything is back to normal.', q); }
+                    var w = findWin(t);
+                    if (w) {
+                        if (PROT.indexOf(w.id) >= 0) { return reply('I will keep ' + e2(w.n), 'This window protects you (safety, legal, account or help), so I do not hide it.', q); }
+                        var h = hid().filter(function (x) { return x !== w.id; }); if (!on) { h.push(w.id); } KX.hidw = h; X.save(); safeCss();
+                        return reply((on ? 'Shown: ' : 'Hidden: ') + e2(w.n), on ? 'It is back in the menu and tab strips.' : 'It is out of the menu and tab strips. Say "show ' + e2(w.n) + '" to bring it back.', q);
+                    }
+                }
+                if (opn) { var w2 = findWin(opn[2]); if (w2) { return reply('Open ' + e2(w2.n), '<span class="pfbtn" data-act="win:' + e2(w2.id) + '">Open ' + e2(w2.n) + '</span>', q); } }
+                if (/(app|it|everything|screen).*(froz|freez|hang|hung|stuck|slow|crash)|^(fix|heal|repair)( the)?( app| it| this)?$|^fix (it|this|the app)|self.?heal/.test(low)) { var did = heal('you asked'); return reply('Repair done', 'I checked the live feed and refreshed the screen' + (did.length ? ' (' + did.join(', ') + ')' : '') + '. If it keeps freezing, say "turn on calm mode".', q); }
+                if (/what did you (fix|repair)|repair log|heal log|what happened to the app/.test(low)) { var l = LOG.slice(-6).reverse(); return reply('Repair log', l.length ? l.map(function (x) { return e2(new Date(x.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + x.m); }).join('<br>') : 'Nothing needed repair so far.', q); }
+            } catch (e) { }
+            return _pa.apply(this, arguments);
+        };
+        window.__heal = { ask: function (q) { return pfAnswer(q); }, heal: heal, LOG: function () { return LOG; }, setSafe: setSafe, safeOff: safeOff };
+    } catch (e) { try { console.error('p9zszzl', e); } catch (e3) { } }
 })();
 
 function renderView(keep) {

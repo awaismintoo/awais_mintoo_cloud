@@ -103,8 +103,50 @@ final class WebHolder {
             }
         });
         web = w;
+        startWatchdog();
         w.loadUrl("https://" + HOST + "/assets/index.html");
         return w;
+    }
+
+
+    /* native freeze watchdog: asks the page a trivial question every 6 s; if the page has not answered for 25 s while it is on screen, reload it (at most 3 times in 10 minutes) */
+    private static boolean wdOn = false;
+    private static long wdLastOk = 0, wdWinStart = 0;
+    private static int wdReloads = 0;
+
+    static void startWatchdog() {
+        if (wdOn) { return; }
+        wdOn = true;
+        wdLastOk = System.currentTimeMillis();
+        MAIN.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                try { wdTick(); } catch (Exception ignored) { }
+                MAIN.postDelayed(this, 6000);
+            }
+        }, 40000);
+    }
+
+    private static void wdTick() {
+        final WebView w = web;
+        if (w == null) { return; }
+        long now = System.currentTimeMillis();
+        if (!w.isShown()) { wdLastOk = now; return; }
+        if (now - wdLastOk > 25000) {
+            if (now - wdWinStart > 600000) { wdWinStart = now; wdReloads = 0; }
+            wdLastOk = now;
+            if (wdReloads < 3) {
+                wdReloads++;
+                try { w.reload(); } catch (Exception ignored) { }
+            }
+            return;
+        }
+        try {
+            w.evaluateJavascript("(function(){return 1;})()", new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String v) { wdLastOk = System.currentTimeMillis(); }
+            });
+        } catch (Exception ignored) { }
     }
 
     static boolean alive() { return web != null; }
