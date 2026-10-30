@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-30.72';
+var BUILD = '2026-10-30.73';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -10976,6 +10976,128 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             }, 750);
         }, false);
     } catch (e) { try { console.log('p9zszd', e); } catch (er) { } }
+})();
+/* ===== .73: "Market story": plain-language explanation for ANY coin, gold, currency (window, chart button, Professor) ===== */
+(function () {
+    try {
+        function e2(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function fm(p) { if (!isFinite(p)) { return '—'; } var a = Math.abs(p); if (a >= 100) { return p.toFixed(2); } if (a >= 1) { return p.toFixed(3); } var d = Math.min(10, Math.max(4, 3 - Math.floor(Math.log10(a || 1e-9)))); return p.toFixed(d); }
+        function pc(x) { return (x >= 0 ? '+' : '') + (x * 100).toFixed(Math.abs(x) >= 0.1 ? 0 : 1) + '%'; }
+        function ago(h) { return h < 1 ? 'less than an hour ago' : h < 2 ? 'about an hour ago' : h < 48 ? Math.round(h) + ' hours ago' : Math.round(h / 24) + ' days ago'; }
+        var YMAP = { GOLD: 'GC=F', XAU: 'GC=F', XAUUSD: 'GC=F', SILVER: 'SI=F', XAG: 'SI=F', XAGUSD: 'SI=F', OIL: 'CL=F', USOIL: 'CL=F', DXY: 'DX-Y.NYB', EURUSD: 'EURUSD=X', GBPUSD: 'GBPUSD=X', USDJPY: 'USDJPY=X', USDPKR: 'PKR=X', USDINR: 'INR=X', AUDUSD: 'AUDUSD=X', USDCAD: 'CAD=X', USDCHF: 'CHF=X' };
+        var NICE = { 'GC=F': 'Gold', 'SI=F': 'Silver', 'CL=F': 'Oil', 'DX-Y.NYB': 'US Dollar Index' };
+        function getJ(u) { return (typeof m7get === 'function' ? m7get(u) : fetch(u, { cache: 'no-store' }).then(function (r) { return r.json(); })); }
+        function rows(a) { return a.map(function (r) { return [+r[0], +r[1], +r[2], +r[3], +r[4], +r[5] || 0]; }); }
+        function loadCandles(key) {
+            var K = String(key).toUpperCase().replace(/[^A-Z0-9]/g, ''), y = YMAP[K];
+            if (y) { return exdYraw(y, '60m', '1mo').then(function (a) { return { rows: a.slice(-96), name: NICE[y] || K, vol: false, quote: '' }; }); }
+            var b = K.replace(/USDT$/, ''), s = b + 'USDT';
+            function bin() { return getJ('https://fapi.binance.com/fapi/v1/klines?symbol=' + s + '&interval=1h&limit=96').then(function (a) { if (!Array.isArray(a) || a.length < 30) { throw new Error('x'); } return { rows: rows(a), name: b, vol: true, quote: 'Binance Futures' }; }); }
+            function mx() { return getJ('https://api.mexc.com/api/v3/klines?symbol=' + s + '&interval=60m&limit=96').then(function (a) { if (!Array.isArray(a) || a.length < 30) { throw new Error('x'); } return { rows: rows(a), name: b, vol: true, quote: 'MEXC' }; }); }
+            var first = S.tick && S.tick[s] ? bin : mx, second = first === bin ? mx : bin;
+            return first().catch(function () { return second(); });
+        }
+        function ema(v, n) { var k = 2 / (n + 1), e = v[0], i, o = [e]; for (i = 1; i < v.length; i++) { e = v[i] * k + e * (1 - k); o.push(e); } return o; }
+        function rsi(c, n) { n = n || 14; if (c.length <= n) { return 50; } var g = 0, l = 0, i, d; for (i = 1; i <= n; i++) { d = c[i] - c[i - 1]; if (d >= 0) { g += d; } else { l -= d; } } g /= n; l /= n; for (i = n + 1; i < c.length; i++) { d = c[i] - c[i - 1]; g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n; } return l === 0 ? 100 : 100 - 100 / (1 + g / l); }
+        function analyse(D) {
+            var R = D.rows, n = R.length, C = R.map(function (r) { return r[4]; }), H = R.map(function (r) { return r[2]; }), L = R.map(function (r) { return r[3]; }), V = R.map(function (r) { return r[5]; });
+            var now = C[n - 1], i, iL = 0, iH = 0, best = 0;
+            /* biggest run-up: low then a later high */
+            var minI = 0; for (i = 1; i < n; i++) { if (L[i] < L[minI]) { minI = i; } var up = H[i] / L[minI] - 1; if (up > best) { best = up; iL = minI; iH = i; } }
+            var lo = L[iL], hi = H[iH], runup = best, hrsSinceHi = n - 1 - iH, hrsSinceLo = n - 1 - iL;
+            var fromHi = now / hi - 1, fromLo = now / lo - 1, pos = hi > lo ? (now - lo) / (hi - lo) : 0.5;
+            var e20 = ema(C, 20), e50 = ema(C, 50), E20 = e20[n - 1], stretch = now / E20 - 1, r14 = rsi(C, 14);
+            var c24 = n > 24 ? now / C[n - 25] - 1 : now / C[0] - 1;
+            var vr = 0; if (D.vol) { var rec = (V[n - 1] + V[n - 2] + V[n - 3]) / 3, old = 0, cnt = 0; for (i = Math.max(0, n - 27); i < n - 3; i++) { old += V[i]; cnt++; } old = cnt ? old / cnt : 0; vr = old ? rec / old : 0; }
+            var rng6 = (Math.max.apply(null, H.slice(-6)) - Math.min.apply(null, L.slice(-6))) / now;
+            var sup = Math.min.apply(null, L.slice(-3));
+            /* phase */
+            var phase, sc = 0, why = [];
+            if (runup >= 0.35 && hrsSinceHi <= 18 && fromHi > -0.15) { phase = 'Vertical rise, now near the top'; }
+            else if (runup >= 0.35 && fromHi <= -0.15) { phase = 'Pulling back after a big rise'; }
+            else if (now > E20 && E20 > e50[n - 1] && c24 > 0.02) { phase = 'Steady uptrend'; }
+            else if (now < E20 && E20 < e50[n - 1] && c24 < -0.02) { phase = 'Steady downtrend'; }
+            else if (fromLo > 0.04 && pos < 0.4 && now > E20) { phase = 'Recovering from a low'; }
+            else { phase = 'Sideways / no clear direction'; }
+            if (runup >= 0.35 && hrsSinceHi <= 18 && pos > 0.8) { sc -= 2; why.push('The price already rose ' + pc(runup) + ' and sits near the top of that move. Buying here means paying the highest price of the move.'); }
+            if (r14 > 75) { sc -= 2; why.push('RSI is ' + r14.toFixed(0) + ': buyers have pushed hard and the move is "overheated".'); } else if (r14 > 65) { sc -= 1; why.push('RSI is ' + r14.toFixed(0) + ': strong, but getting stretched.'); } else if (r14 < 30) { sc += 2; why.push('RSI is ' + r14.toFixed(0) + ': sellers have pushed hard, so a bounce is more likely than usual.'); } else if (r14 < 40) { sc += 1; why.push('RSI is ' + r14.toFixed(0) + ': weak, close to a bounce zone.'); }
+            if (stretch > 0.12) { sc -= 2; why.push('The price is ' + pc(stretch) + ' above its 20-hour average. Prices usually come back toward the average.'); } else if (stretch < -0.12) { sc += 1; why.push('The price is ' + pc(stretch) + ' below its 20-hour average, a stretched drop that often bounces.'); }
+            else if (now > E20) { sc += 1; why.push('The price is above its 20-hour average, which favours buyers.'); } else { sc -= 1; why.push('The price is below its 20-hour average, which favours sellers.'); }
+            if (D.vol && vr) { if (vr < 0.45 && runup >= 0.35) { sc -= 1; why.push('Trading volume has dropped to about ' + Math.round(vr * 100) + '% of normal after the rise. A move that loses volume at the top often stalls or reverses.'); } else if (vr > 1.8) { why.push('Volume is ' + vr.toFixed(1) + '× the normal level: a lot of activity right now.'); } }
+            var lean = sc <= -2 ? 'SELL / take profit side' : sc >= 2 ? 'BUY side' : 'WAIT';
+            return { D: D, now: now, lo: lo, hi: hi, runup: runup, hrsHi: hrsSinceHi, hrsLo: hrsSinceLo, fromHi: fromHi, fromLo: fromLo, pos: pos, E20: E20, stretch: stretch, r14: r14, c24: c24, vr: vr, sup: sup, phase: phase, sc: sc, why: why, lean: lean, rng6: rng6 };
+        }
+        function story(A, compact) {
+            var D = A.D, nm = D.name, rg = A.hi - A.lo, lv618 = A.hi - rg * 0.382, lv50 = A.hi - rg * 0.5, lv382 = A.hi - rg * 0.618;
+            var col = /SELL/.test(A.lean) ? '#ff453a' : /BUY/.test(A.lean) ? '#30d158' : '#ff9f0a';
+            var h = '';
+            h += '<div class="stbox"><div class="stl" style="color:' + col + '">' + e2(A.lean) + '</div><div class="stp">' + e2(A.phase) + '</div></div>';
+            h += '<p><b>What happened</b><br>Over the last ' + Math.round(A.D.rows.length) + ' hours ' + e2(nm) + ' ' + (A.runup > 0.05 ? 'rose from about <b>' + fm(A.lo) + '</b> (' + ago(A.hrsLo) + ') to a high of <b>' + fm(A.hi) + '</b> (' + ago(A.hrsHi) + '), a gain of <b>' + pc(A.runup) + '</b>.' : 'moved between ' + fm(A.lo) + ' and ' + fm(A.hi) + ' without a large swing.') + ' Now it trades at <b>' + fm(A.now) + '</b>' + (A.runup > 0.05 ? ', which is ' + pc(A.fromHi) + ' from that high and ' + pc(A.fromLo) + ' from the low.' : '.') + ' In the last 24 hours it changed ' + pc(A.c24) + '.</p>';
+            h += '<p><b>Why the app leans "' + e2(A.lean) + '"</b></p><ul>' + A.why.map(function (w) { return '<li>' + e2(w) + '</li>'; }).join('') + '</ul>';
+            if (A.runup >= 0.2) { h += '<p><b>Levels to watch</b><br>• Top of the move: <b>' + fm(A.hi) + '</b> (sellers appeared here before)<br>• Recent floor: <b>' + fm(A.sup) + '</b> (last 3 hours)<br>• If it pulls back, common stopping areas are <b>' + fm(lv618) + '</b>, <b>' + fm(lv50) + '</b> (half of the rise) and <b>' + fm(lv382) + '</b>.</p>'; }
+            else { h += '<p><b>Levels to watch</b><br>• Upper edge: <b>' + fm(A.hi) + '</b><br>• Lower edge: <b>' + fm(A.lo) + '</b><br>• Recent floor: <b>' + fm(A.sup) + '</b></p>'; }
+            h += '<p><b>What would make it bullish</b><br>' + (A.runup >= 0.2 ? 'It holds above ' + fm(Math.max(A.sup, lv618)) + ' and then closes an hourly candle above the high ' + fm(A.hi) + ' with strong volume. That means buyers absorbed the sellers.' : 'A close above ' + fm(A.hi) + ' with rising volume, while the price stays above its 20-hour average (' + fm(A.E20) + ').') + '</p>';
+            h += '<p><b>What would make it bearish</b><br>' + (A.runup >= 0.2 ? 'It drops below ' + fm(A.sup) + ' (the recent floor). The next likely stops are ' + fm(lv618) + ' and ' + fm(lv50) + '.' : 'A close below ' + fm(A.lo) + ' or below the 20-hour average ' + fm(A.E20) + ' with volume.') + '</p>';
+            h += '<p><b>How to use this</b><br>' + (/SELL/.test(A.lean) ? 'If you hold it, many traders sell part to lock in gain and keep the rest with a stop-loss. If you do not hold it, waiting for a pullback or a clear hold is usually safer than buying the top.' : /BUY/.test(A.lean) ? 'Buyers have the edge now, but use a stop-loss under ' + fm(A.sup) + ' and never risk more than you can lose.' : 'No clear edge: waiting is a valid decision.') + '</p>';
+            h += '<div class="note">Built from the last hours of ' + e2(D.quote || 'market') + ' candles. It explains what the chart shows. Nobody can know the next move, and this is not financial advice.</div>';
+            return h;
+        }
+        var CSS = document.createElement('style'); CSS.setAttribute('data-mwkeep', '1'); CSS.textContent = '.stbox{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(128,128,128,.1);margin-bottom:8px}.stl{font-size:18px;font-weight:900}.stp{font-size:13px;opacity:.85;text-align:right}.stx p{margin:8px 0;font-size:14px;line-height:1.4}.stx ul{margin:4px 0 4px 18px;padding:0;font-size:14px;line-height:1.4}';
+        document.head.appendChild(CSS);
+        window.__mwStory = { load: loadCandles, analyse: analyse, html: story };
+        /* ---------- window ---------- */
+        var ST = { sym: '', html: '', busy: 0, err: '' };
+        function run(sym) {
+            ST.sym = sym; ST.busy = 1; ST.err = ''; ST.html = ''; try { renderView(true); } catch (e) { }
+            loadCandles(sym).then(function (D) { ST.html = '<div class="stx"><div class="pchead" style="margin:0 0 6px"><b>' + e2(D.name) + '</b> <small class="mut">' + e2(D.quote || sym) + '</small></div>' + story(analyse(D)) + '</div>'; ST.busy = 0; try { if (S.win === 'story') { renderView(true); } } catch (e) { } })
+                .catch(function () { ST.busy = 0; ST.err = 'I could not load candles for "' + sym + '". Check the spelling (for example QI, BTC, GOLD, EURUSD) or your internet.'; try { if (S.win === 'story') { renderView(true); } } catch (e) { } });
+        }
+        function vStory() {
+            var def = ST.sym || ((S.chart && S.chart.sym) || 'BTCUSDT').replace(/USDT$/, '');
+            var h = '<div class="group pad"><b style="font-size:17px">🧭 Market story: why?</b><div class="note" style="margin:4px 0 8px">Type any coin (QI, BTC, SOL…), gold (GOLD) or a currency (EURUSD, USDPKR, DXY). You get a plain-language story: what happened, where it stands, levels to watch and what would change the view.</div><div style="display:flex;gap:8px"><input class="m7inp" id="stin" value="' + e2(def) + '" autocapitalize="characters" autocomplete="off" style="flex:1"><button class="btn" data-stq="go" style="flex:none;width:96px">Explain</button></div></div>';
+            if (ST.busy) { h += '<div class="group pad"><div class="note">Reading the chart…</div></div>'; }
+            else if (ST.err) { h += '<div class="group pad"><div class="note">' + e2(ST.err) + '</div></div>'; }
+            else if (ST.html) { h += '<div class="group pad">' + ST.html + '</div>'; }
+            return h;
+        }
+        WINS.push({ id: 'story', ic: '🧭', c: '#bf5af2', n: 'Market story (why)', t: 'Story', sub: 'Plain explanation for any coin, gold or currency' }); LIVE.story = 0; VIEWS.story = vStory;
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-stq]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var v = el.getAttribute('data-stq');
+            if (v === 'go') { var s = ((document.getElementById('stin') || {}).value || '').trim(); if (s) { run(s); } }
+            else if (v.indexOf('sym:') === 0) { S.win = 'story'; try { gotoWin('story'); } catch (er) { } run(v.slice(4)); }
+        }, true);
+        /* button on the chart and analyst windows */
+        ['chart', 'analyst'].forEach(function (id) {
+            try { var _v = VIEWS[id]; if (!_v) { return; } VIEWS[id] = function () { var h = _v.apply(this, arguments), s = ((S.chart && S.chart.sym) || '').replace(/USDT$/, ''); return '<div class="group pad" style="padding:8px 12px"><button class="btn sec" data-stq="sym:' + e2(s || 'BTC') + '" style="width:100%">🧭 Why? Explain ' + e2(s || 'this coin') + ' in plain words</button></div>' + h; }; } catch (e) { }
+        });
+        function addMenu() { try { var mb = document.querySelector('#sheetMenu [data-act="win:safety"]'); if (mb && !document.querySelector('#sheetMenu [data-act="win:story"]')) { mb.insertAdjacentHTML('beforebegin', '<button class="btn sec" data-act="win:story">🧭 Market story (why)</button>'); } } catch (e) { } }
+        setInterval(addMenu, 2600);
+        /* ---------- Professor ---------- */
+        var STOP = { WHY: 1, THE: 1, AND: 1, FOR: 1, SELL: 1, BUY: 1, RSI: 1, MACD: 1, EMA: 1, SMA: 1, WHAT: 1, EXPLAIN: 1, STORY: 1, ANALYSIS: 1, ANALYZE: 1, ANALYSE: 1, IS: 1, THIS: 1, THAT: 1, COIN: 1, ABOUT: 1, TELL: 1, ME: 1, ARE: 1, SAYING: 1, SAYS: 1, TOLD: 1, WITH: 1, ON: 1, IN: 1, OF: 1, TO: 1, IT: 1, MY: 1, SHOULD: 1, I: 1, A: 1, AN: 1, HAPPENING: 1, GOING: 1, WILL: 1, GO: 1, UP: 1, DOWN: 1, HOLD: 1, NOW: 1, TODAY: 1, TOMORROW: 1, MEXC: 1, BINANCE: 1, SIGNAL: 1, TRADE: 1, LONG: 1, SHORT: 1, CHART: 1, PRICE: 1, MARKET: 1, APP: 1, GIVE: 1, SHOW: 1, HOW: 1, DO: 1, DOES: 1, WHEN: 1, CAN: 1, YOU: 1, PLEASE: 1, WANT: 1, KNOW: 1, SEE: 1, LOOK: 1, AT: 1, BE: 1, BULLISH: 1, BEARISH: 1, REASON: 1, REASONS: 1, DETAILS: 1, DETAIL: 1, MORE: 1, ANY: 1, ALL: 1 };
+        function findSym(raw) {
+            var toks = String(raw).replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean), i, u;
+            for (i = 0; i < toks.length; i++) { u = toks[i].toUpperCase(); if (YMAP[u]) { return u; } }
+            for (i = 0; i < toks.length; i++) { u = toks[i].toUpperCase(); if (!STOP[u] && S.tick && S.tick[u + 'USDT']) { return u; } }
+            for (i = 0; i < toks.length; i++) { u = toks[i].toUpperCase(); if (!STOP[u] && /^[A-Z0-9]{2,8}$/.test(toks[i]) && toks[i] === toks[i].toUpperCase() && /[A-Z]/.test(u)) { return u; } }
+            for (i = toks.length - 1; i >= 0; i--) { u = toks[i].toUpperCase(); if (!STOP[u] && /^[A-Za-z]{2,6}$/.test(toks[i])) { return u; } }
+            return '';
+        }
+        var _pa = pfAnswer;
+        pfAnswer = function (raw) {
+            var q = String(raw || '').toLowerCase();
+            if (/(why|explain|story|analy[sz]|happening|reason|details?|what do you see|kya ho|kyun|kyon).*|(sell|buy).*(signal|says|saying|tell)/.test(q) && !/screen|window|indicator|what is (rsi|macd|ema)|leverage|funding rate/.test(q)) {
+                var sym = findSym(raw);
+                if (sym && (YMAP[sym] || /(sell|buy|why|story|explain|analy|happening|reason|chart|candle|coin)/.test(q))) {
+                    var id = 'stq' + Date.now();
+                    loadCandles(sym).then(function (D) { var html = '<div class="stx">' + story(analyse(D)) + '</div><span class="pfbtn" data-stq="sym:' + e2(sym) + '">Open the full story</span>'; for (var i = PF.msgs.length - 1; i >= 0; i--) { if (PF.msgs[i].html && PF.msgs[i].html.indexOf(id) >= 0) { PF.msgs[i].html = html; PF.msgs[i].title = 'Story: ' + D.name; break; } } try { pfRender(); } catch (e) { } })
+                        .catch(function () { for (var i = PF.msgs.length - 1; i >= 0; i--) { if (PF.msgs[i].html && PF.msgs[i].html.indexOf(id) >= 0) { PF.msgs[i].html = 'I could not load candles for ' + e2(sym) + '. Check the spelling or your internet and try again.'; break; } } try { pfRender(); } catch (e) { } });
+                    return { title: 'Reading ' + sym, html: '<span id="' + id + '">Reading the ' + e2(sym) + ' chart…</span>' };
+                }
+            }
+            return _pa.apply(this, arguments);
+        };
+    } catch (e) { try { console.log('story', e); } catch (er) { } }
 })();
 /* ===== p9zsd: Bot Doctor: honest loss analysis of the paper bot + protective rules (cool-down, anti-chase, daily cap) ===== */
 (function () {
