@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.67';
+var BUILD = '2026-10-29.69';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5523,7 +5523,7 @@ function pfCSS() {
 }
 function pfPos() {
     var m = document.getElementById('pfm'); if (!m) { return; } var W = window.innerWidth, H = window.innerHeight, x = PF.st.x, y = PF.st.y;
-    if (x == null || y == null) { x = W - 46; y = H - 150; } x = Math.max(4, Math.min(W - 42, x)); y = Math.max(60, Math.min(H - 150, y)); m.style.left = x + 'px'; m.style.top = y + 'px';
+    if (x == null || y == null) { x = W - 46; y = H - 150; } x = Math.max(4, Math.min(W - 42, x)); y = Math.max(2, Math.min(H - 46, y)); m.style.left = x + 'px'; m.style.top = y + 'px';
     var bub = m.querySelector('.pfbub'); if (bub) { if (x > W / 2) { bub.style.right = '0'; bub.style.left = 'auto'; } else { bub.style.left = '0'; bub.style.right = 'auto'; } }
 }
 function pfBuild() {
@@ -10036,8 +10036,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function verify(txt) {
             var c = cfg(); if (!c) { close(); return; }
             if (Date.now() < lockedUntil) { message('Too many tries. Wait ' + Math.ceil((lockedUntil - Date.now()) / 1000) + ' s', true); shake(); return; }
-            if (hash(txt, c.s) === c.h) { wrong = 0; close(); return; }
-            wrong++; shake();
+            if (hash(txt, c.s) === c.h) { wrong = 0; try { localStorage.setItem('mintoosuite_lkwrong', '0'); } catch (er) { } close(); return; }
+            wrong++; shake(); try { var tw = (+localStorage.getItem('mintoosuite_lkwrong') || 0) + 1; localStorage.setItem('mintoosuite_lkwrong', String(tw)); window.__mwWipeCheck && window.__mwWipeCheck(tw); } catch (er) { }
             if (wrong >= 5) { lockedUntil = Date.now() + 30000; wrong = 0; message('Too many wrong tries. Wait 30 seconds.', true); }
             else { message('Wrong ' + (c.t === 'pat' ? 'pattern' : 'PIN') + '. ' + (5 - wrong) + ' tries left.', true); }
             entry = ''; patSeq = []; var d = ov && ov.querySelector('#lkd'); if (d) { d.innerHTML = dotsHtml(4); } clearPattern();
@@ -10435,7 +10435,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 if (H().childNodes.length > 6) { H().removeChild(H().firstChild); }
             } catch (er) { }
         }
-        document.addEventListener('pointerdown', fx, true);
+        window.__mwRipple = function (x, y) { fx({ clientX: x, clientY: y, pointerType: 'touch', button: 0 }); };
     } catch (e) { try { console.log('tapfx', e); } catch (er) { } }
 })();
 
@@ -10587,6 +10587,247 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             return h;
         };
     } catch (e) { try { console.log('emb', e); } catch (er) { } }
+})();
+/* ===== .68: responsive taps + clear press dip + accidental-touch guard + scroll-vs-tap judging; title in the header's middle; compact Markets row with DXY ===== */
+(function () {
+    try {
+        /* ---------- taps ---------- */
+        var css = 'html,body{touch-action:manipulation}*{-webkit-tap-highlight-color:transparent}' +
+            '.mwprs{transform:scale(.9)!important;filter:brightness(.62) saturate(1.25)!important;opacity:1!important;box-shadow:inset 0 0 0 2px rgba(120,150,255,.7),0 0 0 2px rgba(120,150,255,.25)!important;transition:transform .05s,filter .05s,box-shadow .05s!important}';
+        var st0 = document.createElement('style'); st0.setAttribute('data-mwkeep', '1'); st0.textContent = css; document.head.appendChild(st0);
+        var CLK = 'button,a,[role=button],[data-act],[data-m7],[data-m8],[data-m9],[data-m13],[data-m24],[data-lk],[data-lp],[data-lm],[data-lf],[data-lpgo],[data-lpx],[data-pl],[data-ls],[data-tr],[data-zb],[data-co],[data-pf],[data-gal],[data-gd],[data-gb],[data-el],[data-mk],.tap,.tab,.o,label';
+        var down = null, lastClick = 0, synthAt = 0, synthEl = null, lastScroll = 0, blockUntil = 0;
+        function clickable(el) { try { var c = el && el.closest ? el.closest(CLK) : null; if (!c) { return null; } if (/^(INPUT|TEXTAREA|SELECT)$/.test(c.tagName) || c.closest('#mwlkui,#mwcoach,#m7gate,canvas,#cv')) { return null; } return c; } catch (e) { return null; } }
+        function tick() { try { navigator.vibrate && navigator.vibrate(7); } catch (e) { } }
+        document.addEventListener('scroll', function () { lastScroll = Date.now(); }, true);
+        document.addEventListener('pointerdown', function (e) {
+            if (e.pointerType === 'mouse' && e.button) { return; }
+            var big = (e.width > 56 || e.height > 56) && e.pointerType === 'touch', fling = Date.now() - lastScroll < 140;
+            down = { x: e.clientX, y: e.clientY, t: Date.now(), el: e.target, id: e.pointerId, bad: big || fling };
+            if (down.bad) { blockUntil = Date.now() + 450; }
+        }, true);
+        document.addEventListener('pointermove', function (e) {
+            if (!down || e.pointerId !== down.id) { return; }
+            if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) { document.querySelectorAll('.mwprs').forEach(function (x) { x.classList.remove('mwprs'); }); }
+        }, true);
+        document.addEventListener('pointerup', function (e) {
+            if (!down || e.pointerId !== down.id) { return; }
+            var d = down; down = null; var moved = Math.hypot(e.clientX - d.x, e.clientY - d.y), dur = Date.now() - d.t;
+            if (moved > 16 || dur > 700) { blockUntil = Date.now() + 120; return; }
+            if (d.bad) { return; }
+            var tg = clickable(d.el); if (!tg) { return; }
+            tick(); try { window.__mwRipple && window.__mwRipple(e.clientX, e.clientY); } catch (er) { }
+            if (e.pointerType === 'touch') { var t0 = Date.now(); setTimeout(function () { if (lastClick < t0 && document.contains(tg)) { synthAt = Date.now(); synthEl = tg; try { tg.click(); } catch (er) { } } }, 130); }
+        }, true);
+        window.addEventListener('click', function (e) {
+            var now = Date.now();
+            if (e.isTrusted && now < blockUntil && clickable(e.target)) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); return; }
+            if (e.isTrusted && synthEl && now - synthAt < 700 && synthEl.contains(e.target)) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); return; }
+            if (e.isTrusted) { lastClick = now; }
+        }, true);
+        window.__tapDbg = { synth: function () { return synthAt; } };
+    } catch (e) { try { console.log('taps', e); } catch (er) { } }
+})();
+
+/* ---------- title in the header's middle + compact Markets row ---------- */
+(function () {
+    try {
+        var css = '#mwtitlebar{display:flex;align-items:center;justify-content:center;padding:0 12px 6px}#mwtitlebar h1{margin:0!important;font-size:22px!important;line-height:1.15;text-align:center;display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}' +
+            '.wrap #winSub{display:none}html.mwbeg .wrap #winSub{display:block}' +
+            '.mwstrip{display:none!important}' +
+            '#mwmk{margin:2px 0 8px}#mwmk .mkh{font-size:11px;font-weight:800;letter-spacing:.12em;opacity:.55;margin:0 4px 5px}' +
+            '#mwmk .row5{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}#mwmk .row5::-webkit-scrollbar{display:none}' +
+            '#mwmk .c{flex:0 0 112px;height:84px;box-sizing:border-box;scroll-snap-align:start;border-radius:16px;padding:8px 9px;background:var(--card,#fff);box-shadow:0 2px 10px rgba(0,0,0,.08);border:1px solid var(--line,rgba(128,128,128,.14));contain:layout style;overflow:hidden;display:block;cursor:pointer}' +
+            '#mwmk .t{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;opacity:.8;height:20px}#mwmk .t svg{flex:none}' +
+            '#mwmk .p{font-size:16px;font-weight:800;margin-top:3px;height:20px;overflow:hidden;white-space:nowrap}' +
+            '#mwmk .b{display:flex;justify-content:space-between;align-items:center;height:26px;margin-top:2px}#mwmk .b b{font-size:12px}#mwmk .b svg{width:44px;height:20px}' +
+            '#mwmk .up{color:var(--grn,#1a9e50)}#mwmk .dn{color:var(--red,#e0352b)}';
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = css; document.head.appendChild(st);
+        /* move the window title into a header row */
+        function relocate() {
+            try {
+                var h1 = document.getElementById('winName'), nav = document.querySelector('header.nav'); if (!h1 || !nav) { return; }
+                var bar = document.getElementById('mwtitlebar'); if (!bar) { bar = document.createElement('div'); bar.id = 'mwtitlebar'; nav.appendChild(bar); }
+                if (h1.parentNode !== bar) { bar.appendChild(h1); }
+            } catch (e) { }
+        }
+        relocate(); setInterval(relocate, 1500);
+        /* DXY from Yahoo */
+        var DX = { p: 0, c: 0, s: [], at: 0, busy: 0 };
+        function loadDx() {
+            if (DX.busy || Date.now() - DX.at < 55000 || typeof exdYraw !== 'function') { return; } DX.busy = 1;
+            exdYraw('DX-Y.NYB', '15m', '1d').then(function (a) { var l = a[a.length - 1][4], o = a[0][1]; DX.p = l; DX.c = (l / o - 1) * 100; DX.s = a.map(function (r) { return r[4]; }); DX.at = Date.now(); DX.busy = 0; }).catch(function () { DX.busy = 0; DX.at = Date.now() - 40000; });
+        }
+        function spark(arr, up) {
+            if (!arr || arr.length < 3) { return '<svg viewBox="0 0 44 20"></svg>'; }
+            var mn = Math.min.apply(null, arr), mx = Math.max.apply(null, arr), n = arr.length, pts = [], i; if (mx === mn) { mx = mn + 1e-9; }
+            var step = Math.max(1, Math.floor(n / 24)); for (i = 0; i < n; i += step) { pts.push((i / (n - 1) * 44).toFixed(1) + ',' + (18 - (arr[i] - mn) / (mx - mn) * 16).toFixed(1)); }
+            return '<svg viewBox="0 0 44 20"><polyline fill="none" stroke="' + (up ? '#1a9e50' : '#e0352b') + '" stroke-width="1.6" stroke-linejoin="round" points="' + pts.join(' ') + '"/></svg>';
+        }
+        function icon(code, sz) { return (window.mwCoinIcon && window.mwCoinIcon(code, sz || 18)) || ''; }
+        function fmtP(sym, v) { try { return px(sym); } catch (e) { return String(v); } }
+        function card(label, ic, price, chg, series, act) {
+            var up = chg >= 0;
+            return '<div class="c" data-act="' + act + '"><div class="t">' + ic + '<span>' + label + '</span></div><div class="p">' + price + '</div><div class="b"><b class="' + (up ? 'up' : 'dn') + '">' + (isFinite(chg) ? (up ? '+' : '') + chg.toFixed(2) + '%' : '—') + '</b>' + spark(series, up) + '</div></div>';
+        }
+        function sym3(label, sym, code) {
+            var t = S.tick[sym], chg = NaN, ser = [];
+            try { if (t) { chg = chgOf(sym).v; } } catch (e) { }
+            try { var r = S.scan.res[sym]; if (r && r.spark) { ser = r.spark; } } catch (e) { }
+            return card(label, icon(code, 18), t ? fmtP(sym) : '…', chg, ser, 'chart:' + sym);
+        }
+        var lastHtml = '';
+        function build() {
+            var host = document.getElementById('mwmk'), home = document.getElementById('mwHome');
+            if (!home) { return; }
+            if (!host) { host = document.createElement('div'); host.id = 'mwmk'; host.setAttribute('data-noswipe', '1'); host.setAttribute('data-mwkeep', '1'); home.parentNode.insertBefore(host, home); }
+            host.style.display = (S.win === 'overview') ? '' : 'none'; if (S.win !== 'overview') { return; }
+            loadDx();
+            var m = {}; try { m = mktStats(); } catch (e) { m = { n: 0, breadth: 0 }; }
+            var h = '<div class="mkh">MARKETS</div><div class="row5">' +
+                sym3('Gold', GOLD, 'XAU') + sym3('Bitcoin', 'BTCUSDT', 'BTC') + sym3('Ethereum', 'ETHUSDT', 'ETH') +
+                '<div class="c"><div class="t"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20V8"/></svg><span>Breadth</span></div><div class="p ' + (m.breadth >= 50 ? 'up' : 'dn') + '">' + (m.n ? m.breadth + '%' : '—') + '</div><div class="b"><span style="font-size:10.5px;opacity:.7">of ' + (m.n || 0) + ' up 24h</span></div></div>' +
+                card('Dollar DXY', '<svg width="18" height="18" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#2b6cb0"/><text x="50" y="68" text-anchor="middle" font-family="Arial" font-weight="700" font-size="58" fill="#fff">$</text></svg>', DX.p ? DX.p.toFixed(2) : '…', DX.p ? DX.c : NaN, DX.s, 'win:exdesk') + '</div>';
+            if (h !== lastHtml) { lastHtml = h; var sc = host.querySelector('.row5'), x = sc ? sc.scrollLeft : 0; host.innerHTML = h; var ns = host.querySelector('.row5'); if (ns && x) { ns.scrollLeft = x; } }
+        }
+        setInterval(build, 1500); setTimeout(build, 800);
+        /* the old big Markets block in the page body is replaced by the row above */
+        var _ov = VIEWS.overview;
+        VIEWS.overview = function () {
+            var h = _ov.apply(this, arguments), a = h.indexOf('<div class="sh"'), k = h.indexOf('class="grid2"');
+            if (k > 0) { var s0 = h.lastIndexOf('<div class="sh"', k), e0 = h.indexOf('<div class="sh"', k); if (s0 >= 0 && e0 > k) { h = h.slice(0, s0) + h.slice(e0); } }
+            return h;
+        };
+        window.__mkDbg = { build: build };
+    } catch (e) { try { console.log('mkrow', e); } catch (er) { } }
+})();
+
+/* ---------- news tapes: white neon label with official icon, source column, full stop + gap between items ---------- */
+(function () {
+    try {
+        var css = '.mwtape{height:36px!important;align-items:stretch!important}.mwtt{background:#fff!important;color:#000!important;display:flex!important;align-items:center;gap:6px;padding:0 11px!important;font-weight:900!important;letter-spacing:.08em!important;position:relative;z-index:2;animation:mwneonlbl 2.4s ease-in-out infinite;border-right:2px solid rgba(255,255,255,.9)}' +
+            '@keyframes mwneonlbl{0%,100%{text-shadow:0 0 3px #19c3e6,0 0 8px #19c3e6;box-shadow:0 0 6px rgba(25,195,230,.7)}50%{text-shadow:0 0 3px #ff3df0,0 0 10px #ff3df0;box-shadow:0 0 12px rgba(255,61,240,.75)}}html.mwcalm .mwtt{animation:none}' +
+            '.mwtt svg{width:16px;height:16px;flex:none}.mwtm .mwit{display:inline-flex;align-items:center;margin:0!important;font-size:13px}.mwtm .msrc{display:inline-block;padding:2px 8px;margin-right:9px;border-radius:6px;background:rgba(255,255,255,.22);border-right:3px solid #ffd60a;font-weight:900;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#fff!important}.mwtm .msrc b{color:#fff!important}' +
+            '.mwtm .mttl{font-style:normal;color:#fff!important}.mwtm .mgap{display:inline-block;width:70px;text-align:center;opacity:.7;color:#fff!important}';
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = css; document.head.appendChild(st);
+        var ICON = {
+            world: '<svg viewBox="0 0 24 24" fill="none" stroke="#0a4fd6" stroke-width="2"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c3 3 3 16 0 19M12 2.5c-3 3-3 16 0 19"/></svg>',
+            gold: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#f5b800" stroke="#b98400" stroke-width="1.5"/><path d="M12 6v12M9.2 9a2.8 2.8 0 0 1 2.8-1.4h.6a2.4 2.4 0 0 1 0 4.8h-1.2a2.4 2.4 0 0 0 0 4.8h.6A2.8 2.8 0 0 0 14.8 15" fill="none" stroke="#7a5600" stroke-width="1.6" stroke-linecap="round"/></svg>',
+            news: '<svg viewBox="0 0 24 24" fill="none" stroke="#c00" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h10M7 17h6"/></svg>'
+        };
+        var _mt = mwTape;
+        mwTape = function (title, items) {
+            var lbl = String(title).replace(/^[^A-Za-z]+/, '').trim(), ic = /GOLD/i.test(lbl) ? ICON.gold : /WORLD/i.test(lbl) ? ICON.world : ICON.news;
+            var txt = items && items.length ? items.map(function (i) { return '<span class="mwit"><em class="msrc">' + esc(i.src || 'NEWS') + '</em><i class="mttl">' + esc(i.title) + '.</i><span class="mgap">•</span></span>'; }).join('') : '<span class="mwit"><i class="mttl">Loading headlines… (if this stays empty, open the News window and check the source list).</i><span class="mgap">•</span></span>';
+            return '<div class="mwtape"><b class="mwtt">' + ic + '<span>' + esc(lbl) + '</span></b><div class="mwtk"><div class="mwtm" style="animation-duration:' + Math.max(40, (items ? items.length : 3) * 11) + 's">' + txt + txt + '</div></div></div>';
+        };
+    } catch (e) { try { console.log('tape', e); } catch (er) { } }
+})();
+/* ===== .68: Safety window (theft lock, auto-erase, panic erase, encrypted backup & restore) + Around you window (region, local market hours, local currency, gold per tola) ===== */
+(function () {
+    try {
+        function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function sv(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+        function e2(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        var Z = { msg: '', backup: '', confirm: '' };
+        /* ---------- erase ---------- */
+        function eraseAll() {
+            try { var n = window.mwNat ? mwNat() : null; if (n && n.secDel) { ['tk', 'ts', 'x_binance', 'x_mexc', 'x_bitget', 'x_bybit', 'x_okx'].forEach(function (k) { try { n.secDel(window.__mwTok, 'mintoosuite_' + k); } catch (e) { } }); } } catch (e) { }
+            try { localStorage.clear(); sessionStorage.clear(); } catch (e) { }
+            try { if (window.indexedDB && indexedDB.databases) { indexedDB.databases().then(function (a) { a.forEach(function (d) { try { indexedDB.deleteDatabase(d.name); } catch (e) { } }); }); } } catch (e) { }
+            setTimeout(function () { location.reload(); }, 600);
+        }
+        window.__mwWipeCheck = function (count) { var lim = +g('mintoosuite_wipeafter') || 0; if (lim && count >= lim) { eraseAll(); } };
+        /* ---------- encrypted backup ---------- */
+        function b64(buf) { var s = '', a = new Uint8Array(buf), i; for (i = 0; i < a.length; i++) { s += String.fromCharCode(a[i]); } return btoa(s); }
+        function unb64(s) { var b = atob(s), a = new Uint8Array(b.length), i; for (i = 0; i < b.length; i++) { a[i] = b.charCodeAt(i); } return a; }
+        function key(pass, salt) { return crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']).then(function (k) { return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 150000, hash: 'SHA-256' }, k, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']); }); }
+        var SECRET = /^mintoosuite_(tk|ts|x_|lkui|sess|acct|dev|lic$|authtry|authlock)/;
+        function makeBackup(pass) {
+            var o = {}, i, k; for (i = 0; i < localStorage.length; i++) { k = localStorage.key(i); if (/^mintoosuite_/.test(k) && !SECRET.test(k) && k.indexOf('avatar_img') < 0) { o[k] = localStorage.getItem(k); } }
+            var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+            return key(pass, salt).then(function (kk) { return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, kk, new TextEncoder().encode(JSON.stringify({ v: 1, t: Date.now(), d: o }))); }).then(function (ct) { return 'MWB1.' + b64(salt) + '.' + b64(iv) + '.' + b64(ct); });
+        }
+        function restoreBackup(code, pass) {
+            var p = String(code).trim().split('.'); if (p[0] !== 'MWB1' || p.length !== 4) { return Promise.reject(new Error('This is not a MintooSuite backup code.')); }
+            return key(pass, unb64(p[1])).then(function (kk) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(p[2]) }, kk, unb64(p[3])); }).then(function (pt) { var j = JSON.parse(new TextDecoder().decode(pt)); var n = 0; Object.keys(j.d || {}).forEach(function (k) { if (/^mintoosuite_/.test(k) && !SECRET.test(k)) { sv(k, j.d[k]); n++; } }); return n; }, function () { throw new Error('Wrong password or damaged code.'); });
+        }
+        /* ---------- Safety window ---------- */
+        function vSafety() {
+            var lock = null; try { lock = JSON.parse(g('mintoosuite_lkui') || 'null'); } catch (e) { }
+            var wa = +g('mintoosuite_wipeafter') || 0, h = '';
+            h += '<div class="group pad"><b style="font-size:17px">🛡 Theft protection</b><div class="note" style="margin:4px 0 8px">If your phone is lost or stolen, these keep your trading data safe.</div>' +
+                '<button class="btn' + (lock ? '' : ' sec') + '" data-sf="lock">🔒 ' + (lock ? 'Lock the app now' : 'Set a PIN or pattern lock first') + '</button>' +
+                '<div class="note" style="margin:8px 0 4px"><b>Auto-erase after wrong tries</b>: after this many wrong PIN/pattern tries in a row the app erases its own data on this phone.</div>' +
+                '<div class="mwlk">' + [[0, 'Off', 'Never erase'], [10, '10 tries', 'Erase after 10'], [20, '20 tries', 'Erase after 20']].map(function (o) { return '<div class="o' + (wa === o[0] ? ' on' : '') + '" data-sf="wipe:' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div>' +
+                (lock ? '' : '<div class="note">Auto-erase works with the PIN/pattern lock screen. Set it up first (Menu > Lock screen).</div>') + '</div>';
+            h += '<div class="group pad"><b style="font-size:17px">💾 Encrypted backup & restore</b><div class="note" style="margin:4px 0 8px">Makes one long code with your settings, shortcuts, paper trades, themes and lists, locked with a password only you know. Keep it in your email or notes. On a new phone paste it here to restore. API keys and your sign-in are <b>never</b> included: enter them again for safety.</div>' +
+                '<input class="m7inp" id="sfpw" type="password" placeholder="Backup password (8+ characters)" autocomplete="off" style="margin-bottom:8px"><button class="btn" data-sf="mk">Make backup code</button>' +
+                (Z.backup ? '<textarea class="m7inp" id="sfout" rows="4" readonly style="margin-top:8px;font-size:11px">' + e2(Z.backup) + '</textarea><button class="btn sec" data-sf="copy">Copy code</button>' : '') +
+                '<textarea class="m7inp" id="sfin" rows="3" placeholder="Paste a backup code here to restore" style="margin-top:10px;font-size:11px"></textarea><button class="btn sec" data-sf="rs">Restore from code (uses the password above)</button>' +
+                (Z.msg ? '<div class="note" style="margin-top:6px"><b>' + e2(Z.msg) + '</b></div>' : '') + '</div>';
+            h += '<div class="group pad" style="border-left:5px solid #ff453a"><b style="font-size:17px">🧨 Erase everything on this phone</b><div class="note" style="margin:4px 0 8px">Removes all MintooSuite data from this phone (settings, keys, paper account, lock). Your exchange accounts are not touched. Make a backup first. Type <b>ERASE</b> to confirm.</div><input class="m7inp" id="sfer" placeholder="Type ERASE" autocapitalize="characters" autocomplete="off"><button class="btn" style="background:#ff453a!important" data-sf="erase">Erase now</button></div>';
+            h += '<div class="group pad"><b style="font-size:17px">📡 Remote lock, remote erase, cloud restore</b><div class="note" style="margin:4px 0">These need a small online service that the app can ask "was I reported stolen?". It is <b>not built yet</b>, and I will not pretend it is. What it needs: Firebase Firestore switched on in your project and a short sign-in step. Tell me when you want it and I will build it and guide you step by step. Until then, protect your exchange account directly: on Binance/MEXC/Bitget delete the API key from the exchange website (this instantly cuts the app off), and turn on exchange withdrawal whitelist.</div></div>';
+            h += '<div class="group pad"><b style="font-size:17px">🖐 Accidental touch protection</b><div class="note" style="margin:4px 0">Always on: palm-sized touches are ignored, taps right after a scroll are ignored, and a tap counts only when your finger did not slide. Risky actions (real trades, erase, close all) still need typed words like TRADE, UNLOCK or ERASE.</div></div>';
+            return h;
+        }
+        WINS.push({ id: 'safety', ic: '🛡', c: '#ff453a', n: 'Safety & anti-theft', t: 'Safety', sub: 'Lock now, auto-erase, encrypted backup and restore, panic erase' }); LIVE.safety = 0; VIEWS.safety = vSafety;
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-sf]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var v = el.getAttribute('data-sf'), pw = (document.getElementById('sfpw') || {}).value || '';
+            if (v === 'lock') { if (g('mintoosuite_lkui')) { window.__mwLockShow && window.__mwLockShow(); } else { S.win = 'lockui'; renderView(false); } return; }
+            if (v.indexOf('wipe:') === 0) { sv('mintoosuite_wipeafter', v.slice(5)); renderView(true); return; }
+            if (v === 'copy') { var o = document.getElementById('sfout'); if (o) { o.select(); try { document.execCommand('copy'); Z.msg = 'Copied.'; } catch (er) { } renderView(true); } return; }
+            if (v === 'mk') { if (pw.length < 8) { Z.msg = 'Use a password of at least 8 characters.'; renderView(true); return; } makeBackup(pw).then(function (c) { Z.backup = c; Z.msg = 'Backup made. Copy it and keep it safe. Remember the password: it cannot be recovered.'; renderView(true); }).catch(function (er) { Z.msg = 'Could not make the backup: ' + er.message; renderView(true); }); return; }
+            if (v === 'rs') { var code = (document.getElementById('sfin') || {}).value || ''; if (pw.length < 8) { Z.msg = 'Type the backup password above first.'; renderView(true); return; } restoreBackup(code, pw).then(function (n) { Z.msg = 'Restored ' + n + ' settings. The app will reload.'; renderView(true); setTimeout(function () { location.reload(); }, 1200); }).catch(function (er) { Z.msg = er.message; renderView(true); }); return; }
+            if (v === 'erase') { if (((document.getElementById('sfer') || {}).value || '').trim() !== 'ERASE') { Z.msg = 'Type ERASE exactly to confirm.'; renderView(true); return; } eraseAll(); }
+        }, true);
+        window.__safetyDbg = { make: makeBackup, restore: restoreBackup, wipeCheck: window.__mwWipeCheck };
+
+        /* ---------- Around you ---------- */
+        var REG = {
+            'Asia/Karachi': { c: 'Pakistan', cur: 'PKR', ex: [['PSX (Karachi)', 'Asia/Karachi', 9.25, 15.5], ['Crypto', null], ['Forex/Gold', 'fx']], q: 'Pakistan economy dollar rate' },
+            'Asia/Kolkata': { c: 'India', cur: 'INR', ex: [['NSE / BSE', 'Asia/Kolkata', 9.25, 15.5]], q: 'India market Sensex' },
+            'Asia/Dubai': { c: 'UAE', cur: 'AED', ex: [['DFM Dubai', 'Asia/Dubai', 10, 15]], q: 'Dubai market' },
+            'Asia/Riyadh': { c: 'Saudi Arabia', cur: 'SAR', ex: [['Tadawul', 'Asia/Riyadh', 10, 15]], q: 'Saudi Tadawul' },
+            'Europe/London': { c: 'United Kingdom', cur: 'GBP', ex: [['London (LSE)', 'Europe/London', 8, 16.5]], q: 'London FTSE' },
+            'America/New_York': { c: 'United States', cur: 'USD', ex: [['NYSE / Nasdaq', 'America/New_York', 9.5, 16]], q: 'Wall Street stocks' },
+            'America/Chicago': { c: 'United States', cur: 'USD', ex: [['NYSE / Nasdaq (ET)', 'America/New_York', 9.5, 16]], q: 'Wall Street stocks' },
+            'America/Los_Angeles': { c: 'United States', cur: 'USD', ex: [['NYSE / Nasdaq (ET)', 'America/New_York', 9.5, 16]], q: 'Wall Street stocks' },
+            'Asia/Tokyo': { c: 'Japan', cur: 'JPY', ex: [['Tokyo (TSE)', 'Asia/Tokyo', 9, 15]], q: 'Nikkei Tokyo market' },
+            'Asia/Hong_Kong': { c: 'Hong Kong', cur: 'HKD', ex: [['HKEX', 'Asia/Hong_Kong', 9.5, 16]], q: 'Hang Seng' },
+            'Asia/Dhaka': { c: 'Bangladesh', cur: 'BDT', ex: [['Dhaka (DSE)', 'Asia/Dhaka', 10, 14.5]], q: 'Bangladesh economy' },
+            'Europe/Istanbul': { c: 'Turkey', cur: 'TRY', ex: [['Borsa Istanbul', 'Europe/Istanbul', 10, 18]], q: 'Turkey lira market' },
+            'Africa/Lagos': { c: 'Nigeria', cur: 'NGN', ex: [['NGX Lagos', 'Africa/Lagos', 10, 14.5]], q: 'Nigeria naira' }
+        };
+        var AY = { rate: 0, at: 0, busy: 0, err: '', pick: '' };
+        function fh(n) { var h = Math.floor(n), m = Math.round((n - h) * 60); return h + ':' + (m < 10 ? '0' : '') + m; }
+        function tz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; } }
+        function region() { var p = g('mintoosuite_region') || tz(); return REG[p] ? p : (REG[tz()] ? tz() : 'Asia/Karachi'); }
+        function hoursOpen(z, a, b) { try { var d = new Date(), f = new Intl.DateTimeFormat('en-US', { timeZone: z, hour: 'numeric', minute: 'numeric', hour12: false, weekday: 'short' }).formatToParts(d), o = {}; f.forEach(function (x) { o[x.type] = x.value; }); var hr = (+o.hour % 24) + (+o.minute) / 60, wd = o.weekday; var open = hr >= a && hr < b && wd !== 'Sat' && wd !== 'Sun'; return { open: open, local: o.hour + ':' + o.minute }; } catch (e) { return { open: false, local: '' }; } }
+        function loadRate(cur) { if (cur === 'USD' || AY.busy || Date.now() - AY.at < 600000) { return; } AY.busy = 1; fetch('https://open.er-api.com/v6/latest/USD').then(function (r) { return r.json(); }).then(function (j) { AY.rate = (j && j.rates && j.rates[cur]) || 0; AY.at = Date.now(); AY.busy = 0; AY.err = AY.rate ? '' : 'Rate not available'; try { if (S.win === 'around') { renderView(true); } } catch (e) { } }).catch(function () { AY.busy = 0; AY.at = Date.now() - 540000; AY.err = 'Rate service not reachable right now'; }); }
+        function vAround() {
+            var k = region(), R = REG[k], h = '', now = new Date();
+            loadRate(R.cur);
+            var opts = Object.keys(REG).map(function (z) { return '<option value="' + z + '"' + (z === k ? ' selected' : '') + '>' + REG[z].c + ' (' + z.split('/')[1].replace('_', ' ') + ')</option>'; }).join('');
+            h += '<div class="group pad"><b style="font-size:17px">📍 Around you: ' + e2(R.c) + '</b><div class="note" style="margin:4px 0 8px">Found from your phone\'s time zone (' + e2(tz()) + '), so the app needs no GPS or location permission. Choose another country if you travel.</div><select class="m7inp" id="ayr" data-ay="reg">' + opts + '</select></div>';
+            h += '<div class="group pad"><b>Local markets now</b>' + R.ex.map(function (x) {
+                if (x[1] === null) { return '<div class="row"><span>Crypto</span><b class="up">24/7 open</b></div>'; }
+                if (x[1] === 'fx') { var wd = now.getUTCDay(); var fxo = !(wd === 6 || (wd === 0 && now.getUTCHours() < 21) || (wd === 5 && now.getUTCHours() >= 21)); return '<div class="row"><span>Forex & gold</span><b class="' + (fxo ? 'up' : 'dn') + '">' + (fxo ? 'Open (Mon-Fri)' : 'Closed (weekend)') + '</b></div>'; }
+                var o = hoursOpen(x[1], x[2], x[3]); return '<div class="row"><span>' + e2(x[0]) + '<br><small class="mut">' + o.local + ' there · ' + fh(x[2]) + '-' + fh(x[3]) + '</small></span><b class="' + (o.open ? 'up' : 'dn') + '">' + (o.open ? 'Open' : 'Closed') + '</b></div>';
+            }).join('') + '</div>';
+            var gp = 0; try { gp = S.tick[GOLD] && S.tick[GOLD].p; } catch (e) { }
+            h += '<div class="group pad"><b>Your currency</b>' + (R.cur === 'USD' ? '<div class="note">Your local currency is the US dollar.</div>' : '<div class="row"><span>1 USD</span><b>' + (AY.rate ? AY.rate.toFixed(2) + ' ' + R.cur : (AY.err || 'loading…')) + '</b></div>') +
+                (AY.rate && gp ? '<div class="row"><span>Gold (international price) per ounce</span><b>' + Math.round(gp * AY.rate).toLocaleString() + ' ' + R.cur + '</b></div>' + (R.cur === 'PKR' || R.cur === 'INR' || R.cur === 'BDT' ? '<div class="row"><span>Gold per tola (11.66 g, before local premium)</span><b>' + Math.round(gp * AY.rate / 31.1035 * 11.6638).toLocaleString() + ' ' + R.cur + '</b></div>' : '') : '') +
+                '<div class="note" style="margin:6px 0 0">International price converted at the live rate. Shops add their own premium, so local prices are a little higher.</div></div>';
+            h += '<div class="group pad"><b>What is happening near you</b><div class="note" style="margin:4px 0 8px">Opens a news search for your region in your browser.</div><a class="btn sec" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="https://news.google.com/search?q=' + encodeURIComponent(R.q) + '">📰 ' + e2(R.c) + ' market news</a><a class="btn sec" style="display:block;text-align:center;text-decoration:none;margin-top:6px" target="_blank" rel="noopener" href="https://www.google.com/search?q=' + encodeURIComponent(R.q + ' today') + '">🔎 Search ' + e2(R.q) + '</a></div>';
+            return h;
+        }
+        WINS.push({ id: 'around', ic: '📍', c: '#30b0c7', n: 'Around you (local markets)', t: 'Around you', sub: 'Local market hours, your currency, gold per tola, local news' }); LIVE.around = 0; VIEWS.around = vAround;
+        document.addEventListener('change', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-ay') === 'reg') { sv('mintoosuite_region', t.value); AY.at = 0; try { renderView(true); } catch (er) { } } }, true);
+        function addMenu() { try { var mb = document.querySelector('#sheetMenu .btn[data-act="win:alerts"]'); if (mb && !document.querySelector('#sheetMenu [data-act="win:safety"]')) { mb.insertAdjacentHTML('beforebegin', '<button class="btn sec" data-act="win:safety">🛡 Safety & anti-theft</button><button class="btn sec" data-act="win:around">📍 Around you (local markets)</button>'); } } catch (e) { } }
+        setInterval(addMenu, 2600);
+    } catch (e) { try { console.log('safety', e); } catch (er) { } }
 })();
 /* ===== p9zsd: Bot Doctor: honest loss analysis of the paper bot + protective rules (cool-down, anti-chase, daily cap) ===== */
 (function () {
