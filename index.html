@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-30.71';
+var BUILD = '2026-10-30.72';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -10853,6 +10853,129 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         };
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = 'html,body{overflow-anchor:none!important}#view{overflow-anchor:none}'; document.head.appendChild(st);
     } catch (e) { try { console.log('calm', e); } catch (er) { } }
+})();
+/* ===== .72: gentler on Binance (slower polling, scanner spacing, ban awareness), request counter, status pop-up, "tap explains itself" ===== */
+(function () {
+    try {
+        function e2(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        var nf = window.fetch, REQ = [], SRV = { w: 0, at: 0 }, lastPrice = 0, last24 = 0, fetchN = 0;
+        function isBin(u) { return /^https:\/\/(fapi|api|dapi|data-api)\.binance\.com\//.test(u); }
+        function ew(u) {
+            if (/\/fapi\/v1\/ticker\/24hr(\?|$)/.test(u)) { return /symbol=/.test(u) ? 1 : 40; }
+            if (/\/ticker\/price(\?|$)/.test(u)) { return /symbol=/.test(u) ? 1 : 2; }
+            if (/\/klines|\/continuousKlines/.test(u)) { var m = /limit=(\d+)/.exec(u), l = m ? +m[1] : 500; return l < 100 ? 1 : l < 500 ? 2 : l <= 1000 ? 5 : 10; }
+            if (/api\/v3\/ticker\/24hr/.test(u)) { return 8; }
+            return 1;
+        }
+        function fake() { return Promise.resolve(new Response('[]', { status: 200, headers: { 'content-type': 'application/json' } })); }
+        window.fetch = function (u, o) {
+            var url = typeof u === 'string' ? u : (u && u.url) || '', now = Date.now();
+            if (!/ticker\/(price|24hr)|\/fapi\/v1\/time|allorigins|corsproxy|codetabs|cors\.lol/.test(url)) { fetchN++; }
+            if (!isBin(url)) { return nf.apply(window, arguments); }
+            var restMode = !(S.wsAt && now - S.wsAt < 6000);
+            if (restMode && /\/fapi\/v1\/ticker\/price$/.test(url)) { if (lastPrice && now - lastPrice < 5000) { return fake(); } lastPrice = now; }
+            if (restMode && /\/fapi\/v1\/ticker\/24hr$/.test(url)) { if (last24 && now - last24 < 30000) { return fake(); } last24 = now; }
+            REQ.push([now, ew(url)]); while (REQ.length && now - REQ[0][0] > 60000) { REQ.shift(); }
+            return nf.apply(window, arguments).then(function (r) { try { var w = +(r.headers.get('x-mbx-used-weight-1m') || 0); if (w) { SRV.w = w; SRV.at = Date.now(); } } catch (e) { } return r; });
+        };
+        function load() { var n = Date.now(), c = 0, w = 0; REQ.forEach(function (x) { if (n - x[0] <= 60000) { c++; w += x[1]; } }); return { c: c, w: w }; }
+        window.__mwLoad = load;
+        /* scanner spacing + ban awareness */
+        if (typeof runScan === 'function') {
+            var _rs = runScan;
+            runScan = function () {
+                try { var b = window.__banUntil ? window.__banUntil() : 0; if (b > Date.now()) { S.scan.pause = Math.max(S.scan.pause || 0, b); } } catch (e) { }
+                var p = _rs.apply(this, arguments);
+                return Promise.resolve(p).then(function () { try { var gap = S.scan.next - Date.now(); if (gap >= 25000 && gap <= 35000) { S.scan.next = Date.now() + ((S.scan.maxw > 1000 || load().w > 900) ? 90000 : 60000); } } catch (e) { } });
+            };
+        }
+        /* ---------- status pop-up ---------- */
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '.brand .stat{cursor:pointer}#mwst{position:fixed;inset:0;z-index:99994;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}#mwst .c{width:100%;max-width:560px;max-height:82vh;overflow:auto;background:var(--bg,#fff);color:var(--ink,#111);border-radius:22px 22px 0 0;padding:16px 16px 22px;box-sizing:border-box}#mwst h3{margin:0 0 4px;font-size:19px}#mwst .r{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid rgba(128,128,128,.2);font-size:14px}#mwst .r b{text-align:right}#mwst .n{font-size:13px;opacity:.8;margin:6px 0}#mwst button{width:100%;margin-top:12px;padding:12px;border:0;border-radius:14px;background:#0a84ff;color:#fff;font-weight:700;font-size:15px}' +
+            '#mwexp{position:fixed;left:12px;right:12px;bottom:84px;z-index:99990;background:rgba(28,28,32,.96);color:#fff;border-radius:14px;padding:10px 12px;font-size:13px;line-height:1.35;box-shadow:0 6px 24px rgba(0,0,0,.35);pointer-events:none}#mwexp b{display:block;margin-bottom:2px}';
+        document.head.appendChild(st);
+        function ago(ms) { return ms < 1000 ? 'just now' : ms < 90000 ? Math.round(ms / 1000) + 's' : Math.round(ms / 60000) + ' min'; }
+        function statusHtml() {
+            var now = Date.now(), n = Object.keys(S.tick).length, age = dataAge(), ban = window.__banUntil ? window.__banUntil() : 0, L = load(), ws = S.wsAt && now - S.wsAt < 6000;
+            var live = (S.feed.mode === 'ws' && S.wsAt && now - S.wsAt < 5000) || (S.feed.mode === 'rest' && S.restAt && now - S.restAt < 4000);
+            var head, meaning;
+            if (ban > now) { head = '⏸ PAUSED (Binance block)'; meaning = 'Binance has temporarily blocked this internet connection because too many requests came from it. The app stops asking until the block ends, so it does not get blocked for longer. Prices on screen are old.'; }
+            else if (live) { head = '🟢 LIVE'; meaning = ws ? 'Prices are streaming in as they change.' : 'Prices are refreshed every few seconds (your network blocks the live stream, so the app asks repeatedly).'; }
+            else if (age < 15000) { head = '🟠 DELAYED'; meaning = 'Prices arrived a little while ago and the next update is on its way. Usually a slow connection.'; }
+            else { head = n ? '🔴 PAUSED (no new data)' : '… Connecting'; meaning = n ? 'No fresh prices for ' + Math.round(age / 1000) + ' seconds. Common causes: weak internet, Binance block, or the app was in the background.' : 'The app is starting up and loading the first prices.'; }
+            var h = '<h3>' + head + '</h3><div class="n">' + e2(meaning) + '</div>';
+            function row(a, b) { h += '<div class="r"><span>' + a + '</span><b>' + b + '</b></div>'; }
+            row('Coins loaded', n); row('Data age', ago(age)); row('Price source', ws ? 'Live stream' : 'Repeat requests (stream blocked)');
+            if (ban > now) { row('Block ends in about', ago(ban - now)); }
+            row('Requests to Binance, last minute', L.c); row('Our load (estimate)', L.w + ' of 2400 allowed');
+            row('Binance counter (all devices on your connection)', SRV.w && now - SRV.at < 120000 ? SRV.w + ' of 2400' : (S.scan.maxw ? S.scan.maxw + ' of 2400 (scanner)' : 'not seen yet'));
+            if (S.scan.at) { row('Last market scan', ago(now - S.scan.at) + ' ago · ' + S.scan.n + ' coins'); }
+            if (S.feed.err) { row('Last problem', e2(String(S.feed.err).slice(0, 60))); }
+            var tip = '';
+            if (SRV.w && L.w && SRV.w > L.w * 2.2 + 150) { tip = 'Binance sees much more traffic from your connection than this phone sends. Other devices or people share your internet address, which can cause blocks that are not this app\'s fault.'; }
+            else if (L.w > 1200) { tip = 'This phone alone is close to the limit. The app will slow down by itself.'; }
+            else if (ban > now) { tip = 'Nothing to do but wait. Avoid pressing refresh repeatedly. Switching between Wi-Fi and mobile data gives you a different address and usually ends the block at once.'; }
+            if (tip) { h += '<div class="n"><b>Reading:</b> ' + e2(tip) + '</div>'; }
+            h += '<button data-st="x">OK</button>';
+            return h;
+        }
+        function openSt() { var o = document.getElementById('mwst'); if (!o) { o = document.createElement('div'); o.id = 'mwst'; o.setAttribute('data-mwkeep', '1'); document.body.appendChild(o); } o.innerHTML = '<div class="c">' + statusHtml() + '</div>'; }
+        window.__mwStatus = openSt;
+        document.addEventListener('click', function (e) {
+            var t = e.target; if (!t || !t.closest) { return; }
+            if (t.closest('[data-st="x"]') || (t.id === 'mwst')) { var o = document.getElementById('mwst'); if (o) { o.remove(); } e.stopPropagation(); return; }
+            if (t.closest('.brand .stat, [data-st="open"]')) { e.preventDefault(); e.stopPropagation(); openSt(); }
+        }, true);
+        setInterval(function () { var o = document.getElementById('mwst'); if (o) { var c = o.querySelector('.c'), y = c ? c.scrollTop : 0; if (c) { c.innerHTML = statusHtml(); c.scrollTop = y; } } }, 2000);
+        /* About: request-load row that opens the pop-up */
+        try { var _ra = renderAbout; renderAbout = function () { _ra(); try { var b = document.getElementById('aboutBox'); if (b && b.innerHTML.indexOf('data-st="open"') < 0) { var L = load(); b.innerHTML += '<div class="row tap" data-st="open"><span>📡 Requests to Binance</span><b>' + L.c + '/min · load ' + L.w + '/2400</b></div>'; } } catch (e) { } }; } catch (e) { }
+
+        /* ---------- every tap explains itself ---------- */
+        var MUT = 0, FN0 = 0, lastShow = 0, hideT = 0;
+        var NOISE = '#tabs,#fsbtn,.mwtk,.mwtape,#mwmk,[data-px],[data-chg],[data-chip],[data-mwp2],[data-mwc2],#statusTxt,#dot,.clk,.dt,#mwexp,#mwfxbg,#mwtapfx,.pfbub,#pfm';
+        try { new MutationObserver(function (rs) { for (var i = 0; i < rs.length; i++) { var n = rs[i].target, el = n && (n.nodeType === 1 ? n : n.parentElement); if (el && el.closest && el.closest(NOISE)) { continue; } MUT++; return; } }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'open', 'hidden'] }); } catch (e) { }
+        var SKIP = 'input,textarea,select,a[href],label,#mwst,#mwexp,#mwcoach,#mwlkui,#m7gate,#pfm,#pfp,#mwtrial,#mwmode,[contenteditable],canvas,[data-nox]';
+        var DICT = [
+            [/^(rsi)\b/i, 'RSI: a 0-100 meter of how fast price moved. Above 70 is often "stretched up", below 30 "stretched down".'],
+            [/^(macd)/i, 'MACD: compares two moving averages to show if momentum is rising or fading.'],
+            [/funding/i, 'Funding rate: a small fee longs and shorts pay each other every 8 hours. Positive means longs are crowded.'],
+            [/^(spread|slippage)/i, 'Spread/slippage: the small gap between the price you click and the price you get.'],
+            [/breadth/i, 'Market breadth: how many coins are rising versus falling right now. More risers means a healthier market.'],
+            [/^dxy|dollar index/i, 'DXY: the US dollar index against major currencies. A rising dollar often pressures gold and crypto.'],
+            [/\bgold\b/i, 'Gold price per ounce in US dollars. Tap the card for the chart.'],
+            [/\blive\b/i, 'LIVE: prices are arriving in real time.'],
+            [/wait|no trade/i, 'WAIT: the app sees no clear setup right now. Waiting is a valid decision.'],
+            [/long\b/i, 'LONG: a bet that the price will rise.'], [/short\b/i, 'SHORT: a bet that the price will fall.'],
+            [/^tp\b|take.?profit/i, 'Take profit: the price where the trade closes to lock in gain.'], [/^sl\b|stop.?loss/i, 'Stop loss: the price where the trade closes to limit the loss.']
+        ];
+        function describe(el) {
+            var txt = (el.getAttribute('aria-label') || el.getAttribute('title') || el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 70), i;
+            for (i = 0; i < DICT.length; i++) { if (DICT[i][0].test(txt)) { return [txt || 'Info', DICT[i][1]]; } }
+            var h = '';
+            if (/^[-+]?\d+(\.\d+)?%$/.test(txt)) { h = 'A percentage change. Green is up, red is down, over the time window shown by the time-zone chip.'; }
+            else if (/^[$€£]?\s?[\d,]+(\.\d+)?$/.test(txt)) { h = 'A price or amount in US dollars (or the coin\'s quote currency).'; }
+            else if (/\bago\b|\d+\s?(s|m|h)\b/i.test(txt)) { h = 'How old this information is.'; }
+            else if (txt && txt.length < 24) { h = 'This is an information label. Nothing happens when you tap it. Open the "?" next to the window title for the full explanation of this screen.'; }
+            else { h = 'Information shown for you to read. For a full explanation of this screen, tap the "?" next to its title, or ask the Professor.'; }
+            return [txt || 'Info', h];
+        }
+        function show(t, b) {
+            var o = document.getElementById('mwexp'); if (!o) { o = document.createElement('div'); o.id = 'mwexp'; o.setAttribute('data-mwkeep', '1'); document.body.appendChild(o); }
+            o.innerHTML = '<b>' + e2(t) + '</b>' + e2(b); o.style.display = 'block'; clearTimeout(hideT); hideT = setTimeout(function () { o.style.display = 'none'; }, 4200);
+        }
+        document.addEventListener('click', function (e) {
+            var t = e.target; if (!t || !t.closest || t.closest(SKIP)) { return; }
+            var el = t.closest('button,[data-act],.tap,.tile,.mwq,.mwmt,.c,.chip,.badge,.row,b,strong,span,svg,img,i,h1,h2,h3,.sh') || t;
+            var r = el.getBoundingClientRect(); if (r.width > window.innerWidth * 0.92 && r.height > 160) { return; } if (r.width < 6 || r.height < 6) { return; }
+            var m0 = MUT, w0 = S.win, f0 = fetchN, y0 = window.pageYOffset, a = document.activeElement;
+            setTimeout(function () {
+                if (MUT !== m0 || S.win !== w0 || fetchN !== f0 || Math.abs(window.pageYOffset - y0) > 2 || document.activeElement !== a) { return; }
+                if (document.getElementById('mwst') || Date.now() - lastShow < 1500) { return; }
+                var tx = (el.innerText || el.textContent || '').trim(); if (!tx && !el.querySelector('svg,img') && el.tagName !== 'svg' && el.tagName !== 'IMG') { return; }
+                lastShow = Date.now(); var d = describe(el); show(d[0], d[1]);
+            }, 750);
+        }, false);
+    } catch (e) { try { console.log('p9zszd', e); } catch (er) { } }
 })();
 /* ===== p9zsd: Bot Doctor: honest loss analysis of the paper bot + protective rules (cool-down, anti-chase, daily cap) ===== */
 (function () {
