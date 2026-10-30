@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-30.101';
+var BUILD = '2026-10-30.104';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -11060,7 +11060,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 if (!A) { return ''; }
                 var nm = String(A.D.name || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/USDT$/, ''), sym = nm + 'USDT', TP = window.__tplan, lean = String(A.lean || ''), side = /BUY/.test(lean) ? 'LONG' : /SELL/.test(lean) ? 'SHORT' : 'WAIT';
                 var px = TP ? TP.priceOf(sym) : 0, h = '<div class="sh">Final recommendation</div>', K2 = window.__kx, acts = '';
-                if (K2) { acts = '<div class="group pad" data-noswipe="1"><div class="note" style="margin:0 0 4px">Look closer:</div>' + (px > 0 ? '<button class="btn sec" data-act="chart:' + sym + '" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">📈 Open chart</button>' : '') + K2.go('Signal Lab', 'siglab') + K2.go('Analyst', 'analyst') + K2.go('Radar', 'radar') + K2.go('Briefing', 'brief') + K2.go('Exness Desk', 'exdesk') + '</div>'; }
+                if (K2) { acts = '<div class="group pad" data-noswipe="1"><div class="note" style="margin:0 0 4px">Look closer:</div>' + (px > 0 ? '<button class="btn sec" data-act="chart:' + sym + '" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">📈 Open chart</button>' : '') + K2.go('Analyst', 'analyst') + '</div>'; }
                 var vt = null; try { vt = window.__brief && window.__brief.veto ? window.__brief.veto(sym, side === 'WAIT' ? 'LONG' : side) : null; } catch (e) { }
                 if (side === 'WAIT') { return h + acts + '<div class="group pad"><b>⏸ WAIT: no trade now.</b><div class="note" style="margin:4px 0 0">The reading is mixed. Waiting is also a position. Come back when price reaches a level above, or use a price alert.</div></div>'; }
                 h += '<div class="group pad"><b style="color:' + (side === 'LONG' ? '#16a34a' : '#dc2626') + '">' + (side === 'LONG' ? '🟢 Lean BUY / LONG' : '🔴 Lean SELL / SHORT') + '</b>' + (vt && vt.vetoBest && vt.notes && vt.notes.length ? '<div class="note" style="margin:4px 0 0">⚠ Caution: ' + e2(vt.notes.join('; ')) + '</div>' : '') + '<div class="note" style="margin:4px 0 0">This is the same reading as above, turned into numbers. The stop is based on how far this coin normally moves (about 3% to 6%) and the target is 1.5 times the stop distance. Not a promise.</div></div>';
@@ -15248,7 +15248,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                     if (isC) { c += '<button class="btn sec" data-act="chart:' + e2(sym) + '" style="' + bt + '">📈 Open chart (with UT Bot)</button><button class="btn sec" data-xk="anTP:' + e2(sym) + '" style="' + bt + '">⚙ Trade Pro ticket</button>'; }
                     c += '<button class="btn sec" data-stq="sym:' + e2(b) + '" style="' + bt + '">🧭 Why? (Market story + final recommendation)</button>';
                     c += '<button class="btn sec" data-xk="anBot:' + e2(sym) + '" style="' + bt + '">🤖 Ask Bot Baba</button><button class="btn sec" data-xk="anBaba:' + e2(sym) + '" style="' + bt + '">🧓 Ask Baba AI</button>';
-                    c += X.go('Real Bot', 'rbot') + X.go('Paper bot', 'botpro') + X.go('Signal Lab', 'siglab') + X.go('Radar', 'radar') + X.go('Briefing', 'brief') + X.go('Proof', 'proof') + X.go('Exness Desk', 'exdesk') + '</div>';
+                    c += '</div>';
                     var o = KX.anOut && KX.anOut.sym === sym ? KX.anOut : null;
                     if (o) { c += '<div class="group pad"><b>' + e2(o.title) + '</b><div style="margin-top:6px">' + o.html + '</div></div>'; }
                     return h + c;
@@ -15353,7 +15353,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             function botsHtml(sym) {
                 var K = S.chart && S.chart.k, h = '';
                 if (K && K.length > 40) { var C = calc(K), u = C.u, p = u.pos[u.pos.length - 1]; h += '<div>UT Bot (' + keyOf() + ', ATR 10): <b style="color:' + (p > 0 ? '#16a34a' : p < 0 ? '#dc2626' : 'inherit') + '">' + (p > 0 ? 'BUY side' : p < 0 ? 'SELL side' : 'no signal') + '</b> · stop ' + fp(u.stop[u.stop.length - 1], sym) + '</div>'; }
-                h += '<div style="margin:8px 0" data-noswipe="1"><button class="btn" data-xk="anBot:' + e2(sym) + '" style="display:inline-block;width:auto;padding:8px 12px;margin:3px 4px 3px 0">🤖 Ask Bot Baba</button><button class="btn" data-xk="anBaba2:' + e2(sym) + '" style="display:inline-block;width:auto;padding:8px 12px;margin:3px 4px 3px 0">🧓 Ask Baba AI</button>' + X.go('🩺 Bot Doctor', 'botdoc') + X.go('Real Bot', 'rbot') + X.go('Paper bot', 'botpro') + X.go('Signal Lab', 'siglab') + X.go('Proof', 'proof') + '</div>';
+                h += '<div style="margin:8px 0" data-noswipe="1"><button class="btn" data-xk="anBot:' + e2(sym) + '" style="display:inline-block;width:auto;padding:8px 12px;margin:3px 4px 3px 0">🤖 Ask Bot Baba</button><button class="btn" data-xk="anBaba2:' + e2(sym) + '" style="display:inline-block;width:auto;padding:8px 12px;margin:3px 4px 3px 0">🧓 Ask Baba AI</button>' + X.go('🩺 Bot Doctor', 'botdoc') + '</div>';
                 var o = KX.anOut && KX.anOut.sym === sym ? KX.anOut : null; if (o) { h += '<div class="group pad" style="margin:6px 0"><b>' + e2(o.title) + '</b><div style="margin-top:6px">' + o.html + '</div></div>'; }
                 var A = FIN[sym]; h += A ? (window.__mwStory ? window.__mwStory.final(A) : '') : '<div class="note">Preparing the final recommendation…</div>';
                 return h;
@@ -15680,6 +15680,102 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         });
         window.__brief = { view: view, veto: veto, ctx: ctx };
     } catch (e) { try { console.log('p9zszzh', e); } catch (er) { } }
+})();
+/* ===== BX: Daily Review (call journal): records Ideas calls all day, grades them on real candles, shows where it was right and wrong, and tightens (never loosens) ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2, JK = 'mintoosuite_journal', FEE = 0.16, J = [];
+        try { J = JSON.parse(localStorage.getItem(JK) || '[]') || []; } catch (e) { J = []; }
+        function sv() { try { if (J.length > 2000) { J = J.slice(-2000); } localStorage.setItem(JK, JSON.stringify(J)); } catch (e) { } }
+        function fp(p, s) { try { return fmtP(p, s); } catch (e) { return String(p); } }
+        function priceOf(sym) { try { var t = S.tick && S.tick[sym]; if (t && t.p > 0) { return { p: t.p, ex: 'bin' }; } var p = window.__tplan ? window.__tplan.priceOf(sym) : 0; return p > 0 ? { p: p, ex: 'other' } : null; } catch (e) { return null; } }
+        function record() {
+            try {
+                if (document.hidden || typeof idRows !== 'function') { return; }
+                var rows = idRows() || [], now = Date.now(), n = 0;
+                rows.slice(0, 16).forEach(function (m) {
+                    if (!m || !m.R || m.R.blocked || (m.side !== 'LONG' && m.side !== 'SHORT') || !(+m.tpP > 0) || !(+m.slP > 0)) { return; }
+                    var dup = J.some(function (c) { return c.sym === m.sym && c.side === m.side && now - c.t0 < 3 * 3600000; }); if (dup) { return; }
+                    var pr = priceOf(m.sym); if (!pr) { return; } var sg = m.side === 'LONG' ? 1 : -1;
+                    J.push({ id: now + '' + n++, sym: m.sym, side: m.side, best: !!m.R.best, t0: now, px0: pr.p, tpP: +m.tpP, slP: +m.slP, tp: pr.p * (1 + sg * m.tpP / 100), sl: pr.p * (1 - sg * m.slP / 100), to: Math.min(now + 24 * 3600000, m.to && m.to > now ? m.to : now + 8 * 3600000), ex: pr.ex, st: 'open', why: [] });
+                });
+                if (n) { sv(); }
+            } catch (e) { }
+        }
+        function klines(sym, from, lim) {
+            var us = ['https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=5m&startTime=' + from + '&limit=' + lim, 'https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=5m&startTime=' + from + '&limit=' + lim, 'https://api.mexc.com/api/v3/klines?symbol=' + sym + '&interval=5m&startTime=' + from + '&limit=' + lim], i = 0;
+            function nx() { if (i >= us.length) { return Promise.resolve(null); } return fetchText(us[i++], 9000).then(function (t) { var a = JSON.parse(t); if (!Array.isArray(a) || !a.length) { throw 0; } return a.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4] }; }); }).catch(nx); }
+            return nx();
+        }
+        function grade(c) {
+            return klines(c.sym, c.t0 - 3600000, 300).then(function (K) {
+                if (!K) { return; } var sg = c.side === 'LONG' ? 1 : -1, pre = K.filter(function (k) { return k.t < c.t0 - 300000; }), post = K.filter(function (k) { return k.t > c.t0; }), end = Math.min(c.to, c.t0 + 24 * 3600000), i, hit = null, k;
+                for (i = 0; i < post.length; i++) {
+                    k = post[i]; if (k.t > end) { break; }
+                    var hs = sg > 0 ? k.l <= c.sl : k.h >= c.sl, ht = sg > 0 ? k.h >= c.tp : k.l <= c.tp;
+                    if (hs) { hit = { st: 'loss', t: k.t, i: i }; break; } if (ht) { hit = { st: 'win', t: k.t, i: i }; break; }
+                }
+                var expired = Date.now() > end;
+                if (!hit && !expired) { return; }
+                if (hit) { c.st = hit.st; c.r = hit.st === 'win' ? c.tpP - FEE : -c.slP - FEE; c.t1 = hit.t; }
+                else { var last = post.length ? post[post.length - 1].c : c.px0; c.st = 'exp'; c.r = sg * (last / c.px0 - 1) * 100 - FEE; c.t1 = end; }
+                c.why = [];
+                if (c.r <= 0) {
+                    if (pre.length >= 6) { var mv = (c.px0 / pre[0].o - 1) * 100; if (sg * mv > 3) { c.why.push('late entry: price had already moved ' + mv.toFixed(1) + '% in the hour before the call'); } }
+                    if (hit && hit.st === 'loss') { var back = post.slice(hit.i + 1).some(function (z) { return z.t <= end && (sg > 0 ? z.h >= c.tp : z.l <= c.tp); }); if (back) { c.why.push('stop was hit first, then price reached the target (stop too tight or noisy)'); } }
+                    if (!c.why.length) { c.why.push(hit ? 'price went against the call straight away' : 'no clear move: the call expired without reaching target'); }
+                }
+            }).catch(function () { });
+        }
+        var busy = 0;
+        function gradeAll() {
+            if (busy || document.hidden) { return; } var q = J.filter(function (c) { return c.st === 'open' && Date.now() - c.t0 > 360000; }).slice(0, 6); if (!q.length) { return; } busy = 1;
+            q.reduce(function (p, c) { return p.then(function () { return grade(c); }); }, Promise.resolve()).then(function () { busy = 0; sv(); try { if (S.win === 'review') { X.again(); } } catch (e) { } });
+        }
+        setInterval(record, 120000); setInterval(gradeAll, 180000); setTimeout(record, 20000); setTimeout(gradeAll, 40000);
+        function done(from) { return J.filter(function (c) { return c.st !== 'open' && c.t1 >= from; }); }
+        function agg(a) { var n = a.length, w = a.filter(function (c) { return c.r > 0; }).length, s = 0; a.forEach(function (c) { s += c.r; }); return { n: n, w: w, win: n ? w / n : 0, avg: n ? s / n : 0, sum: s }; }
+        /* learning: only tightens */
+        function learn() {
+            var from = Date.now() - 48 * 3600000, a = done(from), L = { block: {}, notes: [] };
+            ['LONG', 'SHORT'].forEach(function (sd) { var g = agg(a.filter(function (c) { return c.side === sd; })); if (g.n >= 8 && g.win < 0.4 && g.avg < 0) { L.block[sd] = 1; L.notes.push('Last 48 h: ' + sd + ' calls won only ' + Math.round(g.win * 100) + '% of ' + g.n + ' (avg ' + g.avg.toFixed(2) + '%). BEST badge is removed for ' + sd + ' until it recovers.'); } });
+            var losses = a.filter(function (c) { return c.r <= 0; }), late = losses.filter(function (c) { return (c.why || []).some(function (w) { return /late entry/.test(w); }); }).length, tight = losses.filter(function (c) { return (c.why || []).some(function (w) { return /too tight/.test(w); }); }).length;
+            if (losses.length >= 5 && late / losses.length >= 0.4) { L.notes.push('Lesson: ' + late + ' of ' + losses.length + ' losses were late entries (price had already run). Wait for a pullback; do not chase.'); }
+            if (losses.length >= 5 && tight / losses.length >= 0.3) { L.notes.push('Lesson: ' + tight + ' of ' + losses.length + ' losses hit the stop and then reached the target. Stops may be too tight for this volatility; use smaller size with a wider stop.'); }
+            return L;
+        }
+        var _ir = idRows;
+        idRows = function () { var l = _ir.apply(this, arguments); try { var L = learn(); l.forEach(function (m) { if (m && m.R && m.R.best && L.block[m.side]) { m.R.best = false; if (!/daily review/.test(m.hzl || '')) { m.hzl = (m.hzl || '') + ' · daily review: recent ' + m.side + ' calls lost, so not BEST'; } } }); } catch (e) { } return l; };
+        try { var bv = window.__brief; if (bv && bv.veto) { var _v = bv.veto; bv.veto = function (sym, side) { var r = _v.apply(this, arguments); try { var L = learn(); if (L.block[side]) { r = r || { vetoBest: false, notes: [] }; r.vetoBest = true; (r.notes = r.notes || []).push('daily review: recent ' + side + ' calls mostly lost'); } } catch (e) { } return r; }; } } catch (e) { }
+        function view() {
+            var per = ['h', '1', '7', '30', '365'].indexOf(KX.rvp) >= 0 ? KX.rvp : '1', PL = { h: 'the last hour', '1': 'today', '7': 'the last 7 days', '30': 'the last 30 days', '365': 'the last year' }, from = per === 'h' ? Date.now() - 3600000 : per === '1' ? new Date(new Date().setHours(0, 0, 0, 0)).getTime() : Date.now() - (+per) * 86400000, a = done(from), g = agg(a), open = J.filter(function (c) { return c.st === 'open'; }).length, h = '';
+            h += X.box('<b style="font-size:17px">📒 Daily Review: where were we right, where were we wrong?</b><div class="note" style="margin:6px 0 0">All day the app writes down the trade ideas it shows (entry, stop, target, time), then checks them on real 5-minute candles to see which was reached first. Wrong calls get a reason. When one side keeps losing, the app removes its BEST badge. It can only become stricter, never bolder, and small samples are ignored. </div>', '#5e5ce6');
+            h += X.seg('rvp', [['h', 'Hour'], ['1', 'Day'], ['7', 'Week'], ['30', 'Month'], ['365', 'Year']], per);
+            if (!a.length) { return h + X.box('<div class="note" style="margin:0">No graded calls yet in this period. ' + open + ' call(s) are being watched. Each needs at least 6 minutes, and up to 24 hours, to be judged. Keep the app open.</div>'); }
+            var best = agg(a.filter(function (c) { return c.best; })), norm = agg(a.filter(function (c) { return !c.best; })), lg = agg(a.filter(function (c) { return c.side === 'LONG'; })), sh = agg(a.filter(function (c) { return c.side === 'SHORT'; }));
+            function row(t, x) { return '<tr style="border-top:1px solid var(--line,#e5e5ea)"><td style="padding:5px 4px 5px 0"><b>' + t + '</b></td><td>' + x.n + '</td><td>' + Math.round(x.win * 100) + '%</td><td style="color:' + (x.avg >= 0 ? '#16a34a' : '#dc2626') + '">' + (x.avg >= 0 ? '+' : '') + x.avg.toFixed(2) + '%</td></tr>'; }
+            h += X.box('<b>Score (' + PL[per] + ')</b><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px"><tr style="text-align:left"><th>Group</th><th>Calls</th><th>Right</th><th>Avg/call</th></tr>' + row('All calls', g) + row('LONG', lg) + row('SHORT', sh) + row('BEST-badge calls', best) + row('Other calls', norm) + '</table></div><div class="note" style="margin:6px 0 0">"Right" means it made money after a 0.16% fee. Calls that ended without reaching target or stop are counted at the price when they expired. ' + open + ' more still open.</div>');
+            var hrs = []; for (var i = 0; i < 24; i++) { hrs.push([]); } a.forEach(function (c) { hrs[new Date(c.t0).getHours()].push(c); });
+            h += X.box('<b>By hour of day (your clock)</b><div style="display:flex;gap:2px;align-items:flex-end;height:70px;margin-top:6px">' + hrs.map(function (x, i) { var q = agg(x); return '<div title="' + i + ':00 · ' + q.n + ' calls" style="flex:1;text-align:center"><div style="height:' + Math.round(q.n ? 8 + q.win * 50 : 2) + 'px;background:' + (!q.n ? 'rgba(128,128,128,.25)' : q.win >= 0.5 ? '#16a34a' : '#dc2626') + ';border-radius:2px"></div><div style="font-size:8px">' + (i % 3 === 0 ? i : '') + '</div></div>'; }).join('') + '</div><div class="note" style="margin:4px 0 0">Taller green bar = more calls right in that hour. Grey = no calls. Few calls per hour means this is only a hint.</div>');
+            var L = learn(); h += X.box('<b>What the app learned</b>' + (L.notes.length ? L.notes.map(function (t) { return '<div class="note" style="margin:6px 0 0">• ' + e2(t) + '</div>'; }).join('') : '<div class="note" style="margin:6px 0 0">Nothing to change yet. A rule needs at least 8 graded calls in 48 hours before the app tightens anything.</div>'), '#ff9f0a');
+            var wrong = a.filter(function (c) { return c.r <= 0; }).slice(-8).reverse(), right = a.filter(function (c) { return c.r > 0; }).slice(-5).reverse();
+            h += X.box('<b>Where it was wrong</b>' + (wrong.length ? wrong.map(function (c) { return '<div style="padding:6px 0;border-bottom:1px solid var(--line,#e5e5ea)">❌ <b>' + e2(c.sym.replace(/USDT$/, '')) + '</b> ' + c.side + ' at ' + fp(c.px0, c.sym) + ' (' + new Date(c.t0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ') → ' + c.r.toFixed(2) + '%<div class="note" style="margin:2px 0 0">' + e2((c.why || []).join('; ')) + '</div></div>'; }).join('') : '<div class="note" style="margin:6px 0 0">No wrong calls in this period.</div>'));
+            h += X.box('<b>Where it was right</b>' + (right.length ? right.map(function (c) { return '<div style="padding:5px 0">✅ <b>' + e2(c.sym.replace(/USDT$/, '')) + '</b> ' + c.side + ' at ' + fp(c.px0, c.sym) + ' → +' + c.r.toFixed(2) + '%</div>'; }).join('') : '<div class="note" style="margin:6px 0 0">None yet.</div>'));
+            var bot = S.bot && S.bot.closed ? S.bot.closed.filter(function (t) { return t.at >= from; }) : [], bw = bot.filter(function (t) { return t.pnl > 0; }).length;
+            h += X.box('<b>Bot Baba (practice)</b><div class="note" style="margin:6px 0 0">' + (bot.length ? bot.length + ' practice trades in this period, ' + bw + ' won, net ' + bot.reduce(function (s, t) { return s + t.pnl; }, 0).toFixed(2) + ' USDT.' : 'No closed practice trades in this period.') + '</div>' + X.go('Open Proof', 'proof'));
+            var okc = window.__babaConsent && window.__babaConsent();
+            h += X.box('<b>🧓 Baba AI review</b><div class="note" style="margin:4px 0 8px">Baba reads only the numbers above and writes a short review. It can be wrong; treat it as reading help.</div>' + (okc ? '<button class="btn" data-xk="rvai:go">' + (KX.rvBusy === '1' ? 'Writing…' : 'Write today\'s review') + '</button>' : '<div class="note">Online AI is off. Turn it on in Baba AI › Settings.</div>') + (KX.rvTxt ? '<div style="margin-top:8px">' + e2(KX.rvTxt).replace(/\n/g, '<br>') + '</div>' : ''));
+            return h;
+        }
+        X.on('rvai', function () {
+            if (KX.rvBusy === '1' || !window.__babaAi) { return; } var from = new Date(new Date().setHours(0, 0, 0, 0)).getTime(), a = done(from), g = agg(a), lg = agg(a.filter(function (c) { return c.side === 'LONG'; })), sh = agg(a.filter(function (c) { return c.side === 'SHORT'; })), L = learn();
+            var reasons = {}; a.forEach(function (c) { (c.why || []).forEach(function (w) { var k = w.split(':')[0]; reasons[k] = (reasons[k] || 0) + 1; }); });
+            var q = 'Write a short, simple daily review (at most 8 lines) for a trader. Use ONLY these facts: ' + g.n + ' graded calls today, ' + g.w + ' right (' + Math.round(g.win * 100) + '%), average ' + g.avg.toFixed(2) + '% per call after fees. LONG: ' + lg.n + ' calls, ' + Math.round(lg.win * 100) + '% right. SHORT: ' + sh.n + ' calls, ' + Math.round(sh.win * 100) + '% right. Reasons for wrong calls: ' + JSON.stringify(reasons) + '. App lessons: ' + L.notes.join(' ') + ' Say what to do differently tomorrow. Do not promise profit.';
+            KX.rvBusy = '1'; KX.rvTxt = ''; X.again();
+            window.__babaAi(q, false).then(function (r) { KX.rvTxt = r.t + '\n\n(Written by a free AI service from the numbers above. Not financial advice.)'; }, function (er) { KX.rvTxt = 'Could not write it now: ' + (er && er.message ? er.message : 'try again in a minute'); }).then(function () { KX.rvBusy = '0'; X.again(); });
+        });
+        window.__review = { view: view, J: function () { return J; }, learn: learn, grade: grade, record: record, gradeAll: gradeAll };
+    } catch (e) { try { console.error('p9zszzk', e); } catch (e3) { } }
 })();
 
 function renderView(keep) {
