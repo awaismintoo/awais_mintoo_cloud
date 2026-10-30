@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.105';
+var BUILD = '2026-10-31.107';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5369,9 +5369,11 @@ function doEnsure() {
     function add(s) { if (s && S.tick[s] && want.indexOf(s) < 0 && (!S.dayOpen[s] || S.dayOpen[s].t !== st)) { want.push(s); } }
     try { add(S.chart && S.chart.sym); } catch (e) {} try { add(S.an && S.an.sym); } catch (e) {}
     try { (S.risers || []).forEach(function (r) { add(r.sym); }); } catch (e) {}
-    try { Object.keys(S.tick).filter(function (s) { return /USDT$/.test(s); }).sort(function (a, b) { return S.tick[b].q - S.tick[a].q; }).slice(0, 60).forEach(add); } catch (e) {}
-    want.slice(0, 6).forEach(function (s) {
-        if (DO.busy > 3) { return; } DO.busy++;
+    try { Object.keys(S.tick).filter(function (s) { return /USDT$/.test(s); }).sort(function (a, b) { return S.tick[b].q - S.tick[a].q; }).slice(0, 400).forEach(add); } catch (e) {}
+    /* app open at the reset moment: take every coin's price right then as the new day's open (within about a minute), so all coins start from 0% together */
+    try { var nw = nowMs(); if (nw - st < 90000 && DO.snap !== st) { DO.snap = st; Object.keys(S.tick).forEach(function (k) { var tk = S.tick[k]; if (tk && tk.p > 0 && (!S.dayOpen[k] || S.dayOpen[k].t !== st)) { S.dayOpen[k] = { t: st, o: tk.p, approx: 1 }; } }); want = []; } } catch (e) {}
+    want.slice(0, 12).forEach(function (s) {
+        if (DO.busy > 8) { return; } DO.busy++;
         m7get('https://fapi.binance.com/fapi/v1/klines?symbol=' + s + '&interval=1h&startTime=' + st + '&limit=1').then(function (a) {
             if (Array.isArray(a) && a.length && +a[0][0] === st && +a[0][1] > 0) { S.dayOpen[s] = { t: st, o: +a[0][1] }; }
         }).catch(function () {}).then(function () { DO.busy--; });
@@ -7876,7 +7878,7 @@ function idFactors(c) {
     function add(k, ic, name, v, w, note) { F.push({ k: k, ic: ic, name: name, v: idClamp(v, -1.5, 1), w: w, note: note }); }
     if (c.conf != null) { add('ind', '📊', 'Indicators', (c.conf - 62) / 30, 1, c.conf + '% of the indicator checks agree'); }
     if (c.fx) { e = c.fx; add('fx', '🧮', 'All-factors check', e.veto ? -1.5 : e.support ? 1 : e.against ? -1 : 0, 1, typeof fxVerdictTxt === 'function' ? fxVerdictTxt(e) : 'checked'); }
-    try { e = FC.cache[c.sym]; if (e && e.ks) { A = fcAn(e.ks); if (A) { add('prj', '📈', 'Projection line', (A.dirUp === (dir > 0) ? 1 : -1) * idClamp((A.pct - 45) / 25, 0.2, 1), 0.8, 'line points ' + (A.dirUp ? 'up' : 'down') + ', right ' + A.pct + '% of past times'); } } } catch (er) { }
+    try { e = FC.cache[c.sym]; if (e && e.ks) { A = fcAn(e.ks); if (A) { add('prj', '📈', 'Projection line', (A.dirUp === (dir > 0) ? 1 : -1) * idClamp((A.pct - 50) / 25, -1, 1), 0.8, 'line points ' + (A.dirUp ? 'up' : 'down') + ', right ' + A.pct + '% of past times'); } } } catch (er) { }
     if (t) { var q = t.q || 0; add('vol', '💧', 'Volume', q >= 3e8 ? 1 : q >= 5e7 ? 0.4 : q >= 2e7 ? 0 : -0.8, 0.5, '24h trading ' + (q >= 1e9 ? (q / 1e9).toFixed(1) + 'B' : (q / 1e6).toFixed(0) + 'M') + ' USDT' + (q < 2e7 ? ' (thin)' : '')); }
     if (t && t.h > t.l && c.slP > 0) { var rg = (t.h - t.l) / t.p * 100, r = c.slP / rg; add('vty', '🌊', 'Volatility vs stop', r < 0.08 ? -0.7 : r < 0.2 ? 0 : 0.3, 0.5, 'stop is ' + Math.round(r * 100) + '% of today\'s range' + (r < 0.08 ? ' (price noise may hit it)' : '')); }
     tr = idTrend(c.sym); if (tr) { add('trd', '🧭', 'Bigger trend', tr.up * dir * (tr.weak ? 0.4 : 1), tr.weak ? 0.4 : 0.6, tr.txt); }
@@ -11927,7 +11929,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function ideas() { if (window.__dnMock) { return window.__dnMock; } try { return (typeof idRows === 'function' ? idRows() : []) || []; } catch (e) { return []; } }
         function listedMexc(b) { try { return !!(window.XCH && XCH.listed && XCH.listed('mexc', b)); } catch (e) { return false; } }
         function build() {
-            var rows = ideas().filter(function (m) { return m && m.R && !m.R.blocked && m.tpP > 0 && m.slP > 0; }), seen = {}, bin = [], mx = [], P = window.__tplan;
+            var LEVX = /^(SOXL|SOXS|TQQQ|SQQQ|UVXY|SVXY|SPXL|SPXS|TECL|TECS|LABU|LABD|FNGU|FNGD|NVDL|NVDD|TSLL|TSLQ|SKDD|SKHL|CONL|MSTU|MSTZ|NVDU|NVDS|BITX|BITI|ETHU|ETHD)/, rows = ideas().filter(function (m) { return m && m.R && !m.R.blocked && m.tpP > 0 && m.slP > 0 && !LEVX.test(String(m.sym || '').replace(/USDT$|USDC$|USD$/, '')); }), seen = {}, bin = [], mx = [], P = window.__tplan;
             if (!P) { return []; }
             rows.forEach(function (m) {
                 var b = bsn(m.sym), px = P.priceOf(m.sym); if (!(px > 0)) { return; } var sg = m.side === 'LONG' ? 1 : -1, sl = px * (1 - sg * m.slP / 100), tp = px * (1 + sg * m.tpP / 100);
