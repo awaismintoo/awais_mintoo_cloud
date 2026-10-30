@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-30.86';
+var BUILD = '2026-10-30.91';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5461,7 +5461,7 @@ var PF_KB = [
 ['mexc', 'MEXC', 'Another crypto exchange. The MEXC window in this app shows its Futures and Spot lists. Orders are not placed in the app; tap the badge to open that market on MEXC.'],
 ['psx|kse|pakistan stock', 'PSX / KSE', 'The Pakistan Stock Exchange and its KSE-100 index. The app shows the index and listings for information; orders are not placed from here.']
 ];
-/* ===== v10.8 build .5: Baba Trading - animated draggable helper, tutor and Q&A ===== */
+/* ===== v10.8 build .5: Baba AI - animated draggable helper, tutor and Q&A ===== */
 var PF_APP = [
 ['install|installation|update the app|how do i update|setup file|termux', 'Install / update', 'In Termux run: cp ~/storage/downloads/mintoo_FINAL.sh ~/ && bash ~/mintoo_FINAL.sh . When it says DONE, install app-release.apk from Downloads > MintooSuite_signed_FULL_v108 > MintooSuite-signed > apk > release. Install it over the old app (no need to uninstall) to keep your data.'],
 ['delete old|old version|old files|clean up|cleanup', 'Which files can I delete?', 'Keep: mintoosuite-release.jks (your signing key, plus a copy off the phone), the newest MintooSuite_signed_FULL folder, the newest FullBackup zip, the RESTORE_POINT zip and mintoo_FINAL.sh. Older APK folders, old mintoo_*.sh scripts and older backups can go once the new build works for a day or two.'],
@@ -5529,7 +5529,7 @@ function pfPos() {
 function pfBuild() {
     if (document.getElementById('pfm')) { return; } pfCSS();
     var m = document.createElement('div'); m.id = 'pfm'; m.innerHTML = '<div class="pfbub"></div><div class="pfav">' + PF_AV + '</div>'; document.body.appendChild(m);
-    var p = document.createElement('div'); p.id = 'pfp'; p.innerHTML = '<div class="pfh"><div class="pfav2">' + PF_AV + '</div><div><b>Baba Trading</b><small>Ask about the app, coins, trading, currencies</small></div><span class="pfx" data-pf="close">✕</span></div><div class="pfmsgs" id="pfmsgs"></div><div class="pfchips" id="pfchips"></div><div class="pfin"><input id="pfq" placeholder="Ask me anything…" autocomplete="off"><button data-pf="send">Ask</button></div>'; document.body.appendChild(p);
+    var p = document.createElement('div'); p.id = 'pfp'; p.innerHTML = '<div class="pfh"><div class="pfav2">' + PF_AV + '</div><div><b>Baba AI</b><small>Ask about the app, coins, trading, currencies</small></div><span class="pfx" data-pf="close">✕</span></div><div class="pfmsgs" id="pfmsgs"></div><div class="pfchips" id="pfchips"></div><div class="pfin"><input id="pfq" placeholder="Ask me anything…" autocomplete="off"><button data-pf="send">Ask</button></div>'; document.body.appendChild(p);
     pfPos(); window.addEventListener('resize', pfPos); pfDrag(m);
     p.addEventListener('click', function (e) {
         var el = e.target.closest ? e.target.closest('[data-pf],[data-pfq],[data-pfgo]') : null; if (!el) { return; }
@@ -5550,7 +5550,7 @@ function pfDrag(m) {
 function pfToggle() { if (PF.open) { pfClose(); } else { pfOpen(); } }
 function pfOpen() {
     pfBuild(); var m = document.getElementById('pfm'), p = document.getElementById('pfp'); PF.open = true; p.classList.add('on'); m.classList.remove('tip'); m.classList.add('wave'); setTimeout(function () { m.classList.remove('wave'); }, 950);
-    if (!PF.msgs.length) { pfSay('Hello! I am <b>Baba Trading</b>. I know this app, indicators, coins, currencies, gold and trading basics. Type a question, or tap a topic below. I am not a financial adviser and cannot promise profit, but I will always tell you honestly what I know.', 'Hi'); }
+    if (!PF.msgs.length) { pfSay('Hello! I am <b>Baba AI</b>. I know this app, indicators, coins, currencies, gold and trading basics. Type a question, or tap a topic below. I am not a financial adviser and cannot promise profit, but I will always tell you honestly what I know.', 'Hi'); }
     pfChips(); pfRender();
 }
 function pfClose() { var p = document.getElementById('pfp'); if (p) { p.classList.remove('on'); } PF.open = false; }
@@ -5620,11 +5620,11 @@ function pfTip() {
 }
 // Windows entry to bring the helper back
 function vProf() {
-    var h = '<div class="group pad"><div style="display:flex;gap:12px;align-items:center"><div style="width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c9f3e3,#7ad7b5 70%);overflow:hidden;flex:none">' + PF_AV + '</div><div><b>Baba Trading</b><div class="mut" style="font-size:13px">Your built-in tutor: the app, indicators, coins, gold, currencies and trading basics.</div></div></div></div>';
+    var h = '<div class="group pad"><div style="display:flex;gap:12px;align-items:center"><div style="width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c9f3e3,#7ad7b5 70%);overflow:hidden;flex:none">' + PF_AV + '</div><div><b>Baba AI</b><div class="mut" style="font-size:13px">Your built-in tutor: the app, indicators, coins, gold, currencies and trading basics.</div></div></div></div>';
     h += '<div class="group pad"><div class="row tap" data-m11="ask"><span>💬 Ask a question</span><b>›</b></div><div class="row tap" data-m11="' + (PF.st.hide ? 'show' : 'hide') + '"><span>' + (PF.st.hide ? '👁 Show the floating helper' : '🙈 Hide the floating helper') + '</span><b>›</b></div><div class="row tap" data-m11="quiet"><span>🔕 Tips popping up</span><b>' + (PF.st.quiet ? 'OFF' : 'ON') + '</b></div></div>';
     return h + '<div class="note">Drag the helper anywhere with your finger. Tap it to ask. I am a built-in knowledge base that works offline, not an internet search, and I never promise profit. Not financial advice.</div>';
 }
-WINS.push({ id: 'prof', ic: '🎓', c: '#34c759', n: 'Baba Trading (ask anything)', t: 'Baba Trading', sub: 'Animated helper: explains the app, indicators, coins, gold and trading, answers questions' }); LIVE.prof = 0; VIEWS.prof = vProf;
+WINS.push({ id: 'prof', ic: '🎓', c: '#34c759', n: 'Baba AI (ask anything)', t: 'Baba AI', sub: 'Animated helper: explains the app, indicators, coins, gold and trading, answers questions' }); LIVE.prof = 0; VIEWS.prof = vProf;
 MW_HELP.prof = 'Tap the cartoon helper on any screen and type a question. It also gives short tips, can open windows for you, and shows live price, change and volume for any coin.';
 (function () { var g = MW_GROUPS[0][1]; if (g.indexOf('prof') < 0) { g.splice(Math.min(g.length, g.indexOf('overview') + 1), 0, 'prof'); } })();
 document.addEventListener('click', function (e) {
@@ -5820,7 +5820,7 @@ vAnalyst = function () {
 };
 VIEWS.analyst = vAnalyst;
 MW_HELP.analyst = 'Type any coin (Binance Futures, Binance Spot or MEXC), gold XAU, silver XAG, OIL, a currency pair like USD/PKR or EUR/USD, or a country name like Pakistan. The bot shows where it can be traded, reads real candles, and refreshes the values, levels and profit boxes about every minute (or tap Refresh). Currencies use free daily rates, so they give a daily view only.';
-/* ===== v10.8 build .5: Profile & shortcuts (blinking avatar on Home) + Baba Trading knows exchange profile sections ===== */
+/* ===== v10.8 build .5: Profile & shortcuts (blinking avatar on Home) + Baba AI knows exchange profile sections ===== */
 S.me = { pg: 0, edit: false };
 var ME_DEF = ['best', 'glance', 'scanner', 'plan', 'analyst', 'bot', 'market', 'movers', 'news', 'rates', 'wallet', 'terminal', 'copy', 'rbot', 'timez', 'alerts', 'account', 'plans', 'health', 'perms', 'help', 'lab', 'mexc', 'psx'];
 function meSc() { try { var a = JSON.parse(localStorage.getItem('mintoosuite_short') || 'null'); if (Array.isArray(a) && a.length) { return a.filter(function (id) { return (WINS || []).some(function (w) { return w.id === id; }); }); } } catch (e) {} return ME_DEF.filter(function (id) { return (WINS || []).some(function (w) { return w.id === id; }); }); }
@@ -5864,7 +5864,7 @@ function meEdit() {
 function vMe() {
     meCSS(); var b = S.bot || {}, cl = b.closed || [], wins = cl.filter(function (x) { return (x.pnl != null ? x.pnl : x.usd) > 0; }).length, bal = b.bal || 0, st = b.start || 1000, ch = st ? (bal / st - 1) * 100 : 0, em = meEmail(), signed = !!em;
     var h = '<div class="group pad"><div class="mehd" data-m13="wave">' + meAvatar(78, '') + '<div style="min-width:0"><h2>' + esc(meName()) + '</h2>' + (em ? '<div class="em">' + esc(em) + '</div>' : '<div class="em">Not signed in on this phone</div>') + '<div class="mech"><span class="' + (signed ? 'ok' : '') + '">' + (signed ? '✔ Signed in' : 'Guest') + '</span><span>Plan: Free</span><span>' + (S.rbot && S.rbot.on ? 'Real bot ON' : 'Paper trader') + '</span></div></div><span class="mut" style="margin-left:auto;font-size:22px" data-m13="go:account">⚙️</span></div></div>';
-    h += '<div class="group pad" data-m13="ask" style="display:flex;align-items:center;gap:12px;cursor:pointer">' + meAvatar(42, '') + '<div><b>Baba Trading</b><div class="mut" style="font-size:12.5px">Ask about the app, coins, indicators or trading</div></div><span class="pfbtn" style="margin-left:auto;background:#0a84ff;color:#fff;border-radius:14px;padding:6px 14px;cursor:pointer">Ask</span></div>';
+    h += '<div class="group pad" data-m13="ask" style="display:flex;align-items:center;gap:12px;cursor:pointer">' + meAvatar(42, '') + '<div><b>Baba AI</b><div class="mut" style="font-size:12.5px">Ask about the app, coins, indicators or trading</div></div><span class="pfbtn" style="margin-left:auto;background:#0a84ff;color:#fff;border-radius:14px;padding:6px 14px;cursor:pointer">Ask</span></div>';
     h += sh('For you') + meCards();
     h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><b style="font-size:15px">' + (S.me.edit ? 'Edit shortcuts' : 'Shortcuts') + '</b>' + (S.me.edit ? '' : '<span class="mut" style="font-size:13px;cursor:pointer" data-m13="edit">✏️ Edit</span>') + '</div><div class="group pad" style="margin-top:6px">' + (S.me.edit ? meEdit() : meShortcuts()) + '</div>';
     h += sh('My paper account') + '<div class="group pad"><div class="row"><span>Virtual balance</span><b>$' + bal.toFixed(2) + '</b></div><div class="row"><span>Since the start ($' + st + ')</span><b class="' + (ch >= 0 ? 'up' : 'dn') + '">' + pct(ch) + '</b></div><div class="row"><span>Closed trades · win rate</span><b>' + cl.length + (cl.length ? ' · ' + Math.round(wins / cl.length * 100) + '%' : '') + '</b></div><div class="row"><span>Open trades</span><b>' + ((b.open || []).length) + '</b></div><div class="meprog" title="progress to 50 trades"><i style="width:' + Math.min(100, cl.length * 2) + '%"></i></div><div class="note" style="margin:6px 0 0">' + Math.min(50, cl.length) + ' of 50 trades needed before the result means anything. Virtual money only.</div></div>';
@@ -5894,9 +5894,9 @@ document.addEventListener('click', function (e) {
     else if (v === 'wave') { var av = el.querySelector('.meav'); if (av) { av.classList.add('wave'); setTimeout(function () { av.classList.remove('wave'); }, 950); } }
 }, true);
 document.addEventListener('scroll', function (e) { var t = e.target; if (t && t.id === 'mecar1') { var n = Math.round(t.scrollLeft / Math.max(1, t.clientWidth)), d = document.querySelectorAll('#medots1 i'); Array.prototype.forEach.call(d, function (x, k) { x.className = k === n ? 'on' : ''; }); } }, true);
-// ---- Baba Trading knows the profile/exchange vocabulary ----
+// ---- Baba AI knows the profile/exchange vocabulary ----
 PF_WIN['Profile and shortcuts'] = 'me';
-PF_APP.push(['profile|my profile|avatar|picture|shortcuts|shortcut|swipe', 'Profile and shortcuts', 'Tap your cartoon picture at the top right (next to MENU), or More > Profile & shortcuts. There you find: your name and sign-in, a Baba Trading shortcut, "For you" cards, swipeable shortcut pages you can edit (tap ✏️ Edit), your paper account, a setup checklist and settings. Swipe left or right on the shortcut and "For you" cards.']);
+PF_APP.push(['profile|my profile|avatar|picture|shortcuts|shortcut|swipe', 'Profile and shortcuts', 'Tap your cartoon picture at the top right (next to MENU), or More > Profile & shortcuts. There you find: your name and sign-in, a Baba AI shortcut, "For you" cards, swipeable shortcut pages you can edit (tap ✏️ Edit), your paper account, a setup checklist and settings. Swipe left or right on the shortcut and "For you" cards.']);
 [
 ['earn|savings|staking|stake', 'Earn / staking', 'Earn products let you lock or lend coins to receive interest or rewards. Rates are variable, locked coins may not be withdrawable early, and platform or token risk exists. This app does not run Earn: it lives in your Binance or Bitget app.'],
 ['card|crypto card', 'Crypto card', 'A card that lets you spend crypto like a normal bank card (the exchange converts at payment). Availability depends on country. It is a Binance or Bitget service, not part of this app.'],
@@ -5905,7 +5905,7 @@ PF_APP.push(['profile|my profile|avatar|picture|shortcuts|shortcut|swipe', 'Prof
 ['square|social feed|creator', 'Square / Creator', 'Square is Binance\'s social feed where users and "creators" post views and news. Treat posts as opinions: many are promotions or paid.'],
 ['demo trading|demo|practice account', 'Demo trading', 'Practice with virtual money at real prices. In this app the Auto Bot is a paper (virtual) trader, and the Real bot starts on the Binance test network. Binance also has its own demo mode.'],
 ['trading bots|grid bot|grid|dca bot|bot strategy|rebalancing', 'Trading bots (grid, DCA)', 'A grid bot places buy and sell orders in a price range and profits from sideways moves; a DCA bot buys in steps. They can do badly in strong trends. Your Auto Bot and Bot Pro here are paper bots, and no bot can promise profit.'],
-['learn and earn|learn & earn|academy|course', 'Learn and Earn', 'Short courses and quizzes that give small token rewards. Good for learning basics; the Baba Trading in this app also explains terms on request.'],
+['learn and earn|learn & earn|academy|course', 'Learn and Earn', 'Short courses and quizzes that give small token rewards. Good for learning basics; the Baba AI in this app also explains terms on request.'],
 ['pay|binance pay|payments', 'Pay', 'Exchange payment feature to send or receive crypto between users or pay merchants. It is an account feature of the exchange, not of this app.'],
 ['options|option trading|call put', 'Options', 'Options give the right to buy (call) or sell (put) at a set price before an expiry. They are complex and can lose the whole premium quickly. Not recommended for beginners.'],
 ['referral|refer|invite', 'Referral', 'Invite friends and earn a share of their fees or a bonus. Follow the exchange rules and never promise guaranteed profits to people you invite.'],
@@ -6000,10 +6000,10 @@ function mpSections() {
         '<div>' + mpBtn('savep', 'Save details', 1) + '<span class="mut" id="mpMsg" style="font-size:12.5px"></span></div><div class="note" style="margin:6px 0 0">Saved only in this app on your phone. Nothing is uploaded, because the app has no server.</div></div>';
     h += sh('Real bot earnings (P/L)') + mpPnl();
     h += sh('Security center') + '<div class="group pad"><div style="font-weight:600;margin-bottom:6px">Change password</div>' + (a && a.hash ? '<input id="mpOld" type="password" placeholder="Current password" autocomplete="off" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid var(--line,#d7d7dc);background:var(--card,#fff);color:inherit;font-size:15px;margin-bottom:8px"><input id="mpNew" type="password" placeholder="New password (8+ characters)" autocomplete="off" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid var(--line,#d7d7dc);background:var(--card,#fff);color:inherit;font-size:15px;margin-bottom:8px"><input id="mpNew2" type="password" placeholder="Repeat new password" autocomplete="off" style="width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid var(--line,#d7d7dc);background:var(--card,#fff);color:inherit;font-size:15px;margin-bottom:8px"><div>' + mpBtn('pw', 'Change password', 1) + '<span id="mpPw" style="font-size:12.5px"></span></div>' : '<div class="note" style="margin:0">No password account on this phone. Sign in first (Account).</div>') + '</div>';
-    h += '<div class="group pad"><div class="row tap" data-m13="go:perms"><span>🔒 App lock (fingerprint / PIN)</span><b>' + (lk && lk.enabled ? 'ON' : (lk ? 'OFF' : 'Android app only')) + ' ›</b></div><div class="row tap" data-m13="go:account"><span>👤 Sign-in and sign-out</span><b>›</b></div><div class="row tap" data-m13="go:perms"><span>🛡 Notifications, battery, background</span><b>›</b></div><div class="row" data-m14="sec2fa" style="cursor:pointer"><span>🔑 2FA, anti-phishing code, API safety</span><b>Ask Baba Trading ›</b></div></div>';
+    h += '<div class="group pad"><div class="row tap" data-m13="go:perms"><span>🔒 App lock (fingerprint / PIN)</span><b>' + (lk && lk.enabled ? 'ON' : (lk ? 'OFF' : 'Android app only')) + ' ›</b></div><div class="row tap" data-m13="go:account"><span>👤 Sign-in and sign-out</span><b>›</b></div><div class="row tap" data-m13="go:perms"><span>🛡 Notifications, battery, background</span><b>›</b></div><div class="row" data-m14="sec2fa" style="cursor:pointer"><span>🔑 2FA, anti-phishing code, API safety</span><b>Ask Baba AI ›</b></div></div>';
     h += sh('Identity (KYC)') + '<div class="group pad"><div class="row"><span>Identity check</span><b>Done in Binance / Bitget</b></div><div class="note" style="margin:6px 0 0">This app does not collect ID cards or CNIC photos on purpose. Your exchange verifies you itself, the Real Bot only needs your Binance API keys, and a photo of an ID stored on a phone with no server adds risk but no benefit. Never send ID photos to anyone who asks for them in a chat.</div></div>';
     h += sh('Invite friends') + '<div class="group pad">' + mpIn('ref', 'Your own Binance or Bitget referral link / code', 'paste yours here') + '<div>' + mpBtn('share', '📤 Share', 1) + mpBtn('savep', 'Save') + '</div><div class="note" style="margin:6px 0 0">Rewards come only from the exchange\'s own referral programme, under its rules. This app cannot create or pay prizes, so none are shown here.</div></div>';
-    h += sh('Contact and support') + '<div class="group pad"><div class="row"><span>Email</span><b>awaisrajpoot2@yahoo.com</b></div><div class="row tap" data-m13="go:help"><span>📖 Help and guides</span><b>›</b></div><div class="row" data-m14="askpf" style="cursor:pointer"><span>🎓 Ask Baba Trading</span><b>›</b></div></div>';
+    h += sh('Contact and support') + '<div class="group pad"><div class="row"><span>Email</span><b>awaisrajpoot2@yahoo.com</b></div><div class="row tap" data-m13="go:help"><span>📖 Help and guides</span><b>›</b></div><div class="row" data-m14="askpf" style="cursor:pointer"><span>🎓 Ask Baba AI</span><b>›</b></div></div>';
     return h;
 }
 document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-m14in')) { var o = mpGet(); o[t.getAttribute('data-m14in')] = t.value; mpSet(o); } }, true);
@@ -6014,7 +6014,7 @@ document.addEventListener('click', function (e) {
     else if (a === 'askpf') { var b = document.createElement('button'); b.setAttribute('data-m13', 'ask'); document.body.appendChild(b); b.click(); b.remove(); }
     else if (a === 'sec2fa') { var b2 = document.createElement('button'); b2.setAttribute('data-m13', 'ask'); document.body.appendChild(b2); b2.click(); b2.remove(); setTimeout(function () { try { pfAsk('how do I secure my exchange account with 2FA and an anti-phishing code'); } catch (er) {} }, 400); }
     else if (a === 'share') {
-        var r = (mpGet().ref || '').trim(), txt = r ? 'Join me on the exchange: ' + r : 'Trade with MintooSuite: live Binance data, Best Picks and a built-in Baba Trading.';
+        var r = (mpGet().ref || '').trim(), txt = r ? 'Join me on the exchange: ' + r : 'Trade with MintooSuite: live Binance data, Best Picks and a built-in Baba AI.';
         try { if (navigator.share) { navigator.share({ text: txt }); } else if (navigator.clipboard) { navigator.clipboard.writeText(txt); mpMsg('mpMsg', 'Copied.', true); } } catch (er) {}
     }
     else if (a === 'pw') {
@@ -6074,7 +6074,7 @@ function vMe2() {
     meCSS(); var T = S.me.tab, h = '';
     h += meHeader() + '<div class="metabs">' + ME_TABS.map(function (t) { return '<span class="' + (T === t[0] ? 'on' : '') + '" data-m15="tab:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div>';
     if (T === 'home') {
-        h += '<div class="group pad" data-m13="ask" style="display:flex;align-items:center;gap:12px;cursor:pointer">' + meAvatar(42, '') + '<div><b>Baba Trading</b><div class="mut" style="font-size:12.5px">Ask about the app, coins, indicators or trading</div></div><span class="pfbtn" style="margin-left:auto;background:#0a84ff;color:#fff;border-radius:14px;padding:6px 14px;cursor:pointer">Ask</span></div>';
+        h += '<div class="group pad" data-m13="ask" style="display:flex;align-items:center;gap:12px;cursor:pointer">' + meAvatar(42, '') + '<div><b>Baba AI</b><div class="mut" style="font-size:12.5px">Ask about the app, coins, indicators or trading</div></div><span class="pfbtn" style="margin-left:auto;background:#0a84ff;color:#fff;border-radius:14px;padding:6px 14px;cursor:pointer">Ask</span></div>';
         h += sh('For you') + meCards();
         h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><b style="font-size:15px">' + (S.me.edit ? 'Edit shortcuts' : 'Shortcuts') + '</b>' + (S.me.edit ? '' : '<span class="mut" style="font-size:13px;cursor:pointer" data-m13="edit">✏️ Edit</span>') + '</div><div class="group pad" style="margin-top:6px">' + (S.me.edit ? meEdit() : meShortcuts()) + '</div>';
         var chk = [['Signed in', !!meEmail()], ['Binance keys saved (Connections)', !!(trCfg().key && trCfg().sec)], ['Change(%) time zone chosen (matches Binance)', S.anchor !== 'roll'], ['Paper bot has 50 closed trades', ((S.bot || {}).closed || []).length >= 50]];
@@ -6087,7 +6087,7 @@ function vMe2() {
         var a = null, lk = null; try { a = auAcct(); } catch (e) {} try { lk = lkState(); } catch (e) {}
         var inp = 'width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid var(--line,#d7d7dc);background:var(--card,#fff);color:inherit;font-size:15px;margin-bottom:8px';
         h += sh('Password') + '<div class="group pad">' + (a && a.hash ? '<input id="mpOld" type="password" placeholder="Current password" autocomplete="off" style="' + inp + '"><input id="mpNew" type="password" placeholder="New password (8+ characters)" autocomplete="off" style="' + inp + '"><input id="mpNew2" type="password" placeholder="Repeat new password" autocomplete="off" style="' + inp + '"><div>' + mpBtn('pw', 'Change password', 1) + '<span id="mpPw" style="font-size:12.5px"></span></div>' : '<div class="note" style="margin:0">No password account on this phone yet. Open Account and sign up.</div>') + '</div>';
-        h += sh('Protection') + '<div class="group pad"><div class="row tap" data-m13="go:perms"><span>🔒 App lock (fingerprint / PIN)</span><b>' + (lk && lk.enabled ? 'ON' : (lk ? 'OFF' : 'Android app only')) + ' ›</b></div><div class="row tap" data-m13="go:perms"><span>🛡 Notifications, battery, background</span><b>›</b></div><div class="row" data-m14="sec2fa" style="cursor:pointer"><span>🔑 2FA, anti-phishing code, API safety</span><b>Ask Baba Trading ›</b></div><div class="row tap" data-m13="go:account"><span>👤 Account, sign-in and sign-out</span><b>›</b></div></div>';
+        h += sh('Protection') + '<div class="group pad"><div class="row tap" data-m13="go:perms"><span>🔒 App lock (fingerprint / PIN)</span><b>' + (lk && lk.enabled ? 'ON' : (lk ? 'OFF' : 'Android app only')) + ' ›</b></div><div class="row tap" data-m13="go:perms"><span>🛡 Notifications, battery, background</span><b>›</b></div><div class="row" data-m14="sec2fa" style="cursor:pointer"><span>🔑 2FA, anti-phishing code, API safety</span><b>Ask Baba AI ›</b></div><div class="row tap" data-m13="go:account"><span>👤 Account, sign-in and sign-out</span><b>›</b></div></div>';
         h += sh('Identity (KYC)') + '<div class="group pad"><div class="row"><span>Identity check</span><b>Done in Binance / Bitget</b></div><div class="note" style="margin:6px 0 0">This app does not collect ID cards or CNIC photos on purpose. Your exchange verifies you itself, the Real Bot only needs your API keys, and an ID photo on a phone with no server adds risk but no benefit. Never send ID photos to anyone who asks in a chat.</div></div>';
     } else {
         var th = ls('mintoosuite_theme', 'light');
@@ -6351,7 +6351,7 @@ Tools: a written plan, fixed risk per trade, a daily loss limit, a journal, brea
 7. Only after weeks of consistent paper and test results, try a very small live amount you can afford to lose, with a stop on every trade.
 No tool, bot or teacher can promise profit. Your edge is discipline.`, [['How many closed paper trades before judging the Auto Bot?', ['5', '50', '1'], 1, 'Small samples mislead.'], ['Where should the Real Bot start?', ['Binance test network (TEST mode)', 'Live with max size', 'Anywhere'], 0, 'Test with play money first.']], 'how to become a profitable trader step by step', 'become expert|become a trader|learning path|roadmap|from beginner|expert trader|teach me|learn trading|how to start']
 ];
-/* ===== p9p: Academy window + smarter Baba Trading ===== */
+/* ===== p9p: Academy window + smarter Baba AI ===== */
 var ACP = {}; try { ACP = JSON.parse(localStorage.getItem('mintoosuite_ac') || '{}') || {}; } catch (e) { ACP = {}; }
 ACP.done = ACP.done || {};
 function acSave() { try { localStorage.setItem('mintoosuite_ac', JSON.stringify(ACP)); } catch (e) {} }
@@ -6377,7 +6377,7 @@ function vAcademy() {
         rows.forEach(function (l) { h += '<div class="row tap" data-m16="open:' + l[0] + '"><span>' + (ACP.done[l[0]] ? '✅' : '📘') + ' ' + esc(l[2]) + '</span><b class="mut" style="font-size:12px">' + l[3] + ' min ›</b></div>'; });
         h += '</div>';
     });
-    return h + '<div class="note">Education only, not financial advice. No lesson, bot or teacher can promise profit. You can also ask Baba Trading (the helper) anything, for example "teach me trading" or "explain RSI".</div>';
+    return h + '<div class="note">Education only, not financial advice. No lesson, bot or teacher can promise profit. You can also ask Baba AI (the helper) anything, for example "teach me trading" or "explain RSI".</div>';
 }
 function acLesson(l) {
     var h = '<div class="group pad"><div class="mut" style="font-size:12px">' + esc(AC_LEVELS[l[1]]) + ' · ' + l[3] + ' min</div><b style="font-size:18px">' + esc(l[2]) + '</b><div style="line-height:1.55;margin-top:8px;font-size:14.5px">' + acBody(l[4]) + '</div>' +
@@ -6389,7 +6389,7 @@ function acLesson(l) {
         if (a != null) { h += '<div class="note" style="margin-top:6px">' + (a === q[2] ? '✔ Correct. ' : '✖ Not quite. ') + esc(q[3]) + '</div>'; } h += '</div>';
     });
     var all = l[5].every(function (q, qi) { return S.ac.ans[l[0] + '_' + qi] != null; });
-    h += '<div class="group pad">' + (all ? acBtn('done:' + l[0], '✔ Mark done and continue', true) : '<span class="mut" style="font-size:12.5px">Answer the questions to finish this lesson.</span> ') + acBtn('ask:' + l[0], '💬 Ask Baba Trading') + acBtn('back:0', '‹ All lessons') + '</div>';
+    h += '<div class="group pad">' + (all ? acBtn('done:' + l[0], '✔ Mark done and continue', true) : '<span class="mut" style="font-size:12.5px">Answer the questions to finish this lesson.</span> ') + acBtn('ask:' + l[0], '💬 Ask Baba AI') + acBtn('back:0', '‹ All lessons') + '</div>';
     return h;
 }
 document.addEventListener('click', function (e) {
@@ -6877,7 +6877,7 @@ document.addEventListener('click', function (e) { var el = e.target.closest ? e.
 /* p9y: Legal, privacy, licences, store-readiness (static text, no data leaves the phone) */
 var LG_SEC = [
  ['Who we are', 'MintooSuite Terminal is an independent trading-tools app made by Muhammad Awais. It is NOT a bank, broker, exchange, or wallet provider. It does not hold your money. It is not affiliated with, endorsed by, or sponsored by Binance, MEXC, Bitget, Bybit, OKX, Exness, XM, Quotex, Olymp Trade, the Pakistan Stock Exchange or any other company named in the app. All names and logos belong to their owners and are used only to say which service a feature works with.'],
- ['Risk warning', 'Trading crypto, futures, leverage, forex, gold and shares can lose all of your money, and with leverage even more than you put in. Signals, bots, the Baba Trading and the Academy are education and information, not financial advice, and no profit or win-rate is promised. Only use money you can afford to lose. Start in TEST mode.'],
+ ['Risk warning', 'Trading crypto, futures, leverage, forex, gold and shares can lose all of your money, and with leverage even more than you put in. Signals, bots, the Baba AI and the Academy are education and information, not financial advice, and no profit or win-rate is promised. Only use money you can afford to lose. Start in TEST mode.'],
  ['Privacy policy', 'The app has no account system and no server of ours. Your settings, watch-lists, notes and progress are stored only on your phone. Your exchange API keys are saved only on your phone, encrypted with the Android Keystore, and are sent only to the exchange you chose, to sign your own requests. We do not collect, sell or share personal data. The app asks the internet for public prices and news from public sources (for example exchange price feeds and news sites), and those sites can see your phone\'s network address as any website would. Notification, biometric lock and background-service permissions are used only for the features you switch on. You can delete everything with Menu > Reset, by clearing the app storage in Android settings, or by uninstalling.'],
  ['Terms of use', 'The app is provided as is, without warranty. You are responsible for your exchange account, your API keys (keep withdrawal permission OFF), the orders you send and the laws and taxes that apply to you. Prices can be delayed or wrong; orders can fail or fill differently from what you expect. To the extent the law allows, the maker is not liable for trading losses.'],
  ['Open-source and third-party', 'The app runs inside the Android WebView and uses public data feeds. Any open-source libraries bundled in the app keep their own licences (such as MIT or Apache-2.0), and their notices are kept with the source. Chart and price data belong to their providers and are shown under their public terms.'],
@@ -7056,7 +7056,7 @@ PF_APP.push(['bitget order|mexc order|bybit order|okx order|trade on bitget|trad
 var AG_VER = '1', AG_KEY = 'mintoosuite_agree';
 var AG_SEC = [
  ['1. Who may use this app', 'You must be at least 18 years old (or the age of majority where you live) and legally allowed to trade the products you use. You may not use the app if you are subject to sanctions or live in a place where such trading or the use of this kind of software is prohibited. You are responsible for knowing whether you are allowed.'],
- ['2. What this app is and is not', 'MintooSuite Terminal is an independent software tool for viewing market data, learning, planning and sending orders to YOUR OWN accounts at third-party services using YOUR OWN API keys. It is not a bank, broker, exchange, investment adviser, payment service or custodian of your money. It does not give personalised investment, legal or tax advice. Signals, plans, bots, the Baba Trading and the Academy are general information only.'],
+ ['2. What this app is and is not', 'MintooSuite Terminal is an independent software tool for viewing market data, learning, planning and sending orders to YOUR OWN accounts at third-party services using YOUR OWN API keys. It is not a bank, broker, exchange, investment adviser, payment service or custodian of your money. It does not give personalised investment, legal or tax advice. Signals, plans, bots, the Baba AI and the Academy are general information only.'],
  ['3. Not affiliated', 'MintooSuite is not affiliated with, sponsored by, endorsed by or approved by Binance, MEXC, Bitget, Bybit, OKX, Exness, XM, Quotex, Olymp Trade, the Pakistan Stock Exchange, Google, Apple, Microsoft or any other company, exchange or regulator named or shown in the app. All trademarks and names belong to their owners and are used only to identify the service a feature works with. Using those services is governed by their own terms.'],
  ['4. Risk disclosure', 'Trading cryptocurrencies, futures, margin, leverage, options, forex, CFDs, commodities and shares is high risk. You can lose all the money you put in and, with leverage or margin, more than you deposited. Prices can move fast and gap; positions can be liquidated automatically. Past or back-tested results do not predict the future. No bot, signal or plan can guarantee a profit or a win rate. Technical failures (internet, exchange outages, delayed prices, API limits, software errors, phone problems) can cause missed, duplicated or wrong orders. Only trade money you can afford to lose and start with the test or demo mode and tiny sizes.'],
  ['5. Your API keys and orders', 'Keys are kept only on your phone (encrypted with the Android Keystore where available) and are sent only to the exchange you chose, to sign your own requests. Create keys with withdrawals OFF and, if you can, restrict them to your IP. Anyone with your phone or your key may act on your account. You alone are responsible for every order sent from your keys, for the exchange account terms, fees, margin calls, taxes and reporting. Check the confirmation screen before sending any order.'],
@@ -7979,7 +7979,7 @@ var STK = { act: {}, ide: {} };
     var _ir = idRows;
     idRows = function () { var l = _ir(), out; try { out = sticky(l, function (m) { return m.key; }, STK.ide, 45000); out.forEach(function (m, i) { m.rank = i + 1; }); return out; } catch (e) { return l; } };
 })();
-/* ===== p9zn: polish round: pictures, Live Chat (Baba Trading), Help centre, welcome tour, badges + private stats, more avatars, animated icons ===== */
+/* ===== p9zn: polish round: pictures, Live Chat (Baba AI), Help centre, welcome tour, badges + private stats, more avatars, animated icons ===== */
 var ILN = '<svg viewBox="0 0 320 150" xmlns="http://www.w3.org/2000/svg" role="img" style="width:100%;height:auto;display:block;font:11px system-ui,sans-serif" aria-label="';
 var ILG = '#30d158', ILR = '#ff453a', ILB = '#0a84ff', ILY = '#ff9f0a', ILM = '#8e8e93';
 function ilT(x, y, t, c, a) { return '<text x="' + x + '" y="' + y + '" fill="' + (c || 'currentColor') + '" text-anchor="' + (a || 'start') + '">' + t + '</text>'; }
@@ -8041,12 +8041,12 @@ var BADGES = [
     ['idea', '⭐', 'Idea hunter', 'Open Trade Ideas 5 times', function () { return (STS.w || {}).ideas || 0; }, 5],
     ['less', '🎓', 'Student', 'Finish 3 Academy lessons', function () { try { return Object.keys(ACP.done || {}).length; } catch (e) { return 0; } }, 3],
     ['less2', '🏅', 'Scholar', 'Finish 15 Academy lessons', function () { try { return Object.keys(ACP.done || {}).length; } catch (e) { return 0; } }, 15],
-    ['chat', '💬', 'Curious', 'Ask Baba Trading 10 questions', function () { return STS.ch || 0; }, 10],
+    ['chat', '💬', 'Curious', 'Ask Baba AI 10 questions', function () { return STS.ch || 0; }, 10],
     ['safe', '🛡', 'Safety first', 'Open the Risk meter', function () { return (STS.w || {}).risk || 0; }, 1],
     ['tour', '🗺', 'Tour done', 'Finish the welcome tour', function () { return STS.ts ? 1 : 0; }, 1],
     ['paper', '🧪', 'Practice first', 'Look at the paper bot', function () { return (STS.w || {}).bot || 0; }, 1]
 ];
-/* ---------- Live Chat (Baba Trading) ---------- */
+/* ---------- Live Chat (Baba AI) ---------- */
 var PCH = { msgs: [], busy: 0 };
 try { PCH.msgs = JSON.parse(localStorage.getItem('mintoosuite_pchat') || '[]') || []; } catch (e) { PCH.msgs = []; }
 function pcSave() { try { localStorage.setItem('mintoosuite_pchat', JSON.stringify(PCH.msgs.slice(-40))); } catch (e) { } }
@@ -8073,27 +8073,27 @@ function pcDraw() {
 function vPchat() {
     var h = '<div class="group pad" style="padding:8px 10px"><div id="pcmsgs" class="pcmsgs"></div><div style="display:flex;gap:8px;margin-top:8px"><input id="pcq" class="tin" placeholder="Ask anything: RSI, leverage, a coin, this screen…" autocomplete="off" style="flex:1 1 auto;min-width:0;width:auto"><span class="btn tap" data-pcs="1" style="flex:0 0 auto;width:auto;padding:11px 20px;display:inline-block">Send</span></div></div>';
     h += '<div class="group pad"><b>Quick topics</b>' + PC_CHIPS.map(function (g) { return '<div class="note" style="margin:8px 0 2px"><b>' + g[0] + '</b></div><div class="pcch">' + g[1].map(function (q) { return '<span data-pcq="' + esc(q) + '">' + esc(q) + '</span>'; }).join('') + '</div>'; }).join('') + '</div>';
-    h += '<div class="note">Baba Trading works inside the app (no internet needed for explanations). Videos open as a YouTube search, so you always get fresh results. Never financial advice.</div>';
-    setTimeout(function () { if (!PCH.msgs.length) { PCH.msgs.push({ who: 'bot', html: 'Hello! I am <b>Baba Trading</b>, your built-in guide. Ask me about candles, indicators, risk, coins, or any screen of this app. I will add a picture and a video link when it helps.' }); } pcDraw(); }, 0);
+    h += '<div class="note">Baba AI works inside the app (no internet needed for explanations). Videos open as a YouTube search, so you always get fresh results. Never financial advice.</div>';
+    setTimeout(function () { if (!PCH.msgs.length) { PCH.msgs.push({ who: 'bot', html: 'Hello! I am <b>Baba AI</b>, your built-in guide. Ask me about candles, indicators, risk, coins, or any screen of this app. I will add a picture and a video link when it helps.' }); } pcDraw(); }, 0);
     return h;
 }
-WINS.push({ id: 'pchat', ic: '💬', c: '#34c759', n: 'Live Chat (Baba Trading)', t: 'Chat', sub: 'Ask anything: answers with pictures, lessons and video links' }); LIVE.pchat = 0; VIEWS.pchat = vPchat;
-MW_HELP.pchat = 'Chat with Baba Trading. Ask about trading words, indicators, risk, any coin or any screen. Answers come with a picture, a matching Academy lesson and a video search link when available.';
+WINS.push({ id: 'pchat', ic: '💬', c: '#34c759', n: 'Live Chat (Baba AI)', t: 'Chat', sub: 'Ask anything: answers with pictures, lessons and video links' }); LIVE.pchat = 0; VIEWS.pchat = vPchat;
+MW_HELP.pchat = 'Chat with Baba AI. Ask about trading words, indicators, risk, any coin or any screen. Answers come with a picture, a matching Academy lesson and a video search link when available.';
 /* ---------- Help centre ---------- */
 function hcAll() { var out = [], seen = {}; (PF_APP || []).concat(PF_KB || []).forEach(function (e) { if (!seen[e[1]]) { seen[e[1]] = 1; out.push(e); } }); return out; }
 function hcResults(q) {
     var all = hcAll(), s = (q || '').toLowerCase().trim(), r = s ? all.filter(function (e) { return (e[0] + ' ' + e[1] + ' ' + e[2]).toLowerCase().indexOf(s) >= 0; }) : all.slice(0, 12);
-    if (!r.length) { return '<div class="note">Nothing found. Try the Chat with Baba Trading button above.</div>'; }
+    if (!r.length) { return '<div class="note">Nothing found. Try the Chat with Baba AI button above.</div>'; }
     return r.slice(0, 25).map(function (e) { return '<div class="row hcq"><span><b>' + esc(e[1]) + '</b><div class="note" style="margin:3px 0 0">' + esc(e[2]).slice(0, 320) + (e[2].length > 320 ? '…' : '') + '</div></span></div>'; }).join('');
 }
 function vHelpc() {
-    var h = '<div class="group pad">' + ill('shield') + '<div style="display:flex;flex-wrap:wrap;gap:8px"><span class="btn tap" data-hc="win:pchat">💬 Chat with Baba Trading</span><span class="btn sec tap" data-hc="tour">🗺 Replay the welcome tour</span><span class="btn sec tap" data-hc="win:academy">🎓 Academy</span><span class="btn sec tap" data-hc="win:badges">🏅 Achievements</span></div></div>';
+    var h = '<div class="group pad">' + ill('shield') + '<div style="display:flex;flex-wrap:wrap;gap:8px"><span class="btn tap" data-hc="win:pchat">💬 Chat with Baba AI</span><span class="btn sec tap" data-hc="tour">🗺 Replay the welcome tour</span><span class="btn sec tap" data-hc="win:academy">🎓 Academy</span><span class="btn sec tap" data-hc="win:badges">🏅 Achievements</span></div></div>';
     h += '<div class="group pad"><input id="hcq" class="tin" placeholder="Search help: leverage, RSI, install, bot…" autocomplete="off"><div id="hcres" style="margin-top:8px">' + hcResults('') + '</div></div>';
     h += '<div class="group pad"><b>Contact us</b><div class="note">Email goes to the app owner. Please do not send passwords or keys.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><a class="btn tap" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite question (build ' + BUILD + ')') + '" style="text-decoration:none">✉ Email support</a><a class="btn sec tap" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite problem report (build ' + BUILD + ')') + '&body=' + encodeURIComponent('What happened:\n\nWhich window:\n\nBuild: ' + BUILD) + '" style="text-decoration:none">🐞 Report a problem</a></div></div>';
-    return h + '<div class="note">Live human chat is not available yet; Baba Trading answers instantly, day and night.</div>';
+    return h + '<div class="note">Live human chat is not available yet; Baba AI answers instantly, day and night.</div>';
 }
 WINS.push({ id: 'helpc', ic: '🛟', c: '#0a84ff', n: 'Help centre', t: 'Help', sub: 'Search answers, replay the tour, chat, contact us' }); LIVE.helpc = 0; VIEWS.helpc = vHelpc;
-MW_HELP.helpc = 'Search the built-in help, chat with Baba Trading, replay the tour, or email the app owner.';
+MW_HELP.helpc = 'Search the built-in help, chat with Baba AI, replay the tour, or email the app owner.';
 /* ---------- Achievements + private stats ---------- */
 function vBadges() {
     var got = 0, h = '', rows = BADGES.map(function (b) { var v = Math.min(b[5], b[4]()), ok = v >= b[5]; if (ok) { got++; } return '<div class="bdg' + (ok ? ' on' : '') + '"><div class="bi">' + b[1] + '</div><b>' + esc(b[2]) + '</b><div class="note" style="margin:2px 0 4px">' + esc(b[3]) + '</div><div class="bpb"><i style="width:' + Math.round(v / b[5] * 100) + '%"></i></div><div class="note" style="margin:2px 0 0">' + v + ' / ' + b[5] + '</div></div>'; }).join('');
@@ -8104,7 +8104,7 @@ function vBadges() {
 WINS.push({ id: 'badges', ic: '🏅', c: '#ff9f0a', n: 'Achievements', t: 'Badges', sub: 'Badges, streak and your private activity' }); LIVE.badges = 0; VIEWS.badges = vBadges;
 MW_HELP.badges = 'Badges for learning and safe habits, your daily streak, and activity counts that stay on this phone.';
 /* ---------- welcome tour ---------- */
-var TOUR = [['home', 'Welcome to MintooSuite', 'Home shows live markets, the market mood, the best setup to review right now (Do Now) and the news tapes. Everything starts here.'], ['ideas', 'Trade Ideas', 'One ranked list. ⭐ BEST ideas pass every check. Tap a line to see why, the neon projection line and the chart.'], ['proj', 'The neon projection line', 'A shaded neon line extends the trend. It is a guide with an honest past-accuracy number, never a promise.'], ['prof', 'Meet Baba Trading', 'Tap the cartoon helper or open Chat. Ask anything and get a picture, a lesson and a video link.'], ['shield', 'Stay safe', 'Start with the paper bot and small amounts. Use stops. Never share passwords or keys. Nobody can guarantee profit.']];
+var TOUR = [['home', 'Welcome to MintooSuite', 'Home shows live markets, the market mood, the best setup to review right now (Do Now) and the news tapes. Everything starts here.'], ['ideas', 'Trade Ideas', 'One ranked list. ⭐ BEST ideas pass every check. Tap a line to see why, the neon projection line and the chart.'], ['proj', 'The neon projection line', 'A shaded neon line extends the trend. It is a guide with an honest past-accuracy number, never a promise.'], ['prof', 'Meet Baba AI', 'Tap the cartoon helper or open Chat. Ask anything and get a picture, a lesson and a video link.'], ['shield', 'Stay safe', 'Start with the paper bot and small amounts. Use stops. Never share passwords or keys. Nobody can guarantee profit.']];
 var WT = { i: 0 };
 function wtShow() {
     var o = document.getElementById('wtour'); if (o) { o.remove(); } var s = TOUR[WT.i], last = WT.i === TOUR.length - 1;
@@ -8325,7 +8325,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         ['learn', 'Learn to trade, step by step', '36 lessons + 13 animated clips. Free.', 'win:academy', 210, '🎓'],
         ['ideas', 'Today\'s ranked Trade Ideas', 'Best first, with the reasons shown.', 'win:ideas', 30, '⭐'],
         ['safe', 'Safety first', 'Use a stop-loss. Risk 1%. Never share keys.', 'clip:risk', 140, '🛡'],
-        ['chat', 'Ask Baba Trading anything', 'Answers with pictures and videos.', 'win:pchat', 280, '💬'],
+        ['chat', 'Ask Baba AI anything', 'Answers with pictures and videos.', 'win:pchat', 280, '💬'],
         ['verify', 'Get verified the safe way', 'Checklist for exchange identity checks.', 'win:verify', 195, '🪪']
     ];
     function promoHtml() {
@@ -8339,13 +8339,13 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
     var SUP_TOPICS = ['Question about the app', 'Something is not working', 'Notifications problem', 'Idea or suggestion', 'Security concern'];
     function supInfo() { var u = ''; try { u = navigator.userAgent.replace(/\s+/g, ' ').slice(0, 120); } catch (e) { } return 'App build: ' + (typeof BUILD !== 'undefined' ? BUILD : '?') + '\nScreen: ' + S.win + '\nPhone: ' + u; }
     function vSupport() {
-        var h = '<div class="group pad"><b style="font-size:17px">🛟 Support desk</b><div class="note">Instant help: ask Baba Trading (answers any time). For a human, send a message below; it opens WhatsApp or your email app with everything filled in. Please never include passwords, seed words or API keys.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="win:pchat">💬 Ask Baba Trading now</span><span class="btn sec tap" data-kp="win:helpc">🔎 Search help</span><a class="btn tap" style="background:#25d366;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://wa.me/' + SUP_WA + '">💬 WhatsApp</a></div></div>';
+        var h = '<div class="group pad"><b style="font-size:17px">🛟 Support desk</b><div class="note">Instant help: ask Baba AI (answers any time). For a human, send a message below; it opens WhatsApp or your email app with everything filled in. Please never include passwords, seed words or API keys.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="win:pchat">💬 Ask Baba AI now</span><span class="btn sec tap" data-kp="win:helpc">🔎 Search help</span><a class="btn tap" style="background:#25d366;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://wa.me/' + SUP_WA + '">💬 WhatsApp</a></div></div>';
         h += '<div class="group pad"><b>Write to support</b><select id="kps" class="tin" style="margin-top:8px">' + SUP_TOPICS.map(function (t) { return '<option>' + esc(t) + '</option>'; }).join('') + '</select><textarea id="kpm" class="tin" rows="4" placeholder="Describe what happened, in your own words" style="margin-top:8px;width:100%;box-sizing:border-box"></textarea><label class="note" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input id="kpd" type="checkbox" checked> Include app version and screen name (no personal data)</label><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="sendmail">✉ Send by email</span><span class="btn tap" style="background:#25d366" data-kp="sendwa">💬 Send by WhatsApp</span><span class="btn sec tap" data-kp="copymsg">📋 Copy message</span></div></div>';
         if (SUPN.length) { h += '<div class="sh">Your recent messages (this phone only)</div><div class="group">' + SUPN.slice(-5).reverse().map(function (m) { return '<div class="row"><span><b>#' + m[0] + ' ' + esc(m[1]) + '</b><div class="note" style="margin:3px 0 0">' + esc(m[2]).slice(0, 160) + '</div></span><b class="mut" style="font-size:11px">' + esc(m[3]) + '</b></div>'; }).join('') + '</div>'; }
         return h + '<div class="note">There is no live chat inside the app (that needs a staffed team and a server). WhatsApp and email reach the app owner, who replies when available.</div>';
     }
-    WINS.push({ id: 'support', ic: '🛟', c: '#0a84ff', n: 'Support desk', t: 'Support', sub: 'Ask Baba Trading or write to the owner' }); LIVE.support = 0; VIEWS.support = vSupport;
-    MW_HELP.support = 'Get help: instant answers from Baba Trading, or write a message that opens your email app with the details filled in.';
+    WINS.push({ id: 'support', ic: '🛟', c: '#0a84ff', n: 'Support desk', t: 'Support', sub: 'Ask Baba AI or write to the owner' }); LIVE.support = 0; VIEWS.support = vSupport;
+    MW_HELP.support = 'Get help: instant answers from Baba AI, or write a message that opens your email app with the details filled in.';
     window.__mwMailFail = function () { var t = window.__lastMail || ''; try { navigator.clipboard.writeText(t); } catch (e) { } try { toast('No email app found. Message copied: paste it into any app and send to awaisrajpoot2@yahoo.com, or use WhatsApp.'); } catch (e) { } };
     function supSend(copy, wa) {
         var tp = document.getElementById('kps'), ms = document.getElementById('kpm'), df = document.getElementById('kpd'); if (!ms) { return; }
@@ -8479,7 +8479,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
             '<b>Auto Bots:</b> a paper-money bot for safe practice, and an optional real-money bot on your own Binance keys (test mode by default, safety limits, kill switch).',
             '<b>Order tickets:</b> Binance Futures and Spot, plus Bitget, MEXC, Bybit and OKX connections (your own API keys).',
             '<b>My Wallet:</b> a self-custody wallet where you hold the keys. Receive and send on supported networks.',
-            '<b>Baba Trading:</b> a built-in helper and live chat that explains trading words, indicators and every screen, with pictures, lessons and video links.',
+            '<b>Baba AI:</b> a built-in helper and live chat that explains trading words, indicators and every screen, with pictures, lessons and video links.',
             '<b>Academy and Video lessons:</b> 36 lessons with quizzes and 13 animated video lessons with a built-in player.',
             '<b>Alerts and background run:</b> price alerts and notifications that keep working when you switch the Background run option on.',
             '<b>Security:</b> fingerprint or PIN app lock, API keys encrypted with the Android Keystore, show/hide password.',
@@ -8487,7 +8487,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         ]));
         h += sec('🧭', 'How it works', ul([
             '<b>1. Look:</b> open Home for the live overview, or Ideas for the ranked list.',
-            '<b>2. Understand:</b> tap an idea to see why it ranks where it does. Ask Baba Trading if a word is new.',
+            '<b>2. Understand:</b> tap an idea to see why it ranks where it does. Ask Baba AI if a word is new.',
             '<b>3. Practise:</b> try the idea with the paper-money bot or on paper first.',
             '<b>4. Decide:</b> trade on your own exchange if you choose to. You stay in control. The app never moves your money without your setup and confirmation.'
         ]));
@@ -8513,7 +8513,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         h += sec('🆕', 'What\'s new', ul([
             'Trade Ideas: five old windows merged into one ranked list.',
             'Calmer screens, fixes for flicker.',
-            'Live Chat with Baba Trading, Help centre, welcome tour, achievements.',
+            'Live Chat with Baba AI, Help centre, welcome tour, achievements.',
             '13 animated video lessons with a built-in player, art for every lesson, support desk with WhatsApp and email.',
             'Optional banner ads and an Ads &amp; privacy page.'
         ]));
@@ -8529,7 +8529,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         try { MW_SVG.aboutapp = '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'; } catch (e) { }
     })();
 })();
-/* ===== p9zr: Heads-up popups everywhere (alerts + per-screen tips), MEXC radar, Baba Trading tap fix ===== */
+/* ===== p9zr: Heads-up popups everywhere (alerts + per-screen tips), MEXC radar, Baba AI tap fix ===== */
 (function () {
     var HK = 'mintoosuite_hu', H = { on: true, tips: true, hist: [], mute: {}, unseen: 0 };
     try { var o = JSON.parse(localStorage.getItem(HK) || 'null'); if (o) { H.on = o.on !== false; H.tips = o.tips !== false; H.hist = o.hist || []; H.mute = o.mute || {}; H.unseen = o.unseen || 0; } } catch (e) { }
@@ -8593,7 +8593,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         return r + '</div>' + h;
     }; try { VIEWS.mexc = VIEWS.mexc; } catch (e) { }
     /* ----- per-screen tips (each at most once a day) ----- */
-    var TIPS = { ideas: ['Ideas are estimates', 'A high chance score still loses often. Use a stop-loss and risk 1%.', 'info'], market: ['Markets are live', 'Prices can jump quickly. Check the time zone for Change %.', 'info'], chart: ['Before you trade', 'Set a stop-loss first. Never risk more than you can lose.', 'warn'], tpro: ['Order ticket', 'Check TEST or LIVE at the top. LIVE uses real money.', 'warn'], xtrade: ['Order ticket', 'Start small. Confirm the exchange, market and size before sending.', 'warn'], rbot: ['Real-money bot', 'It trades your own exchange account. Keep TEST mode until you trust it.', 'bad'], botpro: ['Bot Pro', 'Backtests do not guarantee results. Use small size.', 'warn'], bot: ['Paper bot', 'This is practice money. Results here do not guarantee real results.', 'info'], wallet: ['Wallet safety', 'Never share your 12 words. Send a small test amount first.', 'bad'], me: ['Your profile', 'Keep your keys private. Use read/trade keys, never withdrawal keys.', 'warn'], news: ['News', 'Headlines can move prices fast. Verify before acting.', 'info'], analyst: ['Analyst', 'A plan is a suggestion, not advice. Check the risk before you trade.', 'info'], exdesk: ['Exness Desk', 'Gold and forex move fast on news. Mind the spread and lot size.', 'warn'], mexc: ['MEXC', 'Small coins can be very risky and thin. Check volume and spread.', 'warn'], academy: ['Learning', 'Take your time. Finish a lesson, then try on paper first.', 'info'], pchat: ['Baba Trading', 'Ask anything. Answers are educational, not financial advice.', 'info'] };
+    var TIPS = { ideas: ['Ideas are estimates', 'A high chance score still loses often. Use a stop-loss and risk 1%.', 'info'], market: ['Markets are live', 'Prices can jump quickly. Check the time zone for Change %.', 'info'], chart: ['Before you trade', 'Set a stop-loss first. Never risk more than you can lose.', 'warn'], tpro: ['Order ticket', 'Check TEST or LIVE at the top. LIVE uses real money.', 'warn'], xtrade: ['Order ticket', 'Start small. Confirm the exchange, market and size before sending.', 'warn'], rbot: ['Real-money bot', 'It trades your own exchange account. Keep TEST mode until you trust it.', 'bad'], botpro: ['Bot Pro', 'Backtests do not guarantee results. Use small size.', 'warn'], bot: ['Paper bot', 'This is practice money. Results here do not guarantee real results.', 'info'], wallet: ['Wallet safety', 'Never share your 12 words. Send a small test amount first.', 'bad'], me: ['Your profile', 'Keep your keys private. Use read/trade keys, never withdrawal keys.', 'warn'], news: ['News', 'Headlines can move prices fast. Verify before acting.', 'info'], analyst: ['Analyst', 'A plan is a suggestion, not advice. Check the risk before you trade.', 'info'], exdesk: ['Exness Desk', 'Gold and forex move fast on news. Mind the spread and lot size.', 'warn'], mexc: ['MEXC', 'Small coins can be very risky and thin. Check volume and spread.', 'warn'], academy: ['Learning', 'Take your time. Finish a lesson, then try on paper first.', 'info'], pchat: ['Baba AI', 'Ask anything. Answers are educational, not financial advice.', 'info'] };
     var _gw = gotoWin; gotoWin = function (id, isBack) { var r = _gw.call(this, id, isBack); try { var t = TIPS[id]; if (t) { setTimeout(function () { push('tip:' + id, t[2] === 'bad' ? '⚠️' : t[2] === 'warn' ? '⚠️' : '💡', t[0], t[1], '', t[2], 86400000, true); }, 900); } } catch (e) { } return r; };
     /* ----- Heads-up window ----- */
     function ago(t) { var m = Math.round((now() - t) / 60000); return m < 1 ? 'now' : m < 60 ? m + ' min' : Math.round(m / 60) + ' h'; }
@@ -9259,7 +9259,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         return h + body;
     };
 })();
-/* ===== Baba Trading: extra offline encyclopedia (finance, crypto, forex, stocks, safety, this app) ===== */
+/* ===== Baba AI: extra offline encyclopedia (finance, crypto, forex, stocks, safety, this app) ===== */
 (function () {
     var K = [
         ['stablecoin|usdt|usdc|tether|stable coin', 'Stablecoins', 'A stablecoin is a coin designed to stay at one dollar (USDT, USDC and similar). Traders park money in them between trades. Risks: the issuer may not hold enough reserves and the coin can slip below $1 (a "depeg"), and some countries restrict them.'],
@@ -9327,7 +9327,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     try { K.forEach(function (e) { PF_KB.push(e); }); } catch (e) { }
     window.__pfExtraKb = K.length;
 })();
-/* ===== v10.8 .31: Baba Trading brain: voice, attachments, online AI engine, web knowledge, self-learning ===== */
+/* ===== v10.8 .31: Baba AI brain: voice, attachments, online AI engine, web knowledge, self-learning ===== */
 (function () {
     function nowv() { return Date.now(); }
     var PBK = 'mintoosuite_pb', LRN = 'mintoosuite_pf_learn', KBP = 'mintoosuite_pf_kbpack';
@@ -9355,7 +9355,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         try { var gdg = S.fb && S.fb.skips && S.fb.skips.slice(0, 3).map(function (x) { return base(x.sym) + ' skipped: ' + x.why; }); if (gdg && gdg.length) { o.push('Smart Guard recent skips: ' + gdg.join(' | ')); } } catch (e) { }
         return o.join('; ');
     }
-    function system() { return 'You are Baba Trading, a wise, warm elder (a Pakistani baba) who is the built-in tutor inside the MintooSuite trading app, and can also help with education from school to university, coding and general questions. The user is a beginner. Answer in simple plain English. If the user writes in Urdu script, answer in clear Urdu script (Pakistani Urdu, right-to-left, simple everyday words, keep coin names, numbers and technical terms like RSI or stop loss in English letters). If the user writes Roman Urdu, answer in Roman Urdu, short and step by step, with a small example when useful. You can answer any question, also outside trading. Never promise profit or certainty about price direction; for trade questions give educational reasoning and risks and say it is not financial advice. For questions about the app, name the window to open. When asked how to do something on Binance, MEXC, Bitget, OKX or Bybit (create an API key, set permissions, restrict IPs, move funds to the futures wallet, set leverage, place or close an order) or how to connect them in this app (Menu > Profile > Connections, Trade Pro, Real Bot), give short numbered steps, say that screens can differ slightly, always tell the user to keep withdrawals OFF, use trusted IPs, start in test mode or with a tiny amount, and never to share secret keys with anyone including you. You know the app well: Bot Pro (paper, Smart Guard), Real Bot Chief (locked until typed UNLOCK), Trade Pro, Trade Ideas, Gold Desk, Exness Desk, Grid Bot (paper), Problem log, Look & mode. If asked why a bot lost, use the bot facts in the live data and explain plainly. If you are not sure, say so. Live data now: ' + (liveCtx() || 'not available') + '. Time: ' + new Date().toISOString().slice(0, 16) + ' UTC.'; }
+    function system() { return 'You are Baba AI, a wise, warm elder (a Pakistani baba) who is the built-in tutor inside the MintooSuite trading app, and can also help with education from school to university, coding and general questions. The user is a beginner. Answer in simple plain English. If the user writes in Urdu script, answer in clear Urdu script (Pakistani Urdu, right-to-left, simple everyday words, keep coin names, numbers and technical terms like RSI or stop loss in English letters). If the user writes Roman Urdu, answer in Roman Urdu, short and step by step, with a small example when useful. You can answer any question, also outside trading. Never promise profit or certainty about price direction; for trade questions give educational reasoning and risks and say it is not financial advice. For questions about the app, name the window to open. When asked how to do something on Binance, MEXC, Bitget, OKX or Bybit (create an API key, set permissions, restrict IPs, move funds to the futures wallet, set leverage, place or close an order) or how to connect them in this app (Menu > Profile > Connections, Trade Pro, Real Bot), give short numbered steps, say that screens can differ slightly, always tell the user to keep withdrawals OFF, use trusted IPs, start in test mode or with a tiny amount, and never to share secret keys with anyone including you. You know the app well: Bot Pro (paper, Smart Guard), Real Bot Chief (locked until typed UNLOCK), Trade Pro, Trade Ideas, Gold Desk, Exness Desk, Grid Bot (paper), Problem log, Look & mode. If asked why a bot lost, use the bot facts in the live data and explain plainly. If you are not sure, say so. Live data now: ' + (liveCtx() || 'not available') + '. Time: ' + new Date().toISOString().slice(0, 16) + ' UTC.'; }
     function history(n) { var out = []; try { var arr = (PB.ctx === 'pf' ? PF.msgs : PCH.msgs) || []; arr.slice(-n * 2 - 2, -2).forEach(function (m) { var t = plain(m.html).slice(0, 700); if (t && !/pfdots/.test(m.html)) { out.push({ role: m.who === 'me' ? 'user' : 'assistant', content: t }); } }); } catch (e) { } return out; }
     /* ----- AI engines ----- */
     function post(url, headers, body) { return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body) }).then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) { } if (!r.ok) { var m = j && (j.error && (j.error.message || j.error) || j.message) || t.slice(0, 120); throw new Error('HTTP ' + r.status + ': ' + (typeof m === 'string' ? m : JSON.stringify(m)).slice(0, 160)); } return j || { raw: t }; }); }); }
@@ -9368,16 +9368,16 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     }
     function callAI(q, atts) {
         var eng = PB.engine, k = key(), model = PB.model || DEF[eng] || '', img = (atts || []).filter(function (a) { return a.kind === 'image' || a.kind === 'video'; }), aud = (atts || []).filter(function (a) { return a.kind === 'audio'; }), txt = (atts || []).filter(function (a) { return a.kind === 'text'; });
-        if (aud.length && eng !== 'gemini') { return Promise.reject(new Error('Listening to an audio file needs the Google Gemini key (Voice & AI settings). The microphone button works without it.')); }
+        if (aud.length && eng !== 'gemini') { return Promise.reject(new Error('Listening to an audio file needs the Google Gemini key (Baba AI › Settings). The microphone button works without it.')); }
         if (eng === 'free') {
-            if (aud.length) { return Promise.reject(new Error('Audio files need an AI key. Tap the microphone and speak instead, or add a key in Voice & AI settings.')); }
-            return post('https://text.pollinations.ai/openai', { 'content-type': 'application/json' }, { model: 'openai', messages: oaMsgs(q, atts), max_tokens: 900 }).then(function (j) { var t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; if (!t) { throw new Error('empty answer'); } return t; });
+            if (aud.length) { return Promise.reject(new Error('Audio files need an AI key. Tap the microphone and speak instead, or add a key in Baba AI › Settings.')); }
+            return post('https://text.pollinations.ai/openai', { 'content-type': 'application/json' }, { model: 'openai', messages: oaMsgs(q, atts), max_tokens: (window.__maxTok || 900) }).then(function (j) { var t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; if (!t) { throw new Error('empty answer'); } return t; });
         }
-        if (!k) { return Promise.reject(new Error('No AI key saved. Open Voice & AI settings and paste your key, or switch to the free engine.')); }
+        if (!k) { return Promise.reject(new Error('No AI key saved. Open Baba AI › Settings and paste your key, or switch to the free engine.')); }
         if (eng === 'anthropic') {
             var content = []; (img.length ? img : []).forEach(function (a) { (a.frames || [a.dataUrl]).forEach(function (u) { var m = /^data:([^;]+);base64,(.*)$/.exec(u); if (m) { content.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } }); } }); });
             var pre = ''; txt.forEach(function (a) { pre += '\n\n[Attached file ' + a.name + ']\n' + a.text; }); content.push({ type: 'text', text: (q || 'Please explain the attachment simply.') + pre });
-            return post('https://api.anthropic.com/v1/messages', { 'content-type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, { model: model, max_tokens: 900, system: system(), messages: history(6).concat([{ role: 'user', content: content }]) }).then(function (j) { var t = j && j.content && j.content.map(function (c) { return c.text || ''; }).join(''); if (!t) { throw new Error('empty answer'); } return t; });
+            return post('https://api.anthropic.com/v1/messages', { 'content-type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, { model: model, max_tokens: (window.__maxTok || 900), system: system(), messages: history(6).concat([{ role: 'user', content: content }]) }).then(function (j) { var t = j && j.content && j.content.map(function (c) { return c.text || ''; }).join(''); if (!t) { throw new Error('empty answer'); } return t; });
         }
         if (eng === 'gemini') {
             var parts = [{ text: (q || 'Please explain the attachment simply.') + txt.map(function (a) { return '\n\n[Attached file ' + a.name + ']\n' + a.text; }).join('') }];
@@ -9385,8 +9385,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var contents = history(6).map(function (h) { return { role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] }; }).concat([{ role: 'user', parts: parts }]);
             return post('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(k), { 'content-type': 'application/json' }, { systemInstruction: { parts: [{ text: system() }] }, contents: contents }).then(function (j) { var t = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts.map(function (p) { return p.text || ''; }).join(''); if (!t) { throw new Error('empty answer'); } return t; });
         }
-        var url = eng === 'openai' ? 'https://api.openai.com/v1/chat/completions' : (PB.base || '').replace(/\/+$/, '') + '/chat/completions'; if (eng === 'custom' && !PB.base) { return Promise.reject(new Error('Add the service address in Voice & AI settings.')); }
-        return post(url, { 'content-type': 'application/json', 'authorization': 'Bearer ' + k }, { model: model, messages: oaMsgs(q, atts), max_tokens: 900 }).then(function (j) { var t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; if (!t) { throw new Error('empty answer'); } return t; });
+        var url = eng === 'openai' ? 'https://api.openai.com/v1/chat/completions' : (PB.base || '').replace(/\/+$/, '') + '/chat/completions'; if (eng === 'custom' && !PB.base) { return Promise.reject(new Error('Add the service address in Baba AI › Settings.')); }
+        return post(url, { 'content-type': 'application/json', 'authorization': 'Bearer ' + k }, { model: model, messages: oaMsgs(q, atts), max_tokens: (window.__maxTok || 900) }).then(function (j) { var t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; if (!t) { throw new Error('empty answer'); } return t; });
     }
     function fmt(t) {
         var h = esc(String(t)).replace(/```([\s\S]*?)```/g, '<code style="display:block;white-space:pre-wrap">$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/^#{1,4}\s*(.+)$/gm, '<b>$1</b>').replace(/^\s*[-*]\s+/gm, '• ').replace(/\n/g, '<br>');
@@ -9426,13 +9426,13 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var L = findLearned(q); if (L) { return Promise.resolve({ html: L.a + '<br><small>Learned earlier (' + esc(L.s || 'web') + ')</small>', local: 1 }); }
             if (/(news|headline|what happened|latest)/.test(low) && /(crypto|market|bitcoin|today|binance|news)/.test(low)) { var nh = newsHtml(); if (nh) { return Promise.resolve({ html: nh, local: 1 }); } }
         }
-        if (!ensureConsent()) { return Promise.resolve({ html: 'I can answer this with an <b>online AI engine</b>. Your question text and any attachment you add will be sent to that online service (never your keys, passwords or balances). Allow it?<br><span class="pfbtn" data-pb="consent:yes:' + esc(q).slice(0, 300) + '">✅ Allow and answer</span><span class="pfbtn" data-pb="consent:no">Not now</span><br><small>You can change this any time in Voice & AI settings.</small>', pending: 1 }); }
+        if (!ensureConsent()) { return Promise.resolve({ html: 'I can answer this with an <b>online AI engine</b>. Your question text and any attachment you add will be sent to that online service (never your keys, passwords or balances). Allow it?<br><span class="pfbtn" data-pb="consent:yes:' + esc(q).slice(0, 300) + '">✅ Allow and answer</span><span class="pfbtn" data-pb="consent:no">Not now</span><br><small>You can change this any time in Baba AI › Settings.</small>', pending: 1 }); }
         return callAI(q, atts).then(function (t) { var html = fmt(t) + '<div class="note" style="margin:6px 0 0">Answered by an online AI engine. It can make mistakes; check important facts. Not financial advice.</div>'; if (!hasAtt) { learn(q, html, 'AI'); } return { html: html }; }, function (err) {
             if (fb) { return { html: '<b>' + esc(fb.title || '') + '</b><br>' + fb.html + '<div class="note">The online AI did not answer (' + esc(err.message) + '), so this is my closest built-in topic. It may not match your question.</div>' }; }
             if (hasAtt) { return { html: '⚠️ ' + esc(err.message) + '<br><small>Without a working AI engine I cannot look inside pictures, videos or audio. Text files, the microphone and typed questions still work.</small>' }; }
             var m = /^(what is|who is|what are|tell me about|explain|meaning of)\s+(.{2,40})$/.exec(low.trim().replace(/[?.!]+$/, ''));
             var p = m ? coinInfo(m[2]).catch(function () { return wiki(m[2]); }) : wiki(q.replace(/[?.!]+$/, ''));
-            return p.then(function (h) { learn(q, h, 'web'); return { html: h }; }, function () { return { html: '⚠️ The AI engine did not answer (' + esc(err.message) + ') and I found nothing on the web for that.<br>' + btn('win:pbrain', 'Open Voice & AI settings ›') + '<a class="pfbtn" href="https://www.google.com/search?q=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">🔎 Search the web</a>' }; });
+            return p.then(function (h) { learn(q, h, 'web'); return { html: h }; }, function () { return { html: '⚠️ The AI engine did not answer (' + esc(err.message) + ') and I found nothing on the web for that.<br>' + btn('win:pbrain', 'Open Baba AI › Settings ›') + '<a class="pfbtn" href="https://www.google.com/search?q=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">🔎 Search the web</a>' }; });
         });
     }
     /* ----- sending (both the chat window and the floating panel) ----- */
@@ -9499,10 +9499,10 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         inp.click();
     }
     /* ----- toolbar injected into both chat boxes ----- */
-    function toolbar(ctx) { return '<div class="pbtools"><span class="pbt" data-pb="mic:' + ctx + '" title="Speak">🎤</span><span class="pbt" data-pb="attach:' + ctx + '" title="Attach picture, screen recording, audio or file">📎</span><span class="pbt" data-pb="cam:' + ctx + '" title="Take a photo">📷</span><span class="pbt" data-pb="lang" title="Voice language">' + (PB.lang === 'ur-PK' ? 'اردو' : 'EN') + '</span><span class="pbt' + (PB.auto ? ' on' : '') + '" data-pb="auto" title="Read answers aloud">🔊</span><span class="pbt" data-pb="set" title="Voice & AI settings">⚙</span></div><div class="pbtray" id="' + (ctx === 'pc' ? 'pcatt' : 'pfatt') + '"></div>'; }
+    function toolbar(ctx) { return '<div class="pbtools"><span class="pbt" data-pb="mic:' + ctx + '" title="Speak">🎤</span><span class="pbt" data-pb="attach:' + ctx + '" title="Attach picture, screen recording, audio or file">📎</span><span class="pbt" data-pb="cam:' + ctx + '" title="Take a photo">📷</span><span class="pbt" data-pb="lang" title="Voice language">' + (PB.lang === 'ur-PK' ? 'اردو' : 'EN') + '</span><span class="pbt' + (PB.auto ? ' on' : '') + '" data-pb="auto" title="Read answers aloud">🔊</span><span class="pbt" data-pb="set" title="Baba AI › Settings">⚙</span></div><div class="pbtray" id="' + (ctx === 'pc' ? 'pcatt' : 'pfatt') + '"></div>'; }
     var _vp = VIEWS.pchat; VIEWS.pchat = function () { var h = _vp.apply(this, arguments); return h.replace('<div id="pcmsgs" class="pcmsgs"></div>', '<div id="pcmsgs" class="pcmsgs"></div>' + toolbar('pc')); };
     setInterval(function () { try { var p = document.getElementById('pfp'); if (p && !document.getElementById('pftools')) { var inn = p.querySelector('.pfin'); if (inn) { var d = document.createElement('div'); d.id = 'pftools'; d.innerHTML = toolbar('pf'); inn.parentNode.insertBefore(d, inn); trayDraw('pf'); } } trayDraw('pc'); } catch (e) { } }, 1000);
-    /* ----- resizable / maximizable Baba Trading panel ----- */
+    /* ----- resizable / maximizable Baba AI panel ----- */
     var PH = 'mintoosuite_pfh', ph = 0, pmax = false; try { ph = +localStorage.getItem(PH) || 0; } catch (e) { }
     function applyH() { var p = document.getElementById('pfp'); if (!p) { return; } if (pmax) { p.style.height = 'calc(100vh - env(safe-area-inset-top,0px) - 8px)'; p.style.borderRadius = '0'; } else { p.style.borderRadius = ''; p.style.height = ph ? Math.max(220, Math.min(ph, window.innerHeight - 60)) + 'px' : ''; } var b = document.getElementById('pfmaxb'); if (b) { b.textContent = pmax ? '🗗' : '⛶'; } }
     setInterval(function () {
@@ -9527,7 +9527,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     setTimeout(function () { loadPack(false); }, 4000);
     /* ----- settings window ----- */
     function vSet() {
-        var h = '<div class="group pad"><b>Online AI engine</b><div class="note">Baba Trading answers from his built-in encyclopedia first. For anything else he can ask an online AI engine. Only your question text and attachments are sent, never keys, passwords or balances.</div>' +
+        var h = '<div class="group pad"><b>Online AI engine</b><div class="note">Baba AI answers from his built-in encyclopedia first. For anything else he can ask an online AI engine. Only your question text and attachments are sent, never keys, passwords or balances.</div>' +
             '<div class="row"><span>Allow online AI</span><span class="btn sec tap kpb" data-pb="consent:' + (PB.consent ? 'toggle-off' : 'toggle-on') + '">' + (PB.consent ? 'ON · tap to turn off' : 'OFF · tap to turn on') + '</span></div>' +
             '<div class="note" style="margin:8px 0 2px">Engine</div><select class="tin" id="pbEng">' + Object.keys(LABEL).map(function (k) { return '<option value="' + k + '"' + (PB.engine === k ? ' selected' : '') + '>' + LABEL[k] + '</option>'; }).join('') + '</select>' +
             (PB.engine !== 'free' ? '<div class="note" style="margin:8px 0 2px">Your key (stored encrypted on this phone)</div><input class="tin" id="pbKey" type="password" placeholder="' + (key() ? '•••••••• saved' : 'paste key') + '" autocomplete="off"><div class="note" style="margin:8px 0 2px">Model (leave empty for default: ' + esc(DEF[PB.engine] || '') + ')</div><input class="tin" id="pbModel" value="' + esc(PB.model) + '" autocomplete="off">' : '') +
@@ -9535,11 +9535,11 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             '<div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><span class="btn tap kpb" data-pb="save">Save</span><span class="btn sec tap kpb" data-pb="test">Test the engine</span></div>' + (PB.test ? '<div class="note">' + PB.test + '</div>' : '') +
             '<div class="note"><b>Advanced level (Anthropic Claude):</b> 1) open console.anthropic.com and sign in, 2) add a few dollars under Billing, 3) API keys > Create key and copy it, 4) here choose "Anthropic (your key)", paste the key, tap Save, then Test. Hard questions then get Claude-level answers; you pay Anthropic only for what you use (usually cents).</div><div class="note">The free engine needs no key but is a public community service: it can be slow or busy and cannot always read pictures. With your own key you get faster, better answers and can attach pictures, screen-recording frames and (Gemini) audio files.</div></div>';
         h += '<div class="group pad"><b>Voice</b><div class="row"><span>Microphone language</span><span class="btn sec tap kpb" data-pb="lang">' + (PB.lang === 'ur-PK' ? 'اردو (Urdu)' : 'English') + '</span></div><div class="row"><span>Read answers aloud</span><span class="btn sec tap kpb" data-pb="auto">' + (PB.auto ? 'ON' : 'OFF') + '</span></div><div class="note">The microphone uses your phone\'s speech service (Google) and needs the internet. Android will ask for microphone permission the first time.</div></div>';
-        h += '<div class="group pad"><b>What Baba Trading knows</b><div class="row"><span>Built-in encyclopedia</span><b>' + (PF_KB.length) + ' topics</b></div><div class="row"><span>Learned answers on this phone</span><b>' + learned().length + '</b></div><div class="row"><span>Online knowledge pack</span><b>' + (PB.kbN ? PB.kbN + ' topics' : 'none yet') + '</b></div><div class="note">' + (PB.kbAt ? 'Checked ' + new Date(PB.kbAt).toLocaleString() : 'Not checked yet') + (PB.kbErr ? ' · ' + esc(PB.kbErr) : '') + '. The pack updates itself once a day from the owner\'s file professor_kb.json.</div><div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sec tap kpb" data-pb="pack">Update now</span><span class="btn sec tap kpb" data-pb="forget">Clear learned answers</span></div></div>';
+        h += '<div class="group pad"><b>What Baba AI knows</b><div class="row"><span>Built-in encyclopedia</span><b>' + (PF_KB.length) + ' topics</b></div><div class="row"><span>Learned answers on this phone</span><b>' + learned().length + '</b></div><div class="row"><span>Online knowledge pack</span><b>' + (PB.kbN ? PB.kbN + ' topics' : 'none yet') + '</b></div><div class="note">' + (PB.kbAt ? 'Checked ' + new Date(PB.kbAt).toLocaleString() : 'Not checked yet') + (PB.kbErr ? ' · ' + esc(PB.kbErr) : '') + '. The pack updates itself once a day from the owner\'s file professor_kb.json.</div><div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sec tap kpb" data-pb="pack">Update now</span><span class="btn sec tap kpb" data-pb="forget">Clear learned answers</span></div></div>';
         return h;
     }
-    WINS.push({ id: 'pbrain', ic: '🧠', c: '#af52de', n: 'Voice & AI settings', t: 'Voice & AI', sub: 'Microphone, attachments, online AI answers and learning for Baba Trading' }); LIVE.pbrain = 0; VIEWS.pbrain = vSet;
-    MW_HELP.pbrain = 'Choose how Baba Trading answers questions outside the app: a free online engine or your own AI key. Set the voice language, read-aloud, and see what he has learned.';
+    WINS.push({ id: 'pbrain', ic: '🧠', c: '#af52de', n: 'Baba AI › Settings', t: 'Voice & AI', sub: 'Microphone, attachments, online AI answers and learning for Baba AI' }); LIVE.pbrain = 0; VIEWS.pbrain = vSet;
+    MW_HELP.pbrain = 'Choose how Baba AI answers questions outside the app: a free online engine or your own AI key. Set the voice language, read-aloud, and see what he has learned.';
     try { MW_GROUPS.forEach(function (g) { if (/^Account/.test(g[0]) && g[1].indexOf('pbrain') < 0) { g[1].push('pbrain'); } }); mwHostSig = ''; } catch (e) { }
     document.addEventListener('change', function (e) { var t = e.target; if (t && t.id === 'pbEng') { PB.engine = t.value; save(); renderView(true); } });
     document.addEventListener('click', function (e) {
@@ -9658,7 +9658,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         h += '<div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><span class="btn sec tap kpb" data-sg="open:' + esc(r.y) + '">' + (op ? 'Collapse' : 'Expand') + '</span>' + (r.side !== 'HOLD' ? '<span class="btn tap kpb" data-sg="take:' + esc(r.y) + '">Paper trade</span>' : '') + '</div>';
         if (op) {
             var ai = SG.ai[r.y];
-            h += '<div style="margin-top:8px">' + (SG.ohlc[r.y] ? candles(SG.ohlc[r.y], r) : '<div class="note">Chart loads on the next refresh.</div>') + '</div><div class="note" style="margin:8px 0 2px"><b>Why this signal</b></div>' + r.ind.map(function (x) { return '<div class="row" style="padding:3px 0"><span>' + esc(x[0]) + '</span><b style="color:' + (x[1] ? '#34c759' : '#ff3b30') + '">' + (x[1] ? '✔ bullish' : '✘ bearish') + '</b></div>'; }).join('') + '<div class="note">Daily-close rules with ATR(' + f2(r.atr) + ') based levels. Educational, not advice.</div><div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sec tap kpb" data-sg="why:' + esc(r.y) + '">🧠 Ask Baba Trading why</span><a class="btn sec tap kpb" style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(r.y.replace('-USD', 'USD').replace('=X', '').replace('=F', '')) + '">Open on TradingView</a></div>';
+            h += '<div style="margin-top:8px">' + (SG.ohlc[r.y] ? candles(SG.ohlc[r.y], r) : '<div class="note">Chart loads on the next refresh.</div>') + '</div><div class="note" style="margin:8px 0 2px"><b>Why this signal</b></div>' + r.ind.map(function (x) { return '<div class="row" style="padding:3px 0"><span>' + esc(x[0]) + '</span><b style="color:' + (x[1] ? '#34c759' : '#ff3b30') + '">' + (x[1] ? '✔ bullish' : '✘ bearish') + '</b></div>'; }).join('') + '<div class="note">Daily-close rules with ATR(' + f2(r.atr) + ') based levels. Educational, not advice.</div><div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sec tap kpb" data-sg="why:' + esc(r.y) + '">🧠 Ask Baba AI why</span><a class="btn sec tap kpb" style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(r.y.replace('-USD', 'USD').replace('=X', '').replace('=F', '')) + '">Open on TradingView</a></div>';
         }
         return h + '</div>';
     }
@@ -9720,7 +9720,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     function single(y) { var u = { y: y, n: y, tab: 'st' }; return yget(y, '1y').then(function (b) { var r = analyse(b, u); SG.rows[y] = r; SG.ohlc[y] = b.slice(-190); SG.tab = 'st'; SG.sec = 'sig'; SG.q = y; SG.f = 'all'; sv(K, { at: SG.at || Date.now(), rows: SG.rows }); }); }
     window.__sg = { SG: SG, analyse: analyse, refresh: refresh, single: single };
 })();
-/* ===== p9zsb: US stocks and Binance Stocks lookup; Baba Trading answers "where is X listed" ===== */
+/* ===== p9zsb: US stocks and Binance Stocks lookup; Baba AI answers "where is X listed" ===== */
 (function () {
     var SL = { q: '', busy: 0, res: null, err: '' }, BST = { list: null, at: 0, err: '' };
     function jget(u) { return fetch(u, { cache: 'no-store' }).then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); }); }
@@ -9758,7 +9758,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         if (el.hasAttribute('data-sl')) { run(el.getAttribute('data-sl')); return; }
         var y = el.getAttribute('data-sl2'); try { window.__sg.single(y).then(function () { gotoWin('signals'); }, function () { alert('Could not load prices for ' + y); }); } catch (er) { }
     }, true);
-    /* Baba Trading: "where is X listed / which market" */
+    /* Baba AI: "where is X listed / which market" */
     var _pa = pfAnswer;
     pfAnswer = function (q) {
         var low = String(q || '').toLowerCase();
@@ -9918,7 +9918,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         };
     } catch (e) { }
 })();
-/* ===== p9zsu: Baba Trading understands Urdu and Roman Urdu (typed or spoken): vocabulary, language detection, Urdu answers, Urdu read-aloud ===== */
+/* ===== p9zsu: Baba AI understands Urdu and Roman Urdu (typed or spoken): vocabulary, language detection, Urdu answers, Urdu read-aloud ===== */
 (function () {
     var V = [
         ['کیا ہے|کیا ہوتا ہے|کیا ہوتی ہے|kya hai|kya hota hai|kya hoti hai|matlab kya', 'what is'], ['کیسے|کس طرح|kaise|kese|kis tarah', 'how'], ['کیوں|kyun|kyon|kiun', 'why'], ['کون سا|کون سی|kaun sa|konsa|kaunsi', 'which'], ['کہاں|kahan|kaha', 'where'], ['کب|kab', 'when'],
@@ -10360,7 +10360,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         };
         function late() { var _w = VIEWS.plans; if (_w && _w.__late) { return; } VIEWS.plans = function () { var h = _w.apply(this, arguments), l = left();
             if (l >= 0) {
-                h = h.replace(/<a class="btn sec"[^>]*>Request Pro on WhatsApp<\/a>/, '<div class="btn sec" style="display:block;text-align:center;margin-top:6px;opacity:.85">✅ Pro is active on your account (free trial, ' + txt(l) + ' left)</div>').replace('How to get Pro or Elite', 'Upgrade to Elite, or keep Pro after the trial').replace(/Request Elite on WhatsApp/, 'Request Elite on WhatsApp').replace(/Request by email/, 'Request a licence by email (to keep Pro)');
+                h = h.replace(/<a class="btn sec"[^>]*>Request Pro on WhatsApp<\/a>/, '<div class="btn sec" style="display:block;text-align:center;margin-top:6px;opacity:.85">✅ Pro is active on your account (free trial, ' + txt(l) + ' left)</div>').replace('How to get Pro', 'Keep Pro after the trial').replace(/Request by email/, 'Request a licence by email (to keep Pro)');
             }
             return h; }; VIEWS.plans.__late = 1; }
         setTimeout(late, 4000); setTimeout(late, 9000);
@@ -10455,7 +10455,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             { t: 'More', b: 'All other windows live here: learning lessons, wallet, news, settings.', el: function () { return document.querySelector('.tab[data-act="openwin"]'); }, dir: 'up' },
             { t: 'Menu', b: 'Menu has Look & mode (themes), Premium plans, Lock screen, Problem log and the Guided tour.', el: function () { return byText('header button, header .btn, header [data-act], header span', 'MENU'); }, dir: 'down' },
             { t: 'Your profile', b: 'Tap your picture to open your profile, change your avatar and save your exchange connections.', el: function () { var a = document.querySelector('.meav.hd'); return a ? (a.closest('button') || a) : null; }, dir: 'down' },
-            { t: 'Ask the Baba Trading', b: 'The round helper answers anything: how to make an API key on Binance, what a stop-loss is, why a trade lost.', el: function () { return document.getElementById('pfm'); }, dir: 'up' },
+            { t: 'Ask the Baba AI', b: 'The round helper answers anything: how to make an API key on Binance, what a stop-loss is, why a trade lost.', el: function () { return document.getElementById('pfm'); }, dir: 'up' },
             { t: 'You are ready', b: 'Golden rules: practice first, never risk more than 1-2% on one trade, always use a stop-loss. No tool can promise profit.', el: null }
         ];
         var ov = null, idx = 0, steps = [];
@@ -10956,7 +10956,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             else if (/^[$€£]?\s?[\d,]+(\.\d+)?$/.test(txt)) { h = 'A price or amount in US dollars (or the coin\'s quote currency).'; }
             else if (/\bago\b|\d+\s?(s|m|h)\b/i.test(txt)) { h = 'How old this information is.'; }
             else if (txt && txt.length < 24) { h = 'This is an information label. Nothing happens when you tap it. Open the "?" next to the window title for the full explanation of this screen.'; }
-            else { h = 'Information shown for you to read. For a full explanation of this screen, tap the "?" next to its title, or ask the Baba Trading.'; }
+            else { h = 'Information shown for you to read. For a full explanation of this screen, tap the "?" next to its title, or ask the Baba AI.'; }
             return [txt || 'Info', h];
         }
         function show(t, b) {
@@ -10977,7 +10977,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }, false);
     } catch (e) { try { console.log('p9zszd', e); } catch (er) { } }
 })();
-/* ===== .73: "Market story": plain-language explanation for ANY coin, gold, currency (window, chart button, Baba Trading) ===== */
+/* ===== .73: "Market story": plain-language explanation for ANY coin, gold, currency (window, chart button, Baba AI) ===== */
 (function () {
     try {
         function e2(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -11073,7 +11073,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         });
         function addMenu() { try { var mb = document.querySelector('#sheetMenu [data-act="win:safety"]'); if (mb && !document.querySelector('#sheetMenu [data-act="win:story"]')) { mb.insertAdjacentHTML('beforebegin', '<button class="btn sec" data-act="win:story">🧭 Market story (why)</button>'); } } catch (e) { } }
         setInterval(addMenu, 2600);
-        /* ---------- Baba Trading ---------- */
+        /* ---------- Baba AI ---------- */
         var STOP = { WHY: 1, THE: 1, AND: 1, FOR: 1, SELL: 1, BUY: 1, RSI: 1, MACD: 1, EMA: 1, SMA: 1, WHAT: 1, EXPLAIN: 1, STORY: 1, ANALYSIS: 1, ANALYZE: 1, ANALYSE: 1, IS: 1, THIS: 1, THAT: 1, COIN: 1, ABOUT: 1, TELL: 1, ME: 1, ARE: 1, SAYING: 1, SAYS: 1, TOLD: 1, WITH: 1, ON: 1, IN: 1, OF: 1, TO: 1, IT: 1, MY: 1, SHOULD: 1, I: 1, A: 1, AN: 1, HAPPENING: 1, GOING: 1, WILL: 1, GO: 1, UP: 1, DOWN: 1, HOLD: 1, NOW: 1, TODAY: 1, TOMORROW: 1, MEXC: 1, BINANCE: 1, SIGNAL: 1, TRADE: 1, LONG: 1, SHORT: 1, CHART: 1, PRICE: 1, MARKET: 1, APP: 1, GIVE: 1, SHOW: 1, HOW: 1, DO: 1, DOES: 1, WHEN: 1, CAN: 1, YOU: 1, PLEASE: 1, WANT: 1, KNOW: 1, SEE: 1, LOOK: 1, AT: 1, BE: 1, BULLISH: 1, BEARISH: 1, REASON: 1, REASONS: 1, DETAILS: 1, DETAIL: 1, MORE: 1, ANY: 1, ALL: 1 };
         function findSym(raw) {
             var toks = String(raw).replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean), i, u;
@@ -12278,15 +12278,15 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         /* ---------- Bots hub ---------- */
         var BT = [['bot', '🧪', 'Paper bot', 'Practice bot. Virtual money, real prices. Safe to leave running.'], ['botpro', '🤖', 'Bot Pro', 'Tunable practice bot with settings and a history.'], ['botdoc', '🩺', 'Bot Doctor', 'Checks how your bots are doing and what to change.'], ['gridbot', '🔲', 'Grid Bot', 'Buys low and sells high inside a price range.'], ['btest', '🧪', 'History Test', 'Test an idea on past prices before risking anything.'], ['rbot', '💵', 'Real Bot', 'Trades your real Binance money. Needs your typed UNLOCK every time you open the app.']];
         function vBots() {
-            var h = '<div class="group pad"><b style="font-size:17px">🤖 Bots, Baba Trading &amp; Voice</b><div class="note" style="margin:4px 0 0">Your helpers in one place. Bots follow rules you set. <b>Nothing trades real money</b> until you type UNLOCK for the Real Bot, or TRADE on a ticket.</div></div>';
-            h += '<div style="display:flex;gap:8px;margin:0 0 8px">' + [['win:prof', '🎓', 'Baba Trading', 'Ask anything'], ['win:pbrain', '🧠', 'Voice &amp; AI', 'Mic, engine'], ['win:tpro', '🩺', 'Chief Doctor', 'Open trades']].map(function (x) { return '<div class="tap" data-act="' + x[0] + '" style="flex:1;min-width:0;text-align:center;padding:14px 4px;border-radius:16px;background:rgba(128,128,128,.12);font-weight:800;font-size:13px"><div style="font-size:26px">' + x[1] + '</div>' + x[2] + '<div style="font-weight:500;font-size:11px;opacity:.75">' + x[3] + '</div></div>'; }).join('') + '</div>';
+            var h = '<div class="group pad"><b style="font-size:17px">🤖 Bots, Baba AI &amp; Voice</b><div class="note" style="margin:4px 0 0">Your helpers in one place. Bots follow rules you set. <b>Nothing trades real money</b> until you type UNLOCK for the Real Bot, or TRADE on a ticket.</div></div>';
+            h += '<div style="display:flex;gap:8px;margin:0 0 8px">' + [['win:prof', '🎓', 'Baba AI', 'Ask anything'], ['win:pbrain', '🧠', 'Voice &amp; AI', 'Mic, engine'], ['win:tpro', '🩺', 'Chief Doctor', 'Open trades']].map(function (x) { return '<div class="tap" data-act="' + x[0] + '" style="flex:1;min-width:0;text-align:center;padding:14px 4px;border-radius:16px;background:rgba(128,128,128,.12);font-weight:800;font-size:13px"><div style="font-size:26px">' + x[1] + '</div>' + x[2] + '<div style="font-weight:500;font-size:11px;opacity:.75">' + x[3] + '</div></div>'; }).join('') + '</div>';
             BT.forEach(function (b) { h += '<div class="group pad tap" data-act="win:' + b[0] + '" style="display:flex;align-items:center;gap:12px"><div style="font-size:28px">' + b[1] + '</div><div style="flex:1"><b>' + b[2] + (b[0] === 'rbot' ? ' <span style="color:#e0352b;font-size:11px">REAL MONEY</span>' : '') + '</b><div class="note" style="margin:2px 0 0">' + b[3] + '</div></div><span style="opacity:.5">›</span></div>'; });
             h += '<div class="group pad"><b>🩺 Chief Doctor</b><div class="note" style="margin:4px 0 0">When you have an open Binance trade, the Chief Doctor tells you in a pop-up and on the Trade Pro screen whether to continue, protect it, take profit or close. It only advises.</div></div>';
             var en = 'free'; try { en = (JSON.parse(g('mintoosuite_pb') || '{}').engine) || 'free'; } catch (e) { }
-            h += '<div class="note">AI engine for Baba Trading: <b>' + e2(en === 'free' ? 'free built-in' : en) + '</b>. Change it in Voice &amp; AI.</div>';
+            h += '<div class="note">AI engine for Baba AI: <b>' + e2(en === 'free' ? 'free built-in' : en) + '</b>. Change it in Voice &amp; AI.</div>';
             return h;
         }
-        WINS.push({ id: 'bots', ic: '🤖', c: '#34c759', n: 'Bots (all your bots)', t: 'Bots', sub: 'Every bot, the Baba Trading and the voice helper in one place' }); LIVE.bots = 0; VIEWS.bots = vBots;
+        WINS.push({ id: 'bots', ic: '🤖', c: '#34c759', n: 'Bots (all your bots)', t: 'Bots', sub: 'Every bot, the Baba AI and the voice helper in one place' }); LIVE.bots = 0; VIEWS.bots = vBots;
         /* ---------- menu regroup ---------- */
         function regroup() {
             var NEW = [
@@ -12565,7 +12565,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         window.__lkDbg = { LK: LK, outlook: outlook, pump: pump, badges: badges };
     } catch (e) { try { console.log('lk', e); } catch (er) { } }
 })();
-/* BI: navigation fixes, offline banner, Baba Trading (merged helper), highlight-to-ask, Paper Bot hub, inline help marks */
+/* BI: navigation fixes, offline banner, Baba AI (merged helper), highlight-to-ask, Paper Bot hub, inline help marks */
 (function () {
     try {
         function e2(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -12641,13 +12641,13 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             if (menuOpen && id !== S.win) { viaMenu[id] = 1; }
             return _gw.call(this, id, isBack);
         };
-        /* ---------- Baba Trading window: Chat | Ask & paste | Settings | About ---------- */
+        /* ---------- Baba AI window: Chat | Ask & paste | Settings | About ---------- */
         var BB = { tab: 'chat' };
         window.__babaSet = function (a) { BB.tab = a[1] === 'about' ? 'about' : a[1]; };
         function vBaba() {
             var pb = {}; try { pb = JSON.parse(g('mintoosuite_pb') || '{}'); } catch (e) { }
-            var h = '<div class="bbhero"><div class="av">' + BABA + '</div><div><b style="font-size:19px">Baba Trading</b><div style="font-size:12.5px;opacity:.9">Your elder guide for trading, the app, money, school to university, coding and general knowledge.</div></div></div>';
-            h += '<div class="bbtabs">' + [['chat', '💬 Chat'], ['ask', '📋 Paste a topic'], ['settings', '⚙️ Voice & AI'], ['about', 'ℹ️ About']].map(function (x) { return '<span class="' + (BB.tab === x[0] ? 'on' : '') + '" data-bbt="' + x[0] + '">' + x[1] + '</span>'; }).join('') + '</div>';
+            var h = '<div class="bbhero"><div class="av">' + BABA + '</div><div><b style="font-size:19px">Baba AI</b><div style="font-size:12.5px;opacity:.9">Ask anything: trading, science, health, gaming, news, school to university, coding. Creates documents, slides, pictures and video scripts.</div></div></div>';
+            h += '<div class="bbtabs">' + [['chat', '💬 Chat'], ['ask', '📋 Paste a topic'], ['settings', '⚙️ Settings'], ['about', 'ℹ️ About']].map(function (x) { return '<span class="' + (BB.tab === x[0] ? 'on' : '') + '" data-bbt="' + x[0] + '">' + x[1] + '</span>'; }).join('') + '</div>';
             if (BB.tab === 'chat') { h += VIEWS.pchat(); }
             else if (BB.tab === 'ask') { h += '<div class="group pad"><b>Paste any topic, question or homework</b>' + window.__qh('Paste or type anything: a trading word, a news line, a school or university topic, or some code. Baba explains it step by step.') + '<textarea id="bbta" rows="5" class="tin" placeholder="Paste here…" style="width:100%;box-sizing:border-box;margin-top:8px"></textarea><div style="display:flex;gap:8px;margin-top:8px"><span class="btn tap" data-bbgo="ask" style="flex:1;text-align:center;margin:0">🧓 Ask Baba</span><span class="btn sec tap" data-bbgo="paste" style="flex:1;text-align:center;margin:0">📋 Paste</span></div><div class="note" style="margin-top:8px">Tip: you can also highlight text anywhere in the app and tap "Ask Baba".</div></div>'; }
             else if (BB.tab === 'settings') {
@@ -12656,8 +12656,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             } else { h += VIEWS.prof(); }
             return h;
         }
-        WINS.push({ id: 'baba', ic: '🧓', c: '#af52de', n: 'Baba Trading', t: 'Baba Trading', sub: 'Chat, paste a topic, voice and AI settings: all in one place' }); LIVE.baba = 1; VIEWS.baba = vBaba;
-        MW_HELP.baba = 'Baba Trading is your helper for trading, this app and general learning. Chat with him, paste any topic, set voice and AI, or highlight text anywhere and tap Ask Baba.';
+        WINS.push({ id: 'baba', ic: '🧓', c: '#af52de', n: 'Baba AI', t: 'Baba AI', sub: 'Chat, paste a topic, voice and AI settings: all in one place' }); LIVE.baba = 1; VIEWS.baba = vBaba;
+        MW_HELP.baba = 'Baba AI is your helper for trading, this app and general learning. Chat with him, paste any topic, set voice and AI, or highlight text anywhere and tap Ask Baba.';
         document.addEventListener('click', function (e) {
             var t = e.target.closest ? e.target.closest('[data-bbt],[data-bbgo]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation();
             if (t.hasAttribute('data-bbt')) { BB.tab = t.getAttribute('data-bbt'); try { renderView(true); } catch (er) { } return; }
@@ -13223,7 +13223,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     try {
         var PUB = {"kty":"EC","x":"aXfZLoh2VLTAeJzOOvDXCZtqWVq_tyi1GtUSuD6kAjk","y":"escE3P8HWmJ-PWbp67-J9pbZs_796IGgvJ9JahAyUiA","crv":"P-256"};
         var KEY = 'mintoosuite_lic', TRIAL_DAYS = 7, DAY = 86400000, RANK = { free: 0, pro: 1, elite: 2 };
-        var NEED = { botpro: 'pro', botdoc: 'pro', btest: 'pro', lab: 'pro', tpro: 'pro', xtrade: 'pro', trade: 'pro', terminal: 'pro', exdesk: 'pro', rbot: 'elite', golddesk: 'elite', signals: 'elite' };
+        var NEED = { botpro: 'pro', botdoc: 'pro', btest: 'pro', lab: 'pro', tpro: 'pro', xtrade: 'pro', trade: 'pro', terminal: 'pro', exdesk: 'pro', rbot: 'pro', golddesk: 'pro', signals: 'pro' };
         var NAME = { free: 'Free', pro: 'Pro', elite: 'Elite' };
         var WHY = { botpro: 'Bot Pro (strategies, ROI table, protections)', botdoc: 'Bot Doctor (finds why trades lose)', btest: 'History Test (replay rules on past candles)', lab: 'Strategy Lab (backtest and optimise)', tpro: 'Trade Pro (full order ticket)', xtrade: 'Orders on MEXC, Bitget, Bybit and OKX', trade: 'Binance trade window', terminal: 'Trading Terminal', exdesk: 'Exness Desk (25 markets)', rbot: 'Real Bot (automatic real-money trading, always locked until you type UNLOCK)', golddesk: 'Gold Desk (live AI signal on a gold chart)', signals: 'AI Signals (stocks, forex, metals, crypto)' };
         function rd() { var o = null; try { o = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { o = null; } return o || {}; }
@@ -13234,8 +13234,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function fromB64u(s) { var b = atob(b64u(s)), a = new Uint8Array(b.length), i; for (i = 0; i < b.length; i++) { a[i] = b.charCodeAt(i); } return a; }
         function plan() {
             var o = rd(), now = Date.now(), L = o.lic;
-            if (L && (!L.x || L.x > now) && (L.e === '*' || !myEmail() || L.e === myEmail())) { return { p: L.p, src: 'code', x: L.x || 0 }; }
-            if (o.trial && o.trial + TRIAL_DAYS * DAY > now) { return { p: (now - o.trial < 3 * DAY ? 'elite' : 'pro'), src: 'trial', x: o.trial + TRIAL_DAYS * DAY, e3: o.trial + 3 * DAY }; }
+            if (L && (!L.x || L.x > now) && (L.e === '*' || !myEmail() || L.e === myEmail())) { return { p: (L.p === 'elite' ? 'pro' : L.p), src: 'code', x: L.x || 0 }; }
+            if (o.trial && o.trial + TRIAL_DAYS * DAY > now) { return { p: 'pro', src: 'trial', x: o.trial + TRIAL_DAYS * DAY, e3: o.trial + 3 * DAY }; }
             return { p: 'free', src: 'free', x: 0, trialUsed: !!o.trial };
         }
         function startTrial() { var o = rd(); if (!o.trial && agreed()) { o.trial = Date.now(); wr(o); } }
@@ -13263,21 +13263,20 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         // --- locked-window cards ---
         function lockCard(id) {
             var n = NEED[id], pl = plan();
-            return '<div class="group pad" style="text-align:center;padding:22px 16px"><div style="font-size:44px">' + (n === 'elite' ? '👑' : '🔒') + '</div><div style="font-size:20px;font-weight:800;margin:6px 0">' + NAME[n] + ' feature</div><div class="note" style="margin:0 0 10px">' + esc(WHY[id] || 'This window') + ' is part of the <b>' + NAME[n] + '</b> plan.' + (pl.p === 'free' && pl.trialUsed ? ' Your free Pro trial has ended.' : '') + '</div><button class="btn" data-act="win:plans">See plans and enter a code</button></div>';
+            return '<div class="group pad" style="text-align:center;padding:22px 16px"><div style="font-size:44px">' + '🔒' + '</div><div style="font-size:20px;font-weight:800;margin:6px 0">' + NAME[n] + ' feature</div><div class="note" style="margin:0 0 10px">' + esc(WHY[id] || 'This window') + ' is part of the <b>' + NAME[n] + '</b> plan.' + (pl.p === 'free' && pl.trialUsed ? ' Your free Pro trial has ended.' : '') + '</div><button class="btn" data-act="win:plans">See plans and enter a code</button></div>';
         }
         Object.keys(NEED).forEach(function (id) { var f = VIEWS[id]; if (typeof f === 'function') { VIEWS[id] = function () { if (!allowed(id)) { return lockCard(id); } return f.apply(this, arguments); }; } });
         // --- plans window ---
         var PL = { msg: '', busy: false };
         PLANS.length = 0;
-        PLANS.push(['Free', 0, ['Home, Ideas, Markets, Movers, Analyst, Chart', 'Academy, Videos, Baba Trading, Chat, Help', 'News, alerts, risk meter, wallet (self-custody)', 'Practice trading ideas with virtual money in your head, no real orders']]);
-        PLANS.push(['Pro', 9.99, ['Everything in Free', 'Bot Pro and Bot Doctor', 'History Test and Strategy Lab', 'Trade Pro and all exchange order tickets', 'Exness Desk (25 markets)']]);
-        PLANS.push(['Elite', 24.99, ['Everything in Pro', 'Real Bot (real-money automation, safety locks always on)', 'Gold Desk with live AI signal', 'AI Signals window', 'Early access to new windows']]);
+        PLANS.push(['Free', 0, ['Home, Ideas, Markets, Movers, Analyst, Chart', 'Academy, Videos, Baba AI, Chat, Help', 'News, alerts, risk meter, wallet (self-custody)', 'Practice trading ideas with virtual money in your head, no real orders']]);
+        PLANS.push(['Pro', 4.99, ['Everything in Free', 'Bot Pro and Bot Doctor', 'History Test and Strategy Lab', 'Trade Pro and all exchange order tickets', 'Exness Desk (25 markets)', 'Real Bot (real-money automation, safety locks always on)', 'Gold Desk with live AI signal', 'AI Signals window']]);
         var _vp = VIEWS.plans;
         function status() {
             var p = plan(), h = '<div class="group pad" style="border-left:5px solid ' + (p.p === 'elite' ? '#ffd60a' : p.p === 'pro' ? '#0a84ff' : '#8e8e93') + '"><div class="ph"><b style="font-size:19px">Your plan: ' + NAME[p.p] + '</b></div>';
             if (p.src === 'trial') { h += '<div class="note" style="margin:4px 0 0">Free Pro trial: <b>' + Math.max(1, Math.ceil((p.x - Date.now()) / DAY)) + ' day(s) left</b>. After that the app returns to Free unless you enter a licence code.</div>'; }
             else if (p.src === 'code') { h += '<div class="note" style="margin:4px 0 0">Active by licence code ' + (p.x ? 'until <b>' + new Date(p.x).toLocaleDateString() + '</b>' : '(no end date)') + '.</div>'; }
-            else { h += '<div class="note" style="margin:4px 0 0">' + (p.trialUsed ? 'Your 7-day Pro trial has ended. ' : '') + 'Pro and Elite windows are locked. Pick a plan below, pay, and paste the licence code you receive.</div>'; }
+            else { h += '<div class="note" style="margin:4px 0 0">' + (p.trialUsed ? 'Your 7-day Pro trial has ended. ' : '') + 'Pro windows are locked. Pick a plan below, pay, and paste the licence code you receive.</div>'; }
             return h + '</div>';
         }
         function codeBox() {
@@ -13285,9 +13284,9 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         function reqBox() {
             var em = myEmail() || '(your email)', mk = function (pn) { return 'Hello, I would like the ' + pn + ' plan for MintooSuite Terminal. My account email: ' + em; };
-            return '<div class="group pad"><b>How to get Pro or Elite</b><div class="note" style="margin:4px 0 8px">1) Send a request (button below). 2) Pay as agreed (for example Easypaisa, JazzCash or bank). 3) You receive a licence code made for your account email. 4) Paste it above. Paying inside the app comes later with Google Play.</div>' +
-                ['Pro', 'Elite'].map(function (pn) { return '<a class="btn sec" style="display:block;text-align:center;text-decoration:none;margin-top:6px" target="_blank" rel="noopener" href="https://wa.me/923122602811?text=' + encodeURIComponent(mk(pn)) + '">Request ' + pn + ' on WhatsApp</a>'; }).join('') +
-                '<a class="btn sec" style="display:block;text-align:center;text-decoration:none;margin-top:6px" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite plan request') + '&body=' + encodeURIComponent(mk('Pro or Elite')) + '">Request by email</a></div>';
+            return '<div class="group pad"><b>How to get Pro</b><div class="note" style="margin:4px 0 8px">1) Send a request (button below). 2) Pay as agreed (for example Easypaisa, JazzCash or bank). 3) You receive a licence code made for your account email. 4) Paste it above. Paying inside the app comes later with Google Play.</div>' +
+                ['Pro'].map(function (pn) { return '<a class="btn sec" style="display:block;text-align:center;text-decoration:none;margin-top:6px" target="_blank" rel="noopener" href="https://wa.me/923122602811?text=' + encodeURIComponent(mk(pn)) + '">Request ' + pn + ' on WhatsApp</a>'; }).join('') +
+                '<a class="btn sec" style="display:block;text-align:center;text-decoration:none;margin-top:6px" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite plan request') + '&body=' + encodeURIComponent(mk('Pro')) + '">Request by email</a></div>';
         }
         VIEWS.plans = function () {
             var h = _vp ? _vp.apply(this, arguments) : '';
@@ -13748,7 +13747,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 (g.on ? '<div class="group">' + tg('rec', 'Recommendations & factor score', 'volume, trend, news, history, sources') + tg('htf', 'Bigger trend (1 hour)', 'do not fight the 1h trend') + tg('btc', 'Bitcoin direction', 'skip when Bitcoin moves against the trade') + tg('vol', 'Volatility, volume, stretch', 'skip quiet, wild or chased moves') + tg('news', 'News', 'skip when headlines point the other way') + tg('hist', 'Own history & daily limit', '3% daily loss, 3 losses rest, same-way limit') + '</div>' : '') +
                 '<div class="note" style="margin:8px 0 4px">Target compared with the stop</div><div class="m7row">' + [1.2, 1.6, 2, 2.5].map(function (x) { return '<span class="' + (g.rr === x ? 'on' : '') + '" data-gd="rr:' + x + '">' + x + ' ×</span>'; }).join('') + '</div>' +
                 sh('Why trades were skipped', F.skips.length) + (F.skips.length ? '<div class="group">' + F.skips.slice(0, 8).map(function (x) { return '<div class="row" style="align-items:flex-start"><span><b>' + esc(base(x.sym)) + '</b> ' + (x.sg > 0 ? 'LONG' : 'SHORT') + ' <small class="mut">' + Math.round((now - x.at) / 60000) + ' min ago</small><br><small>' + esc(x.why) + '</small></span></div>'; }).join('') + '</div>' : '<div class="group pad mut">Nothing skipped yet. Skipped trades appear here with the reason.</div>') +
-                '<div class="group pad tap" data-act="win:gridbot" style="border-left:5px solid #0a84ff"><b>🔲 Grid Bot (paper)</b><div class="note" style="margin:2px 0 0">Pionex-style: buys low and sells high inside a price range ›</div></div>';
+                '<div class="group pad tap" data-act="win:gridbot" style="border-left:5px solid #0a84ff"><b>🔲 Grid Bot (paper)</b><div class="note" style="margin:2px 0 0">Grid style: buys low and sells high inside a price range ›</div></div>';
             var i = h.indexOf('<div class="sh"><span>Performance'); return i > 0 ? h.slice(0, i) + card + h.slice(i) : h + card;
         };
         document.addEventListener('click', function (e) {
@@ -13808,7 +13807,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             else if (GB.stopped) { h += '<div class="group pad"><b>Stopped</b><div class="note">' + esc(GB.stopped) + ' Final value $' + f(GB.final) + ' from $' + GB.inv + '.</div></div>'; }
             return h;
         }
-        WINS.push({ id: 'gridbot', ic: '🔲', c: '#0a84ff', n: 'Grid Bot (paper)', t: 'Grid Bot', sub: 'Pionex-style grid: buy low, sell high inside a range (virtual money)' }); LIVE.gridbot = 0; VIEWS.gridbot = vGrid; MW_HELP.gridbot = 'A grid bot places many buy and sell levels inside a price range and collects small profits as price moves up and down. This one uses virtual money.';
+        WINS.push({ id: 'gridbot', ic: '🔲', c: '#0a84ff', n: 'Grid Bot (paper)', t: 'Grid Bot', sub: 'Grid style: buy low, sell high inside a range (virtual money)' }); LIVE.gridbot = 0; VIEWS.gridbot = vGrid; MW_HELP.gridbot = 'A grid bot places many buy and sell levels inside a price range and collects small profits as price moves up and down. This one uses virtual money.';
         try { var Gp = MW_GROUPS.filter(function (x) { return /Bot|Auto|Trad/i.test(x[0]); })[0] || MW_GROUPS[MW_GROUPS.length - 1]; Gp[1].push('gridbot'); mwHostSig = ''; } catch (e) { }
         document.addEventListener('click', function (e) {
             var el = e.target.closest ? e.target.closest('[data-gb]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-gb').split(':');
@@ -13817,7 +13816,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }, true);
     } catch (e) { }
 })();
-/* ===== .59: Baba Trading exchange guides (Binance, MEXC, Bitget, OKX, Bybit + connecting them here) and Tip of the day ===== */
+/* ===== .59: Baba AI exchange guides (Binance, MEXC, Bitget, OKX, Bybit + connecting them here) and Tip of the day ===== */
 (function () {
     try {
         var G = [
@@ -13902,7 +13901,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             ['Learn', 'Position size = money you accept to lose divided by the distance to your stop. Size by risk, not by feeling.'],
             ['Learn', 'Spot buying is safer than futures for beginners: no liquidation, no funding fees.'],
             ['Learn', 'Open the Academy window: short lessons with quizzes, from candles to risk management.'],
-            ['Learn', 'Ask Baba Trading anything: "how do I create a Binance API key", "what is funding rate", "why did my bot lose".']
+            ['Learn', 'Ask Baba AI anything: "how do I create a Binance API key", "what is funding rate", "why did my bot lose".']
         ];
         function dayIdx() { var d = new Date(), s = new Date(d.getFullYear(), 0, 0); return Math.floor((d - s) / 86400000); }
         function today() { return T[dayIdx() % T.length]; }
@@ -14199,7 +14198,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 return h;
             }
             if (tab === 'contact') {
-                h += box('<b>💬 Get help</b><div class="note" style="margin:6px 0">Fastest: ask Baba Trading (works any time). For a person, use the Support desk; it opens WhatsApp or email with details filled in. Never send passwords, seed words or API secrets.</div>' + go('Ask Baba Trading', 'baba') + go('Support desk', 'support') + go('Replay welcome tour', 'overview'));
+                h += box('<b>💬 Get help</b><div class="note" style="margin:6px 0">Fastest: ask Baba AI (works any time). For a person, use the Support desk; it opens WhatsApp or email with details filled in. Never send passwords, seed words or API secrets.</div>' + go('Ask Baba AI', 'baba') + go('Support desk', 'support') + go('Replay welcome tour', 'overview'));
                 return h;
             }
             if (tab === 'trust') {
@@ -14323,7 +14322,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
 
         /* ===== MONEY QUEST ===== */
         var STEPS = [
-            ['Welcome, trader!', 'I am Baba Trading. This quest teaches you to trade safely with <b>pretend money</b>. Nothing here can lose real money. Take 10 minutes a day and you will learn faster than most people who start with real cash.', ''],
+            ['Welcome, trader!', 'I am Baba AI. This quest teaches you to trade safely with <b>pretend money</b>. Nothing here can lose real money. Take 10 minutes a day and you will learn faster than most people who start with real cash.', ''],
             ['Rule number one: survive', 'Pros think about losing first. Risk only 1% of your money on one trade. With $1,000 that is $10. Ten bad trades in a row would still leave you with 90%. This is how you stay in the game long enough to get good.', 'win:academy|Open Academy'],
             ['Read the candles', 'A candle shows where price started, moved and ended. Green = buyers won, red = sellers won. Long tails (wicks) show where price was pushed back. Play the Candle Reader game below to practise.', ''],
             ['Always have a stop', 'A stop-loss is a promise to yourself: “if I am wrong, I leave here”. No stop means one bad day can erase months. Practise with the Risk Sizer game.', ''],
@@ -14444,22 +14443,32 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             try { document.body.style.zoom = Z === 100 ? '' : String(Z / 100); document.documentElement.style.overflowX = Z > 100 ? 'auto' : ''; } catch (e) { }
             var l = document.getElementById('xzLbl'), r = document.getElementById('xzRng'); if (l) { l.textContent = Z + '%'; } if (r) { r.value = Z; }
         }
+        var SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.9-4.9M10.5 8v5M8 10.5h5"></path></svg>';
+        function togglePan() { var p = document.getElementById('xzPan'); if (p) { p.style.display = p.style.display === 'none' ? 'block' : 'none'; } }
         function build() {
-            if (document.getElementById('xzBox')) { return; }
-            var d = document.createElement('div'); d.id = 'xzBox'; d.setAttribute('data-noswipe', '1'); d.setAttribute('data-mwkeep', '1');
-            d.style.cssText = 'position:fixed;left:8px;bottom:84px;z-index:9000;font:600 13px system-ui,sans-serif';
-            d.innerHTML = '<div id="xzBtn" style="width:38px;height:38px;border-radius:19px;background:rgba(30,30,40,.72);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.35)" title="Zoom">🔍</div>' +
-                '<div id="xzPan" style="display:none;position:absolute;left:0;bottom:46px;width:250px;padding:12px;border-radius:16px;background:rgba(28,28,36,.96);color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.5)">' +
-                '<div style="display:flex;align-items:center;gap:8px"><button id="xzM" style="width:38px;height:38px;border-radius:19px;border:0;font-size:20px">−</button><div id="xzLbl" style="flex:1;text-align:center;font-size:20px">100%</div><button id="xzP" style="width:38px;height:38px;border-radius:19px;border:0;font-size:20px">+</button></div>' +
-                '<input id="xzRng" type="range" min="25" max="300" step="5" value="100" style="width:100%;margin:10px 0"><div id="xzChips" style="display:flex;flex-wrap:wrap;gap:5px"></div>' +
-                '<div style="font-weight:400;font-size:11px;opacity:.8;margin-top:8px">Zoom 25% to 300%. When zoomed in, drag the screen to move around. You can also pinch with two fingers.</div></div>';
-            document.body.appendChild(d);
-            var ch = d.querySelector('#xzChips'); [25, 50, 75, 100, 125, 150, 200, 250, 300].forEach(function (p) { var b = document.createElement('button'); b.textContent = p + '%'; b.style.cssText = 'padding:5px 9px;border-radius:12px;border:0;font-size:12px'; b.onclick = function () { apply(p); }; ch.appendChild(b); });
-            d.querySelector('#xzBtn').onclick = function () { var p = d.querySelector('#xzPan'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; };
-            d.querySelector('#xzM').onclick = function () { apply(Z - 5); }; d.querySelector('#xzP').onclick = function () { apply(Z + 5); };
-            d.querySelector('#xzRng').oninput = function (e) { apply(+e.target.value); };
-            apply(Z);
+            if (!document.getElementById('xzCss')) { var st = document.createElement('style'); st.id = 'xzCss'; st.setAttribute('data-mwkeep', '1'); st.textContent = '.tabs.xz6{grid-template-columns:repeat(6,1fr)!important}.tab.xzTab{padding-left:0;padding-right:0}'; document.head.appendChild(st); }
+            if (!document.getElementById('xzPan')) {
+                var d = document.createElement('div'); d.id = 'xzBox'; d.setAttribute('data-noswipe', '1'); d.setAttribute('data-mwkeep', '1');
+                d.style.cssText = 'position:fixed;left:8px;bottom:80px;z-index:9000;font:600 13px system-ui,sans-serif;width:0;height:0';
+                d.innerHTML = '<div id="xzPan" style="display:none;position:absolute;left:0;bottom:0;width:250px;padding:12px;border-radius:16px;background:rgba(28,28,36,.96);color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.5)">' +
+                    '<div style="display:flex;align-items:center;gap:8px"><button id="xzM" style="width:38px;height:38px;border-radius:19px;border:0;font-size:20px">−</button><div id="xzLbl" style="flex:1;text-align:center;font-size:20px">100%</div><button id="xzP" style="width:38px;height:38px;border-radius:19px;border:0;font-size:20px">+</button></div>' +
+                    '<input id="xzRng" type="range" min="25" max="300" step="5" value="100" style="width:100%;margin:10px 0"><div id="xzChips" style="display:flex;flex-wrap:wrap;gap:5px"></div>' +
+                    '<div style="font-weight:400;font-size:11px;opacity:.8;margin-top:8px">Zoom 25% to 300%. When zoomed in, drag the screen to move around. You can also pinch with two fingers.</div></div>';
+                document.body.appendChild(d);
+                var ch = d.querySelector('#xzChips'); [25, 50, 75, 100, 125, 150, 200, 250, 300].forEach(function (p) { var bt = document.createElement('button'); bt.textContent = p + '%'; bt.style.cssText = 'padding:5px 9px;border-radius:12px;border:0;font-size:12px'; bt.onclick = function () { apply(p); }; ch.appendChild(bt); });
+                d.querySelector('#xzM').onclick = function () { apply(Z - 5); }; d.querySelector('#xzP').onclick = function () { apply(Z + 5); };
+                d.querySelector('#xzRng').oninput = function (e) { apply(+e.target.value); };
+                apply(Z);
+            }
+            var tabs = document.getElementById('tabs');
+            if (tabs && !tabs.querySelector('.xzTab') && tabs.children.length) {
+                var t = document.createElement('button'); t.className = 'tab xzTab'; t.setAttribute('data-noswipe', '1'); t.setAttribute('data-mwkeep', '1'); t.innerHTML = SVG + 'Zoom';
+                t.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); togglePan(); }, true);
+                tabs.insertBefore(t, tabs.children[1] || null); tabs.classList.add('xz6');
+            }
         }
+        document.addEventListener('click', function (e) { var p = document.getElementById('xzPan'); if (p && p.style.display !== 'none' && !(e.target.closest && (e.target.closest('#xzPan') || e.target.closest('.xzTab')))) { p.style.display = 'none'; } }, true);
+        try { var tb = document.getElementById('tabs'); if (tb) { new MutationObserver(function () { build(); }).observe(tb, { childList: true }); } } catch (e) { }
         if (document.body) { build(); } else { document.addEventListener('DOMContentLoaded', build); }
         setInterval(function () { try { build(); } catch (e) { } }, 3000);
     } catch (e) { try { console.log('p9zszzb', e); } catch (er) { } }
@@ -14499,7 +14508,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             ['loc', '📍', 'Location', 'Used only for “Around you”, local weather and market hours near you. Never uploaded.'],
             ['store', '📁', 'Photos, media and files', 'Lets you attach pictures and save or share exports and screenshots. The app never scans your files.'],
             ['cam', '📷', 'Camera', 'For scanning wallet QR codes and taking a profile picture. Optional.'],
-            ['mic', '🎙', 'Microphone', 'For voice questions to Baba Trading. Optional.']
+            ['mic', '🎙', 'Microphone', 'For voice questions to Baba AI. Optional.']
         ];
         function permRows() {
             var n = nat(), p = pstate(), s = sstate(), h = '';
@@ -14522,6 +14531,385 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         };
         VIEWS.hu = VIEWS.alerts; VIEWS.perms = VIEWS.alerts;
     } catch (e) { try { console.log('p9zszzc', e); } catch (er) { } }
+})();
+/* BL part 1: offline Library (works with no internet). Short, careful summaries; not a replacement for a teacher, doctor, lawyer or advisor. */
+(function () {
+    try {
+        var L = [
+            ['Science', 'Photosynthesis', 'Plants use light, water and carbon dioxide to make sugar (glucose) and oxygen, mostly in leaf cells called chloroplasts. Summary: 6CO2 + 6H2O + light → C6H12O6 + 6O2. It is the base of most food chains.', 'plants leaf chloroplast oxygen glucose'],
+            ['Science', 'Gravity', 'Gravity is the pull between objects with mass. On Earth, falling objects speed up by about 9.8 m/s every second (g). Newton: F = G·m1·m2 / r². Einstein later described gravity as the bending of space and time by mass.', 'newton einstein fall weight mass'],
+            ['Science', 'Newton’s three laws', '1) An object stays at rest or moves steadily unless a force acts (inertia). 2) Force = mass × acceleration (F = ma). 3) Every action has an equal and opposite reaction.', 'force motion inertia physics'],
+            ['Science', 'Atoms and elements', 'Atoms have a nucleus (protons and neutrons) with electrons around it. The number of protons is the atomic number and decides the element. The periodic table lists 118 elements in order of atomic number.', 'atom proton neutron electron periodic table chemistry'],
+            ['Science', 'The water cycle', 'Sun heats water → evaporation → water vapour rises and cools → condensation into clouds → precipitation (rain, snow) → water collects in rivers, seas and ground, then repeats.', 'rain cloud evaporation condensation'],
+            ['Science', 'Speed of light and sound', 'Light travels about 299,792 km per second in a vacuum. Sound is far slower: about 343 m/s in air at 20°C, and it cannot travel through a vacuum.', 'light sound speed physics'],
+            ['Science', 'DNA and genes', 'DNA is a double helix made of four bases (A, T, C, G). Genes are DNA stretches that hold instructions for proteins. Children inherit half their DNA from each parent.', 'genetics heredity biology helix'],
+            ['Science', 'Cells', 'The cell is the basic unit of life. Bacteria are single simple cells (prokaryotes). Plants, animals and fungi have cells with a nucleus (eukaryotes). Human body: trillions of cells.', 'biology cell nucleus bacteria'],
+            ['Science', 'Electricity basics', 'Ohm’s law: voltage V = current I × resistance R. Power P = V × I. Household mains in Pakistan is about 220–240 V, 50 Hz. Never touch wiring with wet hands.', 'ohm volt amp watt current circuit'],
+            ['Science', 'Solar system', 'Eight planets in order from the Sun: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune. Earth takes about 365.25 days to orbit the Sun and 24 hours to spin once.', 'planet sun earth mars jupiter space astronomy'],
+            ['Science', 'Climate change', 'Gases such as carbon dioxide and methane trap heat. Earth is roughly 1.1–1.2°C warmer than before industry. Effects include heat waves, stronger floods and rising seas. Saving energy and planting trees help.', 'global warming greenhouse environment'],
+            ['Science', 'Evolution', 'Living things change over many generations. Individuals with helpful traits tend to survive and have more offspring (natural selection), so those traits become common.', 'darwin natural selection species'],
+            ['Science', 'The pH scale', 'pH 0–14 measures acidity. 7 is neutral (pure water). Below 7 is acidic (lemon juice about 2), above 7 is basic (soap about 9–10).', 'acid base chemistry litmus'],
+            ['Science', 'Big Bang', 'The leading theory says the universe began about 13.8 billion years ago from an extremely hot, dense state and has been expanding since.', 'universe cosmos origin'],
+            ['Health', 'Emergency numbers (Pakistan)', 'Rescue 1122 (many cities), Edhi 115, Police 15, Fire 16. In any serious emergency call first, then use the steps here while help comes.', 'ambulance police fire edhi rescue emergency'],
+            ['Health', 'First aid: bleeding', 'Press firmly on the wound with a clean cloth. Do not remove a soaked cloth, add another on top. Raise the injured limb if possible. Call 1122 for heavy bleeding.', 'cut wound blood first aid'],
+            ['Health', 'First aid: burns', 'Cool the burn under cool running water for about 20 minutes. Do not use ice, butter, toothpaste or oil. Cover loosely with a clean non-fluffy cloth. See a doctor for large, deep or face burns.', 'fire scald burn first aid'],
+            ['Health', 'First aid: choking', 'If the person cannot cough, speak or breathe: give up to 5 firm back blows between the shoulder blades, then up to 5 abdominal thrusts. Repeat. Call 1122. Start CPR if they collapse and stop breathing.', 'choke heimlich airway'],
+            ['Health', 'CPR for adults', 'Call 1122. Push hard and fast in the centre of the chest: 100–120 pushes per minute, about 5–6 cm deep. Hands-only CPR is fine if you are not trained. Continue until help arrives.', 'cardiac arrest heart chest compressions'],
+            ['Health', 'Heat stroke and dehydration', 'In summer: drink water often, use ORS (oral rehydration salts) for diarrhoea or heavy sweating, stay in shade. Confusion, very hot dry skin or fainting means heat stroke: cool the body with water and get emergency help.', 'summer heat water ors loo'],
+            ['Health', 'Fever', 'Adults: a fever is usually 38°C or higher. Rest, drink fluids, and use medicine exactly as the label says. See a doctor if it lasts more than 3 days, is very high, or comes with stiff neck, confusion, breathing trouble or a rash.', 'temperature flu infection'],
+            ['Health', 'Blood pressure', 'About 120/80 mmHg is normal for most adults. Repeated readings of 140/90 or higher need a doctor. Less salt, regular walking, healthy weight and no smoking help.', 'hypertension bp heart'],
+            ['Health', 'Diabetes basics', 'Diabetes means blood sugar stays too high. Common signs: extreme thirst, frequent urination, tiredness, slow healing. Only a blood test can confirm it. See a doctor; do not self-treat.', 'sugar insulin glucose'],
+            ['Health', 'Sleep and study', 'Most adults need 7–9 hours of sleep; teenagers 8–10. Regular sleep times, no screens 30–60 minutes before bed and daylight in the morning help sleep and memory.', 'rest tired insomnia'],
+            ['Health', 'Hand washing', 'Wash with soap and water for at least 20 seconds: palms, backs, between fingers, thumbs and nails. It prevents many infections such as diarrhoea and flu.', 'hygiene germs soap'],
+            ['Math', 'Percentages', 'Percent = part ÷ whole × 100. Percent change = (new − old) ÷ old × 100. A 50% fall needs a 100% rise to get back to the start.', 'percent percentage ratio'],
+            ['Math', 'Compound interest and the rule of 72', 'A = P(1 + r/n)^(n·t). Rule of 72: years to double ≈ 72 ÷ annual rate (%). At 8% a year, money doubles in about 9 years.', 'interest savings invest growth double'],
+            ['Math', 'Pythagoras', 'In a right triangle, a² + b² = c², where c is the longest side (hypotenuse). Example: sides 3 and 4 give hypotenuse 5.', 'triangle geometry'],
+            ['Math', 'Quadratic equation', 'For ax² + bx + c = 0 the solutions are x = (−b ± √(b² − 4ac)) ÷ 2a. The part b² − 4ac tells how many real solutions exist.', 'algebra formula equation'],
+            ['Math', 'Mean, median, mode', 'Mean = sum ÷ count. Median = middle value when sorted. Mode = most common value. Standard deviation measures how spread out the numbers are.', 'average statistics'],
+            ['Math', 'Probability', 'Probability = favourable outcomes ÷ all outcomes (0 to 1). A fair coin: 0.5 heads. Expected value = sum of (outcome × its probability). A game can have a high chance of winning and still lose money.', 'chance odds dice expected value'],
+            ['World', 'Continents and oceans', 'Seven continents: Asia, Africa, North America, South America, Antarctica, Europe, Australia/Oceania. Five oceans: Pacific, Atlantic, Indian, Southern, Arctic. Asia is the largest continent; the Pacific the largest ocean.', 'geography map'],
+            ['World', 'Time zones and UTC', 'Earth is split into time zones, measured from UTC (Coordinated Universal Time). Pakistan Standard Time is UTC+5 all year. Binance’s trading day starts at 00:00 UTC (05:00 in Pakistan).', 'clock gmt timezone'],
+            ['World', 'United Nations', 'The UN was founded in 1945 and has 193 member states. Its main organs include the General Assembly and the Security Council (five permanent members).', 'un world organisation'],
+            ['History', 'Pakistan: key dates', 'Lahore Resolution: 23 March 1940. Independence: 14 August 1947. Quaid-e-Azam Muhammad Ali Jinnah was the first Governor-General. The poet-philosopher Allama Iqbal had proposed the idea of a separate homeland in 1930. Islamabad became the capital in the 1960s.', 'independence jinnah iqbal quaid'],
+            ['History', 'Pakistan: provinces', 'Punjab, Sindh, Khyber Pakhtunkhwa and Balochistan, plus the Islamabad Capital Territory, Gilgit-Baltistan and Azad Jammu and Kashmir.', 'provinces map states'],
+            ['History', 'World wars', 'World War I: 1914–1918. World War II: 1939–1945. The United Nations was created afterwards to help keep peace.', 'war ww1 ww2'],
+            ['History', 'Industrial Revolution', 'Began in Britain around 1760: steam engines, factories and railways moved work from farms and workshops to machines and cities, changing the world economy.', 'steam factory'],
+            ['History', 'History of the internet', 'ARPANET (1969) linked the first computers. Tim Berners-Lee invented the World Wide Web in 1989–1991. Smartphones from 2007 put the internet in every pocket.', 'web www arpanet'],
+            ['Technology', 'How AI chatbots work', 'Large language models learn patterns from huge amounts of text and predict likely next words. They can sound sure and still be wrong (“hallucination”). Always check important facts, numbers and sources.', 'ai chatgpt llm machine learning'],
+            ['Technology', 'How blockchain works', 'A blockchain is a shared list of records (blocks) linked by cryptographic fingerprints (hashes). Many computers keep copies, so changing past records is very hard. Bitcoin and Ethereum use it.', 'bitcoin ethereum crypto ledger'],
+            ['Technology', 'Bitcoin', 'Bitcoin started in 2009 (creator known as Satoshi Nakamoto). Only 21 million coins can ever exist. Its price swings strongly; never invest money you cannot afford to lose.', 'btc satoshi coin'],
+            ['Technology', 'Staying safe online', 'Use a different long password for each account, a password manager, and two-step verification (an authenticator app is better than SMS). Never share OTP codes or 12-word wallet phrases. Phishing messages create fake urgency: stop and check the real website yourself.', 'password hack scam phishing otp 2fa security'],
+            ['Technology', 'Computer parts', 'CPU = the brain (calculations). RAM = short-term working memory. Storage (SSD/HDD) = long-term files. GPU = graphics and parallel maths. Operating system = software that manages them.', 'cpu ram ssd gpu hardware'],
+            ['Technology', 'Programming basics', 'A program is a list of instructions. Core ideas: variables (store values), conditions (if/else), loops (repeat), functions (reusable steps). Good first languages: Python and JavaScript. Practise by building small projects.', 'coding code python javascript learn'],
+            ['Technology', 'Internet basics', 'Every device has an IP address. DNS turns names like example.com into IP addresses. HTTPS encrypts traffic between your phone and a website. Wi-Fi is a local wireless link to your router.', 'ip dns https wifi network'],
+            ['Gaming', 'Game genres', 'Action, adventure, role-playing (RPG), strategy, simulation, sports, puzzle, battle royale, MOBA, and card games. Esports are organised competitions in games such as football (EA FC), Dota 2, CS2 and Valorant.', 'video games esports pubg fortnite'],
+            ['Gaming', 'Healthy gaming', 'Take a break every hour, keep sleep regular, drink water, stretch eyes and wrists, and set daily limits. Be careful with loot boxes and in-game purchases: they work like gambling and can drain money.', 'screen time addiction parents'],
+            ['Gaming', 'Making games', 'Beginners use free engines such as Godot or Unity. Learn: game loop, sprites, input, collisions, score. Start with a tiny game (pong, runner) and finish it before starting a bigger one.', 'unity godot develop programming'],
+            ['Gaming', 'Chess basics', 'Control the centre, develop knights and bishops early, castle for king safety, do not move the same piece twice in the opening, and check for threats before every move.', 'strategy board opening'],
+            ['Money', 'Stop-loss and position size', 'A stop-loss is the price where you accept being wrong and exit. Size the trade so the stop costs only 1–2% of your account. Never move the stop further away to “give it room”.', 'risk trading stop loss'],
+            ['Money', 'Leverage and liquidation', 'Leverage multiplies both profit and loss. At 10× a 10% move against you can wipe out the margin (liquidation). Lower leverage and a stop-loss reduce the chance of losing everything.', 'futures margin crypto'],
+            ['Money', 'Risk and reward', 'If you risk 1 to make 2 (2:1), you can be right only about 40% of the time and still not lose after costs. Fees and slippage reduce results, so test with paper money first.', 'rr ratio expectancy'],
+            ['Money', 'Inflation and saving', 'Inflation is the general rise in prices, so the same money buys less over time. Savings should at least keep pace; spread money across savings, National Savings schemes, gold, property or shares according to your needs.', 'prices rupee currency savings'],
+            ['Money', 'Spot vs futures', 'Spot: you buy the real coin. Futures: a contract on its price, usually with leverage, where you can also profit from falls but can be liquidated. Beginners should start with spot or paper trading.', 'crypto binance exchange'],
+            ['Money', 'Gold basics', 'Gold is often seen as a store of value when fear or inflation is high. In Pakistan a tola is 11.6638 grams. Price follows the world price in dollars and the dollar–rupee rate.', 'tola xau sona'],
+            ['Money', 'Zakat basics', 'Zakat is commonly 2.5% of savings held for a full lunar year above the nisab. Widely used nisab: 87.48 g of gold or 612.36 g of silver. Confirm details with a trusted scholar.', 'islamic charity nisab'],
+            ['Pakistan', 'Pakistan facts', 'Capital: Islamabad. Largest city: Karachi. Currency: Pakistani rupee (PKR). Official languages: Urdu and English. Time: UTC+5. Stock exchange: PSX, normally open Monday to Friday in the daytime (check psx.com.pk for exact hours and holidays).', 'islamabad karachi lahore psx rupee'],
+            ['Pakistan', 'Starting a business', 'Common steps: choose a structure (sole proprietor, partnership or company with SECP), get an NTN from FBR, open a business bank account, and register for sales tax if required. SMEDA publishes free guides.', 'startup smeda secp fbr ntn company'],
+            ['Pakistan', 'Earning online', 'Popular paths: freelancing (writing, design, programming, virtual assistance), e-commerce, YouTube and teaching online. Free training: DigiSkills.pk. Beware “pay to earn” and guaranteed-income schemes, which are usually scams.', 'freelance fiverr upwork digiskills job'],
+            ['Language', 'Urdu phrases (Roman)', 'Hello: Assalam-o-Alaikum. Thank you: Shukriya. How are you: Aap kaise hain? Please: Meherbani. How much: Kitna hua? Where is: … kahan hai? Yes/No: Ji haan / Nahin. Help: Madad.', 'urdu english translate travel'],
+            ['Study', 'How to study well', 'Use active recall (test yourself instead of re-reading), spaced repetition (review after 1, 3, 7, 21 days), short focused blocks (25 minutes work, 5 minutes break) and sleep. Teach the topic aloud to check what you really know.', 'exam memory learn pomodoro'],
+            ['Study', 'Thesis structure', 'Title → Abstract → Introduction (problem, aim, questions) → Literature review → Method → Results → Discussion → Conclusion → References → Appendices. Keep one clear research question and cite every source.', 'dissertation research paper report'],
+            ['Study', 'Writing an essay', 'Plan first: one main idea. Intro (hook + thesis), 3 body paragraphs (point, evidence, explanation), conclusion (restate and leave a thought). Read it aloud and cut every sentence that does not help the main idea.', 'writing english composition']
+        ];
+        window.__babaLib = L;
+        window.__babaLibSearch = function (q) {
+            q = String(q || '').toLowerCase().trim(); if (!q) { return []; }
+            var w = q.split(/[^a-z0-9؀-ۿ]+/).filter(function (x) { return x.length > 1; }), out = [];
+            L.forEach(function (e) { var hay = (e[1] + ' ' + e[3] + ' ' + e[0]).toLowerCase(), body = e[2].toLowerCase(), sc = 0; w.forEach(function (t) { if (hay.indexOf(t) >= 0) { sc += 3; } if (body.indexOf(t) >= 0) { sc += 1; } }); if (sc) { out.push([sc, e]); } });
+            out.sort(function (a, b) { return b[0] - a[0]; });
+            return out.slice(0, 12).map(function (x) { return x[1]; });
+        };
+    } catch (e) { try { console.log('p9zszzd', e); } catch (er) { } }
+})();
+/* BL part 2: Baba AI hub: News, Create (documents, slides, strategy, pictures, video storyboard), offline Library, safety notes, report button, save and share */
+(function () {
+    try {
+        var X = window.__kx; if (!X) { return; }
+        var KX = X.KX, e2 = X.e2, box = X.box, qh = X.qh, lk = X.lk;
+        function tst(m) { try { toast(m); } catch (e) { } }
+        function PBo() { return window.__pb && window.__pb.PB; }
+        function consent() { var p = PBo(); return !!(p && p.consent); }
+        function setConsent() { var p = PBo(); if (p) { p.consent = true; } try { var o = JSON.parse(localStorage.getItem('mintoosuite_pb') || '{}'); o.consent = true; localStorage.setItem('mintoosuite_pb', JSON.stringify(o)); } catch (e) { } }
+        var BAD = /\b(make|build|create|write|give|teach)\b[^.]{0,40}\b(bomb|explosive|nerve agent|ransomware|malware|keylogger|credit card (generator|dump)|fake (id|passport|degree|receipt))\b|\b(child|minor|underage)\b[^.]{0,30}\b(sexual|nude|porn)/i;
+        var DISC = 'AI can be wrong. Check important facts. This is not medical, legal or financial advice, and no prediction is a promise.';
+        function tmo(p, ms) { return new Promise(function (res, rej) { var t = setTimeout(function () { rej(new Error('The free AI service took too long.')); }, ms); p.then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); }); }); }
+        function freeGet(q, model) { return tmo(fetch('https://text.pollinations.ai/' + encodeURIComponent(q.slice(0, 3500)) + '?model=' + model).then(function (r) { if (!r.ok) { throw new Error('busy'); } return r.text(); }).then(function (t) { if (!t || t.length < 2) { throw new Error('empty'); } return t; }), 45000); }
+        function ai(q, big) {
+            if (BAD.test(q)) { return Promise.reject(new Error('I cannot help with that request.')); }
+            if (!consent()) { return Promise.reject(new Error('consent')); }
+            var pb = window.__pb; if (!pb || !pb.callAI) { return Promise.reject(new Error('The AI part is not ready yet.')); }
+            window.__maxTok = big ? 3500 : 900;
+            var eng = pb.PB.engine;
+            return tmo(pb.callAI(q, []), 60000).then(function (t) { window.__maxTok = 0; return { t: String(t), eng: eng === 'free' ? 'free AI' : eng }; }, function (er) {
+                window.__maxTok = 0;
+                var chain = ['openai', 'mistral', 'llama'], i = 0;
+                function next() { if (i >= chain.length) { throw new Error('The free AI services are busy right now. Please try again in a minute.'); } var m = chain[i++]; return freeGet(q, m).then(function (t) { return { t: t, eng: 'free AI (backup ' + m + ')' }; }, next); }
+                return next();
+            });
+        }
+        function md(t) {
+            var h = e2(t).replace(/^### (.+)$/gm, '<h4>$1</h4>').replace(/^## (.+)$/gm, '<h3>$1</h3>').replace(/^# (.+)$/gm, '<h2>$1</h2>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/^\s*[-*•]\s+(.+)$/gm, '<li>$1</li>').replace(/^\s*\d+[.)]\s+(.+)$/gm, '<li>$1</li>');
+            h = h.replace(/(<li>[\s\S]*?<\/li>)(?!\s*<li>)/g, function (m) { return m; }).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>');
+            return '<p>' + h + '</p>';
+        }
+        function consentCard() { return box('<b>Online AI is OFF</b><div class="note" style="margin:4px 0 8px">News summaries, documents, pictures and answers on any topic need an online AI service. Only your question text goes there, never keys, passwords or balances. You can turn it off any time in Baba AI › Settings.</div><button class="btn" data-xk="bconsent:1">Switch ON online AI</button>', '#ff9f0a'); }
+        X.on('bconsent', function () { setConsent(); X.again(); });
+        function out(o, title) {
+            if (!o) { return ''; }
+            if (o.err) { return o.err === 'consent' ? consentCard() : box('⚠️ ' + e2(o.err.message || o.err) + '<div class="note" style="margin:4px 0 0">Please try again in a minute.</div>', '#ff453a'); }
+            return '<div class="xkcard"><div class="note" style="margin:0 0 6px">Answered by: ' + e2(o.eng || '') + '</div><div style="font-size:14px;line-height:1.5">' + md(o.t) + '</div><div class="note" style="margin:8px 0">' + DISC + '</div>' +
+                '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec" data-xk="bcopy:' + (title || 'x') + '" style="width:auto;padding:6px 12px;font-size:13px">📋 Copy</button><button class="btn sec" data-xk="bshare:' + (title || 'x') + '" style="width:auto;padding:6px 12px;font-size:13px">📤 Share</button><button class="btn sec" data-xk="bsave:' + (title || 'x') + '" style="width:auto;padding:6px 12px;font-size:13px">💾 Save</button><button class="btn sec" data-xk="breport:' + (title || 'x') + '" style="width:auto;padding:6px 12px;font-size:13px">🚩 Report</button></div></div>';
+        }
+        var OUT = {}; /* title -> {t, eng, err} */
+        function txtOf(k) { return OUT[k] && OUT[k].t || ''; }
+        X.on('bcopy', function (k) { var t = txtOf(k); try { navigator.clipboard.writeText(t); tst('Copied'); } catch (er) { var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); tst('Copied'); } catch (e) { } document.body.removeChild(ta); } });
+        X.on('bshare', function (k) { var t = txtOf(k), n = window.MintooNative; try { if (n && n.shareText) { n.shareText(window.__mwTok, 'From Baba AI', t); } else if (navigator.share) { navigator.share({ text: t }); } else { navigator.clipboard.writeText(t); tst('Copied (sharing is not available)'); } } catch (e) { } });
+        X.on('breport', function (k) { var t = txtOf(k); window.location.href = 'mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('Report an AI answer (Baba AI, build ' + BUILD + ')') + '&body=' + encodeURIComponent('What is wrong with this answer:\n\n\n---\n' + t.slice(0, 1500)); });
+        function wordDoc(title, body) { return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>' + e2(title) + '</title><style>body{font-family:Calibri,Arial;line-height:1.5}h1,h2,h3{color:#1f3864}</style></head><body><h1>' + e2(title) + '</h1>' + md(body) + '<hr><p><i>' + DISC + '</i></p></body></html>'; }
+        function slideHtml(title, body) {
+            var sl = String(body).split(/\n-{3,}\n|\n\s*\n(?=#\s)/).map(function (s) { return s.trim(); }).filter(Boolean);
+            return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + e2(title) + '</title><style>body{margin:0;font-family:Arial,sans-serif;background:#10142a;color:#fff}.s{display:none;min-height:100vh;box-sizing:border-box;padding:7vw}.s.on{display:block}h1,h2{color:#ffd166}li{font-size:5vw;margin:2vw 0}.b{position:fixed;bottom:12px;left:0;right:0;text-align:center}button{font-size:18px;padding:10px 20px;margin:0 6px;border-radius:12px;border:0}@media print{.s{display:block;page-break-after:always;color:#000;background:#fff}.b{display:none}body{background:#fff}h1,h2{color:#000}}</style></head><body>' + sl.map(function (s, i) { return '<div class="s' + (i ? '' : ' on') + '">' + md(s) + '</div>'; }).join('') + '<div class="b"><button onclick="go(-1)">◀</button><button onclick="go(1)">▶</button></div><script>var i=0,a=document.querySelectorAll(".s");function go(d){a[i].className="s";i=Math.max(0,Math.min(a.length-1,i+d));a[i].className="s on"}<\/script></body></html>';
+        }
+        function saveFile(name, mime, content) {
+            var n = window.MintooNative, ok = false;
+            try { if (n && n.saveDoc) { ok = n.saveDoc(window.__mwTok, name, mime, content); } } catch (e) { }
+            if (ok) { tst('Saved in Downloads > MintooSuite > ' + name); return; }
+            try { var b = new Blob([content], { type: mime }), u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); document.body.removeChild(a); tst('Saved ' + name); } catch (e) { tst('Could not save here. Use Copy or Share.'); }
+        }
+        X.on('bsave', function (k) {
+            var t = txtOf(k); if (!t) { return; } var type = CR.type, base = (CR.topic || 'baba').replace(/[^a-z0-9]+/gi, '_').slice(0, 30) || 'baba';
+            if (type === 'slides') { saveFile('slides_' + base + '.html', 'text/html', slideHtml(CR.topic || 'Slides', t)); }
+            else if (type === 'doc' || type === 'thesis' || type === 'essay') { saveFile('doc_' + base + '.doc', 'application/msword', wordDoc(CR.topic || 'Document', t)); }
+            else { saveFile('baba_' + base + '.txt', 'text/plain', t + '\n\n' + DISC); }
+        });
+
+        /* ---------- NEWS ---------- */
+        var FEEDS = { top: ['🌍 World', 'https://news.google.com/rss?hl=en&gl=US&ceid=US:en'], pk: ['🇵🇰 Pakistan', 'https://news.google.com/rss?hl=en-PK&gl=PK&ceid=PK:en'], biz: ['💼 Business', 'https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-PK&gl=PK&ceid=PK:en'], tech: ['💻 Tech', 'https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=en&gl=US&ceid=US:en'], sci: ['🔬 Science', 'https://news.google.com/rss/headlines/section/topic/SCIENCE?hl=en&gl=US&ceid=US:en'], hlth: ['🩺 Health', 'https://news.google.com/rss/headlines/section/topic/HEALTH?hl=en&gl=US&ceid=US:en'], sport: ['🏏 Sports', 'https://news.google.com/rss/headlines/section/topic/SPORTS?hl=en-PK&gl=PK&ceid=PK:en'], game: ['🎮 Gaming', 'https://news.google.com/rss/search?q=video+games&hl=en&gl=US&ceid=US:en'], cry: ['₿ Crypto', 'https://news.google.com/rss/search?q=crypto+bitcoin&hl=en&gl=US&ceid=US:en'], gold: ['🥇 Gold', 'https://news.google.com/rss/search?q=gold+price&hl=en&gl=US&ceid=US:en'] };
+        var NW = {}; try { NW = JSON.parse(localStorage.getItem('mintoosuite_nwc') || '{}') || {}; } catch (e) { NW = {}; }
+        var nwBusy = {};
+        function nwLoad(k) {
+            var c = NW[k]; if ((c && Date.now() - c.at < 10 * 60000) || nwBusy[k]) { return; } nwBusy[k] = 1;
+            fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(FEEDS[k][1])).then(function (r) { return r.json(); }).then(function (j) {
+                if (!j || !j.items || !j.items.length) { throw new Error('empty'); }
+                NW[k] = { at: Date.now(), items: j.items.slice(0, 15).map(function (x) { return { t: x.title, l: x.link, d: x.pubDate }; }) };
+                try { localStorage.setItem('mintoosuite_nwc', JSON.stringify(NW)); } catch (e) { }
+                nwBusy[k] = 0; if (S.win === 'baba') { X.again(); }
+            }).catch(function () { nwBusy[k] = 0; if (NW[k]) { NW[k].at = Date.now() - 8 * 60000; } else { NW[k] = { at: Date.now() - 9 * 60000, items: [], fail: 1 }; } });
+        }
+        function newsTab() {
+            var k = KX.bnk || 'top'; if (!FEEDS[k]) { k = 'top'; } nwLoad(k);
+            var h = '<div class="segc" data-noswipe="1" style="display:flex;flex-wrap:wrap;gap:4px;margin:0 0 8px">' + Object.keys(FEEDS).map(function (x) { return '<span class="' + (x === k ? 'on' : '') + '" data-xk="bnk:' + x + '" style="flex:1 1 auto;text-align:center;white-space:nowrap">' + FEEDS[x][0] + '</span>'; }).join('') + '</div>';
+            var c = NW[k];
+            if (!c || !c.items.length) { h += '<div class="group pad mut">' + (c && c.fail ? 'News needs internet. Nothing saved yet.' : 'Loading headlines…') + '</div>'; }
+            else { h += '<div class="note" style="margin:0 0 6px">' + (navigator.onLine ? 'Updated ' : 'Offline. Saved ') + new Date(c.at).toLocaleTimeString() + '</div><div class="group">' + c.items.map(function (x) { return '<div class="row" style="display:block"><a href="' + e2(x.l) + '" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><b style="font-size:14px">' + e2(x.t) + '</b></a><div class="note" style="margin:2px 0 0">' + e2(x.d || '') + '</div></div>'; }).join('') + '</div>';
+                h += '<button class="btn" data-xk="bsum:' + k + '">🧠 Baba: summarise and explain these</button>'; }
+            if (OUT['news' + k] && OUT['news' + k].busy) { h += '<div class="group pad mut">Baba is reading the news…</div>'; } else if (OUT['news' + k]) { h += out(OUT['news' + k], 'news' + k); }
+            return h + '<div class="note">Headlines come from public news feeds (Google News). The links open the publishers’ own sites.</div>';
+        }
+        X.on('bsum', function (k) {
+            var c = NW[k]; if (!c || !c.items.length) { return; } var key = 'news' + k; OUT[key] = { busy: 1 }; X.again(); CR.type = 'news'; CR.topic = FEEDS[k][0];
+            ai('Here are today’s headlines (' + FEEDS[k][0] + '):\n' + c.items.slice(0, 12).map(function (x, i) { return (i + 1) + '. ' + x.t; }).join('\n') + '\n\nIn simple words: 1) the 5 most important things happening, 2) why each matters, 3) what to watch next. Do not invent facts that are not in the headlines. If something is uncertain, say so.', false).then(function (r) { OUT[key] = r; X.again(); }, function (er) { OUT[key] = { err: er.message === 'consent' ? 'consent' : er }; X.again(); });
+        });
+
+        /* ---------- CREATE ---------- */
+        var CR = { type: 'doc', topic: '', lang: 'English', len: 'medium', busy: 0, scene: 0 };
+        try { var sv = JSON.parse(localStorage.getItem('mintoosuite_bcr') || '{}'); ['type', 'lang', 'len'].forEach(function (k) { if (sv[k]) { CR[k] = sv[k]; } }); } catch (e) { }
+        var TYPES = { doc: ['📄 Document', 'Write a clear, well-structured document about: '], slides: ['📊 Presentation', 'Create a presentation about: '], thesis: ['🎓 Thesis / research outline', 'Create a thesis or research paper outline with chapter plans, research questions and method about: '], essay: ['✍️ Essay / report', 'Write an essay about: '], strat: ['🧭 Strategy / plan', 'Create a practical step-by-step strategy and action plan for: '], scen: ['🔮 Scenarios (not predictions)', 'Give three scenarios (best, likely, worst) with reasons, what to watch and rough probabilities. Be clear that this is NOT a certain prediction. Topic: '], notes: ['🧠 Study notes + quiz', 'Create short study notes and 8 quiz questions with answers about: '], trade: ['📈 Trade outlook (any market)', 'Give an outlook for this trade or market: '], biz: ['🏢 Business outlook', 'Give an outlook and plan for this business or idea: '], loc: ['📍 Opportunities near me', 'Give practical opportunities, risks and advice for this goal at my location: '], adv: ['💡 Advice on anything', 'Give careful, practical advice on: '], img: ['🖼 Picture', ''], vid: ['🎬 Video storyboard', 'Write a short video storyboard with exactly 6 scenes. For each scene output one line in this exact format: SCENE n | what the picture shows | narration sentence. Topic: '] };
+        function ctxText() {
+            var o = [];
+            try { var l = JSON.parse(localStorage.getItem('mintoosuite_loc') || 'null'); if (l && l.city) { o.push('User location: ' + l.city + (l.country ? ', ' + l.country : '')); } } catch (e) { }
+            try { var a = JSON.parse(localStorage.getItem('mintoosuite_area') || 'null'); if (a && (a.name || a.city)) { o.push('Chosen area: ' + (a.name || a.city) + (a.cc ? ' (' + a.cc + ')' : '')); } } catch (e) { }
+            if (!o.length) { o.push('User location not shared: assume Islamabad, Pakistan (UTC+5), PKR currency, and say you assumed it'); }
+            try { ['BTCUSDT', 'ETHUSDT', 'XAUUSDT'].forEach(function (k) { var t = S.tick && S.tick[k]; if (t && t.p) { o.push(k.replace('USDT', '') + ' ' + t.p + ' (' + (t.chg >= 0 ? '+' : '') + (+t.chg).toFixed(1) + '% 24h)'); } }); } catch (e) { }
+            o.push('Today: ' + new Date().toDateString());
+            return o.join('; ');
+        }
+        var OUTLOOK = 'Format: 1) Current picture in plain words. 2) Three scenarios (best, most likely, worst) each with a rough probability percentage and the reasons. 3) Key triggers and levels or numbers to watch, and what would prove this view wrong. 4) Time horizon. 5) Practical advice including risk limits (for trading: stop-loss and small size). 6) What you do not know. Be honest that this is an estimate from limited information, never a guarantee, and do not invent numbers: say "unknown" if you lack data.';
+        var LENS = { short: 'Keep it short (about 200 words).', medium: 'Medium length (about 500 words).', long: 'Long and detailed (about 1200 words).' };
+        function saveCR() { try { localStorage.setItem('mintoosuite_bcr', JSON.stringify({ type: CR.type, lang: CR.lang, len: CR.len })); } catch (e) { } }
+        document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-bi') === 'topic') { CR.topic = t.value; } });
+        X.on('bct', function (v) { CR.type = v; saveCR(); X.again(); });
+        X.on('bcl', function (v) { CR.lang = v; saveCR(); X.again(); });
+        X.on('bcn', function (v) { CR.len = v; saveCR(); X.again(); });
+        function imgUrl(p, seed) { return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(p) + '?width=768&height=768&nologo=true&seed=' + (seed || 1); }
+        X.on('bgo', function () {
+            var topic = (CR.topic || '').trim(); if (!topic) { tst('Type what you want first.'); return; }
+            if (BAD.test(topic)) { OUT.cr = { err: new Error('I cannot help with that request.') }; X.again(); return; }
+            if (CR.type === 'img') { CR.imgSeed = Math.floor(Math.random() * 99999); OUT.cr = { img: imgUrl(topic, CR.imgSeed), t: topic }; X.again(); return; }
+            if (!consent()) { OUT.cr = { err: 'consent' }; X.again(); return; }
+            OUT.cr = { busy: 1 }; X.again(); CR.scene = 0;
+            var q = TYPES[CR.type][1] + topic + '\n\nContext: ' + ctxText() + (/^(trade|biz|loc|adv|scen)$/.test(CR.type) ? '\n' + OUTLOOK : '') + '\n\nLanguage: ' + CR.lang + '. ' + LENS[CR.len] + (CR.type === 'slides' ? '\nFormat: each slide starts with "# Title" followed by 3-5 short bullet lines starting with "- ". Separate slides with a line containing only ---. Make 8-10 slides.' : '\nUse clear headings and short paragraphs or bullets.') + '\nBe accurate. If you are not sure about a fact, say so instead of guessing. Do not give personal medical, legal or financial instructions; say to ask a professional.';
+            ai(q, true).then(function (r) { OUT.cr = r; X.again(); }, function (er) { OUT.cr = { err: er.message === 'consent' ? 'consent' : er }; X.again(); });
+        });
+        function scenes(t) { var a = []; String(t).split(/\n/).forEach(function (l) { var m = /^\s*(?:\*\*)?SCENE\s*\d+(?:\*\*)?\s*\|\s*(.+?)\s*\|\s*(.+)$/i.exec(l); if (m) { a.push([m[1], m[2]]); } }); return a; }
+        X.on('bscene', function (v) { CR.scene = Math.max(0, +v); X.again(); });
+        X.on('bplay', function () {
+            var o = OUT.cr; if (!o || !o.t) { return; } var sc = scenes(o.t), i = 0; if (!sc.length) { return; }
+            function step() { if (i >= sc.length || S.win !== 'baba') { return; } CR.scene = i; X.again(); try { var u = new SpeechSynthesisUtterance(sc[i][1]); u.onend = function () { i++; setTimeout(step, 400); }; u.onerror = function () { i++; setTimeout(step, 3500); }; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); } catch (e) { i++; setTimeout(step, 4000); } }
+            step();
+        });
+        X.on('bimgsave', function () {
+            var o = OUT.cr; if (!o || !o.img) { return; } fetch(o.img).then(function (r) { return r.blob(); }).then(function (b) { var fr = new FileReader(); fr.onload = function () { var d = String(fr.result), b64 = d.slice(d.indexOf(',') + 1), n = window.MintooNative; try { if (n && n.saveBin && n.saveBin(window.__mwTok, 'baba_picture_' + Date.now() + '.jpg', 'image/jpeg', b64)) { tst('Saved in Downloads > MintooSuite'); return; } } catch (e) { } var a = document.createElement('a'); a.href = d; a.download = 'baba_picture.jpg'; document.body.appendChild(a); a.click(); document.body.removeChild(a); }; fr.readAsDataURL(b); }).catch(function () { tst('Could not save the picture. Press and hold it instead.'); });
+        });
+        X.on('bimgnew', function () { var o = OUT.cr; if (o && o.img) { CR.imgSeed = Math.floor(Math.random() * 99999); OUT.cr = { img: imgUrl(CR.topic, CR.imgSeed), t: CR.topic }; X.again(); } });
+        function chips(key, opts, cur, evt) { return '<div class="segc" data-noswipe="1" style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px">' + Object.keys(opts).map(function (k) { return '<span class="' + (k === cur ? 'on' : '') + '" data-xk="' + evt + ':' + k + '" style="flex:1 1 auto;text-align:center;white-space:nowrap">' + (Array.isArray(opts[k]) ? opts[k][0] : opts[k]) + '</span>'; }).join('') + '</div>'; }
+        function createTab() {
+            var h = box('<b>✍️ Create anything</b> ' + qh('Pick what to make, type the topic, and Baba writes it. Documents save as Word-readable files, presentations as slide shows you can open in any browser, pictures as images. Everything is saved in Downloads > MintooSuite.') + '<div class="note" style="margin:6px 0 2px">What to make</div>' + chips('t', TYPES, CR.type, 'bct') +
+                (CR.type === 'img' ? '' : '<div class="note" style="margin:0">Language</div>' + chips('l', { English: 'English', Urdu: 'اردو Urdu', 'Roman Urdu': 'Roman Urdu', Arabic: 'العربية' }, CR.lang, 'bcl') + '<div class="note" style="margin:0">Length</div>' + chips('n', { short: 'Short', medium: 'Medium', long: 'Long' }, CR.len, 'bcn')) +
+                '<textarea class="tin" data-bi="topic" rows="3" placeholder="' + (CR.type === 'img' ? 'Describe the picture, e.g. a snowy Hunza valley at sunrise' : 'What is it about? e.g. Climate change and farming in Pakistan') + '" style="width:100%;box-sizing:border-box;margin:6px 0">' + e2(CR.topic) + '</textarea><button class="btn" data-xk="bgo:1">' + (CR.type === 'img' ? '🖼 Make picture' : '✨ Create') + '</button>');
+            var o = OUT.cr;
+            if (o && o.busy) { h += '<div class="group pad mut">Baba is writing… this can take up to a minute.</div>'; }
+            else if (o && o.img) { h += '<div class="xkcard"><img src="' + e2(o.img) + '" alt="picture" style="width:100%;border-radius:12px" onerror="this.alt=\'Picture service is busy. Try again.\'"><div class="note" style="margin:6px 0">Picture made by a free online image service. Quality and availability vary. ' + DISC + '</div><button class="btn sec" data-xk="bimgnew:1" style="width:auto;padding:6px 12px;font-size:13px">🔄 Another</button> <button class="btn sec" data-xk="bimgsave:1" style="width:auto;padding:6px 12px;font-size:13px">💾 Save</button></div>'; }
+            else if (o && o.t && CR.type === 'vid' && scenes(o.t).length) {
+                var sc = scenes(o.t), s = sc[Math.min(CR.scene, sc.length - 1)];
+                h += '<div class="xkcard"><b>Scene ' + (Math.min(CR.scene, sc.length - 1) + 1) + ' of ' + sc.length + '</b><img src="' + e2(imgUrl(s[0] + ', cinematic, detailed', 7 + CR.scene)) + '" alt="scene" style="width:100%;border-radius:12px;margin:6px 0"><div style="font-size:14px">' + e2(s[1]) + '</div><div style="display:flex;gap:6px;margin-top:8px"><button class="btn sec" data-xk="bscene:' + (CR.scene - 1) + '" style="flex:1">◀</button><button class="btn" data-xk="bplay:1" style="flex:2">▶ Play with voice</button><button class="btn sec" data-xk="bscene:' + (CR.scene + 1) + '" style="flex:1">▶|</button></div><div class="note" style="margin:6px 0 0">This is a picture-and-voice storyboard, not a finished movie file. ' + DISC + '</div></div>' + out(o, 'cr');
+            } else if (o) { h += out(o, 'cr'); }
+            return h;
+        }
+
+        /* ---------- ENCYCLOPEDIA (Wikipedia, free, no key; saved articles readable offline) ---------- */
+        var WK = {}; try { WK = JSON.parse(localStorage.getItem('mintoosuite_wiki') || '{}') || {}; } catch (e) { WK = {}; }
+        var WS = { q: '', res: null, busy: 0, err: '', lang: 'en' };
+        function wkSave() { try { var k = Object.keys(WK); if (k.length > 60) { k.sort(function (a, b) { return WK[a].at - WK[b].at; }); delete WK[k[0]]; } localStorage.setItem('mintoosuite_wiki', JSON.stringify(WK)); } catch (e) { } }
+        document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-wq')) { WS.q = t.value; } });
+        X.on('wlang', function (v) { WS.lang = v; WS.res = null; X.again(); });
+        X.on('wsearch', function () {
+            var q = (WS.q || '').trim(); if (!q) { return; } WS.busy = 1; WS.err = ''; WS.res = null; X.again();
+            fetch('https://' + WS.lang + '.wikipedia.org/w/api.php?action=opensearch&search=' + encodeURIComponent(q) + '&limit=6&format=json&origin=*').then(function (r) { return r.json(); }).then(function (j) { WS.busy = 0; WS.res = (j[1] || []).map(function (t, i) { return [t, j[2][i] || '', j[3][i] || '']; }); if (!WS.res.length) { WS.err = 'No article found. Try other words, or ask Baba in Chat.'; } X.again(); }).catch(function () { WS.busy = 0; WS.err = 'Needs internet. Saved articles below still work.'; X.again(); });
+        });
+        X.on('wopen', function (v) {
+            var t = decodeURIComponent(v); WS.busy = 1; X.again();
+            fetch('https://' + WS.lang + '.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(t)).then(function (r) { return r.json(); }).then(function (j) { WS.busy = 0; if (!j || !j.extract) { throw new Error('x'); } WK[WS.lang + ':' + t] = { at: Date.now(), t: j.title || t, x: j.extract, u: (j.content_urls && j.content_urls.mobile && j.content_urls.mobile.page) || '', i: (j.thumbnail && j.thumbnail.source) || '', lg: WS.lang }; wkSave(); WS.cur = WS.lang + ':' + t; X.again(); }).catch(function () { WS.busy = 0; WS.err = 'Could not open that article. Needs internet.'; X.again(); });
+        });
+        X.on('wshow', function (v) { WS.cur = decodeURIComponent(v); X.again(); });
+        X.on('wexplain', function () { var a = WK[WS.cur]; if (!a) { return; } CR.type = 'adv'; CR.topic = 'Explain this simply with examples and why it matters: ' + a.t; KX.bT = 'create'; X.save(); X.again(); });
+        function encTab() {
+            var h = box('<b>🌐 Encyclopedia</b> ' + qh('Search any topic in Wikipedia, the world’s largest free encyclopedia, in English or Urdu. Articles you open are saved on this phone so you can read them again offline. Wikipedia is written by volunteers: check important facts in more than one place.') + '<div class="segc" data-noswipe="1" style="display:flex;gap:4px;margin:8px 0"><span class="' + (WS.lang === 'en' ? 'on' : '') + '" data-xk="wlang:en" style="flex:1;text-align:center">English</span><span class="' + (WS.lang === 'ur' ? 'on' : '') + '" data-xk="wlang:ur" style="flex:1;text-align:center">اردو</span></div><input class="tin" data-wq="1" value="' + e2(WS.q) + '" placeholder="Search anything: Mars, diabetes, Mughal Empire, Python…" style="width:100%;box-sizing:border-box"><button class="btn" data-xk="wsearch:1" style="margin-top:6px">Search</button>');
+            if (WS.busy) { h += '<div class="group pad mut">Loading…</div>'; }
+            if (WS.err) { h += '<div class="group pad mut">' + e2(WS.err) + '</div>'; }
+            if (WS.res && WS.res.length) { h += '<div class="group">' + WS.res.map(function (r) { return '<div class="row tap" data-xk="wopen:' + encodeURIComponent(r[0]) + '" style="display:block"><b>' + e2(r[0]) + '</b><div class="note" style="margin:2px 0 0">' + e2(r[1]).slice(0, 120) + '</div></div>'; }).join('') + '</div>'; }
+            var a = WK[WS.cur];
+            if (a) { h += '<div class="xkcard">' + (a.i ? '<img src="' + e2(a.i) + '" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin-bottom:6px">' : '') + '<b style="font-size:16px">' + e2(a.t) + '</b><div style="font-size:14px;line-height:1.55;margin:6px 0">' + e2(a.x) + '</div>' + (a.u ? lk('Read full article', a.u) : '') + '<button class="btn sec" data-xk="wexplain:1" style="width:auto;display:inline-block;padding:7px 12px;font-size:13px">🧓 Ask Baba to explain</button><div class="note" style="margin:6px 0 0">Source: Wikipedia (CC BY-SA). Saved on this phone.</div></div>'; }
+            var sv = Object.keys(WK).sort(function (x, y) { return WK[y].at - WK[x].at; });
+            if (sv.length) { h += '<div class="note" style="margin:8px 0 4px"><b>Saved for offline reading (' + sv.length + ')</b></div><div class="group">' + sv.slice(0, 20).map(function (k) { return '<div class="row tap" data-xk="wshow:' + encodeURIComponent(k) + '"><span>' + e2(WK[k].t) + '</span><span class="mut">' + e2(WK[k].lg) + '</span></div>'; }).join('') + '</div>'; }
+            return h;
+        }
+
+        /* ---------- LIBRARY (offline) ---------- */
+        function libTab() {
+            var cats = {}; (window.__babaLib || []).forEach(function (e) { cats[e[0]] = (cats[e[0]] || 0) + 1; });
+            var q = KX.blq || '', cat = KX.blc || '', res = q ? window.__babaLibSearch(q) : (cat ? window.__babaLib.filter(function (e) { return e[0] === cat; }) : []);
+            var h = box('<b>📚 Offline library</b> ' + qh('These short summaries are stored inside the app, so they work with no internet. They are for learning, not a replacement for a teacher, doctor or lawyer. For deeper or newer answers, ask Baba in Chat.') + '<input class="tin" data-bq="1" value="' + e2(q) + '" placeholder="Search: gravity, first aid, zakat, Pakistan…" style="width:100%;box-sizing:border-box;margin-top:8px"><button class="btn" data-xk="blsearch:1" style="margin-top:6px">Search</button>');
+            h += '<div class="segc" data-noswipe="1" style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0">' + Object.keys(cats).map(function (c) { return '<span class="' + (c === cat && !q ? 'on' : '') + '" data-xk="blcat:' + c + '" style="flex:1 1 auto;text-align:center;white-space:nowrap">' + c + ' ' + cats[c] + '</span>'; }).join('') + '</div>';
+            if (!res.length) { h += '<div class="group pad mut">' + (q ? 'Nothing found offline. Try Chat to ask online AI.' : 'Choose a subject above or search.') + '</div>'; }
+            else { h += res.map(function (e) { return '<div class="xkcard"><div class="note" style="margin:0">' + e2(e[0]) + '</div><b>' + e2(e[1]) + '</b><div style="font-size:14px;line-height:1.5;margin-top:4px">' + e2(e[2]) + '</div></div>'; }).join(''); }
+            return h;
+        }
+        document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-bq')) { KX.blqTmp = t.value; } });
+        X.on('blsearch', function () { KX.blq = (KX.blqTmp !== undefined ? KX.blqTmp : KX.blq) || ''; KX.blc = ''; X.save(); X.again(); });
+        X.on('blcat', function (c) { KX.blc = c; KX.blq = ''; KX.blqTmp = ''; X.save(); X.again(); });
+
+        /* ---------- HUB: new tab bar and welcome card around the existing Baba window ---------- */
+        var _vb = VIEWS.baba;
+        var TABS = [['chat', '💬 Chat'], ['news', '📰 News'], ['create', '✍️ Create'], ['enc', '🌐 Wiki'], ['lib', '📚 Library'], ['ask', '📋 Paste'], ['settings', '⚙️ Settings'], ['about', 'ℹ️ About']];
+        var OWN = { news: 1, create: 1, lib: 1, enc: 1 };
+        VIEWS.baba = function () {
+            var o = _vb.apply(this, arguments), i = o.indexOf('<div class="bbtabs">'); if (i < 0) { return o; }
+            var j = o.indexOf('</div>', i) + 6, hero = o.slice(0, i), body = o.slice(j), m = /<span class="on" data-bbt="([a-z]+)"/.exec(o.slice(i, j)), active = KX.bT || (m && m[1]) || 'chat';
+            var bar = '<div class="bbtabs" data-noswipe="1">' + TABS.map(function (x) { return OWN[x[0]] ? '<span class="' + (active === x[0] ? 'on' : '') + '" data-xk="bT:' + x[0] + '">' + x[1] + '</span>' : '<span class="' + (active === x[0] ? 'on' : '') + '" data-bbt="' + x[0] + '">' + x[1] + '</span>'; }).join('') + '</div>';
+            if (OWN[KX.bT]) { return hero + bar + (KX.bT === 'news' ? newsTab() : KX.bT === 'create' ? createTab() : KX.bT === 'enc' ? encTab() : libTab()); }
+            var wel = '';
+            if (active === 'chat' && KX.bWel !== '0') { wel = box('<div style="display:flex;justify-content:space-between"><b>👋 Welcome to Baba AI</b><span data-xk="bWel:0" style="font-size:12px;opacity:.7">hide</span></div><div class="note" style="margin:6px 0 0"><b>I can:</b> answer questions on most subjects, explain trading and this app, read today’s news, write documents, slides, essays, strategies, study notes, make pictures and video storyboards, and look things up offline in my library.<br><b>I cannot:</b> be right every time, predict the future, replace a doctor, lawyer or financial advisor, or make finished movies. Always check important things.<br><b>Free:</b> Everything works with the free AI, no key and no sign-up needed. If one free service is busy I try another.<br><b>Encyclopedia:</b> the Wiki tab searches all of Wikipedia and saves what you read for offline use.</div><div style="margin-top:6px"><span data-xk="bT:news" class="btn sec" style="display:inline-block;width:auto;padding:6px 12px;font-size:13px">📰 News</span> <span data-xk="bT:create" class="btn sec" style="display:inline-block;width:auto;padding:6px 12px;font-size:13px">✍️ Create</span> <span data-xk="bT:enc" class="btn sec" style="display:inline-block;width:auto;padding:6px 12px;font-size:13px">🌐 Wiki</span> <span data-xk="bT:lib" class="btn sec" style="display:inline-block;width:auto;padding:6px 12px;font-size:13px">📚 Library</span></div>', '#af52de'); }
+            return hero + bar + wel + body;
+        };
+        document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-bbt]') : null; if (t) { KX.bT = ''; X.save(); } }, true);
+        var _bs = window.__babaSet; if (_bs) { window.__babaSet = function () { KX.bT = ''; return _bs.apply(this, arguments); }; }
+        X.on('bT', function (v) { KX.bT = v; X.save(); X.again(); });
+        window.__babaDbg = { OUT: OUT, CR: CR };
+    } catch (e) { try { console.log('p9zszze', e); } catch (er) { } }
+})();
+/* BN part 1: merge many windows into a few families; each family shows a tab strip at the top, swiping moves through the family */
+(function () {
+    try {
+        window.__kDbg = window.__kDbg || {}; window.__kDbg.MG = MW_GROUPS; window.__kDbg.V = VIEWS;
+
+        // ---- Proof window: honest scoreboard from the practice (paper) bot; real fees already included ----
+        function vProof() {
+            var b = S.bot || {}, c = (b.closed || []).slice(), n = c.length, w = 0, gp = 0, gl = 0, i, first = 0;
+            c.forEach(function (t) { if (t.pnl > 0) { w++; gp += t.pnl; } else { gl += -t.pnl; } if (!first || (t.at && t.at < first)) { first = t.at || first; } });
+            var pf = gl > 0 ? gp / gl : (gp > 0 ? 99 : 0), wr = n ? Math.round(w / n * 100) : 0, dd = b.maxDd || 0, days = first ? Math.floor((Date.now() - first) / 86400000) : 0;
+            var net = c.reduce(function (a, t) { return a + t.pnl; }, 0);
+            var ck = [['100 or more closed practice trades', n >= 100, n + ' so far'], ['Profit factor 1.3 or better (after fees)', pf >= 1.3 && n >= 20, n ? pf.toFixed(2) : 'no trades yet'], ['Worst drop under 10%', n >= 20 && dd < 10, dd.toFixed(1) + '%'], ['Running for 28 days or more', days >= 28, days + ' days']];
+            var pass = ck.every(function (x) { return x[1]; });
+            var h = '<div class="group pad"><b>🧾 Proof (honest scoreboard)</b><div class="note" style="margin:4px 0 8px">This page counts only the practice bot with pretend money, and it already subtracts trading fees. It is not a promise. Real trading can lose money. A strategy is only worth trusting after it passes <b>all four checks</b> below on live prices.</div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="group pad" style="margin:0"><div class="note" style="margin:0">Closed trades</div><b style="font-size:22px">' + n + '</b></div><div class="group pad" style="margin:0"><div class="note" style="margin:0">Win rate</div><b style="font-size:22px">' + wr + '%</b></div><div class="group pad" style="margin:0"><div class="note" style="margin:0">Profit factor</div><b style="font-size:22px">' + (n ? pf.toFixed(2) : '–') + '</b></div><div class="group pad" style="margin:0"><div class="note" style="margin:0">Net (pretend $)</div><b style="font-size:22px">' + (net >= 0 ? '+' : '−') + Math.abs(net).toFixed(2) + '</b></div></div></div>' +
+                '<div class="group pad"><b>Pass-mark before trusting any strategy</b>' + ck.map(function (x) { return '<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line,#e5e5ea)"><span>' + (x[1] ? '✅' : '⬜') + ' ' + x[0] + '</span><b>' + x[2] + '</b></div>'; }).join('') +
+                '<div class="note" style="margin:8px 0 0">' + (pass ? 'All four checks passed on practice trades. That is a good sign, not a guarantee. Start real money tiny and keep every safety lock on.' : 'Not passed yet. Keep practising. Do not use real money on this strategy until all four are ticked.') + '</div></div>' +
+                '<div class="group pad"><b>Last practice trades</b>' + (n ? c.slice(0, 10).map(function (t) { return '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>' + (t.pnl >= 0 ? '🟢' : '🔴') + ' ' + String(t.sym || '').replace(/USDT$/, '') + ' ' + (t.side || '') + '</span><b>' + (t.pnl >= 0 ? '+' : '−') + Math.abs(t.pnl).toFixed(2) + '</b></div>'; }).join('') : '<div class="note">No closed practice trades yet. Open Bots and start the practice bot.</div>') + '</div>' +
+                '<div class="group pad"><div class="note" style="margin:0">Honest limits: results from pretend trades differ from real trades (slippage, delays, emotions). Past results do not predict the future. Nobody can promise profit.</div></div>';
+            return h;
+        }
+        try { VIEWS.proof = vProof; LIVE.proof = 0; if (!winDef('proof') || winDef('proof').id !== 'proof') { WINS.push({ id: 'proof', ic: '🧾', c: '#34c759', n: 'Proof', t: 'Proof', sub: 'Honest practice scoreboard with a pass-mark' }); } } catch (e) { try { WINS.push({ id: 'proof', ic: '🧾', c: '#34c759', n: 'Proof', t: 'Proof', sub: 'Honest practice scoreboard' }); VIEWS.proof = vProof; LIVE.proof = 0; } catch (e2) { } }
+        var FAM = [
+            ['Home', ['overview', 'ideas', 'mood', 'movers', 'analyst', 'live']],
+            ['Markets', ['market', 'find', 'chart', 'gold', 'rates', 'news', 'newc', 'split']],
+            ['Exchanges', ['exchanges', 'exness', 'exdesk', 'mexc', 'bitget']],
+            ['Trade', ['hub', 'tpro', 'xtrade', 'trade', 'terminal', 'risk', 'hist', 'copy', 'signals']],
+            ['Bots', ['bots', 'paper', 'rbot', 'proof']],
+            ['Baba AI', ['baba']],
+            ['Pakistan & money', ['around', 'psx', 'offers', 'brokers', 'wallet']],
+            ['Learn & play', ['academy', 'videos', 'quest', 'me', 'tips']],
+            ['Account & tools', ['account', 'plans', 'alerts', 'timez', 'log', 'health', 'help', 'calib', 'perms', 'legal']]
+        ];
+        var famOf = {}, used = {};
+        FAM.forEach(function (f) { f[1] = f[1].filter(function (id) { return typeof VIEWS[id] === 'function'; }); f[1].forEach(function (id) { famOf[id] = f; used[id] = 1; }); });
+        // new menu order (swiping follows this order, so siblings sit next to each other)
+        var old = MW_GROUPS.slice(), rest = [];
+        old.forEach(function (g) { (g[1] || []).forEach(function (id) { if (!used[id] && rest.indexOf(id) < 0 && typeof VIEWS[id] === 'function') { rest.push(id); } }); });
+        var all = []; FAM.forEach(function (f) { f[1].forEach(function (id) { all.push(id); }); }); var ng = [['Main windows', all]];
+        if (rest.length) { ng.push(['Detail pages', rest]); }
+        MW_GROUPS.length = 0; ng.forEach(function (g) { MW_GROUPS.push(g); });
+        // menu shows only the main window of each family (the others are tabs inside it)
+        var HID2 = []; FAM.forEach(function (f) { f[1].slice(1).forEach(function (id) { HID2.push(id); }); });
+        var _mt2 = mwTiles;
+        mwTiles = function () { var h = _mt2.apply(this, arguments); HID2.forEach(function (id) { h = h.replace(new RegExp('<div class="tile[^"]*" data-act="win:' + id + '"><div class="ic"[^>]*>[^<]*</div>[^<]*</div>', 'g'), ''); }); return h; };
+        function nm(id) { var w = null; try { w = winDef(id); } catch (e) { } var t = String((w && (w.t || w.n)) || id).replace(/[^\w &\/.\-+%]+/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 16 ? t.slice(0, 15) + '…' : t; }
+        function strip(id) {
+            var f = famOf[id]; if (!f || f[1].length < 2) { return ''; }
+            return '<div class="segc fmstrip" data-noswipe="1" style="display:flex;gap:6px;overflow-x:auto;white-space:nowrap;margin:0 0 10px;padding:2px 0 6px;-webkit-overflow-scrolling:touch">' + f[1].map(function (k) {
+                var on = k === id;
+                return '<button type="button" data-act="win:' + k + '" data-noswipe="1" style="flex:none;padding:7px 12px;border-radius:16px;border:1px solid ' + (on ? '#0a84ff' : 'var(--line,#d1d1d6)') + ';background:' + (on ? '#0a84ff' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit') + ';font:700 13px system-ui,sans-serif">' + nm(k) + '</button>';
+            }).join('') + '</div>';
+        }
+        FAM.forEach(function (f) {
+            f[1].forEach(function (id) {
+                var fn = VIEWS[id]; if (typeof fn !== 'function' || fn.__fm) { return; }
+                var w = function () { var h = fn.apply(this, arguments); return typeof h === 'string' ? strip(id) + h : h; }; w.__fm = 1; VIEWS[id] = w;
+            });
+        });
+        // keep the active chip in view
+        setInterval(function () { try { var a = document.querySelector('.fmstrip button[style*="#0a84ff;color"]'); var s = document.querySelector('.fmstrip'); if (a && s && !s.__c) { s.__c = 1; s.scrollLeft = Math.max(0, a.offsetLeft - 60); } } catch (e) { } }, 500);
+        window.__fam = { FAM: FAM, famOf: famOf };
+    } catch (e) { try { console.log('p9zszzf', e); } catch (er) { } }
+})();
+/* BN part 2: reviewer fixes: readable chips in Signals, shorter window titles */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '.xchb{display:flex;flex-wrap:wrap;gap:6px}.xchb>span[data-sg]{display:inline-block;padding:8px 13px;border-radius:16px;border:1px solid var(--line,#d1d1d6);cursor:pointer;font-weight:700;font-size:13px}.xchb>span[data-sg].on{background:#0a84ff;color:#fff;border-color:#0a84ff}#winName{max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}';
+        document.head.appendChild(st);
+        WINS.forEach(function (w) { if (w.id === 'botpro') { w.n = 'Bot Pro'; } });
+    } catch (e) { }
+})();
+/* BN part 3: Baba AI round button sits at the very top right of the header (still draggable) */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '.nav-in{padding-right:46px;box-sizing:border-box}#pfm.top .pfbub{bottom:auto!important;top:44px}';
+        document.head.appendChild(st);
+        function navY() { var n = document.querySelector('.nav-in'); if (!n) { return 8; } var r = n.getBoundingClientRect(); return Math.max(2, Math.round(r.top + (r.height - 38) / 2)); }
+        var _pp = pfPos;
+        pfPos = function () {
+            try {
+                if (localStorage.getItem('mintoosuite_pftop') !== '1' && document.querySelector('.nav-in')) {
+                    PF.st.x = window.innerWidth - 46; PF.st.y = navY(); localStorage.setItem('mintoosuite_pftop', '1'); pfSave();
+                }
+            } catch (e) { }
+            _pp.apply(this, arguments);
+            try { var m = document.getElementById('pfm'); if (m) { m.classList.toggle('top', (PF.st.y || 0) < 160); } } catch (e) { }
+        };
+        setTimeout(function () { try { pfPos(); } catch (e) { } }, 1200);
+    } catch (e) { try { console.log('p9zszzf3', e); } catch (er) { } }
 })();
 
 function renderView(keep) {

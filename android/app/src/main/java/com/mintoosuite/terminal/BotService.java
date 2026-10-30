@@ -27,6 +27,7 @@ public class BotService extends Service {
         @Override
         public void run() {
             try { WebHolder.keepAlive(); } catch (Exception ignored) { }
+            try { if (wl != null && wl.isHeld()) { wl.acquire(10L * 60L * 60L * 1000L); } } catch (Exception ignored) { }
             beat.postDelayed(this, 45000L);
         }
     };

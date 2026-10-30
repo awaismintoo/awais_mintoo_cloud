@@ -48,6 +48,14 @@ final class WebHolder {
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         w.addJavascriptInterface(new Bridge(app), "MintooNative");
         w.setWebViewClient(new WebViewClient() {
+            @SuppressLint("NewApi")
+            @Override
+            public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail detail) {
+                try { if (view.getParent() instanceof ViewGroup) { ((ViewGroup) view.getParent()).removeView(view); } view.destroy(); } catch (Exception ignored) { }
+                web = null;
+                return true;
+            }
+
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return loader.shouldInterceptRequest(request.getUrl());

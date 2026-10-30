@@ -358,4 +358,50 @@ final class Bridge {
         ((NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE)).notify(100 + (nid++ % 50), b.build());
         try { Overlay.show(ctx, title, body); } catch (Exception ignored) { }
     }
+
+    /* BJ2: save a document or picture into Downloads/MintooSuite and share text (no storage permission needed on Android 10+) */
+    @JavascriptInterface
+    public boolean saveDoc(String tok, String name, String mime, String content) {
+        if (!ok(tok)) { return false; }
+        try { return writeDownload(name, mime, content.getBytes("UTF-8")); } catch (Exception e) { return false; }
+    }
+
+    @JavascriptInterface
+    public boolean saveBin(String tok, String name, String mime, String b64) {
+        if (!ok(tok)) { return false; }
+        try { return writeDownload(name, mime, android.util.Base64.decode(b64, android.util.Base64.DEFAULT)); } catch (Exception e) { return false; }
+    }
+
+    private boolean writeDownload(String name, String mime, byte[] data) {
+        try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                android.content.ContentValues v = new android.content.ContentValues();
+                v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, name);
+                v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mime);
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS + "/MintooSuite");
+                android.net.Uri u = ctx.getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+                if (u == null) { return false; }
+                java.io.OutputStream o = ctx.getContentResolver().openOutputStream(u);
+                if (o == null) { return false; }
+                o.write(data);
+                o.close();
+                return true;
+            }
+        } catch (Exception ignored) { }
+        return false;
+    }
+
+    @JavascriptInterface
+    public void shareText(String tok, String title, String text) {
+        if (!ok(tok)) { return; }
+        try {
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.setType("text/plain");
+            i.putExtra(Intent.EXTRA_SUBJECT, title);
+            i.putExtra(Intent.EXTRA_TEXT, text);
+            Intent c = Intent.createChooser(i, "Share");
+            c.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ctx.startActivity(c);
+        } catch (Exception ignored) { }
+    }
 }
