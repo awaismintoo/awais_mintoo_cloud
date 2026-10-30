@@ -249,26 +249,31 @@ public class MainActivity extends AppCompatActivity {
         return BiometricManager.from(this).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS;
     }
 
-    boolean bioHas() {
-        return getSharedPreferences("mw_bio", MODE_PRIVATE).contains("ct");
+    boolean bioHas() { return bioHas(""); }
+
+    boolean bioHas(String slot) {
+        return getSharedPreferences("mw_bio" + slot, MODE_PRIVATE).contains("ct");
     }
 
-    void bioClear() {
-        getSharedPreferences("mw_bio", MODE_PRIVATE).edit().clear().apply();
+    void bioClear() { bioClear(""); }
+
+    void bioClear(String slot) {
+        getSharedPreferences("mw_bio" + slot, MODE_PRIVATE).edit().clear().apply();
         try {
             java.security.KeyStore ks = java.security.KeyStore.getInstance("AndroidKeyStore");
             ks.load(null);
-            if (ks.containsAlias(KEY_ALIAS)) { ks.deleteEntry(KEY_ALIAS); }
+            if (ks.containsAlias(KEY_ALIAS + slot)) { ks.deleteEntry(KEY_ALIAS + slot); }
         } catch (Exception ignored) { }
     }
 
-    private javax.crypto.SecretKey bioKey(boolean create) throws Exception {
+    private javax.crypto.SecretKey bioKey(String slot, boolean create) throws Exception {
+        final String alias = KEY_ALIAS + slot;
         java.security.KeyStore ks = java.security.KeyStore.getInstance("AndroidKeyStore");
         ks.load(null);
-        if (ks.containsAlias(KEY_ALIAS)) { return (javax.crypto.SecretKey) ks.getKey(KEY_ALIAS, null); }
+        if (ks.containsAlias(alias)) { return (javax.crypto.SecretKey) ks.getKey(alias, null); }
         if (!create) { return null; }
         javax.crypto.KeyGenerator kg = javax.crypto.KeyGenerator.getInstance(android.security.keystore.KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-        kg.init(new android.security.keystore.KeyGenParameterSpec.Builder(KEY_ALIAS,
+        kg.init(new android.security.keystore.KeyGenParameterSpec.Builder(alias,
                 android.security.keystore.KeyProperties.PURPOSE_ENCRYPT | android.security.keystore.KeyProperties.PURPOSE_DECRYPT)
                 .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
@@ -291,21 +296,23 @@ public class MainActivity extends AppCompatActivity {
         });
         BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
                 .setTitle(title)
-                .setSubtitle("MintooSuite wallet")
+                .setSubtitle("MintooSuite")
                 .setNegativeButtonText("Use password")
                 .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
                 .build();
         bp.authenticate(info, new BiometricPrompt.CryptoObject(cipher));
     }
 
-    void bioSave(final String secret, final String cb) {
+    void bioSave(final String secret, final String cb) { bioSave("", secret, cb); }
+
+    void bioSave(final String slot, final String secret, final String cb) {
         runOnUiThread(() -> {
             try {
                 javax.crypto.Cipher c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
-                c.init(javax.crypto.Cipher.ENCRYPT_MODE, bioKey(true));
+                c.init(javax.crypto.Cipher.ENCRYPT_MODE, bioKey(slot, true));
                 bioPrompt(c, "Enable fingerprint", cb, cipher -> {
                     byte[] ct = cipher.doFinal(secret.getBytes("UTF-8"));
-                    getSharedPreferences("mw_bio", MODE_PRIVATE).edit()
+                    getSharedPreferences("mw_bio" + slot, MODE_PRIVATE).edit()
                             .putString("iv", android.util.Base64.encodeToString(cipher.getIV(), android.util.Base64.NO_WRAP))
                             .putString("ct", android.util.Base64.encodeToString(ct, android.util.Base64.NO_WRAP)).apply();
                     return "ok";
@@ -314,19 +321,21 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    void bioUnlock(final String cb) {
+    void bioUnlock(final String cb) { bioUnlock("", cb); }
+
+    void bioUnlock(final String slot, final String cb) {
         runOnUiThread(() -> {
             try {
-                SharedPreferences sp = getSharedPreferences("mw_bio", MODE_PRIVATE);
+                SharedPreferences sp = getSharedPreferences("mw_bio" + slot, MODE_PRIVATE);
                 String ivs = sp.getString("iv", ""), cts = sp.getString("ct", "");
-                javax.crypto.SecretKey key = ivs.isEmpty() || cts.isEmpty() ? null : bioKey(false);
+                javax.crypto.SecretKey key = ivs.isEmpty() || cts.isEmpty() ? null : bioKey(slot, false);
                 if (key == null) { jsCb(cb, false, "Fingerprint is not set up."); return; }
                 final byte[] ct = android.util.Base64.decode(cts, android.util.Base64.NO_WRAP);
                 javax.crypto.Cipher c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
                 c.init(javax.crypto.Cipher.DECRYPT_MODE, key, new javax.crypto.spec.GCMParameterSpec(128, android.util.Base64.decode(ivs, android.util.Base64.NO_WRAP)));
                 bioPrompt(c, "Unlock with fingerprint", cb, cipher -> new String(cipher.doFinal(ct), "UTF-8"));
             } catch (android.security.keystore.KeyPermanentlyInvalidatedException e) {
-                bioClear();
+                bioClear(slot);
                 jsCb(cb, false, "Your fingerprints changed. Turn fingerprint on again with your password.");
             } catch (Exception e) { jsCb(cb, false, "Fingerprint is not available."); }
         });

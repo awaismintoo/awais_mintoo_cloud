@@ -48,6 +48,30 @@ final class Bridge {
     @JavascriptInterface
     public void speechStop(String tok) { if (ok(tok)) { Media.stop(); } }
 
+    /* ----- language voices: open Android's own "install voice data" screen ----- */
+    @JavascriptInterface
+    public void ttsInstall(String tok) {
+        if (!ok(tok)) { return; }
+        try {
+            Intent i = new Intent("android.speech.tts.engine.INSTALL_TTS_DATA");
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ctx.startActivity(i);
+        } catch (Exception e) {
+            try {
+                Intent j = new Intent("com.android.settings.TTS_SETTINGS");
+                j.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                ctx.startActivity(j);
+            } catch (Exception ignored) { }
+        }
+    }
+
+    /* ----- alerts when the app is closed (needs google-services.json at build time) ----- */
+    @JavascriptInterface
+    public boolean pushAvailable(String tok) { return ok(tok) && PushHelper.available(); }
+
+    @JavascriptInterface
+    public void pushSub(String tok, boolean on) { if (ok(tok)) { PushHelper.subscribe(ctx, on); } }
+
     /* ----- wallet fingerprint ----- */
     @JavascriptInterface
     public boolean bioAvailable(String tok) {
@@ -78,6 +102,61 @@ final class Bridge {
         if (!ok(tok)) { return; }
         MainActivity a = MainActivity.cur;
         if (a != null) { a.bioClear(); } else { ctx.getSharedPreferences("mw_bio", Context.MODE_PRIVATE).edit().clear().apply(); }
+    }
+
+    /* ----- fingerprint log-in (its own slot, separate from the wallet) ----- */
+    @JavascriptInterface
+    public boolean bioHasS(String tok, String slot) { return ok(tok) && ctx.getSharedPreferences("mw_bio" + safeSlot(slot), Context.MODE_PRIVATE).contains("ct"); }
+
+    @JavascriptInterface
+    public void bioSaveS(String tok, String slot, String secret, String cb) {
+        if (!ok(tok)) { return; }
+        MainActivity a = MainActivity.cur;
+        if (a == null) { MainActivity.jsCb(cb, false, "Open the app first."); return; }
+        a.bioSave(safeSlot(slot), secret, cb);
+    }
+
+    @JavascriptInterface
+    public void bioUnlockS(String tok, String slot, String cb) {
+        if (!ok(tok)) { return; }
+        MainActivity a = MainActivity.cur;
+        if (a == null) { MainActivity.jsCb(cb, false, "Open the app first."); return; }
+        a.bioUnlock(safeSlot(slot), cb);
+    }
+
+    @JavascriptInterface
+    public void bioClearS(String tok, String slot) {
+        if (!ok(tok)) { return; }
+        MainActivity a = MainActivity.cur;
+        if (a != null) { a.bioClear(safeSlot(slot)); } else { ctx.getSharedPreferences("mw_bio" + safeSlot(slot), Context.MODE_PRIVATE).edit().clear().apply(); }
+    }
+
+    private static String safeSlot(String s) { return s != null && s.matches("[a-z]{1,8}") ? "_" + s : "_x"; }
+
+    /* ----- offline language packs (ML Kit, by reflection) ----- */
+    @JavascriptInterface
+    public boolean trAvailable(String tok) { return ok(tok) && TranslateHelper.available(); }
+
+    @JavascriptInterface
+    public void trHave(String tok, final String cb) {
+        if (!ok(tok)) { return; }
+        TranslateHelper.have((good, data) -> trCb(cb, good, data));
+    }
+
+    @JavascriptInterface
+    public void trDownload(String tok, String lang, final String cb) {
+        if (!ok(tok) || lang == null || !lang.matches("[a-z]{2,3}")) { return; }
+        TranslateHelper.download(lang, (good, data) -> trCb(cb, good, data));
+    }
+
+    @JavascriptInterface
+    public void trTranslate(String tok, String from, String to, String text, final String cb) {
+        if (!ok(tok) || from == null || to == null || !from.matches("[a-z]{2,3}") || !to.matches("[a-z]{2,3}")) { return; }
+        TranslateHelper.translate(from, to, text == null ? "" : text, (good, data) -> trCb(cb, good, data));
+    }
+
+    private static void trCb(String cb, boolean good, String data) {
+        WebHolder.js("window.__mwTr&&window.__mwTr(" + org.json.JSONObject.quote(cb) + "," + good + "," + org.json.JSONObject.quote(data == null ? "" : data) + ");");
     }
 
     /* ----- whole-app lock ----- */

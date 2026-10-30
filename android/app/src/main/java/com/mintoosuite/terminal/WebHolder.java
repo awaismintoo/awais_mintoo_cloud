@@ -98,6 +98,26 @@ final class WebHolder {
             }
 
             @Override
+            public void onPermissionRequest(final android.webkit.PermissionRequest req) {
+                try {
+                    final java.util.ArrayList<String> ok = new java.util.ArrayList<String>();
+                    String[] rs = req.getResources();
+                    for (int i = 0; i < rs.length; i++) {
+                        if (android.webkit.PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(rs[i])) { ok.add(rs[i]); }
+                    }
+                    if (ok.isEmpty()) { req.deny(); return; }
+                    MAIN.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            try { req.grant(ok.toArray(new String[0])); } catch (Exception ignored) { }
+                        }
+                    });
+                } catch (Exception e) {
+                    try { req.deny(); } catch (Exception ignored) { }
+                }
+            }
+
+            @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> cb, FileChooserParams params) {
                 return Media.chooser(cb, params);
             }
