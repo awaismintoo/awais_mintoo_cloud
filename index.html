@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-29.57';
+var BUILD = '2026-10-29.64';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5568,7 +5568,7 @@ function pfAct(a) {
 function btn(a, t) { return '<span class="pfbtn" data-pfgo="' + esc(a) + '">' + esc(t) + '</span>'; }
 function pfNorm(q) { return ' ' + q.toLowerCase().replace(/[^a-z0-9%&\/+\-\.\s]/g, ' ').replace(/\s+/g, ' ').trim() + ' '; }
 var _pfre = {};
-function pfHit(kw, q) { var out = 0; kw.split('|').forEach(function (k) { var r = _pfre[k]; if (!r) { r = _pfre[k] = new RegExp('(^|[^a-z0-9])' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z0-9]|$)'); } if (r.test(q)) { out += k.length > 4 ? 2 : 1; } }); return out; }
+function pfHit(kw, q) { var out = 0; kw.split('|').forEach(function (k) { var r = _pfre[k]; if (!r) { r = _pfre[k] = new RegExp('(^|[^a-z0-9])' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z0-9]|$)'); } if (r.test(q)) { out += k.length > 4 ? 2 + Math.min(3, k.split(' ').length - 1) : 1; } }); return out; }
 var PF_STOP = { THE: 1, AND: 1, FOR: 1, ARE: 1, WHAT: 1, WHY: 1, HOW: 1, IS: 1, TO: 1, OF: 1, IN: 1, A: 1, MY: 1, ME: 1, IT: 1, DO: 1, I: 1, PRICE: 1, OPEN: 1, SHOW: 1, ABOUT: 1, COIN: 1, ANALYSE: 1, ANALYZE: 1, CHART: 1, GO: 1, TAKE: 1, BUY: 1, SELL: 1, LONG: 1, SHORT: 1, ON: 1, AT: 1, BEST: 1, NOW: 1, TODAY: 1, TELL: 1, CAN: 1, YOU: 1, THIS: 1, THAT: 1, WITH: 1, FROM: 1, NEW: 1, ALL: 1 };
 function pfCoin(raw) {
     var toks = raw.replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean), found = null, aliases = { bitcoin: 'BTC', ethereum: 'ETH', gold: 'XAU', solana: 'SOL', ripple: 'XRP', dogecoin: 'DOGE', binance: 'BNB' };
@@ -9351,9 +9351,11 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     function liveCtx() {
         var o = []; try { ['BTCUSDT', 'ETHUSDT', 'XAUUSDT'].forEach(function (s) { var t = S.tick && S.tick[s]; if (t) { o.push(base(s) + ' ' + fmtP(t.p, s) + ' (' + (t.chg >= 0 ? '+' : '') + t.chg.toFixed(1) + '% 24h)'); } }); } catch (e) { }
         try { var r = window.__idRows ? (window.__xf = 0, window.__idRows().slice(0, 3)) : []; if (r.length) { o.push('top ideas: ' + r.map(function (m) { return base(m.sym) + ' ' + m.side + ' ' + Math.round(m.R.p * 100) + '%'; }).join(', ')); } } catch (e) { }
+        try { var F = S.fb, n = F && F.closed ? F.closed.length : 0; if (n) { o.push('paper Bot Pro: ' + n + ' closed trades, ' + (window.__mwWhyLost ? window.__mwWhyLost() : '')); } } catch (e) { }
+        try { var gdg = S.fb && S.fb.skips && S.fb.skips.slice(0, 3).map(function (x) { return base(x.sym) + ' skipped: ' + x.why; }); if (gdg && gdg.length) { o.push('Smart Guard recent skips: ' + gdg.join(' | ')); } } catch (e) { }
         return o.join('; ');
     }
-    function system() { return 'You are Professor, the built-in tutor inside the MintooSuite trading app. The user is a beginner. Answer in simple plain English. If the user writes in Urdu script, answer in clear Urdu script (Pakistani Urdu, right-to-left, simple everyday words, keep coin names, numbers and technical terms like RSI or stop loss in English letters). If the user writes Roman Urdu, answer in Roman Urdu, short and step by step, with a small example when useful. You can answer any question, also outside trading. Never promise profit or certainty about price direction; for trade questions give educational reasoning and risks and say it is not financial advice. For questions about the app, name the window to open. If you are not sure, say so. Live data now: ' + (liveCtx() || 'not available') + '. Time: ' + new Date().toISOString().slice(0, 16) + ' UTC.'; }
+    function system() { return 'You are Professor, the built-in tutor inside the MintooSuite trading app. The user is a beginner. Answer in simple plain English. If the user writes in Urdu script, answer in clear Urdu script (Pakistani Urdu, right-to-left, simple everyday words, keep coin names, numbers and technical terms like RSI or stop loss in English letters). If the user writes Roman Urdu, answer in Roman Urdu, short and step by step, with a small example when useful. You can answer any question, also outside trading. Never promise profit or certainty about price direction; for trade questions give educational reasoning and risks and say it is not financial advice. For questions about the app, name the window to open. When asked how to do something on Binance, MEXC, Bitget, OKX or Bybit (create an API key, set permissions, restrict IPs, move funds to the futures wallet, set leverage, place or close an order) or how to connect them in this app (Menu > Profile > Connections, Trade Pro, Real Bot), give short numbered steps, say that screens can differ slightly, always tell the user to keep withdrawals OFF, use trusted IPs, start in test mode or with a tiny amount, and never to share secret keys with anyone including you. You know the app well: Bot Pro (paper, Smart Guard), Real Bot Chief (locked until typed UNLOCK), Trade Pro, Trade Ideas, Gold Desk, Exness Desk, Grid Bot (paper), Problem log, Look & mode. If asked why a bot lost, use the bot facts in the live data and explain plainly. If you are not sure, say so. Live data now: ' + (liveCtx() || 'not available') + '. Time: ' + new Date().toISOString().slice(0, 16) + ' UTC.'; }
     function history(n) { var out = []; try { var arr = (PB.ctx === 'pf' ? PF.msgs : PCH.msgs) || []; arr.slice(-n * 2 - 2, -2).forEach(function (m) { var t = plain(m.html).slice(0, 700); if (t && !/pfdots/.test(m.html)) { out.push({ role: m.who === 'me' ? 'user' : 'assistant', content: t }); } }); } catch (e) { } return out; }
     /* ----- AI engines ----- */
     function post(url, headers, body) { return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body) }).then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) { } if (!r.ok) { var m = j && (j.error && (j.error.message || j.error) || j.message) || t.slice(0, 120); throw new Error('HTTP ' + r.status + ': ' + (typeof m === 'string' ? m : JSON.stringify(m)).slice(0, 160)); } return j || { raw: t }; }); }); }
@@ -9945,208 +9947,597 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     var sty = document.createElement('style'); sty.textContent = '.pfm1,.pcm{unicode-bidi:plaintext}#pcq,#pfq{unicode-bidi:plaintext}';
     document.head.appendChild(sty);
 })();
-/* ===== p9zsx: Gold Desk: full pro window for trading gold (XAU/USD) on Exness/MT5 ===== */
+/* ===== .61: rich lock screen (PIN or pattern, fingerprint button) + avatar from gallery ===== */
 (function () {
-    var GK = 'mintoosuite_gold', G = { bk: '', bkt: 0, sig: [], sct: 0,  ctf: '5m', ks: null, kat: 0, last: null, alert: {},  tab: 'plan', bal: '1000', rp: '1', lev: '500', mdl: '50', sl: '', side: 'auto', lvl: null, mac: null, busy: 0, at: 0, j: [], chk: {}, chkDay: '', msg: '', spr: '0.20' };
-    try { var o = JSON.parse(localStorage.getItem(GK) || 'null'); if (o) { ['bal', 'rp', 'lev', 'mdl', 'sl', 'side', 'spr'].forEach(function (k) { if (o[k] != null) { G[k] = o[k]; } }); G.j = o.j || []; G.sig = o.sig || []; G.bk = o.bk || ''; G.bkt = o.bkt || 0; G.chk = o.chk || {}; G.chkDay = o.chkDay || ''; } } catch (e) { }
-    try { var st = document.createElement('style'); st.textContent = '.gdb{display:flex;gap:6px;flex-wrap:wrap}.gdb span{padding:7px 12px;border-radius:16px;background:rgba(128,128,128,.16);font-size:13px;font-weight:600;cursor:pointer}.gdb span.on{background:#d4a017;color:#fff}'; document.head.appendChild(st); } catch (e) { }
-    function sv() { try { localStorage.setItem(GK, JSON.stringify({ bal: G.bal, rp: G.rp, lev: G.lev, mdl: G.mdl, sl: G.sl, side: G.side, spr: G.spr, j: G.j.slice(0, 200), sig: G.sig.slice(0, 120), bk: G.bk, bkt: G.bkt, chk: G.chk, chkDay: G.chkDay })); } catch (e) { } }
-    function f(v, d) { var n = +v; return isFinite(n) ? n.toFixed(d == null ? 2 : d) : '–'; }
-    function px() { var t = S.tick && S.tick[GOLD]; return t ? t.p : (G.ks && G.ks.length ? G.ks[G.ks.length - 1][4] : null); }
-    function day() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
-    function pkt(h, m) { return ('0' + h).slice(-2) + ':' + ('0' + (m || 0)).slice(-2); }
-    function load() {
-        if (G.busy || Date.now() - G.at < 120000) { return; } G.busy = 1; try { mwXLoad(); } catch (e) { }
-        var pr = [fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + GOLD + '&interval=1d&limit=40').then(function (r) { return r.json(); }).then(function (k) { if (Array.isArray(k) && k.length > 10) { var n = k.length, d = k[n - 2], w = k.slice(-8).map(function (x) { return { h: +x[2], l: +x[3] }; }); var H = +d[2], L = +d[3], C = +d[4], P = (H + L + C) / 3; var a = 0, i; for (i = n - 15; i < n - 1; i++) { a += Math.max(+k[i][2] - +k[i][3], Math.abs(+k[i][2] - +k[i - 1][4]), Math.abs(+k[i][3] - +k[i - 1][4])); } G.lvl = { H: H, L: L, C: C, P: P, R1: 2 * P - L, S1: 2 * P - H, R2: P + (H - L), S2: P - (H - L), R3: H + 2 * (P - L), S3: L - 2 * (H - P), wkH: Math.max.apply(null, w.map(function (x) { return x.h; })), wkL: Math.min.apply(null, w.map(function (x) { return x.l; })), tH: +k[n - 1][2], tL: +k[n - 1][3], tO: +k[n - 1][1], atr: a / 14, closes: k.map(function (x) { return +x[4]; }) }; } }).catch(function () { })];
-        var MAC = [['DX-Y.NYB', 'US Dollar index', -1], ['^TNX', 'US 10-year yield', -1], ['SI=F', 'Silver', 1], ['CL=F', 'Oil', 0], ['^GSPC', 'S&P 500', 0], ['^VIX', 'Fear index (VIX)', 0]]; G.mac = G.mac || [];
-        MAC.forEach(function (m) { pr.push(exdYraw(m[0], '1d', '2mo').then(function (r) { var n = r.length, c = r.map(function (x) { return x[4]; }); G.mac = G.mac.filter(function (z) { return z.s !== m[0]; }); G.mac.push({ s: m[0], n: m[1], hint: m[2], p: c[n - 1], ch: (c[n - 1] / c[n - 2] - 1) * 100, closes: c }); }).catch(function () { })); });
-        Promise.all(pr).then(function () { G.busy = 0; G.at = Date.now(); if (S.win === 'golddesk') { renderView(true); } });
-    }
-    function corr(a, b) { var n = Math.min(a.length, b.length, 20); if (n < 8) { return null; } a = a.slice(-n); b = b.slice(-n); var ra = [], rb = [], i; for (i = 1; i < n; i++) { ra.push(a[i] / a[i - 1] - 1); rb.push(b[i] / b[i - 1] - 1); } var ma = ra.reduce(function (s, v) { return s + v; }, 0) / ra.length, mb = rb.reduce(function (s, v) { return s + v; }, 0) / rb.length, sab = 0, sa = 0, sb = 0; for (i = 0; i < ra.length; i++) { sab += (ra[i] - ma) * (rb[i] - mb); sa += (ra[i] - ma) * (ra[i] - ma); sb += (rb[i] - mb) * (rb[i] - mb); } return sa > 0 && sb > 0 ? sab / Math.sqrt(sa * sb) : null; }
+    try {
+        var K = 'mintoosuite_lkui'; /* {t:'pin'|'pat', h:hash, s:salt, auto:30} */
+        function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function sv(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+        function cfg() { try { return JSON.parse(g(K) || 'null'); } catch (e) { return null; } }
+        function hash(txt, salt) { var a = 0xdeadbeef, b = 0x41c6ce57, s = salt + '|' + txt, r, i, ch; for (r = 0; r < 3000; r++) { for (i = 0; i < s.length; i++) { ch = s.charCodeAt(i); a = Math.imul(a ^ ch, 2654435761); b = Math.imul(b ^ ch, 1597334677); } a ^= a >>> 15; b ^= b >>> 13; } return (a >>> 0).toString(36) + (b >>> 0).toString(36); }
+        function nat() { try { return typeof mwNat === 'function' ? mwNat() : null; } catch (e) { return null; } }
+        function esc2(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function nm() { try { return typeof meName === 'function' ? meName() : 'Trader'; } catch (e) { return 'Trader'; } }
+        function av() { try { return typeof avInner === 'function' ? avInner() : ''; } catch (e) { return ''; } }
 
-    function stSplit(get) {
-        function avg(l) { var n = 0, d = 0; l.forEach(function (t) { var a = get(t[0]); if (a) { n += t[1] * a.score; d += t[1] * 6; } }); return d ? n / d * 100 : null; }
-        var sh = avg([['1m', 1], ['5m', 1.5], ['15m', 2]]), lg = avg([['1h', 2.5], ['4h', 3], ['1d', 3]]); return sh == null || lg == null ? null : { sh: sh, lg: lg };
-    }
-    window.__dxy = window.__dxy || { at: 0 };
-    function dxyLoad() { if (Date.now() - window.__dxy.at < 120000) { return; } window.__dxy.at = Date.now(); exdYraw('DX-Y.NYB', '5m', '1d').then(function (r) { var n = r.length, a = r[Math.max(0, n - 13)][4], b = r[n - 1][4]; window.__dxy.ch = (b / a - 1) * 100; window.__dxy.p = b; window.__dxy.t = r[n - 1][0]; }).catch(function () { }); }
-    function liveBox(I) {
-        var D = S.xd, sp = stSplit(function (tf) { return D.data[I.k + tf]; }), k1 = D.ks && D.ks[I.k + '1m'], m20 = null;
-        if (k1 && k1.length > 22) { var a = +k1[k1.length - 21][4], b = +k1[k1.length - 1][4]; m20 = (b / a - 1) * 100; }
-        var lt = D.last && D.last[I.k + '1m'], age = lt ? Math.round((Date.now() - lt) / 60000) : null, dx = window.__dxy;
-        function lab(v) { return v == null ? '–' : (v >= 25 ? 'BUY ' : v <= -25 ? 'SELL ' : 'WAIT ') + Math.round(Math.abs(v)); }
-        function col(v) { return v == null ? 'inherit' : v >= 25 ? '#30d158' : v <= -25 ? '#ff453a' : '#ff9f0a'; }
-        var conflict = sp && Math.abs(sp.sh) >= 20 && Math.abs(sp.lg) >= 25 && (sp.sh > 0) !== (sp.lg > 0);
-        var h = '<div class="group pad" style="border-left:5px solid ' + (conflict ? '#ff9f0a' : '#0a84ff') + '"><b>⏱ Live check (what is happening right now)</b>';
-        h += '<div class="row"><span>Price in the last 20 minutes</span><b style="color:' + (m20 == null ? 'inherit' : m20 >= 0 ? '#30d158' : '#ff453a') + '">' + (m20 == null ? '…' : (m20 >= 0 ? '▲ +' : '▼ ') + m20.toFixed(2) + '%') + '</b></div>';
-        h += '<div class="row"><span>Short-term view (1m, 5m, 15m)</span><b style="color:' + col(sp && sp.sh) + '">' + lab(sp && sp.sh) + '</b></div><div class="row"><span>Slow view (1h, 4h, 1D)</span><b style="color:' + col(sp && sp.lg) + '">' + lab(sp && sp.lg) + '</b></div>';
-        if (I.k === 'XAU' || I.k === 'XAG') { h += '<div class="row"><span>US Dollar index, last hour</span><b style="color:' + (dx && dx.ch != null ? (dx.ch <= 0 ? '#30d158' : '#ff453a') : 'inherit') + '">' + (dx && dx.ch != null ? (dx.ch >= 0 ? '▲ +' : '▼ ') + dx.ch.toFixed(2) + '% · ' + (Math.abs(dx.ch) < 0.03 ? 'flat' : dx.ch < 0 ? 'helps gold up' : 'pushes gold down') : '…') + '</b></div>'; }
-        if (dx && dx.ch != null && m20 != null && Math.abs(dx.ch) >= 0.03 && Math.abs(m20) >= 0.1 && (dx.ch > 0) === (m20 > 0)) { h += '<div class="note">Gold and the dollar are moving the <b>same</b> way right now, so the dollar is not explaining gold at the moment. Do not trade gold on the dollar alone.</div>'; }
-        h += '<div class="note" style="margin:4px 0 0">Newest 1-minute candle is ' + (age == null ? '…' : age <= 1 ? 'fresh' : age + ' min old') + '. This box refreshes every 20 seconds.</div>';
-        if (conflict) { h += '<div class="warn">The slow frames say ' + (sp.lg > 0 ? 'BUY' : 'SELL') + ' but the last minutes say ' + (sp.sh > 0 ? 'BUY' : 'SELL') + '. The plan below mostly follows the slow frames, so it can be late. When they disagree it is safer to WAIT until the short-term view turns the same way, or trade the short-term move with half size and a close stop.</div>'; }
-        else if (sp) { h += '<div class="note">Short and slow views point the same way or are quiet: the plan below is not fighting the current move.</div>'; }
-        return h + '</div>';
-    }
-    ['exdesk'].forEach(function (id) { var o = VIEWS[id]; if (o) { VIEWS[id] = function () { var I = exdI(); dxyLoad(); return liveBox(I) + o.apply(this, arguments); }; } });
-    setInterval(function () { if (S.win !== 'exdesk' || document.hidden || document.querySelector('.sheet.open') || (document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName))) { return; } var I = exdI(); dxyLoad(); exdOne(I, ['1m', '5m', '15m']).then(function () { if (S.win === 'exdesk') { renderView(true); } }); }, 20000);
+        /* ---------- styles ---------- */
+        var css = '#mwlkui{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 26px) 20px calc(env(safe-area-inset-bottom,0px) + 22px);color:#fff;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;overflow:hidden;background:#070b16;touch-action:none;user-select:none;-webkit-user-select:none}' +
+            '#mwlkui .bgf{position:absolute;inset:-20%;background:radial-gradient(600px 420px at 20% 15%,var(--lkA,#5b8cff),transparent 62%),radial-gradient(560px 440px at 85% 75%,var(--lkB,#a05bff),transparent 60%),radial-gradient(500px 360px at 50% 105%,rgba(0,220,170,.35),transparent 65%);opacity:.55;filter:blur(30px);animation:lkdrift 16s ease-in-out infinite alternate}' +
+            '@keyframes lkdrift{from{transform:translate3d(-3%,-2%,0) scale(1)}to{transform:translate3d(3%,3%,0) scale(1.12)}}' +
+            'html.mwcalm #mwlkui .bgf{animation:none}' +
+            '#mwlkui .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:34px 34px;-webkit-mask-image:radial-gradient(circle at 50% 30%,#000,transparent 75%);mask-image:radial-gradient(circle at 50% 30%,#000,transparent 75%)}' +
+            '#mwlkui>*{position:relative}#mwlkui .bgf,#mwlkui .grid{position:absolute}' +
+            '#mwlkui .top{text-align:center;width:100%}' +
+            '#mwlkui .brand{display:inline-flex;gap:8px;align-items:center;font-weight:800;letter-spacing:.14em;font-size:12px;opacity:.85;padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14)}' +
+            '#mwlkui .clk{font-size:68px;font-weight:200;letter-spacing:-.02em;line-height:1;margin-top:18px;text-shadow:0 6px 30px rgba(0,0,0,.4)}' +
+            '#mwlkui .dt{opacity:.8;font-size:15px;margin-top:6px}' +
+            '#mwlkui .who{display:block!important;text-align:center;width:100%}#mwlkui .who>*{display:block;margin-left:auto;margin-right:auto}#mwlkui .dots{display:flex!important}' +
+            '#mwlkui .ring{width:84px;height:84px;margin:0 auto 10px;border-radius:50%;padding:3px;background:conic-gradient(from 0deg,var(--lkA,#5b8cff),var(--lkB,#a05bff),#00e0b0,var(--lkA,#5b8cff));box-shadow:0 0 30px rgba(120,140,255,.5)}' +
+            '#mwlkui .ring>div{width:100%;height:100%;border-radius:50%;overflow:hidden;background:#101733}#mwlkui .ring svg,#mwlkui .ring img{width:100%;height:100%;display:block}' +
+            '#mwlkui .hi{font-size:19px;font-weight:700}#mwlkui .msg{font-size:13.5px;opacity:.78;margin-top:4px;min-height:18px}#mwlkui .msg.bad{color:#ff8a98;opacity:1}' +
+            '#mwlkui .dots{display:flex;gap:16px;justify-content:center;margin:16px 0 4px;height:16px}#mwlkui .dots i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.7);transition:all .12s}#mwlkui .dots i.on{background:#fff;box-shadow:0 0 14px #fff;transform:scale(1.1)}' +
+            '#mwlkui .shake{animation:lkshake .38s}@keyframes lkshake{20%{transform:translateX(-12px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}' +
+            '#mwlkui .pad{display:grid;grid-template-columns:repeat(3,74px);gap:14px 22px;justify-content:center}' +
+            '#mwlkui .k{width:74px;height:74px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;font-weight:300;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;transition:transform .08s,background .08s}' +
+            '#mwlkui .k small{font-size:9px;letter-spacing:.18em;opacity:.6;margin-top:-2px}#mwlkui .k:active,#mwlkui .k.p{background:rgba(255,255,255,.34);transform:scale(.92)}#mwlkui .k.ghost{background:none;border-color:transparent;backdrop-filter:none;font-size:14px;font-weight:600}' +
+            '#mwlkui .pat{position:relative;width:240px;height:240px;margin:6px auto}' +
+            '#mwlkui .pat b{position:absolute;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.07)}#mwlkui .pat b:after{content:"";position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;border-radius:50%;background:rgba(255,255,255,.75)}#mwlkui .pat b.on{border-color:#fff;background:rgba(255,255,255,.22);box-shadow:0 0 22px var(--lkA,#5b8cff)}#mwlkui .pat svg{position:absolute;inset:0;pointer-events:none}' +
+            '#mwlkui .bot{display:flex;gap:18px;justify-content:center;align-items:center;margin-top:14px;font-size:13.5px}#mwlkui .bot span{cursor:pointer;padding:9px 16px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);font-weight:600}' +
+            '#mwlkui .tick{font-size:12px;opacity:.6;text-align:center;margin-top:10px;max-width:290px}' +
+            '.lkset .o{padding:12px;border-radius:14px;margin:6px 0;background:var(--fill,#eee);border:2px solid transparent;cursor:pointer;font-weight:700}.lkset .o.on{border-color:#0a84ff}.lkset .o small{display:block;font-weight:500;opacity:.7;margin-top:2px}';
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = css; document.head.appendChild(st);
 
-    function sigAge(P) {
-        var q = G.sig[0]; if (!q || q.side !== P.side || P.side === 'WAIT') { return ''; }
-        var m = Math.round((Date.now() - q.t) / 60000), d = P.side === 'BUY' ? 1 : -1, mv = (px() - q.p) * d, R = Math.abs(q.p - q.sl);
-        var st = q.st === 'win' ? 'TP1 was reached.' : q.st === 'loss' ? 'Stop was hit.' : mv <= -R * 0.7 ? 'Price has gone most of the way to the stop: the idea is weak now.' : mv >= R * 1.2 ? 'Price already moved well in favour: a new entry now is late.' : 'Still inside the plan range.';
-        return '<div class="note"><b>Signal age:</b> given ' + (m < 90 ? m + ' min' : Math.round(m / 60) + ' h') + ' ago at ' + f(q.p) + ' · price now moved ' + (mv >= 0 ? '+' : '') + f(mv) + ' in the signal direction (stop is ' + f(R) + ' away). ' + st + '</div>';
-    }
-    function sigTrack(P) {
-        if (!P || P.side === 'WAIT' || !px()) { return; } var q = G.sig[0];
-        if (!q || q.side !== P.side || (q.st !== 'open' && Date.now() - q.t > 3600000)) { G.sig.unshift({ side: P.side, p: P.p, sl: P.sl, tp1: P.tp1, tp2: P.tp2, t: Date.now(), st: 'open', conf: Math.round(Math.abs(P.conf)) }); if (G.sig.length > 120) { G.sig.length = 120; } sv(); }
-    }
-    function sigResolve() {
-        if (Date.now() - G.sct < 60000) { return; } G.sct = Date.now();
-        G.sig.filter(function (q) { return q.st === 'open'; }).slice(0, 3).forEach(function (q) {
-            fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + GOLD + '&interval=1m&startTime=' + q.t + '&limit=1000').then(function (r) { return r.json(); }).then(function (k) {
-                if (!Array.isArray(k)) { return; } var up = q.side === 'BUY', res = null, i;
-                for (i = 0; i < k.length; i++) { var h = +k[i][2], l = +k[i][3], hitSl = up ? l <= q.sl : h >= q.sl, hitTp = up ? h >= q.tp1 : l <= q.tp1; if (hitSl) { res = 'loss'; break; } if (hitTp) { res = 'win'; break; } }
-                if (!res && Date.now() - q.t > 86400000) { res = 'expired'; }
-                if (res) { q.st = res; q.rt = Date.now(); sv(); }
-            }).catch(function () { });
-        });
-    }
-    function scoreHtml() {
-        var d = G.sig.filter(function (q) { return q.st === 'win' || q.st === 'loss'; }), w = d.filter(function (q) { return q.st === 'win'; }).length, op = G.sig.filter(function (q) { return q.st === 'open'; }).length, ex = G.sig.filter(function (q) { return q.st === 'expired'; }).length, net = w * 1.5 - (d.length - w);
-        return '<div class="group pad"><b>Scorecard of this app\'s own gold signals</b><div class="note">Every BUY/SELL signal is saved and checked against real 1-minute prices: TP1 (+1.5R) reached before the stop (−1R) = win. If both fall in the same minute it counts as a loss. Signals are only recorded while the Gold Desk or Exness window has been open recently.</div><div class="row"><span>Decided signals</span><b>' + d.length + '</b></div><div class="row"><span>Hit rate</span><b>' + (d.length ? Math.round(w / d.length * 100) + '% (' + w + ' wins)' : '–') + '</b></div><div class="row"><span>Net result in R</span><b style="color:' + (net >= 0 ? '#34c759' : '#ff3b30') + '">' + (net >= 0 ? '+' : '') + f(net, 1) + 'R</b></div><div class="row"><span>Still open / expired</span><b>' + op + ' / ' + ex + '</b></div>' + (d.length < 30 ? '<div class="note">Under 30 decided signals this is not reliable yet.</div>' : '') + (d.length && w / d.length < 0.4 ? '<div class="warn">At 1.5R targets you need about 40% wins to break even. Below that the signals lose money.</div>' : '') + '</div>' + (G.sig.length ? '<div class="group">' + G.sig.slice(0, 20).map(function (q) { return '<div class="row"><span>' + q.side + ' ' + f(q.p) + ' <small class="mut">' + new Date(q.t).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' · strength ' + q.conf + '</small></span><b style="color:' + (q.st === 'win' ? '#34c759' : q.st === 'loss' ? '#ff3b30' : '#8e8e93') + '">' + q.st + '</b></div>'; }).join('') + '</div>' : '');
-    }
-    function plan() {
-        var conf = null; try { conf = mwXConf(); } catch (e) { } var p = px(), L = G.lvl; if (conf == null || !p) { return null; }
-        var sl_ = stSplit(function (tf) { return S.xt[tf]; }), auto = conf >= 25 ? 'BUY' : conf <= -25 ? 'SELL' : 'WAIT', conflict = auto !== 'WAIT' && sl_ && Math.abs(sl_.sh) >= 20 && (sl_.sh > 0) !== (auto === 'BUY'); if (conflict) { auto = 'WAIT'; } var side = G.side === 'buy' ? 'BUY' : G.side === 'sell' ? 'SELL' : auto, d = side === 'BUY' ? 1 : -1, atr = (L && L.atr) || (S.xt['1h'] && S.xt['1h'].atr * 3) || p * 0.008;
-        var a1 = S.xt['1h'] && S.xt['1h'].atr, R = G.sl && +G.sl > 0 ? +G.sl : (a1 ? a1 * 1.5 : atr * 0.5), sl = p - d * R, lv = L ? [L.S3, L.S2, L.S1, L.P, L.R1, L.R2, L.R3, L.H, L.L, L.wkH, L.wkL] : []; if (side !== 'WAIT') { var cand = G.sl ? null : lv.filter(function (v) { return d > 0 ? v < p - R * 0.6 && v > p - R * 1.6 : v > p + R * 0.6 && v < p + R * 1.6; }).sort(function (a, b) { return d > 0 ? b - a : a - b; })[0]; if (cand && !(G.sl && +G.sl > 0)) { sl = cand - d * 0.3; R = Math.abs(p - sl); } }
-        var bal = +G.bal, rp = +G.rp, risk = bal > 0 && rp > 0 ? bal * rp / 100 : 0, lots = risk > 0 && R > 0 ? risk / (R * 100) : 0;
-        var off = G.bk && +G.bk > 0 && Date.now() - G.bkt < 1800000 && px() ? +G.bk - px() : 0; return { off: off, pa: p + off, sla: sl + off, t1a: p + d * R * 1.5 + off, t2a: p + d * R * 2.5 + off, t3a: p + d * R * 4 + off, conflict: conflict, sp: sl_, conf: conf, auto: auto, side: side, d: d, p: p, R: R, sl: sl, tp1: p + d * R * 1.5, tp2: p + d * R * 2.5, tp3: p + d * R * 4, lots: lots, risk: risk, atr: atr };
-    }
-    function sessions() {
-        var u = new Date(), h = u.getUTCHours() + u.getUTCMinutes() / 60, S_ = [['Sydney', 21, 6, 'quiet'], ['Tokyo', 0, 9, 'slow, range'], ['London', 8, 17, 'big moves, trend'], ['New York', 13, 22, 'biggest moves, news']];
-        function on(a, b) { return a < b ? h >= a && h < b : h >= a || h < b; }
-        return S_.map(function (s) { var o = on(s[1], s[2]), st = ((s[1] + 5) % 24), en = ((s[2] + 5) % 24); return { n: s[0], on: o, a: st, b: en, note: s[3] }; });
-    }
-    function chkList() { return ['Higher time frames agree with my direction', 'It is London or New York time (not rollover 02:00–04:00 PKT)', 'No big USD news in the next 30 minutes', 'My risk is 1–2% of the account or less', 'I have set a stop loss before entering', 'Reward is at least 1.5 times the risk', 'The spread looks normal (about $0.15–0.30)', 'I am calm: not chasing, not revenge trading'].map(function (t, i) { return [i, t]; }); }
-    function ticket(P) { if (P.side === 'WAIT') { return ''; } return (P.side + ' XAUUSD | lots ' + (P.lots >= 0.01 ? P.lots.toFixed(2) : '0.01') + ' | entry ~' + f(P.pa) + ' | SL ' + f(P.sla) + ' | TP1 ' + f(P.t1a) + ' | TP2 ' + f(P.t2a) + ' | TP3 ' + f(P.t3a)); }
-
-    function ckl(force) {
-        if (!force && Date.now() - G.kat < 12000) { return Promise.resolve(); } G.kat = Date.now();
-        return fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + GOLD + '&interval=' + G.ctf + '&limit=70').then(function (r) { return r.json(); }).then(function (k) { if (Array.isArray(k) && k.length > 10) { G.ks = k.map(function (x) { return [+x[0], +x[1], +x[2], +x[3], +x[4]]; }); } }).catch(function () { });
-    }
-    function chartHtml(P) {
-        var a = G.ks; if (!a || a.length < 10) { return '<div class="group pad mut">Loading live chart…</div>'; }
-        var p = px() || a[a.length - 1][4], W = 340, H = 220, lv = [p]; if (P && P.side !== 'WAIT') { lv.push(P.sl, P.tp1, P.tp2); }
-        var hi = Math.max.apply(null, a.map(function (x) { return x[2]; }).concat(lv)), lo = Math.min.apply(null, a.map(function (x) { return x[3]; }).concat(lv)), pd = (hi - lo) * 0.06 || 1; hi += pd; lo -= pd;
-        function y(v) { return (H - 6 - (v - lo) / (hi - lo) * (H - 12)).toFixed(1); }
-        var w = (W - 62) / a.length, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block;touch-action:pan-y"><rect width="' + W + '" height="' + H + '" fill="rgba(128,128,128,.06)" rx="10"/>';
-        a.forEach(function (x, i) { var up = x[4] >= x[1], c = up ? '#34c759' : '#ff3b30', cx = (i * w + w / 2).toFixed(1), t = Math.min(y(x[1]), y(x[4])), hgt = Math.max(1, Math.abs(y(x[1]) - y(x[4]))); s += '<line x1="' + cx + '" x2="' + cx + '" y1="' + y(x[2]) + '" y2="' + y(x[3]) + '" stroke="' + c + '" stroke-width="1"/><rect x="' + (i * w + w * 0.18).toFixed(1) + '" y="' + t + '" width="' + (w * 0.64).toFixed(1) + '" height="' + hgt.toFixed(1) + '" fill="' + c + '"/>'; });
-        function line(v, col, lab, dash) { return '<line x1="0" x2="' + (W - 62) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="' + col + '" stroke-width="1.2"' + (dash ? ' stroke-dasharray="5 4"' : '') + '/><text x="' + (W - 60) + '" y="' + (+y(v) + 3) + '" font-size="9" fill="' + col + '">' + lab + ' ' + f(v, 1) + '</text>'; }
-        if (P && P.side !== 'WAIT') { s += line(P.tp2, '#34c759', 'TP2', 1) + line(P.tp1, '#34c759', 'TP1', 1) + line(P.sl, '#ff3b30', 'SL', 1); }
-        s += line(p, '#0a84ff', 'Now', 0) + '</svg>';
-        var cfl = P && P.conflict ? '<div class="warn" style="margin:0 0 6px">Slow time frames and the last minutes disagree: WAIT. See Multi-time-frame view below.</div>' : ''; var col = !P ? '#8e8e93' : P.side === 'BUY' ? '#34c759' : P.side === 'SELL' ? '#ff3b30' : '#ff9f0a', txt = !P ? 'Reading the market…' : P.side === 'WAIT' ? '⏸ AI signal: WAIT' : (P.side === 'BUY' ? '▲ AI signal: BUY' : '▼ AI signal: SELL') + ' · strength ' + Math.round(Math.abs(P.conf)) + '/100';
-        return '<div class="group pad" style="padding:8px">' + cfl + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:' + col + ';font-size:16px">' + txt + '</b><span class="mut" style="font-size:11px"><span style="color:#34c759">●</span> live</span></div>' + s + '<div class="gdb" style="margin:6px 0 0">' + ['1m', '5m', '15m', '1h'].map(function (t) { return '<span class="' + (G.ctf === t ? 'on' : '') + '" data-gd="ctf:' + t + '">' + t + '</span>'; }).join('') + '</div>' + (P && P.side !== 'WAIT' ? '<div class="row" style="margin-top:6px"><span>Recommendation' + (P.off ? ' (Exness price)' : '') + '</span><b style="color:' + col + '">' + P.side + ' @ ' + f(P.pa) + '</b></div><div class="row"><span>SL <b style="color:#ff3b30">' + f(P.sla) + '</b></span><span>TP1 <b style="color:#34c759">' + f(P.t1a) + '</b></span><span>TP2 <b style="color:#34c759">' + f(P.t2a) + '</b></span></div>' : '') + '</div>';
-    }
-    function alerts() {
-        var P = plan(), p = px(); try { sigTrack(P); sigResolve(); } catch (e) { } if (!P || !p || typeof window.__huPush !== 'function') { return; }
-        var sg = P.side; if (G.last && G.last !== sg && sg !== 'WAIT') { window.__huPush('gd-sig-' + sg, sg === 'BUY' ? '🟢' : '🔴', 'Gold signal: ' + sg, 'Entry ' + f(P.p) + ' · SL ' + f(P.sl) + ' · TP1 ' + f(P.tp1) + ' · TP2 ' + f(P.tp2) + ' · lots ' + (P.lots >= 0.01 ? f(P.lots) : '0.01'), 'win:golddesk', sg === 'BUY' ? 'good' : 'bad', 600000); }
-        if (G.last && G.last !== sg && sg === 'WAIT') { window.__huPush('gd-wait', '⏸', 'Gold: signal cleared', 'The time frames no longer agree. Stay out until a clear signal.', 'win:golddesk', 'info', 900000); }
-        G.last = sg;
-        G.j.filter(function (t) { return t.res == null && t.sl && t.tp; }).forEach(function (t, i) { var up = t.side === 'BUY'; if (up ? p >= t.tp : p <= t.tp) { window.__huPush('gd-tp' + t.t, '🎯', 'Gold target 1 reached', 'Price ' + f(p) + ' hit your TP1. Consider moving the stop to entry.', 'win:golddesk', 'good', 3600000); } if (up ? p <= t.sl : p >= t.sl) { window.__huPush('gd-sl' + t.t, '⚠️', 'Gold stop level touched', 'Price ' + f(p) + ' reached your stop ' + f(t.sl) + '. Close the trade if it is still open.', 'win:golddesk', 'bad', 3600000); } });
-    }
-    setInterval(function () { try { alerts(); } catch (e) { } if (S.win !== 'golddesk') { return; } fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=' + GOLD).then(function (r) { return r.json(); }).then(function (j) { if (j && +j.price) { if (S.tick && S.tick[GOLD]) { S.tick[GOLD].p = +j.price; } var els = document.querySelectorAll('[data-px="' + GOLD + '"]'); for (var i = 0; i < els.length; i++) { els[i].textContent = f(+j.price); } } }).catch(function () { }); var busy = document.querySelector('.sheet.open') || (document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName)); if (!busy && Date.now() - G.kat > 12000) { ckl(1).then(function () { if (S.win === 'golddesk') { renderView(true); } }); } }, 5000);
-    function v() {
-        load(); if (!G.ks) { ckl(1).then(function () { if (S.win === 'golddesk') { renderView(true); } }); } var p = px(), P = plan(), L = G.lvl, h = '';
-        h += '<div class="group pad"><div class="row"><span><b style="font-size:20px">🥇 Gold · XAU/USD</b><br><small class="mut">Live gold perpetual on Binance, tracks Exness XAUUSD closely (broker prices differ by a little)</small></span><span style="text-align:right"><b style="font-size:24px" data-px="' + GOLD + '">' + (p ? f(p) : '…') + '</b><br><small style="color:' + ((S.tick[GOLD] && S.tick[GOLD].chg >= 0) ? '#34c759' : '#ff3b30') + '">' + (S.tick[GOLD] ? (S.tick[GOLD].chg >= 0 ? '+' : '') + f(S.tick[GOLD].chg) + '%' : '') + '</small></span></div></div>';
-        h += chartHtml(P);
-        h += '<div class="gdb" style="margin:6px 0">' + [['plan', 'Trade plan'], ['lvl', 'Levels'], ['ses', 'Sessions'], ['mac', 'Macro'], ['calc', 'Calculator'], ['chk', 'Checklist'], ['sc', 'Scorecard'], ['jr', 'Journal']].map(function (t) { return '<span class="' + (G.tab === t[0] ? 'on' : '') + '" data-gd="tab:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div>';
-        if (G.tab === 'plan') {
-            h += '<div class="group pad"><b>Multi-time-frame view</b>' + MW_TF.map(function (tf) { var a = S.xt[tf[0]]; return '<div class="row"><span>' + tf[1] + '</span><span class="mut">RSI ' + (a ? f(a.rsi, 0) : '–') + '</span><b style="color:' + (a ? (a.score > 0 ? '#34c759' : a.score < 0 ? '#ff3b30' : '#ff9f0a') : 'inherit') + '">' + (a ? a.rating : '…') + '</b></div>'; }).join('') + '</div>';
-            if (!P) { h += '<div class="group pad mut">Loading prices and indicators…</div>'; } else {
-                var col = P.side === 'BUY' ? '#34c759' : P.side === 'SELL' ? '#ff3b30' : '#ff9f0a';
-                h += '<div class="group pad" style="border-left:5px solid ' + col + '"><div class="row"><span><b style="font-size:20px;color:' + col + '">' + (P.side === 'WAIT' ? 'WAIT: no clear edge' : P.side + ' gold') + '</b><br><small class="mut">Agreement of time frames: ' + f(P.conf, 0) + ' (−100 sell … +100 buy)</small></span></div>';
-                h += '<div class="gdb" style="margin:6px 0">' + [['auto', 'Auto'], ['buy', 'Force buy'], ['sell', 'Force sell']].map(function (t) { return '<span class="' + (G.side === t[0] ? 'on' : '') + '" data-gd="side:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div>';
-                if (P.side !== 'WAIT') { h += '<div class="row"><span>Entry (market)</span><b>' + f(P.pa) + '</b></div><div class="row"><span>Stop loss</span><b style="color:#ff3b30">' + f(P.sla) + '</b><small class="mut">' + f(P.R) + ' away</small></div><div class="row"><span>Take profit 1 (1.5R)</span><b style="color:#34c759">' + f(P.t1a) + '</b></div><div class="row"><span>Take profit 2 (2.5R)</span><b style="color:#34c759">' + f(P.t2a) + '</b></div><div class="row"><span>Take profit 3 (4R)</span><b style="color:#34c759">' + f(P.t3a) + '</b></div><div class="row"><span>Lots for ' + G.rp + '% risk of $' + G.bal + '</span><b>' + (P.lots >= 0.01 ? f(P.lots) : '0.01 (min)') + '</b></div><div class="note">Risking $' + f(P.risk) + ': TP1 ≈ +$' + f(P.risk * 1.5) + ', TP2 ≈ +$' + f(P.risk * 2.5) + ', stop ≈ −$' + f(P.risk) + '. Move the stop to entry after TP1.</div>' + sigAge(P) + '<div class="note" style="margin:8px 0 2px">My Exness price right now (optional: shifts all levels to your broker price)</div><input class="tin" inputmode="decimal" data-gdin="bk" value="' + esc(G.bk) + '" placeholder="e.g. 4024.68">' + (P.off ? '<div class="note">Feed differs from Exness by ' + f(P.off) + '. Levels above are already shifted. Valid for 30 minutes: update it when you reopen.</div>' : '') + '<div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn tap kpb" data-gd="copy">Copy MT5 ticket</span><span class="btn sec tap kpb" data-gd="log">Add to journal</span></div>'; if (G.msg) { h += '<div class="note"><b>' + esc(G.msg) + '</b></div>'; } }
-                h += '<div class="note">Plan comes from the 6 time frames, daily range (ATR $' + f(P.atr) + ') and nearby levels. It is a tool for decisions, not a guarantee.</div></div>';
-            }
-        } else if (G.tab === 'lvl') {
-            if (!L) { h += '<div class="group pad mut">Loading daily levels…</div>'; } else { var rows = [['R3', L.R3], ['R2', L.R2], ['R1', L.R1], ['Yesterday high', L.H], ['Week high', L.wkH], ['Pivot', L.P], ['Today open', L.tO], ['Yesterday low', L.L], ['Week low', L.wkL], ['S1', L.S1], ['S2', L.S2], ['S3', L.S3]].sort(function (a, b) { return b[1] - a[1]; }); var rn = Math.round((p || L.C) / 50) * 50; h += '<div class="group pad"><b>Key levels</b><div class="note">Price now ' + f(p) + ' · daily range (ATR) $' + f(L.atr) + ' · nearest round number ' + f(rn, 0) + '</div>' + rows.map(function (r) { var near = p && Math.abs(p - r[1]) < L.atr * 0.15; return '<div class="row" style="' + (near ? 'background:rgba(255,159,10,.18);border-radius:8px' : '') + '"><span>' + r[0] + '</span><b>' + f(r[1]) + '</b><small class="mut">' + (p ? (r[1] > p ? '+' : '') + f(r[1] - p) : '') + '</small></div>'; }).join('') + '<div class="note">Classic pivots from yesterday. Price often reacts at these lines; highlighted = within 15% of a daily range.</div></div>'; }
-        } else if (G.tab === 'ses') {
-            var ss = sessions(); h += '<div class="group pad"><b>Market sessions (your time, Pakistan)</b>' + ss.map(function (s) { return '<div class="row"><span>' + (s.on ? '🟢 ' : '⚪ ') + s.n + '<br><small class="mut">' + s.note + '</small></span><b>' + pkt(s.a) + ' – ' + pkt(s.b) + '</b></div>'; }).join('') + '<div class="note"><b>Best time for gold:</b> 18:00–22:00 PKT (London + New York overlap). <b>Avoid:</b> 02:00–04:00 PKT (daily rollover, wide spreads) and the minutes around big USD news. Gold is closed Friday night to Sunday night.</div></div>';
-            var d = new Date(), fr = new Date(d.getFullYear(), d.getMonth(), 1); while (fr.getDay() !== 5) { fr.setDate(fr.getDate() + 1); } if (fr < d) { fr = new Date(d.getFullYear(), d.getMonth() + 1, 1); while (fr.getDay() !== 5) { fr.setDate(fr.getDate() + 1); } }
-            h += '<div class="group pad"><b>Big gold news days</b><div class="row"><span>US jobs report (NFP)</span><b>' + fr.toDateString().slice(0, 10) + ' · 17:30 PKT</b></div><div class="row"><span>US inflation (CPI)</span><span class="mut">mid-month</span></div><div class="row"><span>US interest rate (FOMC)</span><span class="mut">8 times a year</span></div><div class="note">Dates change: check the calendar before trading. Avoid new trades 15 minutes before and after.</div><a class="btn sec" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://www.forexfactory.com/calendar">Open economic calendar</a></div>';
-        } else if (G.tab === 'mac') {
-            var gc = L ? L.closes : []; h += '<div class="group pad"><b>What moves gold</b><div class="note">Gold usually falls when the dollar or US yields rise, and rises when they fall. Correlation = how closely they moved together over the last 20 days (−1 opposite, +1 together).</div>' + ((G.mac || []).length ? G.mac.map(function (m) { var c = corr(gc, m.closes), tx = ''; if (m.hint < 0) { tx = m.ch > 0.2 ? 'pressure on gold' : m.ch < -0.2 ? 'supports gold' : 'neutral'; } else if (m.hint > 0) { tx = m.ch > 0.2 ? 'supports gold' : m.ch < -0.2 ? 'pressure on gold' : 'neutral'; } return '<div class="row"><span>' + m.n + '<br><small class="mut">' + (c == null ? '' : 'correlation ' + f(c)) + (tx ? ' · ' + tx : '') + '</small></span><span style="text-align:right"><b>' + f(m.p) + '</b><br><small style="color:' + (m.ch >= 0 ? '#34c759' : '#ff3b30') + '">' + (m.ch >= 0 ? '+' : '') + f(m.ch) + '%</small></span></div>'; }).join('') : '<div class="mut">Loading…</div>') + '</div>';
-            var nw = (S.news || []).filter(function (n) { return /gold|xau|fed|dollar|inflation|yield|rate|treasury|powell/i.test(n.title || ''); }).slice(0, 5); h += '<div class="group pad"><b>Gold-related headlines</b>' + (nw.length ? nw.map(function (n) { return '<div class="row" style="display:block">' + esc(n.title) + '</div>'; }).join('') : '<div class="note">No matching headlines right now.</div>') + '</div>';
-        } else if (G.tab === 'calc') {
-            var bal = +G.bal, rp = +G.rp, lev = +G.lev, slp = +G.sl || (P ? P.R : 5), risk = bal * rp / 100, lots = slp > 0 ? risk / (slp * 100) : 0, margin = (p || 0) * 100 * Math.max(lots, 0.01) / Math.max(lev, 1), spr = +G.spr;
-            h += '<div class="group pad"><b>Position calculator (XAUUSD, 1 lot = 100 oz)</b>' + [['bal', 'Account balance ($)', G.bal], ['rp', 'Risk per trade (%)', G.rp], ['sl', 'Stop distance in $ (empty = auto)', G.sl], ['lev', 'Leverage (1:)', G.lev], ['spr', 'Spread ($)', G.spr]].map(function (r) { return '<div class="note" style="margin:8px 0 2px">' + r[1] + '</div><input class="tin" inputmode="decimal" data-gdin="' + r[0] + '" value="' + esc(r[2]) + '">'; }).join('') + '<div class="row"><span>Risk amount</span><b>$' + f(risk) + '</b></div><div class="row"><span>Lots</span><b>' + (lots >= 0.01 ? f(lots) : '0.01 (min)') + '</b></div><div class="row"><span>$1 move = </span><b>$' + f(Math.max(lots, 0.01) * 100) + '</b></div><div class="row"><span>Margin needed (about)</span><b>$' + f(margin) + '</b></div><div class="row"><span>Spread cost</span><b>$' + f(spr * 100 * Math.max(lots, 0.01)) + '</b></div><div class="row"><span>Win needed to break even at 1.5R</span><b>40%</b></div>' + (margin > bal * 0.5 ? '<div class="warn">This uses over half of your account as margin. Reduce lots or risk.</div>' : '') + '<div class="note">Do not risk more than 1–2% per trade. Exness symbols can differ (XAUUSDm for cent accounts): check the contract size in MT5.</div></div>';
-        } else if (G.tab === 'chk') {
-            if (G.chkDay !== day()) { G.chk = {}; G.chkDay = day(); sv(); } var items = chkList(), done = items.filter(function (i) { return G.chk[i[0]]; }).length;
-            h += '<div class="group pad"><b>Before every trade</b>' + items.map(function (i) { return '<div class="row tap" data-gd="chk:' + i[0] + '"><span>' + (G.chk[i[0]] ? '☑' : '☐') + ' ' + i[1] + '</span></div>'; }).join('') + '<div class="row"><span><b>' + done + ' / 8</b></span><b style="color:' + (done === 8 ? '#34c759' : done >= 6 ? '#ff9f0a' : '#ff3b30') + '">' + (done === 8 ? 'Ready' : done >= 6 ? 'Almost: fix the rest' : 'Not ready: wait') + '</b></div><div class="idbt" style="display:flex;gap:8px"><span class="btn sec tap kpb" data-gd="chkreset">Reset</span></div></div>';
-        } else if (G.tab === 'sc') { h += scoreHtml(); } else if (G.tab === 'jr') {
-            var cl = G.j.filter(function (t) { return t.res != null; }), w = cl.filter(function (t) { return t.res > 0; }), tot = cl.reduce(function (a, t) { return a + t.res; }, 0), td = G.j.filter(function (t) { return t.res != null && t.day === day(); }).reduce(function (a, t) { return a + t.res; }, 0), lim = (+G.bal) * 0.03;
-            h += '<div class="group pad"><b>Trade journal</b><div class="row"><span>Trades closed</span><b>' + cl.length + '</b></div><div class="row"><span>Win rate</span><b>' + (cl.length ? Math.round(w.length / cl.length * 100) + '%' : '–') + '</b></div><div class="row"><span>Total result</span><b style="color:' + (tot >= 0 ? '#34c759' : '#ff3b30') + '">' + (tot >= 0 ? '+' : '') + '$' + f(tot) + '</b></div><div class="row"><span>Today</span><b style="color:' + (td >= 0 ? '#34c759' : '#ff3b30') + '">' + (td >= 0 ? '+' : '') + '$' + f(td) + '</b></div>' + (td < -lim ? '<div class="warn">Today\'s loss is above 3% of your account. Stop trading for today.</div>' : '') + '<div class="note" style="margin:10px 0 2px">Add or close a trade</div><input class="tin" id="gdnote" placeholder="Note: why did I take it?"><div class="idbt" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><input class="tin" id="gdres" inputmode="decimal" placeholder="Result in $ (+/−)" style="flex:1"><span class="btn tap kpb" data-gd="jadd">Save result</span></div></div>' + (G.j.length ? '<div class="group">' + G.j.slice(0, 25).map(function (t, i) { return '<div class="row"><span>' + esc(t.side || '') + ' ' + (t.e ? f(t.e) : '') + ' <small class="mut">' + esc(t.note || '') + ' · ' + new Date(t.t).toLocaleDateString() + '</small></span><b style="color:' + (t.res == null ? 'inherit' : t.res >= 0 ? '#34c759' : '#ff3b30') + '">' + (t.res == null ? 'open' : (t.res >= 0 ? '+' : '') + f(t.res)) + '</b><span class="btn sec tap kpb" data-gd="jdel:' + i + '">✕</span></div>'; }).join('') + '</div>' : '');
+        /* ---------- the lock screen ---------- */
+        var ov = null, entry = '', wrong = 0, lockedUntil = 0, patDots = [], patSeq = [], clockT = 0, mode = 'check', setup = null;
+        var TIPS = ['Plan the trade first. Decide your stop-loss before you press buy.', 'Small steady wins beat one big gamble.', 'Never risk more than 1-2% of your money on one trade.', 'No tool can promise profit. Protect your capital first.', 'Keep your exchange API keys without withdrawal permission.', 'If you feel rushed or angry, close the app and breathe.'];
+        function pad2(n) { return (n < 10 ? '0' : '') + n; }
+        function tickClock() { if (!ov) { return; } var d = new Date(), c = ov.querySelector('.clk'), t = ov.querySelector('.dt'); if (c) { c.textContent = pad2(d.getHours()) + ':' + pad2(d.getMinutes()); } if (t) { t.textContent = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }); } }
+        function theme() {
+            var cs = getComputedStyle(document.documentElement), a = (cs.getPropertyValue('--blu') || '').trim();
+            var pal = g('mintoosuite_pal'), neon = g('mintoosuite_palon') === '1', M = { violet: ['#5b8cff', '#a05bff'], ocean: ['#19c3e6', '#2f7bff'], sunset: ['#ff7a45', '#ff3d8b'], forest: ['#2ecc71', '#12a37f'], gold: ['#f0b90b', '#f8d33a'], black: ['#4d8dff', '#6c7bff'], rose: ['#ff4d8d', '#ff8fb1'], mint: ['#2ee6b8', '#3ad6ff'], royal: ['#7c5cff', '#c25bff'], crimson: ['#ff3b30', '#ff7a3d'], aurora: ['#38f2c0', '#8a5bff'], cyber: ['#1fff5a', '#00d1a0'], graphite: ['#9aa7bd', '#c5d0e6'], copper: ['#ff9a3d', '#e0663a'], sky: ['#3fa9ff', '#6c8cff'], lava: ['#ff4d2e', '#ffb300'] };
+            return (neon && M[pal]) ? M[pal] : ['#5b8cff', '#a05bff'];
         }
-        return h + '<div class="note">Educational tool. Trading gold with leverage can lose money fast. Past patterns do not promise future results.</div>';
-    }
-    WINS.push({ id: 'golddesk', ic: '🥇', c: '#d4a017', n: 'Gold Desk (pro)', t: 'Gold Desk', sub: 'Gold on Exness/MT5: plan, levels, sessions, macro, calculator, checklist, journal' }); LIVE.golddesk = 1; VIEWS.golddesk = v;
-    MW_HELP.golddesk = 'A complete workspace for trading gold: time-frame signal table, entry/stop/targets with lot size, daily levels, market sessions in Pakistan time, what moves gold (dollar, yields), a position calculator, a pre-trade checklist and a trade journal.';
-    try { var g = MW_GROUPS[1][1]; if (g.indexOf('golddesk') < 0) { g.unshift('golddesk'); } mwHostSig = ''; } catch (e) { }
-    ['exness', 'exdesk'].forEach(function (id) { var o = VIEWS[id]; if (o) { VIEWS[id] = function () { return '<div class="group pad tap" data-act="win:golddesk" style="border-left:5px solid #d4a017"><b>🥇 Open the Gold Desk</b><div class="note" style="margin:2px 0 0">The full pro workspace for gold: plan, levels, sessions, macro, calculator, checklist and journal ›</div></div>' + o.apply(this, arguments); }; } });
-    document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-gdin')) { G[t.getAttribute('data-gdin')] = t.value; if (t.getAttribute('data-gdin') === 'bk') { G.bkt = Date.now(); } sv(); clearTimeout(G.tq); G.tq = setTimeout(function () { var k = t.getAttribute('data-gdin'), s = t.selectionStart; renderView(true); var n = document.querySelector('[data-gdin="' + k + '"]'); if (n) { n.focus(); try { n.setSelectionRange(s, s); } catch (er) { } } }, 600); } });
-    document.addEventListener('click', function (e) {
-        var el = e.target.closest ? e.target.closest('[data-gd]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
-        var a = el.getAttribute('data-gd'), i = a.indexOf(':'), k = i < 0 ? a : a.slice(0, i), x = i < 0 ? '' : a.slice(i + 1), P = plan();
-        if (k === 'tab') { G.tab = x; G.msg = ''; } else if (k === 'ctf') { G.ctf = x; G.ks = null; G.kat = 0; } else if (k === 'side') { G.side = x; sv(); }
-        else if (k === 'copy' && P) { var tx = ticket(P); try { navigator.clipboard.writeText(tx).catch(function () { }); G.msg = 'Copied: ' + tx; } catch (er) { G.msg = tx; } }
-        else if (k === 'log' && P) { G.j.unshift({ side: P.side, e: P.p, sl: P.sl, tp: P.tp1, tp2: P.tp2, note: 'from plan', t: Date.now(), day: day(), res: null }); sv(); G.msg = 'Added to the journal (Journal tab).'; }
-        else if (k === 'chk') { G.chk[x] = !G.chk[x]; sv(); } else if (k === 'chkreset') { G.chk = {}; sv(); }
-        else if (k === 'jadd') { var r = parseFloat((document.getElementById('gdres') || {}).value), nt = ((document.getElementById('gdnote') || {}).value || '').trim(); if (isFinite(r)) { var o = G.j.filter(function (t) { return t.res == null; })[0]; if (o) { o.res = r; if (nt) { o.note = nt; } o.day = day(); } else { G.j.unshift({ side: '', note: nt, t: Date.now(), day: day(), res: r }); } sv(); } }
-        else if (k === 'jdel') { G.j.splice(+x, 1); sv(); }
-        renderView(true);
-    }, true);
-})();
-/* ===== p9zsz: keep every exchange list fresh in the background + announce newly listed coins ===== */
-(function () {
-    var KEY = 'mintoosuite_seen2', seen = {}, base = {}, push = function () { try { if (typeof window.__huPush === 'function') { window.__huPush.apply(null, arguments); } } catch (e) { } };
-    try { seen = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { seen = {}; }
-    function save() { try { localStorage.setItem(KEY, JSON.stringify(seen)); } catch (e) { } }
-    function ago(t) { if (!t) { return 'not yet'; } var s = Math.round((Date.now() - t) / 1000); return s < 5 ? 'just now' : s < 90 ? s + ' s ago' : Math.round(s / 60) + ' min ago'; }
-    function force() { try { S.mx.at = 0; } catch (e) { } try { if (window.XCH) { XCH.bgLoad(true); } } catch (e) { } try { S.m7.mk.spotAt = 0; S.m7.mk.infoAt = 0; } catch (e) { } try { mxLoad(); } catch (e) { } try { m7mkFetch('spot'); } catch (e) { } }
-    function lists() {
-        var o = {}, X = S.mx || {}, B = (window.XCH && XCH.bg) || {}, M = (S.m7 && S.m7.mk) || {};
-        function names(a, k) { return (a || []).map(function (r) { return (r[k || 's'] || '').replace(/USDT$/, ''); }).filter(Boolean); }
-        function map(a, k) { var m = {}; (a || []).forEach(function (r) { var n = (r[k || 's'] || '').replace(/USDT$/, ''); if (n) { m[n] = r; } }); return m; }
-        o['MEXC Perp'] = map(X.fut); o['MEXC Spot'] = map(X.spot); o['Bitget Perp'] = map(B.fut); o['Bitget Spot'] = map(B.spot); o['Binance Spot'] = map(M.spot, 'sym');
-        var bt = {}; try { for (var k in S.tick) { if (/USDT$/.test(k)) { bt[k.replace(/USDT$/, '')] = S.tick[k]; } } } catch (e) { } o['Binance Perp'] = bt; return o;
-    }
-    function scan() {
-        var L = lists(), found = [];
-        Object.keys(L).forEach(function (k) {
-            var cur = Object.keys(L[k]); if (cur.length < 20) { return; }
-            if (!seen[k]) { seen[k] = cur.slice(0, 8000); return; }
-            var old = {}, add; seen[k].forEach(function (s) { old[s] = 1; }); add = cur.filter(function (s) { return !old[s]; });
-            if (add.length && add.length < 40) { add.forEach(function (s) { var r = L[k][s] || {}, c = isFinite(r.c) ? r.c : (isFinite(r.chg) ? r.chg : null); found.push({ s: s, k: k, c: c }); }); }
-            if (add.length) { seen[k] = seen[k].concat(add).slice(-8000); }
+        function dotsHtml(n) { var s = ''; for (var i = 0; i < n; i++) { s += '<i class="' + (i < entry.length ? 'on' : '') + '"></i>'; } return s; }
+        function pinPad() {
+            var keys = [['1', ''], ['2', 'ABC'], ['3', 'DEF'], ['4', 'GHI'], ['5', 'JKL'], ['6', 'MNO'], ['7', 'PQRS'], ['8', 'TUV'], ['9', 'WXYZ']], h = '<div class="pad">';
+            keys.forEach(function (k) { h += '<div class="k" data-k="' + k[0] + '">' + k[0] + '<small>' + k[1] + '</small></div>'; });
+            h += '<div class="k ghost" data-k="fp">' + (nat() && nat().lockAuth ? '🫆' : '') + '</div><div class="k" data-k="0">0<small>&nbsp;</small></div><div class="k ghost" data-k="del">⌫</div></div>';
+            return h;
+        }
+        function patHtml() {
+            var h = '<div class="pat" id="lkpat"><svg viewBox="0 0 240 240"><polyline id="lkline" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" points=""/></svg>';
+            for (var i = 0; i < 9; i++) { h += '<b data-d="' + i + '" style="left:' + (40 + (i % 3) * 80) + 'px;top:' + (40 + Math.floor(i / 3) * 80) + 'px"></b>'; }
+            return h + '</div>';
+        }
+        function message(t, bad) { if (!ov) { return; } var m = ov.querySelector('.msg'); if (m) { m.textContent = t; m.className = 'msg' + (bad ? ' bad' : ''); } }
+        function shake() { var e = ov && ov.querySelector('.shk'); if (e) { e.classList.remove('shake'); void e.offsetWidth; e.classList.add('shake'); } try { navigator.vibrate && navigator.vibrate(160); } catch (er) { } }
+        function build(m, title, sub) {
+            var c = cfg(), t = (setup && setup.t) || (c && c.t) || 'pin', col = theme();
+            if (!ov) { ov = document.createElement('div'); ov.id = 'mwlkui'; document.body.appendChild(ov); }
+            ov.style.setProperty('--lkA', col[0]); ov.style.setProperty('--lkB', col[1]);
+            mode = m; entry = ''; patSeq = [];
+            var fp = nat() && nat().lockAuth, tip = TIPS[new Date().getDate() % TIPS.length];
+            ov.innerHTML = '<div class="bgf"></div><div class="grid"></div>' +
+                '<div class="top"><span class="brand">◆ MINTOOSUITE</span><div class="clk"></div><div class="dt"></div></div>' +
+                '<div class="who shk"><div class="ring"><div>' + av() + '</div></div><div class="hi">' + esc2(title) + '</div><div class="msg">' + esc2(sub || '') + '</div>' +
+                (t === 'pin' ? '<div class="dots" id="lkd">' + dotsHtml(setup && setup.len ? setup.len : 4) + '</div>' : '') + '</div>' +
+                '<div class="inp">' + (t === 'pin' ? pinPad() : patHtml()) +
+                '<div class="bot">' + (t === 'pat' && fp && m === 'check' ? '<span data-k="fp">🫆 Fingerprint</span>' : '') + (m === 'check' ? '<span data-k="forgot">Forgot?</span>' : '<span data-k="cancel">Cancel</span>') + (t === 'pin' && m === 'check' ? '' : '') + '</div>' +
+                (m === 'check' ? '<div class="tick">💡 ' + esc2(tip) + '</div>' : '') + '</div>';
+            tickClock(); clearInterval(clockT); clockT = setInterval(tickClock, 15000);
+            if (t === 'pat') { bindPattern(); }
+        }
+        function close() { clearInterval(clockT); if (ov) { ov.style.transition = 'opacity .25s'; ov.style.opacity = '0'; var o = ov; ov = null; setTimeout(function () { try { o.remove(); } catch (e) { } }, 260); } window.__mwLocked = false; sv('mintoosuite_lkui_t', String(Date.now())); }
+        function show() {
+            var c = cfg(); if (!c || !c.h || ov) { return; }
+            window.__mwLocked = true; setup = null;
+            build('check', 'Welcome back, ' + nm().split(' ')[0], c.t === 'pat' ? 'Draw your pattern to unlock' : 'Enter your PIN to unlock');
+        }
+        function verify(txt) {
+            var c = cfg(); if (!c) { close(); return; }
+            if (Date.now() < lockedUntil) { message('Too many tries. Wait ' + Math.ceil((lockedUntil - Date.now()) / 1000) + ' s', true); shake(); return; }
+            if (hash(txt, c.s) === c.h) { wrong = 0; close(); return; }
+            wrong++; shake();
+            if (wrong >= 5) { lockedUntil = Date.now() + 30000; wrong = 0; message('Too many wrong tries. Wait 30 seconds.', true); }
+            else { message('Wrong ' + (c.t === 'pat' ? 'pattern' : 'PIN') + '. ' + (5 - wrong) + ' tries left.', true); }
+            entry = ''; patSeq = []; var d = ov && ov.querySelector('#lkd'); if (d) { d.innerHTML = dotsHtml(4); } clearPattern();
+        }
+        function finishPin() {
+            var txt = entry;
+            if (mode === 'check') { verify(txt); return; }
+            if (!setup.first) { if (txt.length < 4) { return; } setup.first = txt; setup.len = txt.length; entry = ''; var d = ov.querySelector('#lkd'); d.innerHTML = dotsHtml(txt.length); message('Enter it once more to confirm'); ov.querySelector('.hi').textContent = 'Confirm your PIN'; return; }
+            if (txt === setup.first) { save('pin', txt); } else { setup.first = null; shake(); message('They did not match. Start again.', true); entry = ''; ov.querySelector('.hi').textContent = 'Choose a PIN'; ov.querySelector('#lkd').innerHTML = dotsHtml(4); }
+        }
+        function save(t, txt) {
+            var s = Math.random().toString(36).slice(2, 10);
+            sv(K, JSON.stringify({ t: t, s: s, h: hash(txt, s), n: txt.length, auto: (cfg() || {}).auto || 30 })); setup = null;
+            var o = ov; ov = null; clearInterval(clockT); try { o.remove(); } catch (e) { } window.__mwLocked = false; sv('mintoosuite_lkui_t', String(Date.now()));
+            try { renderView(true); } catch (e) { } try { window.__huPush && window.__huPush('lkon', '🔐', 'Lock screen is ON', 'Your ' + (t === 'pat' ? 'pattern' : 'PIN') + ' is saved on this phone.', 'win:lockui', 'info', 5000, false); } catch (e) { }
+        }
+        /* pattern drawing */
+        function clearPattern() { if (!ov) { return; } ov.querySelectorAll('.pat b.on').forEach(function (b) { b.classList.remove('on'); }); var l = ov.querySelector('#lkline'); if (l) { l.setAttribute('points', ''); } }
+        function bindPattern() {
+            var box = ov.querySelector('#lkpat'), line = ov.querySelector('#lkline'), down = false;
+            function pt(i) { return [40 + (i % 3) * 80, 40 + Math.floor(i / 3) * 80]; }
+            function draw(cx, cy) { var p = patSeq.map(function (i) { return pt(i).join(','); }); if (cx != null) { p.push(cx + ',' + cy); } line.setAttribute('points', p.join(' ')); }
+            function over(e) {
+                var r = box.getBoundingClientRect(), x = (e.clientX - r.left) * 240 / r.width, y = (e.clientY - r.top) * 240 / r.height;
+                for (var i = 0; i < 9; i++) { var q = pt(i); if (Math.abs(q[0] - x) < 30 && Math.abs(q[1] - y) < 30 && patSeq.indexOf(i) < 0) { patSeq.push(i); box.querySelector('[data-d="' + i + '"]').classList.add('on'); try { navigator.vibrate && navigator.vibrate(8); } catch (er) { } } }
+                draw(x, y);
+            }
+            box.addEventListener('pointerdown', function (e) { down = true; patSeq = []; clearPattern(); try { box.setPointerCapture(e.pointerId); } catch (er) { } over(e); e.preventDefault(); });
+            box.addEventListener('pointermove', function (e) { if (down) { over(e); e.preventDefault(); } });
+            function up() {
+                if (!down) { return; } down = false; draw(); var txt = patSeq.join('');
+                if (patSeq.length < 4) { if (patSeq.length) { message('Join at least 4 dots', true); shake(); } setTimeout(clearPattern, 400); patSeq = []; return; }
+                if (mode === 'check') { verify(txt); return; }
+                if (!setup.first) { setup.first = txt; message('Draw it once more to confirm'); ov.querySelector('.hi').textContent = 'Confirm your pattern'; setTimeout(clearPattern, 350); }
+                else if (txt === setup.first) { save('pat', txt); }
+                else { setup.first = null; shake(); message('They did not match. Start again.', true); ov.querySelector('.hi').textContent = 'Draw a new pattern'; setTimeout(clearPattern, 450); }
+            }
+            box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
+        }
+        /* keys */
+        function fpTry() {
+            var n = nat(); if (!n || !n.lockAuth) { message('Fingerprint needs the installed Android app', true); return; }
+            try { n.lockAuth(window.__mwTok, 'wl' + Date.now()); } catch (e) { message('Fingerprint is not available', true); }
+        }
+        var _ml = window.__mwLock;
+        window.__mwLock = function (cb, ok, msg) {
+            if (String(cb).indexOf('wl') === 0) { if (ok) { wrong = 0; close(); } else if (ov) { message(String(msg || 'Cancelled'), true); } return; }
+            return _ml && _ml.apply(this, arguments);
+        };
+        document.addEventListener('pointerdown', function (e) { var k = e.target.closest ? e.target.closest('#mwlkui [data-k]') : null; if (k) { k.classList.add('p'); setTimeout(function () { k.classList.remove('p'); }, 150); } }, true);
+        document.addEventListener('click', function (e) {
+            var k = e.target.closest ? e.target.closest('#mwlkui [data-k]') : null; if (!k) { return; } e.preventDefault(); e.stopPropagation();
+            var v = k.getAttribute('data-k'), d = ov && ov.querySelector('#lkd'), max = (mode === 'check' ? 8 : 6);
+            if (v === 'fp') { fpTry(); return; }
+            if (v === 'cancel') { var o = ov; ov = null; setup = null; clearInterval(clockT); if (o) { o.remove(); } window.__mwLocked = false; return; }
+            if (v === 'forgot') {
+                var n = nat();
+                if (n && n.lockAuth) { message('Use your fingerprint or phone PIN to prove it is you', false); fpTry(); }
+                else { message('Open the installed app and use fingerprint, or clear the app data to reset.', true); }
+                return;
+            }
+            if (v === 'del') { entry = entry.slice(0, -1); } else if (/^\d$/.test(v) && entry.length < max) { entry += v; }
+            if (d) { d.innerHTML = dotsHtml(mode === 'check' ? Math.max(4, entry.length) : (setup && setup.len ? setup.len : Math.max(4, entry.length))); }
+            if (mode === 'check') { var c = cfg(); if (c && c.t === 'pin' && entry.length >= (c.n || 4)) { verify(entry); } }
+            else if (mode === 'set' && setup && setup.t === 'pin' && entry.length === (setup.first ? setup.len : 4)) { finishPin(); }
+        }, true);
+        function startSetup(t) {
+            setup = { t: t, first: null, len: 4 };
+            build('set', t === 'pin' ? 'Choose a 4-digit PIN' : 'Draw a new pattern', t === 'pin' ? 'You will use it every time you open the app' : 'Join at least 4 dots');
+            ov.classList.add('setupmode');
+        }
+
+        /* ---------- settings window ---------- */
+        function view() {
+            var c = cfg(), h = '<div class="group pad lkset"><b style="font-size:17px">🔐 Lock screen</b><div class="note" style="margin:4px 0 8px">Choose how MintooSuite locks. It asks when you open the app and when you come back after the time below. The lock stays on this phone only.</div>' +
+                '<div class="o' + (!c ? ' on' : '') + '" data-ls="off">🔓 Off<small>No lock screen of our own</small></div>' +
+                '<div class="o' + (c && c.t === 'pin' ? ' on' : '') + '" data-ls="pin">🔢 PIN<small>' + (c && c.t === 'pin' ? 'On. Tap to change your PIN' : 'A 4-digit code') + '</small></div>' +
+                '<div class="o' + (c && c.t === 'pat' ? ' on' : '') + '" data-ls="pat">🔗 Pattern<small>' + (c && c.t === 'pat' ? 'On. Tap to change your pattern' : 'Draw a shape over 9 dots') + '</small></div>' +
+                (c ? '<div class="note" style="margin-top:8px">Lock again after being away:</div><div class="mwpal" style="grid-template-columns:repeat(4,1fr)">' + [0, 15, 30, 120].map(function (s) { return '<div class="o' + ((c.auto || 30) === s ? ' on' : '') + '" data-ls="auto:' + s + '">' + (s ? s + ' s' : 'Always') + '</div>'; }).join('') + '</div><button class="btn sec" data-ls="try">👁 Preview lock screen</button>' : '') +
+                '<div class="note" style="margin-top:8px">The lock screen has a fingerprint button on the installed app. The phone lock under Permissions still works too. If you forget your code, use the Forgot button on the lock screen.</div></div>';
+            return h;
+        }
+        WINS.push({ id: 'lockui', ic: '🔐', c: '#5856d6', n: 'Lock screen (PIN / pattern)', t: 'Lock', sub: 'PIN, pattern and fingerprint lock screen' }); LIVE.lockui = 0; VIEWS.lockui = view;
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-ls]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var v = el.getAttribute('data-ls');
+            if (v === 'off') { try { localStorage.removeItem(K); } catch (er) { } try { renderView(true); } catch (er) { } }
+            else if (v === 'pin' || v === 'pat') { startSetup(v); }
+            else if (v === 'try') { var c = cfg(); if (c) { var h0 = c.h; window.__mwLocked = true; show(); } }
+            else if (v.indexOf('auto:') === 0) { var c2 = cfg(); if (c2) { c2.auto = +v.slice(5); sv(K, JSON.stringify(c2)); try { renderView(true); } catch (er) { } } }
+        }, true);
+        setTimeout(function () { try { var mb = document.querySelector('#sheetMenu .btn[data-act="win:alerts"]'); if (mb && !document.querySelector('#sheetMenu [data-act="win:lockui"]')) { mb.insertAdjacentHTML('beforebegin', '<button class="btn sec" data-act="win:lockui">🔐 Lock screen (PIN / pattern)</button>'); } } catch (e) { } }, 2800);
+        /* lock on open and after being away */
+        var leftAt = 0;
+        document.addEventListener('visibilitychange', function () {
+            var c = cfg(); if (!c) { return; }
+            if (document.hidden) { leftAt = Date.now(); }
+            else if (leftAt && !ov && Date.now() - leftAt >= (c.auto || 0) * 1000) { show(); }
         });
-        if (found.length) { save(); found.slice(0, 3).forEach(function (x) { var ex = x.k.split(' ')[0].toLowerCase(); push('new:' + x.k + x.s, '🆕', 'New coin: ' + x.s + ' on ' + x.k, (x.c != null ? 'Today ' + (x.c >= 0 ? '+' : '') + x.c.toFixed(1) + '%. ' : '') + 'Newly listed. Tap to open the coin page. New coins swing hard: small size only.', ex === 'binance' ? 'chart:' + x.s + 'USDT' : 'mx:' + x.s + (ex === 'bitget' ? '@bitget' : ''), 'info', 86400000); }); } else { save(); }
-    }
-    var busy = 0;
-    function cycle() {
-        if (document.hidden || busy) { return; } busy = 1; setTimeout(function () { busy = 0; }, 8000);
-        try { S.mx.at = Math.min(S.mx.at || 0, Date.now() - 25000); mxLoad(); } catch (e) { }
-        try { if (window.XCH) { XCH.bg && (XCH.bgAtStamp = 1); XCH.bgLoad(false); } } catch (e) { }
-        try { m7mkFetch('spot'); } catch (e) { }
-        setTimeout(function () { try { scan(); } catch (e) { } }, 6000);
-    }
-    setTimeout(cycle, 4000); setInterval(cycle, 45000);
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) { setTimeout(cycle, 300); } });
-    function foot() { var a = (S.mx || {}).at, b = (window.XCH && XCH.bg || {}).at, s = (S.m7 && S.m7.mk && S.m7.mk.spotAt) || 0; return '<div class="note" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0">Updated: MEXC ' + ago(a) + ' · Bitget ' + ago(b) + ' · Binance Spot ' + ago(s) + '<span class="btn sec tap kpb" data-fr="1" style="padding:6px 12px">🔄 Refresh now</span></div>'; }
-    ['mexc', 'movers', 'bitget'].forEach(function (id) { var o = VIEWS[id]; if (o) { VIEWS[id] = function () { return o.apply(this, arguments) + foot(); }; } });
-    document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-fr]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); force(); setTimeout(function () { renderView(true); }, 2500); setTimeout(function () { renderView(true); }, 6000); }, true);
-    setInterval(function () { if ((S.win === 'mexc' || S.win === 'movers' || S.win === 'bitget') && !document.hidden && !document.querySelector('.sheet.open') && !(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName))) { renderView(true); } }, 30000);
-    window.__fresh = { force: force, scan: scan, seen: seen };
+        if (cfg()) { show(); }
+        window.__mwLockShow = show; window.__mwTheme2 = theme;
+    } catch (e) { try { console.log('lockui', e); } catch (er) { } }
+
+    /* ---------- avatar from the gallery ---------- */
+    try {
+        var AK = 'mintoosuite_avatar', IK = 'mintoosuite_avatar_img';
+        function gi() { try { return localStorage.getItem(IK) || ''; } catch (e) { return ''; } }
+        function photoSvg() { return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><image href="' + gi() + '" width="100" height="100" preserveAspectRatio="xMidYMid slice"/></svg>'; }
+        var _ai = avInner; avInner = function () { if ((localStorage.getItem(AK) || '') === 'photo' && gi()) { return photoSvg(); } return _ai.apply(this, arguments); };
+        var _ap = avPanel;
+        avPanel = function () {
+            var h = _ap.apply(this, arguments);
+            if (!S.avOpen) { return h; }
+            var photo = (localStorage.getItem(AK) || '') === 'photo' && gi();
+            var add = '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap"><label class="btn" style="flex:1;min-width:150px;text-align:center;cursor:pointer;margin:0">🖼 Choose from gallery<input type="file" accept="image/*" data-gal="pick" style="display:none"></label>' + (gi() ? '<span class="btn sec" data-gal="use" style="flex:1;min-width:130px;text-align:center;cursor:pointer;margin:0">' + (photo ? '✅ Using your photo' : 'Use my photo') + '</span><span class="btn sec" data-gal="del" style="cursor:pointer;margin:0">🗑</span>' : '') + '</div><div class="note" id="galmsg">Your picture is shrunk and kept on this phone only. It is never uploaded.</div>';
+            var i = h.lastIndexOf('</div>'); return i > 0 ? h.slice(0, i) + add + '</div>' : h + add;
+        };
+        document.addEventListener('change', function (e) {
+            var t = e.target; if (!t || !t.getAttribute || t.getAttribute('data-gal') !== 'pick') { return; }
+            var f = t.files && t.files[0]; if (!f) { return; }
+            var rd = new FileReader();
+            rd.onload = function () {
+                var im = new Image();
+                im.onload = function () {
+                    try {
+                        var s = Math.min(im.width, im.height), cv = document.createElement('canvas'); cv.width = cv.height = 256;
+                        cv.getContext('2d').drawImage(im, (im.width - s) / 2, (im.height - s) / 2, s, s, 0, 0, 256, 256);
+                        localStorage.setItem(IK, cv.toDataURL('image/jpeg', 0.85)); localStorage.setItem(AK, 'photo');
+                        avRefresh(); renderView(true);
+                    } catch (er) { var m = document.getElementById('galmsg'); if (m) { m.textContent = 'Could not use that picture. Try another one.'; } }
+                };
+                im.onerror = function () { var m = document.getElementById('galmsg'); if (m) { m.textContent = 'That file is not a picture I can open.'; } };
+                im.src = rd.result;
+            };
+            rd.readAsDataURL(f);
+        }, true);
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-gal]') : null; if (!el || el.tagName === 'INPUT') { return; } e.preventDefault(); e.stopPropagation();
+            var v = el.getAttribute('data-gal');
+            if (v === 'use') { localStorage.setItem(AK, 'photo'); } else if (v === 'del') { localStorage.removeItem(IK); if (localStorage.getItem(AK) === 'photo') { localStorage.setItem(AK, 'original'); } }
+            avRefresh(); renderView(true);
+        }, true);
+        /* choosing a built-in avatar should leave 'photo' mode: the old handler already writes the id */
+    } catch (e) { try { console.log('avgal', e); } catch (er) { } }
+
+    /* ---------- sign-in screen: emblem instead of the diamond, glass look that follows the colour theme ---------- */
+    try {
+        var gcss = '#m7gate{background:radial-gradient(520px 380px at 12% 8%,var(--gA,#5b8cff),transparent 62%),radial-gradient(520px 420px at 92% 88%,var(--gB,#a05bff),transparent 60%),#070b16!important;display:flex!important;flex-direction:column;align-items:center}' +
+            '#m7gate>div{width:100%;max-width:420px;margin:0 auto!important}' +
+            '#m7gate .mwemb{width:96px;height:96px;margin:6px auto 8px;position:relative;display:block}' +
+            '#m7gate .mwemb:before{content:"";position:absolute;inset:-6px;border-radius:30px;background:conic-gradient(from 0deg,var(--gA,#5b8cff),var(--gB,#a05bff),#00e0b0,var(--gA,#5b8cff));filter:blur(14px);opacity:.7;animation:mwspin 9s linear infinite}' +
+            'html.mwcalm #m7gate .mwemb:before{animation:none}@keyframes mwspin{to{transform:rotate(360deg)}}' +
+            '#m7gate .mwemb svg{position:relative;width:100%;height:100%;display:block;filter:drop-shadow(0 8px 18px rgba(0,0,0,.45))}' +
+            '#m7gate .mwtag{text-align:center;font-size:13px;opacity:.82;margin:-6px 0 16px;letter-spacing:.02em}' +
+            '#m7gate h1{font-size:28px!important;letter-spacing:.01em;margin:4px 0 14px!important}' +
+            '#m7gate input{background:rgba(255,255,255,.10)!important;color:#fff!important;border:1px solid rgba(255,255,255,.22)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}#m7gate input::placeholder{color:rgba(255,255,255,.55)}' +
+            '#m7gate [data-au="go"]{background:linear-gradient(135deg,var(--gA,#5b8cff),var(--gB,#a05bff))!important;color:#fff!important;box-shadow:0 10px 26px rgba(0,0,0,.35)}' +
+            '#m7gate .pweye{color:#fff!important;background:rgba(255,255,255,.14)!important}';
+        var gs = document.createElement('style'); gs.setAttribute('data-mwkeep', '1'); gs.textContent = gcss; document.head.appendChild(gs);
+        var EMB = '<svg viewBox="0 0 96 96"><defs><linearGradient id="mwg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fa4ff"/><stop offset="1" stop-color="#b06bff"/></linearGradient></defs><rect x="4" y="4" width="88" height="88" rx="26" fill="#0d1230" stroke="url(#mwg1)" stroke-width="3"/><path d="M22 66V32l26 22 26-22v34" fill="none" stroke="url(#mwg1)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 74h44" stroke="#00e0b0" stroke-width="4" stroke-linecap="round" opacity=".9"/><circle cx="74" cy="26" r="5" fill="#00e0b0"/></svg>';
+        function paintGate() {
+            var el = document.getElementById('m7gate'); if (!el) { return; }
+            var col = window.__mwTheme2 ? window.__mwTheme2() : ['#5b8cff', '#a05bff']; el.style.setProperty('--gA', col[0]); el.style.setProperty('--gB', col[1]);
+            if (el.querySelector('.mwemb')) { return; }
+            var divs = el.querySelectorAll('div'), i, d;
+            for (i = 0; i < divs.length; i++) { d = divs[i]; if (d.children.length === 0 && d.textContent.trim() === '\u{1F48E}') { d.className = 'mwemb'; d.removeAttribute('style'); d.innerHTML = EMB; var tg = document.createElement('div'); tg.className = 'mwtag'; tg.textContent = 'Trade smarter. Protect your capital first.'; var h1 = el.querySelector('h1'); if (h1 && h1.nextSibling !== tg) { h1.parentNode.insertBefore(tg, h1.nextSibling); } break; } }
+        }
+        var _ag = auGate; auGate = function () { var r = _ag.apply(this, arguments); try { paintGate(); } catch (e) { } return r; };
+        try { new MutationObserver(function () { try { paintGate(); } catch (e) { } }).observe(document.body, { childList: true }); } catch (e) { }
+        paintGate();
+    } catch (e) { try { console.log('gate', e); } catch (er) { } }
+})();
+/* ===== .61: official-style coin symbols everywhere (BTC orange ₿, ETH diamond, SOL bars, ...) ===== */
+(function () {
+    try {
+        function t(ch, f, fs) { return '<text x="50" y="' + (fs ? 50 + fs * 0.36 : 66) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="' + (fs || 56) + '" fill="' + (f || '#fff') + '">' + ch + '</text>'; }
+        var C = {
+            BTC: ['#F7931A', t('B', '#fff', 56) + '<path d="M43 17v12M57 17v12M43 71v12M57 71v12" stroke="#fff" stroke-width="5" stroke-linecap="round"/>'],
+            ETH: ['#627EEA', '<path d="M50 16l-20 33 20 12 20-12z" fill="#fff" opacity=".95"/><path d="M50 16v45l20-12z" fill="#fff" opacity=".7"/><path d="M30 55l20 29 20-29-20 12z" fill="#fff" opacity=".95"/>'],
+            BNB: ['#F3BA2F', '<path d="M50 20l9 9-9 9-9-9zM30 40l9 9-9 9-9-9zM70 40l9 9-9 9-9-9zM50 60l9 9-9 9-9-9zM50 40l9 9-9 9-9-9z" fill="#fff"/>'],
+            SOL: ['#14101f', '<defs><linearGradient id="mwsol" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#9945FF"/><stop offset="1" stop-color="#14F195"/></linearGradient></defs><path d="M30 32h44l-6 9H24zM24 55h44l6 9H30zM30 78h0M30 68h44l-6 9H24z" fill="none"/><path d="M28 30h46l-8 11H20zM20 45h46l8 11H28zM28 60h46l-8 11H20z" fill="url(#mwsol)" transform="translate(0,4)"/>'],
+            XRP: ['#23292F', '<path d="M26 28c6 6 12 12 24 12s18-6 24-12M26 72c6-6 12-12 24-12s18 6 24 12M26 28h0" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/><path d="M30 50c6 4 12 6 20 6s14-2 20-6" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity="0"/>'],
+            DOGE: ['#C2A633', t('Ð', '#fff', 62)],
+            ADA: ['#0033AD', '<g fill="#fff"><circle cx="50" cy="50" r="5"/><circle cx="50" cy="26" r="4"/><circle cx="50" cy="74" r="4"/><circle cx="29" cy="38" r="4"/><circle cx="71" cy="38" r="4"/><circle cx="29" cy="62" r="4"/><circle cx="71" cy="62" r="4"/><circle cx="50" cy="14" r="2.5"/><circle cx="50" cy="86" r="2.5"/><circle cx="18" cy="32" r="2.5"/><circle cx="82" cy="32" r="2.5"/><circle cx="18" cy="68" r="2.5"/><circle cx="82" cy="68" r="2.5"/></g>'],
+            TRX: ['#EB0029', '<path d="M24 28l54 10-30 40zM24 28l24 50M78 38L44 50" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>'],
+            AVAX: ['#E84142', '<path d="M50 22L18 76h20l12-22 12 22h20z" fill="#fff"/><path d="M50 60l8 16H42z" fill="#E84142"/>'],
+            LINK: ['#2A5ADA', '<path d="M50 14l30 17v38L50 86 20 69V31z" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/>'],
+            DOT: ['#E6007A', '<circle cx="50" cy="50" r="9" fill="#fff"/><g fill="#fff"><circle cx="50" cy="20" r="7"/><circle cx="50" cy="80" r="7"/><circle cx="24" cy="35" r="7"/><circle cx="76" cy="35" r="7"/><circle cx="24" cy="65" r="7"/><circle cx="76" cy="65" r="7"/></g>'],
+            MATIC: ['#8247E5', '<path d="M62 32l-12-7-12 7v14l-12 7v14l12 7 12-7 12 7 12-7V60l-12-7z" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/>'],
+            LTC: ['#345D9D', t('Ł', '#fff', 60)],
+            BCH: ['#8DC351', t('B', '#fff', 54) + '<path d="M43 17v12M57 17v12M43 71v12M57 71v12" stroke="#fff" stroke-width="5" stroke-linecap="round"/>'],
+            SHIB: ['#E8420E', '<path d="M24 30l12 8 14-4 14 4 12-8-4 22c0 16-10 26-22 26S28 68 28 52z" fill="#fff"/>'],
+            TON: ['#0098EA', '<path d="M24 28h52L50 76z" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/><path d="M50 28v48" stroke="#fff" stroke-width="6"/>'],
+            UNI: ['#FF007A', t('U', '#fff', 56)],
+            ATOM: ['#2E3148', '<ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="#fff" stroke-width="5"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="#fff" stroke-width="5" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="#fff" stroke-width="5" transform="rotate(120 50 50)"/><circle cx="50" cy="50" r="6" fill="#fff"/>'],
+            XLM: ['#14B6E7', '<path d="M24 62l52-26M24 44l52-26M24 78l52-26" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".95" transform="translate(0,2)"/>'],
+            ETC: ['#328332', '<path d="M50 16l-20 33 20 12 20-12zM30 55l20 29 20-29-20 12z" fill="#fff"/>'],
+            FIL: ['#0090FF', t('⨎', '#fff', 56)],
+            NEAR: ['#111', '<path d="M30 76V28l40 44V24" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/>'],
+            APT: ['#111', '<path d="M24 38h52M24 50h52M24 62h52" stroke="#fff" stroke-width="7" stroke-linecap="round"/>'],
+            ARB: ['#213147', '<path d="M50 18l26 15v34L50 82 24 67V33z" fill="none" stroke="#28A0F0" stroke-width="7" stroke-linejoin="round"/><path d="M40 66l10-28 10 28" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>'],
+            OP: ['#FF0420', t('OP', '#fff', 38)],
+            SUI: ['#4DA2FF', '<path d="M50 20c14 14 24 24 24 38a24 24 0 0 1-48 0c0-14 10-24 24-38z" fill="#fff"/>'],
+            USDT: ['#26A17B', '<path d="M30 32h40M50 32v44" stroke="#fff" stroke-width="9" stroke-linecap="round"/><ellipse cx="50" cy="52" rx="24" ry="8" fill="none" stroke="#fff" stroke-width="5"/>'],
+            USDC: ['#2775CA', t('$', '#fff', 58)],
+            DAI: ['#F5AC37', t('◈', '#fff', 54)],
+            PEPE: ['#3B8F2C', t('P', '#fff', 54)],
+            INJ: ['#0082FA', t('I', '#fff', 56)],
+            TIA: ['#7B2BF9', t('T', '#fff', 54)],
+            RUNE: ['#0A2540', t('R', '#33FF99', 54)],
+            ALGO: ['#000', t('A', '#fff', 54)],
+            VET: ['#15BDFF', t('V', '#fff', 54)],
+            AAVE: ['#B6509E', t('A', '#fff', 54)],
+            MKR: ['#1AAB9B', t('M', '#fff', 54)],
+            XMR: ['#FF6600', t('M', '#fff', 54)],
+            EOS: ['#000', t('E', '#fff', 54)],
+            SAND: ['#04ADEF', t('S', '#fff', 54)],
+            MANA: ['#FF2D55', t('M', '#fff', 54)],
+            GALA: ['#111', t('G', '#fff', 54)],
+            XAU: ['#D4AF37', t('Au', '#fff', 40)], PAXG: ['#D4AF37', t('Au', '#fff', 40)]
+        };
+        window.mwCoinIcon = function (b, sz) {
+            b = String(b || '').toUpperCase(); var c = C[b]; sz = sz || 30;
+            if (!c) { return ''; }
+            return '<svg class="mwcoin" viewBox="0 0 100 100" width="' + sz + '" height="' + sz + '" style="border-radius:50%;flex:none;vertical-align:middle"><circle cx="50" cy="50" r="50" fill="' + c[0] + '"/>' + c[1] + '</svg>';
+        };
+        var _ca = coinAv;
+        coinAv = function (b) {
+            var s = window.mwCoinIcon(b, 30); if (!s) { return _ca.apply(this, arguments); }
+            return '<i class="mwav" style="background:none;padding:0">' + s + '</i>';
+        };
+        /* also in the other lists: put the symbol before a coin name when the row has none */
+        var css = '.mwcoin{display:inline-block;margin-right:6px}.mwci{display:inline-flex;align-items:center}';
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = css; document.head.appendChild(st);
+        var BASE = /^(?:1000)?([A-Z0-9]{2,6}?)(?:\/?(?:USDT|USDC|USD|BUSD))?(?:\.P|_.*)?$/;
+        function pass() {
+            try {
+                var v = document.getElementById('view'); if (!v) { return; }
+                v.querySelectorAll('b,strong,.sym,.nm').forEach(function (e) {
+                    if (e.children.length || e.querySelector('.mwcoin') || e.getAttribute('data-ci') || e.closest('.mwav,.m7r,.mwemb')) { return; }
+                    var tx = e.textContent.trim(); if (tx.length < 3 || tx.length > 14) { return; }
+                    var m = BASE.exec(tx); if (!m) { return; }
+                    var s = window.mwCoinIcon(m[1], 18); if (!s) { return; }
+                    if (e.previousElementSibling && e.previousElementSibling.classList && e.previousElementSibling.classList.contains('mwcoin')) { return; }
+                    e.setAttribute('data-ci', '1'); e.insertAdjacentHTML('afterbegin', s);
+                });
+            } catch (er) { }
+        }
+        var _rv = renderView; renderView = function () { var r = _rv.apply(this, arguments); setTimeout(pass, 30); return r; };
+        setInterval(pass, 2500);
+    } catch (e) { try { console.log('coinicons', e); } catch (er) { } }
+})();
+/* ===== .61: Bot Pro shows full trade details (entry, now, stop, target, size, profit, why it opened, why it closed) + Stop/Continue ===== */
+(function () {
+    try {
+        var _bp = VIEWS.botpro;
+        function fmt(p, s) { try { return fmtP(p, s); } catch (e) { return (+p).toFixed(p < 1 ? 5 : 2); } }
+        function dur(ms) { var m = Math.round(ms / 60000); return m < 60 ? m + ' min' : m < 1440 ? (m / 60).toFixed(1) + ' h' : (m / 1440).toFixed(1) + ' d'; }
+        function clock(t) { try { return new Date(t).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
+        function bs(s) { try { return base(s); } catch (e) { return s; } }
+        function line(a, b, c) { return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:2px 0"><span class="mut">' + a + '</span><b' + (c ? ' class="' + c + '"' : '') + '>' + b + '</b></div>'; }
+        function openCard(p, i) {
+            var t = S.tick[p.sym], px = t ? t.p : p.entry, pct = p.sg * (px / p.entry - 1) * 100 - FB_FEE * 100, usd = p.size * pct / 100, now = Date.now();
+            var sl = p.sl || S.fb.sl, tp = p.tp || 0;
+            var slPx = p.entry * (1 - p.sg * sl / 100), tpPx = tp ? p.entry * (1 + p.sg * tp / 100) : 0;
+            var prot = p.pk >= 0.7 * sl ? ' (stop moved to break-even)' : '';
+            var prog = tp ? Math.max(0, Math.min(100, (p.sg * (px / p.entry - 1) * 100) / tp * 100)) : 0;
+            return '<div class="group pad" style="margin-bottom:10px"><div class="ph"><span><b style="font-size:16px">' + esc(bs(p.sym)) + '</b> <span class="badge ' + (p.sg > 0 ? 'long' : 'short') + '">' + (p.sg > 0 ? 'LONG' : 'SHORT') + '</span> <small class="mut">' + dur(now - p.t0) + '</small></span><b class="' + (pct >= 0 ? 'up' : 'dn') + '" style="font-size:16px">' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '% · ' + (usd >= 0 ? '+' : '') + '$' + usd.toFixed(2) + '</b></div>' +
+                line('Opened', clock(p.t0)) + line('Entry price', fmt(p.entry, p.sym)) + line('Price now', fmt(px, p.sym)) +
+                line('Stop-loss' + prot, fmt(slPx, p.sym) + ' (-' + sl.toFixed(1) + '%)', 'dn') + (tp ? line('Target', fmt(tpPx, p.sym) + ' (+' + tp.toFixed(1) + '%)', 'up') : '') + line('Position size', '$' + p.size.toFixed(2)) + line('Best so far', '+' + (p.pk || 0).toFixed(2) + '%') +
+                (p.half ? line('Half profit', 'already locked ✅') : '') +
+                (tp ? '<div style="height:6px;border-radius:4px;background:rgba(128,128,128,.25);margin:6px 0;overflow:hidden"><div style="height:100%;width:' + prog.toFixed(0) + '%;background:#34c759"></div></div>' : '') +
+                (p.why ? '<div class="note" style="margin:4px 0">Why it opened: ' + esc(p.why) + '</div>' : '') +
+                '<div style="display:flex;gap:8px;margin-top:6px"><button class="btn sec" style="flex:1;margin:0;padding:9px" data-zb="close:' + i + '">Close this trade now</button><button class="btn sec" style="flex:1;margin:0;padding:9px" data-m7="fbterm:' + p.sym + ':' + (p.sg > 0 ? 'LONG' : 'SHORT') + '">Chart ›</button></div></div>';
+        }
+        function closedCard(x) {
+            var win = x.usd >= 0, held = x.t1 && x.t0 ? dur(x.t1 - x.t0) : '';
+            return '<div class="group pad" style="margin-bottom:8px;border-left:4px solid ' + (win ? '#34c759' : '#ff453a') + '"><div class="ph"><span><b>' + esc(bs(x.sym)) + '</b> ' + (x.sg > 0 ? 'LONG' : 'SHORT') + ' <small class="mut">' + esc(clock(x.t1)) + (held ? ' · held ' + held : '') + '</small></span><b class="' + (win ? 'up' : 'dn') + '">' + (x.pct >= 0 ? '+' : '') + x.pct.toFixed(2) + '% · ' + (x.usd >= 0 ? '+' : '-') + '$' + Math.abs(x.usd).toFixed(2) + '</b></div>' +
+                '<div class="note" style="margin:2px 0">In ' + fmt(x.entry, x.sym) + ' → Out ' + fmt(x.exit, x.sym) + '</div><div class="note" style="margin:2px 0">Closed because: <b>' + esc(x.why || '') + '</b></div></div>';
+        }
+        VIEWS.botpro = function () {
+            var h = _bp.apply(this, arguments), F = S.fb, a, b, now = Date.now();
+            /* status strip with Stop / Continue */
+            var st = '<div class="group pad" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><div><b>' + (F.on ? (F.lockUntil > now ? '⏸ Paused (safety rest)' : '🟢 Bot is running') : '⚪ Bot is stopped') + '</b><div class="note" style="margin:2px 0 0">' + F.open.length + ' open · ' + F.closed.length + ' closed · paper money only</div></div><button class="btn' + (F.on ? ' sec' : '') + '" style="width:auto;margin:0;padding:10px 16px" data-m7="fbtoggle">' + (F.on ? '⏹ Stop' : '▶ Continue') + '</button></div>';
+            var o1 = h.indexOf('<div class="sh"><span>Open trades'), o2 = h.indexOf('<div class="sh"><span>Latest signals');
+            if (o1 > 0 && o2 > o1) { h = h.slice(0, o1) + '<div class="sh"><span>Open trades</span><span>' + F.open.length + '</span></div>' + (F.open.length ? F.open.map(openCard).join('') : '<div class="group pad mut">None right now. The bot waits until the safety checks agree.</div>') + h.slice(o2); }
+            var c1 = h.indexOf('<div class="sh"><span>Recent closed trades'), c2 = h.indexOf('<div class="sh"><span>Best and worst pairs');
+            if (c2 < 0) { c2 = h.indexOf('<button class="btn sec" style="margin-top:12px" data-m7="fbreset"'); }
+            if (c1 > 0 && c2 > c1) { h = h.slice(0, c1) + '<div class="sh"><span>Closed trades</span><span>' + F.closed.length + '</span></div>' + (F.closed.length ? F.closed.slice(0, 25).map(closedCard).join('') : '<div class="group pad mut">No closed trades yet.</div>') + h.slice(c2); }
+            var k = h.indexOf('<div class="group pad"><div class="ph"><b style="font-size:18px">Bot Pro'); return k >= 0 ? h.slice(0, k) + st + h.slice(k) : st + h;
+        };
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-zb]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var v = el.getAttribute('data-zb').split(':');
+            if (v[0] === 'close') { var i = +v[1], p = S.fb.open[i], t = p && S.tick[p.sym]; if (p) { try { fbClose(i, t ? t.p : p.entry, 'closed by you'); } catch (er) { } } try { renderView(true); } catch (er) { } }
+        }, true);
+        window.__bpDbg = { ok: 1 };
+    } catch (e) { try { console.log('bpdetail', e); } catch (er) { } }
+})();
+
+/* ===== .61: free-trial countdown: card in Premium plans, popup + daily reminders with Remind me later ===== */
+(function () {
+    try {
+        var DAY = 86400000, SK = 'mintoosuite_trialsn', LK = 'mintoosuite_trialshown';
+        function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function sv(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+        function pl() { try { return window.__plan ? window.__plan() : null; } catch (e) { return null; } }
+        function left() { var p = pl(); return p && p.src === 'trial' ? Math.max(0, p.x - Date.now()) : -1; }
+        function txt(ms) { var d = Math.floor(ms / DAY), h = Math.floor((ms % DAY) / 3600000); return d >= 1 ? d + ' day' + (d > 1 ? 's' : '') + (h ? ' ' + h + ' h' : '') : Math.max(1, h) + ' hour' + (h > 1 ? 's' : ''); }
+        var _pv = VIEWS.plans;
+        VIEWS.plans = function () {
+            var h = _pv.apply(this, arguments), l = left(), p = pl(), card = '';
+            if (l >= 0) {
+                var pct = Math.max(0, Math.min(100, (7 * DAY - l) / (7 * DAY) * 100));
+                card = '<div class="group pad" style="border-left:5px solid ' + (l < 2 * DAY ? '#ff9f0a' : '#34c759') + '"><b style="font-size:17px">🎁 Free Pro trial: ' + txt(l) + ' left</b><div class="note" style="margin:4px 0 8px">You did not need a licence code. Every new install gets 7 days of Pro free. After that the app goes back to Free unless you enter a licence code.</div><div style="height:8px;border-radius:5px;background:rgba(128,128,128,.25);overflow:hidden"><div style="height:100%;width:' + pct.toFixed(0) + '%;background:linear-gradient(90deg,#34c759,#ff9f0a)"></div></div><div class="note" style="margin-top:6px">Reminders: ' + (g(SK) && +g(SK) > Date.now() ? 'snoozed until ' + new Date(+g(SK)).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'on (once a day)') + '</div><button class="btn sec" data-tr="snooze">😴 Remind me later</button></div>';
+            } else if (p && p.src === 'free' && p.trialUsed) {
+                card = '<div class="group pad" style="border-left:5px solid #ff453a"><b>Your free trial has ended</b><div class="note">You are on the Free plan now. Enter a licence code below to get Pro or Elite again.</div></div>';
+            }
+            return card + h;
+        };
+        function late() { var _w = VIEWS.plans; if (_w && _w.__late) { return; } VIEWS.plans = function () { var h = _w.apply(this, arguments), l = left();
+            if (l >= 0) {
+                h = h.replace(/<a class="btn sec"[^>]*>Request Pro on WhatsApp<\/a>/, '<div class="btn sec" style="display:block;text-align:center;margin-top:6px;opacity:.85">✅ Pro is active on your account (free trial, ' + txt(l) + ' left)</div>').replace('How to get Pro or Elite', 'Upgrade to Elite, or keep Pro after the trial').replace(/Request Elite on WhatsApp/, 'Request Elite on WhatsApp').replace(/Request by email/, 'Request a licence by email (to keep Pro)');
+            }
+            return h; }; VIEWS.plans.__late = 1; }
+        setTimeout(late, 4000); setTimeout(late, 9000);
+        function card(title, body, ended) {
+            var o = document.getElementById('mwtrial'); if (o) { o.remove(); }
+            o = document.createElement('div'); o.id = 'mwtrial';
+            o.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:100000;border-radius:20px;padding:14px;color:#fff;background:linear-gradient(135deg,#1b2a6b,#5a2fb0);box-shadow:0 14px 40px rgba(0,0,0,.5);font-family:inherit;max-width:520px;margin:0 auto';
+            o.innerHTML = '<div style="font-weight:800;font-size:16px">' + title + '</div><div style="font-size:13.5px;opacity:.92;margin:5px 0 10px;line-height:1.45">' + body + '</div><div style="display:flex;gap:8px"><button data-tr="plans" style="flex:1;border:0;border-radius:12px;padding:11px;font-weight:800;background:#fff;color:#2a2a8a">See plans</button><button data-tr="later" style="flex:1;border:0;border-radius:12px;padding:11px;font-weight:700;background:rgba(255,255,255,.18);color:#fff">😴 Remind me later</button></div>';
+            document.body.appendChild(o);
+        }
+        function check(force) {
+            try {
+                if (document.getElementById('m7gate') || document.getElementById('mwlkui') || document.getElementById('mwtrial') || document.querySelector('.sheet.open') || document.getElementById('mwAgree') || document.getElementById('wtour')) { return; }
+                if (!force && g(SK) && +g(SK) > Date.now()) { return; }
+                var l = left(), p = pl(), day = new Date().toDateString();
+                if (!force && g(LK) === day) { return; }
+                if (l >= 0) { card('🎁 Free Pro trial: ' + txt(l) + ' left', l < DAY ? 'Last day. Tomorrow the app goes back to Free (some windows lock). Get a licence code to keep Pro.' : 'All Pro windows are open for you now, free. Try the AI signals, Bot Pro and Best Picks to see what they do for you. When the days run out the app returns to Free unless you enter a licence code.'); sv(LK, day); }
+                else if (p && p.src === 'free' && p.trialUsed) { card('Your free trial has ended', 'You are on the Free plan. Pro windows are locked until you enter a licence code.'); sv(LK, day); }
+            } catch (e) { }
+        }
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-tr]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var v = el.getAttribute('data-tr'), o = document.getElementById('mwtrial');
+            if (v === 'plans') { if (o) { o.remove(); } try { S.win = 'plans'; renderView(false); } catch (er) { } }
+            else { if (o) { o.remove(); } sv(SK, String(Date.now() + 3 * 3600000 * (v === 'later' ? 1 : 1))); if (v === 'snooze') { try { renderView(true); } catch (er) { } } }
+        }, true);
+        setTimeout(function () { check(false); }, 25000); setInterval(function () { check(false); }, 600000);
+        window.__trDbg = { check: check, left: left, view: function () { return VIEWS.plans(); }, late: late };
+    } catch (e) { try { console.log('trial', e); } catch (er) { } }
+})();
+
+/* ===== .61: trial value: remember which Pro windows the new user opened, show it in the plans window and in the trial reminders ===== */
+(function () {
+    try {
+        var UK = 'mintoosuite_trialuse';
+        function g() { try { return JSON.parse(localStorage.getItem(UK) || '{}') || {}; } catch (e) { return {}; } }
+        function nm(id) { for (var i = 0; i < WINS.length; i++) { if (WINS[i].id === id) { return WINS[i].n || id; } } return id; }
+        function need() { return (window.__planGate && window.__planGate.NEED) || {}; }
+        function inTrial() { try { var p = window.__plan(); return p && p.src === 'trial'; } catch (e) { return false; } }
+        setInterval(function () {
+            try { if (!inTrial()) { return; } var w = S.win, N = need(); if (w && N[w]) { var u = g(); if (!u[w]) { u[w] = Date.now(); localStorage.setItem(UK, JSON.stringify(u)); } } } catch (e) { }
+        }, 2000);
+        window.__trialValue = function () { var u = Object.keys(g()), N = need(), all = Object.keys(N).filter(function (k) { return N[k] === 'pro' || N[k] === 'elite' || N[k]; }); return { used: u.map(nm), locked: all.map(nm), n: u.length }; };
+        var _lv = VIEWS.plans;
+        function wrap() {
+            var _w = VIEWS.plans; if (_w.__tv) { return; }
+            VIEWS.plans = function () {
+                var h = _w.apply(this, arguments); if (!inTrial()) { return h; }
+                var v = window.__trialValue(), box = '<div class="group pad"><b>Your trial in numbers</b><div class="note" style="margin:4px 0">You opened <b>' + v.n + '</b> Pro feature' + (v.n === 1 ? '' : 's') + ' so far' + (v.used.length ? ': ' + esc(v.used.slice(0, 6).join(', ')) : '') + '. Try the AI signals, Bot Pro, Analyst and Best Picks during these days. When the trial ends these ' + v.locked.length + ' Pro and Elite windows lock again.</div></div>';
+                var k = h.indexOf('<div class="group pad"><b>Have a licence code?'); return k >= 0 ? h.slice(0, k) + box + h.slice(k) : box + h;
+            };
+            VIEWS.plans.__tv = 1; VIEWS.plans.__late = 1;
+        }
+        setTimeout(wrap, 5000); setTimeout(wrap, 10000);
+    } catch (e) { try { console.log('trialvalue', e); } catch (er) { } }
+})();
+
+/* ===== .62: every tap anywhere shows a soft ripple (and the pressed highlight already on buttons) ===== */
+(function () {
+    try {
+        var css = '#mwtapfx{position:fixed;left:0;top:0;width:0;height:0;z-index:2147483647;pointer-events:none;contain:layout style}' +
+            '#mwtapfx i{position:fixed;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(120,150,255,.55),rgba(120,150,255,.22) 55%,transparent 72%);border:2px solid rgba(140,165,255,.75);box-shadow:0 0 18px rgba(120,150,255,.55);transform:scale(.25);opacity:1;animation:mwtap .5s ease-out forwards;will-change:transform,opacity}' +
+            '@keyframes mwtap{to{transform:scale(1.35);opacity:0}}';
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = css; document.head.appendChild(st);
+        var host = null;
+        function H() { if (!host || !host.isConnected) { host = document.createElement('div'); host.id = 'mwtapfx'; host.setAttribute('data-mwkeep', '1'); document.body.appendChild(host); } return host; }
+        function fx(e) {
+            try {
+                if (e.pointerType === 'mouse' && e.button > 0) { return; }
+                var d = document.createElement('i'); d.style.left = e.clientX + 'px'; d.style.top = e.clientY + 'px'; H().appendChild(d);
+                setTimeout(function () { try { d.remove(); } catch (er) { } }, 520);
+                if (H().childNodes.length > 6) { H().removeChild(H().firstChild); }
+            } catch (er) { }
+        }
+        document.addEventListener('pointerdown', fx, true);
+    } catch (e) { try { console.log('tapfx', e); } catch (er) { } }
+})();
+
+/* ===== .62: guided tour for new users (spotlight + animated arrow + step bubble), first-visit tips per window, Menu > Guided tour ===== */
+(function () {
+    try {
+        var DONE = 'mintoosuite_coach', TIPK = 'mintoosuite_coachtips';
+        function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function sv(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+        function byText(sel, t) { var a = document.querySelectorAll(sel), i; for (i = 0; i < a.length; i++) { if (a[i].textContent.trim().toUpperCase() === t) { return a[i]; } } return null; }
+        var STEPS = [
+            { t: 'Welcome to MintooSuite', b: 'This 1-minute tour shows where everything is. You can skip it any time and open it again from Menu.', el: null },
+            { t: 'Home', b: 'Home shows the best ideas first. Tap a card to see the entry, stop-loss and target in plain words.', el: function () { return document.querySelector('.tab[data-act="win:overview"]'); }, dir: 'up' },
+            { t: 'Ideas', b: 'Ideas ranks every coin from best to weakest and shows a chance score. Start here when you want to trade.', el: function () { return document.querySelector('.tab[data-act="win:ideas"]'); }, dir: 'up' },
+            { t: 'Markets', b: 'Live prices for Binance, MEXC and Bitget. Tap any coin for its chart.', el: function () { return document.querySelector('.tab[data-act="win:market"]'); }, dir: 'up' },
+            { t: 'Bots (practice money)', b: 'Bot Pro trades with practice money only. Watch it for a while before you ever think of real money. It never trades real money on its own.', el: function () { return document.querySelector('.tab[data-act="win:botpro"]'); }, dir: 'up' },
+            { t: 'More', b: 'All other windows live here: learning lessons, wallet, news, settings.', el: function () { return document.querySelector('.tab[data-act="openwin"]'); }, dir: 'up' },
+            { t: 'Menu', b: 'Menu has Look & mode (themes), Premium plans, Lock screen, Problem log and the Guided tour.', el: function () { return byText('header button, header .btn, header [data-act], header span', 'MENU'); }, dir: 'down' },
+            { t: 'Your profile', b: 'Tap your picture to open your profile, change your avatar and save your exchange connections.', el: function () { var a = document.querySelector('.meav.hd'); return a ? (a.closest('button') || a) : null; }, dir: 'down' },
+            { t: 'Ask the Professor', b: 'The round helper answers anything: how to make an API key on Binance, what a stop-loss is, why a trade lost.', el: function () { return document.getElementById('pfm'); }, dir: 'up' },
+            { t: 'You are ready', b: 'Golden rules: practice first, never risk more than 1-2% on one trade, always use a stop-loss. No tool can promise profit.', el: null }
+        ];
+        var ov = null, idx = 0, steps = [];
+        function rect(e) { var r = e.getBoundingClientRect(); return r; }
+        function close(done) { if (ov) { ov.remove(); ov = null; } if (done) { sv(DONE, '1'); } }
+        function render() {
+            var s = steps[idx], el = s.el ? s.el() : null, r = el ? rect(el) : null, W = window.innerWidth, H = window.innerHeight;
+            if (s.el && (!r || r.width < 4)) { idx++; if (idx >= steps.length) { close(true); return; } render(); return; }
+            if (!ov) { ov = document.createElement('div'); ov.id = 'mwcoach'; ov.setAttribute('data-mwkeep', '1'); document.body.appendChild(ov); }
+            var spot = r ? '<div class="cs" style="left:' + (r.left - 6) + 'px;top:' + (r.top - 6) + 'px;width:' + (r.width + 12) + 'px;height:' + (r.height + 12) + 'px"></div>' : '<div class="cs full"></div>';
+            var below = r ? (r.top + r.height / 2 < H / 2) : true, bubTop = r ? (below ? r.bottom + 62 : null) : null;
+            var arrow = r ? '<div class="ca ' + (below ? 'dn' : 'up') + '" style="left:' + Math.max(16, Math.min(W - 40, r.left + r.width / 2 - 14)) + 'px;top:' + (below ? r.bottom + 10 : r.top - 52) + 'px">' + (below ? '⬆' : '⬇') + '</div>' : '';
+            var bub = '<div class="cb" style="' + (r ? (below ? 'top:' + bubTop + 'px' : 'bottom:' + (H - r.top + 62) + 'px') : 'top:50%;transform:translateY(-50%)') + '"><div class="cn">' + (idx + 1) + ' / ' + steps.length + '</div><b>' + s.t + '</b><p>' + s.b + '</p><div class="cr"><span data-co="skip">Skip</span>' + (idx > 0 ? '<span data-co="back">‹ Back</span>' : '') + '<span class="go" data-co="next">' + (idx === steps.length - 1 ? 'Finish ✓' : 'Next ›') + '</span></div></div>';
+            ov.innerHTML = spot + arrow + bub;
+        }
+        function start() {
+            steps = STEPS.slice(); idx = 0; close(false);
+            var css = document.getElementById('mwcoachcss'); if (!css) { css = document.createElement('style'); css.id = 'mwcoachcss'; css.setAttribute('data-mwkeep', '1'); css.textContent = '#mwcoach{position:fixed;inset:0;z-index:2147483000;font-family:inherit}#mwcoach .cs{position:fixed;border-radius:16px;box-shadow:0 0 0 9999px rgba(4,8,22,.78),0 0 0 3px #7aa2ff,0 0 26px 6px rgba(122,162,255,.8)}#mwcoach .cs.full{inset:0;border-radius:0;box-shadow:0 0 0 9999px rgba(4,8,22,.82)}#mwcoach .ca{position:fixed;font-size:30px;color:#ffd60a;text-shadow:0 0 12px rgba(255,214,10,.9);animation:mwbob .8s ease-in-out infinite alternate}@keyframes mwbob{to{transform:translateY(8px)}}#mwcoach .ca.up{animation-name:mwbob2}@keyframes mwbob2{to{transform:translateY(-8px)}}html.mwcalm #mwcoach .ca{animation:none}#mwcoach .cb{position:fixed;left:14px;right:14px;max-width:420px;margin:0 auto;border-radius:20px;padding:16px;color:#fff;background:linear-gradient(135deg,#1b2a6b,#5a2fb0);box-shadow:0 16px 44px rgba(0,0,0,.6)}#mwcoach .cb b{font-size:18px}#mwcoach .cb p{margin:6px 0 12px;font-size:14px;line-height:1.5;opacity:.95}#mwcoach .cn{font-size:11px;opacity:.7;letter-spacing:.1em;margin-bottom:4px}#mwcoach .cr{display:flex;gap:8px;align-items:center;justify-content:flex-end}#mwcoach .cr span{padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.16);font-weight:700;font-size:14px;cursor:pointer}#mwcoach .cr span.go{background:#fff;color:#2a2a8a}#mwcoach .cr span[data-co="skip"]{margin-right:auto;background:none;opacity:.8}'; document.head.appendChild(css); }
+            try { if (S.sheet || document.querySelector('.sheet.open')) { document.querySelectorAll('.sheet.open').forEach(function (x) { x.classList.remove('open'); }); } } catch (e) { }
+            render();
+        }
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-co]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var v = el.getAttribute('data-co');
+            if (v === 'skip') { close(true); } else if (v === 'back') { idx = Math.max(0, idx - 1); render(); } else { idx++; if (idx >= steps.length) { close(true); } else { render(); } }
+        }, true);
+        document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-act="coachtour"]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); document.querySelectorAll('.sheet.open').forEach(function (x) { x.classList.remove('open'); }); setTimeout(start, 300); }, true);
+        setInterval(function () { try { var mb = document.querySelector('#sheetMenu .btn[data-act="win:alerts"]'); if (mb && !document.querySelector('#sheetMenu [data-act="coachtour"]')) { mb.insertAdjacentHTML('beforebegin', '<button class="btn sec" data-act="coachtour">🧭 Guided tour (arrows)</button>'); } } catch (e) { } }, 2500);
+        /* auto-start once for new users, after the welcome / mode questions are gone */
+        var tries = 0, auto = setInterval(function () {
+            tries++; if (g(DONE) || tries > 120) { clearInterval(auto); return; }
+            try { if (document.getElementById('m7gate') || document.getElementById('mwlkui') || document.getElementById('mwAgree') || document.getElementById('wtour') || document.getElementById('mwMode') || document.getElementById('mwPerm') || document.querySelector('.sheet.open') || document.getElementById('mwcoach')) { return; } clearInterval(auto); setTimeout(start, 1500); } catch (e) { }
+        }, 3000);
+        window.__coachStart = start;
+        /* first-visit tips per window */
+        var TIPS = { ideas: 'Ideas are sorted best first. Tap one to see entry, stop-loss and target. Never skip the stop-loss.', market: 'Tap any coin for its chart. Press and slide on the chart to read the price at any candle.', botpro: 'Bot Pro uses practice money. Smart Guard skips weak trades and its reasons are listed. Stop/Continue is at the top.', tpro: 'Trade Pro places real orders only after you type TRADE. Start with a tiny size and low leverage.', analyst: 'Type any coin, currency or gold. You get LONG/SHORT, entry, stop and target with the reasons.', plans: 'You have a free Pro trial. Open the Pro windows now to see what they do for you.', signals: 'AI signals show what the system sees right now. A signal is a suggestion, not a promise.', lockui: 'Choose PIN or pattern. A fingerprint button is on the lock screen in the installed app.' };
+        setInterval(function () {
+            try {
+                var w = S.win; if (!w || !TIPS[w] || document.getElementById('mwcoach') || !g(DONE)) { return; }
+                var seen = {}; try { seen = JSON.parse(g(TIPK) || '{}') || {}; } catch (e) { } if (seen[w]) { return; }
+                seen[w] = 1; sv(TIPK, JSON.stringify(seen));
+                if (window.__huPush) { window.__huPush('coach:' + w, '💡', 'Quick tip', TIPS[w], '', 'info', 86400000, false); }
+            } catch (e) { }
+        }, 2000);
+    } catch (e) { try { console.log('coach', e); } catch (er) { } }
+})();
+
+/* ===== .64: Beginner vs Pro are now clearly different; selected buttons are clearly coloured ===== */
+(function () {
+    try {
+        var MK = 'mintoosuite_mode';
+        function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function beg() { return g(MK) === 'beginner'; }
+        var css = '.mwlk .o.on,.mwpal .o.on,.lkset .o.on{background:linear-gradient(135deg,var(--blu,#0a84ff),#7a5cff)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 8px 22px rgba(80,110,255,.45)!important}.mwlk .o.on small,.lkset .o.on small{color:rgba(255,255,255,.88)!important;opacity:1!important}.mwlk .o.on:before,.mwpal .o.on:before{content:"✓ ";font-weight:900}' +
+            'html.mwbeg .tab[data-act="win:market"],html.mwbeg .tab[data-act="win:botpro"]{display:none!important}' +
+            'html.mwbeg .btn{min-height:54px;font-size:17px;border-radius:18px}html.mwbeg .note{font-size:15px;line-height:1.5}html.mwbeg .tile{min-height:104px}html.mwbeg .tab{font-size:12.5px}' +
+            'html.mwbeg #view>.tzchip,html.mwbeg #view>#sec-0,html.mwbeg #view>#sec-0+.segc,html.mwbeg #view>#sec-3,html.mwbeg #view>#sec-3+.group,html.mwbeg #view>#sec-4,html.mwbeg #view>#sec-4+.group,html.mwbeg #view>.sk{display:none!important}' +
+            '.mwmodechip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-weight:800;font-size:12px;background:linear-gradient(135deg,var(--blu,#0a84ff),#7a5cff);color:#fff;margin:2px 0 8px}' +
+            '.mwbegcard{border-radius:20px;padding:16px;margin:0 0 12px;color:#fff;background:linear-gradient(135deg,#0f8f5f,#1d6fe0);box-shadow:0 10px 28px rgba(0,0,0,.25)}.mwbegcard b{font-size:18px}.mwbegcard ol{margin:8px 0 12px;padding-left:20px;line-height:1.6;font-size:15px}.mwbegcard .bb{display:flex;gap:8px}.mwbegcard .bb span{flex:1;text-align:center;padding:13px;border-radius:14px;font-weight:800;background:#fff;color:#0b5b8f;cursor:pointer}.mwbegcard .bb span.s{background:rgba(255,255,255,.2);color:#fff}';
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = css; document.head.appendChild(st);
+        function paint() { try { document.documentElement.classList.toggle('mwbeg', beg()); } catch (e) { } }
+        setInterval(paint, 800); paint();
+        document.addEventListener('click', function () { setTimeout(paint, 50); setTimeout(function () { try { mwHostSig = ''; buildNav(); } catch (e) { } }, 80); }, false);
+        var _ov = VIEWS.overview;
+        VIEWS.overview = function () {
+            var h = _ov.apply(this, arguments), c;
+            if (beg()) { c = '<div class="mwbegcard"><b>🌱 Beginner view</b><ol><li>Open <b>Ideas</b> and pick the top idea.</li><li>Read the <b>stop-loss</b> and the chance in plain words.</li><li>Practise with <b>practice money</b> first. Real money never starts by itself.</li></ol><div class="bb"><span data-act="win:ideas">Open Ideas</span><span class="s" data-act="win:academy">Learn first</span><span class="s" data-lk="mode:pro">Show everything</span></div></div>'; }
+            else { c = '<div class="mwmodechip">⚡ PRO VIEW · all tools</div>'; }
+            return c + h;
+        };
+        var _bp2 = VIEWS.botpro;
+        VIEWS.botpro = function () {
+            var h = _bp2.apply(this, arguments);
+            if (beg()) { var a = h.indexOf('SMART GUARD'), b = h.indexOf('<div class="sh"><span>Open trades'); if (a > 0 && b > a) { var s = h.lastIndexOf('<div class="group', a); h = h.slice(0, s) + '<div class="note">🌱 Beginner view hides the advanced Smart Guard, Grid and Performance panels. Switch to Pro in Menu > Look &amp; mode to see them.</div>' + h.slice(b); } }
+            return h;
+        };
+        var _lk2 = VIEWS.look;
+        VIEWS.look = function () {
+            var h = _lk2.apply(this, arguments);
+            return h.replace('Few simple buttons', 'Big buttons · 3 bottom tabs · simple screens · guide card on Home').replace('>Everything<', '>All tools · 5 bottom tabs · every setting<').replace('Same app, different amount of buttons.', 'Beginner: bigger buttons, only Home / Ideas / More at the bottom, a simple Bot Pro and a step-by-step card. Pro: every tool and setting.');
+        };
+    } catch (e) { try { console.log('modes', e); } catch (er) { } }
 })();
 /* ===== p9zsd: Bot Doctor: honest loss analysis of the paper bot + protective rules (cool-down, anti-chase, daily cap) ===== */
 (function () {
@@ -10926,6 +11317,403 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         else if (v === 'mail') { try { navigator.clipboard.writeText(txt); } catch (er) { } window.__lastMail = txt; window.location.href = 'mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite problem log (build ' + BUILD + ')') + '&body=' + encodeURIComponent(txt.slice(-1800)); }
         else if (v === 'clear') { try { localStorage.setItem(LK, '[]'); } catch (er) { } renderView(true); }
     }, true);
+})();
+/* ===== .58: more looks (colour themes) and more modes (Trader focus, Calm motion) inside Menu > Look & mode ===== */
+(function () {
+    try {
+        var PK = 'mintoosuite_pal', MK = 'mintoosuite_mode', CK = 'mintoosuite_calm', LKK = 'mintoosuite_look';
+        function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function sv(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+        var PAL = {
+            violet: { n: 'Violet', e: '🌌', a: '#5b8cff', b: '#a05bff' },
+            ocean: { n: 'Ocean', e: '🌊', bg: '#04141c', c1: '#0e2c3a', c2: '#082029', line: 'rgba(80,200,230,.24)', a: '#19c3e6', b: '#2f7bff', up: '#2cf5c0', dn: '#ff6b81', tx: '#e8fbff', mut: '#8fb9c6' },
+            sunset: { n: 'Sunset', e: '🌅', bg: '#150a14', c1: '#2e1428', c2: '#200e1d', line: 'rgba(255,140,120,.24)', a: '#ff7a45', b: '#ff3d8b', up: '#7dff9a', dn: '#ff5d7a', tx: '#fff0f5', mut: '#cfa3b8' },
+            forest: { n: 'Forest', e: '🌲', bg: '#07140d', c1: '#12301f', c2: '#0b2015', line: 'rgba(90,230,150,.24)', a: '#2ecc71', b: '#12a37f', up: '#3dff94', dn: '#ff6a6a', tx: '#eafff2', mut: '#9bc4ac' },
+            gold: { n: 'Gold', e: '🟡', bg: '#0b0b0c', c1: '#1d1d21', c2: '#141416', line: 'rgba(240,185,11,.26)', a: '#f0b90b', b: '#f8d33a', up: '#0ecb81', dn: '#f6465d', tx: '#f5f5f5', mut: '#a9a9b0', bt: '#111' },
+            rose: { n: 'Rose', e: '🌹', bg: '#160810', c1: '#321628', c2: '#220e1b', line: 'rgba(255,120,170,.26)', a: '#ff4d8d', b: '#ff8fb1', up: '#5dffb0', dn: '#ff5c7c', tx: '#fff0f6', mut: '#d4a0b6' },
+            mint: { n: 'Mint', e: '🍃', bg: '#06130f', c1: '#0f2f27', c2: '#0a211b', line: 'rgba(110,255,210,.24)', a: '#2ee6b8', b: '#3ad6ff', up: '#46ffb8', dn: '#ff7a8a', tx: '#eafff9', mut: '#94c7b9' },
+            royal: { n: 'Royal', e: '👑', bg: '#0a0820', c1: '#1b1747', c2: '#120f33', line: 'rgba(160,140,255,.28)', a: '#7c5cff', b: '#c25bff', up: '#53f2c4', dn: '#ff6a9a', tx: '#f0eeff', mut: '#a9a3d9' },
+            crimson: { n: 'Crimson', e: '🔥', bg: '#120606', c1: '#2d1111', c2: '#1d0b0b', line: 'rgba(255,100,90,.26)', a: '#ff3b30', b: '#ff7a3d', up: '#42f59b', dn: '#ff6b6b', tx: '#fff1ef', mut: '#d1a39f' },
+            aurora: { n: 'Aurora', e: '🌌', bg: '#050f1a', c1: '#0e2a3d', c2: '#0a1d2c', line: 'rgba(120,255,220,.24)', a: '#38f2c0', b: '#8a5bff', up: '#4dffcf', dn: '#ff6f95', tx: '#ecfffb', mut: '#92bdc9' },
+            cyber: { n: 'Cyber green', e: '💚', bg: '#020a04', c1: '#0a1f0d', c2: '#06150a', line: 'rgba(60,255,100,.28)', a: '#1fff5a', b: '#00d1a0', up: '#39ff6e', dn: '#ff4d6d', tx: '#e9ffee', mut: '#8bc79a', bt: '#012' },
+            graphite: { n: 'Graphite', e: '🪨', bg: '#101113', c1: '#202226', c2: '#17181b', line: 'rgba(200,205,215,.2)', a: '#9aa7bd', b: '#c5d0e6', up: '#58e0a3', dn: '#ff7b8b', tx: '#eef0f4', mut: '#9aa0ab', bt: '#101113' },
+            copper: { n: 'Copper', e: '🧡', bg: '#120b06', c1: '#2f1d10', c2: '#20130a', line: 'rgba(255,170,100,.26)', a: '#ff9a3d', b: '#e0663a', up: '#7dff9a', dn: '#ff6a5a', tx: '#fff4ea', mut: '#cfae94' },
+            sky: { n: 'Sky', e: '☁️', bg: '#06101f', c1: '#102a4d', c2: '#0a1d38', line: 'rgba(120,190,255,.28)', a: '#3fa9ff', b: '#6c8cff', up: '#4df0c0', dn: '#ff7392', tx: '#eef6ff', mut: '#9db8d9' },
+            lava: { n: 'Lava', e: '🌋', bg: '#0e0508', c1: '#2a0d16', c2: '#1b0810', line: 'rgba(255,90,60,.28)', a: '#ff4d2e', b: '#ffb300', up: '#4dffa6', dn: '#ff5a7a', tx: '#fff0ec', mut: '#cfa0a0' },
+            black: { n: 'Pure black', e: '⚫', bg: '#000', c1: '#0e0e10', c2: '#080809', line: 'rgba(255,255,255,.14)', a: '#4d8dff', b: '#6c7bff', up: '#2cf5a1', dn: '#ff5d86', tx: '#f2f2f7', mut: '#8e8e93' }
+        };
+
+        var DESC = {
+            violet: ['Electric blue and purple on deep navy. The classic MintooSuite night look.', 'Everyday use, long sessions'],
+            ocean: ['Cool cyan and blue on dark teal. Calm, clean and easy on the eyes.', 'Reading charts for hours'],
+            sunset: ['Warm orange and pink on dark plum. Friendly and energetic.', 'Evening trading'],
+            forest: ['Fresh green on deep forest black. Natural and relaxing.', 'Low eye strain, patient traders'],
+            gold: ['Black with Binance-style gold accents. Serious and premium.', 'Traders who like the exchange look'],
+            black: ['Pure black with a soft blue accent. Saves battery on OLED screens.', 'AMOLED phones, night time'],
+            rose: ['Dark berry with rose-pink highlights. Soft and stylish.', 'A gentle, modern look'],
+            mint: ['Dark green-teal with bright mint. Fresh and clear.', 'Clear contrast, daytime use'],
+            royal: ['Deep indigo with violet glow. Rich and royal.', 'A bold, premium feel'],
+            crimson: ['Dark red with orange fire. High alert and intense.', 'Fast, focused sessions'],
+            aurora: ['Midnight blue with teal-purple northern-lights glow.', 'The most eye-catching look'],
+            cyber: ['Black with neon green, like a hacker terminal.', 'Terminal and bot lovers'],
+            graphite: ['Neutral grey and silver. Quiet and professional.', 'Distraction-free work'],
+            copper: ['Dark brown with copper-orange warmth. Cosy and classic.', 'Warm, calm evenings'],
+            sky: ['Dark navy with bright sky blue. Light and airy.', 'Friendly, open feeling'],
+            lava: ['Black-red with molten orange. Hot and dramatic.', 'High energy']
+        };
+        var css = '';
+        Object.keys(PAL).forEach(function (k) {
+            var p = PAL[k]; if (!p.bg) { return; } var s = 'html[data-mwl="' + k + '"]';
+            css += s + '{--bg:' + p.bg + ';--card:' + p.c1 + ';--line:' + p.line + ';--tx:' + p.tx + ';--mut:' + p.mut + ';--fill:' + p.line.replace(/\.\d+\)/, '.14)') + ';--blu:' + p.a + ';--grn:' + p.up + ';--red:' + p.dn + ';--glass:' + p.bg + 'f2}' +
+                s + '{background:' + p.bg + '!important}' + s + ' body{background:' + p.bg + '!important}' + s + ' .mwlk .o.on,' + s + ' .mwpal .o.on{border-color:' + p.a + '!important;box-shadow:0 0 16px ' + p.a + '66!important}' +
+                s + ' .group,' + s + ' .m7card,' + s + ' .tile{background:linear-gradient(160deg,' + p.c1 + ',' + p.c2 + ')!important;border:1px solid ' + p.line + '}' +
+                s + ' .tile.on{border-color:' + p.a + '!important;box-shadow:0 0 0 1px ' + p.a + ',0 0 20px ' + p.a + '66!important}' +
+                s + ' .btn:not(.sec),' + s + ' .m7row span.on,' + s + ' .segc .on{background:linear-gradient(135deg,' + p.a + ',' + p.b + ')!important;color:' + (p.bt || '#fff') + '!important;box-shadow:0 6px 20px ' + p.a + '55!important}' +
+                s + ' .btn.sec{background:' + p.line.replace(/\.\d+\)/, '.16)') + '!important;color:' + p.tx + '!important;border:1px solid ' + p.line + '}' +
+                s + ' .tabs{background:' + p.bg + 'f7!important;border-top:1px solid ' + p.line + '}' +
+                s + ' .tab.on{color:' + p.a + '!important;text-shadow:0 0 14px ' + p.a + '}' + s + ' .tab.on svg{filter:drop-shadow(0 0 6px ' + p.a + ')}' +
+                s + ' .up,' + s + ' .chg.up{color:' + p.up + '!important}' + s + ' .dn,' + s + ' .chg.dn{color:' + p.dn + '!important}' +
+                s + ' input,' + s + ' textarea,' + s + ' select{background:' + p.line.replace(/\.\d+\)/, '.10)') + '!important;color:' + p.tx + '!important;border:1px solid ' + p.line + '!important;border-radius:12px!important}' +
+                s + ' .nav{background:' + p.bg + '!important}';
+        });
+
+        css += 'html.mwfx-soft #view.mwswap,html.mwfx-rich #view.mwswap{animation:mwin .38s cubic-bezier(.2,.8,.2,1)}@keyframes mwin{from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:none}}' +
+            'html.mwfx-soft .tile:active,html.mwfx-rich .tile:active,html.mwfx-soft .btn:active,html.mwfx-rich .btn:active{transform:scale(.96)}' +
+            'html.mwfx-rich #mwfxbg{display:block}#mwfxbg{display:none;position:fixed;inset:-25%;z-index:0;pointer-events:none;mix-blend-mode:screen;opacity:.30;background:radial-gradient(520px 420px at 20% 20%,var(--fxA,#5b8cff),transparent 65%),radial-gradient(560px 460px at 80% 75%,var(--fxB,#a05bff),transparent 62%);animation:mwdrift 18s ease-in-out infinite alternate;will-change:transform}@keyframes mwdrift{from{transform:translate3d(-4%,-3%,0) scale(1)}to{transform:translate3d(4%,4%,0) scale(1.15)}}' +
+            'html.mwfx-rich .tab.on svg{animation:mwtabp 2.6s ease-in-out infinite}@keyframes mwtabp{50%{transform:scale(1.12)}}' +
+            'html.mwfx-rich .btn:not(.sec){position:relative;overflow:hidden}html.mwfx-rich .btn:not(.sec):after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);transform:skewX(-20deg);animation:mwchipseep 4.5s ease-in-out infinite;pointer-events:none}@keyframes mwchipseep{0%,60%{left:-60%}100%{left:130%}}' +
+            'html.mwfx-rich .badge.long,html.mwfx-rich .up{animation:none}' +
+            'html.mwcalm #mwfxbg,html.mwcalm .btn:after{display:none!important}html.mwcalm #view.mwswap{animation:none!important}' +
+            '.mwprev{border-radius:20px;padding:14px;margin:10px 0;border:1px solid var(--line);overflow:hidden}.mwprev .mwchips{display:flex;gap:6px;margin:8px 0;height:26px;width:100%}.mwprev .mwchips div{flex:1;height:26px;border-radius:9px}.mwprev .pb{display:block;text-align:center;padding:11px;border-radius:13px;font-weight:800;margin-top:8px}.mwprev .row2{display:flex;gap:8px;margin-top:10px}.mwprev .row2 span{flex:1;text-align:center;padding:11px;border-radius:13px;font-weight:800;cursor:pointer}';
+        css += 'html.mwcalm *,html.mwcalm *::before,html.mwcalm *::after{animation:none!important;transition:none!important;text-shadow:none!important}html.mwcalm .tile.on,html.mwcalm .btn{box-shadow:none!important}';
+        css += '.mwpal{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0}.mwpal .o{padding:12px 6px;border-radius:16px;text-align:center;font-weight:800;border:2px solid transparent;background:var(--fill,#eee);cursor:pointer;font-size:13px}.mwpal .o.on{border-color:#6c93ff;box-shadow:0 0 16px rgba(108,147,255,.45)}.mwpal .o i{display:block;height:14px;border-radius:7px;margin-top:8px}';
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = css; document.head.appendChild(st);
+        function paint() {
+            try {
+                var neon = g('mintoosuite_palon') === '1', k = g(PK) || 'violet', h = document.documentElement;
+                if (neon && PAL[k] && PAL[k].bg) { h.setAttribute('data-mwl', k); } else { h.removeAttribute('data-mwl'); }
+                h.classList.toggle('mwcalm', g(CK) === '1');
+                var fx = g('mintoosuite_fx') || 'soft'; h.classList.toggle('mwfx-soft', fx === 'soft'); h.classList.toggle('mwfx-rich', fx === 'rich');
+                var bg = document.getElementById('mwfxbg'); if (!bg) { bg = document.createElement('div'); bg.id = 'mwfxbg'; bg.setAttribute('data-mwkeep', '1'); document.body.appendChild(bg); }
+                var pk = (neon && PAL[k]) ? PAL[k] : PAL.violet; bg.style.setProperty('--fxA', pk.a); bg.style.setProperty('--fxB', pk.b);
+            } catch (e) { }
+        }
+        var _at2 = applyTheme; applyTheme = function () { var r = _at2.apply(this, arguments); paint(); return r; }; paint();
+        /* Trader focus mode: only the trading tools in the Menu tiles */
+        var TRADER = { overview: 1, ideas: 1, market: 1, chart: 1, analyst: 1, movers: 1, tpro: 1, xtrade: 1, trade: 1, botpro: 1, botdoc: 1, rbot: 1, btest: 1, risk: 1, news: 1, exdesk: 1, golddesk: 1, signals: 1, alerts: 1, look: 1, me: 1, errlog: 1, hist: 1, terminal: 1, lab: 1, rates: 1, glance: 1, best: 1 };
+        var _mt2 = mwTiles;
+        mwTiles = function () {
+            if (g(MK) !== 'trader') { return _mt2.apply(this, arguments); }
+            var save = WINS.slice(), keep = save.filter(function (w) { return TRADER[w.id]; }), out = '';
+            WINS.length = 0; keep.forEach(function (w) { WINS.push(w); });
+            try { out = _mt2.apply(this, arguments); } finally { WINS.length = 0; save.forEach(function (w) { WINS.push(w); }); }
+            return out;
+        };
+        /* extra groups in the Look & mode window */
+        var _vl = VIEWS.look;
+        VIEWS.look = function () {
+            var h = _vl.apply(this, arguments), cur = g(PK) || 'violet', neon = g('mintoosuite_palon') === '1', m = g(MK) || 'pro', calm = g(CK) === '1';
+            var pal = Object.keys(PAL).map(function (k) { var p = PAL[k]; return '<div class="o' + (neon && cur === k ? ' on' : '') + '" data-lp="' + k + '">' + p.e + ' ' + p.n + '<i style="background:linear-gradient(90deg,' + p.a + ',' + p.b + ')"></i></div>'; }).join('');
+            var pv = '';
+            if (S.lpPrev && PAL[S.lpPrev]) {
+                var q = PAL[S.lpPrev], dd = DESC[S.lpPrev] || ['', ''];
+                pv = '<div class="group pad"><b style="font-size:17px">' + q.e + ' ' + q.n + '</b><div class="note" style="margin:4px 0">' + dd[0] + '</div><div class="note" style="margin:2px 0"><b>Best for:</b> ' + dd[1] + '</div>' +
+                    '<div class="mwprev" style="background:' + (q.bg || '#070b16') + ';color:' + (q.tx || '#eef1ff') + ';border-color:' + (q.line || 'rgba(130,150,255,.3)') + '"><b>Preview</b><div style="opacity:.75;font-size:13px">Cards, buttons and prices will look like this.</div><div class="mwchips"><div style="background:' + q.a + '"></div><div style="background:' + q.b + '"></div><div style="background:' + (q.up || '#34c759') + '"></div><div style="background:' + (q.dn || '#ff453a') + '"></div></div><span class="pb" style="background:linear-gradient(135deg,' + q.a + ',' + q.b + ');color:' + (q.bt || '#fff') + '">Sample button</span></div>' +
+                    '<div class="note">Only colours change. Every screen, button and menu stays exactly where it is. You can change back any time (Default).</div>' +
+                    '<div class="mwprev" style="border:0;padding:0"><div class="row2"><span style="background:linear-gradient(135deg,' + q.a + ',' + q.b + ');color:' + (q.bt || '#fff') + '" data-lpgo="' + S.lpPrev + '">✅ Apply this theme</span><span style="background:var(--fill,#eee)" data-lpx="1">Cancel</span></div></div></div>';
+            }
+            var fxc = g('mintoosuite_fx') || 'soft';
+            var mo = '<div class="group pad"><b>Motion effects</b><div class="note" style="margin:2px 0 6px">How lively the app feels. None of these move buttons or change the layout.</div><div class="mwlk">' +
+                [['off', '⏸ Off', 'No extra effects'], ['soft', '✨ Soft', 'Smooth window changes and press feedback'], ['rich', '🌈 Rich', 'Glowing moving background in your theme colours, shine on buttons, pulsing active tab']].map(function (o) { return '<div class="o' + (fxc === o[0] ? ' on' : '') + '" data-lf="' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div><div class="note">Calm screen (below) switches every animation off, whatever you pick here.</div></div>';
+            var x = '<div class="group pad"><b>Colour theme</b><div class="note" style="margin:2px 0 0">Sixteen dark colour themes. They change colours only: every screen, button and menu stays exactly where it is.</div><div class="mwpal">' + pal + '<div class="o' + (!neon ? ' on' : '') + '" data-lp="off">↺ Default<i style="background:linear-gradient(90deg,#888,#ccc)"></i></div></div></div>' +
+                mo + '<div class="group pad"><b>More modes</b><div class="mwlk"><div class="o' + (m === 'trader' ? ' on' : '') + '" data-lm="trader">📈 Trader focus<small>Only trading tools in the Menu</small></div><div class="o' + (calm ? ' on' : '') + '" data-lm="calm">🧘 Calm screen<small>' + (calm ? 'On: no animations' : 'Off: tap to turn on') + '</small></div></div><div class="note">Trader focus hides the learning, wallet and fun tiles. Tap Pro or Beginner above to leave it. Calm screen switches off all animations and glow, which also saves battery.</div></div>';
+            var i = h.lastIndexOf('<div class="note">Beginner mode only hides'); return pv + (i > 0 ? h.slice(0, i) + x + h.slice(i) : h + x);
+        };
+        var lastW = ''; setInterval(function () { try { if (S.win !== lastW) { lastW = S.win; var v = document.getElementById('view'); if (v) { v.classList.remove('mwswap'); void v.offsetWidth; v.classList.add('mwswap'); setTimeout(function () { v.classList.remove('mwswap'); }, 420); } } } catch (e) { } }, 250);
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-lp],[data-lm],[data-lpgo],[data-lpx],[data-lf]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            if (el.hasAttribute('data-lpx')) { S.lpPrev = ''; try { renderView(true); } catch (er) { } return; }
+            if (el.hasAttribute('data-lf')) { sv('mintoosuite_fx', el.getAttribute('data-lf')); paint(); try { renderView(true); } catch (er) { } return; }
+            if (el.hasAttribute('data-lp') && el.getAttribute('data-lp') !== 'off') { S.lpPrev = el.getAttribute('data-lp'); try { renderView(true); document.getElementById('view').scrollIntoView(); } catch (er) { } return; }
+            if (el.hasAttribute('data-lpgo')) { el.setAttribute('data-lp', el.getAttribute('data-lpgo')); S.lpPrev = ''; }
+            if (el.hasAttribute('data-lp')) { var lpv = el.getAttribute('data-lp'); if (lpv === 'off') { sv('mintoosuite_palon', '0'); } else { sv(PK, lpv); sv('mintoosuite_palon', '1'); sv('mintoosuite_theme', 'dark'); } try { applyTheme(); } catch (er) { } }
+            else { var v = el.getAttribute('data-lm'); if (v === 'trader') { sv(MK, g(MK) === 'trader' ? 'pro' : 'trader'); } else if (v === 'calm') { sv(CK, g(CK) === '1' ? '0' : '1'); } }
+            paint(); try { mwHostSig = ''; buildNav(); } catch (er) { } try { renderView(true); } catch (er) { }
+        }, true);
+        /* choosing Beginner/Pro or Classic from the old buttons must still work: they run first (capture order) and we only repaint */
+        document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-lk]')) { setTimeout(paint, 0); } }, false);
+    } catch (e) { }
+})();
+/* ===== .59 SMART GUARD for Bot Pro (paper): checks recommendations, bigger trend, Bitcoin, volatility, volume, news, history before every entry;
+   stop/target sized by volatility, break-even, half-profit lock, trailing, time stop; plus Grid Bot (paper) ===== */
+(function () {
+    try {
+        function f(v, d) { var n = +v; return isFinite(n) ? n.toFixed(d == null ? 2 : d) : '–'; }
+        var GD = { on: 1, rec: 1, htf: 1, btc: 1, vol: 1, news: 1, hist: 1, rr: 1.6 };
+        function G() { var F = S.fb; if (!F.guard) { F.guard = JSON.parse(JSON.stringify(GD)); } Object.keys(GD).forEach(function (k) { if (F.guard[k] == null) { F.guard[k] = GD[k]; } }); if (!F.skips) { F.skips = []; } return F.guard; }
+        function ema(k, n) { var e = iEMA(k.map(function (x) { return x.c; }), n); return e[e.length - 1]; }
+        function trendOf(k) { var c = k.slice(0, -1); if (c.length < 55) { return 0; } var a = ema(c, 20), b = ema(c, 50), px = c[c.length - 1].c; return a > b && px > b ? 1 : a < b && px < b ? -1 : 0; }
+        function move3h(k) { var c = k.slice(0, -1), n = c.length; if (n < 4) { return 0; } return (c[n - 1].c / c[n - 4].c - 1) * 100; }
+        var BTCC = { at: 0, k: null };
+        function btcK() { if (BTCC.k && Date.now() - BTCC.at < 90000) { return Promise.resolve(BTCC.k); } return m7kl('BTCUSDT', '1h', 80).then(function (k) { BTCC = { at: Date.now(), k: k }; return k; }); }
+        function skip(F, s, sg, why) { F.skips.unshift({ sym: s, sg: sg, why: why, at: Date.now() }); F.skips = F.skips.slice(0, 40); try { fbSave(); } catch (e) { } if (S.win === 'botpro') { try { renderView(true); } catch (e) { } } }
+        /* ---- entry check ---- */
+        function check(F, s, sg, k15, k1h, kb) {
+            var g = G(), fail = [], ok = [], px = k15[k15.length - 1].c, i;
+            // volatility + sizing (1h ATR)
+            var atr = m7atr(k1h.slice(0, -1).slice(-16), 14), ap = px ? atr / px * 100 : 0;
+            if (g.vol) {
+                if (ap < 0.25) { fail.push('too quiet (' + f(ap) + '%/h): fees would eat the profit'); } else if (ap > 4.5) { fail.push('too wild (' + f(ap) + '%/h)'); } else { ok.push('volatility ' + f(ap) + '%/h'); }
+                var c15 = k15.slice(-21, -1), av = c15.reduce(function (a, x) { return a + x.v; }, 0) / (c15.length || 1), lv = k15[k15.length - 1].v; if (av && lv < av * 0.7) { fail.push('weak volume on the signal candle'); } else { ok.push('volume ok'); }
+                var r = iRSI(k15.map(function (x) { return x.c; }), 14), rv = r[r.length - 1]; if (rv != null && ((sg > 0 && rv > 74) || (sg < 0 && rv < 26))) { fail.push('already stretched (RSI ' + Math.round(rv) + ')'); }
+                var e20 = ema(k15, 20); if (e20 && Math.abs(px / e20 - 1) * 100 > 1.6 * Math.max(ap, 0.4)) { fail.push('price far from its average: chasing'); }
+            }
+            if (g.htf) { var tr = trendOf(k1h); if (tr !== 0 && tr !== sg) { fail.push('1-hour trend is ' + (tr > 0 ? 'UP' : 'DOWN') + ' against this trade'); } else { ok.push(tr === 0 ? '1h sideways' : '1h trend agrees'); } }
+            if (g.btc && s !== 'BTCUSDT' && kb) { var tb = trendOf(kb), mv = move3h(kb); if ((sg > 0 && tb < 0 && mv < -1.2) || (sg < 0 && tb > 0 && mv > 1.2)) { fail.push('Bitcoin is moving hard against it (' + f(mv, 1) + '% in 3h)'); } else { ok.push('Bitcoin ok'); } }
+            if (g.news) { try { var nt = m7newsTilt(s); if (nt && nt.n && ((sg > 0 && nt.tilt < 0) || (sg < 0 && nt.tilt > 0))) { fail.push('news points the other way (' + nt.n + ' headline' + (nt.n > 1 ? 's' : '') + ')'); } else if (nt && nt.n) { ok.push('news ok'); } } catch (e) { } }
+            if (g.rec) {
+                try {
+                    var sl0 = Math.max(1.2, Math.min(4, 1.5 * ap)), tp0 = sl0 * g.rr, R = idCalc({ sym: s, side: sg > 0 ? 'LONG' : 'SHORT', conf: null, tpP: tp0, slP: sl0, srcN: 1, to: null });
+                    if (R && R.edge < -0.05) { fail.push('the factor score is negative (' + R.F.filter(function (x) { return x.v < -0.15; }).map(function (x) { return x.name; }).slice(0, 3).join(', ') + ')'); } else if (R) { ok.push('factor score ok'); }
+                    var rows = idRows().filter(function (x) { return x.sym === s; }), opp = rows.filter(function (x) { return (x.side === 'LONG' ? 1 : -1) !== sg && x.R.p >= 0.55; });
+                    if (opp.length) { fail.push('the recommendations say ' + (sg > 0 ? 'SHORT' : 'LONG') + ' for this coin'); }
+                } catch (e) { }
+            }
+            if (g.hist) {
+                var now = Date.now(), midnight = new Date(); midnight.setHours(0, 0, 0, 0); var today = F.closed.filter(function (x) { return x.t1 >= midnight.getTime(); }), dl = today.reduce(function (a, x) { return a + x.usd; }, 0);
+                if (dl <= -F.start * 0.03) { fail.push('daily loss limit reached (' + f(dl) + ' $)'); }
+                var last3 = F.closed.slice(0, 3); if (last3.length === 3 && last3.every(function (x) { return x.usd < 0; }) && now - last3[0].t1 < 2 * 3600000) { fail.push('3 losses in a row: resting 2 hours'); }
+                var same = F.open.filter(function (p) { return p.sg === sg; }).length; if (same >= 3) { fail.push('already 3 open trades the same way'); }
+                var hr = new Date().getHours(), hh = F.closed.filter(function (x) { return new Date(x.t0).getHours() === hr; }); if (hh.length >= 4 && hh.reduce(function (a, x) { return a + x.usd; }, 0) < 0) { fail.push('this hour of the day lost before'); }
+            }
+            return { fail: fail, ok: ok, ap: ap };
+        }
+        /* ---- new scan (replaces the old entry decision, same schedule) ---- */
+        var _scan = fbScan;
+        fbScan = function () {
+            var F = S.fb; if (!F.on) { return; } var g = G(); if (!g.on) { return _scan(); }
+            var now = Date.now(); if (F.lockUntil > now) { return; }
+            var ms = (CX_MS[F.tf] || 900) * 1000, bucket = Math.floor(now / ms); if (F.last === bucket) { return; } F.last = bucket; F.sigs = (F.sigs || []).filter(function (x) { return now - x.at < 3 * 3600000; });
+            var t = S.tick, syms = Object.keys(t).filter(function (s) { return /USDT$/.test(s) && s !== GOLD && !(S.tradfi && S.tradfi[s]) && !/^(USDC|FDUSD|TUSD|BUSD)/.test(s); }).sort(function (a, b) { return t[b].q - t[a].q; }).slice(0, F.pairs);
+            syms.forEach(function (s) {
+                if (F.open.some(function (p) { return p.sym === s; }) || (F.cd[s] || 0) > now) { return; }
+                Promise.all([m7kl(s, F.tf, 160), m7kl(s, '1h', 120), g.btc ? btcK().catch(function () { return null; }) : Promise.resolve(null)]).then(function (r) {
+                    var k = r[0], k1 = r[1], kb = r[2], closed = k.slice(0, -1); if (closed.length < 70 || !k1 || k1.length < 60) { return; }
+                    var sig = labSignals(closed, F.strat), l0 = sig[sig.length - 1]; if (!l0) { return; } var sg = l0 > 0 ? 1 : -1; if (sg < 0 && !F.shorts) { return; }
+                    var px0 = t[s] && t[s].p; if (!px0) { return; } var lastC = closed[closed.length - 1].c; if (Math.abs(px0 / lastC - 1) > 0.012) { return; }
+                    F.sigs.unshift({ sym: s, sg: sg, px: px0, at: Date.now() }); F.sigs = F.sigs.slice(0, 12);
+                    if (F.open.length >= F.maxOpen || F.open.some(function (p) { return p.sym === s; }) || F.lockUntil > Date.now()) { fbSave(); return; }
+                    var c = check(F, s, sg, k, k1, kb);
+                    if (c.fail.length) { skip(F, s, sg, c.fail.join('; ')); return; }
+                    var size = F.bal * F.stake / 100; if (size < 5) { return; }
+                    var sl = Math.max(1.2, Math.min(4, 1.5 * c.ap)), tp = Math.min(8, sl * g.rr);
+                    F.open.push({ sym: s, sg: sg, entry: px0 * (1 + sg * 0.0003), size: size, t0: Date.now(), pk: 0, sl: sl, tp: tp, g: 1, why: c.ok.join(', ') }); fbSave(); if (S.win === 'botpro') { renderView(true); }
+                }).catch(function () { });
+            });
+        };
+        /* ---- smarter exits for guarded trades ---- */
+        var _tick = fbTick;
+        fbTick = function () {
+            var F = S.fb, now = Date.now(), i; if (!F.open.length) { return; }
+            for (i = F.open.length - 1; i >= 0; i--) {
+                var p = F.open[i]; if (!p.g) { continue; } var t = S.tick[p.sym]; if (!t) { continue; }
+                var pct = p.sg * (t.p / p.entry - 1) * 100, el = (now - p.t0) / 60000; p.pk = Math.max(p.pk || 0, pct);
+                var stop = -p.sl; if (p.pk >= p.sl * 0.7) { stop = Math.max(stop, 0.2); }                       // break-even once 70% of the stop distance is in profit
+                if (p.pk >= p.sl * 1.0) { stop = Math.max(stop, p.pk - p.sl * 0.6); }                          // then trail behind the peak
+                if (!p.half && pct >= p.tp * 0.5) { p.half = 1; var part = p.size / 2, usdp = part * (pct / 100) - part * FB_FEE / 2; F.bal += usdp; p.size -= part; F.closed.unshift({ sym: p.sym, sg: p.sg, entry: p.entry, exit: t.p, pct: (pct - FB_FEE * 100) / 2, usd: usdp, why: 'half profit locked', t0: p.t0, t1: now }); fbSave(); }
+                if (pct <= stop) { fbClose(i, p.entry * (1 + p.sg * stop / 100), stop > 0 ? 'protected stop (+' + f(stop) + '%)' : 'stop-loss'); continue; }
+                if (pct >= p.tp) { fbClose(i, t.p, 'target ' + f(p.tp, 1) + '%'); continue; }
+                if (el >= 480 && pct < p.tp * 0.3) { fbClose(i, t.p, 'time stop (8 h)'); continue; }
+            }
+            var save = F.open; F.open = save.filter(function (p) { return !p.g; }); try { _tick(); } finally { var back = F.open; F.open = save.filter(function (p) { return p.g; }).concat(back); }
+        };
+        window.__sgDbg = { check: function (a, b, c, d, e, f2) { return check(a, b, c, d, e, f2); }, tick: function () { return fbTick(); }, scan: function () { return fbScan(); } };
+        /* ---- Bot Pro page: Smart Guard card ---- */
+        var _vb = VIEWS.botpro;
+        VIEWS.botpro = function () {
+            var h = _vb.apply(this, arguments), g = G(), F = S.fb, now = Date.now();
+            function tg(k, n, d) { return '<div class="row tap" data-gd="' + k + '"><span><b>' + n + '</b><br><small class="mut">' + d + '</small></span><b>' + (g[k] ? '✅ ON' : '⚪ OFF') + '</b></div>'; }
+            var card = sh('🛡 Smart Guard') + '<div class="group pad" style="border-left:5px solid ' + (g.on ? '#34c759' : '#8e8e93') + '"><div class="ph"><b>' + (g.on ? 'ON: checks before every entry' : 'OFF: old behaviour') + '</b><span class="btn sec tap kpb" style="padding:6px 12px;width:auto" data-gd="on">' + (g.on ? 'Turn off' : 'Turn on') + '</span></div><div class="note">Before the bot enters it now checks the recommendations, the 1-hour trend, Bitcoin, volatility, volume, news and its own history. The stop and target are sized to each coin\'s volatility (target ' + g.rr + ' × the stop), the stop moves to break-even, half the profit is locked, and a trade that goes nowhere closes after 8 hours. No filter can promise profit: it only removes the weakest trades.</div></div>' +
+                (g.on ? '<div class="group">' + tg('rec', 'Recommendations & factor score', 'volume, trend, news, history, sources') + tg('htf', 'Bigger trend (1 hour)', 'do not fight the 1h trend') + tg('btc', 'Bitcoin direction', 'skip when Bitcoin moves against the trade') + tg('vol', 'Volatility, volume, stretch', 'skip quiet, wild or chased moves') + tg('news', 'News', 'skip when headlines point the other way') + tg('hist', 'Own history & daily limit', '3% daily loss, 3 losses rest, same-way limit') + '</div>' : '') +
+                '<div class="note" style="margin:8px 0 4px">Target compared with the stop</div><div class="m7row">' + [1.2, 1.6, 2, 2.5].map(function (x) { return '<span class="' + (g.rr === x ? 'on' : '') + '" data-gd="rr:' + x + '">' + x + ' ×</span>'; }).join('') + '</div>' +
+                sh('Why trades were skipped', F.skips.length) + (F.skips.length ? '<div class="group">' + F.skips.slice(0, 8).map(function (x) { return '<div class="row" style="align-items:flex-start"><span><b>' + esc(base(x.sym)) + '</b> ' + (x.sg > 0 ? 'LONG' : 'SHORT') + ' <small class="mut">' + Math.round((now - x.at) / 60000) + ' min ago</small><br><small>' + esc(x.why) + '</small></span></div>'; }).join('') + '</div>' : '<div class="group pad mut">Nothing skipped yet. Skipped trades appear here with the reason.</div>') +
+                '<div class="group pad tap" data-act="win:gridbot" style="border-left:5px solid #0a84ff"><b>🔲 Grid Bot (paper)</b><div class="note" style="margin:2px 0 0">Pionex-style: buys low and sells high inside a price range ›</div></div>';
+            var i = h.indexOf('<div class="sh"><span>Performance'); return i > 0 ? h.slice(0, i) + card + h.slice(i) : h + card;
+        };
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-gd]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var a = el.getAttribute('data-gd').split(':'), g = G(); if (a[0] === 'rr') { g.rr = +a[1]; } else { g[a[0]] = g[a[0]] ? 0 : 1; } fbSave(); renderView(true);
+        }, true);
+        /* ---- Bot Doctor plain-words reason for the user: why did it lose ---- */
+        window.__mwWhyLost = function () {
+            var F = S.fb, C = F.closed.slice(0, 40), n = C.length; if (!n) { return 'Bot Pro has no closed trades yet.'; }
+            var w = C.filter(function (x) { return x.usd > 0; }), l = C.filter(function (x) { return x.usd <= 0; }), aw = w.length ? w.reduce(function (a, x) { return a + x.pct; }, 0) / w.length : 0, al = l.length ? l.reduce(function (a, x) { return a + x.pct; }, 0) / l.length : 0;
+            var sh2 = l.filter(function (x) { return x.sg < 0; }).length, lo2 = l.length - sh2, sls = l.filter(function (x) { return /stop/.test(x.why); }).length;
+            return 'Last ' + n + ' trades: ' + w.length + ' won (average +' + f(aw) + '%), ' + l.length + ' lost (average ' + f(al) + '%). A win must be about ' + f(Math.abs(al) / Math.max(aw, 0.01), 1) + ' times smaller than a loss to break even, which needs a win rate above ' + f(Math.abs(al) / (Math.abs(al) + Math.max(aw, 0.01)) * 100, 0) + '%. ' + sls + ' of the losses were stop-losses (' + sh2 + ' shorts, ' + lo2 + ' longs).';
+        };
+    } catch (e) { try { window.__mwRec && window.__mwRec('smartguard', String(e && e.message)); } catch (er) { } }
+})();
+
+/* ===== Grid Bot (paper), Pionex style ===== */
+(function () {
+    try {
+        var KEY = 'mintoosuite_grid', FEE = 0.0008;
+        function f(v, d) { var n = +v; return isFinite(n) ? n.toFixed(d == null ? 2 : d) : '–'; }
+        function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
+        var GB = load() || { sym: 'BTCUSDT', n: 12, inv: 500, on: false, lo: 0, hi: 0, slots: [], cash0: 0, realized: 0, trades: 0, log: [], t0: 0, stopped: '' };
+        function save() { try { localStorage.setItem(KEY, JSON.stringify(GB)); } catch (e) { } }
+        function lv(i) { return GB.lo * Math.pow(GB.hi / GB.lo, i / GB.n); }
+        function equity() { var t = S.tick[GB.sym], px = t ? t.p : 0, e = 0; GB.slots.forEach(function (s) { e += s.st === 'b' ? s.cash : s.qty * px; }); return e; }
+        function suggest() { return m7kl(GB.sym, '1h', 120).then(function (k) { var c = k.slice(0, -1).slice(-72), hi = Math.max.apply(null, c.map(function (x) { return x.h; })), lo = Math.min.apply(null, c.map(function (x) { return x.l; })); return { lo: lo, hi: hi }; }); }
+        function start() {
+            var t = S.tick[GB.sym]; if (!t) { GB.err = 'No live price for ' + GB.sym; return; }
+            suggest().then(function (r) {
+                var px = t.p; GB.lo = Math.min(r.lo, px * 0.97); GB.hi = Math.max(r.hi, px * 1.03); if (GB.hi / GB.lo > 1.6) { GB.lo = px * 0.8; GB.hi = px * 1.2; }
+                GB.slots = []; var per = GB.inv / GB.n, i; GB.realized = 0; GB.trades = 0; GB.log = []; GB.stopped = ''; GB.err = '';
+                for (i = 0; i < GB.n; i++) { var up = lv(i + 1), dn = lv(i); if (dn >= px) { GB.slots.push({ st: 's', qty: per / px * (1 - FEE), buy: px, cash: 0 }); } else { GB.slots.push({ st: 'b', cash: per, qty: 0 }); } }
+                GB.cash0 = GB.inv; GB.on = true; GB.t0 = Date.now(); save(); if (S.win === 'gridbot') { renderView(true); }
+            }).catch(function () { GB.err = 'Could not read candles to set the range'; save(); });
+        }
+        function stop(why) { var t = S.tick[GB.sym], px = t ? t.p : 0, e = 0; GB.slots.forEach(function (s) { e += s.st === 'b' ? s.cash : s.qty * px * (1 - FEE); }); GB.final = e; GB.on = false; GB.stopped = why; GB.slots = []; save(); if (S.win === 'gridbot') { renderView(true); } }
+        setInterval(function () {
+            try {
+                if (!GB.on) { return; } var t = S.tick[GB.sym]; if (!t) { return; } var px = t.p, ch = 0;
+                GB.slots.forEach(function (s, i) {
+                    var dn = lv(i), up = lv(i + 1);
+                    if (s.st === 'b' && px <= dn) { s.qty = s.cash / dn * (1 - FEE); s.buy = dn; s.cash = 0; s.st = 's'; ch = 1; }
+                    else if (s.st === 's' && px >= up) { var cash = s.qty * up * (1 - FEE), per = GB.inv / GB.n; GB.realized += cash - per; GB.trades++; s.cash = cash; s.qty = 0; s.st = 'b'; ch = 1; GB.log.unshift(new Date().toTimeString().slice(0, 5) + ' sold at ' + fmtP(up, GB.sym) + ' (+' + f(cash - per) + ' $)'); GB.log = GB.log.slice(0, 20); }
+                });
+                if (px < GB.lo * 0.97) { stop('Price fell 3% below the range: grid closed to avoid a bigger loss.'); return; }
+                if (px > GB.hi * 1.03) { stop('Price rose above the range: grid closed (profit kept).'); return; }
+                if (ch) { save(); if (S.win === 'gridbot') { renderView(true); } }
+            } catch (e) { }
+        }, 4000);
+        function vGrid() {
+            var t = S.tick[GB.sym], px = t ? t.p : 0, h = '<div class="warn" style="margin-top:0">Paper trading only (virtual money, live prices, 0.08% fee per trade). A grid earns small profits while price moves sideways inside the range and loses when price trends out of it. It runs only while the app is open.</div>';
+            h += '<div class="group pad"><div class="note" style="margin:0 0 6px">Coin (Binance Futures name)</div><div class="m7q"><span>🔲</span><input data-gb="sym" value="' + esc(GB.sym.replace(/USDT$/, '')) + '" autocapitalize="characters" autocomplete="off"></div><div class="note" style="margin:8px 0 4px">Grids</div><div class="m7row">' + [8, 12, 20, 30].map(function (x) { return '<span class="' + (GB.n === x ? 'on' : '') + '" data-gb="n:' + x + '">' + x + '</span>'; }).join('') + '</div><div class="note" style="margin:8px 0 4px">Money ($)</div><div class="m7row">' + [200, 500, 1000].map(function (x) { return '<span class="' + (GB.inv === x ? 'on' : '') + '" data-gb="inv:' + x + '">' + x + '</span>'; }).join('') + '</div>' +
+                '<div style="margin-top:10px">' + (GB.on ? '<button class="btn" data-gb="stop">Stop and sell everything</button>' : '<button class="btn" data-gb="start">Start Grid Bot</button>') + '</div><div class="note">The range is set automatically from the last 3 days of 1-hour candles (min and max), never wider than ±20% from today\'s price.</div></div>';
+            if (GB.err) { h += '<div class="warn">' + esc(GB.err) + '</div>'; }
+            if (GB.on) { var eq = equity(), pl = eq - GB.inv; h += sh('Running: ' + esc(GB.sym.replace(/USDT$/, ''))) + '<div class="group"><div class="row"><span>Range</span><b>' + fmtP(GB.lo, GB.sym) + ' – ' + fmtP(GB.hi, GB.sym) + '</b></div><div class="row"><span>Price now</span><b>' + fmtP(px, GB.sym) + '</b></div><div class="row"><span>Grid profit (sold)</span><b class="' + (GB.realized >= 0 ? 'up' : 'dn') + '">' + f(GB.realized) + ' $</b></div><div class="row"><span>Total result (with coins held)</span><b class="' + (pl >= 0 ? 'up' : 'dn') + '">' + (pl >= 0 ? '+' : '') + f(pl) + ' $</b></div><div class="row"><span>Completed sells</span><b>' + GB.trades + '</b></div></div>' + (GB.log.length ? sh('Latest sells') + '<div class="group">' + GB.log.slice(0, 8).map(function (x) { return '<div class="row"><span>' + esc(x) + '</span></div>'; }).join('') + '</div>' : ''); }
+            else if (GB.stopped) { h += '<div class="group pad"><b>Stopped</b><div class="note">' + esc(GB.stopped) + ' Final value $' + f(GB.final) + ' from $' + GB.inv + '.</div></div>'; }
+            return h;
+        }
+        WINS.push({ id: 'gridbot', ic: '🔲', c: '#0a84ff', n: 'Grid Bot (paper)', t: 'Grid Bot', sub: 'Pionex-style grid: buy low, sell high inside a range (virtual money)' }); LIVE.gridbot = 0; VIEWS.gridbot = vGrid; MW_HELP.gridbot = 'A grid bot places many buy and sell levels inside a price range and collects small profits as price moves up and down. This one uses virtual money.';
+        try { var Gp = MW_GROUPS.filter(function (x) { return /Bot|Auto|Trad/i.test(x[0]); })[0] || MW_GROUPS[MW_GROUPS.length - 1]; Gp[1].push('gridbot'); mwHostSig = ''; } catch (e) { }
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-gb]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-gb').split(':');
+            if (a[0] === 'n') { if (!GB.on) { GB.n = +a[1]; } } else if (a[0] === 'inv') { if (!GB.on) { GB.inv = +a[1]; } } else if (a[0] === 'start') { var inp = document.querySelector('[data-gb="sym"]'); if (inp) { var q = String(inp.value || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (q) { GB.sym = /USDT$/.test(q) ? q : q + 'USDT'; } } if (!S.tick[GB.sym]) { GB.err = 'No Binance Futures coin called ' + GB.sym.replace(/USDT$/, ''); save(); renderView(true); return; } start(); return; } else if (a[0] === 'stop') { if (window.confirm('Stop the grid and sell everything (paper)?')) { stop('Stopped by you.'); } return; }
+            save(); renderView(true);
+        }, true);
+    } catch (e) { }
+})();
+/* ===== .59: Professor exchange guides (Binance, MEXC, Bitget, OKX, Bybit + connecting them here) and Tip of the day ===== */
+(function () {
+    try {
+        var G = [
+            ['create api key binance|binance api|binance api key|create a binance api key|api key on binance|get binance api|make binance api|api management binance|connect binance|binance connect|binance key|binance api create|how to create api binance', 'Binance API key, step by step', '1) Log in to Binance in a browser (desktop site works best) > profile icon > API Management. 2) Create API > choose "System generated" (HMAC) > name it MintooApp > confirm with your passkey or 2FA. 3) Edit restrictions: tick Enable Reading, and Enable Futures only if you want orders from this app. Leave Withdrawals OFF always. 4) Under IP access restrictions choose "Restrict access to trusted IPs only" and add your home Wi-Fi IP and your phone/hotspot IP (search "what is my IP" on each connection). 5) Copy the API key and secret once (the secret is shown only once). 6) In this app: Menu > Profile > Connections > Binance, paste both, press Test connection. 7) Start in TEST mode, then switch to LIVE only when you are ready. Never send the secret to anyone. Screens can differ slightly.'],
+            ['create a mexc api key|api key on mexc|get mexc api|how to create api mexc|create api key mexc|mexc api|mexc api key|connect mexc|mexc connect|mexc key', 'MEXC API key, step by step', '1) MEXC app or website > Profile > API Management (APIs). 2) Create API key, name it MintooApp. 3) Permissions: tick Account (read) and Spot/Futures Trade only if you want orders. Never tick Withdraw. 4) Add trusted IP addresses if offered (your home and hotspot IP). 5) Copy the Access Key and Secret Key (the secret is shown once). 6) In this app: Menu > Profile > Connections > MEXC, paste them and press Test. MEXC orders in the app are for spot; stop/OCO orders are not available there. Start with a tiny amount.'],
+            ['create a bitget api key|api key on bitget|get bitget api|how to create api bitget|create api key bitget|bitget api|bitget api key|connect bitget|bitget connect|bitget passphrase|bitget key', 'Bitget API key, step by step', '1) Bitget app or website > profile > API Keys Management > Create API Key (System generated). 2) Give it a name and a PASSPHRASE you invent (write it down: the app asks for it). 3) Permissions: Read, and Trade only if needed. Never Withdraw. 4) Bind trusted IPs (home and hotspot). 5) Copy API key and secret (shown once). 6) In this app: Menu > Profile > Connections > Bitget, paste key, secret and passphrase, press Test. There is also a Bitget DEMO slot for practice with fake money. Unified (UTA) and classic accounts differ: the app tries to detect which you have.'],
+            ['create a okx api key|api key on okx|get okx api|how to create api okx|create api key okx|okx api|okx api key|connect okx|okx connect|okx passphrase', 'OKX API key, step by step', '1) OKX website > Profile > API > Create API key. 2) Name it, choose a PASSPHRASE you invent and keep it. 3) Permissions: Read, and Trade only if needed. Never Withdraw. 4) Link your trusted IPs. 5) Copy API key, secret key (shown once) and use your passphrase. 6) In this app: Menu > Profile > Connections > OKX, paste all three and press Test. Start with a tiny amount.'],
+            ['create a bybit api key|api key on bybit|get bybit api|how to create api bybit|create api key bybit|bybit api|bybit api key|connect bybit|bybit connect', 'Bybit API key, step by step', '1) Bybit > Profile > API > Create New Key > System-generated. 2) Name it MintooApp. 3) Choose "Read-Write" only if you want orders, and tick Contract/Spot Trade only. Never tick Withdrawal. 4) Choose "Only IPs with permissions granted are allowed" and add your home and hotspot IPs. 5) Copy key and secret (secret shown once). 6) In this app: Menu > Profile > Connections > Bybit, paste and press Test.'],
+            ['api safety|api key safe|withdraw permission|trusted ip|ip whitelist|ip restriction|restrict ip', 'Making an API key safe', 'Four rules on every exchange: (1) Withdrawals permission OFF, always. (2) Restrict the key to trusted IPs (your home Wi-Fi and phone hotspot). Home IPs can change, so check Connections > Test if it suddenly fails. (3) Give only the permissions you need: Read for viewing, Trade only for orders. (4) Never paste the secret into any chat, website or message, including to me. If a secret leaks, delete the key on the exchange immediately and create a new one.'],
+            ['invalid api key|error 2015|-2015|-1021|timestamp|signature|api error|key not working|connection failed|test connection failed', 'API connection errors', 'Common fixes: "Invalid API-key, IP or permissions (-2015)": the key was copied wrongly, the IP is not on the trusted list (your phone is on a different network than when you saved it), or Futures permission is not enabled. "Timestamp (-1021)": phone clock is off; turn on automatic date and time. "418/429": too many requests, the exchange paused you for minutes; wait and avoid the hotspot spamming. Always re-copy key and secret without spaces, and press Test again.'],
+            ['transfer to futures|futures wallet|move usdt|spot to futures|fund futures|deposit usdt|how to deposit', 'Getting USDT into your futures wallet', 'Binance: Wallet > Overview > Transfer > From Spot to USDS-M Futures > choose USDT > amount > Confirm. Other exchanges are similar (Assets > Transfer > Spot to Futures/Derivatives). To deposit crypto, copy the deposit address for the SAME network you send on (for example TRC20 or BEP20) and send a tiny test amount first. Keep a little spare coin for network fees.'],
+            ['set leverage|leverage exchange|isolated margin|cross margin|position mode|one-way|hedge mode', 'Leverage and margin mode on the exchange', 'In the Binance Futures screen tap the leverage number to change it, and tap Isolated/Cross to switch margin mode. Use Isolated for beginners: a loss cannot touch the rest of your futures balance. The app sets leverage itself when you use Trade Pro, but the exchange may refuse if you already have an open position or order on that coin. One-way vs Hedge mode is in Preferences > Position Mode; Trade Pro detects it.'],
+            ['first real trade|first trade checklist|before real trade|start real trading|go live', 'First real trade checklist', '1) Run Bot Pro on paper first and read its report. 2) Connect your key with Futures permission, trusted IPs, no withdrawal. 3) Fund the futures wallet with a small amount you can afford to lose. 4) Open a coin chart > Trade the recommendation card > margin about 10 USDT, leverage 3x or less, keep the suggested stop. 5) Type TRADE to confirm. 6) Check in the exchange app that the position, the stop-loss and the take-profit orders exist. 7) Close it by hand when you want. 8) Only then consider more. No tool can promise profit.'],
+            ['kyc|verify identity|identity verification|verify account|cnic', 'Exchange identity verification (KYC)', 'Exchanges ask for ID before higher limits and withdrawals. Do it only inside the official exchange app or website (type the address yourself). This app never asks for your ID, passport or CNIC. If anyone asks you for a selfie or ID in a chat, it is a scam.'],
+            ['p2p|buy usdt pakistan|jazzcash|easypaisa|sadapay|buy crypto pakistan', 'Buying USDT in Pakistan', 'Many Pakistanis buy USDT through Binance P2P: choose a merchant with high completion rate and many orders, pay only through the payment method shown in the order, never release or pay outside the platform, and use the in-app chat. Keep screenshots. Local rules on crypto are changing, so follow current Pakistani law and your bank\'s policy. This app does not move PKR.']
+        ];
+        G.forEach(function (e) { try { PF_APP.push(e); } catch (er) { } });
+        var _pa = pfAnswer;
+        pfAnswer = function (raw) {
+            try { var q = pfNorm(raw), best = null, bs = 0; G.forEach(function (e) { var s = pfHit(e[0], q); if (s > bs) { bs = s; best = e; } }); if (best && bs >= 4) { return { title: best[1], html: esc(best[2]), score: bs }; } } catch (e) { }
+            return _pa.apply(this, arguments);
+        };
+        /* ---------- Tip of the day ---------- */
+        var T = [
+            ['Risk', 'Decide the most you can lose on a trade BEFORE you enter. One to two percent of your account per trade keeps you alive through a bad streak.'],
+            ['Risk', 'A stop-loss is not optional. Place it when you open the trade, and never move it further away.'],
+            ['Risk', 'Winning 6 of 10 trades can still lose money if your average loss is bigger than your average win. Check reward versus risk, not only win rate.'],
+            ['Risk', 'Leverage multiplies mistakes as much as profits. Beginners should stay at 3x or below until they have 50 trades of history.'],
+            ['Risk', 'Use isolated margin so one bad trade cannot take your whole futures balance.'],
+            ['Risk', 'Never trade money you need for rent, food, school fees or family. Trade only what you can lose.'],
+            ['Risk', 'Do not average down on a losing trade. Adding to a loser is how small losses become account-ending ones.'],
+            ['Risk', 'Set a daily loss limit (for example 3%). When you hit it, close the app and come back tomorrow.'],
+            ['Risk', 'Fees and slippage are real. A trade that targets 0.3% profit can be fully eaten by costs, so aim for targets that clearly beat fees.'],
+            ['Risk', 'Do not open many trades in the same direction. If the market turns, they all lose together.'],
+            ['Habit', 'Keep a journal: coin, reason, entry, stop, target, result. After 30 trades the journal shows you what really works for you.'],
+            ['Habit', 'Trade less. The best traders skip most setups and only take the clear ones. "No trade" is a position.'],
+            ['Habit', 'Paper trade a new idea for at least 50 trades before using real money. Bot Pro in this app is for exactly this.'],
+            ['Habit', 'Write your rules down once, then follow them. Rules written when calm beat decisions made when excited.'],
+            ['Habit', 'After a big win or a big loss, take a break. Emotions are loudest right after an outcome.'],
+            ['Habit', 'Review your week every Sunday: what worked, what broke a rule, one thing to improve.'],
+            ['Habit', 'Do not trade when tired, angry, hungry or in a hurry. Sleep protects your account.'],
+            ['Habit', 'Compare yourself with yesterday\'s you, not with screenshots of other people\'s wins.'],
+            ['Market', 'The trend on the 1-hour and 4-hour charts matters more than a 1-minute wiggle. Trade with the bigger trend.'],
+            ['Market', 'When Bitcoin moves sharply, most coins follow. Check Bitcoin before trading an altcoin.'],
+            ['Market', 'A coin up 20% or more today is often late. Chasing is the most common beginner loss.'],
+            ['Market', 'Volume confirms moves. A breakout on thin volume often fails.'],
+            ['Market', 'Big news (interest rates, inflation numbers, exchange listings or delistings) can move prices in seconds. Stay small or step aside around them.'],
+            ['Market', 'Weekends and late hours have thinner liquidity, so spreads and spikes are worse.'],
+            ['Market', 'Funding rate extremes on futures show a crowded side. A very high positive rate means many longs: be careful buying.'],
+            ['Market', 'Support and resistance are zones, not exact lines. Give your stop room beyond the zone.'],
+            ['Market', 'RSI above 70 or below 30 is a warning of stretch, not an automatic sell or buy.'],
+            ['Market', 'Sideways markets punish trend strategies; trending markets punish range strategies. Know which one you are in.'],
+            ['Safety', 'Create exchange API keys with Withdrawal OFF and trusted IPs only. This is your strongest protection.'],
+            ['Safety', 'Turn on Google Authenticator or a passkey on every exchange. Avoid SMS-only security.'],
+            ['Safety', 'Type exchange addresses yourself or use your saved bookmark. Fake sites copy real ones perfectly.'],
+            ['Safety', 'No real person from an exchange, this app or a "profit group" will ever ask for your secret key, password or 12 words.'],
+            ['Safety', 'Write your wallet\'s 12 words on paper and keep it offline. A screenshot is not a backup, it is a risk.'],
+            ['Safety', 'Beware anyone promising guaranteed profit, signals with 100% accuracy, or doubling your money. They are scams.'],
+            ['Safety', 'Test withdrawals and transfers with a tiny amount first, on the correct network.'],
+            ['Safety', 'Change the password of any account you ever pasted into a chat or typed into the wrong place, and delete old API keys.'],
+            ['App', 'Open Trade Ideas first: it ranks the best opportunities with the reasons and the chance estimate in one list.'],
+            ['App', 'Use the Trade card under a chart: it fills entry, stop and target for you. You still confirm every real order.'],
+            ['App', 'Bot Pro\'s Smart Guard shows why it skipped a trade. Skips are good: they are the losses you did not take.'],
+            ['App', 'The real bot is locked until you type UNLOCK, and the STOP button stops all bots. Keep it visible.'],
+            ['App', 'Use Menu > Problem log if anything freezes. It records errors and helps fix them quickly.'],
+            ['App', 'Check Bot Doctor weekly: it explains why trades lost and what to change.'],
+            ['App', 'Use the Grid Bot (paper) on a calm sideways coin first to see how grids behave before risking money.'],
+            ['App', 'Set your alerts for coins you follow so you do not stare at the screen all day.'],
+            ['App', 'Try Calm screen in Look & mode if you want a quieter, battery-friendly app.'],
+            ['Mindset', 'There is no 100% success in trading. Professionals aim for a small edge, small losses and many repetitions.'],
+            ['Mindset', 'Your first goal is not profit. It is to survive 100 trades without breaking your rules.'],
+            ['Mindset', 'Losses are the cost of doing business. What matters is that each loss is small and planned.'],
+            ['Mindset', 'A good trade can lose and a bad trade can win. Judge yourself by whether you followed your plan.'],
+            ['Mindset', 'Compounding small steady gains beats chasing one huge win. Slow is smooth, smooth is fast.'],
+            ['Mindset', 'If you feel "I must win this back", that is the signal to stop trading for today.'],
+            ['Mindset', 'Learn one strategy deeply instead of ten shallowly.'],
+            ['Mindset', 'Protect your capital first, grow it second. You cannot trade tomorrow with money you lost today.'],
+            ['Learn', 'Read a candle: open, high, low, close. Long wicks mean rejection; big bodies mean conviction.'],
+            ['Learn', 'Moving averages (EMA 20 and 50) show trend direction; crossovers lag but filter noise.'],
+            ['Learn', 'ATR measures how far a coin normally moves. Put your stop beyond normal noise, about 1.5 times ATR.'],
+            ['Learn', 'Risk to reward of 1 to 1.5 or better means you can be wrong more than half the time and still profit.'],
+            ['Learn', 'Position size = money you accept to lose divided by the distance to your stop. Size by risk, not by feeling.'],
+            ['Learn', 'Spot buying is safer than futures for beginners: no liquidation, no funding fees.'],
+            ['Learn', 'Open the Academy window: short lessons with quizzes, from candles to risk management.'],
+            ['Learn', 'Ask Professor anything: "how do I create a Binance API key", "what is funding rate", "why did my bot lose".']
+        ];
+        function dayIdx() { var d = new Date(), s = new Date(d.getFullYear(), 0, 0); return Math.floor((d - s) / 86400000); }
+        function today() { return T[dayIdx() % T.length]; }
+        function vTips() {
+            var i = dayIdx() % T.length, t = T[i], h = '<div class="group pad" style="border-left:5px solid #ff9f0a"><div class="note" style="margin:0">💡 TIP OF THE DAY · ' + esc(t[0]) + '</div><div style="font-size:17px;font-weight:700;margin-top:6px;line-height:1.35">' + esc(t[1]) + '</div></div>';
+            h += '<div class="note">A new tip every day. These habits do not make profit certain (nothing can), but they remove most of the avoidable losses.</div>' + sh('All tips', T.length) + '<div class="group">';
+            T.forEach(function (x, k) { h += '<div class="row" style="align-items:flex-start"><span><b>' + esc(x[0]) + '</b><br><small>' + esc(x[1]) + '</small></span><b>' + (k === i ? '⭐' : '') + '</b></div>'; });
+            return h + '</div>';
+        }
+        WINS.push({ id: 'tips', ic: '💡', c: '#ff9f0a', n: 'Tip of the day', t: 'Tip of the day', sub: 'One useful trading habit or safety tip every day' }); LIVE.tips = 0; VIEWS.tips = vTips; MW_HELP.tips = 'A new trading tip every day, plus all tips in one list.';
+        try { var Gp = MW_GROUPS.filter(function (x) { return /^Tools|^Learn|^Help|^Account/i.test(x[0]); })[0] || MW_GROUPS[MW_GROUPS.length - 1]; Gp[1].unshift('tips'); mwHostSig = ''; } catch (e) { }
+        PF_APP.push(['tip of the day|daily tip|today tip|give me a tip|trading tip', 'Tip of the day', 'Today\'s tip: ' + today()[1] + ' (All tips: Menu > Tip of the day.)']);
+        /* show once a day as a small popup at the top, never twice the same day */
+        setTimeout(function () {
+            try {
+                var d = new Date().toISOString().slice(0, 10); if (localStorage.getItem('mintoosuite_tipday') === d) { return; }
+                var a = JSON.parse(localStorage.getItem('mintoosuite_agree') || 'null'); if (!(a && a.t) || !window.__huPush) { return; }
+                localStorage.setItem('mintoosuite_tipday', d); var t = today();
+                window.__huPush('tip:' + d, '💡', 'Tip of the day', t[1], 'win:tips', 'info', 86400000, false);
+            } catch (e) { }
+        }, 14000);
+    } catch (e) { try { window.__mwRec && window.__mwRec('tips', String(e && e.message)); } catch (er) { } }
 })();
 
 function renderView(keep) {

@@ -216,6 +216,26 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /** Ask the phone for fingerprint, face or phone PIN once; used by the MintooSuite lock screen's fingerprint button. */
+    void lockAuth(final String cb) {
+        runOnUiThread(() -> {
+            if (!lockCanAuth()) { lockCb(cb, false, "No fingerprint, face or screen lock is set on this phone."); return; }
+            try {
+                BiometricPrompt bp = new BiometricPrompt(this, ContextCompat.getMainExecutor(this), new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult r) { lockCb(cb, true, "ok"); }
+
+                    @Override
+                    public void onAuthenticationError(int code, CharSequence msg) { lockCb(cb, false, String.valueOf(msg)); }
+                });
+                bp.authenticate(new BiometricPrompt.PromptInfo.Builder()
+                        .setTitle("Unlock MintooSuite")
+                        .setAllowedAuthenticators(LOCK_AUTH)
+                        .build());
+            } catch (Exception e) { lockCb(cb, false, "Fingerprint is not available on this phone."); }
+        });
+    }
+
     static void lockCb(String cb, boolean ok, String data) {
         WebHolder.js("window.__mwLock&&window.__mwLock(" + org.json.JSONObject.quote(cb) + "," + ok + "," + org.json.JSONObject.quote(data == null ? "" : data) + ");");
     }

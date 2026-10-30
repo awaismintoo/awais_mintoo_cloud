@@ -91,6 +91,14 @@ final class Bridge {
     }
 
     @JavascriptInterface
+    public void lockAuth(String tok, String cb) {
+        if (!ok(tok)) { return; }
+        MainActivity a = MainActivity.cur;
+        if (a == null) { MainActivity.lockCb(cb, false, "Open the app first."); return; }
+        a.lockAuth(cb);
+    }
+
+    @JavascriptInterface
     public void lockSet(String tok, boolean on, String cb) {
         if (!ok(tok)) { return; }
         MainActivity a = MainActivity.cur;
