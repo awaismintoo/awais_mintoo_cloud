@@ -22,6 +22,14 @@ public class BotService extends Service {
     static final String A_PAUSE = "com.mintoosuite.terminal.PAUSE";
     static final String A_STOP = "com.mintoosuite.terminal.STOP";
     private PowerManager.WakeLock wl;
+    private final android.os.Handler beat = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable beatRun = new Runnable() {
+        @Override
+        public void run() {
+            try { WebHolder.keepAlive(); } catch (Exception ignored) { }
+            beat.postDelayed(this, 45000L);
+        }
+    };
 
     static SharedPreferences sp(Context c) { return c.getApplicationContext().getSharedPreferences("mw_svc", Context.MODE_PRIVATE); }
 
@@ -134,6 +142,7 @@ public class BotService extends Service {
             WebHolder.js("window.__mwSvcCmd&&window.__mwSvcCmd('" + (now ? "pause" : "resume") + "');");
         }
         show();
+        beat.removeCallbacks(beatRun); beat.post(beatRun);
         wake(sp(this).getBoolean("wake", false));
         return START_STICKY;
     }
@@ -146,6 +155,7 @@ public class BotService extends Service {
 
     @Override
     public void onDestroy() {
+        beat.removeCallbacks(beatRun);
         wake(false);
         if (!isOn(this)) {
             WebHolder.js("window.__mwSvcCmd&&window.__mwSvcCmd('svcoff');");

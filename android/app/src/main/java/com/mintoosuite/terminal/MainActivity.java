@@ -351,6 +351,14 @@ public class MainActivity extends AppCompatActivity {
         try { startActivity(i); } catch (Exception ignored) { }
     }
 
+    void openOverlaySettings() {
+        try { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + getPackageName()))); } catch (Exception e) { openAppSettings(); }
+    }
+
+    void askRuntime(String[] perms) {
+        try { androidx.core.app.ActivityCompat.requestPermissions(this, perms, 7790); } catch (Exception e) { openAppSettings(); }
+    }
+
     void askBattery() {
         try {
             startActivity(new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:" + getPackageName())));

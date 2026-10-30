@@ -40,7 +40,9 @@ final class WebHolder {
                 .build();
         WebSettings s = w.getSettings();
         s.setJavaScriptEnabled(true);
+        s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false); s.setUseWideViewPort(true);
         s.setDomStorageEnabled(true);
+        try { if (android.os.Build.VERSION.SDK_INT >= 26) { w.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false); } } catch (Exception ignored) { }
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
@@ -110,6 +112,17 @@ final class WebHolder {
         if (web == null) { return; }
         if (web.getParent() instanceof ViewGroup) { ((ViewGroup) web.getParent()).removeView(web); }
         if (wrap != null && app != null) { wrap.setBaseContext(app); }
+        keepAlive();
+    }
+
+    /* keep page timers running while the app is in the background (alerts, prices, bot) */
+    static void keepAlive() {
+        MAIN.post(new Runnable() {
+            @Override
+            public void run() {
+                try { if (web != null) { web.onResume(); web.resumeTimers(); } } catch (Exception ignored) { }
+            }
+        });
     }
 
     static void destroy() {

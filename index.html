@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-30.84';
+var BUILD = '2026-10-30.86';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -13925,6 +13925,603 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             } catch (e) { }
         }, 14000);
     } catch (e) { try { window.__mwRec && window.__mwRec('tips', String(e && e.message)); } catch (er) { } }
+})();
+/* BJ part 1: shared helpers, safety guards, merged Logs, merged Alerts hub, menu clean-up */
+(function () {
+    try {
+        function e2(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        var KX = {}; try { KX = JSON.parse(localStorage.getItem('mintoosuite_kx') || '{}') || {}; } catch (e) { KX = {}; }
+        function ksave() { try { localStorage.setItem('mintoosuite_kx', JSON.stringify(KX)); } catch (e) { } }
+        function qh(t) { try { return window.__qh ? window.__qh(t) : ''; } catch (e) { return ''; } }
+        function tst(m) { try { toast(m); } catch (e) { } }
+        function seg(key, opts, cur) {
+            return '<div class="segc" data-noswipe="1" style="display:flex;flex-wrap:wrap;gap:4px;margin:0 0 10px">' + opts.map(function (o) {
+                return '<span class="' + (o[0] === cur ? 'on' : '') + '" data-xk="' + key + ':' + o[0] + '" style="flex:1 1 auto;text-align:center;white-space:nowrap">' + o[1] + '</span>';
+            }).join('') + '</div>';
+        }
+        function lk(t, u) { return '<a class="btn sec" href="' + e2(u) + '" target="_blank" rel="noopener" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;text-decoration:none;display:inline-block">' + e2(t) + '</a>'; }
+        function go(t, win) { return '<button class="btn sec" data-act="win:' + win + '" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">' + e2(t) + '</button>'; }
+        function pill(t, c) { return '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:12px;font-weight:700;background:' + c + '22;color:' + c + '">' + t + '</span>'; }
+        function box(h, c) { return '<div class="group pad" style="' + (c ? 'border-left:4px solid ' + c + ';' : '') + 'border-radius:14px">' + h + '</div>'; }
+        function again() { try { renderView(true); } catch (e) { } }
+        window.__kx = { KX: KX, save: ksave, seg: seg, lk: lk, go: go, pill: pill, box: box, e2: e2, qh: qh, again: again };
+
+        /* ---------- window names (one clear name each) ---------- */
+        function rename(id, n, t, sub) { try { var w = winDef(id); if (w && w.id === id) { if (n) { w.n = n; } if (t) { w.t = t; } if (sub) { w.sub = sub; } } } catch (e) { } }
+        rename('log', 'Logs', 'Logs', 'Trading log, alerts and app problems in one place');
+        rename('alerts', 'Alerts', 'Alerts', 'Push alerts, pop-ups, permissions and background run');
+        rename('health', 'Health', 'Health', 'App health, self-repair, security centre and antivirus help');
+        rename('help', 'Help', 'Help', 'Topics, learning, support and trust information');
+        rename('timez', 'World clock', 'World clock', 'World clocks, market hours, weather and your clock settings');
+
+        /* ---------- redirects: old window ids open the merged window on the right tab ---------- */
+        var RD = { hu: ['alerts', 'pop', 'alT'], perms: ['alerts', 'bg', 'alT'], errlog: ['log', 'app', 'lgT'], helpc: ['help', 'more', 'hpT'], badges: ['help', 'learn', 'hpT'], tips: ['help', 'learn', 'hpT'], support: ['help', 'contact', 'hpT'] };
+        var _gw = gotoWin;
+        gotoWin = function (id) { var m = RD[id]; if (m) { KX[m[2]] = m[1]; ksave(); id = m[0]; } var a = [].slice.call(arguments, 1); return _gw.apply(this, [id].concat(a)); };
+        var HID = ['hu', 'perms', 'errlog', 'helpc', 'badges', 'tips', 'aboutapp', 'support', 'verify', 'adsinfo'];
+        var _mt = mwTiles;
+        mwTiles = function () { var h = _mt.apply(this, arguments); HID.forEach(function (id) { h = h.replace(new RegExp('<div class="tile[^"]*" data-act="win:' + id + '"><div class="ic"[^>]*>[^<]*</div>[^<]*</div>', 'g'), ''); }); return h; };
+        try { var st = document.createElement('style'); st.textContent = '#sheetMenu [data-act="win:errlog"],#sheetMenu [data-act="win:hu"],#sheetMenu [data-act="win:perms"],#sheetMenu [data-act="win:helpc"]{display:none!important}.xkcard{border-radius:16px;padding:12px;margin:0 0 10px;background:var(--card,rgba(127,127,127,.10))}.xkbar{height:10px;border-radius:6px;background:rgba(127,127,127,.2);overflow:hidden}.xkbar i{display:block;height:100%}'; document.head.appendChild(st); } catch (e) { }
+
+        /* ---------- click dispatcher for data-xk="key:value" ---------- */
+        var XK = {};
+        window.__kx.on = function (k, f) { XK[k] = f; };
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-xk]') : null; if (!el) { return; }
+            e.preventDefault(); e.stopPropagation();
+            var p = el.getAttribute('data-xk') || '', i = p.indexOf(':'), k = p.slice(0, i), v = p.slice(i + 1);
+            try { if (XK[k]) { XK[k](v, el); } else { KX[k] = v; ksave(); again(); } } catch (er) { try { console.log('xk', er); } catch (e2_) { } }
+        }, true);
+        window.__kx.on('jump', function (v) { var t = document.getElementById(v); if (t && t.scrollIntoView) { t.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+
+        /* ---------- safety guards: crash, freeze, link and frame protection ---------- */
+        try { if (window.top !== window.self) { try { window.top.location = window.self.location; } catch (e) { document.documentElement.innerHTML = ''; } } } catch (e) { }
+        document.addEventListener('click', function (e) {
+            var a = e.target.closest ? e.target.closest('a[href]') : null; if (!a) { return; }
+            var h = String(a.getAttribute('href') || '');
+            if (/^\s*(javascript|data|vbscript|file|intent|content|blob):/i.test(h)) { e.preventDefault(); e.stopPropagation(); tst('Blocked an unsafe link.'); }
+        }, true);
+        function logErr(kind, msg) { try { var a = JSON.parse(localStorage.getItem('mintoosuite_errlog') || '[]') || []; a.push(new Date().toLocaleString() + ' [' + kind + '] ' + String(msg).slice(0, 160)); if (a.length > 150) { a = a.slice(-150); } localStorage.setItem('mintoosuite_errlog', JSON.stringify(a)); } catch (e) { } }
+        var _rv = renderView, rvBad = 0;
+        renderView = function () {
+            try { var r = _rv.apply(this, arguments); rvBad = 0; return r; }
+            catch (er) {
+                rvBad++; logErr('error', 'screen failed: ' + (er && er.message));
+                try { var v = document.getElementById('view'); if (v && rvBad < 4) { v.innerHTML = '<div class="group pad"><b>⚠️ This screen had a problem</b><div class="note">Your data is safe. The problem was saved in Logs. Go back or open another window.</div><button class="btn" data-act="win:overview">🏠 Go Home</button></div>'; } } catch (e) { }
+            }
+        };
+        setInterval(function () { try { if (S.log && S.log.length > 300) { S.log.length = 300; } var a = JSON.parse(localStorage.getItem('mintoosuite_errlog') || '[]'); if (a.length > 150) { localStorage.setItem('mintoosuite_errlog', JSON.stringify(a.slice(-150))); } } catch (e) { } }, 60000);
+
+        /* ---------- LOGS: one categorised window ---------- */
+        function errList() { try { return JSON.parse(localStorage.getItem('mintoosuite_errlog') || '[]') || []; } catch (e) { return []; } }
+        function allLogs() {
+            var out = [];
+            (S.log || []).forEach(function (x) {
+                var ty = String(x.type || ''), tx = String(x.text || ''), cat = /BOT|TRADE|ORDER|PEND|ROCKET|REAL|PAPER|GRID|CLOSE|OPEN|FILL/i.test(ty) ? 'trade' : 'alert', lv = /fail|error|reject|denied|stuck|kill|liquid/i.test(tx) ? 'high' : /warn|pause|stop|loss|skip|limit|expire|cancel/i.test(tx) ? 'med' : 'low';
+                out.push({ t: x.t || 0, cat: cat, lv: lv, ty: ty, tx: tx });
+            });
+            errList().forEach(function (s) {
+                var m = /^(.*?)\s\[([^\]]+)\]\s(.*)$/.exec(String(s)), kind = m ? m[2] : 'note', d = m ? Date.parse(m[1]) : 0;
+                out.push({ t: d || 0, cat: 'app', lv: /error|promise|crash|fatal/i.test(kind) ? 'high' : /jump|slow/i.test(kind) ? 'low' : 'med', ty: kind, tx: m ? m[3] : String(s) });
+            });
+            out.sort(function (a, b) { return b.t - a.t; });
+            return out;
+        }
+        var LVC = { high: ['🔴', 'High', '#ff453a'], med: ['🟠', 'Medium', '#ff9f0a'], low: ['🟢', 'Low', '#30d158'] };
+        function vLogs() {
+            var all = allLogs(), tab = KX.lgT || 'all', lv = KX.lgL || 'any', cnt = { high: 0, med: 0, low: 0 };
+            all.forEach(function (x) { cnt[x.lv]++; });
+            var h = box('<b>🗂 Logs</b> ' + qh('Everything the app records, in one place. Trading = bot and order events. Alerts = signals and warnings the app showed. App problems = errors and slow moments found by the app itself. Red means look at it now, orange means keep an eye on it, green is only information.') +
+                '<div class="note" style="margin:4px 0 8px">Saved only on this phone (last 300 events). Nothing is sent anywhere unless you press Email.</div>' +
+                '<div style="display:flex;gap:8px">' + ['high', 'med', 'low'].map(function (k) { return '<div class="xkcard" style="flex:1;margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:' + LVC[k][2] + '">' + cnt[k] + '</div><div class="note" style="margin:0">' + LVC[k][0] + ' ' + LVC[k][1] + '</div></div>'; }).join('') + '</div>');
+            h += seg('lgT', [['all', 'All'], ['trade', '💵 Trading'], ['alert', '🔔 Alerts'], ['app', '🧯 App problems']], tab);
+            h += seg('lgL', [['any', 'Any level'], ['high', '🔴 High'], ['med', '🟠 Medium'], ['low', '🟢 Low']], lv);
+            var rows = all.filter(function (x) { return (tab === 'all' || x.cat === tab) && (lv === 'any' || x.lv === lv); });
+            h += '<div class="group">' + (rows.length ? rows.slice(0, 80).map(function (x) {
+                var c = LVC[x.lv]; return '<div class="row" style="display:block"><div>' + c[0] + ' <span class="badge wait">' + e2(x.ty) + '</span> <span style="font-size:12px;word-break:break-word">' + e2(x.tx) + '</span></div><div class="note" style="margin:3px 0 0">' + (x.t ? new Date(x.t).toLocaleString() : '') + '</div></div>';
+            }).join('') : '<div class="row"><span class="mut">Nothing here. That is good news.</span></div>') + '</div>';
+            h += '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec" data-xk="lgcopy:1" style="flex:1">📋 Copy</button><button class="btn sec" data-xk="lgmail:1" style="flex:1">✉️ Email</button><button class="btn sec" data-act="clearlog" data-xclr="1" style="flex:1">🗑 Clear all</button></div>';
+            return h + '<div class="note">This is a record of what the app recommended and noticed. For real orders, your exchange history is the official record.</div>';
+        }
+        function logText() { return allLogs().map(function (x) { return (x.t ? new Date(x.t).toLocaleString() : '') + ' [' + x.cat + '/' + x.lv + '] ' + x.ty + ' ' + x.tx; }).join('\n'); }
+        window.__kx.on('lgcopy', function () { var t = logText(); try { navigator.clipboard.writeText(t); tst('Copied'); } catch (er) { var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); tst('Copied'); } catch (e) { } document.body.removeChild(ta); } });
+        window.__kx.on('lgmail', function () { var t = logText(); try { navigator.clipboard.writeText(t); } catch (e) { } window.location.href = 'mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite logs (build ' + BUILD + ')') + '&body=' + encodeURIComponent(t.slice(0, 1500) + '\n\n(full log copied to clipboard)'); });
+        document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-xclr]')) { try { localStorage.setItem('mintoosuite_errlog', '[]'); } catch (er) { } setTimeout(again, 50); } }, true);
+        VIEWS.log = vLogs; VIEWS.errlog = vLogs; LIVE.log = 0;
+
+        /* ---------- ALERTS HUB: push + pop-ups + permissions + background ---------- */
+        var _AL = VIEWS.alerts, _HU = VIEWS.hu, _PM = VIEWS.perms;
+        function vAlertHub() {
+            var tab = KX.alT || 'push', perm = window.MintooNative ? 'granted' : ('Notification' in window ? Notification.permission : 'n/a');
+            var h = box('<b>🔔 Alert centre</b> ' + qh('Push alerts reach you even when the app is in the background. Pop-ups appear on top of any screen while the app is open. Permissions and background settings make sure Android does not stop the app. Everything alert-related is here.') +
+                '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + pill(perm === 'granted' ? '✅ Phone allows alerts' : '⚠️ Alerts not allowed yet', perm === 'granted' ? '#30d158' : '#ff9f0a') + pill(S.sysPush ? '🔔 Push ON' : '🔕 Push OFF', S.sysPush ? '#30d158' : '#8e8e93') + '</div>');
+            h += seg('alT', [['push', '🔔 Push'], ['pop', '💬 Pop-ups'], ['bg', '🛡 Background'], ['hist', '🕘 History']], tab);
+            try {
+                if (tab === 'push') { h += (_AL ? _AL() : ''); }
+                else if (tab === 'pop') { h += (_HU ? _HU() : ''); }
+                else if (tab === 'bg') { h += (_PM ? _PM() : ''); }
+                else { KX.lgT = 'alert'; h += '<div class="group pad">Recent alerts and warnings the app showed are listed in Logs.</div>' + go('Open Logs', 'log'); }
+            } catch (er) { h += '<div class="group pad mut">This part is not available right now.</div>'; }
+            return h;
+        }
+        VIEWS.alerts = vAlertHub; VIEWS.hu = vAlertHub; VIEWS.perms = vAlertHub;
+        window.__kx.logErr = logErr;
+    } catch (e) { try { console.log('p9zszx', e); } catch (er) { } }
+})();
+/* BJ part 2: World clock + market hours + weather, Health & security centre, Help & learning hub */
+(function () {
+    try {
+        var X = window.__kx; if (!X) { return; }
+        var KX = X.KX, e2 = X.e2, seg = X.seg, lk = X.lk, go = X.go, pill = X.pill, box = X.box, qh = X.qh;
+
+        /* ===== TIME ZONE ===== */
+        var CITIES = [
+            ['Islamabad', 'Asia/Karachi', 33.69, 73.05, '🇵🇰'], ['Dubai', 'Asia/Dubai', 25.2, 55.27, '🇦🇪'], ['Riyadh', 'Asia/Riyadh', 24.71, 46.68, '🇸🇦'], ['Istanbul', 'Europe/Istanbul', 41.01, 28.98, '🇹🇷'],
+            ['London', 'Europe/London', 51.51, -0.13, '🇬🇧'], ['Frankfurt', 'Europe/Berlin', 50.11, 8.68, '🇩🇪'], ['New York', 'America/New_York', 40.71, -74.0, '🇺🇸'], ['Chicago', 'America/Chicago', 41.88, -87.63, '🇺🇸'],
+            ['Mumbai', 'Asia/Kolkata', 19.08, 72.88, '🇮🇳'], ['Singapore', 'Asia/Singapore', 1.35, 103.82, '🇸🇬'], ['Hong Kong', 'Asia/Hong_Kong', 22.32, 114.17, '🇭🇰'], ['Tokyo', 'Asia/Tokyo', 35.68, 139.69, '🇯🇵'], ['Sydney', 'Australia/Sydney', -33.87, 151.21, '🇦🇺']
+        ];
+        function parts(tz, d) {
+            try { var f = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', weekday: 'short' }).formatToParts(d || new Date()), o = {}; f.forEach(function (p) { o[p.type] = p.value; }); return { h: +o.hour, m: +o.minute, s: +o.second, wd: o.weekday }; } catch (e) { return { h: 0, m: 0, s: 0, wd: '' }; }
+        }
+        function offMin(tz) { var d = new Date(), p = parts(tz, d), u = parts('UTC', d), x = (p.h * 60 + p.m) - (u.h * 60 + u.m); if (x > 720) { x -= 1440; } if (x < -720) { x += 1440; } return x; }
+        function fmt(h, m) { var h24 = true; try { h24 = M7.h24; } catch (e) { } if (h24) { return ('0' + h).slice(-2) + ':' + ('0' + m).slice(-2); } var ap = h >= 12 ? 'PM' : 'AM', hh = h % 12 || 12; return hh + ':' + ('0' + m).slice(-2) + ' ' + ap; }
+        function myTz() { try { var k = M7.tz; if (!k || k === 'pkt') { return 'Asia/Karachi'; } if (k === 'device') { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Karachi'; } return k; } catch (e) { return 'Asia/Karachi'; } }
+        function clockSvg(p) {
+            var a = (p.h % 12 + p.m / 60) * 30, b = p.m * 6, day = p.h >= 6 && p.h < 18;
+            return '<svg width="54" height="54" viewBox="0 0 54 54"><circle cx="27" cy="27" r="25" fill="' + (day ? '#fff6d6' : '#1c2340') + '" stroke="rgba(127,127,127,.5)" stroke-width="2"/>' +
+                '<line x1="27" y1="27" x2="' + (27 + 13 * Math.sin(a * Math.PI / 180)).toFixed(1) + '" y2="' + (27 - 13 * Math.cos(a * Math.PI / 180)).toFixed(1) + '" stroke="' + (day ? '#222' : '#eee') + '" stroke-width="3" stroke-linecap="round"/>' +
+                '<line x1="27" y1="27" x2="' + (27 + 20 * Math.sin(b * Math.PI / 180)).toFixed(1) + '" y2="' + (27 - 20 * Math.cos(b * Math.PI / 180)).toFixed(1) + '" stroke="' + (day ? '#222' : '#eee') + '" stroke-width="2" stroke-linecap="round"/><circle cx="27" cy="27" r="2" fill="#ff453a"/></svg>';
+        }
+        var WX = { at: 0, d: null, busy: 0 };
+        function wxCode(c) { return c === 0 ? '☀️' : c <= 2 ? '🌤' : c === 3 ? '☁️' : c <= 48 ? '🌫' : c <= 67 ? '🌧' : c <= 77 ? '❄️' : c <= 82 ? '🌦' : '⛈'; }
+        function wxLoad() {
+            if (WX.busy || Date.now() - WX.at < 15 * 60000) { return; } WX.busy = 1;
+            var la = CITIES.map(function (c) { return c[2]; }).join(','), lo = CITIES.map(function (c) { return c[3]; }).join(',');
+            fetch('https://api.open-meteo.com/v1/forecast?latitude=' + la + '&longitude=' + lo + '&current=temperature_2m,weather_code,is_day&timezone=auto').then(function (r) { return r.json(); }).then(function (j) { WX.d = Array.isArray(j) ? j : [j]; WX.at = Date.now(); WX.busy = 0; if (S.win === 'timez') { X.again(); } }).catch(function () { WX.busy = 0; WX.at = Date.now() - 12 * 60000; });
+        }
+        function sessBar() {
+            var tz = myTz(), off = offMin(tz), p = parts(tz), nowF = (p.h * 60 + p.m) / 1440;
+            var S_ = [['Sydney', 21, 6, '#ff9f0a'], ['Tokyo', 0, 9, '#bf5af2'], ['London', 7, 16, '#0a84ff'], ['New York', 12, 21, '#30d158']];
+            function seg2(s, e, c, lab) {
+                var a = ((s * 60 + off) % 1440 + 1440) % 1440 / 1440, len = ((e - s + 24) % 24) / 24, o = '';
+                if (a + len <= 1) { o += '<i style="position:absolute;left:' + (a * 100) + '%;width:' + (len * 100) + '%;top:0;bottom:0;background:' + c + ';opacity:.8;border-radius:5px"></i>'; }
+                else { o += '<i style="position:absolute;left:' + (a * 100) + '%;right:0;top:0;bottom:0;background:' + c + ';opacity:.8;border-radius:5px 0 0 5px"></i><i style="position:absolute;left:0;width:' + ((a + len - 1) * 100) + '%;top:0;bottom:0;background:' + c + ';opacity:.8;border-radius:0 5px 5px 0"></i>'; }
+                return o;
+            }
+            var h = '<div class="xkcard"><b>Forex and gold sessions</b> ' + qh('Colored bars show when each big market is open, in your chosen time zone. Where two bars overlap, many traders are active together, so prices move more. For gold the London + New York overlap is usually the busiest time. Hours shift by one hour when countries change their clocks.') + '<div style="margin:10px 0 4px">';
+            S_.forEach(function (s) { h += '<div style="display:flex;align-items:center;gap:6px;margin:4px 0"><span style="width:62px;font-size:12px">' + s[0] + '</span><div style="position:relative;flex:1;height:14px;background:rgba(127,127,127,.15);border-radius:5px">' + seg2(s[1], s[2], s[3]) + '<i style="position:absolute;left:' + (nowF * 100) + '%;top:-3px;bottom:-3px;width:2px;background:#ff453a"></i></div></div>'; });
+            h += '</div><div class="note" style="margin:0">Red line = now (' + e2(fmt(p.h, p.m)) + ' ' + e2(tz.split('/').pop().replace('_', ' ')) + '). Bars start at midnight on the left.</div></div>';
+            return h;
+        }
+        function utcToMine(hh, mm) { var off = offMin(myTz()), t = ((hh * 60 + (mm || 0) + off) % 1440 + 1440) % 1440; return fmt(Math.floor(t / 60), t % 60); }
+        function vTimeHub() {
+            var tab = KX.tzT || 'clocks', p0 = parts(myTz()), h = '';
+            h += box('<div style="display:flex;justify-content:space-between;align-items:center"><div><div class="note" style="margin:0">YOUR TIME ' + qh('The big clock follows the time zone you choose in the Settings tab. Charts, plans and logs follow it too.') + '</div><div style="font-size:34px;font-weight:800">' + fmt(p0.h, p0.m) + '</div><div class="note" style="margin:0">' + e2(p0.wd) + ' · ' + e2(myTz().split('/').pop().replace('_', ' ')) + '</div></div>' + clockSvg(p0) + '</div>');
+            h += seg('tzT', [['clocks', '🕒 Clocks'], ['mk', '📊 Markets'], ['wx', '🌦 Weather'], ['set', '⚙️ Settings']], tab);
+            if (tab === 'clocks') {
+                wxLoad();
+                h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' + CITIES.map(function (c, i) {
+                    var p = parts(c[1]), w = WX.d && WX.d[i] && WX.d[i].current, d = offMin(c[1]) - offMin(myTz()), ds = d === 0 ? 'same time' : (d > 0 ? '+' : '−') + Math.floor(Math.abs(d) / 60) + (Math.abs(d) % 60 ? ':' + ('0' + Math.abs(d) % 60).slice(-2) : '') + ' h';
+                    return '<div class="xkcard" style="margin:0;text-align:center"><div style="font-size:13px;font-weight:700">' + c[4] + ' ' + e2(c[0]) + '</div>' + clockSvg(p) + '<div style="font-size:20px;font-weight:800">' + fmt(p.h, p.m) + '</div><div class="note" style="margin:0">' + e2(p.wd) + ' · ' + ds + (w ? ' · ' + wxCode(w.weather_code) + ' ' + Math.round(w.temperature_2m) + '°' : '') + '</div></div>';
+                }).join('') + '</div>';
+            } else if (tab === 'mk') {
+                h += sessBar();
+                h += '<div class="xkcard"><b>⏰ Key times in your time zone</b>' + qh('These are the moments when prices often jump. Avoid opening a new trade a few minutes before big news; spreads widen and prices gap.') + '<div class="group" style="margin-top:8px">' + [
+                    ['London + New York overlap (busiest for gold)', utcToMine(12, 0) + ' – ' + utcToMine(16, 0)],
+                    ['US economic news usually (jobs, inflation)', utcToMine(13, 30)],
+                    ['Binance daily candle opens (plans reset)', utcToMine(0, 0)],
+                    ['Futures funding times', utcToMine(0, 0) + ' · ' + utcToMine(8, 0) + ' · ' + utcToMine(16, 0)],
+                    ['Exness gold weekend close · open', 'Fri 21:55 UTC · Sun 22:00 UTC (here: ' + utcToMine(21, 55) + ' · ' + utcToMine(22, 0) + ')'],
+                    ['Pakistan Stock Exchange (Mon–Fri)', utcToMine(4, 15) + ' – ' + utcToMine(10, 30)]
+                ].map(function (r) { return '<div class="row"><span style="font-size:13px">' + e2(r[0]) + '</span><b style="font-size:13px">' + e2(r[1]) + '</b></div>'; }).join('') + '</div><div class="note" style="margin:6px 0 0">PSX hours and the Friday break change; confirm on psx.com.pk. Daylight-saving changes move US and UK times by one hour.</div></div>';
+                h += '<div class="xkcard"><b>💡 Ideas that traders use</b><div class="note" style="margin:6px 0 0">• Quiet Asian hours: smaller moves, good for planning, not for chasing.<br>• First 30 minutes after London or New York open: fast moves, wider spreads. Wait for a candle to close.<br>• Weekends: crypto has thinner trading, so sudden spikes are more common.<br>• Before a big news time, reduce size or stand aside.<br>• Do the same thing at the same hours for two weeks and keep notes; patterns appear only from your own record.</div></div>';
+                h += '<div class="xkcard"><b>🌍 Exchange open or closed</b>' + (typeof vExchanges === 'function' ? vExchanges() : '') + '</div>';
+                h += lk('Economic calendar (Investing.com)', 'https://www.investing.com/economic-calendar/') + lk('Forex session map', 'https://www.tradingview.com/markets/currencies/');
+            } else if (tab === 'wx') {
+                wxLoad();
+                h += '<div class="note" style="margin:0 0 8px">Weather matters for traders in two ways: power cuts and internet drops at home, and commodity prices such as oil, gas and crops. Data: Open-Meteo.</div>';
+                if (!WX.d) { h += '<div class="group pad mut">Loading weather… needs internet.</div>'; }
+                else { h += '<div class="group">' + CITIES.map(function (c, i) { var w = WX.d[i] && WX.d[i].current; return '<div class="row"><span>' + c[4] + ' ' + e2(c[0]) + '</span><b>' + (w ? wxCode(w.weather_code) + ' ' + Math.round(w.temperature_2m) + '°C' + (w.is_day ? '' : ' 🌙') : '—') + '</b></div>'; }).join('') + '</div>'; }
+            } else {
+                h += (typeof vTimez === 'function' ? vTimez() : '');
+            }
+            return h;
+        }
+        VIEWS.timez = vTimeHub; LIVE.timez = 1;
+
+        /* ===== SECURITY CENTRE (inside Health) ===== */
+        var IG = { res: null };
+        function sha(t) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)).then(function (b) { return Array.prototype.map.call(new Uint8Array(b), function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }); }
+        function integ() {
+            try {
+                var t = Array.prototype.map.call(document.scripts, function (s) { return s.src ? '' : s.textContent; }).join('');
+                sha(t).then(function (hx) {
+                    var b = null; try { b = JSON.parse(localStorage.getItem('mintoosuite_ibase') || 'null'); } catch (e) { }
+                    if (!b || b.b !== BUILD) { localStorage.setItem('mintoosuite_ibase', JSON.stringify({ b: BUILD, h: hx })); IG.res = 'ok'; }
+                    else { IG.res = b.h === hx ? 'ok' : 'bad'; if (IG.res === 'bad' && X.logErr) { X.logErr('error', 'code fingerprint changed since first run of this build'); } }
+                    IG.fp = hx.slice(0, 12);
+                }).catch(function () { IG.res = 'na'; });
+            } catch (e) { IG.res = 'na'; }
+        }
+        setTimeout(integ, 4000);
+        var AV = [
+            ['Google Play Protect', 'Built into every Android phone. Free. Scans apps even outside the Play Store.', 'https://support.google.com/googleplay/answer/2812853'],
+            ['Bitdefender Mobile Security', 'Consistently high scores in independent lab tests.', 'https://play.google.com/store/search?q=bitdefender%20mobile%20security&c=apps'],
+            ['Kaspersky for Android', 'Strong detection; check availability in your country.', 'https://play.google.com/store/search?q=kaspersky%20android&c=apps'],
+            ['Malwarebytes', 'Good second-opinion scanner and web protection.', 'https://play.google.com/store/search?q=malwarebytes&c=apps'],
+            ['ESET Mobile Security', 'Light on battery, good anti-theft tools.', 'https://play.google.com/store/search?q=eset%20mobile%20security&c=apps'],
+            ['Norton 360 / Avast', 'Well-known suites with web and Wi-Fi protection.', 'https://play.google.com/store/search?q=norton%20360&c=apps']
+        ];
+        function vSecurity() {
+            var ok = [], i;
+            ok.push(['Safe connection (secure context)', !!window.isSecureContext, 'The app runs in a protected browser mode.']);
+            ok.push(['Not shown inside another page', window.top === window.self, 'Stops “clickjacking” tricks.']);
+            ok.push(['App code unchanged since first run', IG.res === 'ok', IG.res === 'bad' ? 'The app code differs from its first-run fingerprint. Re-install the app from your own installer.' : IG.res === 'na' ? 'Could not be checked on this phone.' : 'Fingerprint ' + (IG.fp || '…')]);
+            ok.push(['Online AI is off by default', true, 'Nothing is sent to an AI service unless you switch it on.']);
+            ok.push(['Real trading needs typed UNLOCK / TRADE', true, 'No bot or button can trade real money by itself.']);
+            ok.push(['Wallet is encrypted on this phone', true, 'Keys never leave the phone.']);
+            var good = ok.filter(function (r) { return r[1]; }).length, h = box('<b>🛡 Security centre</b> ' + qh('This page checks what the app can check about itself and shows the steps you should do on the phone. A web app cannot scan other apps on your phone, so for that use Google Play Protect or a trusted antivirus app (listed below).') +
+                '<div style="display:flex;align-items:center;gap:10px;margin-top:8px"><div style="font-size:26px;font-weight:800">' + good + '/' + ok.length + '</div><div class="xkbar" style="flex:1"><i style="width:' + (good / ok.length * 100) + '%;background:' + (good === ok.length ? '#30d158' : '#ff9f0a') + '"></i></div></div>');
+            h += '<div class="group">' + ok.map(function (r) { return '<div class="row" style="display:block"><b>' + (r[1] ? '✅' : '⚠️') + ' ' + e2(r[0]) + '</b><div class="note" style="margin:2px 0 0">' + e2(r[2]) + '</div></div>'; }).join('') + '</div>';
+            h += X.box('<b>🦠 Antivirus: what to do on your phone</b><div class="note" style="margin:6px 0">An app like this cannot contain a real antivirus engine (those need special phone access). The honest, strongest protection is below. Do these in order:</div>' + [
+                'Open <b>Play Store</b> → tap your profile picture → <b>Play Protect</b> → <b>Scan</b>. Keep “Scan apps with Play Protect” ON.',
+                'Install apps only from the Play Store or from files you made yourself (like this app’s installer). Never from links in chat groups.',
+                'Optional: install <b>one</b> trusted antivirus from the list below (two at once slow the phone and fight each other).',
+                'Check any file you are unsure about on <b>VirusTotal</b> before opening it.',
+                'Keep Android updated: Settings → Software update. Old Android versions have known holes.',
+                'Never give anyone your 12 wallet words, passwords or API secrets, and never install apps that ask for “screen sharing” or remote control from strangers.'
+            ].map(function (t, i) { return '<div class="note" style="margin:4px 0"><b>' + (i + 1) + '.</b> ' + t + '</div>'; }).join(''), '#0a84ff');
+            h += '<div class="group">' + AV.map(function (a) { return '<div class="row" style="display:block"><b>' + e2(a[0]) + '</b><div class="note" style="margin:2px 0 4px">' + e2(a[1]) + '</div>' + lk('Open', a[2]) + '</div>'; }).join('') + '</div>';
+            h += lk('VirusTotal (check a file)', 'https://www.virustotal.com/') + lk('Independent lab results (AV-TEST)', 'https://www.av-test.org/en/antivirus/mobile-devices/android/') + go('Lock & anti-theft', 'safety');
+            h += X.box('<b>🔒 Protections built into this app</b><div class="note" style="margin:6px 0 0">• Unsafe links (javascript:, file:, data:) are blocked.<br>• A screen that fails shows a safe fallback instead of a blank or frozen page; the error is saved in Logs.<br>• Logs and caches are trimmed so memory does not grow forever.<br>• The app refuses to run inside another page.<br>• Your API keys, wallet and trades stay on this phone.<br>• Real-money actions need typed confirmation.</div>', '#30d158');
+            return h + '<div class="note">No software can promise “unhackable”. These steps lower the risk a lot; the biggest risks are still people tricking you, so keep secrets secret.</div>';
+        }
+        var _H = VIEWS.health;
+        VIEWS.health = function () {
+            var tab = KX.hlT || 'status', h = seg('hlT', [['status', '🩺 Health'], ['sec', '🛡 Security'], ['perf', '📈 Stability']], tab);
+            if (tab === 'sec') { return h + vSecurity(); }
+            if (tab === 'perf') {
+                var mem = '', ls = 0; try { var pm = performance.memory; if (pm) { mem = Math.round(pm.usedJSHeapSize / 1048576) + ' MB of ' + Math.round(pm.jsHeapSizeLimit / 1048576) + ' MB'; } } catch (e) { }
+                try { for (var k in localStorage) { if (localStorage.hasOwnProperty(k)) { ls += (localStorage[k] || '').length; } } } catch (e) { }
+                var errs = 0; try { errs = (JSON.parse(localStorage.getItem('mintoosuite_errlog') || '[]') || []).filter(function (s) { return /\[(error|promise)\]/.test(s); }).length; } catch (e) { }
+                return h + '<div class="group">' + [['Memory used by the app', mem || 'not reported on this phone'], ['Saved data on this phone', Math.round(ls / 1024) + ' KB'], ['Real errors saved', String(errs)], ['Internet', navigator.onLine ? 'online' : 'offline'], ['Open for', Math.round(performance.now() / 60000) + ' min']].map(function (r) { return '<div class="row"><span>' + r[0] + '</span><b>' + e2(r[1]) + '</b></div>'; }).join('') + '</div>' + go('Open Logs', 'log') + '<div class="note">If the app ever feels slow: close other big apps, restart MintooSuite, then check Logs for red items. The app trims its own memory every minute.</div>';
+            }
+            return h + (_H ? _H() : '');
+        };
+
+        /* ===== HELP & LEARNING HUB ===== */
+        var _HP = VIEWS.help, _HC = typeof vHelpc === 'function' ? vHelpc : null;
+        VIEWS.help = function () {
+            var tab = KX.hpT || 'topics', h = seg('hpT', [['topics', '📚 Topics'], ['learn', '🎓 Learn'], ['contact', '💬 Contact'], ['trust', '🔐 Trust'], ['more', '➕ More']], tab);
+            if (tab === 'learn') {
+                h += box('<b>🎓 Learn step by step</b> ' + qh('A simple path: Academy for the basics, Videos for pictures, Tip of the day for habits, Achievements to see your progress. Practice in the Paper Bot before any real money.') + '<div style="margin-top:6px">' + go('Academy', 'academy') + go('Videos', 'videos') + go('Tip of the day', 'tips') + go('Achievements', 'badges') + go('Money Quest', 'quest') + go('Paper Bot', 'paper') + '</div>');
+                h += '<div class="xkcard"><b>Suggested path</b><div class="note" style="margin:6px 0 0">1. Academy: candles, support and resistance, risk.<br>2. Money Quest games: 10 minutes a day.<br>3. Paper Bot for at least 50 trades.<br>4. Read your Logs weekly.<br>5. Only then think about small real size, with a stop-loss every time.</div></div>';
+                return h;
+            }
+            if (tab === 'contact') {
+                h += box('<b>💬 Get help</b><div class="note" style="margin:6px 0">Fastest: ask Baba Trading (works any time). For a person, use the Support desk; it opens WhatsApp or email with details filled in. Never send passwords, seed words or API secrets.</div>' + go('Ask Baba Trading', 'baba') + go('Support desk', 'support') + go('Replay welcome tour', 'overview'));
+                return h;
+            }
+            if (tab === 'trust') {
+                h += box('<b>🔐 Trust & privacy</b><div class="note" style="margin:6px 0">What this app does with your information, in plain words.</div>' + go('Legal & privacy', 'legal') + go('Ads & privacy', 'adsinfo') + go('About the app', 'aboutapp') + go('Get verified (KYC guide)', 'verify') + go('Security centre', 'health'));
+                h += '<div class="xkcard"><b>In short</b><div class="note" style="margin:6px 0 0">• The app gives ideas and tools; it never guarantees profit and is not financial advice.<br>• Your keys, wallet and trades stay on this phone.<br>• Real-money actions need your typed confirmation.<br>• Ads never appear on trading, wallet, or sign-in screens.<br>• You can export or delete your data any time.</div></div>';
+                return h;
+            }
+            if (tab === 'more') { return h + (_HC ? _HC() : ''); }
+            return h + (_HP ? _HP() : '');
+        };
+        VIEWS.helpc = VIEWS.help;
+    } catch (e) { try { console.log('p9zszy', e); } catch (er) { } }
+})();
+/* BJ part 3: Wallet safety centre, Split charts on every exchange, Exness gold plan card */
+(function () {
+    try {
+        var X = window.__kx; if (!X) { return; }
+        var KX = X.KX, e2 = X.e2, seg = X.seg, lk = X.lk, go = X.go, pill = X.pill, box = X.box, qh = X.qh;
+        function tst(m) { try { toast(m); } catch (e) { } }
+        function jget(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
+        function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+
+        /* ===== WALLET: safety centre + send guard ===== */
+        var TR = 'mintoosuite_wtrust', LIM = 'mintoosuite_wlim', pend = {};
+        function addrOk(a) { return /^0x[0-9a-fA-F]{40}$/.test(a) || /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{20,70}$/.test(a); }
+        function short(a) { return a.slice(0, 6) + '…' + a.slice(-6); }
+        var _W = VIEWS.wallet;
+        VIEWS.wallet = function () {
+            var trusted = jget(TR, []), lim = jget(LIM, 0), open = KX.wsOpen !== '0';
+            var h = box('<div style="display:flex;justify-content:space-between;align-items:center"><b>🛡 Wallet safety centre</b><span data-xk="wsOpen:' + (open ? '0' : '1') + '" style="padding:4px 12px;border-radius:12px;background:rgba(127,127,127,.2);font-size:12px">' + (open ? 'Hide' : 'Show') + '</span></div>' +
+                (open ? '<div class="note" style="margin:6px 0 8px">' + qh('This wallet is self-custody: your keys are created and encrypted on this phone. Nobody else, including this app’s maker, can see, move or recover your money. These extra guards protect you from the most common thefts: look-alike addresses, rushed sends and shared secrets.') + 'Non-custodial: MintooSuite never holds your money, never asks for your 12 words, and is not a bank, exchange or licensed financial service.</div>' +
+                    '<div class="xkcard"><b>Send guard (always on)</b><div class="note" style="margin:4px 0 0">• New real-money address: first press only saves it and waits 10 seconds, then press Review again.<br>• Address is checked for correct format.<br>• Warns if a new address looks almost the same as one you trust (“address poisoning” trick).<br>• Optional limit per send (below).</div></div>' +
+                    '<div class="xkcard"><b>Max per send (coin units, 0 = no limit)</b><input class="m7inp" data-xin="wlim" inputmode="decimal" value="' + (lim || '') + '" placeholder="e.g. 0.5" style="width:100%;box-sizing:border-box;padding:10px;margin-top:6px"></div>' +
+                    '<div class="xkcard"><b>Trusted addresses (' + trusted.length + ')</b>' + (trusted.length ? trusted.map(function (a, i) { return '<div class="row"><span style="font-family:monospace;font-size:12px">' + e2(short(a)) + '</span><span data-xk="wdel:' + i + '" style="color:#ff453a;font-size:12px">remove</span></div>'; }).join('') : '<div class="note" style="margin:4px 0 0">None yet. An address is added after you confirm it twice.</div>') + '</div>' +
+                    '<div class="xkcard"><b>Golden rules</b><div class="note" style="margin:4px 0 0">1. The 12 words go on paper only: never photo, cloud, chat or screenshot.<br>2. Start with Practice mode, then a tiny real amount.<br>3. Compare the first and last 6 characters of the address with the receiver’s own screen.<br>4. Nobody from support, a bank or an exchange will ever ask for your words or password.<br>5. Wrong network = lost coins. Check the network name twice.</div></div>' +
+                    '<div class="xkcard" style="margin-bottom:0"><b>For store review (Google Play)</b><div class="note" style="margin:4px 0 0">Self-custody, no deposits taken, no exchange or custody service, no buying or selling inside the app. Before publishing: complete the Play “Financial features” declaration, link a privacy policy, and check crypto rules for each country. See your STORE_AUDIT file for the steps.</div></div>' : ''), '#30d158');
+            return h + (_W ? _W() : '');
+        };
+        document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-xin') === 'wlim') { var v = parseFloat(String(t.value).replace(',', '.')); jset(LIM, isFinite(v) && v > 0 ? v : 0); } });
+        X.on('wdel', function (v) { var a = jget(TR, []); a.splice(+v, 1); jset(TR, a); X.again(); });
+        function val(k) { var el = document.querySelector('[data-wf="' + k + '"]'); return el ? String(el.value || '').trim() : ''; }
+        document.addEventListener('click', function (e) {
+            var b = e.target.closest ? e.target.closest('[data-w="sreview"]') : null; if (!b) { return; }
+            var net = val('net') || 'prac', to = val('to'), amt = parseFloat(val('amt').replace(',', '.')) || 0, real = !/^(prac|test)/i.test(net), trusted = jget(TR, []), lim = jget(LIM, 0), now = Date.now();
+            function stop(m) { e.preventDefault(); e.stopImmediatePropagation(); tst(m); }
+            if (!to) { return; }
+            if (!addrOk(to)) { return stop('That address does not look right. Check every character.'); }
+            if (!real) { return; }
+            if (lim > 0 && amt > lim) { return stop('Above your own per-send limit (' + lim + '). Change the limit in the safety centre if you really mean it.'); }
+            if (trusted.indexOf(to) >= 0) { return; }
+            var low = to.toLowerCase(), twin = trusted.filter(function (t) { var l = t.toLowerCase(); return l.slice(0, 6) === low.slice(0, 6) && l.slice(-4) === low.slice(-4); })[0];
+            if (twin) { return stop('Careful: this looks like your trusted address ' + short(twin) + ' but it is different. This is a common trick. Check again.'); }
+            if (pend[to] && now - pend[to] >= 10000) { trusted.push(to); jset(TR, trusted.slice(-30)); delete pend[to]; return; }
+            if (!pend[to]) { pend[to] = now; }
+            stop('New address. Read it slowly, then press Review again in 10 seconds.');
+        }, true);
+
+        /* ===== SPLIT CHARTS: every exchange ===== */
+        try {
+            var COINS = [['BTC', 'bitcoin'], ['ETH', 'ethereum'], ['SOL', 'solana'], ['BNB', 'bnb'], ['XRP', 'ripple'], ['DOGE', 'doge dogecoin'], ['TON', 'ton toncoin'], ['LINK', 'chainlink'], ['AVAX', 'avalanche'], ['PEPE', 'pepe']];
+            var EXS = [['Binance futures', 'BINANCE', '.P'], ['MEXC', 'MEXC', ''], ['Bitget', 'BITGET', ''], ['Bybit', 'BYBIT', '.P'], ['OKX', 'OKX', ''], ['KuCoin', 'KUCOIN', ''], ['Coinbase', 'COINBASE', 'USD'], ['Kraken', 'KRAKEN', 'USD']];
+            EXS.forEach(function (x) { COINS.forEach(function (c) { var q = x[2] === 'USD' ? c[0] + 'USD' : c[0] + 'USDT' + x[2]; SP_LIB.push([c[0] + ' · ' + x[0], x[1] + ':' + q, c[0].toLowerCase() + ' ' + c[1] + ' ' + x[0].toLowerCase(), 'Crypto · ' + x[0]]); }); });
+            SP_PRE.mexc = ['MEXC:BTCUSDT', 'MEXC:ETHUSDT', 'MEXC:SOLUSDT', 'MEXC:XRPUSDT', 'MEXC:DOGEUSDT', 'MEXC:BNBUSDT', 'MEXC:LINKUSDT', 'MEXC:PEPEUSDT'];
+            SP_PRE.bitget = ['BITGET:BTCUSDT', 'BITGET:ETHUSDT', 'BITGET:SOLUSDT', 'BITGET:XRPUSDT', 'BITGET:DOGEUSDT', 'BITGET:BNBUSDT', 'BITGET:LINKUSDT', 'BITGET:PEPEUSDT'];
+            SP_PRE.bybit = ['BYBIT:BTCUSDT.P', 'BYBIT:ETHUSDT.P', 'BYBIT:SOLUSDT.P', 'BYBIT:XRPUSDT.P', 'BYBIT:DOGEUSDT.P', 'BYBIT:BNBUSDT.P', 'BYBIT:LINKUSDT.P', 'BYBIT:PEPEUSDT.P'];
+            SP_PRE.okx = ['OKX:BTCUSDT', 'OKX:ETHUSDT', 'OKX:SOLUSDT', 'OKX:XRPUSDT', 'OKX:DOGEUSDT', 'OKX:BNBUSDT', 'OKX:LINKUSDT', 'OKX:PEPEUSDT'];
+            SP_PRE.mixed = ['BINANCE:BTCUSDT.P', 'MEXC:BTCUSDT', 'BITGET:BTCUSDT', 'BYBIT:BTCUSDT.P', 'OKX:BTCUSDT', 'COINBASE:BTCUSD', 'KRAKEN:BTCUSD', 'KUCOIN:BTCUSDT'];
+            SP_PRE.alt = ['MEXC:PEPEUSDT', 'BITGET:DOGEUSDT', 'BINANCE:SOLUSDT.P', 'BYBIT:XRPUSDT.P', 'OKX:LINKUSDT', 'KUCOIN:TONUSDT', 'MEXC:AVAXUSDT', 'BITGET:BNBUSDT'];
+        } catch (e) { }
+        var XL = [['Binance', 'https://www.binance.com/en/futures/BTCUSDT', 'https://www.binance.com/en/trade/BTC_USDT'], ['MEXC', 'https://futures.mexc.com/exchange/BTC_USDT', 'https://www.mexc.com/exchange/BTC_USDT'], ['Bitget', 'https://www.bitget.com/futures/usdt/BTCUSDT', 'https://www.bitget.com/spot/BTCUSDT'], ['Bybit', 'https://www.bybit.com/trade/usdt/BTCUSDT', 'https://www.bybit.com/en/trade/spot/BTC/USDT'], ['OKX', 'https://www.okx.com/trade-swap/btc-usdt-swap', 'https://www.okx.com/trade-spot/btc-usdt'], ['KuCoin', 'https://www.kucoin.com/futures/trade/XBTUSDTM', 'https://www.kucoin.com/trade/BTC-USDT'], ['Coinbase', '', 'https://www.coinbase.com/advanced-trade/spot/BTC-USD'], ['Kraken', 'https://pro.kraken.com/app/trade/btc-usd', 'https://pro.kraken.com/app/trade/btc-usd']];
+        var _SP = VIEWS.split;
+        VIEWS.split = function () {
+            var h = box('<b>🌐 Charts from every exchange</b> ' + qh('Pick one preset to load eight charts from that exchange, or choose any market in each pane. The pane menu now lists Binance, MEXC, Bitget, Bybit, OKX, KuCoin, Coinbase and Kraken coins. Prices differ slightly between exchanges; comparing them shows where liquidity is.') +
+                '<div class="segc" data-noswipe="1" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">' + [['mexc', 'MEXC'], ['bitget', 'Bitget'], ['bybit', 'Bybit'], ['okx', 'OKX'], ['mixed', 'BTC on 8 exchanges'], ['alt', 'Altcoin mix']].map(function (p) { return '<span data-sp="preset:' + p[0] + '" style="flex:1 1 auto;text-align:center">' + p[1] + '</span>'; }).join('') + '</div>' +
+                '<div class="note" style="margin:6px 0 0">Open the exchange itself (BTC shown; search any coin inside):</div><div>' + XL.map(function (x) { return lk(x[0] + ' spot', x[2]) + (x[1] ? lk(x[0] + ' futures', x[1]) : ''); }).join('') + '</div>');
+            return h + (_SP ? _SP() : '');
+        };
+
+        /* ===== EXNESS GOLD: plan card at the top, jump links ===== */
+        function gplan() {
+            var t = S.tick[GOLD]; if (!t || !t.p) { return null; }
+            var side, entry, sl, tp, src = '';
+            try {
+                var D0 = dayOpenFor(nowMs()), g = S.morning.D === D0 ? S.morning.items.filter(function (o) { return o.sym === GOLD && o.today; })[0] : null, gp = S.plan.items.filter(function (r) { return r.kind === 'gold'; })[0];
+                if (g) { side = g.today.day; entry = g.today.entry; sl = g.today.dSL; tp = g.today.dTP; src = 'New-day plan'; } else if (gp) { side = gp.day; entry = gp.price; sl = gp.daySL; tp = gp.dayTP; src = 'Master plan'; }
+            } catch (e) { }
+            var rng = (t.h && t.l) ? t.h - t.l : t.p * 0.008; if (!(rng > 0)) { rng = t.p * 0.008; }
+            if (!(side === 'LONG' || side === 'SHORT') || !(sl > 0) || !(tp > 0)) {
+                var pos = (t.h && t.l && t.h > t.l) ? (t.p - t.l) / (t.h - t.l) : 0.5; src = 'Range plan (from today’s high and low)';
+                side = (t.chg || 0) >= 0 ? (pos < 0.8 ? 'LONG' : 'WAIT') : (pos > 0.2 ? 'SHORT' : 'WAIT'); entry = t.p; sl = rng * 0.5; tp = rng * 0.9;
+            }
+            return { side: side, entry: entry, sl: sl, tp: tp, src: src, t: t };
+        }
+        var _EX = VIEWS.exness;
+        VIEWS.exness = function () {
+            var p = gplan(), bal = +(KX.xbal || 1000) || 1000, risk = +(KX.xrisk || 1) || 1, h = '<div id="xtop"></div>';
+            if (p) {
+                var long = p.side === 'LONG', wait = p.side === 'WAIT', e = p.entry, slp = long ? e - p.sl : e + p.sl, t1 = long ? e + p.tp * 0.6 : e - p.tp * 0.6, t2 = long ? e + p.tp : e - p.tp, riskUsd = bal * risk / 100, lots = Math.floor(riskUsd / (p.sl * 100) * 100) / 100, closed = false;
+                try { closed = goldClosed(new Date(nowMs())); } catch (er) { }
+                h += box('<div style="display:flex;justify-content:space-between;align-items:center"><b>🥇 Recommended gold plan</b>' + pill(closed ? 'Market closed' : (wait ? 'WAIT' : (long ? '▲ BUY' : '▼ SELL')), closed ? '#8e8e93' : wait ? '#ff9f0a' : long ? '#30d158' : '#ff453a') + '</div>' +
+                    '<div class="note" style="margin:4px 0 8px">' + e2(p.src) + ' · ' + qh('A plan is an estimate from recent prices, not a promise. Entry is where the idea starts; the stop is where you accept being wrong and close; targets are where you take profit. Always place the stop. Risk only the small percent you choose below.') + '</div>' +
+                    (wait ? '<div class="note">No clear edge right now. Waiting is a valid trade. Re-check after the next candle or at the London / New York open.</div>' :
+                        '<div class="group">' + [['Entry', fmtP(e, GOLD)], ['Stop-loss', fmtP(slp, GOLD)], ['Target 1 (take half)', fmtP(t1, GOLD)], ['Target 2', fmtP(t2, GOLD)], ['Reward vs risk', (p.tp / p.sl).toFixed(2) + ' : 1']].map(function (r) { return '<div class="row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join('') + '</div>' +
+                        '<div class="xkcard"><b>Your size</b> <span class="note">balance $<input class="m7inp" data-xin="xbal" inputmode="decimal" value="' + bal + '" style="width:80px;padding:4px"> risk <input class="m7inp" data-xin="xrisk" inputmode="decimal" value="' + risk + '" style="width:50px;padding:4px">%</span><div style="margin-top:6px">Risk $' + riskUsd.toFixed(2) + ' → about <b>' + (lots >= 0.01 ? lots.toFixed(2) + ' lot' : 'below 0.01 lot') + '</b></div><div class="note" style="margin:4px 0 0">The smallest trade (0.01 lot) risks about $' + (p.sl * 100 * 0.01).toFixed(2) + ' with this stop' + (lots < 0.01 ? ', which is more than your chosen risk. Wait for a closer stop or accept a smaller account risk.' : '.') + '</div><div class="note" style="margin:4px 0 0">1 lot = 100 oz; check your Exness contract size. Spread, commission and swap not included.</div></div>') +
+                    '<div class="note" style="margin:8px 0 6px">Best hours: the London + New York overlap. Avoid the minutes around big US news. Move the stop to entry after Target 1.</div>' +
+                    '<div><button class="btn" data-xk="jump:xbottom" style="width:auto;display:inline-block;padding:8px 14px;font-size:13px">⬇ Full details below</button> ' + lk('Chart on TradingView', 'https://www.tradingview.com/chart/?symbol=OANDA%3AXAUUSD') + '</div>', long ? '#30d158' : wait ? '#ff9f0a' : '#ff453a');
+            } else { h += box('<b>🥇 Recommended gold plan</b><div class="note">Waiting for live gold prices…</div>'); }
+            h += (_EX ? _EX() : '');
+            h += '<div id="xbottom"></div><button class="btn sec" data-xk="jump:xtop">⬆ Back to the plan at the top</button>';
+            return h;
+        };
+        document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute) { var k = t.getAttribute('data-xin'); if (k === 'xbal' || k === 'xrisk') { var v = parseFloat(String(t.value).replace(',', '.')); if (isFinite(v) && v > 0) { KX[k] = v; X.save(); } } } });
+        document.addEventListener('change', function (e) { var t = e.target; if (t && t.getAttribute && /^(xbal|xrisk)$/.test(t.getAttribute('data-xin') || '')) { X.again(); } });
+    } catch (e) { try { console.log('p9zszz', e); } catch (er) { } }
+})();
+/* BJ part 4: AI-guided Money Quest (Baba guide + arcade games) and the rich Pakistan offers hub */
+(function () {
+    try {
+        var X = window.__kx; if (!X) { return; }
+        var KX = X.KX, e2 = X.e2, seg = X.seg, lk = X.lk, go = X.go, pill = X.pill, box = X.box, qh = X.qh;
+
+        /* ===== MONEY QUEST ===== */
+        var STEPS = [
+            ['Welcome, trader!', 'I am Baba Trading. This quest teaches you to trade safely with <b>pretend money</b>. Nothing here can lose real money. Take 10 minutes a day and you will learn faster than most people who start with real cash.', ''],
+            ['Rule number one: survive', 'Pros think about losing first. Risk only 1% of your money on one trade. With $1,000 that is $10. Ten bad trades in a row would still leave you with 90%. This is how you stay in the game long enough to get good.', 'win:academy|Open Academy'],
+            ['Read the candles', 'A candle shows where price started, moved and ended. Green = buyers won, red = sellers won. Long tails (wicks) show where price was pushed back. Play the Candle Reader game below to practise.', ''],
+            ['Always have a stop', 'A stop-loss is a promise to yourself: “if I am wrong, I leave here”. No stop means one bad day can erase months. Practise with the Risk Sizer game.', ''],
+            ['Spot the traps', 'Most money is lost to scams and rushed decisions, not to the market. “Guaranteed profit”, “send me your 12 words”, “double your coins” are all traps. Try the Scam Spotter game.', ''],
+            ['Graduate step by step', 'Reach Level 3 here, then run the Paper Bot for 50 trades. Only if it makes money after fees should you consider tiny real size. Nobody can promise profit; the goal is to lose small and learn fast.', 'win:paper|Open Paper Bot']
+        ];
+        function guide() {
+            if (KX.qgDone === '1') { return '<div style="margin:0 0 8px">' + '<span data-xk="qgDone:0" style="display:inline-block;padding:6px 12px;border-radius:14px;background:rgba(127,127,127,.18);font-size:13px">🧓 Show Baba’s guide again</span></div>'; }
+            var i = Math.max(0, Math.min(STEPS.length - 1, +KX.qgi || 0)), s = STEPS[i], a = s[2] ? s[2].split('|') : null;
+            return box('<div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:34px">🧓</div><div style="flex:1"><div class="note" style="margin:0">Step ' + (i + 1) + ' of ' + STEPS.length + ' ' + qh('Baba guides you through the quest. Use Back and Next to move, or Skip to go straight to the games.') + '</div><b>' + s[0] + '</b><div class="note" style="margin:4px 0 8px;color:inherit">' + s[1] + '</div>' + (a ? go(a[1], a[0].split(':')[1]) : '') + '</div></div>' +
+                '<div class="xkbar" style="margin:8px 0"><i style="width:' + ((i + 1) / STEPS.length * 100) + '%;background:#7c3aed"></i></div>' +
+                '<div style="display:flex;gap:6px"><button class="btn sec" data-xk="qgs:-1" style="flex:1"' + (i === 0 ? ' disabled' : '') + '>← Back</button><button class="btn sec" data-xk="qgDone:1" style="flex:1">Skip</button><button class="btn" data-xk="qgs:1" style="flex:1">' + (i === STEPS.length - 1 ? 'Finish ✓' : 'Next →') + '</button></div>', '#7c3aed');
+        }
+        X.on('qgs', function (v) { var i = (+KX.qgi || 0) + (+v); if (i >= STEPS.length) { KX.qgDone = '1'; KX.qgi = 0; } else { KX.qgi = Math.max(0, i); } X.save(); X.again(); });
+
+        function rnd(seed) { var s = seed >>> 0; return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+        function shuffle(a, r) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+        var SCAM = [
+            ['“Admin” DMs you: send your 12 words to verify your wallet.', 1, 'Nobody legitimate ever needs your words.'], ['Your exchange app shows prices and you set your own stop.', 0, 'Normal tools. You stay in control.'],
+            ['“Guaranteed 5% daily profit, send $100 to start.”', 1, 'Guaranteed profit does not exist. Classic investment scam.'], ['A friend shows you a trade, you check the chart and decide your own size.', 0, 'Checking for yourself is the right habit.'],
+            ['Stranger offers “free signals” if you install a screen-sharing app.', 1, 'Screen sharing lets them see your passwords and codes.'], ['Exchange sends a login alert; you open the official app yourself, not the link.', 0, 'Opening the app yourself avoids fake links.'],
+            ['“Double your BTC in 1 hour, limited seats!”', 1, 'Urgency plus doubling is always a scam.'], ['You enable two-step verification on your exchange account.', 0, 'This is one of the best protections you can add.']
+        ];
+        var RULES = [
+            ['Using a stop-loss on every trade lowers the risk of a huge loss.', 1, 'True. It limits how wrong you can be.'], ['If a trade is losing, adding more money always fixes it.', 0, 'False. Adding to a loser is how accounts blow up.'],
+            ['Higher leverage means more profit with no extra risk.', 0, 'False. Leverage multiplies losses as much as profits.'], ['Risking 1% per trade lets you survive a long losing streak.', 1, 'True. Small risk keeps you in the game.'],
+            ['A coin that already jumped 50% is always safe to buy.', 0, 'False. Late buyers are often the ones who lose.'], ['Writing down every trade helps you improve.', 1, 'True. Your own records show your real mistakes.']
+        ];
+        var GAMES = { candle: ['🕯 Candle Reader', 'Read the candle: who won?'], risk: ['⚖️ Risk Sizer', 'Work out a safe position size'], scam: ['🕵️ Scam Spotter', 'Scam or safe?'], rules: ['🧠 Rule Rush', 'True or false trading rules'] };
+        function mkQ(g, n) {
+            var r = rnd(n * 7919 + g.charCodeAt(0) * 131), q;
+            if (g === 'candle') {
+                var o = 100 + Math.round(r() * 20), c = o + Math.round((r() - .5) * 20), hi = Math.max(o, c) + Math.round(r() * 10), lo = Math.min(o, c) - Math.round(r() * 10), up = c >= o;
+                if (c === o) { c = o + 1; up = true; }
+                var kind = r() < .5 ? 0 : 1, y = function (v) { return 110 - (v - 70) * 2.6; };
+                var svg = '<svg width="80" height="120" viewBox="0 0 80 120"><line x1="40" y1="' + y(hi) + '" x2="40" y2="' + y(lo) + '" stroke="' + (up ? '#30d158' : '#ff453a') + '" stroke-width="3"/><rect x="26" y="' + Math.min(y(o), y(c)) + '" width="28" height="' + Math.max(3, Math.abs(y(o) - y(c))) + '" fill="' + (up ? '#30d158' : '#ff453a') + '"/></svg>';
+                if (kind === 0) { return { svg: svg, q: 'Opened at ' + o + ', closed at ' + c + '. Who won this candle?', o: ['Buyers (bullish)', 'Sellers (bearish)'], a: up ? 0 : 1, why: up ? 'Closed above the open, so buyers pushed price up.' : 'Closed below the open, so sellers pushed price down.' }; }
+                var top = hi - Math.max(o, c), bot = Math.min(o, c) - lo;
+                return { svg: svg, q: 'Which side has the longer wick (tail) on this candle?', o: ['Upper wick', 'Lower wick', 'Both equal'], a: top > bot ? 0 : bot > top ? 1 : 2, why: 'The longer wick shows where price was rejected. A long upper wick means buyers were pushed back down.' };
+            }
+            if (g === 'risk') {
+                var bal = [500, 1000, 2000, 5000][Math.floor(r() * 4)], rp = [1, 2][Math.floor(r() * 2)], ent = 100, stp = [2, 4, 5][Math.floor(r() * 3)], usd = bal * rp / 100, units = usd / stp, opts = [units, units * 2, units / 2, units * 4].map(function (v) { return Math.round(v * 100) / 100; });
+                var idx = shuffle([0, 1, 2, 3], r);
+                return { q: 'Account $' + bal + ', risk ' + rp + '% per trade. Buy at ' + ent + ', stop at ' + (ent - stp) + '. How many units can you buy?', o: idx.map(function (i) { return opts[i] + ' units'; }), a: idx.indexOf(0), why: 'Risk money = $' + usd + '. Loss per unit = ' + stp + '. Units = ' + usd + ' ÷ ' + stp + ' = ' + opts[0] + '.' };
+            }
+            var bank = g === 'scam' ? SCAM : RULES, it = bank[n % bank.length];
+            return { q: it[0], o: g === 'scam' ? ['Scam / dangerous', 'Safe / normal'] : ['True', 'False'], a: g === 'scam' ? (it[1] ? 0 : 1) : (it[1] ? 0 : 1), why: it[2] };
+        }
+        function xp() { return +KX.qxp || 0; }
+        function lvl() { return Math.floor(xp() / 100) + 1; }
+        var TITLES = ['Newcomer', 'Apprentice', 'Chart Reader', 'Risk Keeper', 'Steady Trader', 'Sharp Eye', 'Veteran', 'Master'];
+        function arcade() {
+            var g = KX.qg, h = box('<div style="display:flex;justify-content:space-between;align-items:center"><b>🎮 Arcade</b>' + pill('Level ' + lvl() + ' · ' + TITLES[Math.min(TITLES.length - 1, lvl() - 1)], '#7c3aed') + '</div><div class="xkbar" style="margin:8px 0"><i style="width:' + (xp() % 100) + '%;background:#7c3aed"></i></div><div class="note" style="margin:0">' + xp() + ' XP · 🔥 streak ' + (+KX.qstk || 0) + ' ' + qh('Each right answer gives 10 XP; every 100 XP is a new level. A streak counts right answers in a row. Games teach habits; they do not predict markets.') + '</div>');
+            if (!g || !GAMES[g]) {
+                h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' + Object.keys(GAMES).map(function (k) { return '<div class="xkcard tap" data-xk="qg:' + k + '" style="margin:0;text-align:center"><div style="font-size:26px">' + GAMES[k][0].split(' ')[0] + '</div><b style="font-size:14px">' + GAMES[k][0].slice(3) + '</b><div class="note" style="margin:2px 0 0">' + GAMES[k][1] + '</div></div>'; }).join('') + '</div>';
+                return h;
+            }
+            var n = +KX['qn' + g] || 1, q = mkQ(g, n), pick = KX.qpick, done = pick !== undefined && pick !== '' && KX.qpn === String(g + n);
+            h += '<div class="xkcard"><div class="note" style="margin:0 0 6px"><span data-xk="qg:" style="cursor:pointer">← All games</span> · ' + GAMES[g][0] + ' · question ' + n + '</div>' + (q.svg ? '<div style="text-align:center">' + q.svg + '</div>' : '') + '<b>' + e2(q.q) + '</b><div style="margin-top:8px">' +
+                q.o.map(function (t, i) { var st = ''; if (done) { st = i === q.a ? 'outline:2px solid #30d158;' : (i === +pick ? 'outline:2px solid #ff453a;' : ''); } return '<button class="btn sec" ' + (done ? 'disabled' : 'data-xk="qa:' + g + '|' + n + '|' + i + '"') + ' style="width:100%;margin:4px 0;text-align:left;' + st + '">' + e2(t) + '</button>'; }).join('') + '</div>' +
+                (done ? '<div class="note" style="margin:6px 0;color:inherit">' + (+pick === q.a ? '✅ Correct! +10 XP. ' : '❌ Not this time. ') + e2(q.why) + '</div><button class="btn" data-xk="qnext:' + g + '">Next question →</button>' : '') + '</div>';
+            return h;
+        }
+        X.on('qg', function (v) { KX.qg = v; KX.qpick = ''; X.save(); X.again(); });
+        X.on('qa', function (v) { var p = v.split('|'), g = p[0], n = +p[1], i = +p[2], q = mkQ(g, n); KX.qpick = i; KX.qpn = g + n; if (i === q.a) { KX.qxp = xp() + 10; KX.qstk = (+KX.qstk || 0) + 1; } else { KX.qstk = 0; } X.save(); X.again(); });
+        X.on('qnext', function (g) { KX['qn' + g] = (+KX['qn' + g] || 1) + 1; KX.qpick = ''; X.save(); X.again(); });
+        var _Q = VIEWS.quest;
+        VIEWS.quest = function () {
+            var tab = KX.qT || 'play', h = guide() + seg('qT', [['play', '🎮 Arcade'], ['quest', '🗺 Missions']], tab);
+            return h + (tab === 'play' ? arcade() : (_Q ? _Q() : ''));
+        };
+
+        /* ===== PAKISTAN OFFERS HUB ===== */
+        var DIR = {
+            markets: [
+                ['Islamabad', [['Aabpara Market (groceries, daily needs)', 'https://www.google.com/maps/search/Aabpara+Market+Islamabad'], ['Jinnah Super Market (shops, cafes, brands)', 'https://www.google.com/maps/search/Jinnah+Super+Market+Islamabad'], ['Centaurus Mall', 'https://www.google.com/maps/search/Centaurus+Mall+Islamabad'], ['Sunday Bazaar G-9 / I-10', 'https://www.google.com/maps/search/Sunday+Bazaar+Islamabad'], ['Raja Bazaar (Rawalpindi: cloth, gold, wholesale)', 'https://www.google.com/maps/search/Raja+Bazaar+Rawalpindi']]],
+                ['Karachi', [['Zainab Market / Saddar', 'https://www.google.com/maps/search/Zainab+Market+Karachi'], ['Tariq Road', 'https://www.google.com/maps/search/Tariq+Road+Karachi'], ['Bohri Bazaar (electronics, daily goods)', 'https://www.google.com/maps/search/Bohri+Bazaar+Karachi'], ['Millennium Mall', 'https://www.google.com/maps/search/Millennium+Mall+Karachi']]],
+                ['Lahore', [['Liberty Market', 'https://www.google.com/maps/search/Liberty+Market+Lahore'], ['Anarkali Bazaar', 'https://www.google.com/maps/search/Anarkali+Bazaar+Lahore'], ['Hall Road (electronics, wholesale)', 'https://www.google.com/maps/search/Hall+Road+Lahore'], ['Packages Mall', 'https://www.google.com/maps/search/Packages+Mall+Lahore']]],
+                ['Other cities', [['Peshawar: Qissa Khwani and Namak Mandi', 'https://www.google.com/maps/search/Namak+Mandi+Peshawar'], ['Quetta: Liaquat Bazaar', 'https://www.google.com/maps/search/Liaquat+Bazaar+Quetta'], ['Faisalabad: Clock Tower bazaars (textile)', 'https://www.google.com/maps/search/Clock+Tower+Faisalabad']]]
+            ],
+            brands: [
+                ['Fashion & lifestyle', [['Khaadi', 'https://pk.khaadi.com/'], ['Sapphire', 'https://pk.sapphireonline.pk/'], ['Gul Ahmed', 'https://www.gulahmedshop.com/'], ['Alkaram Studio', 'https://www.alkaramstudio.com/'], ['Outfitters', 'https://outfitters.com.pk/']]],
+                ['Food & home', [['Shezan', 'https://www.shezan.com/'], ['National Foods', 'https://www.nfoods.com/'], ['Dawlance (appliances)', 'https://www.dawlance.com.pk/'], ['Master Tiles / Interwood (home)', 'https://www.google.com/search?q=Interwood+Pakistan']]],
+                ['Industry leaders (also listed on PSX)', [['Engro', 'https://www.engro.com/'], ['Lucky Cement', 'https://www.lucky-cement.com/'], ['Hub Power', 'https://www.hubpower.com/'], ['Systems Limited (IT)', 'https://www.systemsltd.com/']]]
+            ],
+            deals: [
+                ['Shopping deals', [['Daraz deals', 'https://www.daraz.pk/'], ['OLX (second-hand)', 'https://www.olx.com.pk/'], ['PakWheels (cars and bikes)', 'https://www.pakwheels.com/'], ['Zameen (property)', 'https://www.zameen.com/']]],
+                ['Food & rides', [['Foodpanda deals', 'https://www.foodpanda.pk/'], ['Careem', 'https://www.careem.com/en-pk/'], ['inDrive', 'https://indrive.com/']]],
+                ['Mobile & cards', [['Jazz packages', 'https://jazz.com.pk/'], ['Zong packages', 'https://www.zong.com.pk/'], ['Meezan Bank card offers', 'https://www.meezanbank.com/'], ['Bank card discounts (search)', 'https://www.google.com/search?q=bank+card+discounts+Pakistan+this+month']]]
+            ],
+            biz: [
+                ['Start a business', [['SMEDA (small business help)', 'https://smeda.org/'], ['National Incubation Center', 'https://nic.org.pk/'], ['Ignite (IT and startups)', 'https://ignite.org.pk/'], ['SECP (register a company)', 'https://www.secp.gov.pk/'], ['FBR (tax)', 'https://www.fbr.gov.pk/']]],
+                ['Export & trade', [['TDAP (export help)', 'https://tdap.gov.pk/'], ['Alibaba (sourcing)', 'https://www.alibaba.com/'], ['Daraz seller center', 'https://sellercenter.daraz.pk/']]],
+                ['Earn online', [['DigiSkills.pk (free courses)', 'https://digiskills.pk/'], ['Upwork', 'https://www.upwork.com/'], ['Fiverr', 'https://www.fiverr.com/'], ['PSEB (IT policy and training)', 'https://pseb.org.pk/']]],
+                ['Invest wisely', [['Pakistan Stock Exchange', 'https://www.psx.com.pk/'], ['MUFAP (mutual funds)', 'https://www.mufap.com.pk/'], ['National Savings', 'https://savings.gov.pk/'], ['Gold rate today (search)', 'https://www.google.com/search?q=gold+rate+today+Pakistan+tola']]]
+            ]
+        };
+        function dirHtml(k) {
+            return DIR[k].map(function (g) { return '<div class="xkcard"><b>' + e2(g[0]) + '</b><div style="margin-top:6px">' + g[1].map(function (x) { return lk(x[0], x[1]); }).join('') + '</div></div>'; }).join('') + '<div class="note">Links open official or map pages. They are not paid adverts, and the app does not guarantee prices or quality. Always compare two sellers and pay on delivery when you can.</div>';
+        }
+        var _O = VIEWS.offers;
+        VIEWS.offers = function () {
+            var tab = KX.ofT || 'near', h = box('<b>🇵🇰 Local market & offers</b> ' + qh('Real places, brands and opportunities in Pakistan. “Near you” uses your location if you allowed it. The other tabs are quick directories of markets, brands, deals and ways to earn.') + '<div class="note" style="margin:4px 0 0">Markets, brands, businesses and chances to earn: all in one place.</div>');
+            h += seg('ofT', [['near', '📍 Near you'], ['markets', '🛍 Markets'], ['brands', '🏷 Brands'], ['deals', '🎁 Deals'], ['biz', '💼 Business']], tab);
+            if (tab === 'near') { return h + (_O ? _O() : ''); }
+            return h + dirHtml(tab);
+        };
+    } catch (e) { try { console.log('p9zszza', e); } catch (er) { } }
+})();
+/* BJ part 5: manual zoom 25%-300% (button panel), pan by scrolling, pinch zoom enabled in the Android shell */
+(function () {
+    try {
+        var K = 'mintoosuite_zoom', Z = 100;
+        try { Z = parseInt(localStorage.getItem(K), 10) || 100; } catch (e) { }
+        function clamp(v) { v = Math.round(v / 5) * 5; return Math.max(25, Math.min(300, v)); }
+        function apply(v) {
+            Z = clamp(v); try { localStorage.setItem(K, String(Z)); } catch (e) { }
+            try { document.body.style.zoom = Z === 100 ? '' : String(Z / 100); document.documentElement.style.overflowX = Z > 100 ? 'auto' : ''; } catch (e) { }
+            var l = document.getElementById('xzLbl'), r = document.getElementById('xzRng'); if (l) { l.textContent = Z + '%'; } if (r) { r.value = Z; }
+        }
+        function build() {
+            if (document.getElementById('xzBox')) { return; }
+            var d = document.createElement('div'); d.id = 'xzBox'; d.setAttribute('data-noswipe', '1'); d.setAttribute('data-mwkeep', '1');
+            d.style.cssText = 'position:fixed;left:8px;bottom:84px;z-index:9000;font:600 13px system-ui,sans-serif';
+            d.innerHTML = '<div id="xzBtn" style="width:38px;height:38px;border-radius:19px;background:rgba(30,30,40,.72);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.35)" title="Zoom">🔍</div>' +
+                '<div id="xzPan" style="display:none;position:absolute;left:0;bottom:46px;width:250px;padding:12px;border-radius:16px;background:rgba(28,28,36,.96);color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.5)">' +
+                '<div style="display:flex;align-items:center;gap:8px"><button id="xzM" style="width:38px;height:38px;border-radius:19px;border:0;font-size:20px">−</button><div id="xzLbl" style="flex:1;text-align:center;font-size:20px">100%</div><button id="xzP" style="width:38px;height:38px;border-radius:19px;border:0;font-size:20px">+</button></div>' +
+                '<input id="xzRng" type="range" min="25" max="300" step="5" value="100" style="width:100%;margin:10px 0"><div id="xzChips" style="display:flex;flex-wrap:wrap;gap:5px"></div>' +
+                '<div style="font-weight:400;font-size:11px;opacity:.8;margin-top:8px">Zoom 25% to 300%. When zoomed in, drag the screen to move around. You can also pinch with two fingers.</div></div>';
+            document.body.appendChild(d);
+            var ch = d.querySelector('#xzChips'); [25, 50, 75, 100, 125, 150, 200, 250, 300].forEach(function (p) { var b = document.createElement('button'); b.textContent = p + '%'; b.style.cssText = 'padding:5px 9px;border-radius:12px;border:0;font-size:12px'; b.onclick = function () { apply(p); }; ch.appendChild(b); });
+            d.querySelector('#xzBtn').onclick = function () { var p = d.querySelector('#xzPan'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; };
+            d.querySelector('#xzM').onclick = function () { apply(Z - 5); }; d.querySelector('#xzP').onclick = function () { apply(Z + 5); };
+            d.querySelector('#xzRng').oninput = function (e) { apply(+e.target.value); };
+            apply(Z);
+        }
+        if (document.body) { build(); } else { document.addEventListener('DOMContentLoaded', build); }
+        setInterval(function () { try { build(); } catch (e) { } }, 3000);
+    } catch (e) { try { console.log('p9zszzb', e); } catch (er) { } }
+})();
+/* BJ part 6: background run ON by default, full permission centre (overlay, battery, location, storage, camera, microphone) */
+(function () {
+    try {
+        var X = window.__kx; if (!X) { return; }
+        var KX = X.KX, e2 = X.e2, box = X.box, qh = X.qh;
+        function nat() { return window.MintooNative || null; }
+        function tok() { return window.__mwTok; }
+        function pstate() { try { var n = nat(); return n && n.permState ? JSON.parse(n.permState(tok())) : null; } catch (e) { return null; } }
+        function sstate() { try { var n = nat(); return n && n.svcState ? JSON.parse(n.svcState(tok())) : null; } catch (e) { return null; } }
+        /* 1) keep the background service on by default unless the user turned it off on purpose */
+        function autoStart() {
+            try {
+                var n = nat(); if (!n || !n.svcStart) { return; }
+                if (localStorage.getItem('mintoosuite_bgoff') === '1') { return; }
+                var s = sstate(), p = pstate();
+                if (s && s.on) { return; }
+                if (p && p.notif === false) { return; }
+                if (n.svcStart(tok())) { try { S.bg.on = true; } catch (e) { } }
+            } catch (e) { }
+        }
+        setTimeout(autoStart, 6000); setInterval(autoStart, 120000);
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-m8]') : null; if (!el) { return; }
+            var v = el.getAttribute('data-m8') || '';
+            if (v === 'pm:bg:off') { try { localStorage.setItem('mintoosuite_bgoff', '1'); } catch (er) { } }
+            if (v === 'pm:bg:on') { try { localStorage.removeItem('mintoosuite_bgoff'); } catch (er) { } }
+        }, true);
+        var _c = window.__mwSvcCmd; window.__mwSvcCmd = function (c) { if (c === 'svcoff') { try { localStorage.setItem('mintoosuite_bgoff', '1'); } catch (e) { } } return _c ? _c.apply(this, arguments) : undefined; };
+
+        /* 2) permission centre rows */
+        var ROWS = [
+            ['overlay', '🪟', 'Display over other apps', 'Lets a small alert banner appear on top of other apps when something important happens while MintooSuite is closed. Optional.'],
+            ['loc', '📍', 'Location', 'Used only for “Around you”, local weather and market hours near you. Never uploaded.'],
+            ['store', '📁', 'Photos, media and files', 'Lets you attach pictures and save or share exports and screenshots. The app never scans your files.'],
+            ['cam', '📷', 'Camera', 'For scanning wallet QR codes and taking a profile picture. Optional.'],
+            ['mic', '🎙', 'Microphone', 'For voice questions to Baba Trading. Optional.']
+        ];
+        function permRows() {
+            var n = nat(), p = pstate(), s = sstate(), h = '';
+            h += box('<b>➕ More permissions</b> (notifications, battery and background run are in the list above) ' + qh('Each row shows if the permission is ON. Tap Allow to ask the phone. Nothing is sent anywhere. The app does not read your contacts, messages, call history or other apps, and never asks for those.') + '<div class="note" style="margin:4px 0 0">Background run: <b>' + (s && s.on ? 'ON ✅' : 'OFF') + '</b> ' + (localStorage.getItem('mintoosuite_bgoff') === '1' ? '(you turned it off)' : '(starts by itself)') + '</div>');
+            if (!n || !n.permAsk) { return h + '<div class="group pad mut">These switches exist in the installed Android app. In a browser, the browser asks for each permission itself.</div>'; }
+            h += '<div class="group">' + ROWS.map(function (r) {
+                var on = p ? p[r[0]] : undefined, st = on === true ? '<b class="up">ON ✅</b>' : on === false ? '<b class="org">OFF</b>' : '<b class="mut">check</b>';
+                return '<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center"><b>' + r[1] + ' ' + e2(r[2]) + '</b>' + st + '</div><div class="note" style="margin:3px 0 6px">' + e2(r[3]) + '</div>' + (on === true ? '' : '<button class="btn sec" data-xk="pa:' + r[0] + '" style="width:auto;display:inline-block;padding:6px 14px;font-size:13px">Allow</button> ') + '<button class="btn sec" data-xk="pa:appset" style="width:auto;display:inline-block;padding:6px 14px;font-size:13px">Phone settings</button></div>';
+            }).join('') + '</div>';
+            h += '<div class="xkcard"><b>Make sure alerts arrive when the app is closed</b><div class="note" style="margin:6px 0 0">1. Background run must be ON (above).<br>2. Battery must be <b>Unrestricted</b>.<br>3. Do not use “Force stop” or clear the app from a cleaner app.<br>4. Samsung: Settings → Battery → Background usage limits → Never sleeping apps → add MintooSuite.<br>5. Xiaomi, Oppo, Vivo, Huawei: also turn on “Autostart”.</div></div>';
+            return h;
+        }
+        X.on('pa', function (w) { try { var n = nat(); if (n && n.permAsk) { n.permAsk(tok(), w); } setTimeout(X.again, 1500); } catch (e) { } });
+        document.addEventListener('visibilitychange', function () { if (!document.hidden && S.win === 'alerts') { X.again(); } });
+        var _h = VIEWS.alerts;
+        VIEWS.alerts = function () {
+            var out = _h.apply(this, arguments);
+            if (KX.alT === 'bg') { out = out.replace('Not needed. Backups use the phone’s own file picker, so the app asks for no storage permission.', 'Optional. See “Photos, media and files” below.') + permRows(); }
+            return out;
+        };
+        VIEWS.hu = VIEWS.alerts; VIEWS.perms = VIEWS.alerts;
+    } catch (e) { try { console.log('p9zszzc', e); } catch (er) { } }
 })();
 
 function renderView(keep) {

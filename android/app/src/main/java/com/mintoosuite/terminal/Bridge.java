@@ -107,6 +107,20 @@ final class Bridge {
     }
 
     /* ----- permissions popup ----- */
+    private boolean has(String p) {
+        try { return androidx.core.content.ContextCompat.checkSelfPermission(ctx, p) == PackageManager.PERMISSION_GRANTED; } catch (Exception e) { return false; }
+    }
+
+    private boolean overlayOk() {
+        try { if (Build.VERSION.SDK_INT >= 23) { return android.provider.Settings.canDrawOverlays(ctx); } return true; } catch (Exception e) { return false; }
+    }
+
+    private boolean storeOk() {
+        if (Build.VERSION.SDK_INT >= 33) { return has("android.permission.READ_MEDIA_IMAGES"); }
+        return has(Manifest.permission.READ_EXTERNAL_STORAGE);
+    }
+
+
     @JavascriptInterface
     public String permState(String tok) {
         if (!ok(tok)) { return "{}"; }
@@ -119,7 +133,7 @@ final class Bridge {
             }
         } catch (Exception ignored) { }
         try { lock = BiometricManager.from(ctx).canAuthenticate(MainActivity.LOCK_AUTH) == BiometricManager.BIOMETRIC_SUCCESS; } catch (Exception ignored) { }
-        return "{\"sdk\":" + Build.VERSION.SDK_INT + ",\"notif\":" + notif + ",\"batt\":" + batt + ",\"lock\":" + lock + ",\"svc\":" + BotService.isOn(ctx) + "}";
+        return "{\"sdk\":" + Build.VERSION.SDK_INT + ",\"notif\":" + notif + ",\"batt\":" + batt + ",\"lock\":" + lock + ",\"svc\":" + BotService.isOn(ctx) + ",\"overlay\":" + overlayOk() + ",\"loc\":" + has(Manifest.permission.ACCESS_FINE_LOCATION) + ",\"cam\":" + has(Manifest.permission.CAMERA) + ",\"mic\":" + has(Manifest.permission.RECORD_AUDIO) + ",\"store\":" + storeOk() + "}";
     }
 
     @JavascriptInterface
@@ -135,6 +149,11 @@ final class Bridge {
                     else if ("notifset".equals(which)) { a.openNotificationSettings(); }
                     else if ("batt".equals(which)) { a.askBattery(); }
                     else if ("appset".equals(which)) { a.openAppSettings(); }
+                    else if ("overlay".equals(which)) { a.openOverlaySettings(); }
+                    else if ("loc".equals(which)) { a.askRuntime(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}); }
+                    else if ("cam".equals(which)) { a.askRuntime(new String[]{Manifest.permission.CAMERA}); }
+                    else if ("mic".equals(which)) { a.askRuntime(new String[]{Manifest.permission.RECORD_AUDIO}); }
+                    else if ("store".equals(which)) { a.askRuntime(Build.VERSION.SDK_INT >= 33 ? new String[]{"android.permission.READ_MEDIA_IMAGES", "android.permission.READ_MEDIA_VIDEO"} : new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}); }
                 } catch (Exception ignored) { }
             }
         });
@@ -337,5 +356,6 @@ final class Bridge {
                 .setAutoCancel(true)
                 .setContentIntent(pi);
         ((NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE)).notify(100 + (nid++ % 50), b.build());
+        try { Overlay.show(ctx, title, body); } catch (Exception ignored) { }
     }
 }
