@@ -5,8 +5,10 @@ Rule ("Baba pick"): the UT Bot trailing stop (key 2, ATR 10) flips on the last C
 right side of the EMA 50. This is a statistical idea, not a promise of profit. No personal data is used or stored."""
 import json, os, sys, time, urllib.request
 
-FAPI = 'https://fapi.binance.com'
+# GitHub's servers are in the USA and Binance refuses them (HTTP 451), so the market data comes from the first source that answers.
 COINS = 25
+TOP = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE', 'ADA', 'TRX', 'AVAX', 'LINK', 'DOT', 'LTC', 'BCH', 'NEAR', 'UNI', 'ATOM', 'APT', 'ARB', 'OP', 'SUI', 'FIL', 'ETC', 'INJ', 'AAVE', 'TON']
+SRC = None
 MAX_AGE_MIN = 16
 STABLE = ('USDC', 'FDUSD', 'TUSD', 'BUSD', 'USDP')
 
@@ -91,10 +93,49 @@ def check(kl, now_ms):
 
 
 def pick_coins():
-    t = get(FAPI + '/fapi/v1/ticker/24hr')
-    t = [x for x in t if x['symbol'].endswith('USDT') and not any(x['symbol'].startswith(s) for s in STABLE)]
-    t.sort(key=lambda x: -float(x['quoteVolume']))
-    return [x['symbol'] for x in t[:COINS]]
+    return [c + 'USDT' for c in TOP[:COINS]]
+
+
+def k_binance(sym):
+    return get('https://data-api.binance.vision/api/v3/klines?symbol=%s&interval=15m&limit=120' % sym)
+
+
+def k_okx(sym):
+    d = get('https://www.okx.com/api/v5/market/candles?instId=%s-USDT-SWAP&bar=15m&limit=120' % sym[:-4])['data']
+    out = []
+    for r in reversed(d):
+        t = int(r[0])
+        out.append([t, r[1], r[2], r[3], r[4], r[5], t + 899999])
+    return out
+
+
+def k_gate(sym):
+    d = get('https://api.gateio.ws/api/v4/futures/usdt/candlesticks?contract=%s_USDT&interval=15m&limit=120' % sym[:-4])
+    out = []
+    for r in d:
+        t = int(r['t']) * 1000
+        out.append([t, r['o'], r['h'], r['l'], r['c'], r.get('v', 0), t + 899999])
+    return out
+
+
+SOURCES = [('Binance public data', k_binance), ('OKX', k_okx), ('Gate.io', k_gate)]
+
+
+def klines(sym):
+    global SRC
+    if SRC is None:
+        for name, fn in SOURCES:
+            try:
+                k = fn('BTCUSDT')
+                if len(k) > 80:
+                    SRC = (name, fn)
+                    print('market data from', name)
+                    break
+            except Exception as e:
+                print('source', name, 'not available:', str(e)[:80])
+        if SRC is None:
+            raise RuntimeError('no market data source reachable from GitHub')
+    return SRC[1](sym)
 
 
 def send(sa, title, body, dry):
@@ -123,7 +164,7 @@ def main():
     hits = []
     for s in pick_coins():
         try:
-            kl = get(FAPI + '/fapi/v1/klines?symbol=%s&interval=15m&limit=120' % s)
+            kl = klines(s)
             r = check(kl, now)
             if r:
                 hits.append((s, r, float(kl[-2][4])))
