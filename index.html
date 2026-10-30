@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-30.95';
+var BUILD = '2026-10-30.97';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -3495,6 +3495,7 @@ function drawChart() {
         if (ind.ma7) { leg += ' · MA7 ' + fmtP(ind.ma7[ix] || 0, ch.sym) + ' MA25 ' + fmtP(ind.ma25[ix] || 0, ch.sym); }
         info.innerHTML = '<b>' + esc(ch.sym) + '</b> · ' + ch.tf + (cxSrc() === 's' ? ' · Spot' : cxSrc() === 'd' ? ' · Coin-M' : ' · Perp') + ' · O ' + fmtP(kk.o, ch.sym) + ' H ' + fmtP(kk.h, ch.sym) + ' L ' + fmtP(kk.l, ch.sym) + ' C ' + fmtP(kk.c, ch.sym) + ' <b class="' + (kk.c >= kk.o ? 'up' : 'dn') + '">' + pct((kk.c - kk.o) / kk.o * 100) + '</b>' + leg;
     }
+    try { if (window.__cxOver) { window.__cxOver(g, { start: start, end: end, xs: xs, y: y, W: W, padT: padT, ph: ph, K: K, cw: cw, sym: ch.sym, tf: ch.tf, GR: GR, RD: RD, TX: TX, MT: MT }); } } catch (e) { }
     if (note) { note.textContent = 'Live from Binance (' + (cxSrc() === 's' ? 'Spot' : cxSrc() === 'd' ? 'Coin-M' : 'Futures') + '). The last candle moves in real time. Times use your chosen time zone.'; }
 }
 function cxInfo(k, i, closes, ind) {
@@ -4119,7 +4120,7 @@ document.addEventListener('input', function (e) { var el = e.target; if (el && e
 Object.keys(VIEWS).forEach(function (k) { var f = VIEWS[k]; if (f && !f.__m7) { VIEWS[k] = function () { return m7label(f.apply(this, arguments)); }; VIEWS[k].__m7 = 1; } });
 (function () { try { var st = document.createElement('style'); st.textContent = '#winName{font-size:24px!important;letter-spacing:-.3px}@media(max-width:420px){.brand .logo{display:none}.brand b{font-size:15px}#statusTxt{display:inline-block;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}.nbtns .nbtn{padding-left:10px;padding-right:10px}}'; document.head.appendChild(st); } catch (e) {} })();
 (function () { try { var fix = function () { var els = document.querySelectorAll('#sheetTerms .topic span'); for (var i = 0; i < els.length; i++) { if (els[i].textContent.indexOf('no account or login') >= 0) { els[i].textContent = 'Your account, wallet and settings stay on your phone and we receive nothing. Cloud sign-in and public comments work only if you add your own Firebase project.'; } } }; fix(); setTimeout(fix, 600); } catch (e) {} })();
-// ===== v10.7 · part 8: trading terminal, Bot Pro (Freqtrade-style paper bot), copy-trading guide =====
+// ===== v10.7 · part 8: trading terminal, Bot Baba (Freqtrade-style paper bot), copy-trading guide =====
 S.tm = { sym: 'BTCUSDT', side: 'LONG', slp: 1.5, tpp: 3, bal: null, pos: null, ord: null, busy: false, err: '', at: 0 };
 function tmFake(o) { return { getAttribute: function (k) { return o[k] === undefined ? null : String(o[k]); } }; }
 function tmLv() { var T = S.tm, t = S.tick[T.sym]; if (!t) { return null; } var p = t.p, L = T.side === 'LONG'; return { p: p, sl: L ? p * (1 - T.slp / 100) : p * (1 + T.slp / 100), tp: L ? p * (1 + T.tpp / 100) : p * (1 - T.tpp / 100) }; }
@@ -4158,7 +4159,7 @@ function tmLoad() {
 }
 WINS.push({ id: 'terminal', ic: '🖥️', c: '#f0b90b', n: 'Trading Terminal', t: 'Terminal', sub: 'Order ticket with stop and target, positions and balance (your own Binance keys)' }); LIVE.terminal = 0; VIEWS.terminal = vTerminal;
 
-// ---------- Bot Pro: Freqtrade-style paper bot ----------
+// ---------- Bot Baba: Freqtrade-style paper bot ----------
 var FB_KINDS = [['combo', 'Combined (all agree)'], ['ema', 'EMA 9/21 cross'], ['st', 'SuperTrend flip'], ['bb', 'Bollinger breakout'], ['macd', 'MACD zero cross'], ['don', 'Donchian 20 breakout'], ['rsi', 'RSI reversal']];
 var FB_ROI = { scalper: [[0, 3], [15, 1.5], [45, 0.6], [90, 0]], balanced: [[0, 6], [30, 3], [90, 1.5], [180, 0.5]], patient: [[0, 12], [120, 6], [360, 3], [720, 1]] };
 function fbDef() { return { on: false, bal: 1000, start: 1000, strat: 'combo', tf: '15m', pairs: 12, maxOpen: 4, stake: 10, sl: 3, roiName: 'balanced', trail: true, tOff: 1.5, tDist: 1, shorts: true, cool: 60, ddLock: 15, open: [], closed: [], cd: {}, last: 0, peak: 1000, maxDd: 0, lockUntil: 0, sigs: [], note: '' }; }
@@ -4210,7 +4211,7 @@ function fbSpark() { var C = S.fb.closed.slice().reverse(), b = S.fb.start, pts 
 function vBotPro() {
     var F = S.fb, st = fbStats(), now = Date.now(), h = '', locked = F.lockUntil > now, ret = (F.bal / F.start - 1) * 100;
     h += '<div class="warn" style="margin-top:0">Paper trading only: virtual money, real Binance prices, fees and slippage included (0.16% per round trip). It keeps running only while the app is open. A good paper result is not a promise of real profit.</div>';
-    h += '<div class="group pad"><div class="ph"><b style="font-size:18px">Bot Pro ' + (F.on ? (locked ? '⏸ paused' : '🟢 running') : '⚪ stopped') + '</b><b class="' + (ret >= 0 ? 'up' : 'dn') + '">' + (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%</b></div><div class="note" style="margin:4px 0">Balance $' + F.bal.toFixed(2) + ' · start $' + F.start + ' · worst drop ' + F.maxDd.toFixed(1) + '%</div>' + fbSpark() + (F.note ? '<div class="note">' + esc(F.note) + '</div>' : '') + '<button class="btn" data-m7="fbtoggle">' + (F.on ? 'Stop the bot' : 'Start the bot') + '</button></div>';
+    h += '<div class="group pad"><div class="ph"><b style="font-size:18px">Bot Baba ' + (F.on ? (locked ? '⏸ paused' : '🟢 running') : '⚪ stopped') + '</b><b class="' + (ret >= 0 ? 'up' : 'dn') + '">' + (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%</b></div><div class="note" style="margin:4px 0">Balance $' + F.bal.toFixed(2) + ' · start $' + F.start + ' · worst drop ' + F.maxDd.toFixed(1) + '%</div>' + fbSpark() + (F.note ? '<div class="note">' + esc(F.note) + '</div>' : '') + '<button class="btn" data-m7="fbtoggle">' + (F.on ? 'Stop the bot' : 'Start the bot') + '</button></div>';
     h += sh('Performance') + '<div class="group"><div class="row"><span>Closed trades</span><b>' + st.n + '</b></div><div class="row"><span>Win rate</span><b>' + st.win.toFixed(0) + '%</b></div><div class="row"><span>Profit factor</span><b>' + st.pf.toFixed(2) + '</b></div><div class="row"><span>Average per trade (after fees)</span><b class="' + (st.exp >= 0 ? 'up' : 'dn') + '">' + st.exp.toFixed(2) + '%</b></div></div>';
     var ok = [[st.n >= 50, 'At least 50 closed trades (now ' + st.n + ')'], [st.pf >= 1.3, 'Profit factor 1.3 or more (now ' + st.pf.toFixed(2) + ')'], [st.exp > 0.05, 'Positive average after fees'], [F.maxDd <= 15, 'Worst drop 15% or less (now ' + F.maxDd.toFixed(1) + '%)'], [ret > 0, 'Total result above zero']];
     h += sh('Ready to try by hand with real money?') + '<div class="group">' + ok.map(function (x) { return '<div class="row"><span>' + (x[0] ? '✅ ' : '❌ ') + x[1] + '</span></div>'; }).join('') + '</div><div class="note">Only when all five are ticked over days of paper trading is it even worth trying a signal by hand with a tiny amount in the Terminal. Even then, the future can differ.</div>';
@@ -4227,10 +4228,10 @@ function vBotPro() {
     h += sh('Latest signals', sg.length) + (sg.length ? '<div class="group">' + sg.slice(0, 6).map(function (s) { return '<div class="row"><span><b>' + esc(base(s.sym)) + '</b> ' + (s.sg > 0 ? 'LONG' : 'SHORT') + ' <small class="mut">at ' + fmtP(s.px, s.sym) + ' · ' + Math.round((now - s.at) / 60000) + ' min ago</small></span><button class="btn sec" style="padding:6px 10px;width:auto" data-m7="fbterm:' + s.sym + ':' + (s.sg > 0 ? 'LONG' : 'SHORT') + '">Terminal ›</button></div>'; }).join('') + '</div>' : '<div class="group pad mut">Signals appear when a candle closes with the strategy firing.</div>');
     h += sh('Recent closed trades', F.closed.length) + (F.closed.length ? '<div class="group">' + F.closed.slice(0, 10).map(function (x) { return '<div class="row"><span><b>' + esc(base(x.sym)) + '</b> ' + (x.sg > 0 ? 'LONG' : 'SHORT') + ' <small class="mut">' + esc(x.why) + '</small></span><b class="' + (x.usd >= 0 ? 'up' : 'dn') + '">' + (x.pct >= 0 ? '+' : '') + x.pct.toFixed(2) + '%</b></div>'; }).join('') + '</div>' : '<div class="group pad mut">No closed trades yet.</div>');
     if (st.per.length > 1) { h += sh('Best and worst pairs') + '<div class="group">' + [st.per[0], st.per[st.per.length - 1]].map(function (x) { return '<div class="row"><span>' + esc(base(x[0])) + '</span><b class="' + (x[1] >= 0 ? 'up' : 'dn') + '">' + (x[1] >= 0 ? '+' : '') + x[1].toFixed(2) + ' $</b></div>'; }).join('') + '</div>'; }
-    h += '<button class="btn sec" style="margin-top:12px" data-m7="fbreset">Reset Bot Pro (back to $1000)</button><div class="note">To test a strategy on past data first, use the Strategy Lab window (backtest with fees, optimiser, out-of-sample check).</div>';
+    h += '<button class="btn sec" style="margin-top:12px" data-m7="fbreset">Reset Bot Baba (back to $1000)</button><div class="note">To test a strategy on past data first, use the Strategy Lab window (backtest with fees, optimiser, out-of-sample check).</div>';
     return h;
 }
-WINS.push({ id: 'botpro', ic: '🤖', c: '#5e5ce6', n: 'Bot Pro (Freqtrade-style)', t: 'Bot Pro', sub: 'Strategies, ROI table, stop-loss, trailing stop, protections, performance' }); LIVE.botpro = 0; VIEWS.botpro = vBotPro;
+WINS.push({ id: 'botpro', ic: '🤖', c: '#5e5ce6', n: 'Bot Baba (Freqtrade-style)', t: 'Bot Baba', sub: 'Strategies, ROI table, stop-loss, trailing stop, protections, performance' }); LIVE.botpro = 0; VIEWS.botpro = vBotPro;
 
 // ---------- Copy trading guide + lead-trader scorecard ----------
 S.cp = { roi: '', dd: '', win: '', trades: '', days: '', share: '10' };
@@ -4251,7 +4252,7 @@ function vCopy() {
     var h = '<div class="note" style="margin:0 0 8px">Copy trading means choosing a "lead trader" and having their trades copied on your own account in proportion to the amount you allot. You can usually stop at any time, and the lead trader typically takes a share of your profits (shown on their profile). Losses are yours alone. Availability, rules and fees differ by country and change often, so read each platform\'s own page.</div>';
     h += sh('Where it exists') + '<div class="group">' + [['Binance Copy Trading', 'Futures lead traders with ROI, drawdown and followers on their profile.', 'https://www.binance.com/en/copy-trading'], ['Bitget Copy Trading', 'Futures and spot copy trading, with a trader ranking.', 'https://www.bitget.com/copy-trading'], ['XM', 'XM runs its own copy-trading offers for forex/CFDs; check what is available in your country.', 'https://www.xm.com/'], ['MEXC', 'MEXC also lists copy trading; see the MEXC window for markets.', 'https://www.mexc.com/']].map(function (x) { return '<div class="row tap" style="display:block"><b>' + x[0] + '</b><div class="note" style="margin:2px 0 6px">' + x[1] + '</div><a class="btn sec" style="padding:8px;display:block;text-align:center" href="' + x[2] + '" target="_blank" rel="noopener">Open official page ›</a></div>'; }).join('') + '</div>';
     h += sh('Lead-trader scorecard') + '<div class="group pad"><div style="display:flex;flex-wrap:wrap;gap:8px">' + fld('roi', 'ROI (%) for the period', 'e.g. 85') + fld('dd', 'Max drawdown (%)', 'e.g. 18') + fld('win', 'Win rate (%)', 'e.g. 62') + fld('trades', 'Number of trades', 'e.g. 240') + fld('days', 'Days of history', 'e.g. 120') + fld('share', 'Profit share to the trader (%)', '10') + '</div></div><div id="m7cpo">' + cpOut() + '</div>';
-    h += sh('Becoming a lead trader') + '<div class="group pad"><div class="note" style="margin:0">Platforms set their own requirements (account size, history, verification). Build a record first: your Bot Pro paper record is ' + (st.n ? st.n + ' trades, win rate ' + st.win.toFixed(0) + '%, profit factor ' + st.pf.toFixed(2) + ', worst drop ' + F.maxDd.toFixed(1) + '%' : 'empty so far (start Bot Pro)') + '. Never promise followers profits; show real numbers including the drawdown.</div></div>';
+    h += sh('Becoming a lead trader') + '<div class="group pad"><div class="note" style="margin:0">Platforms set their own requirements (account size, history, verification). Build a record first: your Bot Baba paper record is ' + (st.n ? st.n + ' trades, win rate ' + st.win.toFixed(0) + '%, profit factor ' + st.pf.toFixed(2) + ', worst drop ' + F.maxDd.toFixed(1) + '%' : 'empty so far (start Bot Baba)') + '. Never promise followers profits; show real numbers including the drawdown.</div></div>';
     return h + '<div class="note">MintooSuite does not copy trades, hold funds or recommend a trader. This window only teaches how to judge one.</div>';
 }
 WINS.push({ id: 'copy', ic: '👥', c: '#0a84ff', n: 'Copy trading', t: 'Copy trading', sub: 'Binance, Bitget, XM: how it works and a lead-trader scorecard' }); LIVE.copy = 0; VIEWS.copy = vCopy;
@@ -4273,7 +4274,7 @@ document.addEventListener('click', function (e) {
     else if (v === 'fbsl') { F.sl = +x; fbSave(); renderView(true); } else if (v === 'fbr') { F.roiName = x; fbSave(); renderView(true); }
     else if (v === 'fbtrail') { F.trail = !F.trail; fbSave(); renderView(true); } else if (v === 'fbshort') { F.shorts = !F.shorts; fbSave(); renderView(true); }
     else if (v === 'fbterm') { var q = x.split(':'); T.sym = q[0]; T.side = q[1]; gotoWin('terminal'); }
-    else if (v === 'fbreset') { if (window.confirm('Reset Bot Pro and its history?')) { S.fb = fbDef(); fbSave(); renderView(true); } }
+    else if (v === 'fbreset') { if (window.confirm('Reset Bot Baba and its history?')) { S.fb = fbDef(); fbSave(); renderView(true); } }
 });
 // menu groups, help, wallet card
 (function () {
@@ -4283,7 +4284,7 @@ document.addEventListener('click', function (e) {
         MW_HELP.botpro = 'A paper-money bot in the style of Freqtrade: choose a strategy, candle size, number of pairs, stake, stop-loss, a take-profit schedule (ROI table), trailing stop and protections. It uses real prices with fees and slippage. The checklist tells you honestly when its record is good enough to even consider a small real trade by hand.';
         MW_HELP.copy = 'Explains copy trading on Binance, Bitget and XM and gives you a scorecard to judge a lead trader from the numbers on their profile (ROI, drawdown, trades, history, profit share).';
     } catch (e) {}
-    try { var w = VIEWS.wallet; if (w && !w.__cp) { VIEWS.wallet = function () { return w.apply(this, arguments) + '<div class="group pad" style="margin-top:12px"><b>Traders and copy trading</b><div class="note" style="margin:4px 0 8px">Learn how copy trading works and score a lead trader before you follow anyone.</div><button class="btn sec" data-act="win:copy">Open Copy trading</button> <button class="btn sec" data-act="win:botpro" style="margin-top:8px">Open Bot Pro</button></div>'; }; VIEWS.wallet.__cp = 1; } } catch (e) {}
+    try { var w = VIEWS.wallet; if (w && !w.__cp) { VIEWS.wallet = function () { return w.apply(this, arguments) + '<div class="group pad" style="margin-top:12px"><b>Traders and copy trading</b><div class="note" style="margin:4px 0 8px">Learn how copy trading works and score a lead trader before you follow anyone.</div><button class="btn sec" data-act="win:copy">Open Copy trading</button> <button class="btn sec" data-act="win:botpro" style="margin-top:8px">Open Bot Baba</button></div>'; }; VIEWS.wallet.__cp = 1; } } catch (e) {}
     ['terminal', 'botpro', 'copy'].forEach(function (k) { var f = VIEWS[k]; if (f && !f.__m7) { VIEWS[k] = function () { return m7label(f.apply(this, arguments)); }; VIEWS[k].__m7 = 1; } });
 })();
 
@@ -4548,7 +4549,7 @@ function rbCard() {
     h += sh('Real results', n) + '<div class="group"><div class="row"><span>Closed trades</span><b>' + n + '</b></div><div class="row"><span>Win rate</span><b>' + (n ? Math.round(w / n * 100) : 0) + '%</b></div><div class="row"><span>Total result (after fees)</span><b class="' + (tot >= 0 ? 'up' : 'dn') + '">' + (tot >= 0 ? '+' : '') + tot.toFixed(2) + ' USDT</b></div></div>';
     if (n) { h += '<div class="group">' + C.slice(0, 8).map(function (x) { return '<div class="row"><span><b>' + esc(base(x.sym)) + '</b> ' + (x.sg > 0 ? 'LONG' : 'SHORT') + ' <small class="mut">' + esc(x.why) + '</small></span><b class="' + (x.pnl >= 0 ? 'up' : 'dn') + '">' + (x.pnl >= 0 ? '+' : '') + x.pnl.toFixed(2) + '</b></div>'; }).join('') + '</div>'; }
     h += sh('Bot log', R.log.length) + '<div class="group pad">' + (R.log.length ? R.log.slice(0, 25).map(function (e) { return '<div class="mwd" style="margin:4px 0"><b>' + pkd(e.t) + '</b> · ' + esc(e.m) + '</div>'; }).join('') : '<span class="mut">Empty.</span>') + '<button class="btn sec" style="margin-top:8px" data-m8="rb:clearlog">Clear log</button></div>';
-    var st2 = fbStats(); h += sh('Has the paper bot earned your trust?') + '<div class="group pad"><div class="note" style="margin:0">Bot Pro paper result: ' + st2.n + ' trades, win rate ' + st2.win.toFixed(0) + '%, profit factor ' + st2.pf.toFixed(2) + (st2.n >= 50 && st2.pf >= 1.3 ? '. That is a fair start.' : '. That is not yet enough evidence. Prove a strategy on paper first, then use the TEST mode here, then a very small LIVE amount.') + '</div></div>';
+    var st2 = fbStats(); h += sh('Has the paper bot earned your trust?') + '<div class="group pad"><div class="note" style="margin:0">Bot Baba paper result: ' + st2.n + ' trades, win rate ' + st2.win.toFixed(0) + '%, profit factor ' + st2.pf.toFixed(2) + (st2.n >= 50 && st2.pf >= 1.3 ? '. That is a fair start.' : '. That is not yet enough evidence. Prove a strategy on paper first, then use the TEST mode here, then a very small LIVE amount.') + '</div></div>';
     h += '<div class="note">The bot trades only while the app (or its background service) is running and has internet. If it stops, trades already open stay protected by the stop-loss and take-profit placed on Binance. Binance fees, funding and slippage reduce results. This is not financial advice.</div>';
     return h;
 }
@@ -5904,7 +5905,7 @@ PF_APP.push(['profile|my profile|avatar|picture|shortcuts|shortcut|swipe', 'Prof
 ['rewards hub|vouchers|voucher|points|pts|tasks|task', 'Rewards, vouchers and tasks', 'Exchanges give vouchers (fee discounts, trading bonuses) and points for completing tasks. They are marketing rewards with conditions and expiry dates. They live in the exchange app; this app does not show them.'],
 ['square|social feed|creator', 'Square / Creator', 'Square is Binance\'s social feed where users and "creators" post views and news. Treat posts as opinions: many are promotions or paid.'],
 ['demo trading|demo|practice account', 'Demo trading', 'Practice with virtual money at real prices. In this app the Auto Bot is a paper (virtual) trader, and the Real bot starts on the Binance test network. Binance also has its own demo mode.'],
-['trading bots|grid bot|grid|dca bot|bot strategy|rebalancing', 'Trading bots (grid, DCA)', 'A grid bot places buy and sell orders in a price range and profits from sideways moves; a DCA bot buys in steps. They can do badly in strong trends. Your Auto Bot and Bot Pro here are paper bots, and no bot can promise profit.'],
+['trading bots|grid bot|grid|dca bot|bot strategy|rebalancing', 'Trading bots (grid, DCA)', 'A grid bot places buy and sell orders in a price range and profits from sideways moves; a DCA bot buys in steps. They can do badly in strong trends. Your Auto Bot and Bot Baba here are paper bots, and no bot can promise profit.'],
 ['learn and earn|learn & earn|academy|course', 'Learn and Earn', 'Short courses and quizzes that give small token rewards. Good for learning basics; the Baba AI in this app also explains terms on request.'],
 ['pay|binance pay|payments', 'Pay', 'Exchange payment feature to send or receive crypto between users or pay merchants. It is an account feature of the exchange, not of this app.'],
 ['options|option trading|call put', 'Options', 'Options give the right to buy (call) or sell (put) at a set price before an expiry. They are complex and can lose the whole premium quickly. Not recommended for beginners.'],
@@ -6127,7 +6128,7 @@ Most beginners lose money. Not because trading is magic, but because they risk t
 • You earn only when your winning trades are bigger than your losing trades plus fees.
 • You can profit from falling prices too (called short selling) in futures and CFDs.
 • Nobody can predict the market. Professionals survive by controlling risk, not by predicting.
-• Practise first with paper money: the Auto Bot and Bot Pro in this app trade with virtual money.`, [['What makes a trader profitable over time?', ['Predicting every move', 'Wins bigger than losses plus fees, with controlled risk', 'Using the highest leverage'], 1, 'Nobody predicts everything. Edge plus risk control plus costs under control is what lasts.'], ['What is the difference between trading and investing?', ['None', 'Trading is shorter-term, investing is held for years', 'Investing uses leverage'], 1, 'Time horizon is the main difference.']], 'what is trading for beginners', 'what is trading|trading basics|start trading|trading meaning|investing vs trading'],
+• Practise first with paper money: the Auto Bot and Bot Baba in this app trade with virtual money.`, [['What makes a trader profitable over time?', ['Predicting every move', 'Wins bigger than losses plus fees, with controlled risk', 'Using the highest leverage'], 1, 'Nobody predicts everything. Edge plus risk control plus costs under control is what lasts.'], ['What is the difference between trading and investing?', ['None', 'Trading is shorter-term, investing is held for years', 'Investing uses leverage'], 1, 'Time horizon is the main difference.']], 'what is trading for beginners', 'what is trading|trading basics|start trading|trading meaning|investing vs trading'],
 [2, 0, 'The markets: crypto, forex, stocks, gold and more', 5, `Different markets behave differently:
 • Crypto (Bitcoin, Ethereum...): open 24 hours, 7 days. Very volatile. Traded on exchanges such as Binance and MEXC.
 • Forex (currencies like EUR/USD, USD/PKR): open 24 hours on weekdays. Moves are small, so brokers allow leverage.
@@ -6239,7 +6240,7 @@ This is why a trade that closes at +0.07% can still be a loss after fees. Target
 • Risk per trade and a daily loss limit (for example stop trading after losing 3%).
 • Maximum trades per day.
 Journal every trade: date, coin, direction, entry, stop, target, result, a screenshot, and one sentence on what you did well or wrong. Review weekly.
-Your journal turns losses into lessons. This app's Auto Bot and Bot Pro keep results with "R" values so you can learn from them.`, [['What is a daily loss limit?', ['A point where you stop trading for the day', 'A fee', 'A bonus'], 0, 'It prevents revenge trading.'], ['Why keep a journal?', ['To find patterns in your mistakes', 'It is required by Binance', 'To pay less tax'], 0, 'You improve what you measure.']], 'trading plan and trading journal beginners', 'trading plan|journal|rules|daily loss|routine|discipline'],
+Your journal turns losses into lessons. This app's Auto Bot and Bot Baba keep results with "R" values so you can learn from them.`, [['What is a daily loss limit?', ['A point where you stop trading for the day', 'A fee', 'A bonus'], 0, 'It prevents revenge trading.'], ['Why keep a journal?', ['To find patterns in your mistakes', 'It is required by Binance', 'To pay less tax'], 0, 'You improve what you measure.']], 'trading plan and trading journal beginners', 'trading plan|journal|rules|daily loss|routine|discipline'],
 [20, 3, 'Spot, futures and perpetuals', 5, `Perpetual futures (perps) are the most traded crypto product. They have no expiry and use a funding payment to keep their price near spot.
 • Spot: slower, no liquidation, you own the coin. Good for holding.
 • Perpetual: leveraged, can go short, funding every 8 hours, liquidation risk.
@@ -8593,7 +8594,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         return r + '</div>' + h;
     }; try { VIEWS.mexc = VIEWS.mexc; } catch (e) { }
     /* ----- per-screen tips (each at most once a day) ----- */
-    var TIPS = { ideas: ['Ideas are estimates', 'A high chance score still loses often. Use a stop-loss and risk 1%.', 'info'], market: ['Markets are live', 'Prices can jump quickly. Check the time zone for Change %.', 'info'], chart: ['Before you trade', 'Set a stop-loss first. Never risk more than you can lose.', 'warn'], tpro: ['Order ticket', 'Check TEST or LIVE at the top. LIVE uses real money.', 'warn'], xtrade: ['Order ticket', 'Start small. Confirm the exchange, market and size before sending.', 'warn'], rbot: ['Real-money bot', 'It trades your own exchange account. Keep TEST mode until you trust it.', 'bad'], botpro: ['Bot Pro', 'Backtests do not guarantee results. Use small size.', 'warn'], bot: ['Paper bot', 'This is practice money. Results here do not guarantee real results.', 'info'], wallet: ['Wallet safety', 'Never share your 12 words. Send a small test amount first.', 'bad'], me: ['Your profile', 'Keep your keys private. Use read/trade keys, never withdrawal keys.', 'warn'], news: ['News', 'Headlines can move prices fast. Verify before acting.', 'info'], analyst: ['Analyst', 'A plan is a suggestion, not advice. Check the risk before you trade.', 'info'], exdesk: ['Exness Desk', 'Gold and forex move fast on news. Mind the spread and lot size.', 'warn'], mexc: ['MEXC', 'Small coins can be very risky and thin. Check volume and spread.', 'warn'], academy: ['Learning', 'Take your time. Finish a lesson, then try on paper first.', 'info'], pchat: ['Baba AI', 'Ask anything. Answers are educational, not financial advice.', 'info'] };
+    var TIPS = { ideas: ['Ideas are estimates', 'A high chance score still loses often. Use a stop-loss and risk 1%.', 'info'], market: ['Markets are live', 'Prices can jump quickly. Check the time zone for Change %.', 'info'], chart: ['Before you trade', 'Set a stop-loss first. Never risk more than you can lose.', 'warn'], tpro: ['Order ticket', 'Check TEST or LIVE at the top. LIVE uses real money.', 'warn'], xtrade: ['Order ticket', 'Start small. Confirm the exchange, market and size before sending.', 'warn'], rbot: ['Real-money bot', 'It trades your own exchange account. Keep TEST mode until you trust it.', 'bad'], botpro: ['Bot Baba', 'Backtests do not guarantee results. Use small size.', 'warn'], bot: ['Paper bot', 'This is practice money. Results here do not guarantee real results.', 'info'], wallet: ['Wallet safety', 'Never share your 12 words. Send a small test amount first.', 'bad'], me: ['Your profile', 'Keep your keys private. Use read/trade keys, never withdrawal keys.', 'warn'], news: ['News', 'Headlines can move prices fast. Verify before acting.', 'info'], analyst: ['Analyst', 'A plan is a suggestion, not advice. Check the risk before you trade.', 'info'], exdesk: ['Exness Desk', 'Gold and forex move fast on news. Mind the spread and lot size.', 'warn'], mexc: ['MEXC', 'Small coins can be very risky and thin. Check volume and spread.', 'warn'], academy: ['Learning', 'Take your time. Finish a lesson, then try on paper first.', 'info'], pchat: ['Baba AI', 'Ask anything. Answers are educational, not financial advice.', 'info'] };
     var _gw = gotoWin; gotoWin = function (id, isBack) { var r = _gw.call(this, id, isBack); try { var t = TIPS[id]; if (t) { setTimeout(function () { push('tip:' + id, t[2] === 'bad' ? '⚠️' : t[2] === 'warn' ? '⚠️' : '💡', t[0], t[1], '', t[2], 86400000, true); }, 900); } } catch (e) { } return r; };
     /* ----- Heads-up window ----- */
     function ago(t) { var m = Math.round((now() - t) / 60000); return m < 1 ? 'now' : m < 60 ? m + ' min' : Math.round(m / 60) + ' h'; }
@@ -9351,11 +9352,11 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     function liveCtx() {
         var o = []; try { ['BTCUSDT', 'ETHUSDT', 'XAUUSDT'].forEach(function (s) { var t = S.tick && S.tick[s]; if (t) { o.push(base(s) + ' ' + fmtP(t.p, s) + ' (' + (t.chg >= 0 ? '+' : '') + t.chg.toFixed(1) + '% 24h)'); } }); } catch (e) { }
         try { var r = window.__idRows ? (window.__xf = 0, window.__idRows().slice(0, 3)) : []; if (r.length) { o.push('top ideas: ' + r.map(function (m) { return base(m.sym) + ' ' + m.side + ' ' + Math.round(m.R.p * 100) + '%'; }).join(', ')); } } catch (e) { }
-        try { var F = S.fb, n = F && F.closed ? F.closed.length : 0; if (n) { o.push('paper Bot Pro: ' + n + ' closed trades, ' + (window.__mwWhyLost ? window.__mwWhyLost() : '')); } } catch (e) { }
+        try { var F = S.fb, n = F && F.closed ? F.closed.length : 0; if (n) { o.push('paper Bot Baba: ' + n + ' closed trades, ' + (window.__mwWhyLost ? window.__mwWhyLost() : '')); } } catch (e) { }
         try { var gdg = S.fb && S.fb.skips && S.fb.skips.slice(0, 3).map(function (x) { return base(x.sym) + ' skipped: ' + x.why; }); if (gdg && gdg.length) { o.push('Smart Guard recent skips: ' + gdg.join(' | ')); } } catch (e) { }
         return o.join('; ');
     }
-    function system() { return 'You are Baba AI, a wise, warm elder (a Pakistani baba) who is the built-in tutor inside the MintooSuite trading app, and can also help with education from school to university, coding and general questions. The user is a beginner. Answer in simple plain English. If the user writes in Urdu script, answer in clear Urdu script (Pakistani Urdu, right-to-left, simple everyday words, keep coin names, numbers and technical terms like RSI or stop loss in English letters). If the user writes Roman Urdu, answer in Roman Urdu, short and step by step, with a small example when useful. You can answer any question, also outside trading. Never promise profit or certainty about price direction; for trade questions give educational reasoning and risks and say it is not financial advice. For questions about the app, name the window to open. When asked how to do something on Binance, MEXC, Bitget, OKX or Bybit (create an API key, set permissions, restrict IPs, move funds to the futures wallet, set leverage, place or close an order) or how to connect them in this app (Menu > Profile > Connections, Trade Pro, Real Bot), give short numbered steps, say that screens can differ slightly, always tell the user to keep withdrawals OFF, use trusted IPs, start in test mode or with a tiny amount, and never to share secret keys with anyone including you. You know the app well: Bot Pro (paper, Smart Guard), Real Bot Chief (locked until typed UNLOCK), Trade Pro, Trade Ideas, Gold Desk, Exness Desk, Grid Bot (paper), Problem log, Look & mode. If asked why a bot lost, use the bot facts in the live data and explain plainly. If you are not sure, say so. Live data now: ' + (liveCtx() || 'not available') + '. Time: ' + new Date().toISOString().slice(0, 16) + ' UTC.'; }
+    function system() { return 'You are Baba AI, a wise, warm elder (a Pakistani baba) who is the built-in tutor inside the MintooSuite trading app, and can also help with education from school to university, coding and general questions. The user is a beginner. Answer in simple plain English. If the user writes in Urdu script, answer in clear Urdu script (Pakistani Urdu, right-to-left, simple everyday words, keep coin names, numbers and technical terms like RSI or stop loss in English letters). If the user writes Roman Urdu, answer in Roman Urdu, short and step by step, with a small example when useful. You can answer any question, also outside trading. Never promise profit or certainty about price direction; for trade questions give educational reasoning and risks and say it is not financial advice. For questions about the app, name the window to open. When asked how to do something on Binance, MEXC, Bitget, OKX or Bybit (create an API key, set permissions, restrict IPs, move funds to the futures wallet, set leverage, place or close an order) or how to connect them in this app (Menu > Profile > Connections, Trade Pro, Real Bot), give short numbered steps, say that screens can differ slightly, always tell the user to keep withdrawals OFF, use trusted IPs, start in test mode or with a tiny amount, and never to share secret keys with anyone including you. You know the app well: Bot Baba (paper, Smart Guard), Real Bot Chief (locked until typed UNLOCK), Trade Pro, Trade Ideas, Gold Desk, Exness Desk, Grid Bot (paper), Problem log, Look & mode. If asked why a bot lost, use the bot facts in the live data and explain plainly. If you are not sure, say so. Live data now: ' + (liveCtx() || 'not available') + '. Time: ' + new Date().toISOString().slice(0, 16) + ' UTC.'; }
     function history(n) { var out = []; try { var arr = (PB.ctx === 'pf' ? PF.msgs : PCH.msgs) || []; arr.slice(-n * 2 - 2, -2).forEach(function (m) { var t = plain(m.html).slice(0, 700); if (t && !/pfdots/.test(m.html)) { out.push({ role: m.who === 'me' ? 'user' : 'assistant', content: t }); } }); } catch (e) { } return out; }
     /* ----- AI engines ----- */
     function post(url, headers, body) { return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body) }).then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) { } if (!r.ok) { var m = j && (j.error && (j.error.message || j.error) || j.message) || t.slice(0, 120); throw new Error('HTTP ' + r.status + ': ' + (typeof m === 'string' ? m : JSON.stringify(m)).slice(0, 160)); } return j || { raw: t }; }); }); }
@@ -10290,7 +10291,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         setInterval(pass, 2500);
     } catch (e) { try { console.log('coinicons', e); } catch (er) { } }
 })();
-/* ===== .61: Bot Pro shows full trade details (entry, now, stop, target, size, profit, why it opened, why it closed) + Stop/Continue ===== */
+/* ===== .61: Bot Baba shows full trade details (entry, now, stop, target, size, profit, why it opened, why it closed) + Stop/Continue ===== */
 (function () {
     try {
         var _bp = VIEWS.botpro;
@@ -10327,7 +10328,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var c1 = h.indexOf('<div class="sh"><span>Recent closed trades'), c2 = h.indexOf('<div class="sh"><span>Best and worst pairs');
             if (c2 < 0) { c2 = h.indexOf('<button class="btn sec" style="margin-top:12px" data-m7="fbreset"'); }
             if (c1 > 0 && c2 > c1) { h = h.slice(0, c1) + '<div class="sh"><span>Closed trades</span><span>' + F.closed.length + '</span></div>' + (F.closed.length ? F.closed.slice(0, 25).map(closedCard).join('') : '<div class="group pad mut">No closed trades yet.</div>') + h.slice(c2); }
-            var k = h.indexOf('<div class="group pad"><div class="ph"><b style="font-size:18px">Bot Pro'); return k >= 0 ? h.slice(0, k) + st + h.slice(k) : st + h;
+            var k = h.indexOf('<div class="group pad"><div class="ph"><b style="font-size:18px">Bot Baba'); return k >= 0 ? h.slice(0, k) + st + h.slice(k) : st + h;
         };
         document.addEventListener('click', function (e) {
             var el = e.target.closest ? e.target.closest('[data-zb]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
@@ -10377,7 +10378,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 if (!force && g(SK) && +g(SK) > Date.now()) { return; }
                 var l = left(), p = pl(), day = new Date().toDateString();
                 if (!force && g(LK) === day) { return; }
-                if (l >= 0) { card('🎁 Free Pro trial: ' + txt(l) + ' left', l < DAY ? 'Last day. Tomorrow the app goes back to Free (some windows lock). Get a licence code to keep Pro.' : 'All Pro windows are open for you now, free. Try the AI signals, Bot Pro and Best Picks to see what they do for you. When the days run out the app returns to Free unless you enter a licence code.'); sv(LK, day); }
+                if (l >= 0) { card('🎁 Free Pro trial: ' + txt(l) + ' left', l < DAY ? 'Last day. Tomorrow the app goes back to Free (some windows lock). Get a licence code to keep Pro.' : 'All Pro windows are open for you now, free. Try the AI signals, Bot Baba and Best Picks to see what they do for you. When the days run out the app returns to Free unless you enter a licence code.'); sv(LK, day); }
                 else if (p && p.src === 'free' && p.trialUsed) { card('Your free trial has ended', 'You are on the Free plan. Pro windows are locked until you enter a licence code.'); sv(LK, day); }
             } catch (e) { }
         }
@@ -10409,7 +10410,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var _w = VIEWS.plans; if (_w.__tv) { return; }
             VIEWS.plans = function () {
                 var h = _w.apply(this, arguments); if (!inTrial()) { return h; }
-                var v = window.__trialValue(), box = '<div class="group pad"><b>Your trial in numbers</b><div class="note" style="margin:4px 0">You opened <b>' + v.n + '</b> Pro feature' + (v.n === 1 ? '' : 's') + ' so far' + (v.used.length ? ': ' + esc(v.used.slice(0, 6).join(', ')) : '') + '. Try the AI signals, Bot Pro, Analyst and Best Picks during these days. When the trial ends these ' + v.locked.length + ' Pro and Elite windows lock again.</div></div>';
+                var v = window.__trialValue(), box = '<div class="group pad"><b>Your trial in numbers</b><div class="note" style="margin:4px 0">You opened <b>' + v.n + '</b> Pro feature' + (v.n === 1 ? '' : 's') + ' so far' + (v.used.length ? ': ' + esc(v.used.slice(0, 6).join(', ')) : '') + '. Try the AI signals, Bot Baba, Analyst and Best Picks during these days. When the trial ends these ' + v.locked.length + ' Pro and Elite windows lock again.</div></div>';
                 var k = h.indexOf('<div class="group pad"><b>Have a licence code?'); return k >= 0 ? h.slice(0, k) + box + h.slice(k) : box + h;
             };
             VIEWS.plans.__tv = 1; VIEWS.plans.__late = 1;
@@ -10451,7 +10452,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             { t: 'Home', b: 'Home shows the best ideas first. Tap a card to see the entry, stop-loss and target in plain words.', el: function () { return document.querySelector('.tab[data-act="win:overview"]'); }, dir: 'up' },
             { t: 'Ideas', b: 'Ideas ranks every coin from best to weakest and shows a chance score. Start here when you want to trade.', el: function () { return document.querySelector('.tab[data-act="win:ideas"]'); }, dir: 'up' },
             { t: 'Markets', b: 'Live prices for Binance, MEXC and Bitget. Tap any coin for its chart.', el: function () { return document.querySelector('.tab[data-act="win:market"]'); }, dir: 'up' },
-            { t: 'Bots (practice money)', b: 'Bot Pro trades with practice money only. Watch it for a while before you ever think of real money. It never trades real money on its own.', el: function () { return document.querySelector('.tab[data-act="win:botpro"]'); }, dir: 'up' },
+            { t: 'Bots (practice money)', b: 'Bot Baba trades with practice money only. Watch it for a while before you ever think of real money. It never trades real money on its own.', el: function () { return document.querySelector('.tab[data-act="win:botpro"]'); }, dir: 'up' },
             { t: 'More', b: 'All other windows live here: learning lessons, wallet, news, settings.', el: function () { return document.querySelector('.tab[data-act="openwin"]'); }, dir: 'up' },
             { t: 'Menu', b: 'Menu has Look & mode (themes), Premium plans, Lock screen, Problem log and the Guided tour.', el: function () { return byText('header button, header .btn, header [data-act], header span', 'MENU'); }, dir: 'down' },
             { t: 'Your profile', b: 'Tap your picture to open your profile, change your avatar and save your exchange connections.', el: function () { var a = document.querySelector('.meav.hd'); return a ? (a.closest('button') || a) : null; }, dir: 'down' },
@@ -10491,7 +10492,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }, 3000);
         window.__coachStart = start;
         /* first-visit tips per window */
-        var TIPS = { ideas: 'Ideas are sorted best first. Tap one to see entry, stop-loss and target. Never skip the stop-loss.', market: 'Tap any coin for its chart. Press and slide on the chart to read the price at any candle.', botpro: 'Bot Pro uses practice money. Smart Guard skips weak trades and its reasons are listed. Stop/Continue is at the top.', tpro: 'Trade Pro places real orders only after you type TRADE. Start with a tiny size and low leverage.', analyst: 'Type any coin, currency or gold. You get LONG/SHORT, entry, stop and target with the reasons.', plans: 'You have a free Pro trial. Open the Pro windows now to see what they do for you.', signals: 'AI signals show what the system sees right now. A signal is a suggestion, not a promise.', lockui: 'Choose PIN or pattern. A fingerprint button is on the lock screen in the installed app.' };
+        var TIPS = { ideas: 'Ideas are sorted best first. Tap one to see entry, stop-loss and target. Never skip the stop-loss.', market: 'Tap any coin for its chart. Press and slide on the chart to read the price at any candle.', botpro: 'Bot Baba uses practice money. Smart Guard skips weak trades and its reasons are listed. Stop/Continue is at the top.', tpro: 'Trade Pro places real orders only after you type TRADE. Start with a tiny size and low leverage.', analyst: 'Type any coin, currency or gold. You get LONG/SHORT, entry, stop and target with the reasons.', plans: 'You have a free Pro trial. Open the Pro windows now to see what they do for you.', signals: 'AI signals show what the system sees right now. A signal is a suggestion, not a promise.', lockui: 'Choose PIN or pattern. A fingerprint button is on the lock screen in the installed app.' };
         setInterval(function () {
             try {
                 var w = S.win; if (!w || !TIPS[w] || document.getElementById('mwcoach') || !g(DONE)) { return; }
@@ -10534,7 +10535,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var _lk2 = VIEWS.look;
         VIEWS.look = function () {
             var h = _lk2.apply(this, arguments);
-            return h.replace('Few simple buttons', 'Big buttons · simple screens · guide card on Home').replace('>Everything<', '>All tools · every setting<').replace('Same app, different amount of buttons.', 'Beginner: bigger buttons, all five bottom tabs, a simple Bot Pro and a step-by-step card. Pro: every tool and setting.');
+            return h.replace('Few simple buttons', 'Big buttons · simple screens · guide card on Home').replace('>Everything<', '>All tools · every setting<').replace('Same app, different amount of buttons.', 'Beginner: bigger buttons, all five bottom tabs, a simple Bot Baba and a step-by-step card. Pro: every tool and setting.');
         };
     } catch (e) { try { console.log('modes', e); } catch (er) { } }
 })();
@@ -12276,7 +12277,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
         function sv(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
         /* ---------- Bots hub ---------- */
-        var BT = [['bot', '🧪', 'Paper bot', 'Practice bot. Virtual money, real prices. Safe to leave running.'], ['botpro', '🤖', 'Bot Pro', 'Tunable practice bot with settings and a history.'], ['botdoc', '🩺', 'Bot Doctor', 'Checks how your bots are doing and what to change.'], ['gridbot', '🔲', 'Grid Bot', 'Buys low and sells high inside a price range.'], ['btest', '🧪', 'History Test', 'Test an idea on past prices before risking anything.'], ['rbot', '💵', 'Real Bot', 'Trades your real Binance money. Needs your typed UNLOCK every time you open the app.']];
+        var BT = [['bot', '🧪', 'Paper bot', 'Practice bot. Virtual money, real prices. Safe to leave running.'], ['botpro', '🤖', 'Bot Baba', 'Tunable practice bot with settings and a history.'], ['botdoc', '🩺', 'Bot Doctor', 'Checks how your bots are doing and what to change.'], ['gridbot', '🔲', 'Grid Bot', 'Buys low and sells high inside a price range.'], ['btest', '🧪', 'History Test', 'Test an idea on past prices before risking anything.'], ['rbot', '💵', 'Real Bot', 'Trades your real Binance money. Needs your typed UNLOCK every time you open the app.']];
         function vBots() {
             var h = '<div class="group pad"><b style="font-size:17px">🤖 Bots, Baba AI &amp; Voice</b><div class="note" style="margin:4px 0 0">Your helpers in one place. Bots follow rules you set. <b>Nothing trades real money</b> until you type UNLOCK for the Real Bot, or TRADE on a ticket.</div></div>';
             h += '<div style="display:flex;gap:8px;margin:0 0 8px">' + [['win:prof', '🎓', 'Baba AI', 'Ask anything'], ['win:pbrain', '🧠', 'Voice &amp; AI', 'Mic, engine'], ['win:tpro', '🩺', 'Chief Doctor', 'Open trades']].map(function (x) { return '<div class="tap" data-act="' + x[0] + '" style="flex:1;min-width:0;text-align:center;padding:14px 4px;border-radius:16px;background:rgba(128,128,128,.12);font-weight:800;font-size:13px"><div style="font-size:26px">' + x[1] + '</div>' + x[2] + '<div style="font-weight:500;font-size:11px;opacity:.75">' + x[3] + '</div></div>'; }).join('') + '</div>';
@@ -12665,11 +12666,11 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             if (a === 'ask') { var q = ta && ta.value.trim(); if (q) { askBaba(q); } else { hint('Type or paste something first.'); } }
             else if (a === 'paste') { try { navigator.clipboard.readText().then(function (x) { if (ta) { ta.value = x; } }, function () { hint('Your phone did not allow paste. Press and hold in the box, then tap Paste.'); }); } catch (er) { hint('Press and hold in the box, then tap Paste.'); } }
         }, true);
-        /* ---------- Paper Bot hub: Bot Pro | Grid | Strategy Lab | Doctor | History test ---------- */
+        /* ---------- Paper Bot hub: Bot Baba | Grid | Strategy Lab | Doctor | History test ---------- */
         var PP = { tab: 'pro' };
         window.__paperSet = function (a) { PP.tab = a[1]; };
         var _bs = window.__babaSet; window.__babaSet = function (a) { if (a[0] === 'paper') { PP.tab = a[1]; } else { _bs(a); } };
-        var PT = { pro: ['🤖 Bot Pro', 'botpro'], grid: ['🔲 Grid', 'gridbot'], lab: ['🧪 Strategy Lab', 'lab'], doc: ['🩺 Doctor', 'botdoc'], test: ['📜 History test', 'btest'] };
+        var PT = { pro: ['🤖 Bot Baba', 'botpro'], grid: ['🔲 Grid', 'gridbot'], lab: ['🧪 Strategy Lab', 'lab'], doc: ['🩺 Doctor', 'botdoc'], test: ['📜 History test', 'btest'] };
         var SRC = {};
         function vPaper() {
             var h = '<div class="group pad"><b style="font-size:17px">🧪 Paper Bot</b>' + window.__qh('Paper = practice with virtual money and real prices. Nothing here spends your real money. Use it to prove a plan before the Real Bot is even unlocked.') + '<div class="note" style="margin:4px 0 0">Practice bots, their results, the Strategy Lab and the history test: all in one place. Virtual money only.</div></div>';
@@ -12679,7 +12680,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         ['gridbot', 'botpro', 'lab', 'botdoc', 'btest'].forEach(function (id) { SRC[({ gridbot: 'grid', botpro: 'pro', lab: 'lab', botdoc: 'doc', btest: 'test' })[id]] = VIEWS[id]; });
         WINS.push({ id: 'paper', ic: '🧪', c: '#30b0c7', n: 'Paper Bot', t: 'Paper Bot', sub: 'Practice bots, Grid, Strategy Lab, Doctor and history test in one window' }); LIVE.paper = 1; VIEWS.paper = vPaper;
-        MW_HELP.paper = 'All the practice (virtual money) tools in one place: Bot Pro, Grid bot, Strategy Lab, the Bot Doctor and the History test.';
+        MW_HELP.paper = 'All the practice (virtual money) tools in one place: Bot Baba, Grid bot, Strategy Lab, the Bot Doctor and the History test.';
         document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-ppt]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); PP.tab = t.getAttribute('data-ppt'); try { renderView(true); } catch (er) { } }, true);
         /* ---------- menu groups ---------- */
         function regroup() {
@@ -12788,17 +12789,17 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     function v() {
         var T = trades(), a = analyse(T), A = accts(), h = '', rs = rest();
         h += '<div class="group pad"><div class="row"><span><b style="font-size:19px">🩺 Bot Doctor</b><br><small class="mut">Reads every paper trade and says in plain words what is going wrong. It cannot make the bot win; it shows where money is lost.</small></span></div></div>';
-        h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">' + [['botpro', 'Bot Pro'], ['real', 'Real Bot'], ['all', 'All'], ['binance', 'Old Auto Bot']].map(function (x) { return '<span class="tap" data-bd="ex:' + x[0] + '" style="padding:7px 12px;border-radius:16px;font-size:13px;font-weight:600;background:' + (C.ex === x[0] ? '#0a84ff;color:#fff' : 'rgba(128,128,128,.16)') + '">' + x[1] + '</span>'; }).join('') + '</div>';
+        h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">' + [['botpro', 'Bot Baba'], ['real', 'Real Bot'], ['all', 'All'], ['binance', 'Old Auto Bot']].map(function (x) { return '<span class="tap" data-bd="ex:' + x[0] + '" style="padding:7px 12px;border-radius:16px;font-size:13px;font-weight:600;background:' + (C.ex === x[0] ? '#0a84ff;color:#fff' : 'rgba(128,128,128,.16)') + '">' + x[1] + '</span>'; }).join('') + '</div>';
         if (rs) { h += '<div class="warn">😴 The Binance bot is resting until ' + new Date(rs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' after 3 losses in a row. Open trades are still managed.</div>'; }
         h += '<div class="group pad"><div class="row"><span>Closed trades</span><b>' + a.n + '</b></div><div class="row"><span>Win rate</span><b>' + (a.n ? f(a.wr, 0) + '% (' + a.w + ' won / ' + a.l + ' lost)' : '–') + '</b></div><div class="row"><span>Total result</span><b style="color:' + (a.tot >= 0 ? '#34c759' : '#ff3b30') + '">' + (a.tot >= 0 ? '+' : '') + '$' + f(a.tot) + '</b></div><div class="row"><span>Average win / average loss</span><b>$' + f(a.avgW) + ' / $' + f(a.avgL) + '</b></div><div class="row"><span>Profit factor (win $ ÷ loss $)</span><b>' + (a.pf == null ? '–' : f(a.pf)) + '</b></div><div class="note">Profit factor above 1.3 over 100+ trades is a good sign. Below 1 means the bot loses money.</div></div>';
         h += '<div class="group pad"><b>What the doctor found</b>' + a.F.map(function (x) { return '<div class="' + (x[0] === 'bad' ? 'warn' : 'note') + '" style="margin:6px 0">' + (x[0] === 'bad' ? '🔴 ' : x[0] === 'warn' ? '🟠 ' : x[0] === 'good' ? '🟢 ' : 'ℹ️ ') + x[1] + '</div>'; }).join('') + '</div>';
-        if (C.ex === 'botpro') { h += '<div class="group pad"><b>Protections</b><div class="note" style="margin:4px 0 0">Bot Pro has its own protections (pause after losses, daily loss limit, max open trades). Change them in the Bot Pro window.</div></div>' + '<div class="group pad"><b>STOP button on screen</b><div class="row"><span>' + [['full', 'Full'], ['dot', 'Small dot'], ['hide', 'Hidden']].map(function (m) { var cur = window.__stopMode ? window.__stopMode.get() : 'full'; return '<span class="tap" data-sm="' + m[0] + '" style="padding:6px 12px;border-radius:12px;margin-right:6px;background:' + (cur === m[0] ? '#0a84ff;color:#fff' : 'rgba(128,128,128,.16)') + '">' + m[1] + '</span>'; }).join('') + '</span></div><div class="note">Hidden works while the real bot is off. If the real bot runs, a small dot stays so you can always stop it.</div></div>'; } else {
+        if (C.ex === 'botpro') { h += '<div class="group pad"><b>Protections</b><div class="note" style="margin:4px 0 0">Bot Baba has its own protections (pause after losses, daily loss limit, max open trades). Change them in the Bot Baba window.</div></div>' + '<div class="group pad"><b>STOP button on screen</b><div class="row"><span>' + [['full', 'Full'], ['dot', 'Small dot'], ['hide', 'Hidden']].map(function (m) { var cur = window.__stopMode ? window.__stopMode.get() : 'full'; return '<span class="tap" data-sm="' + m[0] + '" style="padding:6px 12px;border-radius:12px;margin-right:6px;background:' + (cur === m[0] ? '#0a84ff;color:#fff' : 'rgba(128,128,128,.16)') + '">' + m[1] + '</span>'; }).join('') + '</span></div><div class="note">Hidden works while the real bot is off. If the real bot runs, a small dot stays so you can always stop it.</div></div>'; } else {
         h += '<div class="group pad"><b>Protection rules</b>' + [['cool', 'Rest 2 hours after 3 losses in a row'], ['chase', 'Skip coins already up or down more than 12% today (anti-chase)']].map(function (r) { return '<div class="row tap" data-bd="tg:' + r[0] + '"><span>' + (C[r[0]] ? '☑' : '☐') + ' ' + r[1] + '</span></div>'; }).join('') + '<div class="row"><span>Max new trades per day (0 = no limit)</span><span>' + [0, 4, 8, 12].map(function (n) { return '<span class="tap" data-bd="md:' + n + '" style="padding:4px 9px;border-radius:12px;margin-left:4px;background:' + (+C.maxd === n ? '#0a84ff;color:#fff' : 'rgba(128,128,128,.16)') + '">' + n + '</span>'; }).join('') + '</span></div><div class="row"><span>STOP button on screen</span><span>' + [['full', 'Full'], ['dot', 'Small dot'], ['hide', 'Hidden']].map(function (m) { var cur = window.__stopMode ? window.__stopMode.get() : 'full'; return '<span class="tap" data-sm="' + m[0] + '" style="padding:4px 9px;border-radius:12px;margin-left:4px;background:' + (cur === m[0] ? '#0a84ff;color:#fff' : 'rgba(128,128,128,.16)') + '">' + m[1] + '</span>'; }).join('') + '</span></div><div class="note">Hidden works only while the real bot is off. If the real bot runs, a small dot stays so you can always stop it.</div><div class="note">Today the Binance bot has made ' + todayN() + ' trades. These rules only stop new entries. They do not close open trades.</div></div>';
         }
         h += '<div class="group"><div class="note" style="padding:10px 14px 0"><b>Latest trades</b></div>' + (T.slice(0, 12).map(function (t) { var hm = t.at && t.ct ? Math.round((t.ct - t.at) / 60000) : null; return '<div class="row"><span><b>' + esc((t.s || '').replace(/USDT$/, '')) + '</b> ' + esc(t.side || '') + ' <small class="mut">' + esc(t.x) + ' · ' + (hm == null ? '' : hm + ' min · ') + esc(t.why) + '</small></span><b style="color:' + (t.pnl >= 0 ? '#34c759' : '#ff3b30') + '">' + (t.pnl >= 0 ? '+' : '') + f(t.pnl) + '</b></div>'; }).join('') || '<div class="row mut">No closed trades yet.</div>') + '</div>';
         return h + '<div class="note">Paper results use real prices but no real orders. Past results do not promise the future.</div>';
     }
-    WINS.push({ id: 'botdoc', ic: '🩺', c: '#30b0c7', n: 'Bot Doctor', t: 'Bot Doctor', sub: 'Why Bot Pro loses and what to change' }); LIVE.botdoc = 1; VIEWS.botdoc = v;
+    WINS.push({ id: 'botdoc', ic: '🩺', c: '#30b0c7', n: 'Bot Doctor', t: 'Bot Doctor', sub: 'Why Bot Baba loses and what to change' }); LIVE.botdoc = 1; VIEWS.botdoc = v;
     MW_HELP.botdoc = 'Reads every closed paper trade, shows win rate, profit factor and plain-words findings (stops too tight, chasing, bad hours), and lets you switch protection rules on.';
     try { var g = MW_GROUPS[0][1]; if (g.indexOf('botdoc') < 0) { g.splice(g.indexOf('bot') + 1, 0, 'botdoc'); } mwHostSig = ''; } catch (e) { }
     var _vb = VIEWS.bot; if (_vb) { VIEWS.bot = function () { return '<div class="group pad tap" data-act="win:botdoc" style="border-left:5px solid #30b0c7"><b>🩺 Bot Doctor</b><div class="note" style="margin:2px 0 0">See why trades lose and switch on protection rules ›</div></div>' + _vb.apply(this, arguments); }; }
@@ -12920,7 +12921,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     try { var _vm = VIEWS.mexcd; if (_vm) { VIEWS.mexcd = function () { var h = _vm.apply(this, arguments); try { var M = window.__MXD, a = M && M.ana; if (a && !a.err && a.side !== 'WAIT' && a.atr1) { var sg = a.side === 'LONG' ? 1 : -1, sig = a.atr1 * 2 * 0.8, ch = typeof m7chance === 'function' ? m7chance(sig, sig, Math.min(0.08, 0.03 * Math.abs(a.ov))) * 100 : 0, P = mkPlan(a.sym, a.side, a.price, a.price - sg * sig, a.price + sg * sig, ch, a.x === 'bitget' ? 'bitget' : 'mexc', !!a.fut), i = h.indexOf('>Plan and indicators<'); if (P) { var j = i > 0 ? h.lastIndexOf('<div', i) : -1; var c = tcard(P, a.x === 'bitget' ? 'Bitget' : 'MEXC'); h = j > 0 ? h.slice(0, j) + c + h.slice(j) : h + c; } } } catch (e) { } return h; }; } } catch (e) { }
     /* ---- 3) always-visible STOP pill ---- */
     var pill = document.createElement('div'); pill.id = 'stopPill'; pill.style.cssText = 'position:fixed;left:6px;bottom:calc(env(safe-area-inset-bottom) + 66px);z-index:2147483000;display:none;align-items:center;gap:6px;background:#1c1c1e;color:#fff;border-radius:22px;padding:5px 6px 5px 11px;font:600 11.5px/1.2 -apple-system,Roboto,sans-serif;box-shadow:0 3px 12px rgba(0,0,0,.35)'; document.body.appendChild(pill);
-    function bots() { var R = S.rb || {}, B = S.bot || {}, o = []; if (R.armed && R.running) { var pl = +R.dayPnl || 0; o.push({ k: 'real', t: '💵 Real ' + (R.paused ? 'paused' : 'ON') + ' ' + (pl >= 0 ? '+' : '') + f(pl) + ' USDT', c: pl >= 0 ? '#30d158' : '#ff453a' }); } if (S.fb && S.fb.on) { var fr = (+S.fb.bal / (+S.fb.start || 1000) - 1) * 100; o.push({ k: 'pro', t: '🤖 Bot Pro ON ' + (fr >= 0 ? '+' : '') + f(fr) + '%', c: fr >= 0 ? '#30d158' : '#ff453a' }); } if (B.on) { var pp = (+B.bal || 0) - (+B.start || 1000); o.push({ k: 'paper', t: '🧪 Paper ON ' + (pp >= 0 ? '+' : '') + f(pp), c: pp >= 0 ? '#30d158' : '#ff453a' }); } return o; }
+    function bots() { var R = S.rb || {}, B = S.bot || {}, o = []; if (R.armed && R.running) { var pl = +R.dayPnl || 0; o.push({ k: 'real', t: '💵 Real ' + (R.paused ? 'paused' : 'ON') + ' ' + (pl >= 0 ? '+' : '') + f(pl) + ' USDT', c: pl >= 0 ? '#30d158' : '#ff453a' }); } if (S.fb && S.fb.on) { var fr = (+S.fb.bal / (+S.fb.start || 1000) - 1) * 100; o.push({ k: 'pro', t: '🤖 Bot Baba ON ' + (fr >= 0 ? '+' : '') + f(fr) + '%', c: fr >= 0 ? '#30d158' : '#ff453a' }); } if (B.on) { var pp = (+B.bal || 0) - (+B.start || 1000); o.push({ k: 'paper', t: '🧪 Paper ON ' + (pp >= 0 ? '+' : '') + f(pp), c: pp >= 0 ? '#30d158' : '#ff453a' }); } return o; }
     var MK = 'mintoosuite_stopmode', mode = 'full'; try { var m0 = localStorage.getItem(MK); if (m0 === 'full' || m0 === 'dot' || m0 === 'hide') { mode = m0; } } catch (e) { }
     function setMode(m) { mode = m; try { localStorage.setItem(MK, m); } catch (e) { } pill.__s = ''; paint(); try { renderView(true); } catch (e) { } }
     window.__stopMode = { get: function () { return mode; }, set: setMode };
@@ -12933,7 +12934,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         pill.innerHTML = o.map(function (x) { return '<span style="color:' + x.c + '">' + x.t + '</span>'; }).join('<span style="opacity:.4">·</span>') + '<span data-stopall="1" style="background:#ff3b30;color:#fff;border-radius:16px;padding:5px 10px;font-weight:800;cursor:pointer">⏹ STOP</span><span data-stopmin="1" style="padding:4px 8px;font-size:15px;opacity:.7;cursor:pointer" title="Make small">–</span>';
     }
     setInterval(paint, 1500); paint();
-    function stopAll() { try { if (S.rb && S.rb.running) { rbStop(); } } catch (e) { } try { if (S.bot && S.bot.on) { S.bot.on = false; botSave(); addLog('BOT', 'Paper bot stopped with the STOP button'); } } catch (e) { } try { if (S.fb && S.fb.on) { S.fb.on = false; fbSave(); addLog('BOT', 'Bot Pro stopped with the STOP button'); } } catch (e) { } try { window.__huPush('stopall' + Date.now(), '⏹', 'Bots stopped', 'No new trades will be opened. Trades already open keep their stop-loss and take-profit on the exchange.', '', 'info', 1000); } catch (e) { } pill.__s = ''; paint(); try { renderView(true); } catch (e) { } }
+    function stopAll() { try { if (S.rb && S.rb.running) { rbStop(); } } catch (e) { } try { if (S.bot && S.bot.on) { S.bot.on = false; botSave(); addLog('BOT', 'Paper bot stopped with the STOP button'); } } catch (e) { } try { if (S.fb && S.fb.on) { S.fb.on = false; fbSave(); addLog('BOT', 'Bot Baba stopped with the STOP button'); } } catch (e) { } try { window.__huPush('stopall' + Date.now(), '⏹', 'Bots stopped', 'No new trades will be opened. Trades already open keep their stop-loss and take-profit on the exchange.', '', 'info', 1000); } catch (e) { } pill.__s = ''; paint(); try { renderView(true); } catch (e) { } }
     pill.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-stopall],[data-stopmin],[data-stopexp]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); if (t.hasAttribute('data-stopall')) { stopAll(); } else if (t.hasAttribute('data-stopmin')) { setMode('dot'); } else { setMode('full'); } }, true);
     window.__stopAll = stopAll;
     document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-sm]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); setMode(el.getAttribute('data-sm')); }, true);
@@ -13066,7 +13067,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         };
     } catch (e) { }
 })();
-/* ===== p9zsm: bots tidied up: Auto Bot retired from the menus, Bot Pro gains range + regime strategies ===== */
+/* ===== p9zsm: bots tidied up: Auto Bot retired from the menus, Bot Baba gains range + regime strategies ===== */
 (function () {
     try {
         // 1) two extra Freqtrade-style strategies for sideways markets
@@ -13117,13 +13118,13 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var _g = gotoWin; gotoWin = function (id, isBack) { if (id === 'bot') { id = 'botpro'; } return _g.call(this, id, isBack); };
         try { buildNav(); } catch (e) { }
         mwHostSig = '';
-        // 3) Bot Pro page: a link to the Doctor at the top
+        // 3) Bot Baba page: a link to the Doctor at the top
         var _vb = VIEWS.botpro;
         if (typeof _vb === 'function') { VIEWS.botpro = function () { return '<div class="group pad tap" data-act="win:botdoc" style="border-left:5px solid #30b0c7"><b>🩺 Bot Doctor</b><div class="note" style="margin:2px 0 0">See why trades lose and what to change ›</div></div>' + _vb.apply(this, arguments); }; }
-        // 4) the Stop pill and notifications keep working for Bot Pro through their own paths; nothing else to change
+        // 4) the Stop pill and notifications keep working for Bot Baba through their own paths; nothing else to change
     } catch (e) { }
 })();
-/* ===== p9zsc: Real Bot "Chief": Bot Pro strategy engine + Bot Doctor safety checks + trade management ===== */
+/* ===== p9zsc: Real Bot "Chief": Bot Baba strategy engine + Bot Doctor safety checks + trade management ===== */
 (function () {
     try {
         var K = 'mintoosuite_chief', C = { proof: 1, htf: 1, btc: 1, roi: 'balanced', trail: 1, log: [] };
@@ -13142,7 +13143,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             function add(name, ok, note) { res.push({ n: name, ok: ok, t: note || '' }); if (!ok && !blocked) { blocked = name + ': ' + (note || 'no'); } }
             var live = false; try { live = trCfg().net === 'live'; } catch (e) { }
             // 1. paper proof (live only)
-            if (C.proof && live) { var st = fbStats(); var ok1 = st.n >= 50 && st.pf >= 1.3 && st.exp > 0; add('Paper proof', ok1, ok1 ? 'Bot Pro has ' + st.n + ' trades, profit factor ' + f(st.pf) : 'Bot Pro has only ' + st.n + ' paper trades, profit factor ' + f(st.pf) + ' (needs 50+ trades and 1.3+)'); } else { add('Paper proof', true, live ? 'switched off by you' : 'test mode'); }
+            if (C.proof && live) { var st = fbStats(); var ok1 = st.n >= 50 && st.pf >= 1.3 && st.exp > 0; add('Paper proof', ok1, ok1 ? 'Bot Baba has ' + st.n + ' trades, profit factor ' + f(st.pf) : 'Bot Baba has only ' + st.n + ' paper trades, profit factor ' + f(st.pf) + ' (needs 50+ trades and 1.3+)'); } else { add('Paper proof', true, live ? 'switched off by you' : 'test mode'); }
             // 2. own record (Doctor style)
             var cl = (R.closed || []).slice(0, 60), sameCoin = cl.filter(function (t) { return t.sym === sym && now - t.t1 < 6 * 3600000; }).slice(0, 3);
             add('Coin cool-down', !(sameCoin.length >= 2 && sameCoin.every(function (t) { return t.pnl <= 0; })), sameCoin.length >= 2 ? 'two or more recent losses on ' + base(sym) + ', resting 6 hours' : '');
@@ -13201,16 +13202,16 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function card() {
             var R = S.rb, live = false; try { live = trCfg().net === 'live'; } catch (e) { }
             var st = fbStats(), proofOk = st.n >= 50 && st.pf >= 1.3 && st.exp > 0;
-            var h = '<div class="group pad" style="border-left:5px solid #af52de"><div class="ph"><b style="font-size:18px">🧠 Chief brain</b></div><div class="note" style="margin:4px 0 8px">Before every real trade the Chief runs the Bot Doctor checks and the Bot Pro rules, and it manages open trades. It can only say no or yes: it cannot make a trade profitable. Real money always stays locked until you type UNLOCK.</div>';
-            h += '<div class="row"><span>' + (proofOk ? '✅' : '⏳') + ' Paper proof (Bot Pro): ' + st.n + ' trades, profit factor ' + f(st.pf) + '</span></div>';
+            var h = '<div class="group pad" style="border-left:5px solid #af52de"><div class="ph"><b style="font-size:18px">🧠 Chief brain</b></div><div class="note" style="margin:4px 0 8px">Before every real trade the Chief runs the Bot Doctor checks and the Bot Baba rules, and it manages open trades. It can only say no or yes: it cannot make a trade profitable. Real money always stays locked until you type UNLOCK.</div>';
+            h += '<div class="row"><span>' + (proofOk ? '✅' : '⏳') + ' Paper proof (Bot Baba): ' + st.n + ' trades, profit factor ' + f(st.pf) + '</span></div>';
             [['proof', 'Real-money entries need paper proof first (50+ paper trades, profit factor 1.3+)'], ['htf', 'Trade only with the 1-hour trend'], ['btc', 'Skip trades against a hard Bitcoin move'], ['trail', 'Trailing profit exit (peak 1%, gives back 0.6%)']].map(function (x) { return '<div class="row tap" data-ch="tg:' + x[0] + '"><span>' + (C[x[0]] ? '☑' : '☐') + ' ' + x[1] + '</span></div>'; }).forEach(function (r) { h += r; });
-            h += '<div class="note" style="margin:8px 0 4px">Take-profit schedule (ROI table, like Bot Pro)</div><div class="m8row">' + Object.keys(FB_ROI).map(function (x) { return '<span class="' + (C.roi === x ? 'on' : '') + '" data-ch="roi:' + x + '">' + x + '</span>'; }).join('') + '</div>';
+            h += '<div class="note" style="margin:8px 0 4px">Take-profit schedule (ROI table, like Bot Baba)</div><div class="m8row">' + Object.keys(FB_ROI).map(function (x) { return '<span class="' + (C.roi === x ? 'on' : '') + '" data-ch="roi:' + x + '">' + x + '</span>'; }).join('') + '</div>';
             h += '<div class="note" style="margin:10px 0 4px"><b>Latest decisions</b></div>';
             h += C.log.length ? C.log.slice(0, 8).map(function (d) { return '<div class="note" style="margin:4px 0">' + (d.ok ? '✅ ' : '⛔ ') + '<b>' + esc(base(d.s)) + '</b> ' + (d.sg > 0 ? 'LONG' : 'SHORT') + ' <small class="mut">' + new Date(d.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</small><br><small>' + (d.ok ? d.res.length + ' checks passed' : esc(d.block)) + '</small></div>'; }).join('') : '<div class="note">No decisions yet. They appear when the bot sees a signal.</div>';
             return h + '</div>';
         }
         var _v = VIEWS.rbot; if (typeof _v === 'function') { VIEWS.rbot = function () { return card() + _v.apply(this, arguments); }; }
-        try { var w = winDef('rbot'); if (w) { w.sub = 'The chief bot: Bot Pro strategies + Bot Doctor checks + trade management, with real-money safety locks'; w.n = 'Real Bot (Chief)'; } } catch (e) { }
+        try { var w = winDef('rbot'); if (w) { w.sub = 'The chief bot: Bot Baba strategies + Bot Doctor checks + trade management, with real-money safety locks'; w.n = 'Real Bot (Chief)'; } } catch (e) { }
         document.addEventListener('click', function (e) {
             var el = e.target.closest ? e.target.closest('[data-ch]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
             var a = el.getAttribute('data-ch'), i = a.indexOf(':'), v = a.slice(0, i), x = a.slice(i + 1);
@@ -13226,7 +13227,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var KEY = 'mintoosuite_lic', TRIAL_DAYS = 7, DAY = 86400000, RANK = { free: 0, pro: 1, elite: 2 };
         var NEED = { botpro: 'pro', botdoc: 'pro', btest: 'pro', lab: 'pro', tpro: 'pro', xtrade: 'pro', trade: 'pro', terminal: 'pro', exdesk: 'pro', rbot: 'pro', golddesk: 'pro', signals: 'pro' };
         var NAME = { free: 'Free', pro: 'Pro', elite: 'Elite' };
-        var WHY = { botpro: 'Bot Pro (strategies, ROI table, protections)', botdoc: 'Bot Doctor (finds why trades lose)', btest: 'History Test (replay rules on past candles)', lab: 'Strategy Lab (backtest and optimise)', tpro: 'Trade Pro (full order ticket)', xtrade: 'Orders on MEXC, Bitget, Bybit and OKX', trade: 'Binance trade window', terminal: 'Trading Terminal', exdesk: 'Exness Desk (25 markets)', rbot: 'Real Bot (automatic real-money trading, always locked until you type UNLOCK)', golddesk: 'Gold Desk (live AI signal on a gold chart)', signals: 'AI Signals (stocks, forex, metals, crypto)' };
+        var WHY = { botpro: 'Bot Baba (strategies, ROI table, protections)', botdoc: 'Bot Doctor (finds why trades lose)', btest: 'History Test (replay rules on past candles)', lab: 'Strategy Lab (backtest and optimise)', tpro: 'Trade Pro (full order ticket)', xtrade: 'Orders on MEXC, Bitget, Bybit and OKX', trade: 'Binance trade window', terminal: 'Trading Terminal', exdesk: 'Exness Desk (25 markets)', rbot: 'Real Bot (automatic real-money trading, always locked until you type UNLOCK)', golddesk: 'Gold Desk (live AI signal on a gold chart)', signals: 'AI Signals (stocks, forex, metals, crypto)' };
         function rd() { var o = null; try { o = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { o = null; } return o || {}; }
         function wr(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { } }
         function agreed() { try { var a = JSON.parse(localStorage.getItem('mintoosuite_agree') || 'null'); return !!(a && a.t); } catch (e) { return false; } }
@@ -13271,7 +13272,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var PL = { msg: '', busy: false };
         PLANS.length = 0;
         PLANS.push(['Free', 0, ['Home, Ideas, Markets, Movers, Analyst, Chart', 'Academy, Videos, Baba AI, Chat, Help', 'News, alerts, risk meter, wallet (self-custody)', 'Practice trading ideas with virtual money in your head, no real orders']]);
-        PLANS.push(['Pro', 4.99, ['Everything in Free', 'Bot Pro and Bot Doctor', 'History Test and Strategy Lab', 'Trade Pro and all exchange order tickets', 'Exness Desk (25 markets)', 'Real Bot (real-money automation, safety locks always on)', 'Gold Desk with live AI signal', 'AI Signals window']]);
+        PLANS.push(['Pro', 4.99, ['Everything in Free', 'Bot Baba and Bot Doctor', 'History Test and Strategy Lab', 'Trade Pro and all exchange order tickets', 'Exness Desk (25 markets)', 'Real Bot (real-money automation, safety locks always on)', 'Gold Desk with live AI signal', 'AI Signals window']]);
         var _vp = VIEWS.plans;
         function status() {
             var p = plan(), h = '<div class="group pad" style="border-left:5px solid ' + (p.p === 'elite' ? '#ffd60a' : p.p === 'pro' ? '#0a84ff' : '#8e8e93') + '"><div class="ph"><b style="font-size:19px">Your plan: ' + NAME[p.p] + '</b></div>';
@@ -13655,7 +13656,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-lk]')) { setTimeout(paint, 0); } }, false);
     } catch (e) { }
 })();
-/* ===== .59 SMART GUARD for Bot Pro (paper): checks recommendations, bigger trend, Bitcoin, volatility, volume, news, history before every entry;
+/* ===== .59 SMART GUARD for Bot Baba (paper): checks recommendations, bigger trend, Bitcoin, volatility, volume, news, history before every entry;
    stop/target sized by volatility, break-even, half-profit lock, trailing, time stop; plus Grid Bot (paper) ===== */
 (function () {
     try {
@@ -13739,7 +13740,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var save = F.open; F.open = save.filter(function (p) { return !p.g; }); try { _tick(); } finally { var back = F.open; F.open = save.filter(function (p) { return p.g; }).concat(back); }
         };
         window.__sgDbg = { check: function (a, b, c, d, e, f2) { return check(a, b, c, d, e, f2); }, tick: function () { return fbTick(); }, scan: function () { return fbScan(); } };
-        /* ---- Bot Pro page: Smart Guard card ---- */
+        /* ---- Bot Baba page: Smart Guard card ---- */
         var _vb = VIEWS.botpro;
         VIEWS.botpro = function () {
             var h = _vb.apply(this, arguments), g = G(), F = S.fb, now = Date.now();
@@ -13757,7 +13758,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }, true);
         /* ---- Bot Doctor plain-words reason for the user: why did it lose ---- */
         window.__mwWhyLost = function () {
-            var F = S.fb, C = F.closed.slice(0, 40), n = C.length; if (!n) { return 'Bot Pro has no closed trades yet.'; }
+            var F = S.fb, C = F.closed.slice(0, 40), n = C.length; if (!n) { return 'Bot Baba has no closed trades yet.'; }
             var w = C.filter(function (x) { return x.usd > 0; }), l = C.filter(function (x) { return x.usd <= 0; }), aw = w.length ? w.reduce(function (a, x) { return a + x.pct; }, 0) / w.length : 0, al = l.length ? l.reduce(function (a, x) { return a + x.pct; }, 0) / l.length : 0;
             var sh2 = l.filter(function (x) { return x.sg < 0; }).length, lo2 = l.length - sh2, sls = l.filter(function (x) { return /stop/.test(x.why); }).length;
             return 'Last ' + n + ' trades: ' + w.length + ' won (average +' + f(aw) + '%), ' + l.length + ' lost (average ' + f(al) + '%). A win must be about ' + f(Math.abs(al) / Math.max(aw, 0.01), 1) + ' times smaller than a loss to break even, which needs a win rate above ' + f(Math.abs(al) / (Math.abs(al) + Math.max(aw, 0.01)) * 100, 0) + '%. ' + sls + ' of the losses were stop-losses (' + sh2 + ' shorts, ' + lo2 + ' longs).';
@@ -13830,7 +13831,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             ['invalid api key|error 2015|-2015|-1021|timestamp|signature|api error|key not working|connection failed|test connection failed', 'API connection errors', 'Common fixes: "Invalid API-key, IP or permissions (-2015)": the key was copied wrongly, the IP is not on the trusted list (your phone is on a different network than when you saved it), or Futures permission is not enabled. "Timestamp (-1021)": phone clock is off; turn on automatic date and time. "418/429": too many requests, the exchange paused you for minutes; wait and avoid the hotspot spamming. Always re-copy key and secret without spaces, and press Test again.'],
             ['transfer to futures|futures wallet|move usdt|spot to futures|fund futures|deposit usdt|how to deposit', 'Getting USDT into your futures wallet', 'Binance: Wallet > Overview > Transfer > From Spot to USDS-M Futures > choose USDT > amount > Confirm. Other exchanges are similar (Assets > Transfer > Spot to Futures/Derivatives). To deposit crypto, copy the deposit address for the SAME network you send on (for example TRC20 or BEP20) and send a tiny test amount first. Keep a little spare coin for network fees.'],
             ['set leverage|leverage exchange|isolated margin|cross margin|position mode|one-way|hedge mode', 'Leverage and margin mode on the exchange', 'In the Binance Futures screen tap the leverage number to change it, and tap Isolated/Cross to switch margin mode. Use Isolated for beginners: a loss cannot touch the rest of your futures balance. The app sets leverage itself when you use Trade Pro, but the exchange may refuse if you already have an open position or order on that coin. One-way vs Hedge mode is in Preferences > Position Mode; Trade Pro detects it.'],
-            ['first real trade|first trade checklist|before real trade|start real trading|go live', 'First real trade checklist', '1) Run Bot Pro on paper first and read its report. 2) Connect your key with Futures permission, trusted IPs, no withdrawal. 3) Fund the futures wallet with a small amount you can afford to lose. 4) Open a coin chart > Trade the recommendation card > margin about 10 USDT, leverage 3x or less, keep the suggested stop. 5) Type TRADE to confirm. 6) Check in the exchange app that the position, the stop-loss and the take-profit orders exist. 7) Close it by hand when you want. 8) Only then consider more. No tool can promise profit.'],
+            ['first real trade|first trade checklist|before real trade|start real trading|go live', 'First real trade checklist', '1) Run Bot Baba on paper first and read its report. 2) Connect your key with Futures permission, trusted IPs, no withdrawal. 3) Fund the futures wallet with a small amount you can afford to lose. 4) Open a coin chart > Trade the recommendation card > margin about 10 USDT, leverage 3x or less, keep the suggested stop. 5) Type TRADE to confirm. 6) Check in the exchange app that the position, the stop-loss and the take-profit orders exist. 7) Close it by hand when you want. 8) Only then consider more. No tool can promise profit.'],
             ['kyc|verify identity|identity verification|verify account|cnic', 'Exchange identity verification (KYC)', 'Exchanges ask for ID before higher limits and withdrawals. Do it only inside the official exchange app or website (type the address yourself). This app never asks for your ID, passport or CNIC. If anyone asks you for a selfie or ID in a chat, it is a scam.'],
             ['p2p|buy usdt pakistan|jazzcash|easypaisa|sadapay|buy crypto pakistan', 'Buying USDT in Pakistan', 'Many Pakistanis buy USDT through Binance P2P: choose a merchant with high completion rate and many orders, pay only through the payment method shown in the order, never release or pay outside the platform, and use the in-app chat. Keep screenshots. Local rules on crypto are changing, so follow current Pakistani law and your bank\'s policy. This app does not move PKR.']
         ];
@@ -13854,7 +13855,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             ['Risk', 'Do not open many trades in the same direction. If the market turns, they all lose together.'],
             ['Habit', 'Keep a journal: coin, reason, entry, stop, target, result. After 30 trades the journal shows you what really works for you.'],
             ['Habit', 'Trade less. The best traders skip most setups and only take the clear ones. "No trade" is a position.'],
-            ['Habit', 'Paper trade a new idea for at least 50 trades before using real money. Bot Pro in this app is for exactly this.'],
+            ['Habit', 'Paper trade a new idea for at least 50 trades before using real money. Bot Baba in this app is for exactly this.'],
             ['Habit', 'Write your rules down once, then follow them. Rules written when calm beat decisions made when excited.'],
             ['Habit', 'After a big win or a big loss, take a break. Emotions are loudest right after an outcome.'],
             ['Habit', 'Review your week every Sunday: what worked, what broke a rule, one thing to improve.'],
@@ -13880,7 +13881,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             ['Safety', 'Change the password of any account you ever pasted into a chat or typed into the wrong place, and delete old API keys.'],
             ['App', 'Open Trade Ideas first: it ranks the best opportunities with the reasons and the chance estimate in one list.'],
             ['App', 'Use the Trade card under a chart: it fills entry, stop and target for you. You still confirm every real order.'],
-            ['App', 'Bot Pro\'s Smart Guard shows why it skipped a trade. Skips are good: they are the losses you did not take.'],
+            ['App', 'Bot Baba\'s Smart Guard shows why it skipped a trade. Skips are good: they are the losses you did not take.'],
             ['App', 'The real bot is locked until you type UNLOCK, and the STOP button stops all bots. Keep it visible.'],
             ['App', 'Use Menu > Problem log if anything freezes. It records errors and helps fix them quickly.'],
             ['App', 'Check Bot Doctor weekly: it explains why trades lost and what to change.'],
@@ -14997,6 +14998,230 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         window.__cmp = { D: D, refresh: refresh, get: function (k) { var d = D[k]; return d && d.pct != null && Date.now() - d.at < 600000 ? d : null; } };
     } catch (e) { try { console.log('p9zszzi', e); } catch (er) { } }
 })();
+/* ===== BS: UT Bot BUY/SELL + Support/Resistance on every chart (with off switch), Signal Lab (honest indicator tests), Bot Baba sale page ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2, FEE = 0.0008; /* 0.08% each side (fee + slippage) */
+        function g(k, d) { return KX[k] === undefined ? d : KX[k]; }
+        function fp(p, s) { try { return fmtP(p, s); } catch (e) { return String(Math.round(p * 100) / 100); } }
+
+        /* ---------- indicators ---------- */
+        function utbot(K, key, per) {
+            var n = K.length, stop = [], pos = [], buy = [], sell = [], a = 0, i, tr, nl, c, pc, ps, s, p = 0;
+            for (i = 0; i < n; i++) {
+                tr = i ? Math.max(K[i].h - K[i].l, Math.abs(K[i].h - K[i - 1].c), Math.abs(K[i].l - K[i - 1].c)) : K[i].h - K[i].l;
+                a = i < per ? (a * i + tr) / (i + 1) : (a * (per - 1) + tr) / per;
+                nl = key * a; c = K[i].c; pc = i ? K[i - 1].c : c; ps = i ? stop[i - 1] : c;
+                if (c > ps && pc > ps) { s = Math.max(ps, c - nl); } else if (c < ps && pc < ps) { s = Math.min(ps, c + nl); } else { s = c > ps ? c - nl : c + nl; }
+                stop.push(s);
+                var b = i >= per && c > s && pc <= ps, d = i >= per && c < s && pc >= ps;
+                buy.push(b); sell.push(d); if (b) { p = 1; } else if (d) { p = -1; }
+                pos.push(p);
+            }
+            return { stop: stop, pos: pos, buy: buy, sell: sell };
+        }
+        function emaArr(a, n) { var k = 2 / (n + 1), e = null, o = [], i; for (i = 0; i < a.length; i++) { e = e === null ? a[i] : a[i] * k + e * (1 - k); o.push(e); } return o; }
+        function strategies(K) {
+            var n = K.length, cl = K.map(function (x) { return x.c; }), o = {}, i;
+            var u1 = utbot(K, 1, 10), u2 = utbot(K, 2, 10), st = iSUPER(K, 10, 3), e9 = emaArr(cl, 9), e21 = emaArr(cl, 21), e50 = emaArr(cl, 50), rs = iRSI(cl, 14);
+            o.ut1 = u1.pos; o.ut2 = u2.pos;
+            o.st = K.map(function (x, j) { return st[j] ? (st[j].up ? 1 : -1) : 0; });
+            o.ema = K.map(function (x, j) { return j < 21 ? 0 : (e9[j] > e21[j] ? 1 : -1); });
+            var rp = [], p = 0; for (i = 0; i < n; i++) { var r = rs[i], r0 = i ? rs[i - 1] : null; if (r !== null && r0 !== null && r0 < 30 && r >= 30) { p = 1; } else if (p === 1 && r !== null && r >= 50) { p = 0; } rp.push(p); } o.rsi = rp;
+            o.baba = K.map(function (x, j) { var a = o.ut2[j], b = o.st[j], c2 = j < 50 ? 0 : (cl[j] > e50[j] ? 1 : -1); return (a && a === b && a === c2) ? a : 0; });
+            o._u2 = u2;
+            return o;
+        }
+        var SN = [['ut1', 'UT Bot (default 1, ATR 10)'], ['ut2', 'UT Bot (calmer 2, ATR 10)'], ['st', 'Supertrend (10, 3)'], ['ema', 'EMA 9/21 cross'], ['rsi', 'RSI bounce (buy 30, exit 50)'], ['baba', 'Bot Baba rule (UT + Supertrend + EMA50 agree)']];
+        function sim(K, pos) {
+            var tr = [], cur = 0, ent = 0, i, p, px, n = K.length;
+            for (i = 0; i < n - 1; i++) { p = pos[i] || 0; if (p !== cur) { px = K[i + 1].o; if (cur) { tr.push(cur * (px / ent - 1) - 2 * FEE); } if (p) { ent = px; } cur = p; } }
+            return tr;
+        }
+        function wil(w, n) { if (!n) { return 0; } var z = 1.64, p = w / n; return (p + z * z / (2 * n) - z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))) / (1 + z * z / n); }
+        function stats(tr) {
+            var n = tr.length, w = 0, gp = 0, gl = 0, sum = 0, eq = 1, pk = 1, dd = 0;
+            tr.forEach(function (t) { if (t > 0) { w++; gp += t; } else { gl -= t; } sum += t; eq *= (1 + t); if (eq > pk) { pk = eq; } dd = Math.max(dd, (pk - eq) / pk); });
+            return { n: n, win: n ? w / n : 0, lcb: wil(w, n), avg: n ? sum / n * 100 : 0, sum: sum * 100, pf: gl > 0 ? gp / gl : (gp > 0 ? 99 : 0), dd: dd * 100 };
+        }
+
+        /* ---------- support / resistance (pivot levels) ---------- */
+        function levels(K) {
+            var L = 8, R = 8, n = K.length, hs = [], ls = [], i, j, ph, pl;
+            for (i = L; i < n - R; i++) {
+                ph = true; pl = true;
+                for (j = i - L; j <= i + R; j++) { if (K[j].h > K[i].h) { ph = false; } if (K[j].l < K[i].l) { pl = false; } if (!ph && !pl) { break; } }
+                if (ph) { hs.push({ p: K[i].h, i: i }); } if (pl) { ls.push({ p: K[i].l, i: i }); }
+            }
+            var last = K[n - 1].c, all = hs.concat(ls), out = [];
+            all.sort(function (a, b) { return b.i - a.i; });
+            all.forEach(function (lv) { var dup = out.some(function (o) { return Math.abs(o.p - lv.p) / lv.p < 0.004; }); if (!dup) { out.push(lv); } });
+            var res = out.filter(function (o) { return o.p > last * 1.0005; }).sort(function (a, b) { return a.p - b.p; }).slice(0, 2);
+            var sup = out.filter(function (o) { return o.p < last * 0.9995; }).sort(function (a, b) { return b.p - a.p; }).slice(0, 2);
+            return { res: res, sup: sup };
+        }
+
+        /* ---------- chart overlay ---------- */
+        var CACHE = { k: '', u: null, lv: null, bt: null };
+        function keyOf() { var k = +g('utk', 1); return k === 2 || k === 3 ? k : 1; }
+        function calc(K) {
+            var sig = K.length + ':' + K[K.length - 1].t + ':' + K[K.length - 1].c + ':' + keyOf();
+            if (CACHE.k === sig) { return CACHE; }
+            var u = utbot(K, keyOf(), 10), bt = stats(sim(K, u.pos));
+            CACHE = { k: sig, u: u, lv: levels(K), bt: bt }; return CACHE;
+        }
+        window.__cxOver = function (c, m) {
+            var K = m.K; if (!K || K.length < 40) { return; }
+            var on1 = g('ut', 'on') !== 'off', on2 = g('sr', 'on') !== 'off', C = calc(K), u = C.u, i, x, ytop = m.padT, ybot = m.padT + m.ph;
+            c.save(); c.beginPath(); c.rect(0, ytop, m.W, m.ph); c.clip();
+            if (on2) {
+                c.font = '10px -apple-system,Segoe UI,sans-serif'; c.textAlign = 'left';
+                C.lv.res.concat(C.lv.sup).forEach(function (lv) {
+                    var yy = m.y(lv.p); if (yy < ytop || yy > ybot) { return; }
+                    var isR = lv.p > K[K.length - 1].c, col = isR ? m.RD : m.GR, x0 = Math.max(0, m.xs(Math.max(lv.i, m.start)) - 4);
+                    c.strokeStyle = col; c.globalAlpha = 0.75; c.lineWidth = 1.2; c.setLineDash([6, 4]); c.beginPath(); c.moveTo(x0, yy); c.lineTo(m.W, yy); c.stroke(); c.setLineDash([]);
+                    c.globalAlpha = 1; c.fillStyle = col; c.fillText((isR ? 'Resistance ' : 'Support ') + fp(lv.p, m.sym), 4, yy - 3);
+                });
+            }
+            if (on1) {
+                c.lineWidth = 1.6;
+                for (i = Math.max(m.start + 1, 1); i < m.end; i++) {
+                    var s0 = u.stop[i - 1], s1 = u.stop[i]; if (!isFinite(s0) || !isFinite(s1)) { continue; }
+                    c.strokeStyle = u.pos[i] < 0 ? m.RD : m.GR; c.globalAlpha = 0.55; c.beginPath(); c.moveTo(m.xs(i - 1), m.y(s0)); c.lineTo(m.xs(i), m.y(s1)); c.stroke();
+                }
+                c.globalAlpha = 1; c.font = '700 10px -apple-system,Segoe UI,sans-serif'; c.textAlign = 'center';
+                for (i = m.start; i < m.end; i++) {
+                    x = m.xs(i);
+                    if (u.buy[i]) { var yb = m.y(K[i].l) + 14; c.fillStyle = '#16a34a'; c.beginPath(); c.moveTo(x, yb - 12); c.lineTo(x - 6, yb); c.lineTo(x + 6, yb); c.closePath(); c.fill(); c.fillRect(x - 15, yb + 1, 30, 14); c.fillStyle = '#fff'; c.fillText('BUY', x, yb + 11); }
+                    else if (u.sell[i]) { var ys = m.y(K[i].h) - 14; c.fillStyle = '#dc2626'; c.beginPath(); c.moveTo(x, ys + 12); c.lineTo(x - 6, ys); c.lineTo(x + 6, ys); c.closePath(); c.fill(); c.fillRect(x - 15, ys - 15, 30, 14); c.fillStyle = '#fff'; c.fillText('SELL', x, ys - 5); }
+                }
+            }
+            c.restore();
+            try { info(K, C); } catch (e) { }
+        };
+        function since(u) { var n = u.pos.length, p = u.pos[n - 1], i = n - 1; while (i > 0 && u.pos[i - 1] === p) { i--; } return n - 1 - i; }
+        function info(K, C) {
+            var el = document.getElementById('utInfo'); if (!el) { return; }
+            var on1 = g('ut', 'on') !== 'off', u = C.u, p = u.pos[u.pos.length - 1], b = C.bt, h = '';
+            if (on1) {
+                h = '<b>UT Bot now: <span style="color:' + (p > 0 ? '#16a34a' : p < 0 ? '#dc2626' : 'inherit') + '">' + (p > 0 ? 'BUY side' : p < 0 ? 'SELL side' : 'no signal yet') + '</span></b>' + (p ? ' for ' + since(u) + ' candle(s)' : '') + ' · trailing stop ' + fp(u.stop[u.stop.length - 1], S.chart.sym) + '. ';
+                h += b.n >= 5 ? 'On the ' + K.length + ' candles shown, following every signal would have made ' + b.n + ' trades, ' + Math.round(b.win * 100) + '% winners, average ' + (b.avg >= 0 ? '+' : '') + b.avg.toFixed(2) + '% per trade after fees. ' : 'Too few signals here to judge. ';
+                h += 'This is a past test only, not a promise. <span data-act="win:siglab" style="text-decoration:underline;cursor:pointer">See the full accuracy test</span>.';
+            }
+            el.innerHTML = h;
+        }
+        var _vc = VIEWS.chart;
+        VIEWS.chart = function () {
+            var h = _vc.apply(this, arguments), ut = g('ut', 'on') !== 'off', sr = g('sr', 'on') !== 'off', k = keyOf();
+            var row = '<div class="m7ind" data-noswipe="1"><span class="' + (ut ? 'on' : '') + '" data-xk="ut:' + (ut ? 'off' : 'on') + '">UT Bot BUY/SELL</span><span class="' + (sr ? 'on' : '') + '" data-xk="sr:' + (sr ? 'off' : 'on') + '">Support/Resistance</span>' +
+                [[1, 'Same as TradingView (1,10)'], [2, 'Calmer'], [3, 'Calmest']].map(function (o) { return '<span class="' + (k === o[0] ? 'on' : '') + '" data-xk="utk:' + o[0] + '">' + o[1] + '</span>'; }).join('') + '</div><div class="note" id="utInfo" style="margin:4px 0 0;font-size:11.5px"></div>';
+            var a = '<div class="note" id="chartNote"';
+            return h.indexOf(a) >= 0 ? h.replace(a, row + a) : h + row;
+        };
+
+        /* ---------- Signal Lab: honest accuracy tests ---------- */
+        var MK = [['Bitcoin', 'BTCUSDT', 'BTC-USD'], ['Ethereum', 'ETHUSDT', 'ETH-USD'], ['Solana', 'SOLUSDT', 'SOL-USD'], ['BNB', 'BNBUSDT', 'BNB-USD'], ['XRP', 'XRPUSDT', 'XRP-USD'], ['Dogecoin', 'DOGEUSDT', 'DOGE-USD'],
+            ['Gold', 'XAUUSDT', 'GC=F'], ['Silver', 'XAGUSDT', 'SI=F'], ['Oil (WTI)', 'CLUSDT', 'CL=F'], ['EUR/USD', 'EURUSDT', 'EURUSD=X']];
+        var TFS = { '15m': 1, '1h': 1, '4h': 1 };
+        var LAB = { res: {}, busy: 0, msg: '', done: 0, tot: 0 };
+        function tf() { var t = g('labtf', '1h'); return TFS[t] ? t : '1h'; }
+        function binK(a) { return a.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }; }).filter(function (x) { return x.c > 0; }); }
+        function agg4(K) { var o = [], i; for (i = 0; i + 3 < K.length; i += 4) { var s = K.slice(i, i + 4); o.push({ t: s[0].t, o: s[0].o, h: Math.max.apply(null, s.map(function (x) { return x.h; })), l: Math.min.apply(null, s.map(function (x) { return x.l; })), c: s[3].c, v: 0 }); } return o; }
+        function load(m, t) {
+            var iv = t, urls = [['https://fapi.binance.com/fapi/v1/klines?symbol=' + m[1] + '&interval=' + iv + '&limit=1500', 'b'], ['https://api.binance.com/api/v3/klines?symbol=' + m[1] + '&interval=' + iv + '&limit=1000', 'b']];
+            var yi = t === '15m' ? '15m' : '60m', yr = t === '15m' ? '1mo' : (t === '1h' ? '3mo' : '1y');
+            urls.push(['https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(m[2]) + '?interval=' + yi + '&range=' + yr + '&includePrePost=false', 'y']);
+            var i = 0;
+            function nxt() {
+                if (i >= urls.length) { return Promise.resolve(null); }
+                var u = urls[i++];
+                return fetchText(u[0], 12000).then(function (tx) {
+                    var j = JSON.parse(tx), K;
+                    if (u[1] === 'b') { if (!Array.isArray(j) || j.length < 120) { throw 0; } K = binK(j); }
+                    else { var r = j.chart.result[0], q = r.indicators.quote[0]; K = []; r.timestamp.forEach(function (ts, z) { if (q.close[z] != null && q.open[z] != null && q.high[z] != null && q.low[z] != null) { K.push({ t: ts * 1000, o: q.open[z], h: q.high[z], l: q.low[z], c: q.close[z], v: q.volume ? q.volume[z] || 0 : 0 }); } }); if (t === '4h') { K = agg4(K); } }
+                    if (K.length < 120) { throw 0; } return { K: K, src: u[1] === 'b' ? 'Binance' : 'Yahoo (delayed)' };
+                }).catch(nxt);
+            }
+            return nxt();
+        }
+        function runLab() {
+            if (LAB.busy) { return; }
+            var t = tf(), q = MK.slice(), act = 0; LAB.busy = 1; LAB.res = {}; LAB.t = t; LAB.done = 0; LAB.tot = MK.length; LAB.msg = '';
+            function worker() { var m = q.shift(); if (!m) { return Promise.resolve(); } return load(m, t).then(function (d) { LAB.done++; if (d) { LAB.res[m[0]] = mk(m, d); } X.again(); }).then(worker); }
+            Promise.all([worker(), worker(), worker()]).then(function () { LAB.busy = 0; LAB.at = Date.now(); if (!Object.keys(LAB.res).length) { LAB.msg = 'Could not reach the price feeds. Check your internet and try again.'; } X.again(); });
+            X.again();
+        }
+        function mk(m, d) {
+            var K = d.K, S0 = strategies(K), o = { name: m[0], n: K.length, src: d.src, st: {}, days: Math.round((K[K.length - 1].t - K[0].t) / 86400000) };
+            SN.forEach(function (s) { var tr = sim(K, S0[s[0]]); o.st[s[0]] = { tr: tr, s: stats(tr), pos: S0[s[0]][K.length - 1], from: 0 }; });
+            o.bh = (K[K.length - 1].c / K[Math.min(50, K.length - 1)].o - 1) * 100; o.px = K[K.length - 1].c; o.stop = S0._u2.stop[K.length - 1];
+            var u = S0._u2, p = u.pos[K.length - 1], i = K.length - 1; while (i > 0 && u.pos[i - 1] === p) { i--; } o.since = K.length - 1 - i;
+            return o;
+        }
+        function pill(t, c) { return X.pill(t, c); }
+        function sideTxt(p) { return p > 0 ? pill('BUY', '#16a34a') : p < 0 ? pill('SELL', '#dc2626') : pill('WAIT', '#8e8e93'); }
+        function vLab() {
+            var t = tf(), names = Object.keys(LAB.res), h = '';
+            h += X.box('<b style="font-size:17px">🔬 Signal Lab: how accurate are the indicators?</b><div class="note" style="margin:6px 0 0">This tests the famous indicators (UT Bot, Supertrend, EMA cross, RSI) on real past candles of 10 markets: Bitcoin and other coins, Gold, Silver, Oil and EUR/USD. Every trade pays a fee and slippage of 0.08% each side. Entries use the <b>next</b> candle, so there is no cheating.</div>' +
+                '<div class="note" style="margin:6px 0 0"><b>About "99.9% accuracy":</b> no indicator on earth can honestly do that. A bot can show a high win rate by taking many tiny wins and a few huge losses, by repainting old signals, or by showing only lucky coins. What counts is win rate <b>and</b> the size of wins versus losses, after fees, on many trades. This page shows exactly that, with the number of trades, so you can see the truth.</div>', '#0a84ff');
+            h += X.seg('labtf', [['15m', '15 minutes'], ['1h', '1 hour'], ['4h', '4 hours']], t);
+            h += '<button class="btn" data-xk="labrun:1" ' + (LAB.busy ? 'disabled' : '') + '>' + (LAB.busy ? 'Testing… ' + LAB.done + '/' + LAB.tot : (names.length ? 'Run the test again' : 'Run the test (about 20 seconds)')) + '</button>';
+            if (LAB.msg) { h += '<div class="note">' + e2(LAB.msg) + '</div>'; }
+            if (!names.length) { return h + '<div class="note">Tap the button. Nothing is stored or sent; your phone downloads past prices and does the maths.</div>'; }
+            var R = names.map(function (n) { return LAB.res[n]; });
+            h += '<div class="group pad"><b>Result across ' + R.length + ' markets (' + (LAB.t || t) + ' candles, about ' + R[0].days + ' days each)</b><div style="overflow-x:auto" data-noswipe="1"><table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px"><tr style="text-align:left"><th>Rule</th><th>Trades</th><th>Won</th><th>Avg/trade</th><th>Profit factor</th><th>Markets +</th><th>Verdict</th></tr>';
+            SN.forEach(function (s) {
+                var all = [], pos = 0; R.forEach(function (r) { all = all.concat(r.st[s[0]].tr); if (r.st[s[0]].s.sum > 0) { pos++; } });
+                var a = stats(all), ok = a.n >= 100 && a.avg > 0 && a.pf >= 1.2 && pos / R.length >= 0.6;
+                h += '<tr style="border-top:1px solid var(--line,#e5e5ea)"><td style="padding:6px 4px 6px 0"><b>' + e2(s[1]) + '</b></td><td>' + a.n + '</td><td>' + Math.round(a.win * 100) + '%</td><td style="color:' + (a.avg >= 0 ? '#16a34a' : '#dc2626') + '">' + (a.avg >= 0 ? '+' : '') + a.avg.toFixed(2) + '%</td><td>' + a.pf.toFixed(2) + '</td><td>' + pos + '/' + R.length + '</td><td>' + (ok ? pill('Edge seen', '#16a34a') : pill('Not proven', '#ff9f0a')) + '</td></tr>';
+            });
+            h += '</table></div><div class="note" style="margin:8px 0 0">"Edge seen" needs 100+ trades, profit after fees, profit factor 1.2+, and profit in 60% of markets. Even then it is only the past. "Not proven" means the rule did not clear that bar on this data. Most single indicators do not.</div></div>';
+            h += '<div class="group pad"><b>Right now, by market</b><div style="overflow-x:auto" data-noswipe="1"><table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px"><tr style="text-align:left"><th>Market</th><th>Price</th><th>UT Bot</th><th>Supertrend</th><th>Bot Baba</th></tr>';
+            R.forEach(function (r) {
+                h += '<tr style="border-top:1px solid var(--line,#e5e5ea)"><td style="padding:6px 4px 6px 0"><b>' + e2(r.name) + '</b><div class="note" style="margin:0;font-size:10px">' + e2(r.src) + '</div></td><td>' + fp(r.px, r.name) + '</td><td>' + sideTxt(r.st.ut2.pos) + '<div class="note" style="margin:0;font-size:10px">' + r.since + ' candles · stop ' + fp(r.stop, r.name) + '</div></td><td>' + sideTxt(r.st.st.pos) + '</td><td>' + sideTxt(r.st.baba.pos) + '</td></tr>';
+            });
+            h += '</table></div><div class="note" style="margin:8px 0 0">Bot Baba says BUY or SELL only when UT Bot, Supertrend and the EMA50 trend all agree; otherwise WAIT. Crypto prices come from Binance. Gold, silver, oil and EUR/USD use Binance futures when available, otherwise Yahoo (delayed, may differ a little from Exness).</div></div>';
+            h += '<div class="group pad"><b>Total profit of each rule, per market (sum of trades, after fees)</b><div style="overflow-x:auto" data-noswipe="1"><table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px"><tr style="text-align:left"><th>Market</th>' + SN.map(function (s, i) { return '<th>' + ['UT1', 'UT2', 'ST', 'EMA', 'RSI', 'Baba'][i] + '</th>'; }).join('') + '<th>Just holding</th></tr>';
+            R.forEach(function (r) {
+                h += '<tr style="border-top:1px solid var(--line,#e5e5ea)"><td style="padding:5px 4px 5px 0"><b>' + e2(r.name) + '</b></td>' + SN.map(function (s) { var v = r.st[s[0]].s; return '<td style="color:' + (v.sum >= 0 ? '#16a34a' : '#dc2626') + '">' + (v.sum >= 0 ? '+' : '') + v.sum.toFixed(1) + '%<span class="note" style="margin:0;font-size:9px"> (' + v.n + ')</span></td>'; }).join('') + '<td>' + (r.bh >= 0 ? '+' : '') + r.bh.toFixed(1) + '%</td></tr>';
+            });
+            h += '</table></div><div class="note" style="margin:8px 0 0">Numbers in brackets are how many trades. A rule that beats "just holding" and makes money in most markets is worth more attention. A rule that wins in one market and loses in the others is luck.</div></div>';
+            return h + '<div class="group pad"><div class="note" style="margin:0">Honest limits: past candles, a short window, simple fee model, no guarantee. Use stops, small size, and the practice bot first.</div></div>';
+        }
+        X.on('labrun', function () { runLab(); });
+        try {
+            VIEWS.siglab = vLab; LIVE.siglab = 0;
+            WINS.push({ id: 'siglab', ic: '🔬', c: '#0a84ff', n: 'Signal Lab', t: 'Signal Lab', sub: 'Honest accuracy test of UT Bot, Supertrend, RSI and Bot Baba on past candles' });
+        } catch (e) { }
+
+        /* ---------- Bot Baba + Baba AI: product and sale-readiness page ---------- */
+        function proof() {
+            var b = S.bot || {}, c = b.closed || [], n = c.length, w = 0, gp = 0, gl = 0, first = 0;
+            c.forEach(function (t) { if (t.pnl > 0) { w++; gp += t.pnl; } else { gl -= t.pnl; } if (!first || (t.at && t.at < first)) { first = t.at || first; } });
+            var pf = gl > 0 ? gp / gl : (gp > 0 ? 99 : 0), days = first ? Math.floor((Date.now() - first) / 86400000) : 0, dd = b.maxDd || 0;
+            var ck = [['100+ closed practice trades', n >= 100], ['Profit factor 1.3+ after fees', n >= 20 && pf >= 1.3], ['Worst drop under 10%', n >= 20 && dd < 10], ['28+ days of results', days >= 28]];
+            return { n: n, win: n ? Math.round(w / n * 100) : 0, pf: pf, days: days, ck: ck, pass: ck.every(function (x) { return x[1]; }) };
+        }
+        function story() { var p = proof(); return p.n ? 'Bot Baba practice record (pretend money, fees included): ' + p.n + ' closed trades over ' + p.days + ' days, ' + p.win + '% winners, profit factor ' + p.pf.toFixed(2) + '. Past results are not a promise.' : 'Bot Baba has no closed practice trades yet.'; }
+        function vSale() {
+            var p = proof(), h = '';
+            h += X.box('<b style="font-size:18px">🤖 Bot Baba and 🧓 Baba AI</b><div class="note" style="margin:6px 0 0">Two products inside MintooSuite. <b>Bot Baba</b> is the rule-based trading bot (practice mode, Real Bot with safety locks, Bot Doctor, Signal Lab). <b>Baba AI</b> is the friendly helper that explains markets, news and your numbers in simple words.</div>', '#af52de');
+            h += X.box('<b>Selling status: ' + (p.pass ? pill('Ready to open', '#16a34a') : pill('Not open yet', '#ff9f0a')) + '</b>' + p.ck.map(function (x) { return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line,#e5e5ea)"><span>' + e2(x[0]) + '</span><span>' + (x[1] ? '✅' : '⏳') + '</span></div>'; }).join('') +
+                '<div class="note" style="margin:8px 0 0">We sell only after the practice record is real and good. This protects buyers and protects you. The record comes from the Proof page, never from invented numbers.</div>', p.pass ? '#16a34a' : '#ff9f0a');
+            h += X.box('<b>Your sales story (real numbers only)</b><div class="note" style="margin:6px 0">' + e2(story()) + '</div><button class="btn sec" data-xk="bcopy:1" style="width:auto;padding:7px 14px">Copy this text</button> ' + X.go('Open Proof', 'proof') + X.go('Signal Lab', 'siglab'));
+            h += X.box('<b>What a buyer gets today</b><div class="note" style="margin:6px 0 0">Pro plan, $4.99: Bot Baba (practice + Real Bot with locks), Bot Doctor, Signal Lab, UT Bot and support/resistance on every chart, Trade Pro, Exness Desk and Compare board, Radar, Briefing and Baba AI. Licence codes are issued on request now; in-app payment comes with Google Play Billing.</div>');
+            h += X.box('<b>Before you sell (your checklist)</b><div class="note" style="margin:6px 0 0">1) Finish the 4-week practice record above. 2) Run the Play closed test (12 testers, 14 days). 3) Check the name "Bot Baba" and "MintooSuite" for trademark clashes. 4) Add Play Billing for Pro. 5) Keep the privacy page and risk warnings. 6) Never advertise profit, win rates or "99%" claims you cannot show on the Proof page. Wording like "guaranteed" or "risk free" is not allowed on Google Play and is misleading.</div>');
+            h += X.box('<b>Want it when it opens?</b><div class="note" style="margin:6px 0">Send a waitlist message.</div><a class="btn" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/923122602811?text=' + encodeURIComponent('Hello, please add me to the Bot Baba and Baba AI waitlist. MintooSuite Terminal.') + '">Join the waitlist on WhatsApp</a>');
+            return h;
+        }
+        X.on('bcopy', function () { var t = story(); try { navigator.clipboard.writeText(t).then(function () { toast('Copied'); }, function () { toast('Could not copy'); }); } catch (e) { try { toast('Could not copy'); } catch (e2_) { } } });
+        try {
+            VIEWS.bsale = vSale; LIVE.bsale = 0;
+            WINS.push({ id: 'bsale', ic: '🛍', c: '#af52de', n: 'Sell Bot Baba', t: 'Bot Baba and Baba AI', sub: 'Product page, sale-readiness checks and your real track record' });
+        } catch (e) { }
+        window.__siglab = { utbot: utbot, strategies: strategies, sim: sim, stats: stats, levels: levels, runLab: runLab, LAB: LAB };
+    } catch (e) { try { console.error('p9zszzj', e); } catch (e3) { } }
+})();
 /* BN part 1: merge many windows into a few families; each family shows a tab strip at the top, swiping moves through the family */
 (function () {
     try {
@@ -15021,10 +15246,10 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         try { VIEWS.proof = vProof; LIVE.proof = 0; if (!winDef('proof') || winDef('proof').id !== 'proof') { WINS.push({ id: 'proof', ic: '🧾', c: '#34c759', n: 'Proof', t: 'Proof', sub: 'Honest practice scoreboard with a pass-mark' }); } } catch (e) { try { WINS.push({ id: 'proof', ic: '🧾', c: '#34c759', n: 'Proof', t: 'Proof', sub: 'Honest practice scoreboard' }); VIEWS.proof = vProof; LIVE.proof = 0; } catch (e2) { } }
         var FAM = [
             ['Home', ['overview', 'ideas', 'radar', 'brief', 'mood', 'movers', 'analyst', 'live']],
-            ['Markets', ['market', 'find', 'chart', 'gold', 'rates', 'news', 'newc', 'split']],
+            ['Markets', ['market', 'find', 'chart', 'siglab', 'gold', 'rates', 'news', 'newc', 'split']],
             ['Exchanges', ['exchanges', 'exness', 'compare', 'exdesk', 'mexc', 'bitget']],
             ['Trade', ['hub', 'tpro', 'xtrade', 'trade', 'terminal', 'risk', 'hist', 'copy', 'signals']],
-            ['Bots', ['bots', 'paper', 'rbot', 'proof']],
+            ['Bots', ['bots', 'paper', 'rbot', 'proof', 'bsale']],
             ['Baba AI', ['baba']],
             ['Pakistan & money', ['around', 'psx', 'offers', 'brokers', 'wallet']],
             ['Learn & play', ['academy', 'videos', 'quest', 'me', 'tips']],
@@ -15067,7 +15292,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
         st.textContent = '.xchb{display:flex;flex-wrap:wrap;gap:6px}.xchb>span[data-sg]{display:inline-block;padding:8px 13px;border-radius:16px;border:1px solid var(--line,#d1d1d6);cursor:pointer;font-weight:700;font-size:13px}.xchb>span[data-sg].on{background:#0a84ff;color:#fff;border-color:#0a84ff}#winName{max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}';
         document.head.appendChild(st);
-        WINS.forEach(function (w) { if (w.id === 'botpro') { w.n = 'Bot Pro'; } });
+        WINS.forEach(function (w) { if (w.id === 'botpro') { w.n = 'Bot Baba'; } });
     } catch (e) { }
 })();
 /* BN part 3: Baba AI round button sits at the very top right of the header (still draggable) */
