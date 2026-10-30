@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-30.92';
+var BUILD = '2026-10-30.94';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -13146,6 +13146,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             // 2. own record (Doctor style)
             var cl = (R.closed || []).slice(0, 60), sameCoin = cl.filter(function (t) { return t.sym === sym && now - t.t1 < 6 * 3600000; }).slice(0, 3);
             add('Coin cool-down', !(sameCoin.length >= 2 && sameCoin.every(function (t) { return t.pnl <= 0; })), sameCoin.length >= 2 ? 'two or more recent losses on ' + base(sym) + ', resting 6 hours' : '');
+            try { var bv = window.__brief && window.__brief.veto(sym, sg > 0 ? 'LONG' : 'SHORT'); if (bv) { add('World, news and dollar check', !bv.vetoBest, bv.notes.join('; ')); } } catch (ev) { }
             var wr = cl.length ? cl.filter(function (t) { return t.pnl > 0; }).length / cl.length * 100 : 100;
             add('Real record', !(cl.length >= 10 && wr < 35 && pf(cl) < 0.9), cl.length >= 10 ? 'win rate ' + f(wr, 0) + '%, profit factor ' + f(pf(cl)) : 'not enough real trades yet');
             var side = cl.filter(function (t) { return t.sg === sg; }); var swr = side.length ? side.filter(function (t) { return t.pnl > 0; }).length / side.length * 100 : 100;
@@ -14637,6 +14638,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 return next();
             });
         }
+        window.__babaAi = ai; window.__babaConsent = consent;
         function md(t) {
             var h = e2(t).replace(/^### (.+)$/gm, '<h4>$1</h4>').replace(/^## (.+)$/gm, '<h3>$1</h3>').replace(/^# (.+)$/gm, '<h2>$1</h2>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/^\s*[-*•]\s+(.+)$/gm, '<li>$1</li>').replace(/^\s*\d+[.)]\s+(.+)$/gm, '<li>$1</li>');
             h = h.replace(/(<li>[\s\S]*?<\/li>)(?!\s*<li>)/g, function (m) { return m; }).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>');
@@ -14818,6 +14820,92 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         window.__babaDbg = { OUT: OUT, CR: CR };
     } catch (e) { try { console.log('p9zszze', e); } catch (er) { } }
 })();
+/* BN part 6: Opportunity Radar. Looks for early breakouts, dip bounces and new coins in the biggest movers, shows evidence + a plan, and keeps its own honest track record. */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2, RK = 'mintoosuite_radar';
+        var FAPI = 'https://fapi.binance.com/fapi/v1/klines?symbol=', STABLE = /^(USDC|FDUSD|TUSD|BUSD|USDP|DAI|EUR|AEUR)/;
+        var R = { calls: [], seen: {}, rows: [], at: 0, busy: 0 }, K5 = {}, K1 = {};
+        try { R.calls = JSON.parse(localStorage.getItem(RK) || '[]') || []; } catch (e) { R.calls = []; }
+        function sv() { try { localStorage.setItem(RK, JSON.stringify(R.calls.slice(0, 200))); } catch (e) { } }
+        function get(url) { return fetch(url).then(function (r) { return r.ok ? r.json() : Promise.reject(); }); }
+        function k5(sym) { var t = K5[sym]; if (t && Date.now() - t.at < 170000) { return Promise.resolve(t.k); } return get(FAPI + sym + '&interval=5m&limit=40').then(function (k) { if (!Array.isArray(k) || k.length < 30) { throw 0; } K5[sym] = { at: Date.now(), k: k }; return k; }); }
+        function k1(sym) { var t = K1[sym]; if (t && Date.now() - t.at < 6 * 3600000) { return Promise.resolve(t.k); } return get(FAPI + sym + '&interval=1d&limit=30').then(function (k) { if (!Array.isArray(k)) { throw 0; } K1[sym] = { at: Date.now(), k: k }; return k; }); }
+        function an(sym, t, k, d) {
+            var c = k.slice(0, -1), n = c.length; if (n < 30) { return null; }
+            var cl = c.map(function (x) { return +x[4]; }), op = c.map(function (x) { return +x[1]; }), hi = c.map(function (x) { return +x[2]; }), lo = c.map(function (x) { return +x[3]; }), vo = c.map(function (x) { return +x[7] || (+x[5] * +x[4]); });
+            var last = cl[n - 1], cur = t.p > 0 ? t.p : +k[k.length - 1][4], i;
+            function sum(a, s, e) { var r = 0, j; for (j = s; j < e; j++) { r += a[j]; } return r; }
+            var v30 = sum(vo, n - 6, n), vprev = sum(vo, 0, n - 6) / ((n - 6) / 6) || 1, vr = v30 / vprev;
+            var h3 = Math.max.apply(null, hi), l3 = Math.min.apply(null, lo), l30 = Math.min.apply(null, lo.slice(n - 6));
+            var ret30 = (cur - cl[n - 7]) / cl[n - 7] * 100, off3 = (h3 - cur) / h3 * 100, offDay = t.h > 0 ? (t.h - cur) / t.h * 100 : 0, up3 = (cur - l3) / l3 * 100;
+            var hl = 0; for (i = n - 3; i < n; i++) { if (lo[i] >= lo[i - 1] * 0.9995) { hl++; } }
+            var gr = 0; for (i = n - 3; i < n; i++) { if (cl[i] > op[i]) { gr++; } }
+            var age = d ? d.length : 99, type = null, why = '';
+            if (t.chg >= 5 && ret30 >= 1.5 && vr >= 2.5 && off3 <= 3 && gr >= 2) { type = 'brk'; why = 'up ' + t.chg.toFixed(0) + '% today, +' + ret30.toFixed(1) + '% in 30 min, trading volume ' + vr.toFixed(1) + 'x normal, still near its 3-hour high'; }
+            else if (offDay >= 15 && off3 >= 8 && hl >= 2 && gr >= 2 && vr >= 1.5 && up3 >= 1) { type = 'dip'; why = 'fell ' + offDay.toFixed(0) + '% from the day high, now making higher lows with volume ' + vr.toFixed(1) + 'x normal'; }
+            if (!type) { return null; }
+            if (age < 21) { why = 'NEW COIN (listed about ' + age + ' days ago): ' + why; }
+            var entry = cur, stop = type === 'brk' ? Math.min(l30, entry * 0.975) : Math.min(l3, entry * 0.97), risk = (entry - stop) / entry;
+            if (risk < 0.012) { stop = entry * 0.988; risk = 0.012; } if (risk > 0.08) { stop = entry * 0.92; risk = 0.08; }
+            var tp = type === 'brk' ? entry * (1 + risk * 1.7) : entry + (h3 - entry) * 0.5; if (tp < entry * (1 + risk * 1.2)) { tp = entry * (1 + risk * 1.2); }
+            return { sym: sym, type: type, isNew: age < 21, why: why, entry: entry, stop: stop, tp: tp, risk: risk * 100, rew: (tp - entry) / entry * 100, vr: vr, t: Date.now() };
+        }
+        function scan() {
+            if (R.busy) { return; } var now = Date.now(); if (now - R.at < 100000) { return; } R.at = now;
+            var cand = Object.keys(S.tick || {}).filter(function (s) { var t = S.tick[s]; return /USDT$/.test(s) && !STABLE.test(s) && t && t.p > 0 && t.q >= 5e6 && Math.abs(t.chg) >= 5 && t.chg < 500; }).sort(function (a, b) { return Math.abs(S.tick[b].chg) - Math.abs(S.tick[a].chg); }).slice(0, 24);
+            var out = [], i = 0; R.busy = 1;
+            function next() {
+                if (i >= cand.length) { R.rows = out; R.busy = 0; record(out); try { if (S.win === 'radar') { renderView(true); } } catch (e) { } return; }
+                var s = cand[i++], t = S.tick[s];
+                k5(s).then(function (k) { var a = an(s, t, k, null); if (!a) { return null; } return k1(s).catch(function () { return null; }).then(function (d) { return an(s, t, k, d); }); }).then(function (a) { if (a) { out.push(a); } }).catch(function () { }).then(function () { setTimeout(next, 250); });
+            }
+            next();
+        }
+        function record(rows) {
+            rows.forEach(function (a) {
+                var k = a.sym + a.type; if (R.seen[k] && Date.now() - R.seen[k] < 4 * 3600000) { return; } R.seen[k] = Date.now();
+                R.calls.unshift({ sym: a.sym, type: a.type, t: a.t, e: a.entry, s: a.stop, p: a.tp, st: 'open' }); try { tst('Radar: ' + a.sym.replace('USDT', '') + (a.type === 'brk' ? ' breakout' : ' dip bounce')); addLog('RADAR', a.sym + ' ' + a.type + ' ' + a.why); } catch (e) { }
+            });
+            sv();
+        }
+        function judge() {
+            var ch = 0; R.calls.forEach(function (c) {
+                if (c.st !== 'open') { return; } var t = S.tick[c.sym]; if (!t || !(t.p > 0)) { return; }
+                if (t.p >= c.p) { c.st = 'win'; c.x = c.p; ch = 1; } else if (t.p <= c.s) { c.st = 'loss'; c.x = c.s; ch = 1; } else if (Date.now() - c.t > 6 * 3600000) { c.st = (t.p > c.e ? 'timeup' : 'timedn'); c.x = t.p; ch = 1; }
+            }); if (ch) { sv(); }
+        }
+        function board() {
+            var cl = R.calls.filter(function (c) { return c.st !== 'open'; }), w = 0, l = 0, sumR = 0;
+            cl.forEach(function (c) { var risk = (c.e - c.s) / c.e * 100 || 1, r = ((c.x - c.e) / c.e * 100 - 0.16) / risk; sumR += r; if (r > 0) { w++; } else { l++; } });
+            return { n: cl.length, w: w, l: l, avgR: cl.length ? sumR / cl.length : 0, open: R.calls.length - cl.length };
+        }
+        function f(p, sym) { try { return fmtP(p, sym); } catch (e) { return String(+p.toPrecision(5)); } }
+        function vRadar() {
+            var tab = KX.rdT || 'all', b = board(), rows = R.rows.filter(function (a) { return tab === 'all' || (tab === 'brk' && a.type === 'brk') || (tab === 'dip' && a.type === 'dip') || (tab === 'new' && a.isNew); });
+            var h = X.seg('rdT', [['all', 'All'], ['brk', '🚀 Breakouts'], ['dip', '↩ Dip bounces'], ['new', '🆕 New coins']], tab);
+            h += '<div class="group pad"><b>📡 Opportunity Radar</b><div class="note" style="margin:4px 0 8px">Every few minutes the app looks at the biggest movers and checks 5-minute candles for two things people often profit from: <b>early breakouts</b> (price and volume rising together) and <b>dip bounces</b> (a big fall that starts to turn up). New coins are marked. These are <b>high-risk</b> ideas. Use a tiny size (1-2% of your account) and always keep the stop. No chance % is shown because nobody can promise one.</div>' +
+                '<div class="note" style="margin:0"><b>Radar record (this phone):</b> ' + (b.n ? b.n + ' finished calls: ' + b.w + ' made money, ' + b.l + ' lost, average ' + (b.avgR >= 0 ? '+' : '') + b.avgR.toFixed(2) + 'R after fees' : 'no finished calls yet') + (b.open ? ' · ' + b.open + ' still open' : '') + '. Calls end at target, stop, or 6 hours.</div></div>';
+            if (R.busy && !R.rows.length) { h += '<div class="group pad mut">Scanning the movers…</div>'; }
+            else if (!rows.length) { h += '<div class="group pad mut">Nothing passes the radar rules right now' + (R.at ? ' (last scan ' + Math.round((Date.now() - R.at) / 60000) + ' min ago)' : '') + '. That is normal: most of the time there is no clean setup, and waiting is a valid choice.</div>'; }
+            rows.forEach(function (a) {
+                var cur = S.tick[a.sym] ? S.tick[a.sym].p : a.entry;
+                h += '<div class="group pad" style="border-left:5px solid ' + (a.type === 'brk' ? '#34c759' : '#ff9f0a') + '"><div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:18px">' + e2(nm(a.sym)) + '</b><span style="font-weight:800">' + (a.type === 'brk' ? '🚀 BREAKOUT' : '↩ DIP BOUNCE') + (a.isNew ? ' 🆕' : '') + '</span></div>' +
+                    '<div class="note" style="margin:4px 0">' + e2(a.why) + '.</div>' +
+                    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0"><div><div class="note" style="margin:0">Entry</div><b>' + f(a.entry, a.sym) + '</b></div><div><div class="note" style="margin:0">Stop −' + a.risk.toFixed(1) + '%</div><b style="color:#ff3b30">' + f(a.stop, a.sym) + '</b></div><div><div class="note" style="margin:0">Target +' + a.rew.toFixed(1) + '%</div><b style="color:#34c759">' + f(a.tp, a.sym) + '</b></div></div>' +
+                    '<div class="note" style="margin:4px 0">Now ' + f(cur, a.sym) + '. If the price is already far above the entry, skip it: late buyers lose most often. ' + (a.isNew ? 'New coins can swing 50% either way within hours; use the smallest size. ' : '') + 'The stop is a must.</div>' +
+                    '<div style="display:flex;gap:8px"><span class="btn tap" data-act="chart:' + a.sym + '">Open chart</span></div></div>';
+            });
+            return h + '<div class="group pad"><div class="note" style="margin:0">Honest limit: the radar can only react to moves that have already started, and many breakouts fail. The record above is the proof, so watch it for a few weeks before trusting real money. Not financial advice.</div></div>';
+        }
+        VIEWS.brief = function () { try { return window.__brief ? window.__brief.view() : '<div class="group pad mut">Loading…</div>'; } catch (e) { return '<div class="group pad">Briefing could not load.</div>'; } }; LIVE.brief = 0;
+        try { WINS.push({ id: 'brief', ic: '🗞', c: '#5e5ce6', n: 'Briefing', t: 'Briefing', sub: 'Why markets are moving: news, world headlines, Bitcoin, gold, dollar' }); } catch (e) { }
+        VIEWS.radar = vRadar; LIVE.radar = 0;
+        try { WINS.push({ id: 'radar', ic: '📡', c: '#ff9f0a', n: 'Radar', t: 'Radar', sub: 'Early breakouts, dip bounces and new coins with a plan and a track record' }); } catch (e) { }
+        setInterval(function () { try { scan(); judge(); } catch (e) { } }, 30000); setTimeout(function () { try { scan(); } catch (e) { } }, 20000);
+        window.__radar = { R: R, an: an, scan: scan };
+    } catch (e) { try { console.log('p9zszzg', e); } catch (er) { } }
+})();
 /* BN part 1: merge many windows into a few families; each family shows a tab strip at the top, swiping moves through the family */
 (function () {
     try {
@@ -14841,7 +14929,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         try { VIEWS.proof = vProof; LIVE.proof = 0; if (!winDef('proof') || winDef('proof').id !== 'proof') { WINS.push({ id: 'proof', ic: '🧾', c: '#34c759', n: 'Proof', t: 'Proof', sub: 'Honest practice scoreboard with a pass-mark' }); } } catch (e) { try { WINS.push({ id: 'proof', ic: '🧾', c: '#34c759', n: 'Proof', t: 'Proof', sub: 'Honest practice scoreboard' }); VIEWS.proof = vProof; LIVE.proof = 0; } catch (e2) { } }
         var FAM = [
-            ['Home', ['overview', 'ideas', 'mood', 'movers', 'analyst', 'live']],
+            ['Home', ['overview', 'ideas', 'radar', 'brief', 'mood', 'movers', 'analyst', 'live']],
             ['Markets', ['market', 'find', 'chart', 'gold', 'rates', 'news', 'newc', 'split']],
             ['Exchanges', ['exchanges', 'exness', 'exdesk', 'mexc', 'bitget']],
             ['Trade', ['hub', 'tpro', 'xtrade', 'trade', 'terminal', 'risk', 'hist', 'copy', 'signals']],
@@ -14951,6 +15039,155 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         };
         window.__momCheck = { MOM: MOM, judge: judge };
     } catch (e) { try { console.log('p9zszzf4', e); } catch (er) { } }
+})();
+/* BN part 5: honest statistics. Each idea is replayed on that coin's own last ~20 days of hourly candles (same direction, same target/stop, fees included).
+   The chance shown comes from the tested hit rate (blended with the plain barrier maths), and BEST needs a positive tested result. */
+(function () {
+    try {
+        var BT = {}, q = [], busy = 0, FEE = 0.16;
+        var LEV = /^(SOXL|SOXS|TQQQ|SQQQ|UVXY|SVXY|SPXL|SPXS|TECL|TECS|LABU|LABD|FNGU|FNGD|NVDL|NVDD|TSLL|TSLQ|SKDD|SKHL|CONL|MSTU|MSTZ|NVDU|NVDS|BITX|BITI|ETHU|ETHD)/;
+        function ema(a, n) { var k = 2 / (n + 1), e = a[0], out = [e], i; for (i = 1; i < a.length; i++) { e = a[i] * k + e * (1 - k); out.push(e); } return out; }
+        function barsOf(m) { var h = m.hz === 'day' ? 24 : m.hz === 'fh' ? 6 : 12; if (m.to && m.from) { var b = Math.round((m.to - m.from) / 3600000); if (b >= 2 && b <= 48) { h = b; } } return h; }
+        function run(k, side, H, tp, sl) {
+            var c = k.map(function (x) { return +x[4]; }), hi = k.map(function (x) { return +x[2]; }), lo = k.map(function (x) { return +x[3]; });
+            var e9 = ema(c, 9), e21 = ema(c, 21), n = 0, w = 0, pos = 0, sumR = 0, sq = 0, i, j, dir = side === 'LONG' ? 1 : -1;
+            for (i = 30; i < c.length - 1; i++) {
+                var up = c[i] > e21[i] && e9[i] > e21[i], dn = c[i] < e21[i] && e9[i] < e21[i];
+                if (dir > 0 ? !up : !dn) { continue; }
+                var en = c[i], tpx = en * (1 + dir * tp / 100), slx = en * (1 - dir * sl / 100), res = null, ret = 0;
+                for (j = i + 1; j <= Math.min(i + H, c.length - 1); j++) {
+                    var hitSl = dir > 0 ? lo[j] <= slx : hi[j] >= slx, hitTp = dir > 0 ? hi[j] >= tpx : lo[j] <= tpx;
+                    if (hitSl) { res = 'sl'; break; } if (hitTp) { res = 'tp'; break; }
+                }
+                if (res === 'tp') { ret = tp; w++; } else if (res === 'sl') { ret = -sl; } else { ret = dir * (c[Math.min(i + H, c.length - 1)] - en) / en * 100; }
+                var R = (ret - FEE) / sl; if (R > 0) { pos++; } n++; sumR += R; sq += R * R;
+            }
+            if (n < 1) { return { n: 0 }; }
+            var mean = sumR / n, sd = Math.sqrt(Math.max(0, sq / n - mean * mean)), neff = Math.max(1, n / H);
+            return { n: n, win: w / n, pos: pos / n, meanR: mean, lcb: mean - 1.0 * sd / Math.sqrt(neff), days: Math.round(c.length / 24) };
+        }
+        var KL = {};
+        function getK(sym) {
+            var t = KL[sym]; if (t && Date.now() - t.at < 1200000) { return Promise.resolve(t.k); }
+            var f = 'https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=1h&limit=500', s = 'https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=1h&limit=500';
+            return fetch(f).then(function (r) { return r.ok ? r.json() : Promise.reject(); }).catch(function () { return fetch(s).then(function (r) { return r.ok ? r.json() : Promise.reject(); }); }).then(function (k) { if (!Array.isArray(k) || k.length < 120) { throw 0; } KL[sym] = { at: Date.now(), k: k }; return k; });
+        }
+        function pump() {
+            while (busy < 2 && q.length) {
+                var job = q.shift(); busy++;
+                (function (job) { getK(job.sym).then(function (k) { BT[job.key] = { at: Date.now(), r: run(k, job.side, job.H, job.tp, job.sl) }; }).catch(function () { BT[job.key] = { at: Date.now(), r: null }; }).then(function () { busy--; try { IDS.at = 0; } catch (e) { } pump(); }); })(job);
+            }
+        }
+        function stat(m) {
+            var H = barsOf(m), tp = Math.max(0.2, +m.tpP || 0), sl = Math.max(0.2, +m.slP || 0), key = [m.sym, m.side, H, tp.toFixed(1), sl.toFixed(1)].join('|'), t = BT[key];
+            if (!t || Date.now() - t.at > 1500000) { if (!q.some(function (j) { return j.key === key; })) { q.push({ key: key, sym: m.sym, side: m.side, H: H, tp: tp, sl: sl }); pump(); } return t && t.r ? t.r : (t ? null : undefined); }
+            return t.r;
+        }
+        var _irG = idRows;
+        idRows = function () {
+            var l = _irG.apply(this, arguments);
+            l.forEach(function (m, i) {
+                if (!m || !m.R || m.__bt === 1) { return; }
+                var base = String(m.sym || '').replace(/USDT$|USDC$|USD$/, ''), R = m.R;
+                var tp = Math.max(0.01, (+m.tpP || 0) - 0.1), sl = (+m.slP || 0) + 0.1, p0 = sl / (tp + sl);
+                if (LEV.test(base)) { R.best = false; if (!/leveraged/.test(m.hzl || '')) { m.hzl = (m.hzl || '') + ' · leveraged/inverse fund: very risky'; } return; }
+                if (i >= 16) { R.best = false; return; }
+                var s = stat(m), txt = '';
+                if (s === undefined) { R.best = false; txt = ' · testing on past candles…'; }
+                else if (s === null || !s.n) { R.best = false; txt = ' · no past test available'; }
+                else {
+                    var H2 = barsOf(m), ne = Math.max(1, s.n / H2), p = (ne * s.pos + 15 * 0.5) / (ne + 15), er = (ne * s.meanR + 15 * (-FEE / sl)) / (ne + 15);
+                    R.p = Math.max(0.2, Math.min(0.8, p)); R.expR = er;
+                    R.best = s.n >= 40 && s.lcb > 0 && er > 0.1 && R.p >= 0.55;
+                    txt = ' · tested ' + s.n + ' past signals (' + s.days + ' days, fees in): made money in ' + Math.round(s.pos * 100) + '%, avg ' + (s.meanR >= 0 ? '+' : '') + s.meanR.toFixed(2) + 'R';
+                }
+                m.hzl = String(m.hzl || '').replace(/ · (tested \d+ past signals[^·]*|testing on past candles…|no past test available)$/, '') + txt; if (s !== undefined) { m.__bt = 1; }
+            });
+            var nb = 0; l.forEach(function (m) { if (m.R && m.R.best) { nb++; if (nb > 8) { m.R.best = false; } } });
+            l.sort(function (a, b) { if (!a.R || !b.R) { return 0; } if (a.R.best !== b.R.best) { return a.R.best ? -1 : 1; } return (b.R.p - a.R.p) || (b.R.expR - a.R.expR); });
+            l.forEach(function (m, i) { m.rank = i + 1; });
+            return l;
+        };
+        var _vi = VIEWS.ideas;
+        if (typeof _vi === 'function') { VIEWS.ideas = function () { var h = _vi.apply(this, arguments); return typeof h === 'string' ? h.replace('It is an estimate, not a promise.', 'Each idea is also replayed on the coin own last ~20 days of hourly candles with fees. BEST needs a positive tested result, so the list is often short. It is an estimate, not a promise.') : h; }; }
+        window.__bt = { run: run, BT: BT };
+    } catch (e) { try { console.log('p9zszzf5', e); } catch (er) { } }
+})();
+/* BN part 7: Briefing (news + world headlines + Bitcoin/gold/dollar) and a veto layer. It can only take BEST away or warn; it never promotes an idea. */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2;
+        var OFF = /\b(war|attack|missile|strike[sd]?|invasion|sanction|tariff|ban(ned|s)?|crackdown|hack(ed|s)?|exploit|bankrupt|default|recession|crash|plunge|collapse|emergency|panic|liquidat|lawsuit|sues|fraud|rate hike|hot inflation|shutdown)\b/i;
+        var ON = /\b(ceasefire|peace deal|rate cut|approves?|approved|etf inflow|inflows?|record high|rally|adoption|partnership|stimulus|soft landing)\b/i;
+        var MAJOR = /^(BTC|ETH|PAXG|XAU|BNB)/;
+        function heads() { var now = nowMs(); return (S.news || []).filter(function (n) { return n && n.title && (!n.t || now - n.t < 12 * 3600000); }); }
+        function ctx() {
+            var hs = heads(), off = hs.filter(function (n) { return OFF.test(n.title); }), on = hs.filter(function (n) { return ON.test(n.title); });
+            var btc = null, eth = null; try { btc = idTrend('BTCUSDT'); eth = idTrend('ETHUSDT'); } catch (e) { }
+            var eur = S.tick && S.tick.EURUSDT ? S.tick.EURUSDT.chg : null, gold = S.tick && S.tick.PAXGUSDT ? S.tick.PAXGUSDT.chg : null;
+            var riskOff = (off.length >= 3 && off.length > on.length * 1.5) || (btc && btc.up < 0 && !btc.weak && off.length >= 2);
+            return { hs: hs, off: off, on: on, btc: btc, eth: eth, eur: eur, gold: gold, riskOff: riskOff };
+        }
+        function veto(sym, side) {
+            var notes = [], hard = false, b = String(sym || '').replace(/USDT$|USDC$|USD$/, ''), c = ctx(), nw = null;
+            try { nw = idNews(sym); } catch (e) { }
+            if (nw) {
+                if (side === 'LONG' && nw.neg >= 2 && nw.v <= -0.5) { hard = true; notes.push('news about ' + b + ' is mostly negative'); }
+                if (side === 'SHORT' && nw.pos >= 2 && nw.v >= 0.5) { hard = true; notes.push('news about ' + b + ' is mostly positive'); }
+            }
+            if (c.riskOff && side === 'LONG' && !MAJOR.test(b)) { hard = true; notes.push('world headlines are risk-off today (' + c.off.length + ' alarming)'); }
+            if (!MAJOR.test(b) && c.btc && !c.btc.weak) {
+                if (side === 'LONG' && c.btc.up < 0) { hard = true; notes.push('Bitcoin trend is down'); }
+                if (side === 'SHORT' && c.btc.up > 0) { hard = true; notes.push('Bitcoin trend is up'); }
+            }
+            if (/^(PAXG|XAU)/.test(b) && c.eur != null) {
+                if (side === 'LONG' && c.eur < -0.5) { hard = true; notes.push('the dollar is rising (EUR ' + c.eur.toFixed(2) + '%)'); }
+                if (side === 'SHORT' && c.eur > 0.5) { hard = true; notes.push('the dollar is falling (EUR +' + c.eur.toFixed(2) + '%)'); }
+            }
+            return { vetoBest: hard, notes: notes };
+        }
+        var _irH = idRows;
+        idRows = function () {
+            var l = _irH.apply(this, arguments);
+            l.forEach(function (m) {
+                if (!m || !m.R || m.__vt) { return; } m.__vt = 1;
+                var v = veto(m.sym, m.side);
+                if (v.vetoBest) { m.R.best = false; m.hzl = String(m.hzl || '') + ' · caution: ' + v.notes.join('; '); }
+            });
+            l.sort(function (a, b) { if (!a.R || !b.R) { return 0; } if (a.R.best !== b.R.best) { return a.R.best ? -1 : 1; } return (b.R.p - a.R.p) || (b.R.expR - a.R.expR); });
+            l.forEach(function (m, i) { m.rank = i + 1; });
+            return l;
+        };
+        function ago(t) { if (!t) { return ''; } var m = Math.round((nowMs() - t) / 60000); return m < 60 ? m + ' min ago' : Math.round(m / 60) + ' h ago'; }
+        function line(n) { return '<div style="padding:6px 0;border-bottom:1px solid var(--line,#e5e5ea)"><div>' + e2(n.title) + '</div><div class="note" style="margin:2px 0 0">' + e2(n.src || n.s || '') + (n.t ? ' · ' + ago(n.t) : '') + '</div></div>'; }
+        function view() {
+            var c = ctx(), h = '';
+            var chip = c.riskOff ? '<span style="background:#ff3b30;color:#fff;border-radius:10px;padding:3px 10px;font-weight:800">RISK-OFF</span>' : '<span style="background:#34c759;color:#fff;border-radius:10px;padding:3px 10px;font-weight:800">NORMAL</span>';
+            h += '<div class="group pad"><div style="display:flex;justify-content:space-between;align-items:center"><b>🗞 Briefing</b>' + chip + '</div><div class="note" style="margin:6px 0">What is moving markets right now, from the app\'s own live data and headlines. Trade ideas and the Real Bot use it as a <b>safety check only</b>: it can take away a BEST mark or block a trade, it never makes an idea stronger.</div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+                '<div class="group pad" style="margin:0"><div class="note" style="margin:0">Bitcoin</div><b>' + (c.btc ? c.btc.txt : 'no data') + '</b></div>' +
+                '<div class="group pad" style="margin:0"><div class="note" style="margin:0">Ethereum</div><b>' + (c.eth ? c.eth.txt : 'no data') + '</b></div>' +
+                '<div class="group pad" style="margin:0"><div class="note" style="margin:0">Gold (24h)</div><b>' + (c.gold != null ? (c.gold >= 0 ? '+' : '') + c.gold.toFixed(2) + '%' : 'no data') + '</b></div>' +
+                '<div class="group pad" style="margin:0"><div class="note" style="margin:0">Dollar (EUR 24h, opposite)</div><b>' + (c.eur != null ? (c.eur >= 0 ? '+' : '') + c.eur.toFixed(2) + '%' : 'no data') + '</b></div></div>' +
+                '<div class="note" style="margin:8px 0 0">Headlines in the last 12 hours: <b>' + c.hs.length + '</b> · alarming words: <b>' + c.off.length + '</b> · good-news words: <b>' + c.on.length + '</b>. Word counts are a rough signal, not understanding.</div></div>';
+            h += '<div class="group pad"><b>What the safety check blocks</b><div class="note" style="margin:4px 0 0">• LONG ideas when the coin\'s own news is mostly negative, when Bitcoin\'s trend is down, or when world headlines are risk-off.<br>• SHORT ideas when the coin\'s own news is mostly positive or Bitcoin\'s trend is up.<br>• Gold LONG while the dollar is rising, gold SHORT while it is falling.<br>• The same checks run before the Real Bot (Chief) enters a trade.</div></div>';
+            var top = c.off.slice(0, 6); if (top.length) { h += '<div class="group pad"><b>Alarming headlines</b>' + top.map(line).join('') + '</div>'; }
+            var rest = c.hs.filter(function (n) { return c.off.indexOf(n) < 0; }).slice(0, 8); if (rest.length) { h += '<div class="group pad"><b>Latest headlines</b>' + rest.map(line).join('') + '</div>'; }
+            var ai = window.__babaAi, okc = window.__babaConsent && window.__babaConsent();
+            h += '<div class="group pad"><b>🧓 Baba AI written briefing</b><div class="note" style="margin:4px 0 8px">Baba reads only the facts above and writes a short explanation. AI can be wrong, so treat it as reading help, not as a signal.</div>' +
+                (okc ? '<button class="btn" data-xk="brief:go">' + (KX.brBusy === '1' ? 'Writing…' : 'Write the briefing') + '</button>' : '<div class="note">Online AI is off. Turn it on in Baba AI › Settings, then come back.</div>') +
+                (KX.brTxt ? '<div style="margin-top:8px">' + e2(KX.brTxt).replace(/\n/g, '<br>') + '<div class="note" style="margin:6px 0 0">Written ' + e2(KX.brAt || '') + ' by a free AI service. Not financial advice.</div></div>' : '') + '</div>';
+            return h;
+        }
+        X.on('brief', function (v) {
+            if (v !== 'go' || KX.brBusy === '1' || !window.__babaAi) { return; }
+            var c = ctx(); KX.brBusy = '1'; X.save(); X.again();
+            var facts = 'Bitcoin: ' + (c.btc ? c.btc.txt : 'n/a') + '; Ethereum: ' + (c.eth ? c.eth.txt : 'n/a') + '; Gold 24h: ' + (c.gold != null ? c.gold.toFixed(2) + '%' : 'n/a') + '; EUR vs USD 24h: ' + (c.eur != null ? c.eur.toFixed(2) + '%' : 'n/a') + '.\nHeadlines:\n' + c.hs.slice(0, 14).map(function (n) { return '- ' + n.title; }).join('\n');
+            var q = 'You are a careful markets explainer for beginners. Using ONLY the facts below, write a short briefing in simple English: (1) what seems to be driving crypto, gold and the dollar today, (2) which kinds of trades look risky today and why, (3) what to watch next. Do not predict prices. Do not invent facts that are not below. Keep it under 180 words.\n\n' + facts;
+            window.__babaAi(q, false).then(function (r) { KX.brTxt = r.t; KX.brAt = new Date().toLocaleString(); }, function (er) { KX.brTxt = 'Could not write it now: ' + (er && er.message ? er.message : 'try again in a minute') + '.'; KX.brAt = new Date().toLocaleString(); }).then(function () { KX.brBusy = '0'; X.save(); X.again(); });
+        });
+        window.__brief = { view: view, veto: veto, ctx: ctx };
+    } catch (e) { try { console.log('p9zszzh', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
