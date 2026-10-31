@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.219';
+var BUILD = '2026-10-31.223';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -10729,7 +10729,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var m = {}; try { m = mktStats(); } catch (e) { m = { n: 0, breadth: 0 }; }
             var h = '<div class="mkh">MARKETS</div><div class="row5">' +
                 sym3('Gold', GOLD, 'XAU') + sym3('Bitcoin', 'BTCUSDT', 'BTC') + sym3('Ethereum', 'ETHUSDT', 'ETH') +
-                '<div class="c"><div class="t"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20V8"/></svg><span>Breadth</span></div><div class="p ' + (m.breadth >= 50 ? 'up' : 'dn') + '">' + (m.n ? m.breadth + '%' : '—') + '</div><div class="b"><span style="font-size:10.5px;opacity:.7">of ' + (m.n || 0) + ' up 24h</span></div></div>' +
+                '<div class="c" data-md="breadth" style="cursor:pointer"><div class="t"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20V8"/></svg><span>Breadth</span></div><div class="p ' + (m.breadth >= 50 ? 'up' : 'dn') + '">' + (m.n ? m.breadth + '%' : '—') + '</div><div class="b"><span style="font-size:10.5px;opacity:.7">of ' + (m.n || 0) + ' up 24h</span></div></div>' +
                 card('Dollar DXY', '<svg width="18" height="18" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#2b6cb0"/><text x="50" y="68" text-anchor="middle" font-family="Arial" font-weight="700" font-size="58" fill="#fff">$</text></svg>', DX.p ? DX.p.toFixed(2) : '…', DX.p ? DX.c : NaN, DX.s, 'win:exdesk') + '</div>';
             if (h !== lastHtml) { lastHtml = h; var sc = host.querySelector('.row5'), x = sc ? sc.scrollLeft : 0; host.innerHTML = h; var ns = host.querySelector('.row5'); if (ns && x) { ns.scrollLeft = x; } }
         }
@@ -19436,7 +19436,8 @@ try {
         window.__lkOpen = show;
         window.addEventListener('click', function (e) {
             var t = e.target && e.target.closest ? e.target.closest('[data-lk]') : null; if (!t) { return; }
-            e.preventDefault(); e.stopPropagation(); var k = t.getAttribute('data-lk');
+            var k = t.getAttribute('data-lk'); if (!(k === 'x' || k.indexOf('chart:') === 0 || k.indexOf('news:') === 0)) { return; }
+            e.preventDefault(); e.stopPropagation();
             if (k === 'x') { hide(); } else if (k.indexOf('chart:') === 0) { hide(); try { var c = document.createElement('div'); c.setAttribute('data-act', 'chart:' + k.slice(6) + 'USDT'); document.body.appendChild(c); c.click(); c.remove(); } catch (er) { } }
             else if (k.indexOf('news:') === 0) { hide(); try { var cn = k.slice(5); if (cn) { window.__nwCoin = cn; window.__nwTab = 'coin'; } gotoWin('news'); } catch (er) { } }
         }, true);
@@ -20006,7 +20007,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
                         var k = kind(tx); var after = el; if (el.nextElementSibling && el.nextElementSibling.classList.contains('lkb')) after = el.nextElementSibling;
                         var nx = after.nextElementSibling, has = nx && nx.classList && nx.classList.contains('mwmk');
                         if (!k) { if (has) nx.remove(); continue; }
-                        if (has) { if (nx.textContent !== k) nx.textContent = k; } else { after.insertAdjacentHTML('afterend', '<span class="mwmk">' + k + '</span>'); }
+                        if (has) { if (nx.textContent !== k) nx.textContent = k; if (!nx.getAttribute('data-ci')) { nx.setAttribute('data-ci', tx + 'USDT'); nx.setAttribute('data-noswipe', '1'); } } else { after.insertAdjacentHTML('afterend', '<span class="mwmk" data-ci="' + tx + 'USDT" data-noswipe="1">' + k + '</span>'); }
                     }
                 } catch (e) { }
             }, 400);
@@ -20237,6 +20238,38 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             PF_APP.push(['live trade|trade window|candles|order book|track trade|لائیو ٹریڈ', 'Live trade window', 'In the Trades panel tap "Live trade window" on any trade. It opens a full screen with live candles, volume, lines for entry, stop-loss, take-profit and liquidation, live profit or loss, the order book, and buttons to close the trade, open the full chart or open Trade Pro.']);
         } catch (e) { }
     } catch (e) { try { console.log('br', e); } catch (er) { } }
+})();
+
+/* tap the market tag (Binance · Futures ...) next to any coin = its info box; News tile back in More */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '.mwmk[data-ci]{cursor:pointer;background:rgba(10,132,255,.16)!important;color:#0a84ff!important}.mwmk[data-ci]:before{content:"ℹ️ "}';
+        document.head.appendChild(st);
+        var _mtn = mwTiles;
+        mwTiles = function () {
+            var h = _mtn.apply(this, arguments);
+            try { if (h.indexOf('data-act="win:news"') < 0 && typeof VIEWS.news === 'function') { var w = winDef('news'), t = '<div class="tile" data-act="win:news"><div class="ic" style="background:' + ((w && w.c) || '#ff453a') + '22">' + ((w && w.ic) || '📰') + '</div>' + ((w && (w.t || w.n)) || 'News') + '</div>', i = h.indexOf('data-act="win:market"'); if (i >= 0) { var j = h.indexOf('</div></div>', i); h = h.slice(0, j + 12) + t + h.slice(j + 12); } else { h += t; } } } catch (e) { }
+            return h;
+        };
+    } catch (e) { try { console.log('mt', e); } catch (er) { } }
+})();
+
+/* ===== Baba AI offline answers for the newest features (rule based, no internet needed) ===== */
+(function () {
+    try {
+        var A = [
+            ['coin info|coin history|coin details|launch date|listed|listing date|ath|all time high|volume history|info button|کوائن کی ہسٹری|لانچ|تفصیل', 'Coin info box', 'Tap the small blue "ℹ️ Info" chip next to the coin name on a chart, or tap the market tag next to any coin (for example "Binance · Futures"), or the Info chip inside the live trade window. A box opens with the listing date and age, price when listed, all-time high and low, 7, 30, 90 days and 1 year performance, 52-week range, 24h volume, funding rate, open interest and the latest live trades. It needs internet because the numbers are live from Binance.'],
+            ['chain|link icon|linked master|master link|follows|🔗|ماسٹر|چین', 'Chain icon (linked masters)', 'The small 🔗 badge next to a coin shows which big coin (like BTC or ETH) it follows and whether that master is going up or down. Tap it to open the details box with a comparison chart, strength of the link and news. A "~" means a weak link. It needs a minute after the app starts to measure the links.'],
+            ['where is news|news button|news tile|news kahan|خبریں کہاں', 'Where is News', 'News is a tile in More (bottom bar > More) next to Market. It is also a tab inside the Market window. It has crypto, Binance, gold, dollar and Fed, war and world headlines. The tile list loads offline, but headlines need internet.'],
+            ['paper trade pro|paper like real|practice trade pro|replica|pretend binance|fake coins|پیپر ٹریڈ', 'Paper Trade Pro', 'When your mode is Paper (More > Trading options), Trade Pro works exactly like the real ticket but with pretend money: isolated or cross margin, market, limit, stop-limit, stop-market, take-profit and trailing orders, stop-loss and take-profit, partial close and liquidation. It starts with $1000 pretend money, uses live prices, and nothing is sent to Binance. It works offline only while prices are still arriving, so live prices need internet.'],
+            ['bot trades|bot open trades|click bot trade|bot window|bot settings|بوٹ ٹریڈ', 'Bot trades and settings', 'Open Paper Bot > Bot Baba (or the Baba Bot window). The top card "Open trades of this bot" lists every trade. Tap one to open the live trade window with candles, stop-loss, take-profit and a Close button. Use "Bot settings" to change margin, stop-loss, take-profit and most trades open. Use "Stop all bots" or "Force stop ALL" at the bottom of that card.'],
+            ['change sl|change tp|edit sl|edit stop|move stop|stop loss badlo|ایڈٹ|سٹاپ بدل', 'Change stop-loss and take-profit', 'Open the trade in the live trade window and tap "✏ Change SL/TP". Pick the new stop-loss % and take-profit % and Apply. For a real Binance trade the old stop and target are cancelled and new ones are placed.'],
+            ['exchange tabs|custom tabs|wallet tabs|bitget wallet|okx wallet|okx|bitget|p2p|deposit|ایکسچینج ٹیب', 'Exchange tabs in the wallet', 'Open More > Wallet. At the top is the Exchange tabs card. Pick Binance, Bitget, Bitget Wallet, OKX, OKX Wallet, MEXC or Bybit, then tap Markets, Trade, Futures, Assets, P2P, Buy/Sell, Card, Deposit, Pay, Scan, Discover or Earn. It opens that exchange website in your browser. Tap "Custom tabs" to add (+), remove (−) and reorder your favourite tabs. The app never sees your exchange password.'],
+            ['live trade window|click trade|open trade details|trade details box|لائیو ٹریڈ', 'Live trade window', 'Tap the blue button (it pulses while a trade runs), then "📺 Live trade window" on any trade. You see live candles with entry, stop-loss, take-profit and liquidation lines, your profit or loss, the order book and buttons to close, change SL/TP, open the full chart or Trade Pro.']
+        ];
+        A.forEach(function (a) { try { PF_APP.push(a); } catch (e) { } });
+    } catch (e) { try { console.log('bofl', e); } catch (er) { } }
 })();
 /* ===== p9sim: Paper Trade Pro. A pretend Binance Futures account that answers the same calls as the real one. =====
    When the trading mode is PAPER, Trade Pro, positions, SL/TP, trailing and the close buttons all run on this
