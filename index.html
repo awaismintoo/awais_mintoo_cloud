@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.116';
+var BUILD = '2026-10-31.118';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -4681,7 +4681,7 @@ function tzOpen() {
     o.innerHTML = '<div class="tzh"><span data-m9="tzclose" class="tzx">‹</span><b>Change(%) &amp; Chart Timezone</b></div><div class="tzn">Changing the UTC time zone recalculates the market Change(%) from 00:00 of the zone you pick. It applies to Markets, MEXC, the scanners and every window in this app that shows Change(%). Country names are for standard time; clocks that use summer time move one hour.</div><div class="tzl">' + rows + '</div><div class="tzn">Half-hour zones (India UTC+5:30, Nepal UTC+5:45 …) are not offered by Binance either; use the nearest whole-hour zone.</div>';
     document.body.appendChild(o);
 }
-function tzChip() { var k = tzK(); return '<div class="tzchip" data-m9="tzopen">🕒 Change(%) time zone: <b>' + (k == null ? 'Last 24 hours' : tzName(k) + ', 00:00') + '</b> ▾</div>'; }
+function tzChip() { var k = tzK(), hm = (typeof S !== 'undefined' && S.win === 'overview'); return '<div class="tzchip' + (hm ? ' tzs' : '') + '" data-m9="tzopen"><span>🕒 Change(%) time zone: <b>' + (k == null ? 'Last 24 hours' : tzName(k) + ', 00:00') + '</b> ▾</span>' + (hm ? '<span class="stbtn" data-act="win:agent" data-noswipe="1">🧠 Strategy</span>' : '') + '</div>'; }
 // ---- coin avatar + full names ----
 var COIN_NM = { BTC: 'Bitcoin', ETH: 'Ethereum', BNB: 'BNB', SOL: 'Solana', XRP: 'XRP', DOGE: 'Dogecoin', ADA: 'Cardano', TRX: 'TRON', AVAX: 'Avalanche', LINK: 'Chainlink', DOT: 'Polkadot', MATIC: 'Polygon', POL: 'Polygon', LTC: 'Litecoin', BCH: 'Bitcoin Cash', SHIB: 'Shiba Inu', TON: 'Toncoin', UNI: 'Uniswap', ATOM: 'Cosmos', XLM: 'Stellar', ETC: 'Ethereum Classic', FIL: 'Filecoin', NEAR: 'NEAR Protocol', APT: 'Aptos', ARB: 'Arbitrum', OP: 'Optimism', SUI: 'Sui', INJ: 'Injective', AAVE: 'Aave', ICP: 'Internet Computer', HBAR: 'Hedera', PEPE: 'Pepe', WIF: 'dogwifhat', BONK: 'Bonk', FET: 'Fetch.ai', RENDER: 'Render', TAO: 'Bittensor', ENA: 'Ethena', TIA: 'Celestia', SEI: 'Sei', JUP: 'Jupiter', ORDI: 'ORDI', XAU: 'Gold', XAG: 'Silver', PAXG: 'PAX Gold', LDO: 'Lido DAO', MKR: 'Maker', CRV: 'Curve', RUNE: 'THORChain', ALGO: 'Algorand', VET: 'VeChain', GRT: 'The Graph', SAND: 'The Sandbox', MANA: 'Decentraland', AXS: 'Axie Infinity', GALA: 'Gala', EOS: 'EOS', NEO: 'Neo', XMR: 'Monero', ZEC: 'Zcash', DASH: 'Dash', 'WLD': 'Worldcoin', 'TRUMP': 'Official Trump', 'HYPE': 'Hyperliquid', 'PENGU': 'Pudgy Penguins', 'FLOKI': 'Floki', 'JTO': 'Jito', 'STX': 'Stacks', 'IMX': 'Immutable', 'CAKE': 'PancakeSwap', 'COMP': 'Compound', 'SNX': 'Synthetix', 'EGLD': 'MultiversX', 'THETA': 'Theta Network', 'KAS': 'Kaspa', 'PYTH': 'Pyth Network', 'ONDO': 'Ondo', 'TON1': 'Toncoin' };
 function coinBase(sym) { return String(sym).replace(/_.*$/, '').replace(/^1000+/, '').replace(/(USDT|USDC|USD|BUSD)$/, ''); }
@@ -5331,8 +5331,7 @@ glRows = function () {
 var _ov111 = VIEWS.overview;
 VIEWS.overview = function () {
     var n = 0; try { n = bpList('fh').length + bpList('day').length; } catch (e) {}
-    var card = '<div class="group pad tap" data-m10="bestopen" style="border-left:4px solid #ff9f0a"><div style="display:flex;justify-content:space-between;align-items:center"><b>⭐ Best Picks</b><span class="mut">' + (n ? n + ' ready' : 'waiting for a strong setup') + ' ›</span></div><div class="mut" style="font-size:12.5px;margin-top:4px">The few most reliable ideas for the next hours and the whole day. A suggestion only.</div></div>';
-    return card + _ov111.apply(this, arguments);
+    return _ov111.apply(this, arguments);
 };
 document.addEventListener('click', function (e) {
     var el = e.target.closest ? e.target.closest('[data-m10]') : null; if (!el) { return; } var v = el.getAttribute('data-m10');
@@ -11209,13 +11208,13 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function cnt(x) { try { if (x === 'binance') { return Object.keys(S.tick).length + ' coins'; } if (x === 'mexc') { var M = S.mx || {}; return ((M.spot || []).length + (M.fut || []).length) + ' pairs'; } if (x === 'bitget') { var B = (window.XCH && XCH.bg) || {}; return ((B.spot || []).length + (B.fut || []).length) + ' pairs'; } } catch (e) { } return ''; }
         function ccHtml() {
             var m = moodObj(), cur = S.xch || 'all', dash = Math.round(m.v / 100 * 264), col = m.v < 42 ? '#e0352b' : m.v < 58 ? '#e8a317' : '#1a9e50';
-            var rows = ideas(), nb = rows.filter(function (r) { return r.R && r.R.best; }).length, hot = Object.keys(S.tick || {}).filter(function (s) { return /USDT$/.test(s) && S.tick[s].q > 5e7; }).sort(function (a, b) { return S.tick[b].chg - S.tick[a].chg; }).slice(0, 2);
+            var bpn = function () { try { return bpList('fh').length + bpList('day').length; } catch (e) { return 0; } }, rows = ideas(), nb = rows.filter(function (r) { return r.R && r.R.best; }).length, hot = Object.keys(S.tick || {}).filter(function (s) { return /USDT$/.test(s) && S.tick[s].q > 5e7; }).sort(function (a, b) { return S.tick[b].chg - S.tick[a].chg; }).slice(0, 2);
             var h = '<div class="mps">' + MP.map(function (x) { return '<div class="mp' + (cur === x[0] ? ' on' : '') + '" data-xch="' + x[0] + '">' + x[1] + '<small>' + (x[0] === 'all' ? 'every market' : cnt(x[0])) + '</small></div>'; }).join('') +
                 '<div class="mp" data-act="win:xtrade">Bybit · OKX<small>order tickets</small></div><div class="mp" data-act="win:exdesk">Exness<small>gold &amp; forex</small></div><div class="mp" data-act="win:gold">Gold<small>desk</small></div><div class="mp" data-act="win:psx">PSX<small>Pakistan</small></div></div>';
             h += '<div class="mood" data-act="win:mood" data-noswipe="1"><i class="mgrip" data-bdflip="1"></i><span class="pgr"><i class="on"></i><i></i></span><div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="rgba(128,128,128,.22)" stroke-width="10"/><circle cx="50" cy="50" r="42" fill="none" stroke="' + col + '" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + dash + ' 264"/></svg><div class="n"><b>' + m.v + '</b><small>MOOD</small></div></div><div style="min-width:0"><h3>Market mood: ' + e2(m.lab) + '</h3><p>' + e2(m.txt) + '</p></div></div>';
             var Qd = null, Ar = null; try { Qd = window.__qDbg && window.__qDbg.Q; Ar = window.__mwOffers && window.__mwOffers.area; } catch (e) { }
             var qeq = ''; try { if (Qd) { var qp = Qd.cash + Qd.pos.reduce(function (a, p) { return a + p.usd; }, 0); qeq = 'Lv ' + (function () { var l = 0; [0, 100, 250, 500, 900, 1500, 2500, 4000, 6500, 10000].forEach(function (x, i) { if (Qd.xp >= x) { l = i; } }); return l + 1; })() + ' · $' + Math.round(qp).toLocaleString('en-US'); } } catch (e) { }
-            h += '<div class="bnw" data-noswipe="1"><div class="bn2"><div class="c2" data-act="win:ideas"><b>⭐ Best picks</b><small>' + (nb ? '<span class="up">' + nb + ' ready</span> · all ideas ›' : 'none strong now · all ideas ›') + '</small></div>' +
+            h += '<div class="bnw" data-noswipe="1"><div class="bn2"><div class="c2 bpt" data-act="win:best"><b>⭐ Best picks' + (bpn() ? ' <span class="bpl">live</span>' : '') + '</b><small>' + (bpn() ? '<span class="up">' + bpn() + ' ready</span> · open ›' : 'none ready yet · live ›') + '</small></div>' +
                 '<div class="c2" data-act="win:movers"><b>🚀 Movers</b><small>' + (hot.length ? hot.map(function (s) { return e2(bs(s)) + ' <span class="' + (S.tick[s].chg >= 0 ? 'up' : 'dn') + '">' + pc(S.tick[s].chg) + '</span>'; }).join(' · ') : 'early movers') + '</small></div>' +
                 '<div class="c2" data-act="win:' + (Ar && Ar.cc === 'PK' ? 'psx' : 'offers') + '"><b>' + (Ar && Ar.cc === 'PK' ? '🇵🇰 Pakistan desk' : '🌍 Local market') + '</b><small>' + (Ar && Ar.cc === 'PK' ? 'PSX · autos · property · offers ›' : (Ar ? e2(Ar.cc) + ' markets &amp; offers ›' : 'your area · offers ›')) + '</small></div>' +
                 '<div class="c2" data-act="win:quest"><b>🎮 Money Quest</b><small>' + (qeq || 'practice game · virtual money ›') + '</small></div></div><div class="bsb"><i></i></div></div>';
@@ -13586,7 +13585,19 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             copper: { n: 'Copper', e: '🧡', bg: '#120b06', c1: '#2f1d10', c2: '#20130a', line: 'rgba(255,170,100,.26)', a: '#ff9a3d', b: '#e0663a', up: '#7dff9a', dn: '#ff6a5a', tx: '#fff4ea', mut: '#cfae94' },
             sky: { n: 'Sky', e: '☁️', bg: '#06101f', c1: '#102a4d', c2: '#0a1d38', line: 'rgba(120,190,255,.28)', a: '#3fa9ff', b: '#6c8cff', up: '#4df0c0', dn: '#ff7392', tx: '#eef6ff', mut: '#9db8d9' },
             lava: { n: 'Lava', e: '🌋', bg: '#0e0508', c1: '#2a0d16', c2: '#1b0810', line: 'rgba(255,90,60,.28)', a: '#ff4d2e', b: '#ffb300', up: '#4dffa6', dn: '#ff5a7a', tx: '#fff0ec', mut: '#cfa0a0' },
-            black: { n: 'Pure black', e: '⚫', bg: '#000', c1: '#0e0e10', c2: '#080809', line: 'rgba(255,255,255,.14)', a: '#4d8dff', b: '#6c7bff', up: '#2cf5a1', dn: '#ff5d86', tx: '#f2f2f7', mut: '#8e8e93' }
+            black: { n: 'Pure black', e: '⚫', bg: '#000', c1: '#0e0e10', c2: '#080809', line: 'rgba(255,255,255,.14)', a: '#4d8dff', b: '#6c7bff', up: '#2cf5a1', dn: '#ff5d86', tx: '#f2f2f7', mut: '#8e8e93' },
+            ai: { n: 'AI Neural', e: '🧠', bg: '#060818', c1: '#12163a', c2: '#0c0f2a', line: 'rgba(120,140,255,.28)', a: '#5b8cff', b: '#22d3ee', up: '#34f5c5', dn: '#ff6b8b', tx: '#eef1ff', mut: '#9aa3d9', glass: 1, fx: 'radial-gradient(520px 380px at 12% 0%,rgba(91,140,255,.38),transparent 70%),radial-gradient(540px 400px at 100% 18%,rgba(34,211,238,.24),transparent 70%),radial-gradient(rgba(150,170,255,.18) 1px,transparent 1.5px)', fxs: 'auto,auto,22px 22px', fxr: 'no-repeat,no-repeat,repeat' },
+            holo: { n: 'Hologram', e: '🪩', bg: '#06101a', c1: '#102235', c2: '#0a1726', line: 'rgba(125,249,255,.30)', a: '#7df9ff', b: '#ff7bd5', up: '#5dffc2', dn: '#ff6b9a', tx: '#eefcff', mut: '#9bc6d4', bt: '#06101a', glass: 1, fx: 'linear-gradient(115deg,rgba(125,249,255,.22),rgba(255,123,213,.16) 38%,rgba(160,255,200,.12) 68%,transparent 90%),radial-gradient(480px 340px at 90% 8%,rgba(255,123,213,.25),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
+            matrix: { n: 'Matrix', e: '🟢', bg: '#000a02', c1: '#06210d', c2: '#041507', line: 'rgba(0,255,102,.30)', a: '#00ff66', b: '#00c853', up: '#39ff6e', dn: '#ff4d6d', tx: '#dcffe6', mut: '#6fbf86', bt: '#001a07', fx: 'repeating-linear-gradient(0deg,rgba(0,255,100,.07) 0 1px,transparent 1px 3px),radial-gradient(520px 320px at 50% 0%,rgba(0,255,102,.22),transparent 70%)', fxs: 'auto,auto', fxr: 'repeat,no-repeat' },
+            space: { n: 'Deep Space', e: '🪐', bg: '#03030c', c1: '#111233', c2: '#0a0b22', line: 'rgba(160,150,255,.26)', a: '#8b7bff', b: '#ff9ad5', up: '#58f5c8', dn: '#ff6f9f', tx: '#f0f0ff', mut: '#a3a3d6', fx: 'radial-gradient(1.2px 1.2px at 8% 12%,#fff,transparent),radial-gradient(1px 1px at 22% 40%,#cfd6ff,transparent),radial-gradient(1.6px 1.6px at 35% 8%,#fff,transparent),radial-gradient(1px 1px at 48% 30%,#dfe3ff,transparent),radial-gradient(1.4px 1.4px at 61% 16%,#fff,transparent),radial-gradient(1px 1px at 74% 44%,#cfd6ff,transparent),radial-gradient(1.5px 1.5px at 88% 10%,#fff,transparent),radial-gradient(1px 1px at 92% 36%,#fff,transparent),radial-gradient(1.2px 1.2px at 15% 70%,#dfe3ff,transparent),radial-gradient(1px 1px at 40% 82%,#fff,transparent),radial-gradient(1.3px 1.3px at 66% 76%,#cfd6ff,transparent),radial-gradient(1px 1px at 84% 88%,#fff,transparent),radial-gradient(560px 420px at 85% 20%,rgba(139,123,255,.28),transparent 70%),radial-gradient(520px 380px at 10% 90%,rgba(255,154,213,.18),transparent 70%)', fxs: 'auto,auto,auto,auto,auto,auto,auto,auto,auto,auto,auto,auto,auto,auto', fxr: 'no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat' },
+            tokyo: { n: 'Neon Tokyo', e: '🏙', bg: '#0a0614', c1: '#1f1038', c2: '#150a28', line: 'rgba(255,47,179,.30)', a: '#ff2fb3', b: '#26d9ff', up: '#4dffc4', dn: '#ff5470', tx: '#fff0fb', mut: '#c9a3cf', glass: 1, fx: 'linear-gradient(105deg,transparent 38%,rgba(255,47,179,.20) 50%,transparent 62%),linear-gradient(72deg,transparent 52%,rgba(38,217,255,.18) 64%,transparent 76%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
+            plasma: { n: 'Plasma', e: '⚡', bg: '#0d0518', c1: '#26104a', c2: '#190a35', line: 'rgba(178,75,255,.32)', a: '#b24bff', b: '#ff4bd8', up: '#56f7c4', dn: '#ff5f8f', tx: '#f7eeff', mut: '#b79bd6', fx: 'radial-gradient(500px 380px at 0% 0%,rgba(178,75,255,.40),transparent 70%),radial-gradient(520px 380px at 100% 60%,rgba(255,75,216,.26),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
+            quantum: { n: 'Quantum', e: '⚛️', bg: '#03120f', c1: '#0b2f29', c2: '#072019', line: 'rgba(0,229,195,.30)', a: '#00e5c3', b: '#b6ff3b', up: '#7dffb0', dn: '#ff6f7f', tx: '#e9fff9', mut: '#8fc7bb', bt: '#02130f', fx: 'radial-gradient(520px 380px at 90% 0%,rgba(0,229,195,.30),transparent 70%),radial-gradient(500px 360px at 0% 80%,rgba(182,255,59,.16),transparent 70%),radial-gradient(rgba(0,229,195,.14) 1px,transparent 1.5px)', fxs: 'auto,auto,26px 26px', fxr: 'no-repeat,no-repeat,repeat' },
+            carbon: { n: 'Carbon racer', e: '🏎', bg: '#0a0a0b', c1: '#1b1b1e', c2: '#121214', line: 'rgba(255,59,59,.32)', a: '#ff3b3b', b: '#ff8a3b', up: '#2cf5a1', dn: '#ff5d6c', tx: '#f4f4f6', mut: '#9a9aa2', fx: 'linear-gradient(45deg,rgba(255,255,255,.04) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.04) 75%),linear-gradient(45deg,rgba(255,255,255,.04) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.04) 75%),radial-gradient(500px 300px at 50% 0%,rgba(255,59,59,.24),transparent 70%)', fxs: '8px 8px,8px 8px,auto', fxr: 'repeat,repeat,no-repeat' },
+            pearl: { n: 'Pearl (light)', e: '🤍', bg: '#f3f5fb', c1: '#ffffff', c2: '#eef1fa', line: 'rgba(90,100,160,.24)', a: '#5b6cff', b: '#9b5bff', up: '#0f9d58', dn: '#e5334b', tx: '#14172b', mut: '#5d6485', bt: '#fff', fx: 'radial-gradient(520px 380px at 0% 0%,rgba(91,108,255,.18),transparent 70%),radial-gradient(520px 380px at 100% 10%,rgba(155,91,255,.14),transparent 70%),radial-gradient(500px 360px at 50% 100%,rgba(0,200,180,.12),transparent 70%)', fxs: 'auto,auto,auto', fxr: 'no-repeat,no-repeat,no-repeat' },
+            emerald: { n: 'Emerald AI', e: '💎', bg: '#03110c', c1: '#0c2f23', c2: '#08201a', line: 'rgba(16,230,154,.30)', a: '#10e69a', b: '#0ea5e9', up: '#4dffc2', dn: '#ff6f86', tx: '#eafff6', mut: '#8fc7b3', bt: '#02130c', fx: 'radial-gradient(520px 380px at 100% 0%,rgba(16,230,154,.28),transparent 70%),radial-gradient(480px 340px at 0% 70%,rgba(14,165,233,.20),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
+            solar: { n: 'Solar flare', e: '☀️', bg: '#130a02', c1: '#33200a', c2: '#241506', line: 'rgba(255,176,32,.32)', a: '#ffb020', b: '#ff5a1f', up: '#6dff9f', dn: '#ff5a6a', tx: '#fff5e6', mut: '#d1b48e', bt: '#1a0e00', fx: 'radial-gradient(560px 420px at 50% -6%,rgba(255,176,32,.42),transparent 70%),radial-gradient(480px 340px at 100% 60%,rgba(255,90,31,.20),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
+            midnight: { n: 'Midnight glass', e: '🌃', bg: '#05070f', c1: '#101a33', c2: '#0a1124', line: 'rgba(77,163,255,.28)', a: '#4da3ff', b: '#7a5cff', up: '#4df0c0', dn: '#ff7392', tx: '#eef4ff', mut: '#9aaed4', glass: 1, fx: 'radial-gradient(520px 380px at 15% 0%,rgba(77,163,255,.30),transparent 70%),radial-gradient(520px 380px at 95% 40%,rgba(122,92,255,.22),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' }
         };
 
         var DESC = {
@@ -13605,7 +13616,19 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             graphite: ['Neutral grey and silver. Quiet and professional.', 'Distraction-free work'],
             copper: ['Dark brown with copper-orange warmth. Cosy and classic.', 'Warm, calm evenings'],
             sky: ['Dark navy with bright sky blue. Light and airy.', 'Friendly, open feeling'],
-            lava: ['Black-red with molten orange. Hot and dramatic.', 'High energy']
+            lava: ['Black-red with molten orange. Hot and dramatic.', 'High energy'],
+            ai: ['Dark indigo with neural glow, light orbs and a fine dot grid. Frosted glass cards.', 'The AI look'],
+            holo: ['Cyan and pink hologram light sweeping across frosted glass.', 'A futuristic, shiny feel'],
+            matrix: ['Black with green scan-lines and a glowing top light, like a hacker screen.', 'Terminal and bot lovers'],
+            space: ['Deep space with stars and a violet nebula glow.', 'Calm night sessions'],
+            tokyo: ['Magenta and cyan neon beams over dark glass, like a city at night.', 'Bold and exciting'],
+            plasma: ['Purple and pink plasma light on dark violet.', 'Eye-catching and energetic'],
+            quantum: ['Teal and lime glow with a fine particle grid.', 'Fresh, techy and clear'],
+            carbon: ['Carbon-fibre texture with red racing light.', 'Fast, focused trading'],
+            pearl: ['Light pearl-white with soft pastel light. The only bright theme.', 'Daytime and bright rooms'],
+            emerald: ['Deep green with emerald and blue light.', 'Rich and relaxed'],
+            solar: ['Dark amber with a warm sun glow from the top.', 'Warm, cosy, high contrast'],
+            midnight: ['Midnight blue frosted glass with soft blue and violet light.', 'Clean and premium']
         };
         var css = '';
         Object.keys(PAL).forEach(function (k) {
@@ -13621,6 +13644,10 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 s + ' .up,' + s + ' .chg.up{color:' + p.up + '!important}' + s + ' .dn,' + s + ' .chg.dn{color:' + p.dn + '!important}' +
                 s + ' input,' + s + ' textarea,' + s + ' select{background:' + p.line.replace(/\.\d+\)/, '.10)') + '!important;color:' + p.tx + '!important;border:1px solid ' + p.line + '!important;border-radius:12px!important}' +
                 s + ' .nav{background:' + p.bg + '!important}';
+            css += s + ' .c3 span{color:' + p.tx + '!important}';
+            if (p.fx) { css += s + ' body{background-image:' + p.fx + '!important;' + (p.fxs ? 'background-size:' + p.fxs + '!important;' : '') + (p.fxr ? 'background-repeat:' + p.fxr + '!important;' : '') + '}'; }
+            if (p.glass) { css += s + ' .group,' + s + ' .m7card,' + s + ' .tile,' + s + ' .c2{background:linear-gradient(160deg,rgba(255,255,255,.085),rgba(255,255,255,.03))!important;-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);border:1px solid ' + p.line + '!important}'; }
+            if (p.bg && p.fx) { css += s + ' .group,' + s + ' .m7card{box-shadow:0 10px 30px rgba(0,0,0,.30),0 0 26px ' + p.a + '22!important}'; }
         });
 
         css += '#view.mwswap{animation:none!important}@keyframes mwin{from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:none}}' +
@@ -15465,7 +15492,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var f = famOf[id]; if (!f || f[1].length < 2) { return ''; }
             return '<div class="segc fmstrip" data-noswipe="1" style="display:flex;gap:6px;overflow-x:auto;white-space:nowrap;margin:0 0 10px;padding:2px 0 6px;-webkit-overflow-scrolling:touch">' + f[1].map(function (k) {
                 var on = k === id;
-                return '<button type="button" data-act="win:' + k + '" data-noswipe="1" style="flex:none;padding:7px 12px;border-radius:16px;border:1px solid ' + (on ? '#0a84ff' : 'var(--line,#d1d1d6)') + ';background:' + (on ? '#0a84ff' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit') + ';font:700 13px system-ui,sans-serif">' + nm(k) + '</button>';
+                return '<button type="button" data-act="win:' + k + '" data-noswipe="1" style="flex:none;padding:7px 12px;border-radius:16px;border:1px solid ' + (on ? '#0a84ff' : 'var(--line,#d1d1d6)') + ';background:' + (on ? '#0a84ff' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit') + ';font:700 13px system-ui,sans-serif">' + nm(k) + (window.__lvb ? window.__lvb(k) : '') + '</button>';
             }).join('') + '</div>';
         }
         FAM.forEach(function (f) {
@@ -17392,10 +17419,14 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             + '.tab-bar,#tabs,.tabs{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}'
             + '@media (prefers-color-scheme:dark){#view .group,#view .m7card,#view .xkcard{box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 8px 24px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.4)!important;border-color:rgba(160,140,255,.22)}#view .tile,#view .c2,#mwcc .bn2>div{box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 6px 18px rgba(0,0,0,.45)!important}}'
             + '#view>.tzchip.tzs{display:flex!important;width:100%!important;max-width:100%!important;box-sizing:border-box;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px!important;padding:7px 12px!important;margin:0 0 6px!important;white-space:nowrap}.stbtn{flex:none;margin:0;padding:4px 2px;background:none;color:inherit;font:800 13px system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none}.stbtn::after{content:"";width:8px;height:8px;border-radius:50%;background:#16a34a;animation:lvr 1.8s infinite}html.mwcalm .stbtn::after{animation:none}'
-            /* live badges */
-            + '.lvb{display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:1px 6px;border-radius:9px;background:rgba(22,163,74,.16);color:#16a34a;font:800 11px system-ui,sans-serif;vertical-align:middle}.lvb::before{content:"";width:6px;height:6px;border-radius:50%;background:#16a34a;animation:lvp 1.6s infinite}@keyframes lvp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}'
-            + 'html.mwcalm .lvb::before{animation:none}'
-            + '.lvd{position:relative}.lvd::after{content:"";position:absolute;top:8px;right:10px;width:8px;height:8px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 0 rgba(22,163,74,.6);animation:lvr 1.8s infinite}@keyframes lvr{0%{box-shadow:0 0 0 0 rgba(22,163,74,.55)}100%{box-shadow:0 0 0 9px rgba(22,163,74,0)}}html.mwcalm .lvd::after{animation:none}';
+            /* live badges: tiny, fixed in a corner, never change the size of a button */
+            + '.fmstrip button{position:relative}.lvb{position:absolute;top:1px;right:3px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:#16a34a;color:#fff;font:800 9px/14px system-ui,sans-serif;text-align:center;box-sizing:border-box;pointer-events:none}.lvb.d{min-width:8px;width:8px;height:8px;top:3px;right:5px;padding:0;animation:lvp 1.6s infinite}@keyframes lvp{0%,100%{opacity:1}50%{opacity:.35}}'
+            + 'html.mwcalm .lvb.d{animation:none}'
+            + '.c3[data-act="win:analyst"],.c3[data-act="win:risk"],.c3[data-act="win:news"],.c3[data-act="win:rates"],.c3[data-act="win:alerts"]{position:relative}.c3[data-act="win:analyst"]::after,.c3[data-act="win:risk"]::after,.c3[data-act="win:news"]::after,.c3[data-act="win:rates"]::after,.c3[data-act="win:alerts"]::after{content:"";position:absolute;top:8px;right:10px;width:7px;height:7px;border-radius:50%;background:#16a34a;animation:lvp 1.8s infinite}'
+            + '.bpt .bpl{display:inline-block;margin-left:5px;padding:0 6px;border-radius:8px;background:#16a34a;color:#fff;font:800 9px/15px system-ui,sans-serif;vertical-align:middle;animation:lvp 1.6s infinite}.bpt{min-height:58px}'
+            + '.stbtn{flex:none;margin:0;padding:4px 2px;background:none;color:inherit;font:800 13px system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px}.stbtn::after{content:"";width:8px;height:8px;border-radius:50%;background:#16a34a;animation:lvp 1.8s infinite}'
+            + '#view>.tzchip.tzs{display:flex!important;width:100%!important;max-width:100%!important;box-sizing:border-box;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px!important;padding:7px 12px!important;margin:0 0 6px!important;white-space:nowrap}'
+            + 'html.mwcalm .stbtn::after,html.mwcalm .bpt .bpl,html.mwcalm .c3::after{animation:none}';
         document.head.appendChild(st);
         function cnt(id) {
             try {
@@ -17405,24 +17436,30 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 if (id === 'brief') { return -1; } if (id === 'analyst' || id === 'live') { return -1; }
             } catch (e) { } return 0;
         }
+        window.__lvb = function (id) { if (!/^(ideas|radar|brief|movers|analyst|live)$/.test(id)) { return ''; } var n = cnt(id); return n > 0 ? '<span class="lvb" data-lv="' + id + '">' + (n > 99 ? '99+' : n) + '</span>' : n < 0 ? '<span class="lvb d" data-lv="' + id + '"></span>' : ''; };
         function live() {
-            try {
-                document.querySelectorAll('.fmstrip button[data-act^="win:"]').forEach(function (b) {
-                    var id = b.getAttribute('data-act').slice(4); if (!/^(ideas|radar|brief|movers|analyst|live)$/.test(id)) { return; }
-                    var n = cnt(id), old = b.querySelector('.lvb'), t = n > 0 ? String(n > 99 ? '99+' : n) : n < 0 ? 'live' : '';
-                    if (!t) { if (old) { old.remove(); } return; }
-                    if (old) { if (old.textContent !== t) { old.textContent = t; } } else { b.insertAdjacentHTML('beforeend', '<span class="lvb">' + t + '</span>'); }
-                });
-                var hv = document.getElementById('view'), tz = hv && hv.querySelector('.tzchip');
-                if (tz && S.win === 'overview' && !tz.querySelector('.stbtn')) { tz.classList.add('tzs'); tz.insertAdjacentHTML('beforeend', '<span class="stbtn" data-act="win:agent" data-noswipe="1">🧠 Strategy</span>'); }
-                else if (tz && S.win !== 'overview') { var sb = tz.querySelector('.stbtn'); if (sb) { sb.remove(); tz.classList.remove('tzs'); } }
-                var home = document.getElementById('view'); if (home) {
-                    home.querySelectorAll('[data-act="win:analyst"],[data-act="win:risk"],[data-act="win:news"],[data-act="win:rates"],[data-act="win:alerts"]').forEach(function (e) { if (!e.closest('.fmstrip') && !e.classList.contains('lvd') && e.getBoundingClientRect().width > 50 && e.getBoundingClientRect().width < 200) { e.classList.add('lvd'); } });
-                }
-            } catch (e) { }
+            try { document.querySelectorAll('.lvb[data-lv]:not(.d)').forEach(function (b) { var n = cnt(b.getAttribute('data-lv')), t = n > 0 ? String(n > 99 ? '99+' : n) : ''; if (t && b.textContent !== t) { b.textContent = t; } }); } catch (e) { }
         }
+
+        /* ---------- self-healing: flicker watchdog. If the same window keeps jumping, switch the live extras off and tell the log ---------- */
+        try {
+            var SH = { t: [], healed: {} };
+            new PerformanceObserver(function (l) {
+                l.getEntries().forEach(function (e) {
+                    if (e.hadRecentInput || e.value < 0.002) { return; } var now = Date.now(), w = (typeof S !== 'undefined' && S.win) || '';
+                    SH.t.push(now); SH.t = SH.t.filter(function (x) { return now - x < 6000; });
+                    if (SH.t.length >= 6 && !SH.healed[w]) {
+                        SH.healed[w] = 1; SH.t = [];
+                        try { document.documentElement.classList.add('mwnolive', 'mwcalm'); localStorage.setItem('mintoosuite_calm', '1'); } catch (er) { }
+                        try { window.__mwRec && window.__mwRec('selfheal', 'flicker on ' + w + ': live extras and animations switched off'); } catch (er) { }
+                        try { toast('🛠 The app noticed flicker and switched to Calm look to fix it.'); } catch (er) { }
+                    }
+                });
+            }).observe({ type: 'layout-shift', buffered: false });
+            var st2 = document.createElement('style'); st2.setAttribute('data-mwkeep', '1'); st2.textContent = 'html.mwnolive .lvb,html.mwnolive .bpt .bpl{display:none!important}html.mwnolive .c3::after,html.mwnolive .stbtn::after{display:none!important}'; document.head.appendChild(st2);
+            window.__selfheal = SH;
+        } catch (e) { }
         setInterval(live, 2500); setTimeout(live, 600);
-        try { new MutationObserver(function () { clearTimeout(live.t); live.t = setTimeout(live, 250); }).observe(document.getElementById('view') || document.body, { childList: true }); } catch (e) { }
     } catch (e) { try { console.error('p9zszzv', e); } catch (e2) { } }
 })();
 
