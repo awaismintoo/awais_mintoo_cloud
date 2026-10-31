@@ -65,6 +65,7 @@ final class WebHolder {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri u = request.getUrl();
                 if (HOST.equals(u.getHost())) { return false; }
+                if (!request.isForMainFrame() && !request.hasGesture()) { return true; }
                 String sch = u.getScheme();
                 if ("mailto".equals(sch) || "tel".equals(sch) || "sms".equals(sch) || "smsto".equals(sch) || "whatsapp".equals(sch)) {
                     try {
@@ -94,12 +95,14 @@ final class WebHolder {
         w.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, android.webkit.GeolocationPermissions.Callback cb) {
+                if (origin == null || !(origin.equals("https://" + HOST) || origin.equals("https://" + HOST + "/"))) { cb.invoke(origin, false, false); return; }
                 Media.geo(origin, cb);
             }
 
             @Override
             public void onPermissionRequest(final android.webkit.PermissionRequest req) {
                 try {
+                    if (req.getOrigin() == null || !HOST.equals(req.getOrigin().getHost())) { req.deny(); return; }
                     final java.util.ArrayList<String> ok = new java.util.ArrayList<String>();
                     String[] rs = req.getResources();
                     for (int i = 0; i < rs.length; i++) {

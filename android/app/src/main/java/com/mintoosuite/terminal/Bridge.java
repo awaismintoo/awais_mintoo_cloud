@@ -335,6 +335,7 @@ final class Bridge {
                     if (!allowed) { throw new Exception("host not allowed"); }
                     String m = "POST".equals(method) ? "POST" : ("DELETE".equals(method) ? "DELETE" : "GET");
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
+                    c.setInstanceFollowRedirects(false);
                     c.setRequestMethod(m);
                     c.setConnectTimeout(8000);
                     c.setReadTimeout(12000);
@@ -374,6 +375,7 @@ final class Bridge {
                     java.net.URL u = new java.net.URL(url);
                     if (!"https".equals(u.getProtocol())) { throw new Exception("https only"); }
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
+                    c.setInstanceFollowRedirects(false);
                     c.setConnectTimeout(8000);
                     c.setReadTimeout(10000);
                     c.setRequestProperty("User-Agent", "Mozilla/5.0 (Android) MintooSuite");
@@ -421,7 +423,10 @@ final class Bridge {
     }
 
     @JavascriptInterface
-    public void notify(String title, String body) {
+    public void notify(String tok, String title, String body) {
+        if (!ok(tok)) { return; }
+        if (title != null && title.length() > 80) { title = title.substring(0, 80); }
+        if (body != null && body.length() > 300) { body = body.substring(0, 300); }
         if (Build.VERSION.SDK_INT >= 33 && ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { return; }
         MainActivity.alertChannel(ctx);
         Intent open = new Intent(ctx, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);

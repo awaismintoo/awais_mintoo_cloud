@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.122';
+var BUILD = '2026-10-31.144';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -510,7 +510,7 @@ function pkd(ms) { try { return new Date(ms).toLocaleDateString('en-GB', { timeZ
 // ---------- notifications (service worker) ----------
 function sendPush(title, body) {
     try {
-        if (window.MintooNative && window.MintooNative.notify) { window.MintooNative.notify(String(title), String(body)); return; }
+        if (window.MintooNative && window.MintooNative.notify) { window.MintooNative.notify(window.__mwTok || '', String(title), String(body)); return; }
         if ('serviceWorker' in navigator && navigator.serviceWorker.controller) { navigator.serviceWorker.controller.postMessage({ type: 'TRIGGER_PUSH', title: title, body: body }); }
         else if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) { navigator.serviceWorker.ready.then(function (r) { r.showNotification(title, { body: body, vibrate: [300, 100, 300], requireInteraction: true }); }); }
     } catch (e) {}
@@ -4410,7 +4410,7 @@ function rbActivate() {
     if (!rbKeys()) { R.note = 'Add your Binance API key and secret in the Trade window first.'; return rbDraw(); }
     if (!R.ack1 || !R.ack2) { R.note = 'Tick both boxes to confirm you understand the risk.'; return rbDraw(); }
     if (live && String(R.ph || '').trim().toUpperCase() !== 'ACTIVATE REAL BOT') { R.note = 'Type ACTIVATE REAL BOT in the box to switch on the real-money bot.'; return rbDraw(); }
-    R.armed = true; R.running = false; R.paused = false; R.note = ''; R.ack1 = false; R.ack2 = false; R.ph = ''; rbLog('Baba Bot ACTIVATED (' + rbMode() + ' mode). Not started yet.'); rbSave(); mwSvcPush(); rbDraw();
+    R.armed = true; R.armedNet = trCfg().net; R.running = false; R.paused = false; R.note = ''; R.ack1 = false; R.ack2 = false; R.ph = ''; rbLog('Baba Bot ACTIVATED (' + rbMode() + ' mode). Not started yet.'); rbSave(); mwSvcPush(); rbDraw();
 }
 function rbDeactivate() { var R = S.rb; R.armed = false; R.running = false; R.paused = false; R.wasRunning = false; rbLog('Baba Bot DEACTIVATED. Open trades keep their exchange stop-loss and take-profit.'); rbSave(); mwSvcPush(); rbDraw(); }
 function rbStart() { var R = S.rb; if (!R.armed) { return; } R.running = true; R.paused = false; R.wasRunning = true; R.note = ''; R.lockUntil = R.lockUntil > nowMs() ? R.lockUntil : 0; rbLog('Bot STARTED'); rbSave(); mwSvcPush(); rbDraw(); setTimeout(rbLoop, 400); }
@@ -4464,7 +4464,7 @@ function rbReconcile(force) {
 // ---- opening a trade ----
 function rbEnter(sym, sg, px0) {
     var R = S.rb, side = sg > 0 ? 'LONG' : 'SHORT', open = rbSide(sg), close = rbSide(-sg), t = S.tick[sym];
-    if (R.busy || !t) { return Promise.resolve(); } R.busy = true;
+    if (R.busy || !t) { return Promise.resolve(); } if (R.armedNet && R.armedNet !== trCfg().net) { return Promise.resolve(); } R.busy = true;
     var px = t.p, sl = px * (1 - sg * R.slp / 100), tp = px * (1 + sg * R.tpp / 100), p = trPlan(sym, side, sl, tp, R.margin, R.lev), fq;
     if (p.err) { R.busy = false; rbLog('Skipped ' + base(sym) + ': ' + p.err); R.cd[sym] = nowMs() + 30 * 60000; return Promise.resolve(); }
     function fail(m) { throw new Error(m); }
@@ -4504,7 +4504,7 @@ function rbScan() {
 }
 var rbLastRec = 0;
 function rbLoop() {
-    var R = S.rb; try { rbRoll(); if (!R.armed) { return; } var now = nowMs();
+    var R = S.rb; try { rbRoll(); if (!R.armed) { return; } if (R.armedNet && R.armedNet !== trCfg().net) { R.armed = false; R.running = false; R.note = 'Switched between TEST and LIVE, so the bot was switched off for your safety. Activate it again on purpose.'; try { rbLog('Bot disarmed: TEST/LIVE changed'); rbSave(); rbDraw(); } catch (e) { } return; } var now = nowMs();
         if (R.open.length && now - rbLastRec > 40000) { rbLastRec = now; rbReconcile(); }
         R.open.slice().forEach(function (p) { if (!p.closing && R.maxHrs && now - p.t0 > R.maxHrs * 3600000) { p.closing = true; rbCloseOne(p, 'time limit ' + R.maxHrs + ' h').catch(function (e) { p.closing = false; rbLog('Time-limit close failed: ' + e.message); }); } });
         if (R.running && !R.paused && R.lockUntil <= now) { rbScan(); }
@@ -5298,7 +5298,7 @@ function bpCard(p) {
     var why = ['Time frames agreeing: ' + p.ag + ' of ' + (p.hz === 'fh' ? 4 : 3) + ' (15m/1h/4h/1d) ' + (d > 0 ? 'point up' : 'point down'), 'Indicator strength ' + Math.abs(p.ov).toFixed(1) + ' out of about 3 (needs 1.0)', 'All-factors check supports it: ' + (p.e.al >= 0 ? '+' : '') + p.e.al.toFixed(2) + ' from ' + p.e.n + ' checks (order book, volume, funding, open interest, news)', 'Not stretched: RSI ' + p.rsi.toFixed(0) + ', no veto flags'];
     return '<div class="group pad tap" id="' + id + '" data-ix="best" data-act="chart:' + p.sym + '"><div class="ph">' + who(p.sym) + '<div class="side">' + badge(p.side) + meterC(p.pct, p.ag, p.hz === 'fh' ? 4 : 3) + '</div></div>' +
         '<div class="pm"><div><div class="px">' + px(p.sym, p.price) + '</div>' + chgTxt(p.sym, true) + '</div>' + sparkOf(p.sym) + '</div>' + lv(p.side, p.price, p.sl, p.tp, p.sym) + plBox(p.side, p.price, p.sl, p.tp, p.sym) +
-        '<div class="foot"><b class="vwin">VALID ' + hm(p.from) + ' → ' + hm(p.to) + '</b> • estimated chance about ' + p.pct + '% (an estimate, not a promise)</div>' +
+        '<div class="foot"><b class="vwin">VALID ' + hm(p.from) + ' → ' + hm(p.to) + '</b> • estimated chance of reaching the target before the stop about ' + p.pct + '% (not a chance of profit, not a promise)</div>' +
         '<ul style="margin:8px 0 0 18px;padding:0;font-size:12.5px;line-height:1.5">' + why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>' + fxLine(p.e) +
         (p.e.flags.length ? '<div class="warn">' + esc(p.e.flags[0]) + '</div>' : '') + '<details onclick="event.stopPropagation()"><summary style="font-size:12.5px;margin-top:6px">Show every factor checked</summary>' + fxTable(p.e) + '</details>' + ixBackHTML() + '</div>';
 }
@@ -5315,7 +5315,7 @@ function vBest() {
     h += part('Next few hours', f, 'the next few hours') + part('Whole day', d, 'the whole day');
     return h + '<div class="note">Stock-linked contracts are skipped while the US market is closed. Not financial advice.</div>';
 }
-WINS.push({ id: 'best', ic: '⭐', c: '#ff9f0a', n: 'Best Picks (most reliable)', t: 'Best', sub: 'The few strongest setups for the next few hours and the whole day, all checks agreeing' }); LIVE.best = 0; VIEWS.best = vBest;
+WINS.push({ id: 'best', ic: '⭐', c: '#ff9f0a', n: 'Best Picks (strict filters)', t: 'Best', sub: 'The few strongest setups for the next few hours and the whole day, all checks agreeing' }); LIVE.best = 0; VIEWS.best = vBest;
 MW_HELP.best = 'The strictest list in the app. A coin appears only when 3 to 4 time frames agree, the order book, volume, funding, open interest and news support it, and it is not overstretched. Often the list is empty, which means wait. It is a suggestion, never a guarantee.';
 IX_WINS.best = 1;
 (function () { var g = MW_GROUPS[0][1]; ['best', 'glance'].forEach(function (k) { if (g.indexOf(k) < 0) { g.splice(Math.min(g.length, g.indexOf('overview') + 1), 0, k); } }); })();
@@ -6702,7 +6702,7 @@ setTimeout(updNewsFetch, 7000); setInterval(updNewsFetch, 1800000);
     mwUpdBanner = function () {
         var L = S.upd.latest; if (!L || mwBuildNum(L) <= mwBuildNum(BUILD) || updSnoozed(L)) { return ''; }
         return '<div class="mwupd" style="display:block"><b>⬆️ New version ' + esc(L) + ' is ready</b> (you have ' + esc(BUILD) + ')' + (_updNews ? '<div style="font-size:12.5px;margin-top:3px;opacity:.9">What\'s new: ' + esc(_updNews) + '</div>' : '') +
-            '<div style="margin-top:6px"><a href="https://github.com/awaismintoo/awais_mintoo_cloud/releases/latest/download/app-release.apk" target="_blank" rel="noopener" style="display:inline-block;padding:8px 14px;border-radius:12px;background:#fff;color:#0a84ff;font-weight:700;text-decoration:none;margin-right:8px">Download new app</a><a href="https://github.com/awaismintoo/awais_mintoo_cloud/releases/latest" target="_blank" rel="noopener" style="display:inline-block;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.25);color:inherit;font-weight:700;text-decoration:none;margin-right:8px">Release page</a><span data-m19="later:' + esc(L) + '" style="display:inline-block;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.25);color:inherit;font-weight:700;cursor:pointer">Remind me tomorrow</span></div>' +
+            '<div style="margin-top:6px"><a href="market://details?id=com.mintoosuite.terminal" target="_blank" rel="noopener" style="display:inline-block;padding:8px 14px;border-radius:12px;background:#fff;color:#0a84ff;font-weight:700;text-decoration:none;margin-right:8px">Download new app</a><a href="https://github.com/awaismintoo/awais_mintoo_cloud/releases/latest" target="_blank" rel="noopener" style="display:inline-block;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.25);color:inherit;font-weight:700;text-decoration:none;margin-right:8px">Release page</a><span data-m19="later:' + esc(L) + '" style="display:inline-block;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.25);color:inherit;font-weight:700;cursor:pointer">Remind me tomorrow</span></div>' +
             '<div style="font-size:11.5px;margin-top:4px;opacity:.85">One tap downloads the new app. When it finishes, open the downloaded file and tap Install (never uninstall first). Your data stays.</div></div>';
     };
     var _ra = renderAbout; renderAbout = function () { _ra(); try { var b = $('aboutBox'); if (b && b.innerHTML.indexOf('data-m19="chk"') < 0) { b.innerHTML = b.innerHTML + '<div class="row tap" data-m19="chk"><span>🔄 Check for a new version</span><b id="updMsg" class="mut">' + esc(_updMsg) + '</b></div>'; } } catch (e) { } };
@@ -6814,7 +6814,7 @@ function tpGo() {
     if (T.type === 'STOP_MARKET' || T.type === 'STOP') { if (long ? tr <= live_px : tr >= live_px) { say('For a ' + (long ? 'buy' : 'sell') + ' stop the trigger must be ' + (long ? 'above' : 'below') + ' the current price.'); return; } }
     if (T.type === 'TAKE_PROFIT_MARKET') { if (long ? tr >= live_px : tr <= live_px) { say('For a ' + (long ? 'buy' : 'sell') + ' take-profit the trigger must be ' + (long ? 'below' : 'above') + ' the current price.'); return; } }
     if (T.type === 'TRAILING_STOP_MARKET') { var cb = tpN(T.cb); if (!(cb >= 0.1 && cb <= 10)) { say('Callback rate must be between 0.1 and 10.'); return; } }
-    T.busy = true; T.log = [];
+    T.busy = true; T.log = []; T.conf = '';
     var ps = tpPos(T.side), res = null;
     say('Preparing ' + (T.mode === 'ISOLATED' ? 'isolated' : 'cross') + ' margin…');
     trCall('POST', '/fapi/v1/marginType', { symbol: sym, marginType: T.mode }).catch(function (e) { if (/-4046/.test(e.message)) { return; } throw e; }).then(function () { say('Setting leverage ' + C.lev + '×…'); return trCall('POST', '/fapi/v1/leverage', { symbol: sym, leverage: C.lev }); }).then(function () {
@@ -7905,9 +7905,9 @@ function idRows() {
         else { if (m.srcs.indexOf(r.src) < 0) { m.srcs.push(r.src); } if (r.conf > m.conf) { m.conf = r.conf; m.tpP = r.tpP; m.slP = r.slP; m.fx = r.fx || m.fx; m.win = r.win; m.anchor = r.anchor; } if (r.to && (!m.to || r.to > m.to)) { m.to = r.to; } }
     });
     Object.keys(map).forEach(function (k) { var m = map[k]; m.srcN = m.srcs.length; m.R = idCalc(m); if (!m.R.blocked) { out.push(m); } });
-    out.sort(function (a, b) { if (a.R.best !== b.R.best) { return a.R.best ? -1 : 1; } return b.R.p - a.R.p || b.R.expR - a.R.expR; });
+    out.sort(function (a, b) { if (a.R.best !== b.R.best) { return a.R.best ? -1 : 1; } return b.R.expR - a.R.expR || b.R.p - a.R.p; });
     var nb = 0; out.forEach(function (m) { if (m.R.best) { nb++; if (nb > 8) { m.R.best = false; } } });
-    out.sort(function (a, b) { if (a.R.best !== b.R.best) { return a.R.best ? -1 : 1; } return b.R.p - a.R.p || b.R.expR - a.R.expR; });
+    out.sort(function (a, b) { if (a.R.best !== b.R.best) { return a.R.best ? -1 : 1; } return b.R.expR - a.R.expR || b.R.p - a.R.p; });
     out.forEach(function (m, i) { m.rank = i + 1; });
     IDS.rows = out; IDS.at = now; return out;
 }
@@ -7917,7 +7917,7 @@ function idRow(m) {
     var h = '<div class="idr' + (R.best ? ' idb' : '') + '"><div class="idh tap" data-m25="open:' + m.key + '"><span class="idn">' + m.rank + '</span><div class="idm"><div><b>' + esc(base(m.sym)) + '</b> <span class="badge ' + (m.side === 'LONG' ? 'long' : 'short') + '">' + (m.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + '</span>' + (R.best ? ' <span class="idst">⭐ BEST</span>' : '') + '</div><div class="note" style="margin:2px 0 0">' + m.hzl + ' · until ' + (m.to ? fmtT(m.to) : '—') + ' · now ' + px + '</div><div class="note" style="margin:2px 0 0">Target +' + m.tpP.toFixed(2) + '% · Stop −' + m.slP.toFixed(2) + '% · expected ' + (R.expR >= 0 ? '+' : '') + R.expR.toFixed(2) + 'R</div>' + idChips(R) + '</div><div class="idp ' + (pc >= 60 ? 'up' : pc >= 50 ? '' : 'mut') + '"><b>' + pc + '%</b><span>chance</span></div></div>';
     if (open) {
         h += '<div class="idx">' + R.F.map(function (f) { return '<div class="idf"><span>' + f.ic + ' ' + esc(f.name) + '</span><span class="' + (f.v > 0.15 ? 'up' : f.v < -0.15 ? 'dn' : 'mut') + '">' + (f.v > 0.15 ? 'supports' : f.v < -0.15 ? 'against' : 'neutral') + ' · ' + esc(f.note) + '</span></div>'; }).join('') +
-            '<div class="note">Start: ' + Math.round(R.p0 * 100) + '% (the odds a coin flip gives for this target and stop). The factors above moved it ' + (R.edge >= 0 ? 'up' : 'down') + ' to ' + pc + '%. Sources: ' + esc(m.srcs.join(', ')) + '.</div>';
+            '<div class="note">Start: ' + Math.round(R.p0 * 100) + '% (the odds a plain random walk gives for this target and stop, before fees). The factors above moved it ' + (R.edge >= 0 ? 'up' : 'down') + ' to ' + pc + '%. Sources: ' + esc(m.srcs.join(', ')) + '.</div>';
         try { h += fcMini(m.sym); } catch (e) { }
         h += '<div class="idbt"><span class="btn tap" data-m25="chart:' + m.sym + '">Open chart</span><span class="btn sec tap" data-m25="win:' + (m.win || 'scanner') + '">Detail page</span></div></div>';
     }
@@ -9359,7 +9359,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     function system() { return (PB.lang && PB.lang !== 'en-US' ? 'IMPORTANT: always reply in ' + vlName() + ' (use its normal script), unless the user writes in another language. ' : '') + 'You are Baba AI, a wise, warm elder (a Pakistani baba) who is the built-in tutor inside the MintooSuite trading app, and can also help with education from school to university, coding and general questions. The user is a beginner. Answer in simple plain English. If the user writes in Urdu script, answer in clear Urdu script (Pakistani Urdu, right-to-left, simple everyday words, keep coin names, numbers and technical terms like RSI or stop loss in English letters). If the user writes Roman Urdu, answer in Roman Urdu, short and step by step, with a small example when useful. You can answer any question, also outside trading. Never promise profit or certainty about price direction; for trade questions give educational reasoning and risks and say it is not financial advice. For questions about the app, name the window to open. When asked how to do something on Binance, MEXC, Bitget, OKX or Bybit (create an API key, set permissions, restrict IPs, move funds to the futures wallet, set leverage, place or close an order) or how to connect them in this app (Menu > Profile > Connections, Trade Pro, Baba Bot), give short numbered steps, say that screens can differ slightly, always tell the user to keep withdrawals OFF, use trusted IPs, start in test mode or with a tiny amount, and never to share secret keys with anyone including you. You know the app well: Bot Baba (paper, Smart Guard), Baba Bot Chief (locked until typed UNLOCK), Trade Pro, Trade Ideas, Gold Desk, Exness Desk, Grid Bot (paper), Problem log, Look & mode. If asked why a bot lost, use the bot facts in the live data and explain plainly. If you are not sure, say so. Live data now: ' + (liveCtx() || 'not available') + '. Time: ' + new Date().toISOString().slice(0, 16) + ' UTC.'; }
     function history(n) { var out = []; try { var arr = (PB.ctx === 'pf' ? PF.msgs : PCH.msgs) || []; arr.slice(-n * 2 - 2, -2).forEach(function (m) { var t = plain(m.html).slice(0, 700); if (t && !/pfdots/.test(m.html)) { out.push({ role: m.who === 'me' ? 'user' : 'assistant', content: t }); } }); } catch (e) { } return out; }
     /* ----- AI engines ----- */
-    function post(url, headers, body) { return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body) }).then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) { } if (!r.ok) { var m = j && (j.error && (j.error.message || j.error) || j.message) || t.slice(0, 120); throw new Error('HTTP ' + r.status + ': ' + (typeof m === 'string' ? m : JSON.stringify(m)).slice(0, 160)); } return j || { raw: t }; }); }); }
+    function post(url, headers, body) { var ac = null, tm = 0; try { ac = new AbortController(); tm = setTimeout(function () { try { ac.abort(); } catch (e) { } }, 20000); } catch (e) { } return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body), signal: ac ? ac.signal : undefined }).then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) { } if (!r.ok) { var m = j && (j.error && (j.error.message || j.error) || j.message) || t.slice(0, 120); throw new Error('HTTP ' + r.status + ': ' + (typeof m === 'string' ? m : JSON.stringify(m)).slice(0, 160)); } return j || { raw: t }; }); }); }
     function oaMsgs(q, atts) {
         var msgs = [{ role: 'system', content: system() }].concat(history(6)), parts = [], img = (atts || []).filter(function (a) { return a.kind === 'image' || a.kind === 'video'; }), txt = (atts || []).filter(function (a) { return a.kind === 'text'; }), pre = '';
         txt.forEach(function (a) { pre += '\n\n[Attached file ' + a.name + ']\n' + a.text; });
@@ -9384,7 +9384,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var parts = [{ text: (q || 'Please explain the attachment simply.') + txt.map(function (a) { return '\n\n[Attached file ' + a.name + ']\n' + a.text; }).join('') }];
             img.concat(aud).forEach(function (a) { (a.frames || [a.dataUrl]).forEach(function (u) { var m = /^data:([^;]+);base64,(.*)$/.exec(u); if (m) { parts.push({ inlineData: { mimeType: m[1], data: m[2] } }); } }); });
             var contents = history(6).map(function (h) { return { role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] }; }).concat([{ role: 'user', parts: parts }]);
-            return post('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(k), { 'content-type': 'application/json' }, { systemInstruction: { parts: [{ text: system() }] }, contents: contents }).then(function (j) { var t = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts.map(function (p) { return p.text || ''; }).join(''); if (!t) { throw new Error('empty answer'); } return t; });
+            return post('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', { 'content-type': 'application/json', 'x-goog-api-key': k }, { systemInstruction: { parts: [{ text: system() }] }, contents: contents }).then(function (j) { var t = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts.map(function (p) { return p.text || ''; }).join(''); if (!t) { throw new Error('empty answer'); } return t; });
         }
         var url = eng === 'openai' ? 'https://api.openai.com/v1/chat/completions' : (PB.base || '').replace(/\/+$/, '') + '/chat/completions'; if (eng === 'custom' && !PB.base) { return Promise.reject(new Error('Add the service address in Baba AI › Settings.')); }
         return post(url, { 'content-type': 'application/json', 'authorization': 'Bearer ' + k }, { model: model, messages: oaMsgs(q, atts), max_tokens: (window.__maxTok || 900) }).then(function (j) { var t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; if (!t) { throw new Error('empty answer'); } return t; });
@@ -9438,13 +9438,25 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     }
     /* ----- sending (both the chat window and the floating panel) ----- */
     function thumbs(atts) { return (atts || []).map(function (a) { return a.kind === 'image' ? '<br><img src="' + a.dataUrl + '" style="max-width:100%;max-height:140px;border-radius:10px;margin-top:4px">' : '<br><span class="pfbtn" style="pointer-events:none">' + (a.kind === 'audio' ? '🎧' : a.kind === 'video' ? '🎬' : '📄') + ' ' + esc(a.name) + '</span>'; }).join(''); }
+    var LINKMAP = [[/vwap|obv|fibonacci|stochastic|bollinger|atr|ema|macd|rsi|candle|indicator|support|resistance|trend|channel|swing|diverg/i, 'chart', 'Open a chart'], [/grid|dca|bot baba|smart guard|ut bot|bot\b/i, 'bots', 'Bots'], [/strategy agent|strategy/i, 'agent', 'Strategy Agent'], [/exness|gold desk|gold|forex/i, 'exdesk', 'Exness Desk'], [/money quest|challenge/i, 'quest', 'Money Quest'], [/signal lab|backtest|win rate|prove/i, 'siglab', 'Signal Lab'], [/ai signal|signal/i, 'signals', 'AI Signals'], [/best pick|idea|top pick|what to buy|which coin/i, 'ideas', 'Ideas'], [/news|headline/i, 'news', 'News'], [/market|price|gainer|loser|mover/i, 'market', 'Markets'], [/practice|paper|virtual/i, 'paper', 'Paper Bot'], [/learn|lesson|beginner|what is|how does/i, 'academy', 'Academy'], [/risk|stop.?loss|leverage|lose/i, 'safety', 'Safety'], [/look|theme|colou?r/i, 'look', 'Look & mode'], [/mexc/i, 'mexcd', 'MEXC coins'], [/bitget/i, 'bitget', 'Bitget']];
+    function linkRow(q, r) {
+        try {
+            var t = (r.title || '') + ' ' + q + ' ' + plain(r.html || '').slice(0, 160), seen = {}, h = '', n = 0, ids = {}; (window.WINS || []).forEach(function (w) { ids[w.id] = 1; }); ids.chart = 1;
+            if (/data-act="win:/.test(r.html || '')) { return ''; }
+            LINKMAP.forEach(function (m) { if (n < 3 && m[0].test(t) && !seen[m[1]] && ids[m[1]]) { seen[m[1]] = 1; n++; h += '<span class="pfbtn" data-act="win:' + m[1] + '">➡ ' + m[2] + '</span>'; } });
+            var c = String(q).match(/\b(btc|eth|sol|bnb|xrp|doge|ada|ton|avax|link|dot|trx|ltc|pepe|shib|sui|apt|arb|near)\b/i); if (c) { h += '<a class="pfbtn" href="https://www.tradingview.com/symbols/' + c[1].toUpperCase() + 'USDT/" target="_blank" rel="noopener noreferrer" style="text-decoration:none">📺 ' + c[1].toUpperCase() + ' on TradingView</a>'; }
+            if (!r.local && !r.pending) { var qq = encodeURIComponent(String(q).slice(0, 120)); h += '<a class="pfbtn" href="https://www.google.com/search?q=' + qq + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">🔎 Google</a><a class="pfbtn" href="https://www.investopedia.com/search?q=' + qq + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">📘 Investopedia</a>'; }
+            var rep = '<a class="pfbtn" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('Report a Baba AI answer') + '&body=' + encodeURIComponent('Question: ' + String(q).slice(0, 300) + '\n\nWhat was wrong with the answer:\n') + '" style="text-decoration:none;opacity:.75;font-size:12px">🚩 Report this answer</a>';
+            return '<div class="pfgo" style="margin-top:6px">' + (h ? '<small>Go to:</small> ' + h : '') + rep + '</div>';
+        } catch (e) { return ''; }
+    }
     function go(ctx, q) {
         q = (q || '').trim(); var atts = PB.pend[ctx].slice(); if ((!q && !atts.length) || PB.busy) { return; } PB.busy = true; PB.ctx = ctx; PB.pend[ctx] = []; trayDraw(ctx);
         var M = ctx === 'pc' ? PCH.msgs : PF.msgs, draw = ctx === 'pc' ? function () { pcSave(); pcDraw(); } : function () { pfRender(); };
         M.push({ who: 'me', html: esc(q || '(attachment)') + thumbs(atts) }); M.push({ who: 'bot', html: '<span class="pfdots"><i></i><i></i><i></i></span>', typing: 1 }); draw(); try { STS.ch = (STS.ch || 0) + 1; stSave(); } catch (e) { }
         var el = document.getElementById(ctx === 'pc' ? 'pcmsgs' : 'pfmsgs'); void el;
         brain(q, atts, ctx).then(function (r) { return r; }, function (e) { return { html: 'Sorry, I had a small problem: ' + esc(e && e.message || e) }; }).then(function (r) {
-            M.pop(); var id = PB.say.push(plain(r.html)) - 1; M.push({ who: 'bot', html: r.html + '<div><span class="pbsay" data-pb="say:' + id + '">🔊</span></div>' }); PB.busy = false; draw(); if (PB.auto && !r.pending) { speak(plain(r.html)); }
+            M.pop(); var id = PB.say.push(plain(r.html)) - 1; M.push({ who: 'bot', html: r.html + (r.pending ? '' : linkRow(q, r)) + '<div><span class="pbsay" data-pb="say:' + id + '">🔊</span></div>' }); PB.busy = false; draw(); if (PB.auto && !r.pending) { speak(plain(r.html)); }
         });
     }
     var _pa = pcAsk; pcAsk = function (q) { go('pc', q); };
@@ -10734,7 +10746,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var _mt = mwTape;
         mwTape = function (title, items) {
             var lbl = String(title).replace(/^[^A-Za-z]+/, '').trim(), ic = /GOLD/i.test(lbl) ? ICON.gold : /WORLD/i.test(lbl) ? ICON.world : ICON.news;
-            var txt = items && items.length ? items.map(function (i) { return '<span class="mwit"><em class="msrc">' + esc(i.src || 'NEWS') + '</em><i class="mttl">' + esc(i.title) + '.</i><span class="mgap">•</span></span>'; }).join('') : '<span class="mwit"><i class="mttl">Loading headlines… (if this stays empty, open the News window and check the source list).</i><span class="mgap">•</span></span>';
+            var txt = items && items.length ? items.map(function (i) { return '<span class="mwit"><em class="msrc">' + esc(i.src || 'NEWS') + '</em><i class="mttl">' + esc(i.title) + '.</i><span class="mgap">•</span></span>'; }).join('') : '<span class="mwit"><i class="mttl">Headlines loading…</i><span class="mgap">•</span></span>';
             return '<div class="mwtape"><b class="mwtt">' + ic + '<span>' + esc(lbl) + '</span></b><div class="mwtk"><div class="mwtm" style="animation-duration:' + Math.max(40, (items ? items.length : 3) * 11) + 's">' + txt + txt + '</div></div></div>';
         };
     } catch (e) { try { console.log('tape', e); } catch (er) { } }
@@ -14764,7 +14776,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var h = '<div class="segc" data-noswipe="1" style="display:flex;flex-wrap:wrap;gap:4px;margin:0 0 8px">' + Object.keys(FEEDS).map(function (x) { return '<span class="' + (x === k ? 'on' : '') + '" data-xk="bnk:' + x + '" style="flex:1 1 auto;text-align:center;white-space:nowrap">' + FEEDS[x][0] + '</span>'; }).join('') + '</div>';
             var c = NW[k];
             if (!c || !c.items.length) { h += '<div class="group pad mut">' + (c && c.fail ? 'News needs internet. Nothing saved yet.' : 'Loading headlines…') + '</div>'; }
-            else { h += '<div class="note" style="margin:0 0 6px">' + (navigator.onLine ? 'Updated ' : 'Offline. Saved ') + new Date(c.at).toLocaleTimeString() + '</div><div class="group">' + c.items.map(function (x) { return '<div class="row" style="display:block"><a href="' + e2(x.l) + '" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><b style="font-size:14px">' + e2(x.t) + '</b></a><div class="note" style="margin:2px 0 0">' + e2(x.d || '') + '</div></div>'; }).join('') + '</div>';
+            else { h += '<div class="note" style="margin:0 0 6px">' + (navigator.onLine ? 'Updated ' : 'Offline. Saved ') + new Date(c.at).toLocaleTimeString() + '</div><div class="group">' + c.items.map(function (x) { return '<div class="row" style="display:block"><a href="' + (/^https?:\/\//i.test(String(x.l || '')) ? e2(x.l) : '#') + '" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><b style="font-size:14px">' + e2(x.t) + '</b></a><div class="note" style="margin:2px 0 0">' + e2(x.d || '') + '</div></div>'; }).join('') + '</div>';
                 h += '<button class="btn" data-xk="bsum:' + k + '">🧠 Baba: summarise and explain these</button>'; }
             if (OUT['news' + k] && OUT['news' + k].busy) { h += '<div class="group pad mut">Baba is reading the news…</div>'; } else if (OUT['news' + k]) { h += out(OUT['news' + k], 'news' + k); }
             return h + '<div class="note">Headlines come from public news feeds (Google News). The links open the publishers’ own sites.</div>';
@@ -15219,7 +15231,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var LAB = { res: {}, busy: 0, msg: '', done: 0, tot: 0 };
         function tf() { var t = g('labtf', '1h'); return TFS[t] ? t : '1h'; }
         function binK(a) { return a.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }; }).filter(function (x) { return x.c > 0; }); }
-        function agg4(K) { var o = [], i; for (i = 0; i + 3 < K.length; i += 4) { var s = K.slice(i, i + 4); o.push({ t: s[0].t, o: s[0].o, h: Math.max.apply(null, s.map(function (x) { return x.h; })), l: Math.min.apply(null, s.map(function (x) { return x.l; })), c: s[3].c, v: 0 }); } return o; }
+        function agg4(K) { var o = [], i, cur = null, G = 14400000; for (i = 0; i < K.length; i++) { var x = K[i], id = Math.floor(x.t / G); if (!cur || cur.id !== id) { if (cur) { o.push(cur.b); } cur = { id: id, b: { t: id * G, o: x.o, h: x.h, l: x.l, c: x.c, v: 0 } }; } else { cur.b.h = Math.max(cur.b.h, x.h); cur.b.l = Math.min(cur.b.l, x.l); cur.b.c = x.c; } } return o; }
         function load(m, t) {
             var iv = t, urls = [['https://fapi.binance.com/fapi/v1/klines?symbol=' + m[1] + '&interval=' + iv + '&limit=1500', 'b'], ['https://api.binance.com/api/v3/klines?symbol=' + m[1] + '&interval=' + iv + '&limit=1000', 'b']];
             var yi = t === '15m' ? '15m' : '60m', yr = t === '15m' ? '1mo' : (t === '1h' ? '3mo' : '1y');
@@ -15232,7 +15244,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                     var j = JSON.parse(tx), K;
                     if (u[1] === 'b') { if (!Array.isArray(j) || j.length < 120) { throw 0; } K = binK(j); }
                     else { var r = j.chart.result[0], q = r.indicators.quote[0]; K = []; r.timestamp.forEach(function (ts, z) { if (q.close[z] != null && q.open[z] != null && q.high[z] != null && q.low[z] != null) { K.push({ t: ts * 1000, o: q.open[z], h: q.high[z], l: q.low[z], c: q.close[z], v: q.volume ? q.volume[z] || 0 : 0 }); } }); if (t === '4h') { K = agg4(K); } }
-                    if (K.length < 120) { throw 0; } return { K: K, src: u[1] === 'b' ? 'Binance' : 'Yahoo (delayed)' };
+                    var ivm = t === '15m' ? 9e5 : t === '4h' ? 144e5 : 36e5; while (K.length && K[K.length - 1].t + ivm > Date.now()) { K.pop(); } if (K.length < 120) { throw 0; } return { K: K, src: u[1] === 'b' ? 'Binance' : 'Yahoo (delayed)' };
                 }).catch(nxt);
             }
             return nxt();
@@ -15948,7 +15960,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                     }
                 }
                 if (opn) { var w2 = findWin(opn[2]); if (w2) { return reply('Open ' + e2(w2.n), '<span class="pfbtn" data-act="win:' + e2(w2.id) + '">Open ' + e2(w2.n) + '</span>', q); } }
-                if (/(app|it|everything|screen).*(froz|freez|hang|hung|stuck|slow|crash)|^(fix|heal|repair)( the)?( app| it| this)?$|^fix (it|this|the app)|self.?heal/.test(low)) { var did = heal('you asked'); return reply('Repair done', 'I checked the live feed and refreshed the screen' + (did.length ? ' (' + did.join(', ') + ')' : '') + '. If it keeps freezing, say "turn on calm mode".', q); }
+                if (/(app|it|everything|screen).*(froz|freez|hang|hung|stuck|slow|crash)|^(fix|heal|repair)( the)?( app| it| this)?$|^fix (it|this|the app)|self.?heal/.test(low)) { var did = heal('you asked'); try { window.__repair && window.__repair.run(true); } catch (er) { } return reply('Repair started', 'I am checking internet, prices, the chart, saved data and smoothness, and fixing what I can in the background. A message will tell you what I fixed. If it keeps freezing, say "turn on calm mode".', q); }
                 if (/what did you (fix|repair)|repair log|heal log|what happened to the app/.test(low)) { var l = LOG.slice(-6).reverse(); return reply('Repair log', l.length ? l.map(function (x) { return e2(new Date(x.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + x.m); }).join('<br>') : 'Nothing needed repair so far.', q); }
             } catch (e) { }
             return _pa.apply(this, arguments);
@@ -16031,7 +16043,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             'Home': 'ہوم', 'Best': 'بہترین', 'Movers': 'تیز حرکت', 'Analyst': 'تجزیہ کار', 'Glance': 'ایک نظر', 'Risk': 'خطرہ', 'News': 'خبریں', 'Rates': 'ریٹس', 'Alerts': 'الرٹس', 'Exness': 'ایکسنیس', 'Gold': 'سونا', 'PSX': 'پی ایس ایکس', 'Ideas': 'آئیڈیاز', 'Radar': 'ریڈار', 'Briefing': 'بریفنگ', 'Market mood': 'مارکیٹ کا موڈ', 'Live': 'لائیو', 'Markets': 'مارکیٹس', 'Bots': 'بوٹس', 'More': 'مزید', 'Exchanges': 'ایکسچینجز', 'Trade Hub': 'ٹریڈ ہب', 'Baba AI': 'بابا اے آئی', 'Around you': 'آپ کے آس پاس', 'Academy': 'اکیڈمی', 'Account': 'اکاؤنٹ', 'Look & mode': 'انداز اور موڈ', 'New Plan': 'نیا پلان', 'Master Plan': 'ماسٹر پلان', 'Scanner': 'سکینر', '3m Candles': '3 منٹ کی کینڈلز', 'Coin details': 'کوائن کی تفصیل', 'Trade': 'ٹریڈ', 'Lock': 'لاک', 'Safety': 'حفاظت', 'Story': 'کہانی', 'Meter details': 'میٹر کی تفصیل',
             'I understand and accept': 'میں سمجھ گیا اور قبول کرتا ہوں', 'Appearance': 'ظاہری شکل', 'Light': 'روشن', 'Dark': 'سیاہ', 'Auto': 'خودکار', 'Language': 'زبان', 'About this copy': 'اس کاپی کے بارے میں', 'Show': 'دکھائیں', 'Create account': 'اکاؤنٹ بنائیں', 'Ask': 'پوچھیں', 'WINDOWS': 'ونڈوز', 'MENU': 'مینو', 'Zoom': 'زوم', 'Calm look': 'پرسکون انداز', 'Animations on': 'حرکت والا انداز', 'Calm (no animations)': 'پرسکون (بغیر حرکت)',
             'Time zone & 12/24-hour clock': 'ٹائم زون اور گھڑی', 'Account & premium': 'اکاؤنٹ اور پریمیم', 'Problem log (every error)': 'مسائل کا ریکارڈ', 'Baba Bot (live trading)': 'ریئل بوٹ (لائیو ٹریڈنگ)', 'Guided tour (arrows)': 'رہنمائی ٹور', 'Market story (why)': 'مارکیٹ کی کہانی (کیوں)', 'Safety & anti-theft': 'حفاظت اور چوری سے بچاؤ', 'Around you (local markets)': 'آپ کے آس پاس (مقامی مارکیٹس)', 'Lock screen (PIN / pattern)': 'لاک اسکرین (پن / پیٹرن)', 'Alert settings': 'الرٹ سیٹنگز', 'Help & contact': 'مدد اور رابطہ', 'Reload app (get latest version)': 'ایپ دوبارہ لوڈ کریں',
-            'Permissions & background': 'اجازتیں اور بیک گراؤنڈ', 'At a glance': 'ایک نظر میں', 'Best Picks (most reliable)': 'بہترین انتخاب (سب سے قابل اعتماد)', 'Baba AI (ask anything)': 'بابا اے آئی (کچھ بھی پوچھیں)', 'Profile & shortcuts': 'پروفائل اور شارٹ کٹس', 'Academy (learn trading step by step)': 'اکیڈمی (ٹریڈنگ قدم بہ قدم سیکھیں)', 'Trade Pro (full order ticket)': 'ٹریڈ پرو (مکمل آرڈر ٹکٹ)', 'Legal, privacy & licences': 'قانونی، رازداری اور لائسنس', 'Exness Desk (recommendations)': 'ایکسنیس ڈیسک (سفارشات)', 'Trade Ideas': 'ٹریڈ آئیڈیاز', 'Help centre': 'ہیلپ سینٹر', 'Achievements': 'کامیابیاں', 'Video lessons': 'ویڈیو اسباق', 'Support desk': 'سپورٹ ڈیسک', 'About MintooSuite': 'منٹو سوٹ کے بارے میں', 'Heads-up alerts': 'فوری الرٹس', 'Bot Doctor': 'بوٹ ڈاکٹر', 'History Test': 'تاریخی آزمائش', 'AI Signals': 'اے آئی سگنلز', 'Grid Bot (paper)': 'گرڈ بوٹ (پیپر)', 'Tip of the day': 'آج کا مشورہ', 'Problem log': 'مسائل کا ریکارڈ', 'Money Quest (game)': 'منی کوئسٹ (گیم)', 'Local market & offers': 'مقامی مارکیٹ اور آفرز', 'Bots (all your bots)': 'بوٹس (آپ کے تمام بوٹس)', 'Paper Bot': 'پیپر بوٹ', 'Proof': 'ثبوت', 'Compare': 'موازنہ', 'Signal Lab': 'سگنل لیب', 'Sell Bot Baba': 'بوٹ بابا بیچیں', 'Bot Baba': 'بوٹ بابا', 'Risk Meter & Trades': 'رسک میٹر اور ٹریڈز', 'Early Movers': 'ابتدائی موورز', 'Split Charts': 'الگ الگ چارٹس', 'Rates: Currency, Gold, Oil': 'ریٹس: کرنسی، سونا، تیل', 'Time zone & clock': 'ٹائم زون اور گھڑی', 'Search markets': 'مارکیٹس تلاش کریں', 'Ask the bot (Analyst)': 'بوٹ سے پوچھیں (تجزیہ کار)', 'Live Trades': 'لائیو ٹریڈز', 'Trade detail': 'ٹریڈ کی تفصیل', 'Strategy Lab (backtest & dry-run)': 'اسٹریٹجی لیب', 'Premium plans & comments': 'پریمیم پلانز اور تبصرے', 'Karachi Stock Exchange (PSX)': 'کراچی اسٹاک ایکسچینج (پی ایس ایکس)', 'Trading Terminal': 'ٹریڈنگ ٹرمینل', 'Copy trading': 'کاپی ٹریڈنگ', 'Logs': 'ریکارڈ', 'Health': 'صحت', 'Help': 'مدد', 'World clock': 'عالمی گھڑی',
+            'Permissions & background': 'اجازتیں اور بیک گراؤنڈ', 'At a glance': 'ایک نظر میں', 'Best Picks (strict filters)': 'بہترین انتخاب (سب سے قابل اعتماد)', 'Baba AI (ask anything)': 'بابا اے آئی (کچھ بھی پوچھیں)', 'Profile & shortcuts': 'پروفائل اور شارٹ کٹس', 'Academy (learn trading step by step)': 'اکیڈمی (ٹریڈنگ قدم بہ قدم سیکھیں)', 'Trade Pro (full order ticket)': 'ٹریڈ پرو (مکمل آرڈر ٹکٹ)', 'Legal, privacy & licences': 'قانونی، رازداری اور لائسنس', 'Exness Desk (recommendations)': 'ایکسنیس ڈیسک (سفارشات)', 'Trade Ideas': 'ٹریڈ آئیڈیاز', 'Help centre': 'ہیلپ سینٹر', 'Achievements': 'کامیابیاں', 'Video lessons': 'ویڈیو اسباق', 'Support desk': 'سپورٹ ڈیسک', 'About MintooSuite': 'منٹو سوٹ کے بارے میں', 'Heads-up alerts': 'فوری الرٹس', 'Bot Doctor': 'بوٹ ڈاکٹر', 'History Test': 'تاریخی آزمائش', 'AI Signals': 'اے آئی سگنلز', 'Grid Bot (paper)': 'گرڈ بوٹ (پیپر)', 'Tip of the day': 'آج کا مشورہ', 'Problem log': 'مسائل کا ریکارڈ', 'Money Quest (game)': 'منی کوئسٹ (گیم)', 'Local market & offers': 'مقامی مارکیٹ اور آفرز', 'Bots (all your bots)': 'بوٹس (آپ کے تمام بوٹس)', 'Paper Bot': 'پیپر بوٹ', 'Proof': 'ثبوت', 'Compare': 'موازنہ', 'Signal Lab': 'سگنل لیب', 'Sell Bot Baba': 'بوٹ بابا بیچیں', 'Bot Baba': 'بوٹ بابا', 'Risk Meter & Trades': 'رسک میٹر اور ٹریڈز', 'Early Movers': 'ابتدائی موورز', 'Split Charts': 'الگ الگ چارٹس', 'Rates: Currency, Gold, Oil': 'ریٹس: کرنسی، سونا، تیل', 'Time zone & clock': 'ٹائم زون اور گھڑی', 'Search markets': 'مارکیٹس تلاش کریں', 'Ask the bot (Analyst)': 'بوٹ سے پوچھیں (تجزیہ کار)', 'Live Trades': 'لائیو ٹریڈز', 'Trade detail': 'ٹریڈ کی تفصیل', 'Strategy Lab (backtest & dry-run)': 'اسٹریٹجی لیب', 'Premium plans & comments': 'پریمیم پلانز اور تبصرے', 'Karachi Stock Exchange (PSX)': 'کراچی اسٹاک ایکسچینج (پی ایس ایکس)', 'Trading Terminal': 'ٹریڈنگ ٹرمینل', 'Copy trading': 'کاپی ٹریڈنگ', 'Logs': 'ریکارڈ', 'Health': 'صحت', 'Help': 'مدد', 'World clock': 'عالمی گھڑی',
             'ENTRY': 'انٹری', 'STOP LOSS': 'اسٹاپ لاس', 'TAKE PROFIT': 'ٹیک پرافٹ', 'Leverage': 'لیوریج', 'Margin': 'مارجن', 'Spend': 'خرچ', 'GREEN LIGHT': 'ہری بتی', 'RED LIGHT': 'لال بتی', 'Risk per trade:': 'ہر ٹریڈ میں خطرہ:', 'Top Baba pick': 'سب سے اوپر بابا پک', 'Baba picks and new-day plan': 'بابا پکس اور نئے دن کا پلان', 'Final recommendation': 'حتمی سفارش', 'Open chart': 'چارٹ کھولیں', 'Reset height': 'اونچائی ری سیٹ', 'Support/Resistance': 'سپورٹ / ریزسٹنس', 'UT Bot BUY/SELL': 'یو ٹی بوٹ خرید / فروخت', 'Long': 'لانگ', 'Short': 'شارٹ', 'Buy': 'خریدیں', 'Sell': 'بیچیں', 'Order book': 'آرڈر بک', 'Depth': 'ڈیپتھ', 'Trades': 'ٹریڈز', 'Bots & AI': 'بوٹس اور اے آئی', 'Replay': 'ری پلے', 'Exit replay': 'ری پلے ختم', 'Next candle': 'اگلی کینڈل', 'Pause': 'روکیں', 'Play': 'چلائیں', 'Save': 'محفوظ کریں', 'Cancel': 'منسوخ', 'Close': 'بند کریں', 'Done': 'ہو گیا', 'Search': 'تلاش', 'Settings': 'سیٹنگز'
         };
         var PRE = /^([^A-Za-z0-9]*)([\s\S]*?)(\s*)$/;
@@ -17219,7 +17231,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         var G = { text: '', phase: 'ask', draft: null, mode: 'paper', err: '', ans: null, think: 0, tab: 'new', done: null };
         function say(t) { try { toast(t); } catch (e) { } }
         function f(v, d) { var n = +v; return isFinite(n) ? n.toFixed(d == null ? 2 : d) : '–'; }
-        function px(c) { var t = S.tick && S.tick[c + 'USDT']; return t && t.p > 0 ? +t.p : 0; }
+        function px(c) { var t = S.tick && S.tick[c + 'USDT']; if (t && t.p > 0) { return +t.p; } t = S.tick && S.tick['1000' + c + 'USDT']; return t && t.p > 0 ? +t.p / 1000 : 0; }
         function mkey(t) { var d = new Date(t || Date.now()); return d.getFullYear() + '-' + (d.getMonth() + 1); }
         function fmtP(p) { return p >= 100 ? f(p, 0) : p >= 1 ? f(p, 2) : f(p, 5); }
         var COINS = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'LINK', 'DOT', 'LTC', 'NEAR', 'UNI', 'ATOM', 'APT', 'ARB', 'OP', 'SUI', 'AAVE', 'INJ', 'TRX', 'TON', 'PEPE', 'SHIB'];
@@ -17229,17 +17241,17 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         function num(s) { var n = parseFloat(String(s).replace(/[, ]/g, '').replace(/k$/i, '')); if (/k$/i.test(String(s).trim())) { n *= 1000; } return n; }
         function parse(raw) {
             var t = String(raw || '').trim(), q = t.toLowerCase(), r = { text: t, ok: false }, m, i;
-            var coin = ''; for (i = 0; i < COINS.length; i++) { if (new RegExp('\\b' + COINS[i].toLowerCase() + '\\b').test(q)) { coin = COINS[i]; break; } }
+            var coin = '', bi = q.search(/\b(buy|accumulate|dca|purchase)\b/), best = 1e9; for (i = 0; i < COINS.length; i++) { var cm = new RegExp('\\b' + COINS[i].toLowerCase() + '\\b').exec(q); if (cm) { var ix = cm.index + (bi >= 0 && cm.index < bi ? 5000 : 0); if (ix < best) { best = ix; coin = COINS[i]; } } }
             if (!coin) { for (var w in WORDS) { if (q.indexOf(w) > -1) { coin = WORDS[w]; break; } } }
             if (!coin) { r.why = 'I could not see a coin name. Try for example: “Buy BTC in tranches below 74,000, max 500 USDT a month.”'; return r; }
             if (/\b(sell|short)\b/.test(q) && !/\bbuy\b/.test(q)) { r.why = 'Right now the Agent can only buy (dip buying, breakout buying, or regular DCA). Selling and shorting are done in the Practice account under any chart.'; return r; }
             r.coin = coin;
-            var cap = 0; m = q.match(/(?:max(?:imum)?|cap|up to|budget|limit|total|not more than|at most)[^0-9$]{0,14}\$?\s*([0-9][0-9,\.]*\s*k?)/); if (m) { cap = num(m[1]); }
-            if (!cap) { m = q.match(/\$?\s*([0-9][0-9,\.]*\s*k?)\s*(?:usdt|usd|dollars?|\$)\s*(?:a|per|each|every|\/)\s*(?:month|week|day)/); if (m) { cap = num(m[1]); } }
-            if (!cap) { m = q.match(/([0-9][0-9,\.]*\s*k?)\s*(?:usdt|usd|dollars?)/); if (m) { cap = num(m[1]); } }
-            var pm = q.match(/(?:usdt|usd|dollars?|\$)\s*(?:a|per|each|every|\/)\s*(week|day|month)/), per = pm ? pm[1] : 'month';
+            var cap = 0, capEnd = -1; m = /(?:max(?:imum)?|cap|up to|budget|limit|total|not more than|at most)[^0-9$]{0,14}\$?\s*([0-9][0-9,\.]*\s*k?)(?!\s*(?:tranches?|orders?|times|buys|months?|weeks?|days?))/.exec(q); if (m) { cap = num(m[1]); capEnd = m.index + m[0].length; }
+            if (!cap) { m = /\$?\s*([0-9][0-9,\.]*\s*k?)\s*(?:usdt|usd|dollars?|\$)\s*(?:a|per|each|every|\/)\s*(?:month|week|day)/.exec(q); if (m) { cap = num(m[1]); capEnd = m.index + m[0].length - 1 - (/(month|week|day)$/.exec(m[0])[1].length - 1); capEnd = m.index + m[0].length; } }
+            if (!cap) { m = /([0-9][0-9,\.]*\s*k?)\s*(?:usdt|usd|dollars?)/.exec(q); if (m) { cap = num(m[1]); capEnd = m.index + m[0].length; } }
+            var pm = capEnd >= 0 ? q.slice(Math.max(0, capEnd - 12), capEnd + 28).match(/(?:usdt|usd|dollars?|\$)?\s*(?:a|per|each|every|\/)\s*(week|day|month)/) : null, per = pm ? pm[1] : 'month';
             r.period = per;
-            var below = q.match(/(?:below|under|beneath|lower than|less than|dips? to|drops? to|falls? to|at or below)\s*\$?\s*([0-9][0-9,\.]*\s*k?)/), above = q.match(/(?:above|over|breaks? (?:above|over)|higher than|more than|crosses?)\s*\$?\s*([0-9][0-9,\.]*\s*k?)/);
+            var below = q.match(/(?:below|under|beneath|lower than|less than|dips? to|drops? to|falls? to|at or below)\s*\$?\s*([0-9][0-9,\.]*\s*k?)(?!\s*(?:months?|weeks?|days?|years?|tranches?|times|orders?|usdt|usd|%))/), above = q.match(/(?:above|over|breaks? (?:above|over)|higher than|more than|crosses?)\s*\$?\s*([0-9][0-9,\.]*\s*k?)(?!\s*(?:months?|weeks?|days?|years?|tranches?|times|orders?|usdt|usd|%))/);
             if (below) { r.kind = 'dip'; r.trig = num(below[1]); } else if (above) { r.kind = 'brk'; r.trig = num(above[1]); }
             else if (/\b(dca|every|each|daily|weekly|regular|monthly|schedule)\b/.test(q)) { r.kind = 'dca'; r.trig = 0; }
             else { r.why = 'I need either a price (“below 74,000”) or a rhythm (“every week”). Example: “Buy ETH every week, 50 USDT, max 200 USDT a month.”'; return r; }
@@ -17247,7 +17259,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             if (!(cap > 0)) { r.why = 'Every plan needs a safety limit. Add something like “max 500 USDT a month”.'; return r; }
             if (per === 'week') { cap *= 4; } else if (per === 'day') { cap *= 30; }
             r.capM = Math.round(cap * 100) / 100; r.capO = Math.round(r.capM / 3 * 100) / 100;
-            if (r.kind === 'dca') { m = q.match(/([0-9][0-9,\.]*\s*k?)\s*(?:usdt|usd|dollars?)\s*(?:every|each|per|a)\s*(day|week)/); if (m) { r.capO = Math.min(num(m[1]), r.capM); } r.every = /week/.test(q) ? 7 * 864e5 : /day|daily/.test(q) ? 864e5 : 7 * 864e5; }
+            if (r.kind === 'dca') { m = q.match(/([0-9][0-9,\.]*\s*k?)\s*(?:usdt|usd|dollars?)\s*,?\s*(?:every|each|per|a|weekly|daily|monthly)/); if (m) { r.capO = Math.min(num(m[1]), r.capM); } r.every = /month/.test(q) ? 30 * 864e5 : /week/.test(q) ? 7 * 864e5 : /day|daily/.test(q) ? 864e5 : 7 * 864e5; }
             r.ok = true;
             r.title = r.kind === 'dip' ? 'Buy ' + coin + ' on dips below ' + fmtP(r.trig) : r.kind === 'brk' ? 'Buy ' + coin + ' on a break above ' + fmtP(r.trig) : 'Buy ' + coin + ' regularly (DCA)';
             r.say = r.kind === 'dip' ? 'You want a staged dip-buying plan. I will buy ' + coin + ' in tranches of up to ' + fmtP(r.capO) + ' USDT, only while the price is at or below ' + fmtP(r.trig) + ', and each next tranche needs the price at least 1% lower than the last one. I stop once ' + fmtP(r.capM) + ' USDT is filled this month.'
@@ -17315,7 +17327,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             } else if (G.phase === 'fund') {
                 h += '<div style="background:#8881;border-radius:14px;padding:8px 14px"><div style="font-weight:800;font-size:17px;padding:6px 0">Capital transfer <span class="mut" style="float:right;font-size:13px">1 / 1</span></div>' + row('Strategy account', '#' + ('0' + (A.seq + 1)).slice(-2)) + row('Spot account minimum', '50 USDT') + row('Paper money', 'No transfer needed', '#16a34a') + '</div><div class="note" style="margin-top:6px">No transfer needed for Paper Mode. The Agent uses an imaginary 10,000 USDT account, so nothing real is touched.</div>' + btn('Confirm and create', 'sacreate:1');
             } else if (G.phase === 'started') {
-                var s = G.done; h += '<div style="background:#fef9e7;color:#111;border-radius:14px;padding:11px 14px;margin:0 0 10px 30px">Transfer settled, live execution running</div><div style="background:#8881;border-radius:12px;padding:10px 14px;margin:8px 0;font-weight:700">✅ Live execution started</div><div style="margin:8px 0">A few more steps and the strategy is ready.</div>'
+                var s = G.done; h += '<div style="background:#fef9e7;color:#111;border-radius:14px;padding:11px 14px;margin:0 0 10px 30px">Practice balance set. Paper strategy running (no real money)</div><div style="background:#8881;border-radius:12px;padding:10px 14px;margin:8px 0;font-weight:700">✅ Paper strategy started (no real money)</div><div style="margin:8px 0">A few more steps and the strategy is ready.</div>'
                     + '<div style="background:#8881;border-radius:14px;padding:6px 14px">' + row('Strategy account', 'Strategy account #' + ('0' + s.id).slice(-2)) + row('Monthly cap', f(s.capM, 0) + ' USDT') + row('Status', '<span style="background:#16a34a22;color:#16a34a;padding:2px 8px;border-radius:6px">Running</span>') + '</div>'
                     + '<div style="display:flex;gap:8px;margin-top:8px">' + btn('Build another', 'sanew:1', 1) + btn('Open dashboard', 'satab:dash') + '</div><div class="note" style="margin-top:8px">The dashboard shows balance, limits, orders and exceptions. Pause or terminate at any time.</div>';
             }
@@ -17381,6 +17393,27 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         PF_APP.push(['fingerprint|biometric|login fast', 'Fingerprint login', 'After your first login the app offers fingerprint login. You can turn it on or off in Account. Your password is never stored as plain text.']);
         PF_APP.push(['alerts closed|app closed|notification when closed|push alerts', 'Alerts when the app is closed', 'Alerts > “Alerts when the app is closed” gives you Baba pick alerts even when the app is shut. It needs the push setup that is already done in your build.']);
     } catch (e) { try { console.error('p9zszzt', e); } catch (e2) { } }
+})();
+/* ===== CS: knowledge for the newest changes (Ideas tabs, live chart + TradingView, backup price sources, Signal Lab, Look Studio) ===== */
+(function () {
+    try {
+        PF_WIN['Ideas window'] = 'ideas'; PF_WIN['Signal Lab'] = 'siglab'; PF_WIN['Look and mode'] = 'look';
+        PF_APP.push(['best picks|master plan|ideas tab|real best|close calls|which exchange|binance mexc bitget picks', 'Ideas window', 'Ideas now has three tabs. ⭐ Best (top picks) shows only REAL best picks: they pass the strict live check (all time frames, order book, volume, funding, news) and a test on that coin’s own last 20 days. Pick an exchange tab (All, Binance, MEXC, Bitget) so lists do not mix. “Close calls” passed the live check but not the 20-day test: use smaller size. 📋 All (full list) is every ranked idea. 🧭 Plan (gold & big coins) is the next-day trend and the whole-day and few-hours plans. The order stays fixed while you look; new coins join at the bottom. Often there are no real best picks: then wait.']);
+        PF_APP.push(['more tools|swing structure|higher high|lower low|hh hl|trend channel|regression|divergence|volume spike|fair value gap|gaps to fill|chartprime|which indicator|how many indicators|combine indicators|use together', 'Chart More tools: what each does and how to use them', 'Under the chart there is a row called More tools. Tick one to draw it, tick again to hide. All are off by default. (1) Swing structure: a zig-zag of swing highs and lows labelled HH, HL, LH, LL. HH+HL means an up-trend, LH+LL means a down-trend. Use it to know the direction before you act. (2) Trend channel: a centre line with a band above and below, from the last 100 candles. Price near the lower band in an up-trend is a cheaper place to buy; near the upper band in a down-trend is a better place to sell. A close outside the band means the move is stretched or the trend is changing. (3) Divergence marks: DIV down = price made a new high but momentum (RSI) did not, so the rise may be tiring. DIV up = price made a new low but momentum did not, so the fall may be tiring. It is a warning, not a signal; wait for the price to confirm. (4) Volume spikes: a dot on a candle with more than 2.5 times the usual volume. Big money is active there; a breakout on a spike is more believable. (5) Gaps to fill: shaded zones where price jumped and has not come back. Price often returns to test them, so they can act as targets or entry areas. HOW MANY AT A TIME: use at most three together, from different jobs: one for direction (Swing structure or UT Bot), one for place (Trend channel or support/resistance), one for warning or strength (Divergence or Volume spikes). More lines make the chart noisy and do not make it more accurate. A simple routine: 1) direction from Swing structure, 2) wait for price at a support/resistance line or channel edge, 3) wait for UT Bot BUY or SELL in the same direction, 4) check Volume spikes or Divergence, 5) set the stop-loss first, risk 1% or less. If they disagree, do nothing. HONEST LIMIT: these tools describe the past and do not predict. No combination guarantees profit; they only help you skip weak trades. Test on the practice account first.']);
+        PF_APP.push(['profit|guarantee|how to win|successful trading|make money|best indicator|accurate', 'Using the app for successful trading (honest)', 'Nothing in this app can promise profit, and nobody can. What the app can do: show direction (Swing structure, UT Bot), place (support/resistance, Trend channel), warning and strength (Divergence, Volume spikes), test an idea on past data (Signal Lab, which shows buy and sell results separately and says Not proven when it is not), and practise with virtual money (Practice account, Money Quest, Strategy Agent in paper mode). A safe path: learn, practise 2 to 4 weeks on paper, look at your results, only then use small real size, always with a stop-loss and 1% risk. Use at most three tools at a time. Prefer Best picks that pass the strict checks; often there are none, and waiting is a good choice. Auto-buying in Strategy Agent is practice only.']);
+        PF_APP.push(['ai signal|ai signals|signal on chart|buy setup|sell setup|hold|hit rate', 'AI signal on the chart', 'On the Chart window tick AI signal. It is a rules-and-statistics model, not a chatbot. It scores 7 things (EMA trend, Supertrend, RSI, MACD, position in the 20-candle range, a 4x slower timeframe) on CLOSED candles only, then looks back at how similar setups on THIS coin really ended (target hit before stop, within 24 candles). It shows BUY or SELL only when that history shows an edge after fees and at least 30 similar setups exist; otherwise it says HOLD, and HOLD is the honest answer most of the time. The % is the backtested hit rate on this coin, not a promise, and the number in brackets is how many past setups it used. Stop and two targets are drawn as thin dotted lines. A marker never moves after its candle closes. Use it as one of your three tools, together with direction (Swing structure) and place (support/resistance), and always set the stop-loss first.']);
+        PF_APP.push(['supertrend|super trend', 'Supertrend', 'Supertrend draws a line that follows price at a distance of about 3 times the recent average candle size (ATR). Price above the line = up-trend (line is green, under price, acts like a trailing stop). Price closes below the line = it flips to a down-trend. It works well in trends and gives many false flips in sideways markets, so check the bigger picture first. It is one of the 7 things our AI signal reads.']);
+        PF_APP.push(['ut bot|utbot|ut-bot', 'UT Bot BUY/SELL', 'UT Bot is a trailing stop based on the recent average candle size (ATR). When price closes above its line it shows BUY; when it closes below, SELL. On our chart you can tick UT Bot BUY/SELL on or off and choose Same as TradingView (1,10), Calmer or Calmest (fewer, slower signals). Signals on the newest unfinished candle are shown with a question mark because they can still change. Test it first in Signal Lab: it shows buy and sell results separately and says Not proven when the history does not support it.']);
+        PF_APP.push(['ichimoku|ichimoku cloud', 'Ichimoku cloud', 'Ichimoku is a set of lines and a shaded cloud. Price above the cloud = up-trend, below = down-trend, inside = unclear. The cloud also acts like support or resistance. It looks busy for beginners. This app does not draw it yet; use Swing structure and the Trend channel for the same job (direction and place).']);
+        PF_APP.push(['adx|average directional', 'ADX (trend strength)', 'ADX measures how strong a trend is, not its direction. Under about 20 = weak or sideways market (trend tools give false signals), above 25 = a real trend. Use it as a filter: only follow UT Bot or Supertrend signals when the trend is strong. This app does not draw ADX yet; our Trend channel and Swing structure show the same thing by eye.']);
+        PF_APP.push(['smart guard', 'Smart Guard', 'Smart Guard is the safety layer of the bots: it limits the amount per trade, stops trading for a while after losses, blocks new trades when the market is too wild, and always uses a stop-loss. It reduces damage; it cannot make a bad strategy profitable. Keep it on.']);
+        PF_APP.push(['dictionary|urdu dictionary|english urdu|spelling|grammar|translate word|urdu meaning', 'Dictionary and spelling', 'Open the Dictionary window (Profile > Dictionary and spelling): type an English word to see Urdu with how to say it, or an Urdu word to see English. It works without internet and has trading and everyday words. The same box fixes common spelling mistakes, i to I, a/an, repeated words and capital letters in English text. You can also ask me in chat: "profit in urdu" or "meaning of risk". For about 40 other languages download an offline pack from Look and language > Offline languages. Pashto, Sindhi and Punjabi are not available offline, but I still translate them online. The same window has Subject dictionaries (medical, internet, business, science, world and history): built-in entries work offline, and anything you look up online is saved on the phone for offline use later. Ask me "what is diabetes" or "define zebra" and I answer from them.']);
+        PF_APP.push(['tradingview|live chart|freezing|frozen|not loading|candles not loading|418|blocked|realtime|real time', 'Live chart and TradingView', 'On the Chart window you can switch between 📊 Our chart (UT Bot signals, support/resistance, Long/Short) and 📺 TradingView live. Our chart moves with every price tick and is corrected from the exchange every 5 seconds. If Binance blocks the phone (HTTP 418) the app switches by itself to Bybit, OKX, Binance spot data or Gate, so charts and prices keep updating. The line above the chart shows the source and how fresh it is. Links to TradingView and other sites are under the chart.']);
+        PF_APP.push(['signal lab|not proven|edge seen|99.9|accuracy|indicator test|ut bot accuracy', 'Signal Lab', 'Signal Lab replays UT Bot, Supertrend, EMA cross, RSI and Bot Baba on past candles of 10 markets, with fees. The verdict covers buying and selling (short) together. Under each verdict you see the Buy side and the Sell side separately. “Not proven” means the rule did not make money after fees, with enough trades, in most markets. No indicator can honestly promise 99.9%. Changing the time frame runs the test again.']);
+        PF_WIN['Repair centre'] = 'health';
+        PF_APP.push(['repair|fix|fixer|self heal|freezing|frozen app|hanging|stuck|not updating|stale|prices old|flicker|jumping', 'Repair centre', 'Just say “fix the app” (or “it is frozen”) to Baba AI. The Repair centre runs in the background (it has no menu button) and shows a message with what it fixed. It checks internet, live prices, the chart data, saved settings and smoothness, fixes what it can (restarts the price feed, reloads an empty chart, resets a damaged setting, switches on the Calm look if the screen stutters) and tells you in plain words what it did. The app also repairs these by itself, all the time. If prices stay old, Binance or your network is blocking this phone: switch between Wi-Fi and mobile data, and use Chart > Test my live connections.']);
+        PF_APP.push(['theme|look studio|icon set|layout|popup|tap feedback|motion|beginner|pro mode|trader mode', 'Look and mode', 'Menu > Look & mode: Mode (Beginner, Pro, Trader) sits in one row. Motion is one switch (Off, Soft, Rich) plus Tap feedback (Off or Faint; it never flashes while you scroll). The theme gallery has 28 looks with live previews and an Undo bar. Style lets you change shape, font, bottom bar, icon weight, Icon set (Outline, Duotone, Badge, Ring, Orb), window-grid Layout (Grid, Big, List, Dense), press effect and spacing. Each theme sets its own defaults.']);
+    } catch (e) { try { console.error('p9zszzt2', e); } catch (e2) { } }
 })();
 /* ===== CI: p9zszzu: richer sharp Baba AI look, Strategy Agent step-by-step wizard (Previous / Next with dots), direct "Open ..." in chat ===== */
 (function () {
@@ -17709,9 +17742,49 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         var TABS = [['best', '⭐ Best (top picks)'], ['all', '📋 All (full list)'], ['plan', '🧭 Plan (gold & big coins)']];
         function cur() { var t = KX.idT; return t === 'all' || t === 'plan' ? t : 'best'; }
         function call(f) { try { return f.apply(null, []); } catch (e) { return '<div class="note">This part could not load: ' + X.e2(e && e.message) + '</div>'; } }
+        /* ---------- Best tab: real best picks, with a tab per exchange so lists never mix ---------- */
+        var BST = { keys: null, at: 0 }, LT2 = Date.now();
+        ['touchstart', 'pointerdown', 'wheel', 'scroll'].forEach(function (ev) { document.addEventListener(ev, function () { LT2 = Date.now(); }, { passive: true, capture: true }); });
+        function steady(list, keyOf) {
+            var now = Date.now(), busy = now - LT2 < 25000, map = {}, out = [], seen = {};
+            list.forEach(function (x) { map[keyOf(x)] = x; });
+            if (!BST.keys || (!busy && now - BST.at > 90000)) { BST.keys = list.map(keyOf); BST.at = now; return list; }
+            BST.keys.forEach(function (k) { if (map[k]) { out.push(map[k]); seen[k] = 1; } });
+            list.forEach(function (x) { if (!seen[keyOf(x)]) { out.push(x); } });
+            BST.keys = out.map(keyOf); return out;
+        }
+        var XL = [['all', 'All'], ['binance', 'Binance'], ['mexc', 'MEXC'], ['bitget', 'Bitget']];
+        function bxc() { var t = KX.bxch; return XL.some(function (x) { return x[0] === t; }) ? t : 'all'; }
+        function onEx(ex, sym) { try { return !!(window.XCH && XCH.listed(ex, sym)); } catch (e) { return ex === 'binance'; } }
+        function vBestX() {
+            try { bpRefresh(false); } catch (e) { }
+            var ex = bxc(), real = [], bp = [], checked = 0;
+            try { real = idRows().filter(function (m) { return m && m.R && m.R.best; }); } catch (e) { }
+            try { bp = bpList('fh').concat(bpList('day')); checked = Object.keys(S.bp.c).length; } catch (e) { }
+            var rk = {}; real.forEach(function (m) { rk[m.sym + '|' + m.side] = 1; });
+            var all = steady(real.map(function (m) { return { t: 'r', k: 'r|' + m.key, m: m, sym: m.sym }; }).concat(bp.filter(function (p) { return !rk[p.sym + '|' + p.side]; }).map(function (p) { return { t: 'c', k: 'c|' + p.sym + '|' + p.hz + '|' + p.side, p: p, sym: p.sym }; })), function (x) { return x.k; });
+            var h = X.seg('bxch', XL, ex) + '<div class="warn" style="margin:0 0 8px">⭐ <b>Real best picks</b> must pass the strict live check (all time frames agree, order book, volume, funding, news) <b>and</b> a test on that coin\'s own last 20 days. Often there are none, and then the right action is to wait. Never a promise of profit; always use the stop shown.</div>';
+            h += '<div class="note" style="margin:0 0 6px">' + checked + ' big coins checked on 4 time frames. The order stays fixed while you look at the list; new coins join at the bottom.</div>';
+            function card(x) { try { return x.t === 'r' ? idRow(x.m) : bpCard(x.p); } catch (e) { return ''; } }
+            function block(title, arr) {
+                var r = arr.filter(function (x) { return x.t === 'r'; }), c = arr.filter(function (x) { return x.t === 'c'; }), o = sh(title + ' (' + r.length + ' real · ' + c.length + ' close)');
+                if (!arr.length) { return o + '<div class="group pad mut">Nothing passes the checks on this exchange right now. That is normal: wait.</div>'; }
+                if (r.length) { o += '<div class="note" style="margin:0 0 4px">✅ Real best: passed the strict check and the 20-day test</div><div class="group">' + r.map(card).join('') + '</div>'; } else { o += '<div class="group pad mut">No pick has passed both checks here right now.</div>'; }
+                if (c.length) { o += '<div class="note" style="margin:6px 0 4px">👀 Close calls: strict live check passed, 20-day test not confirmed. Smaller size, extra care.</div>' + c.map(card).join(''); }
+                return o;
+            }
+            if (ex === 'all') {
+                var used = {}; XL.slice(1).forEach(function (e) { var arr = all.filter(function (x) { return onEx(e[0], x.sym); }); arr.forEach(function (x) { used[x.k] = 1; }); h += block(e[1], arr); });
+                var oth = all.filter(function (x) { return !used[x.k]; }); if (oth.length) { h += block('Other markets (gold, indices, others)', oth); }
+                h += '<div class="note">A coin that trades on several exchanges appears under each of them.</div>';
+            } else {
+                h += block((XL.filter(function (e) { return e[0] === ex; })[0] || [0, ex])[1], all.filter(function (x) { return onEx(ex, x.sym); }));
+            }
+            return h + '<div class="note">Stock-linked contracts are skipped while the US market is closed. Not financial advice.</div>';
+        }
         VIEWS.ideas = function () {
             var t = cur(), h = X.seg('idT', TABS, t);
-            return h + call(t === 'best' ? vB : t === 'plan' ? vP : vI);
+            return h + call(t === 'best' ? (function () { try { return vBestX(); } catch (e) { return vB(); } }) : t === 'plan' ? vP : vI);
         };
         LIVE.ideas = 1;
         try { var w = winDef('ideas'); if (w) { w.n = 'Ideas'; w.t = 'Ideas'; w.sub = 'Best picks, the full ranked list and the Master Plan, in one place'; } } catch (e) { }
@@ -17726,6 +17799,819 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         var st = document.createElement('style'); st.textContent = '#sheetMenu [data-act="win:best"],#sheetMenu [data-act="win:plan"]{display:none!important}'; document.head.appendChild(st);
         window.__ideasTabs = { cur: cur };
     } catch (e) { try { console.error('p9zszzy', e); } catch (e2) { } }
+})();
+/* ===== CR: p9zszzz: Chart that never goes blank. (1) Candles: if Binance blocks this phone (HTTP 418/429) or fails, the same request is answered from Bybit, OKX, Binance spot data or Gate, in Binance's format, so every chart and tool keeps working. (2) The last candle updates every 3 seconds (the live stream is blocked in this WebView) and a failed first load retries by itself. (3) A row of links under the chart: TradingView and other top sites for the same coin. ===== */
+(function () {
+    try {
+        var X = window.__kx, e2 = X.e2, nf = window.fetch, KX = X.KX;
+        if (typeof nf !== 'function') { return; }
+        var IV = {
+            bybit: { '1m': '1', '3m': '3', '5m': '5', '15m': '15', '30m': '30', '1h': '60', '2h': '120', '4h': '240', '6h': '360', '12h': '720', '1d': 'D', '1w': 'W' },
+            okx: { '1m': '1m', '3m': '3m', '5m': '5m', '15m': '15m', '30m': '30m', '1h': '1H', '2h': '2H', '4h': '4H', '6h': '6Hutc', '12h': '12Hutc', '1d': '1Dutc', '1w': '1Wutc' },
+            gate: { '1m': '1m', '5m': '5m', '15m': '15m', '30m': '30m', '1h': '1h', '4h': '4h', '8h': '8h', '1d': '1d' }
+        };
+        function rowOf(t, o, h, l, c, v) { return [+t, String(o), String(h), String(l), String(c), String(v || 0), +t + 1, '0', 0, '0', '0', '0']; }
+        function jget(url, sig) { return nf.call(window, url, { cache: 'no-store', signal: sig }).then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); }); }
+        var SRC = [
+            ['Bybit', function (p, sig) { var iv = IV.bybit[p.iv]; if (!iv) { throw 0; } return jget('https://api.bybit.com/v5/market/kline?category=linear&symbol=' + p.sym + '&interval=' + iv + '&limit=' + p.n, sig).then(function (j) { var a = j && j.result && j.result.list; if (!a || a.length < 2) { throw 0; } return a.slice().reverse().map(function (x) { return rowOf(x[0], x[1], x[2], x[3], x[4], x[5]); }); }); }],
+            ['OKX', function (p, sig) { var iv = IV.okx[p.iv]; if (!iv) { throw 0; } return jget('https://www.okx.com/api/v5/market/candles?instId=' + p.base + '-USDT-SWAP&bar=' + iv + '&limit=' + Math.min(p.n, 300), sig).then(function (j) { var a = j && j.data; if (!a || a.length < 2) { throw 0; } return a.slice().reverse().map(function (x) { return rowOf(x[0], x[1], x[2], x[3], x[4], x[6] || x[5]); }); }); }],
+            ['Gate', function (p, sig) { var iv = IV.gate[p.iv]; if (!iv) { throw 0; } return jget('https://api.gateio.ws/api/v4/futures/usdt/candlesticks?contract=' + p.base + '_USDT&interval=' + iv + '&limit=' + p.n, sig).then(function (a) { if (!Array.isArray(a) || a.length < 2) { throw 0; } return a.map(function (x) { return rowOf(x.t * 1000, x.o, x.h, x.l, x.c, 0); }); }); }]
+        ];
+        var LASTOK = {}, NAME = { v: '' }, SER = {};
+        function fb(p, o, orig) {
+            var sig = o && o.signal, i = 0, order = SRC.slice(); var pref = LASTOK[p.iv]; if (pref) { order.sort(function (a, b) { return (a[0] === pref ? -1 : 0) - (b[0] === pref ? -1 : 0); }); }
+            function nxt() {
+                if (i >= order.length) { if (orig && orig.ok === false) { return Promise.resolve(orig); } return Promise.reject(orig || new Error('no source')); }
+                var s = order[i++];
+                var mu = 1, pp = p; if ((s[0] === 'OKX' || s[0] === 'Gate') && /^(1000000|10000|1000|1M)[A-Z]/.test(p.sym)) { var mm = /^(1000000|10000|1000|1M)/.exec(p.sym)[1]; mu = mm === '1M' ? 1e6 : +mm; pp = { sym: p.sym, base: p.base.replace(/^(1000000|10000|1000|1M)/, ''), iv: p.iv, n: p.n }; }
+                return s[1](pp, sig).then(function (rows) { if (mu !== 1) { rows = rows.map(function (r) { return [r[0], String(r[1] * mu), String(r[2] * mu), String(r[3] * mu), String(r[4] * mu), r[5], r[6], r[7], r[8], r[9], r[10], r[11]]; }); } LASTOK[p.iv] = s[0]; NAME.v = s[0]; if (p.n >= 100) { SER[p.sym + '|' + p.iv] = s[0]; } return new Response(JSON.stringify(rows), { status: 200, headers: { 'content-type': 'application/json', 'x-mw-source': s[0] } }); }, nxt);
+            }
+            return nxt();
+        }
+        /* ---------- prices for the whole market when Binance blocks us ---------- */
+        var TCB = { at: 0, txt: '' };
+        var TC = { at: 0, rows: null, busy: null, src: '' };
+        function tfb(orig) {
+            if (TC.rows && Date.now() - TC.at < 4000) { return Promise.resolve(new Response(JSON.stringify(TC.rows), { status: 200, headers: { 'content-type': 'application/json' } })); }
+            if (TC.busy) { return TC.busy.then(function () { return tfb(orig); }, function () { return Promise.reject(orig); }); }
+            function j(u) { return nf.call(window, u, { cache: 'no-store' }).then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); }); }
+            var by = j('https://api.bybit.com/v5/market/tickers?category=linear').then(function (d) { var a = d && d.result && d.result.list || [], o = []; a.forEach(function (x) { if (/USDT$/.test(x.symbol) && +x.lastPrice > 0) { o.push({ symbol: x.symbol, lastPrice: x.lastPrice, openPrice: x.prevPrice24h, highPrice: x.highPrice24h, lowPrice: x.lowPrice24h, quoteVolume: x.turnover24h, priceChangePercent: String((+x.price24hPcnt || 0) * 100) }); } }); return o; }).catch(function () { return []; });
+            var ok = j('https://www.okx.com/api/v5/market/tickers?instType=SWAP').then(function (d) { var a = d && d.data || [], o = []; a.forEach(function (x) { var m = /^(.+)-USDT-SWAP$/.exec(x.instId || ''); if (m && +x.last > 0) { var op = +x.open24h || +x.last; o.push({ symbol: m[1] + 'USDT', lastPrice: x.last, openPrice: x.open24h, highPrice: x.high24h, lowPrice: x.low24h, quoteVolume: String((+x.volCcy24h || 0) * (+x.last)), priceChangePercent: String(op ? (+x.last - op) / op * 100 : 0) }); } }); return o; }).catch(function () { return []; });
+            TC.busy = Promise.all([by, ok]).then(function (v) {
+                var K1 = { PEPE: 1000, SHIB: 1000, BONK: 1000, FLOKI: 1000, LUNC: 1000, XEC: 1000, SATS: 1000, RATS: 1000, CAT: 1000, MOG: 1000000 }; v[1].forEach(function (x) { var b = x.symbol.replace(/USDT$/, ''); if (K1[b]) { var k = K1[b]; x.symbol = (k === 1e6 ? '1000000' : '1000') + b + 'USDT'; ['lastPrice', 'openPrice', 'highPrice', 'lowPrice'].forEach(function (f) { x[f] = String(+x[f] * k); }); } });
+                var seen = {}, out = []; v[0].concat(v[1]).forEach(function (x) { if (!seen[x.symbol]) { seen[x.symbol] = 1; out.push(x); } });
+                TC.busy = null; if (out.length < 20) { throw 0; } TC.rows = out; TC.at = Date.now(); TC.src = v[0].length ? 'Bybit' : 'OKX'; NAME.t = TC.src;
+            }, function () { TC.busy = null; throw 0; });
+            return TC.busy.then(function () { return new Response(JSON.stringify(TC.rows), { status: 200, headers: { 'content-type': 'application/json', 'x-mw-source': TC.src } }); }, function () { if (orig && orig.ok === false) { return orig; } return Promise.reject(orig || new Error('no price source')); });
+        }
+        window.fetch = function (u, o) {
+            var url = typeof u === 'string' ? u : (u && u.url) || '';
+            if (/^https:\/\/fapi\.binance\.com\/fapi\/v1\/ticker\/24hr(\?|$)/.test(url) && !/symbol=/.test(url)) {
+                if (TCB.txt && Date.now() - TCB.at < 6000) { return Promise.resolve(new Response(TCB.txt, { status: 200, headers: { 'content-type': 'application/json' } })); }
+                return nf.apply(window, arguments).then(function (r) { if (!r.ok) { return tfb(r); } return r.clone().text().then(function (t) { TCB.txt = t; TCB.at = Date.now(); return r; }); }, function (e) { return tfb(e); });
+            }
+            var m = /^https:\/\/(?:fapi|api)\.binance\.com\/(?:fapi\/v1|api\/v3)\/klines\?(.*)$/.exec(url);
+            if (!m) { return nf.apply(window, arguments); }
+            var q = {}; m[1].split('&').forEach(function (kv) { var a = kv.split('='); q[a[0]] = decodeURIComponent(a[1] || ''); });
+            if (!q.symbol || !/USDT$/.test(q.symbol) || !q.interval || q.startTime || q.endTime) { return nf.apply(window, arguments); }
+            var p = { sym: q.symbol, base: q.symbol.replace(/USDT$/, ''), iv: q.interval, n: Math.min(+q.limit || 120, 1000) };
+            return nf.apply(window, arguments).then(function (r) { if (r.ok) { if (p.n >= 100) { SER[p.sym + '|' + p.iv] = 'Binance futures'; } return r; } return fb(p, o, r); }, function (e) { return fb(p, o, e); });
+        };
+        /* ---------- live candles: the last candle moves with every price tick, and is corrected from the exchange every 5 s ---------- */
+        var TFMS = { '1m': 6e4, '3m': 18e4, '5m': 3e5, '15m': 9e5, '30m': 18e5, '1h': 36e5, '2h': 72e5, '4h': 144e5, '6h': 216e5, '8h': 288e5, '12h': 432e5, '1d': 864e5 };
+        var busy = 0, errAt = 0, fetchAt = 0, skip = 0, LV = { src: 'Binance', at: 0, drawAt: 0, pend: 0 };
+        function draw() { var n = Date.now(); if (n - LV.drawAt < 250) { if (!LV.pend) { LV.pend = 1; setTimeout(function () { LV.pend = 0; draw(); }, 260); } return; } LV.drawAt = n; try { drawChart(); } catch (e) { } }
+        function merge(c, rows) {
+            var ch = 0; rows.forEach(function (r) {
+                var cd = { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }, n = c.k.length, last = c.k[n - 1], j, hit = -1;
+                if (!last || !(cd.t > 0)) { return; }
+                for (j = n - 1; j >= Math.max(0, n - 3); j--) { if (c.k[j].t === cd.t) { hit = j; break; } }
+                if (hit >= 0) { var x = c.k[hit]; if (x.c !== cd.c || x.h !== cd.h || x.l !== cd.l || x.o !== cd.o || (cd.v && x.v !== cd.v)) { c.k[hit] = { t: cd.t, o: cd.o, h: cd.h, l: cd.l, c: cd.c, v: cd.v || x.v }; ch = 1; } }
+                else if (cd.t > last.t) { c.k.push(cd); if (c.k.length > 300) { c.k.shift(); } ch = 1; }
+            }); return ch;
+        }
+        function tickMove(c) {
+            var k = c.k, last = k[k.length - 1], t = S.tick && S.tick[c.sym], ms = TFMS[c.tf]; if (!last || !t || !(t.p > 0) || Date.now() - t.at > 20000) { return 0; }
+            if (ms && Date.now() >= last.t + ms) { fetchAt = 0; return 0; }
+            var p = t.p, ch = 0;
+            if (SER[c.sym + '|' + c.tf] && SER[c.sym + '|' + c.tf] !== 'Binance futures') { return 0; }
+            if (last.c !== p) { last.c = p; ch = 1; } if (p > last.h) { last.h = p; ch = 1; } if (p < last.l) { last.l = p; ch = 1; }
+            return ch;
+        }
+        var RL2 = 0;
+        function reloadSeries(c) {
+            if (Date.now() - RL2 < 15000) { return; } RL2 = Date.now(); var sym = c.sym, tf = c.tf;
+            fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=' + tf + '&limit=300', { cache: 'no-store' }).then(function (r) { if (!r.ok) { throw 0; } return r.json(); }).then(function (rows) {
+                if (sym !== c.sym || tf !== c.tf || !Array.isArray(rows) || rows.length < 50) { return; }
+                c.k = rows.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }; }); LV.at = Date.now(); draw();
+            }).catch(function () { });
+        }
+        setInterval(function () {
+            try {
+                if (S.win !== 'chart' || document.hidden) { return; }
+                var c = S.chart; if (!c || !c.sym) { return; }
+                if (c.err || !c.k || !c.k.length) { if (Date.now() - errAt > 6000 && !busy) { errAt = Date.now(); loadChart(); } return; }
+                if (tickMove(c)) { LV.at = Date.now(); draw(); }
+                if (busy || skip > 0 && (skip--, 1) || Date.now() - fetchAt < (LS.name && Date.now() - LS.at < 6000 ? 20000 : 5000)) { return; }
+                var sym = c.sym, tf = c.tf; busy = 1; fetchAt = Date.now();
+                fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=' + tf + '&limit=3', { cache: 'no-store' }).then(function (r) { if (!r.ok) { throw 0; } LV.srcRaw = r.headers.get('x-mw-source') || 'Binance futures'; LV.src = LV.srcRaw === 'Binance futures' ? 'Binance' : LV.srcRaw; return r.json(); }).then(function (rows) {
+                    busy = 0; if (sym !== c.sym || tf !== c.tf || S.win !== 'chart' || !Array.isArray(rows)) { return; }
+                    var have = SER[sym + '|' + tf]; if (have && LV.srcRaw !== have) { reloadSeries(c); return; }
+                    LV.at = Date.now(); if (merge(c, rows)) { draw(); }
+                }).catch(function () { busy = 0; skip = 2; });
+            } catch (e) { busy = 0; }
+        }, 1000);
+        setInterval(function () {
+            try { var el = document.getElementById('cplv'); if (!el) { return; } var a = LV.at ? Math.max(0, Math.round((Date.now() - LV.at) / 1000)) : -1, ok = a >= 0 && a < 15; var tx = (ok ? '● LIVE' : '○ reconnecting') + ' · ' + LV.src + (ok ? ' · updated ' + (a <= 1 ? 'just now' : a + 's ago') : ''); if (el.getAttribute('data-t') !== tx) { el.setAttribute('data-t', tx); el.textContent = tx; el.style.color = ok ? '#16a34a' : '#ff9f0a'; } } catch (e) { }
+        }, 1000);
+        /* ---------- links to top sites ---------- */
+        function links(sym) {
+            var base = sym.replace(/USDT$/, ''), u = /USDT$/.test(sym), L = [];
+            L.push(['📈 TradingView', 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent('BINANCE:' + sym + (u ? '.P' : ''))]);
+            if (u) {
+                L.push(['Binance', 'https://www.binance.com/en/futures/' + sym]);
+                L.push(['Bybit', 'https://www.bybit.com/trade/usdt/' + sym]);
+                L.push(['OKX', 'https://www.okx.com/trade-swap/' + base.toLowerCase() + '-usdt-swap']);
+                L.push(['CoinGlass', 'https://www.coinglass.com/currencies/' + base]);
+                L.push(['CoinGecko', 'https://www.coingecko.com/en/search?query=' + base]);
+            }
+            return '<div class="group pad" data-noswipe="1"><b>🔗 Open ' + e2(base || sym) + ' on top sites</b><div style="margin-top:6px">' + L.map(function (x) { return X.lk(x[0], x[1]); }).join('') + '</div><div class="note" style="margin:6px 0 0">These open in your browser. TradingView shows its own full chart with drawing tools.</div></div>';
+        }
+        /* ---------- TradingView live chart (its own stream, never freezes) next to our chart ---------- */
+        var TVH = null, TVI = { '1m': '1', '3m': '3', '5m': '5', '15m': '15', '30m': '30', '1h': '60', '2h': '120', '4h': '240', '6h': '360', '12h': '720', '1d': 'D', '1w': 'W' };
+        function dark() { try { var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(document.body).backgroundColor); return m ? (+m[1] * .3 + +m[2] * .59 + +m[3] * .11) < 110 : false; } catch (e) { return false; } }
+        function tvSrc(c) { var sym = c.sym, ts = /USDT$/.test(sym) ? 'BINANCE:' + sym + '.P' : sym; return 'https://s.tradingview.com/widgetembed/?frameElementId=cvtv&symbol=' + encodeURIComponent(ts) + '&interval=' + (TVI[c.tf] || '15') + '&hidesidetoolbar=0&symboledit=1&saveimage=0&toolbarbg=f1f3f6&studies=%5B%5D&theme=' + (dark() ? 'dark' : 'light') + '&style=1&timezone=Asia%2FKarachi&withdateranges=1&locale=en'; }
+        var MODES = [['own', '📊 Our chart (signals, Long / Short)'], ['tv', '📺 TradingView live (never freezes)']];
+        function tvOn() { return KX.cvm === 'tv'; }
+        function sync() {
+            try {
+                var v = document.getElementById('view'); if (!v || !v.parentNode) { return; }
+                var on = S.win === 'chart' && tvOn() && S.chart && S.chart.sym;
+                if (!TVH) { TVH = document.createElement('div'); TVH.id = 'cvtvHost'; TVH.setAttribute('data-mwkeep', '1'); TVH.setAttribute('data-noswipe', '1'); TVH.style.cssText = 'padding:0 0 8px'; v.parentNode.insertBefore(TVH, v); }
+                TVH.style.display = on ? 'block' : 'none'; if (!on) { return; }
+                var src = tvSrc(S.chart);
+                if (TVH.getAttribute('data-src') !== src) { TVH.setAttribute('data-src', src); TVH.innerHTML = X.seg('cvm', MODES, 'tv') + '<iframe src="' + src + '" style="width:100%;height:min(64vh,540px);border:0;border-radius:14px;display:block;background:var(--card,#fff)" allow="fullscreen"></iframe><div class="note" style="margin:4px 4px 0">This is TradingView\'s own live chart (price stream from TradingView, so it keeps moving). Switch to "Our chart" for UT Bot signals, support/resistance and Long / Short.</div>'; }
+            } catch (e) { }
+        }
+        var _rv = renderView; renderView = function () { var r = _rv.apply(this, arguments); sync(); return r; };
+        setInterval(sync, 1500);
+        var _vc = VIEWS.chart;
+        VIEWS.chart = function () {
+            var h = _vc.apply(this, arguments);
+            try {
+                var c = S.chart, k = '<div class="sh">Tools</div>', i = h.indexOf(k); if (c && c.sym && i >= 0) { h = h.slice(0, i) + links(c.sym) + testHtml() + h.slice(i); }
+                var g = h.indexOf('id="chartInfo"');
+                if (g >= 0) {
+                    g = h.lastIndexOf('<div class="group pad"', g);
+                    if (g >= 0) {
+                        if (tvOn()) { h = h.slice(0, g) + '<div class="group pad" style="display:none"' + h.slice(g + '<div class="group pad"'.length); }
+                        else if (h.indexOf('id="cplv"') < 0) { h = h.slice(0, g) + X.seg('cvm', MODES, 'own') + '<div id="cplv" style="height:18px;line-height:18px;font:700 12px -apple-system,Segoe UI,sans-serif;margin:0 4px 4px;overflow:hidden;white-space:nowrap"></div>' + h.slice(g); }
+                    }
+                }
+            } catch (e) { window.__vcErr = String(e && e.stack || e); }
+            return h;
+        };
+        /* ---------- idea list keeps its order while you look at it ---------- */
+        var LT = Date.now(), STB = { keys: null, at: 0, obj: {} };
+        ['touchstart', 'pointerdown', 'wheel', 'scroll'].forEach(function (ev) { document.addEventListener(ev, function () { LT = Date.now(); }, { passive: true, capture: true }); });
+        try {
+            var _ir = idRows;
+            idRows = function () {
+                var l = _ir.apply(this, arguments); if (!Array.isArray(l)) { return l; }
+                try {
+                    var now = Date.now(), busy = (now - LT < 25000) || (typeof IDS !== 'undefined' && IDS.open), map = {}, out = [], seen = {};
+                    l.forEach(function (m) { if (m && m.key) { map[m.key] = m; STB.obj[m.key] = m; m.__seen = now; } });
+                    if (!STB.keys || (!busy && now - STB.at > 90000)) { STB.keys = l.map(function (m) { return m && m.key; }); STB.at = now; return l; }
+                    STB.keys.forEach(function (k) { if (map[k]) { out.push(map[k]); seen[k] = 1; } else if (typeof IDS !== 'undefined' && IDS.open === k && STB.obj[k] && now - (STB.obj[k].__seen || 0) < 120000 && !(STB.obj[k].to && STB.obj[k].to < now)) { out.push(STB.obj[k]); seen[k] = 1; } });
+                    l.forEach(function (m) { if (m && m.key && !seen[m.key]) { out.push(m); } });
+                    out.forEach(function (m, i) { m.rank = i + 1; });
+                    STB.keys = out.map(function (m) { return m.key; });
+                    return out;
+                } catch (e) { return l; }
+            };
+            window.__idRows = function () { return idRows(); };
+        } catch (e) { }
+        /* ---------- true live stream for the chart you are looking at (WebSocket), trying several exchanges ---------- */
+        var LS = { ws: null, key: '', i: 0, name: '', at: 0, tm: 0, pg: 0, dead: {}, log: [] };
+        var WSC = [
+            ['Binance futures', function (c) { return 'wss://fstream.binance.com/ws/' + c.sym.toLowerCase() + '@kline_' + c.tf; }, null, function (m) { return m && m.k ? [[m.k.t, m.k.o, m.k.h, m.k.l, m.k.c, m.k.v]] : null; }],
+            ['Bybit', function () { return 'wss://stream.bybit.com/v5/public/linear'; }, function (c) { return JSON.stringify({ op: 'subscribe', args: ['kline.' + (IV.bybit[c.tf] || '15') + '.' + c.sym] }); }, function (m) { return m && m.data && m.topic && /^kline\./.test(m.topic) ? m.data.map(function (x) { return [x.start, x.open, x.high, x.low, x.close, x.volume]; }) : null; }],
+            ['OKX', function () { return 'wss://ws.okx.com:8443/ws/v5/business'; }, function (c) { return JSON.stringify({ op: 'subscribe', args: [{ channel: 'candle' + (IV.okx[c.tf] || '15m'), instId: c.sym.replace(/USDT$/, '') + '-USDT-SWAP' }] }); }, function (m) { return m && m.data && m.arg && /^candle/.test(m.arg.channel) ? m.data.map(function (x) { return [x[0], x[1], x[2], x[3], x[4], x[6] || x[5]]; }) : null; }]
+        ];
+        function lsClose() { try { if (LS.ws) { LS.ws.onmessage = LS.ws.onerror = LS.ws.onclose = LS.ws.onopen = null; LS.ws.close(); } } catch (e) { } LS.ws = null; clearTimeout(LS.tm); clearInterval(LS.pg); LS.name = ''; }
+        function lsOpen(c, i) {
+            lsClose(); LS.key = c.sym + '|' + c.tf; LS.i = i;
+            if (i >= WSC.length) { LS.log.push('all streams failed for ' + c.sym); LS.retry = Date.now() + 30000; return; }
+            var d = WSC[i], key = LS.key, ws, got = 0, url = d[1](c), sr = SER[c.sym + '|' + c.tf];
+            if (sr && sr !== d[0] && !(sr === 'Binance futures' && d[0] === 'Binance futures')) { return lsOpen(c, i + 1); }
+            if (LS.dead[d[0]] && Date.now() < LS.dead[d[0]]) { return lsOpen(c, i + 1); }
+            function fail(why) { if (LS.key !== key || got) { return; } LS.log.push(d[0] + ': ' + why); LS.dead[d[0]] = Date.now() + 120000; lsOpen(c, i + 1); }
+            try { ws = new WebSocket(url); } catch (e) { return fail('cannot start'); }
+            LS.ws = ws;
+            LS.tm = setTimeout(function () { if (!got) { try { ws.close(); } catch (e) { } fail('no data in 6s'); } }, 6000);
+            ws.onopen = function () { try { if (d[2]) { ws.send(d[2](c)); } } catch (e) { } if (d[0] === 'Bybit') { LS.pg = setInterval(function () { try { ws.send('{"op":"ping"}'); } catch (e) { } }, 20000); } else if (d[0] === 'OKX') { LS.pg = setInterval(function () { try { ws.send('ping'); } catch (e) { } }, 25000); } };
+            ws.onerror = function () { fail('connection refused or blocked'); };
+            ws.onclose = function (ev) { if (LS.key === key && got) { LS.name = ''; LS.retry = Date.now() + 1500; } else { fail('closed (code ' + (ev && ev.code) + ')'); } };
+            ws.onmessage = function (ev) {
+                var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+                var rows = d[3](m); if (!rows || !rows.length) { return; }
+                var cc = S.chart; if (!cc || cc.sym !== c.sym || cc.tf !== c.tf || !cc.k || !cc.k.length) { return; }
+                if (!got) { got = 1; clearTimeout(LS.tm); LS.name = d[0]; LS.log.push(d[0] + ': connected'); }
+                LS.at = Date.now(); LV.at = LS.at; LV.src = d[0] + ' live stream';
+                if (merge(cc, rows.map(function (r) { return [+r[0], +r[1], +r[2], +r[3], +r[4], +r[5]]; }))) { draw(); }
+            };
+        }
+        setInterval(function () {
+            try {
+                var c = S.chart, on = S.win === 'chart' && c && c.sym && c.k && c.k.length && !document.hidden && KX.cvm !== 'tv';
+                if (!on) { if (LS.ws && (S.win !== 'chart' || document.hidden)) { LS.idle = LS.idle || Date.now(); if (Date.now() - LS.idle > 20000) { lsClose(); LS.key = ''; LS.idle = 0; } } return; }
+                LS.idle = 0;
+                var key = c.sym + '|' + c.tf;
+                if (LS.key !== key || (!LS.ws && (!LS.retry || Date.now() > LS.retry))) { lsOpen(c, 0); }
+            } catch (e) { }
+        }, 1000);
+        /* ---------- connection test (plain words) ---------- */
+        var CT = { run: 0, rows: [] };
+        function testWs(name, url, sub) {
+            return new Promise(function (res) {
+                var t0 = Date.now(), done = 0, ws;
+                function fin(ok, why) { if (done) { return; } done = 1; try { ws.close(); } catch (e) { } res({ n: name, ok: ok, t: why }); }
+                try { ws = new WebSocket(url); } catch (e) { return fin(false, 'cannot start'); }
+                var tm = setTimeout(function () { fin(false, 'no answer in 7 seconds'); }, 7000);
+                ws.onopen = function () { try { if (sub) { ws.send(sub); } } catch (e) { } };
+                ws.onmessage = function () { clearTimeout(tm); fin(true, 'live data arrived in ' + (Date.now() - t0) + ' ms'); };
+                ws.onerror = function () { clearTimeout(tm); fin(false, 'blocked or refused'); };
+                ws.onclose = function (ev) { clearTimeout(tm); fin(false, 'closed by the server (code ' + (ev && ev.code) + ')'); };
+            });
+        }
+        function testRest(name, url) {
+            var t0 = Date.now();
+            return nf.call(window, url, { cache: 'no-store' }).then(function (r) { return { n: name, ok: r.ok, t: r.ok ? 'answered in ' + (Date.now() - t0) + ' ms' : 'HTTP ' + r.status + (r.status === 418 || r.status === 429 ? ' (this phone is temporarily blocked for sending too many requests)' : '') }; }, function () { return { n: name, ok: false, t: 'not reachable' }; });
+        }
+        function runTest() {
+            if (CT.run) { return; } CT.run = 1; CT.rows = []; X.again();
+            var jobs = [
+                testRest('Binance Futures (prices)', 'https://fapi.binance.com/fapi/v1/ping'), testRest('Binance spot data', 'https://data-api.binance.vision/api/v3/ping'), testRest('Bybit (prices)', 'https://api.bybit.com/v5/market/time'), testRest('OKX (prices)', 'https://www.okx.com/api/v5/public/time'),
+                testWs('Binance Futures (live stream)', 'wss://fstream.binance.com/ws/btcusdt@trade'), testWs('Binance spot data (live stream)', 'wss://data-stream.binance.vision/ws/btcusdt@trade'),
+                testWs('Bybit (live stream)', 'wss://stream.bybit.com/v5/public/linear', JSON.stringify({ op: 'subscribe', args: ['publicTrade.BTCUSDT'] })), testWs('OKX (live stream)', 'wss://ws.okx.com:8443/ws/v5/public', JSON.stringify({ op: 'subscribe', args: [{ channel: 'trades', instId: 'BTC-USDT-SWAP' }] }))
+            ];
+            Promise.all(jobs).then(function (r) { CT.rows = r; CT.run = 0; CT.at = Date.now(); X.again(); });
+        }
+        X.on('wstest', function () { runTest(); });
+        function testHtml() {
+            var h = '<div class="group pad" data-noswipe="1"><b>🔧 Test my live connections</b><div class="note" style="margin:4px 0 8px">Checks which price servers and live streams work on this phone, and tells you the reason if one is blocked.</div><button class="btn" data-xk="wstest:1"' + (CT.run ? ' disabled' : '') + '>' + (CT.run ? 'Testing… (about 8 seconds)' : 'Run the test') + '</button>';
+            if (CT.rows.length) {
+                h += '<div style="margin-top:8px">' + CT.rows.map(function (r) { return '<div style="display:flex;gap:8px;padding:5px 0;border-top:1px solid var(--line,#e5e5ea);font-size:13px"><span>' + (r.ok ? '✅' : '❌') + '</span><span><b>' + e2(r.n) + '</b><br><span class="mut">' + e2(r.t) + '</span></span></div>'; }).join('') + '</div>';
+                var okS = CT.rows.filter(function (r) { return /live stream/.test(r.n) && r.ok; }).length, okR = CT.rows.filter(function (r) { return !/live stream/.test(r.n) && r.ok; }).length;
+                h += '<div class="note" style="margin:8px 0 0">' + (okS === 0 && okR > 0 ? 'Normal prices work but live streams do not. Your network or the app\'s browser is blocking live streams. The app keeps polling every few seconds instead.' : okS > 0 ? 'At least one live stream works, so the chart can run on it automatically.' : 'No price server answered. Check your internet or try a different network (Wi-Fi vs mobile data).') + (CT.rows[0] && /blocked for sending/.test(CT.rows[0].t) ? ' Binance has paused this phone for a few minutes. Other sources are being used meanwhile.' : '') + '</div>';
+            }
+            return h + '</div>';
+        }
+        /* ---------- honest odds: the chance of reaching the target before the stop uses the plain barrier odds (no invented floor), expected R uses the cost-adjusted target and stop ---------- */
+        try {
+            var _ic = idCalc;
+            idCalc = function (c) {
+                var R = _ic.apply(this, arguments);
+                try {
+                    var fee = 0.1, tpN = Math.max(0.01, c.tpP - fee), slN = c.slP + fee, pz = c.slP / (c.tpP + c.slP);
+                    var p = Math.max(Math.max(0.03, pz - 0.12), Math.min(Math.min(0.9, pz + 0.12), pz + R.edge * 0.12));
+                    R.p0 = pz; R.p = p; R.expR = p * (tpN / slN) - (1 - p);
+                    var veto = R.F.some(function (f) { return f.k === 'fx' && f.v < 0 || f.k === 'tim' && f.v < 0; });
+                    R.best = !R.blocked && p >= 0.62 && R.expR > 0.1 && R.sup >= Math.ceil(R.n * 0.7) && !veto;
+                } catch (e) { }
+                return R;
+            };
+        } catch (e) { }
+        window.__chartfb = { name: NAME, SRC: SRC, TC: TC, STB: STB, LS: LS, runTest: runTest };
+    } catch (e) { try { console.error('p9zszzz', e); } catch (e2) { } }
+})();
+/* ===== CR: p9zszzzz: speed. Animations that forced the phone to repaint every frame (pulsing shadows, glowing text, shimmer) now use only cheap opacity/transform; all animations pause while you scroll, and when the app is hidden. ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent =
+            '@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}' +
+            '@keyframes sk{0%,100%{opacity:.55}50%{opacity:1}}' +
+            '.sk,.skb{background-size:100% 100%!important;background-position:0 0!important}' +
+            '@keyframes mwneonlbl{0%,100%{opacity:1}50%{opacity:.8}}' +
+            '.mwtm{will-change:transform;backface-visibility:hidden}' +
+            '.lvb.d,.stbtn::after,#dot,.c3[data-act]::after{will-change:opacity}' +
+            'html.mwscr *:not(.mwtm):not(.sk):not(.skb):not(.mwit),html.mwscr *::before,html.mwscr *::after{animation-play-state:paused!important}' +
+            'html.mwhid *,html.mwhid *::before,html.mwhid *::after{animation-play-state:paused!important}' +
+            '#view .group,#view .tile,#view .c2,#view .c3{contain:layout style}' +
+            /* crystal look: crisp text, hairline edges, sharp vector icons (cheap: no extra blur layers) */
+            'html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}' +
+            'svg{shape-rendering:geometricPrecision}canvas{image-rendering:-webkit-optimize-contrast}' +
+            '#view .group,#view .tile,#view .c2{border:.5px solid rgba(128,128,128,.22)}' +
+            '#view .group,#view .tile{box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 6px 18px rgba(0,0,0,.07)}' +
+            '#view b,#view h1,#view h2{letter-spacing:-.1px}';
+        document.head.appendChild(st);
+        var h = document.documentElement, tm = 0;
+        window.addEventListener('scroll', function () { if (!h.classList.contains('mwscr')) { h.classList.add('mwscr'); } clearTimeout(tm); tm = setTimeout(function () { h.classList.remove('mwscr'); }, 220); }, { passive: true, capture: true });
+        document.addEventListener('touchmove', function () { if (!h.classList.contains('mwscr')) { h.classList.add('mwscr'); } clearTimeout(tm); tm = setTimeout(function () { h.classList.remove('mwscr'); }, 260); }, { passive: true, capture: true });
+        document.addEventListener('visibilitychange', function () { h.classList.toggle('mwhid', document.hidden); });
+        window.__speed = { v: 1 };
+    } catch (e) { try { console.error('p9zszzzz', e); } catch (e2) { } }
+})();
+/* ===== CS: p9fix: a Repair centre that really repairs: checks internet, price feed, chart data, damaged saved data and smoothness, FIXES what it can, and says in plain words what it did. Also runs quietly by itself. ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2, RK = 'mintoosuite_repair';
+        var LOG = []; try { LOG = JSON.parse(localStorage.getItem(RK) || '[]') || []; } catch (e) { LOG = []; }
+        var R = { busy: 0, rows: [], at: 0 }, LT = [];
+        function note(t) { LOG.push({ t: Date.now(), m: t }); if (LOG.length > 30) { LOG = LOG.slice(-30); } try { localStorage.setItem(RK, JSON.stringify(LOG)); } catch (e) { } }
+        try { new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { LT.push({ t: Date.now(), d: e.duration }); }); LT = LT.filter(function (x) { return Date.now() - x.t < 60000; }); }).observe({ entryTypes: ['longtask'] }); } catch (e) { }
+        function jank() { var n = Date.now(); LT = LT.filter(function (x) { return n - x.t < 60000; }); return LT.filter(function (x) { return x.d > 120; }).length; }
+        function age() { try { return dataAge(); } catch (e) { return Infinity; } }
+        function srcName() { try { var f = window.__chartfb; if (f && f.TC && f.TC.at && Date.now() - f.TC.at < 15000) { return f.TC.src + ' (backup, because Binance is not answering)'; } } catch (e) { } return 'Binance'; }
+        function calmOn(why) { try { localStorage.setItem('mintoosuite_calm', '1'); localStorage.setItem('mintoosuite_fx', 'off'); } catch (e) { } try { document.documentElement.classList.add('mwcalm', 'mwnolive'); } catch (e) { } try { applyTheme(); } catch (e) { } note('Calm look switched on: ' + why); }
+        function storageFix() {
+            var bad = [], tot = 0, k, v, i, keys = [];
+            try { for (i = 0; i < localStorage.length; i++) { keys.push(localStorage.key(i)); } } catch (e) { return { bad: [], tot: 0 }; }
+            keys.forEach(function (k) {
+                try { v = localStorage.getItem(k) || ''; tot += v.length; if (/^mintoosuite_/.test(k) && /^\s*[\[{]/.test(v)) { try { JSON.parse(v); } catch (e) { bad.push(k); localStorage.removeItem(k); } } } catch (e) { }
+            });
+            if (tot > 3.2e6) { ['mintoosuite_errlog', 'mintoosuite_heal', RK].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) { } }); }
+            return { bad: bad, tot: tot };
+        }
+        function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+        function diag(fix) {
+            var rows = [], p = Promise.resolve();
+            /* internet */
+            rows.push(navigator.onLine ? { s: 'ok', n: 'Internet', m: 'Connected.' } : { s: 'warn', n: 'Internet', m: 'Phone says it is offline. Turn on Wi-Fi or mobile data. Everything else waits for this.' });
+            /* prices */
+            var a0 = age(), prow = { n: 'Live prices' };
+            if (a0 < 20000) { prow.s = 'ok'; prow.m = 'Updating (last update ' + Math.round(a0 / 1000) + ' s ago, from ' + srcName() + ').'; }
+            else if (!fix) { prow.s = 'warn'; prow.m = 'Prices are ' + (isFinite(a0) ? Math.round(a0 / 1000) + ' s old' : 'not loaded yet') + '. Tap "Check and fix now".'; }
+            else { prow.s = 'work'; prow.m = 'Restarting the price feed…'; p = p.then(function () { try { reconnect(); } catch (e) { } try { pollREST(true); } catch (e) { } return wait(4000); }).then(function () { var a1 = age(); if (a1 < 20000) { prow.s = 'fix'; prow.m = 'Fixed. Prices are updating again from ' + srcName() + '.'; note('Repair: price feed restarted, now live via ' + srcName()); } else { prow.s = 'warn'; prow.m = 'Still no fresh prices. Binance or your network is blocking this phone for now; the app keeps trying backup sources (Bybit, OKX) every few seconds. Try the other network (Wi-Fi / mobile data).'; note('Repair: prices still stale'); } }); }
+            rows.push(prow);
+            /* chart */
+            try {
+                var c = S.chart; if (c && c.sym) {
+                    var crow = { n: 'Chart data (' + c.sym + ')' };
+                    if (c.k && c.k.length && !c.err) { crow.s = 'ok'; crow.m = c.k.length + ' candles loaded.'; }
+                    else if (!fix) { crow.s = 'warn'; crow.m = c.err ? 'Could not load: ' + c.err : 'No candles yet.'; }
+                    else { crow.s = 'work'; crow.m = 'Reloading the candles…'; p = p.then(function () { try { loadChart(); } catch (e) { } return wait(3500); }).then(function () { if (c.k && c.k.length && !c.err) { crow.s = 'fix'; crow.m = 'Fixed. ' + c.k.length + ' candles loaded.'; note('Repair: chart reloaded'); } else { crow.s = 'warn'; crow.m = 'Still empty. This coin may not exist on the backup exchanges. Open the TradingView option on the chart.'; } }); }
+                    rows.push(crow);
+                }
+            } catch (e) { }
+            /* saved data */
+            var st = fix ? storageFix() : null;
+            if (fix) { rows.push(st.bad.length ? { s: 'fix', n: 'Saved data', m: 'Fixed. ' + st.bad.length + ' damaged item(s) were reset: ' + st.bad.map(function (k) { return k.replace('mintoosuite_', ''); }).join(', ') + '. Your other settings are untouched.' } : { s: 'ok', n: 'Saved data', m: 'All saved settings are readable (' + Math.round(st.tot / 1024) + ' KB).' }); if (st.bad.length) { note('Repair: reset damaged data ' + st.bad.join(',')); } }
+            else { var bad = 0; try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i), v = localStorage.getItem(k) || ''; if (/^mintoosuite_/.test(k) && /^\s*[\[{]/.test(v)) { try { JSON.parse(v); } catch (e) { bad++; } } } } catch (e) { } rows.push(bad ? { s: 'warn', n: 'Saved data', m: bad + ' damaged item(s). Tap "Check and fix now".' } : { s: 'ok', n: 'Saved data', m: 'All saved settings are readable.' }); }
+            /* smoothness */
+            var j = jank(), calm = false; try { calm = localStorage.getItem('mintoosuite_calm') === '1'; } catch (e) { }
+            if (j >= 5 && !calm) { if (fix) { calmOn(j + ' slow moments in the last minute'); rows.push({ s: 'fix', n: 'Smoothness', m: 'Fixed. The screen stuttered ' + j + ' times in the last minute, so the Calm look (no animations) is on now. You can turn it off in Look & mode.' }); } else { rows.push({ s: 'warn', n: 'Smoothness', m: 'The screen stuttered ' + j + ' times in the last minute. Tap "Check and fix now" to switch on the Calm look.' }); } }
+            else { rows.push({ s: 'ok', n: 'Smoothness', m: j ? j + ' short slow moment(s) in the last minute, nothing to fix.' : 'Smooth. No slow moments in the last minute.' }); }
+            /* memory */
+            try { var pm = performance.memory; if (pm) { var u = pm.usedJSHeapSize / pm.jsHeapSizeLimit; if (u > 0.7) { if (fix) { try { wsWatchdog(); renderView(true); } catch (e) { } rows.push({ s: 'fix', n: 'Memory', m: 'Memory was ' + Math.round(u * 100) + '% full. Old data was cleared.' }); note('Repair: memory cleanup'); } else { rows.push({ s: 'warn', n: 'Memory', m: Math.round(u * 100) + '% full.' }); } } else { rows.push({ s: 'ok', n: 'Memory', m: Math.round(u * 100) + '% used.' }); } } } catch (e) { }
+            /* update */
+            try { if (S.update) { rows.push({ s: 'warn', n: 'App version', m: 'A newer version is ready. Use "Update now" at the top of Home.' }); } } catch (e) { }
+            return { rows: rows, done: p };
+        }
+        function ag() { if (S.win === 'health') { X.again(); } }
+        function run(fix) {
+            if (R.busy) { return; } R.busy = 1; var d = diag(fix); R.rows = d.rows; ag();
+            var iv = setInterval(function () { if (S.win === 'health') { ag(); } }, 700);
+            d.done.then(function () { clearInterval(iv); R.busy = 0; R.at = Date.now(); if (fix && S.win !== 'health') { try { var fx = R.rows.filter(function (r) { return r.s === 'fix'; }), wn = R.rows.filter(function (r) { return r.s === 'warn'; }); toast(fx.length || wn.length ? '🛠 Repair done: ' + fx.length + ' fixed' + (wn.length ? ', ' + wn.length + ' need you (' + wn.map(function (r) { return r.n; }).join(', ') + ')' : '') : '🛠 Checked everything: all fine'); } catch (e) { } } if (fix) { note('Repair centre run: ' + R.rows.filter(function (r) { return r.s === 'fix'; }).length + ' fixed, ' + R.rows.filter(function (r) { return r.s === 'warn'; }).length + ' need you'); } ag(); });
+        }
+        X.on('rpx', function (v) { run(v === 'go'); });
+        function icon(s) { return s === 'ok' ? '✅' : s === 'fix' ? '🔧' : s === 'work' ? '⏳' : '⚠️'; }
+        function tab() {
+            var h = '<div class="group pad"><b style="font-size:17px">🛠 Repair centre</b><div class="note" style="margin:4px 0 8px">Checks the things that make an app feel broken (internet, prices, chart, saved data, smoothness), fixes what it can, and tells you plainly what it did.</div><button class="btn" data-xk="rpx:go"' + (R.busy ? ' disabled' : '') + '>' + (R.busy ? 'Working…' : '🛠 Check and fix now') + '</button> <button class="btn sec" data-xk="rpx:chk" style="width:auto;padding:8px 14px"' + (R.busy ? ' disabled' : '') + '>Only check</button></div>';
+            if (!R.rows.length) { R.rows = diag(false).rows; }
+            h += '<div class="group pad">' + R.rows.map(function (r) { return '<div style="display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line,#e5e5ea)"><span style="font-size:18px">' + icon(r.s) + '</span><span><b>' + e2(r.n) + '</b><br><span class="note" style="margin:0">' + e2(r.m) + '</span></span></div>'; }).join('') + '<div class="note" style="margin:6px 0 0">✅ fine · 🔧 fixed just now · ⚠️ needs you or time</div></div>';
+            h += '<div class="group pad"><b>Repairs the app does by itself</b><div class="note" style="margin:4px 0 0">• Restarts the price feed when prices go stale, and switches to backup sources when Binance blocks the phone.<br>• Reloads an empty chart every few seconds.<br>• Resets a damaged saved setting instead of crashing.<br>• Switches on the Calm look when the screen stutters or flickers.<br>• Starts in Calm mode after repeated crashes.</div></div>';
+            var l = LOG.slice(-10).reverse(); h += '<div class="group pad"><b>What it did lately</b>' + (l.length ? l.map(function (x) { var d = new Date(x.t); return '<div class="note" style="margin:4px 0 0"><b>' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + '</b> ' + e2(x.m) + '</div>'; }).join('') : '<div class="note" style="margin:4px 0 0">Nothing needed fixing yet.</div>') + '</div>';
+            return h;
+        }
+        var _H = VIEWS.health;
+        VIEWS.health = function () {
+            if (KX.hlT === 'fix') { return X.seg('hlT', [['status', '🩺 Health'], ['sec', '🛡 Security'], ['perf', '📈 Stability'], ['fix', '🛠 Repair']], 'fix') + tab(); }
+            var h = _H.apply(this, arguments); return h.replace(/(data-xk="hlT:perf"[^>]*>[^<]*<\/span>)/, '$1<span class="" data-xk="hlT:fix" style="flex:1 1 auto;text-align:center;white-space:nowrap">🛠 Repair</span>');
+        };
+        /* quiet self-repair */
+        var lastFeed = 0, lastCalm = 0;
+        storageFix();
+        setInterval(function () {
+            try {
+                if (document.hidden || !navigator.onLine) { return; }
+                var a = age(), n = Date.now();
+                if (a > 25000 && isFinite(a) && n - lastFeed > 30000) { lastFeed = n; try { reconnect(); pollREST(true); } catch (e) { } note('Auto: price feed restarted (prices were ' + Math.round(a / 1000) + ' s old)'); }
+                if (jank() >= 8 && n - lastCalm > 300000) { var c = ''; try { c = localStorage.getItem('mintoosuite_calm'); } catch (e) { } if (c !== '1') { lastCalm = n; calmOn('the screen stuttered ' + jank() + ' times in a minute'); try { toast('🛠 The screen was stuttering, so the Calm look is on. Change it in Look & mode.'); } catch (e) { } } }
+            } catch (e) { }
+        }, 10000);
+        /* Health is hidden from the menus: it works in the background. Baba AI ("fix the app") still runs it and reports in a message. */
+        try {
+            var hs = document.createElement('style'); hs.setAttribute('data-mwkeep', '1'); hs.textContent = '#sheetMenu [data-act="win:health"],#tiles [data-act="win:health"],#view [data-act="win:health"].tile,#view [data-act="win:health"].c3,#view [data-act="win:health"].row{display:none!important}'; document.head.appendChild(hs);
+            var _mt = mwTiles; mwTiles = function () { var h = _mt.apply(this, arguments); return h.replace(new RegExp('<div class="tile[^"]*" data-act="win:health"><div class="ic"[\\s\\S]*?</div>[^<]*</div>', 'g'), ''); };
+        } catch (e) { }
+        window.__repair = { diag: diag, run: run, R: R, jank: jank, LOG: function () { return LOG; } };
+    } catch (e) { try { console.error('p9fix', e); } catch (e2) { } }
+})();
+/* ===== CT: p9ux: reviewer fixes. One first-run popup at a time, no Home blocks flashing on other windows, bigger tap targets, clearer text colours, swipe arrows fade. ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent =
+            /* 1. never two first-run popups together */
+            'body:has(#wtour) #mwMode{display:none!important}' +
+            'body:has(#wtour) #mwcoach,body:has(#wtour) #mwtoast{display:none!important}' +
+            /* 2. Home-only blocks never show on other windows (no flash, no 300px jump) */
+            'html[data-win]:not([data-win="overview"]) #mwcc,html[data-win]:not([data-win="overview"]) #mwmk,html[data-win]:not([data-win="overview"]) #mwbd,html[data-win]:not([data-win="overview"]) #mwHome{display:none!important}' +
+            /* 3. tap targets at least 44px tall without changing the look */
+            '#view [data-xk],#view .seg b,#view .seg button,#view .chip,#view .pill{min-height:40px;display:inline-flex;align-items:center;justify-content:center}' +
+            '#view .fav,#view [data-act^="fav"]{min-width:44px;min-height:44px}' +
+            /* 4. text colours that can be read */
+            '#view .warn{color:#8a4b00}@media(prefers-color-scheme:dark){#view .warn{color:#ffb454}}' +
+            '#view .mut{opacity:.78}' +
+            '@media(prefers-color-scheme:light){#view .up{color:#0a7a3d}}' +
+            '.wrap>:not(#view) [data-act^="win:"]{min-height:40px;display:inline-flex;align-items:center}' +
+            /* 6. Chart window: chart higher up, fixed bar never covers content or the Full screen button */
+            '#plstrip{padding:6px 10px!important}#plstrip .note{display:none}#plstrip>div:first-child{margin-bottom:0!important}' +
+            '#view .group.pad:has([data-stq^="sym:"]){padding:4px 8px!important;margin-bottom:6px!important}' +
+            '#fsbtn{bottom:142px!important}html[data-win="chart"] #view{padding-bottom:150px}' +
+            /* 5. swipe arrows: visible for 3 seconds after opening, then faint */
+            '#mwsl,#mwsr{opacity:.0;animation:uxfade 3.2s ease-out 1}@keyframes uxfade{0%{opacity:.9}70%{opacity:.9}100%{opacity:0}}' +
+            '#mwsl:active,#mwsr:active{opacity:.9}';
+        document.head.appendChild(st);
+        // keep html[data-win] in step with the open window (checked often, cheap)
+        var last = '';
+        setInterval(function () { try { var w = window.__kDbg && window.__kDbg.S && window.__kDbg.S.win; if (w && w !== last) { last = w; document.documentElement.setAttribute('data-win', w); } } catch (e) { } }, 16);
+        window.__ux = { v: 1 };
+    } catch (e) { try { console.error('p9ux', e); } catch (e2) { } }
+})();
+/* ===== CU: p9cp: five extra chart tools (our own code). Each has a tick box, all OFF by default so nothing doubles up with the support/resistance lines already on the chart. ===== */
+(function () {
+    try {
+        var X = window.__kx; if (!X) { return; } var KX = X.KX;
+        function g(k, d) { return KX[k] === undefined ? d : KX[k]; }
+        function on(k) { return g(k, 'off') === 'on'; }
+        var LIST = [['zz', 'Swing structure (HH HL LH LL)'], ['ch', 'Trend channel'], ['dv', 'Divergence marks'], ['vs', 'Volume spikes'], ['fg', 'Gaps to fill']];
+        function pivots(K, L) { var hi = [], lo = [], i, j, ph, pl; for (i = L; i < K.length - L; i++) { ph = pl = true; for (j = 1; j <= L; j++) { if (K[i].h <= K[i - j].h || K[i].h < K[i + j].h) { ph = false; } if (K[i].l >= K[i - j].l || K[i].l > K[i + j].l) { pl = false; } } if (ph) { hi.push(i); } if (pl) { lo.push(i); } } return { hi: hi, lo: lo }; }
+        function rsi(K, n) { var r = [], ag = 0, al = 0, i, d; for (i = 0; i < K.length; i++) { if (!i) { r.push(50); continue; } d = K[i].c - K[i - 1].c; var up = d > 0 ? d : 0, dn = d < 0 ? -d : 0; if (i <= n) { ag += up / n; al += dn / n; } else { ag = (ag * (n - 1) + up) / n; al = (al * (n - 1) + dn) / n; } r.push(i < n ? 50 : al === 0 ? 100 : 100 - 100 / (1 + ag / al)); } return r; }
+        var _o = window.__cxOver;
+        window.__cxOver = function (c, m) {
+            if (_o) { _o(c, m); }
+            var K = m.K; if (!K || K.length < 40) { return; } if (!LIST.some(function (o) { return on(o[0]); })) { return; }
+            try {
+                var Y = m.yr || m.y, ytop = m.padT, ybot = m.padT + m.ph, i, last = K.length - 1, P;
+                c.save(); c.beginPath(); c.rect(0, ytop, m.W, m.ph); c.clip(); c.font = '700 9px -apple-system,Segoe UI,sans-serif'; c.textAlign = 'center';
+                if (on('zz') || on('dv')) { P = pivots(K, 5); }
+                if (on('zz')) {
+                    var pts = P.hi.map(function (i) { return { i: i, p: K[i].h, t: 'h' }; }).concat(P.lo.map(function (i) { return { i: i, p: K[i].l, t: 'l' }; })).sort(function (a, b) { return a.i - b.i; }), z = [], q;
+                    pts.forEach(function (p) { q = z[z.length - 1]; if (q && q.t === p.t) { if ((p.t === 'h' && p.p > q.p) || (p.t === 'l' && p.p < q.p)) { z[z.length - 1] = p; } } else { z.push(p); } });
+                    c.lineWidth = 1.4; c.globalAlpha = 0.85; c.strokeStyle = '#a78bfa'; c.beginPath(); var st = false; z.forEach(function (p) { if (p.i < m.start - 1 || p.i > m.end + 1) { return; } var x = m.xs(p.i), y = Y(p.p); if (!st) { c.moveTo(x, y); st = true; } else { c.lineTo(x, y); } }); c.stroke();
+                    var ph = null, pl = null;
+                    z.forEach(function (p) { var lab; if (p.t === 'h') { lab = ph === null ? '' : p.p > ph ? 'HH' : 'LH'; ph = p.p; } else { lab = pl === null ? '' : p.p > pl ? 'HL' : 'LL'; pl = p.p; } if (!lab || p.i < m.start || p.i > m.end) { return; } var up = lab === 'HH' || lab === 'HL', x = m.xs(p.i), y = Y(p.p) + (p.t === 'h' ? -7 : 12); c.globalAlpha = 1; c.fillStyle = up ? m.GR : m.RD; c.fillText(lab, x, y); });
+                }
+                if (on('ch')) {
+                    var n = Math.min(100, K.length), s0 = K.length - n, sx = 0, sy = 0, sxy = 0, sxx = 0, k;
+                    for (k = 0; k < n; k++) { sx += k; sy += K[s0 + k].c; sxy += k * K[s0 + k].c; sxx += k * k; }
+                    var sl = (n * sxy - sx * sy) / (n * sxx - sx * sx), ic = (sy - sl * sx) / n, sd = 0; for (k = 0; k < n; k++) { var d = K[s0 + k].c - (ic + sl * k); sd += d * d; } sd = Math.sqrt(sd / n);
+                    [[0, '#a78bfa', 1.6, []], [2, '#f59e0b', 1, [5, 4]], [-2, '#f59e0b', 1, [5, 4]]].forEach(function (L) { c.strokeStyle = L[1]; c.lineWidth = L[2]; c.globalAlpha = 0.8; c.setLineDash(L[3]); c.beginPath(); c.moveTo(m.xs(s0), Y(ic + L[0] * sd)); c.lineTo(m.xs(last), Y(ic + sl * (n - 1) + L[0] * sd)); c.stroke(); }); c.setLineDash([]);
+                }
+                if (on('dv')) {
+                    var R = rsi(K, 14), a, b2, j2;
+                    for (j2 = 1; j2 < P.hi.length; j2++) { a = P.hi[j2 - 1]; b2 = P.hi[j2]; if (K[b2].h > K[a].h && R[b2] < R[a] - 2 && b2 >= m.start && b2 <= m.end) { c.globalAlpha = 0.9; c.strokeStyle = c.fillStyle = m.RD; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(m.xs(a), Y(K[a].h)); c.lineTo(m.xs(b2), Y(K[b2].h)); c.stroke(); c.setLineDash([]); c.fillText('DIV▼', m.xs(b2), Y(K[b2].h) - 16); } }
+                    for (j2 = 1; j2 < P.lo.length; j2++) { a = P.lo[j2 - 1]; b2 = P.lo[j2]; if (K[b2].l < K[a].l && R[b2] > R[a] + 2 && b2 >= m.start && b2 <= m.end) { c.globalAlpha = 0.9; c.strokeStyle = c.fillStyle = m.GR; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(m.xs(a), Y(K[a].l)); c.lineTo(m.xs(b2), Y(K[b2].l)); c.stroke(); c.setLineDash([]); c.fillText('DIV▲', m.xs(b2), Y(K[b2].l) + 22); } }
+                }
+                if (on('vs')) {
+                    for (i = Math.max(m.start, 20); i < Math.min(m.end, last); i++) { var av = 0, q2; for (q2 = 1; q2 <= 20; q2++) { av += K[i - q2].v || 0; } av /= 20; if (av > 0 && K[i].v > 2.5 * av) { c.globalAlpha = 0.95; c.fillStyle = K[i].c >= K[i].o ? m.GR : m.RD; c.beginPath(); c.arc(m.xs(i), K[i].c >= K[i].o ? Y(K[i].h) - 6 : Y(K[i].l) + 6, 3.2, 0, 6.3); c.fill(); } }
+                }
+                if (on('fg')) {
+                    var gaps = [], t2;
+                    for (i = 2; i <= last; i++) { if (K[i].l > K[i - 2].h) { gaps.push({ i: i - 1, lo: K[i - 2].h, hi: K[i].l, up: 1 }); } else if (K[i].h < K[i - 2].l) { gaps.push({ i: i - 1, lo: K[i].h, hi: K[i - 2].l, up: 0 }); } }
+                    gaps = gaps.filter(function (G) { for (t2 = G.i + 2; t2 <= last; t2++) { if (G.up ? K[t2].l <= G.lo : K[t2].h >= G.hi) { return false; } } return true; }).slice(-6);
+                    gaps.forEach(function (G) { var y1 = Y(G.hi), y2 = Y(G.lo), x0 = Math.max(0, m.xs(Math.max(G.i, m.start))); c.globalAlpha = 0.18; c.fillStyle = G.up ? m.GR : m.RD; c.fillRect(x0, y1, m.W - x0, Math.max(2, y2 - y1)); c.globalAlpha = 0.8; c.fillText('gap', Math.min(m.W - 14, x0 + 14), y1 + 9); });
+                }
+                c.globalAlpha = 1; c.restore();
+            } catch (e) { try { c.restore(); } catch (e2) { } }
+        };
+        var _vc = VIEWS.chart;
+        VIEWS.chart = function () {
+            var h = _vc.apply(this, arguments);
+            var row = '<div class="m7ind" data-noswipe="1"><span style="opacity:.7;cursor:default">More tools:</span>' + LIST.map(function (o) { var a = on(o[0]); return '<span class="' + (a ? 'on' : '') + '" data-xk="' + o[0] + ':' + (a ? 'off' : 'on') + '">' + (a ? '✓ ' : '') + o[1] + '</span>'; }).join('') + '</div><div class="note" style="margin:4px 0 0;font-size:11px">Tick a tool to draw it on the chart; untick to hide. They are off by default so the chart stays clean. These are estimates from past candles, not promises.</div>';
+            var a = '<div class="note" id="chartNote"';
+            return h.indexOf(a) >= 0 ? h.replace(a, row + a) : h + row;
+        };
+        window.__cp = { v: 1, LIST: LIST };
+    } catch (e) { try { console.error('p9cp', e); } catch (e2) { } }
+})();
+/* ===== CW: p9ai: AI signal on the chart. A rules-and-statistics model (not a chatbot): scores 7 indicators, then measures how similar setups on THIS coin really ended before it shows a confidence. Closed candles only, never repaints, mostly says HOLD unless the history shows an edge. ===== */
+(function () { var __root = {};
+(function (root) {
+  var STOP = 1.5, T1 = 1.5, T2 = 3, H = 24, FEE = 0.0008, THR = 0.35, MINN = 30, K0 = 20, LOOK = 1500;
+  function ema(a, n) { var k = 2 / (n + 1), e = null, o = new Array(a.length), i; for (i = 0; i < a.length; i++) { e = e === null ? a[i] : a[i] * k + e * (1 - k); o[i] = e; } return o; }
+  function rma(a, n) { var o = new Array(a.length), r = 0, i; for (i = 0; i < a.length; i++) { r = i < n ? (r * i + a[i]) / (i + 1) : (r * (n - 1) + a[i]) / n; o[i] = r; } return o; }
+  function rsi(c, n) { var u = [0], d = [0], i; for (i = 1; i < c.length; i++) { u.push(Math.max(0, c[i] - c[i - 1])); d.push(Math.max(0, c[i - 1] - c[i])); } var U = rma(u, n), D = rma(d, n); return U.map(function (x, j) { return D[j] === 0 ? 100 : 100 - 100 / (1 + x / D[j]); }); }
+  function cl(x) { return x > 1 ? 1 : x < -1 ? -1 : x; }
+  function sgn(x) { return x > 0 ? 1 : x < 0 ? -1 : 0; }
+  /* per-bar score in [-1,1] using only bars <= i. Returns arrays. */
+  function series(K, upto) {
+    var n = upto, c = [], tr = [], i;
+    for (i = 0; i < n; i++) { c.push(K[i].c); tr.push(i ? Math.max(K[i].h - K[i].l, Math.abs(K[i].h - K[i - 1].c), Math.abs(K[i].l - K[i - 1].c)) : K[i].h - K[i].l); }
+    var atr = rma(tr, 14), e9 = ema(c, 9), e21 = ema(c, 21), e50 = ema(c, 50), r = rsi(c, 14);
+    var e12 = ema(c, 12), e26 = ema(c, 26), dif = e12.map(function (x, j) { return x - e26[j]; }), sig = ema(dif, 9);
+    /* supertrend(10,3) direction, causal recursion */
+    var a10 = rma(tr, 10), fu = 0, fl = 0, dir = 1, st = [];
+    for (i = 0; i < n; i++) { var m = (K[i].h + K[i].l) / 2, bu = m + 3 * a10[i], bl = m - 3 * a10[i];
+      if (i === 0) { fu = bu; fl = bl; } else { fu = (bu < fu || c[i - 1] > fu) ? bu : fu; fl = (bl > fl || c[i - 1] < fl) ? bl : fl; if (dir === 1 && c[i] < fl) { dir = -1; } else if (dir === -1 && c[i] > fu) { dir = 1; } }
+      st.push(dir); }
+    /* higher timeframe = 4x bars, anchored on absolute time so groups never shift when new candles arrive; only COMPLETED groups used */
+    var ds = []; for (i = 1; i < Math.min(n, 200); i++) { ds.push(K[i].t - K[i - 1].t); } ds.sort(function (x, y) { return x - y; });
+    var dt = ds.length ? ds[ds.length >> 1] : 1, G = dt * 4, gid = K.slice(0, n).map(function (k) { return Math.floor(k.t / G); });
+    var hc = [], hid = []; for (i = 0; i < n; i++) { if (i === n - 1 || gid[i + 1] !== gid[i]) { hc.push(c[i]); hid.push(gid[i]); } }
+    /* group j is complete at the bar that closes it, i.e. known from the next group's first bar on */
+    var h8 = ema(hc, 8), h21 = ema(hc, 21), hAt = {}; for (i = 0; i < hid.length; i++) { hAt[hid[i]] = i; }
+    var score = new Array(n), parts = new Array(n), hs = new Array(n);
+    for (i = 0; i < n; i++) {
+      var a = atr[i] || 1e-12, lo = Infinity, hi = -Infinity, j, w = Math.max(0, i - 19);
+      for (j = w; j <= i; j++) { lo = Math.min(lo, K[j].l); hi = Math.max(hi, K[j].h); }
+      var jg = hAt[gid[i]] - 1; /* last fully completed HTF group before this bar's group */
+      var ht = (i < 60 || jg < 21) ? 0 : cl((h8[jg] - h21[jg]) / (a * 2));
+      var f = { trend: cl((e9[i] - e21[i]) / (a * 1.5)), slope: i > 5 ? cl((e50[i] - e50[i - 5]) / (a * 1.0)) : 0, st: st[i], mom: cl((r[i] - 50) / 25), macd: cl((dif[i] - sig[i]) / (a * 0.5)), brk: hi > lo ? cl(((c[i] - (hi + lo) / 2) / ((hi - lo) / 2))) : 0 };
+      var s = 0.22 * f.trend + 0.12 * f.slope + 0.2 * f.st + 0.12 * f.mom + 0.12 * f.macd + 0.12 * f.brk + 0.10 * ht;
+      /* HTF disagreement dampens (not flips) the score */
+      if (ht !== 0 && sgn(ht) !== sgn(s)) { s *= 0.6; }
+      f.htf = ht; score[i] = i < 60 ? 0 : cl(s / 0.9); parts[i] = f; hs[i] = ht;
+    }
+    return { score: score, parts: parts, atr: atr };
+  }
+  /* triple barrier outcome for an entry at close of bar i (fill = next open i+1). +1 hit T1 first, -1 stop first/tie, 0 timeout. needs i+H <= last known bar */
+  function outcome(K, i, side, a) {
+    var e = K[i + 1].o, st = e - side * STOP * a, t1 = e + side * T1 * a, j;
+    for (j = i + 1; j <= i + H; j++) { var hitS = side > 0 ? K[j].l <= st : K[j].h >= st, hitT = side > 0 ? K[j].h >= t1 : K[j].l <= t1; if (hitS) { return -1; } if (hitT) { return 1; } }
+    return 0;
+  }
+  function wilsonLo(w, n) { if (!n) return 0; var z = 1.28, p = w / n; return (p + z * z / (2 * n) - z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))) / (1 + z * z / n); }
+  /* core(K, upto): reads ONLY K[0..upto-1]. */
+  function core(K, upto) {
+    var n = upto, hold = function (why, extra) { var o = { side: 'hold', conf: null, stop: null, t1: null, t2: null, reasons: [why], n: 0, score: 0 }; for (var k in extra) o[k] = extra[k]; return o; };
+    if (n < 150) return hold('Not enough candles (' + n + '/150) to learn this coin', {});
+    var S = series(K, n), i = n - 1, sc = S.score[i], a = S.atr[i], side = sgn(sc);
+    if (Math.abs(sc) < THR) return hold('Indicators disagree (score ' + sc.toFixed(2) + ', need beyond +-' + THR + ')', { score: sc });
+    /* calibration: past bars with same side and |score|>=THR whose outcome is fully known by bar n-1; thinned so events do not overlap */
+    var w = 0, l = 0, to = 0, last = -1e9, from = Math.max(60, n - LOOK);
+    for (var j = from; j + H + 1 <= n - 1; j++) {
+      var s2 = S.score[j]; if (sgn(s2) !== side || Math.abs(s2) < THR || j - last < H / 2) continue;
+      last = j; var o = outcome(K, j, side, S.atr[j]); if (o > 0) w++; else if (o < 0) l++; else to++;
+    }
+    var N = w + l + to, pr = 0.5 - FEE / (T1 * a / K[i].c) * 0.5, p = (w + K0 * pr) / (N + K0), lo = wilsonLo(w + K0 * pr, N + K0);
+    var rr = T1 / STOP, costR = 2 * FEE * K[i].c / (STOP * a), expR = p * rr - (1 - p) - costR;
+    var px = K[i].c, R = [];
+    var pt = S.parts[i]; [['trend', 'EMA9 vs EMA21'], ['st', 'Supertrend'], ['mom', 'RSI momentum'], ['macd', 'MACD histogram'], ['brk', 'position in 20-bar range'], ['htf', '4x timeframe trend']].forEach(function (q) { var v = pt[q[0]]; if (sgn(v) === side && Math.abs(v) > 0.2) R.push(q[1] + ' agrees'); else if (sgn(v) === -side && Math.abs(v) > 0.2) R.push(q[1] + ' disagrees'); });
+    R.push('On this coin, ' + N + ' similar past setups: ' + w + ' hit target first, ' + l + ' hit stop first, ' + to + ' timed out');
+    if (N < MINN) { R.unshift('Only ' + N + ' similar past setups (need ' + MINN + '): not enough proof'); return { side: 'hold', conf: null, stop: null, t1: null, t2: null, reasons: R, n: N, score: sc }; }
+    if (expR <= 0.05 || lo < 0.42) { R.unshift('Past results on this coin do not show an edge after fees'); return { side: 'hold', conf: null, stop: null, t1: null, t2: null, reasons: R, n: N, score: sc, p: p, lo: lo }; }
+    return { side: side > 0 ? 'buy' : 'sell', conf: Math.round(p * 100), lo: Math.round(lo * 100), expR: +expR.toFixed(2), n: N, score: +sc.toFixed(2),
+      entry: px, stop: px - side * STOP * a, t1: px + side * T1 * a, t2: px + side * T2 * a, reasons: R };
+  }
+  function aiSignal(K) { return core(K, K.length); }
+  var api = { aiSignal: aiSignal, _core: core, _series: series, _outcome: outcome };
+  __root.aiSignal = aiSignal;
+})(__root);
+try {
+    var X = window.__kx, KX = X.KX, AI = __root.aiSignal, CACHE = {}, STAMP = {};
+    function g(k, d) { return KX[k] === undefined ? d : KX[k]; }
+    function onAI() { return g('aisig', 'on') !== 'off'; }
+    function fpx(p, s) { try { return fmtP(p, s); } catch (e) { return String(Math.round(p * 1e6) / 1e6); } }
+    function tfKey(K) { var d = K.length > 1 ? K[K.length - 1].t - K[K.length - 2].t : 0; return d; }
+    function sigFor(K, sym) {
+        var C = K.slice(0, -1); if (C.length < 150) { return { side: 'hold', reasons: ['Needs 150 closed candles (have ' + C.length + ')'] }; }
+        var key = sym + '|' + tfKey(K) + '|' + C[C.length - 1].t; if (CACHE.k === key) { return CACHE.v; }
+        var v = AI(C); CACHE = { k: key, v: v };
+        if (v.side !== 'hold') { var sk = sym + '|' + tfKey(K); STAMP[sk] = STAMP[sk] || {}; if (!STAMP[sk][C[C.length - 1].t]) { STAMP[sk][C[C.length - 1].t] = { side: v.side, conf: v.conf }; } }
+        return v;
+    }
+    var _o = window.__cxOver;
+    window.__cxOver = function (c, m) {
+        if (_o) { _o(c, m); }
+        if (!onAI()) { return; } var K = m.K; if (!K || K.length < 151) { return; }
+        try {
+            var sym = (window.__kDbg && window.__kDbg.S && window.__kDbg.S.chart && window.__kDbg.S.chart.sym) || 'x', v = sigFor(K, sym), Y = m.yr || m.y, last = K.length - 1;
+            window.__lastAI = v; var el = document.getElementById('aiInfo'); if (el) { el.innerHTML = infoHtml(v, sym); }
+            c.save(); c.beginPath(); c.rect(0, m.padT, m.W, m.ph); c.clip();
+            var st = STAMP[sym + '|' + tfKey(K)] || {}, i, t, bull;
+            c.font = '700 9px -apple-system,Segoe UI,sans-serif'; c.textAlign = 'center';
+            for (i = Math.max(m.start, 1); i < last; i++) { var s = st[K[i].t]; if (!s || s.conf < 55) { continue; } bull = s.side === 'buy'; var x = m.xs(i), y = bull ? Y(K[i].l) + 26 : Y(K[i].h) - 26; c.globalAlpha = 0.95; c.fillStyle = bull ? '#0ea5e9' : '#f97316'; c.beginPath(); c.moveTo(x, bull ? y - 8 : y + 8); c.lineTo(x - 5, bull ? y : y); c.lineTo(x + 5, y); c.closePath(); c.fill(); c.fillText('AI ' + (bull ? 'BUY ' : 'SELL ') + s.conf + '%', x, bull ? y + 11 : y - 4); }
+            if (v.side !== 'hold') {
+                var lv = [[v.stop, '#dc2626', 'stop'], [v.t1, '#16a34a', 'target 1'], [v.t2, '#16a34a', 'target 2']], x0 = Math.max(0, m.xs(Math.max(last - 1, m.start)) - 6);
+                c.setLineDash([3, 3]); c.lineWidth = 1; c.textAlign = 'right'; lv.forEach(function (q) { var yy = Y(q[0]); if (yy < m.padT || yy > m.padT + m.ph) { return; } c.globalAlpha = 0.8; c.strokeStyle = q[1]; c.beginPath(); c.moveTo(x0, yy); c.lineTo(m.W, yy); c.stroke(); c.fillStyle = q[1]; c.fillText('AI ' + q[2], m.W - 4, yy - 2); }); c.setLineDash([]);
+            }
+            c.globalAlpha = 1; c.restore();
+        } catch (e) { try { c.restore(); } catch (e2) { } }
+    };
+    function infoHtml(v, sym) {
+        if (v.side === 'hold') { return '<b>AI signal: <span style="opacity:.8">HOLD</span></b> · ' + (v.reasons || []).slice(0, 2).join(' · ') + '. <span class="mut">No proven edge means no signal: that is the honest answer.</span>'; }
+        var col = v.side === 'buy' ? '#0ea5e9' : '#f97316';
+        return '<b style="color:' + col + '">AI signal: ' + (v.side === 'buy' ? 'BUY setup' : 'SELL setup') + '</b> · backtested hit rate on this coin <b>' + v.conf + '%</b> (' + v.n + ' similar past setups, worst plausible ' + v.lo + '%) · stop ' + fpx(v.stop, sym) + ' · targets ' + fpx(v.t1, sym) + ' / ' + fpx(v.t2, sym) + '<br><span class="mut">' + (v.reasons || []).join(' · ') + '. Estimate from past candles on closed bars only; it never moves after the candle closes. Rules and statistics, not a chatbot. Not advice.</span>';
+    }
+    var _vc = VIEWS.chart;
+    VIEWS.chart = function () {
+        var h = _vc.apply(this, arguments), on = onAI();
+        var row = '<div class="m7ind" data-noswipe="1"><span class="' + (on ? 'on' : '') + '" data-xk="aisig:' + (on ? 'off' : 'on') + '">' + (on ? '✓ ' : '') + 'AI signal</span></div>' + (on ? '<div class="note" id="aiInfo" style="margin:4px 0 0;font-size:12px;line-height:1.45;min-height:34px">AI signal: checking this coin\'s history…</div>' : '');
+        var a = '<div class="note" id="chartNote"';
+        return h.indexOf(a) >= 0 ? h.replace(a, row + a) : h + row;
+    };
+    window.__ai = { v: 1, aiSignal: AI };
+} catch (e) { try { console.error('p9ai', e); } catch (e2) { } }
+})();
+/* ===== CX: p9bb: Baba understands common Roman-Urdu words (kya hota hai, kaise, paisa, nuksan, munafa...) by turning them into the English words the answer search already knows. ===== */
+(function () {
+    try {
+        var MAP = [[/\bkya hota hai\b|\bkya hai\b|\bkya hoti hai\b/g, ' what is '], [/\bkaise\b|\bkis tarah\b/g, ' how '], [/\bkyun\b|\bkyon\b/g, ' why '], [/\bpaisa\b|\bpaise\b|\brupay[ae]\b/g, ' money '], [/\bnuksan\b|\bnuqsan\b/g, ' loss risk '], [/\bmunafa\b|\bfaida\b|\bfaaida\b/g, ' profit '], [/\bkharid(na|o|ein)?\b|\bkharidna\b/g, ' buy '], [/\bbech(na|o|ein)?\b/g, ' sell '], [/\bsamjh(ao|ana|aye|ayen)\b/g, ' explain '], [/\bbatao\b|\bbataye\b|\bbatain\b/g, ' tell '], [/\bkhatra\b/g, ' risk '], [/\bseekhna\b|\bsikhna\b|\bsikhao\b/g, ' learn '], [/\bkaun sa\b|\bkon sa\b/g, ' which '], [/\bsabse acha\b|\bbehtareen\b/g, ' best ']];
+        var _n = pfNorm;
+        pfNorm = function (q) { var s = String(q || '').toLowerCase(); try { MAP.forEach(function (m) { s = s.replace(m[0], m[1]); }); } catch (e) { } return _n(s); };
+        /* named indicators and our own tools must get their own answer, not a nearby lesson */
+        var SPEC = /(^|[^a-z0-9])(supertrend|super trend|ut bot|utbot|ichimoku|adx|smart guard|ai signal|ai signals)([^a-z0-9]|$)/;
+        var _pa = pfAnswer;
+        pfAnswer = function (raw) {
+            try {
+                var q = pfNorm(raw); if (SPEC.test(q) && !/(^| )(open|go to|take me)( |$)/.test(q)) {
+                    var best = null, bs = 0, all = PF_APP.concat(PF_KB);
+                    all.forEach(function (e, n) { var s = pfHit(e[0], q) * (n < PF_APP.length ? 1.4 : 1); if (s > bs) { bs = s; best = e; } });
+                    if (best && bs >= 2) { var wid = null; try { wid = PF_WIN[best[1]]; } catch (e) { } return { title: best[1], html: esc(best[2]) + (wid ? '<br>' + btn('win:' + wid, 'Open ' + pfWinName(wid) + ' ›') : ''), score: bs }; }
+                }
+            } catch (e) { }
+            return _pa.apply(this, arguments);
+        };
+        window.__bb = { v: 1 };
+    } catch (e) { try { console.error('p9bb', e); } catch (e2) { } }
+})();
+/* ===== CX: p9del: "Delete my account and data" in Profile. Erases the sign-in, saved keys, bots, settings and history stored by this app on this phone, then restarts the app. ===== */
+(function () {
+    try {
+        var armed = 0, tm = 0;
+        var _me = VIEWS.me;
+        VIEWS.me = function () {
+            var h = _me.apply(this, arguments);
+            var dic = '<div class="group pad"><b>📖 Dictionary and spelling</b><div class="note" style="margin:4px 0 8px">English ⇄ Urdu dictionary and spelling help, works offline.</div><span class="pfbtn" data-act="win:dict" style="cursor:pointer">Open dictionary</span></div>';
+            var box = dic + '<div class="group pad" id="mwdel"><b>Delete my account and data</b><div class="note" style="margin:4px 0 8px">Erases everything this app saved on this phone: your sign-in, exchange keys, bots, practice account, alerts and settings. It cannot be undone. Your exchange accounts and money stay untouched in their own apps; remove API keys there too if you want.</div>' +
+                (armed ? '<div class="note" style="margin:0 0 8px;color:#ff453a"><b>Tap again to confirm. This erases everything now.</b></div><span class="pfbtn" data-mwdel="go" style="background:#ff453a;color:#fff;font-weight:800;cursor:pointer">🗑 Yes, delete everything</span> <span class="pfbtn" data-mwdel="no" style="cursor:pointer">Cancel</span>' : '<span class="pfbtn" data-mwdel="ask" style="background:#ff453a;color:#fff;font-weight:700;cursor:pointer">🗑 Delete my account and data</span>') + '</div>';
+            var k = '<div class="note">Everything on this page comes from your own phone';
+            return h.indexOf(k) >= 0 ? h.replace(k, box + k) : h + box;
+        };
+        function wipe() {
+            try { var n = null; try { n = mwNat(); } catch (e) { } var ks = []; for (var i = 0; i < localStorage.length; i++) { ks.push(localStorage.key(i)); }
+                ks.forEach(function (k) { try { if (/^mintoosuite_/.test(k)) { localStorage.removeItem(k); } } catch (e) { } });
+                try { if (n && n.secDel) { ['mintoosuite_key', 'mintoosuite_secret', 'mintoosuite_keys', 'mintoosuite_trade'].forEach(function (k) { try { n.secDel(window.__mwTok, k); } catch (e) { } }); } } catch (e) { }
+                try { sessionStorage.clear(); } catch (e) { } } catch (e) { }
+            try { localStorage.setItem('mintoosuite_deleted', String(Date.now())); } catch (e) { }
+            try { location.reload(); } catch (e) { }
+        }
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest && e.target.closest('[data-mwdel]'); if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var a = el.getAttribute('data-mwdel');
+            if (a === 'ask') { armed = 1; clearTimeout(tm); tm = setTimeout(function () { armed = 0; try { renderView(true); } catch (er) { } }, 12000); try { renderView(true); } catch (er) { } }
+            else if (a === 'no') { armed = 0; try { renderView(true); } catch (er) { } }
+            else if (a === 'go') { wipe(); }
+        }, true);
+        window.__del = { v: 1 };
+    } catch (e) { try { console.error('p9del', e); } catch (e2) { } }
+})();
+/* ===== CX: p9dic: English-Urdu dictionary (works offline) with spelling help and a simple grammar fixer. Baba AI uses it to answer "X in Urdu" questions and to repair typos. Other languages: download through the existing Offline languages list. ===== */
+(function () {
+    try {
+        var ROWS = [["price", "قیمت", "qeemat"], ["buy", "خریدنا", "kharidna"], ["sell", "بیچنا", "bechna"], ["profit", "منافع", "munafa"], ["loss", "نقصان", "nuqsan"], ["risk", "خطرہ", "khatra"], ["market", "بازار", "bazaar"], ["trade", "تجارت", "tijarat"], ["trader", "تاجر", "taajir"], ["trading", "تجارت کرنا", "tijarat karna"], ["invest", "سرمایہ کاری کرنا", "sarmaya kari karna"], ["investment", "سرمایہ کاری", "sarmaya kari"], ["investor", "سرمایہ کار", "sarmaya kaar"], ["money", "پیسہ", "paisa"], ["cash", "نقد", "naqd"], ["balance", "بیلنس / باقی رقم", "balance"], ["account", "کھاتہ", "khata"], ["wallet", "بٹوہ", "batwa"], ["bank", "بینک", "bank"], ["exchange", "ایکسچینج / تبادلہ", "exchange"], ["coin", "سکہ", "sikka"], ["token", "ٹوکن", "token"], ["chart", "نقشہ / چارٹ", "chart"], ["candle", "کینڈل / شمع", "candle"], ["trend", "رجحان", "rujhan"], ["support", "سپورٹ / سہارا", "support"], ["resistance", "رکاوٹ", "rukawat"], ["breakout", "حد توڑنا", "had torhna"], ["volume", "حجم", "hajm"], ["volatility", "اتار چڑھاؤ", "utaar charhao"], ["liquidity", "روانی / نقدی", "liquidity"], ["leverage", "ادھار کی طاقت (لیوریج)", "leverage"], ["margin", "مارجن", "margin"], ["position", "پوزیشن", "position"], ["order", "آرڈر / حکم", "order"], ["limit", "حد", "had"], ["stop", "رکنا / روکنا", "rukna"], ["stop loss", "نقصان روک", "nuqsan rok"], ["take profit", "منافع لینا", "munafa lena"], ["target", "ہدف", "hadaf"], ["entry", "داخلہ", "dakhla"], ["exit", "اخراج / نکلنا", "nikalna"], ["long", "لمبی (خریداری)", "long"], ["short", "چھوٹی (فروخت)", "short"], ["bull", "تیزی", "tezi"], ["bear", "مندی", "mandi"], ["bullish", "تیزی کا رجحان", "tezi ka rujhan"], ["bearish", "مندی کا رجحان", "mandi ka rujhan"], ["rise", "اضافہ / بڑھنا", "izafa"], ["fall", "کمی / گرنا", "kami"], ["drop", "گرنا", "girna"], ["increase", "اضافہ", "izafa"], ["decrease", "کمی", "kami"], ["high", "بلند", "buland"], ["low", "کم / پست", "kam"], ["open", "کھلنا / کھولنا", "kholna"], ["close", "بند کرنا", "band karna"], ["fee", "فیس", "fees"], ["commission", "کمیشن", "commission"], ["tax", "ٹیکس", "tax"], ["interest", "سود / دلچسپی", "sood"], ["rate", "شرح", "sharah"], ["gold", "سونا", "sona"], ["silver", "چاندی", "chandi"], ["oil", "تیل", "tel"], ["dollar", "ڈالر", "dollar"], ["rupee", "روپیہ", "rupya"], ["currency", "کرنسی", "currency"], ["stock", "حصص / اسٹاک", "hissa"], ["share", "حصہ", "hissa"], ["shares", "حصص", "hissay"], ["dividend", "منافع منقسمہ", "dividend"], ["bond", "بانڈ", "bond"], ["fund", "فنڈ", "fund"], ["index", "اشاریہ", "ishariya"], ["news", "خبریں", "khabrein"], ["headline", "سرخی", "surkhi"], ["report", "رپورٹ", "report"], ["signal", "اشارہ", "ishara"], ["alert", "الرٹ / خبردار", "alert"], ["warning", "انتباہ", "intibah"], ["safe", "محفوظ", "mehfooz"], ["safety", "حفاظت", "hifazat"], ["danger", "خطرہ", "khatra"], ["careful", "احتیاط سے", "ehtiyat se"], ["patience", "صبر", "sabr"], ["discipline", "نظم و ضبط", "nazm o zabt"], ["strategy", "حکمت عملی", "hikmat e amli"], ["plan", "منصوبہ", "mansooba"], ["goal", "مقصد", "maqsad"], ["practice", "مشق", "mashq"], ["learn", "سیکھنا", "seekhna"], ["lesson", "سبق", "sabaq"], ["quiz", "سوالات / کوئز", "quiz"], ["beginner", "مبتدی / نیا", "naya"], ["expert", "ماہر", "maahir"], ["advanced", "اعلیٰ / ترقی یافتہ", "aala"], ["simple", "آسان / سادہ", "aasan"], ["easy", "آسان", "aasan"], ["hard", "مشکل", "mushkil"], ["fast", "تیز", "tez"], ["slow", "سست / آہستہ", "sust"], ["now", "اب", "ab"], ["today", "آج", "aaj"], ["tomorrow", "کل (آنے والا)", "kal"], ["yesterday", "کل (گزرا ہوا)", "kal"], ["week", "ہفتہ", "hafta"], ["month", "مہینہ", "mahina"], ["year", "سال", "saal"], ["day", "دن", "din"], ["hour", "گھنٹہ", "ghanta"], ["minute", "منٹ", "minute"], ["second", "سیکنڈ", "second"], ["time", "وقت", "waqt"], ["daily", "روزانہ", "rozana"], ["weekly", "ہفتہ وار", "hafta war"], ["monthly", "ماہانہ", "mahana"], ["yearly", "سالانہ", "salana"], ["start", "شروع کرنا", "shuru karna"], ["begin", "آغاز کرنا", "aghaaz karna"], ["end", "اختتام", "ikhtitaam"], ["finish", "ختم کرنا", "khatam karna"], ["wait", "انتظار کرنا", "intezar karna"], ["help", "مدد", "madad"], ["contact", "رابطہ", "rabta"], ["email", "ای میل", "email"], ["phone", "فون", "phone"], ["password", "پاس ورڈ", "password"], ["login", "لاگ اِن", "login"], ["logout", "لاگ آؤٹ", "logout"], ["sign in", "لاگ اِن کرنا", "login karna"], ["sign up", "رجسٹر ہونا", "register hona"], ["delete", "حذف کرنا", "hazf karna"], ["save", "محفوظ کرنا", "mehfooz karna"], ["cancel", "منسوخ کرنا", "mansookh karna"], ["confirm", "تصدیق کرنا", "tasdeeq karna"], ["send", "بھیجنا", "bhejna"], ["receive", "وصول کرنا", "wasool karna"], ["pay", "ادا کرنا", "ada karna"], ["payment", "ادائیگی", "adaigi"], ["free", "مفت / آزاد", "muft"], ["cheap", "سستا", "sasta"], ["expensive", "مہنگا", "mehnga"], ["big", "بڑا", "bara"], ["small", "چھوٹا", "chhota"], ["good", "اچھا", "acha"], ["bad", "برا", "bura"], ["best", "بہترین", "behtareen"], ["better", "بہتر", "behtar"], ["worst", "بدترین", "badtareen"], ["true", "سچ / درست", "sach"], ["false", "جھوٹ / غلط", "jhoot"], ["right", "صحیح / دائیں", "sahi"], ["wrong", "غلط", "ghalat"], ["yes", "ہاں", "haan"], ["no", "نہیں", "nahi"], ["please", "براہِ مہربانی", "barae meherbani"], ["thanks", "شکریہ", "shukriya"], ["thank you", "آپ کا شکریہ", "aap ka shukriya"], ["sorry", "معذرت", "maazrat"], ["welcome", "خوش آمدید", "khush aamdeed"], ["hello", "ہیلو / السلام علیکم", "salaam"], ["goodbye", "خدا حافظ", "khuda hafiz"], ["what", "کیا", "kya"], ["why", "کیوں", "kyun"], ["how", "کیسے", "kaise"], ["when", "کب", "kab"], ["where", "کہاں", "kahan"], ["who", "کون", "kaun"], ["which", "کون سا", "kaun sa"], ["many", "بہت سے", "bohat se"], ["much", "بہت", "bohat"], ["more", "زیادہ", "zyada"], ["less", "کم", "kam"], ["all", "سب", "sab"], ["some", "کچھ", "kuch"], ["none", "کوئی نہیں", "koi nahi"], ["every", "ہر", "har"], ["again", "دوبارہ", "dobara"], ["always", "ہمیشہ", "hamesha"], ["never", "کبھی نہیں", "kabhi nahi"], ["sometimes", "کبھی کبھی", "kabhi kabhi"], ["often", "اکثر", "aksar"], ["maybe", "شاید", "shayad"], ["possible", "ممکن", "mumkin"], ["impossible", "ناممکن", "namumkin"], ["important", "اہم", "aham"], ["necessary", "ضروری", "zaroori"], ["ready", "تیار", "tayyar"], ["sure", "یقینی", "yaqeeni"], ["guarantee", "ضمانت", "zamanat"], ["promise", "وعدہ", "wada"], ["truth", "سچائی", "sachai"], ["fraud", "دھوکہ", "dhoka"], ["scam", "دھوکہ دہی", "dhoka dehi"], ["fake", "جعلی", "jaali"], ["real", "اصلی", "asli"], ["demo", "نمائشی / مشق", "demo"], ["virtual", "مجازی", "majazi"], ["real money", "اصلی پیسہ", "asli paisa"], ["bot", "بوٹ / خودکار پروگرام", "bot"], ["automatic", "خودکار", "khud kaar"], ["manual", "ہاتھ سے", "haath se"], ["setting", "ترتیب", "tarteeb"], ["settings", "ترتیبات", "tarteebat"], ["language", "زبان", "zabaan"], ["theme", "تھیم / انداز", "theme"], ["dark", "تاریک / گہرا", "andhera"], ["light", "روشنی / ہلکا", "roshni"], ["screen", "اسکرین", "screen"], ["button", "بٹن", "button"], ["menu", "مینو / فہرست", "fehrist"], ["search", "تلاش کرنا", "talash karna"], ["find", "ڈھونڈنا", "dhoondna"], ["list", "فہرست", "fehrist"], ["table", "جدول", "jadwal"], ["graph", "گراف", "graph"], ["number", "نمبر / عدد", "adad"], ["amount", "رقم", "raqam"], ["total", "کل / مجموعہ", "kul"], ["average", "اوسط", "ausat"], ["percent", "فیصد", "faisad"], ["percentage", "فیصد", "faisad"], ["profit and loss", "نفع و نقصان", "nafa o nuqsan"], ["trend line", "رجحان کی لکیر", "rujhan ki lakeer"], ["moving average", "حرکت پذیر اوسط", "harkat pazeer ausat"], ["indicator", "اشارہ دینے والا آلہ", "ishara dene wala"], ["momentum", "رفتار / زور", "raftaar"], ["divergence", "اختلاف", "ikhtilaaf"], ["channel", "چینل / راستہ", "channel"], ["gap", "خلا / فرق", "khala"], ["spike", "اچانک اضافہ", "achanak izafa"], ["crash", "زوردار گراوٹ", "crash"], ["pump", "اچانک تیزی", "pump"], ["dump", "اچانک گراوٹ", "dump"], ["whale", "بڑا سرمایہ کار", "whale"], ["hold", "روکے رکھنا", "rokay rakhna"], ["holder", "رکھنے والا", "rakhne wala"], ["long term", "طویل مدتی", "taweel muddat"], ["short term", "قلیل مدتی", "qaleel muddat"], ["spread", "فرق (خرید و فروخت)", "farq"], ["slippage", "قیمت کا فرق", "qeemat ka farq"], ["funding", "فنڈنگ", "funding"], ["order book", "آرڈر بک", "order book"], ["liquidation", "زبردستی بند ہونا", "liquidation"], ["withdraw", "نکلوانا", "nikalwana"], ["deposit", "جمع کرانا", "jama karana"], ["transfer", "منتقل کرنا", "muntaqil karna"], ["history", "تاریخ / ریکارڈ", "record"], ["journal", "روزنامچہ", "roznamcha"], ["review", "جائزہ", "jaiza"], ["result", "نتیجہ", "nateeja"], ["test", "آزمائش / ٹیسٹ", "aazmaish"], ["backtest", "پرانے ڈیٹا پر آزمائش", "purane data par aazmaish"], ["accuracy", "درستگی", "durustagi"], ["estimate", "اندازہ", "andaza"], ["prediction", "پیش گوئی", "peshgoi"], ["advice", "مشورہ", "mashwara"], ["financial advice", "مالی مشورہ", "maali mashwara"], ["education", "تعلیم", "taleem"], ["educational", "تعلیمی", "taleemi"]], EN = {}, UR = {}, i;
+        ROWS.forEach(function (r) { EN[r[0]] = r; r[1].split(/\s*\/\s*/).forEach(function (u) { u = u.replace(/\s*\(.*\)\s*/, '').trim(); if (u && !UR[u]) { UR[u] = r; } }); });
+        function e3(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        /* ---- vocabulary for spell help: dictionary words + every word the app's own help texts use ---- */
+        var VOC = null;
+        function vocab() {
+            if (VOC) { return VOC; } VOC = {}; var add = function (s) { String(s || '').toLowerCase().split(/[^a-z]+/).forEach(function (w) { if (w.length >= 3) { VOC[w] = (VOC[w] || 0) + 1; } }); };
+            try { ROWS.forEach(function (r) { add(r[0]); }); (PF_APP || []).concat(PF_KB || []).forEach(function (e) { add(e[0].replace(/\|/g, ' ')); add(e[1]); add(e[2]); }); } catch (e) { }
+            return VOC;
+        }
+        function lev(a, b, mx) { var m = a.length, n = b.length, p = [], c, j, k; if (Math.abs(m - n) > mx) { return mx + 1; } for (j = 0; j <= n; j++) { p[j] = j; } for (k = 1; k <= m; k++) { c = [k]; var mn = k; for (j = 1; j <= n; j++) { c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[k - 1] === b[j - 1] ? 0 : 1)); if (c[j] < mn) { mn = c[j]; } } if (mn > mx) { return mx + 1; } p = c; } return p[n]; }
+        function suggest(w, n) {
+            w = String(w || '').toLowerCase(); var V = vocab(); if (V[w] || w.length < 3) { return []; } var mx = w.length > 6 ? 2 : 1, out = [], k, d;
+            for (k in V) { if (Math.abs(k.length - w.length) > mx) { continue; } d = lev(w, k, mx); if (d <= mx) { out.push([k, d, V[k]]); } }
+            out.sort(function (a, b) { return a[1] - b[1] || b[2] - a[2]; }); return out.slice(0, n || 3).map(function (x) { return x[0]; });
+        }
+        /* ---- lookup ---- */
+        function lookup(q) {
+            q = String(q || '').trim(); if (!q) { return { kind: 'empty' }; } var l = q.toLowerCase().replace(/\s+/g, ' ');
+            if (/[؀-ۿ]/.test(q)) { var u = q.replace(/\s*\(.*\)\s*/, '').trim(); var r = UR[u]; if (!r) { for (var k in UR) { if (k.indexOf(u) >= 0 || u.indexOf(k) >= 0) { r = UR[k]; break; } } } return r ? { kind: 'hit', r: r, rev: 1 } : { kind: 'none', q: q }; }
+            if (EN[l]) { return { kind: 'hit', r: EN[l] }; }
+            var alt = l.replace(/(ing|ed|es|s)$/, ''); if (EN[alt]) { return { kind: 'hit', r: EN[alt] }; } if (EN[alt + 'e']) { return { kind: 'hit', r: EN[alt + 'e'] }; }
+            var part = Object.keys(EN).filter(function (k) { return k.indexOf(l) === 0 && l.length >= 3; }).slice(0, 6); if (part.length) { return { kind: 'part', list: part, q: l }; }
+            var sg = suggest(l, 4).filter(function (s) { return EN[s]; }); if (!sg.length) { sg = suggest(l, 4); }
+            return { kind: 'none', q: q, sg: sg };
+        }
+        /* ---- grammar and spelling fixer (rule based, English) ---- */
+        var FIX = { teh: 'the', adn: 'and', taht: 'that', recieve: 'receive', definately: 'definitely', seperate: 'separate', alot: 'a lot', occured: 'occurred', untill: 'until', wich: 'which', becuase: 'because', beacuse: 'because', thier: 'their', freind: 'friend', realy: 'really', wierd: 'weird', tommorow: 'tomorrow', tomorow: 'tomorrow', accomodate: 'accommodate', begining: 'beginning', beleive: 'believe', buisness: 'business', calender: 'calendar', collegue: 'colleague', comming: 'coming', diffrent: 'different', enviroment: 'environment', goverment: 'government', happend: 'happened', immediatly: 'immediately', knowlege: 'knowledge', libary: 'library', neccessary: 'necessary', necesary: 'necessary', noticable: 'noticeable', occassion: 'occasion', persistant: 'persistent', posible: 'possible', prefered: 'preferred', publically: 'publicly', recomend: 'recommend', refered: 'referred', relevent: 'relevant', succesful: 'successful', sucess: 'success', suprise: 'surprise', tomorow: 'tomorrow', truely: 'truly', unfortunatly: 'unfortunately', writting: 'writing', proffit: 'profit', prise: 'price', tradeing: 'trading', investmant: 'investment', markit: 'market', resistence: 'resistance', suport: 'support', voltality: 'volatility', volatilty: 'volatility', liqudity: 'liquidity', stoploss: 'stop loss', dont: "don't", cant: "can't", wont: "won't", doesnt: "doesn't", didnt: "didn't", isnt: "isn't", arent: "aren't", wasnt: "wasn't", im: "I'm", ive: "I've", ill: "I'll", youre: "you're", thats: "that's", whats: "what's" };
+        function grammar(txt) {
+            var s = String(txt || ''), notes = [], before = s;
+            s = s.replace(/[ \t]+/g, ' ').replace(/\s+([,.!?;:])/g, '$1').replace(/([,.!?;:])(?=[A-Za-z])/g, '$1 ').trim();
+            s = s.replace(/\b[A-Za-z']+\b/g, function (w) { var f = FIX[w.toLowerCase()]; if (!f) { return w; } if (w.toLowerCase() === 'ill' || w.toLowerCase() === 'im' && false) { return w; } notes.push(w + ' → ' + f); return /^[A-Z]/.test(w) && f[0] !== 'I' ? f[0].toUpperCase() + f.slice(1) : f; });
+            s = s.replace(/\bi\b/g, function () { notes.push('i → I'); return 'I'; });
+            s = s.replace(/\b(a)\s+(?=[aeiou][a-z]+)(?!(?:one|once|uni|use|usu|eu)\b)/gi, function (m, a) { notes.push('a → an'); return (a === 'A' ? 'An ' : 'an '); });
+            s = s.replace(/\ban\s+(?=(?:[bcdfghjklmnpqrstvwxyz])[a-z]+)(?!hour|honest|honou?r|heir)/gi, function (m) { notes.push('an → a'); return m[0] === 'A' ? 'A ' : 'a '; });
+            s = s.replace(/\b(\w+)\s+\1\b/gi, function (m, w) { notes.push('repeated word: ' + w); return w; });
+            s = s.replace(/(^|[.!?]\s+)([a-z])/g, function (m, p, c) { return p + c.toUpperCase(); });
+            if (s && !/[.!?]$/.test(s) && s.split(' ').length > 3) { s += '.'; }
+            return { text: s, notes: notes.filter(function (n, i, a) { return a.indexOf(n) === i; }), changed: s !== before };
+        }
+        /* ---- window ---- */
+        var ST = { q: '', t: '' };
+        function card(res) {
+            if (res.kind === 'empty') { return '<div class="note">Type an English word to see Urdu, or an Urdu word to see English. Works without internet.</div>'; }
+            if (res.kind === 'hit') { var r = res.r; return '<div style="font-size:20px;font-weight:800">' + e3(r[0]) + '</div><div dir="rtl" style="font-size:26px;margin:6px 0;line-height:1.5">' + e3(r[1]) + '</div><div class="mut">Say it: <b>' + e3(r[2]) + '</b></div>'; }
+            if (res.kind === 'part') { return '<div class="note">Did you mean:</div>' + res.list.map(function (k) { return '<span class="pfbtn" data-dic="q:' + e3(k) + '" style="cursor:pointer">' + e3(k) + '</span>'; }).join(''); }
+            return '<div class="note">Not in this small offline dictionary yet.</div>' + ((res.sg || []).length ? '<div class="note" style="margin-top:6px">Did you mean:</div>' + res.sg.map(function (k) { return '<span class="pfbtn" data-dic="q:' + e3(k) + '" style="cursor:pointer">' + e3(k) + '</span>'; }).join('') : '') + '<div style="margin-top:8px"><a class="pfbtn" target="_blank" rel="noopener noreferrer" style="text-decoration:none" href="https://translate.google.com/?sl=en&tl=ur&text=' + encodeURIComponent(res.q) + '">🌐 Look up online</a></div>';
+        }
+        function vDic() {
+            var res = lookup(ST.q), g = ST.t ? grammar(ST.t) : null;
+            var h = '<div class="group pad"><b>📖 English ⇄ Urdu dictionary</b><div class="note" style="margin:4px 0 8px">' + ROWS.length + ' trading and everyday words, offline. English or Urdu both work.</div><div class="m7q"><span>🔍</span><input id="dicq" data-dic-in="q" placeholder="Type a word: profit, price, خطرہ…" value="' + e3(ST.q) + '" autocomplete="off" autocapitalize="off"></div><div id="dicres" style="margin-top:8px">' + card(res) + '</div></div>';
+            h += '<div class="group pad"><b>✍️ Spelling and grammar help (English)</b><div class="note" style="margin:4px 0 8px">Paste a sentence. It fixes common spelling mistakes, i → I, a/an, repeated words, spaces and capital letters. It is a simple helper, not a full grammar checker.</div><textarea id="dict" data-dic-in="t" rows="3" style="width:100%;box-sizing:border-box;border-radius:12px;padding:10px;font:inherit" placeholder="i want to by teh coin tommorow">' + e3(ST.t) + '</textarea><div style="margin-top:8px"><span class="pfbtn" data-dic="fix" style="background:#0a84ff;color:#fff;font-weight:700;cursor:pointer">✓ Check my text</span></div><div id="dicfix" style="margin-top:8px">' + (g ? (g.changed ? '<div style="font-weight:700">' + e3(g.text) + '</div><div class="note" style="margin:4px 0">' + e3(g.notes.join(' · ')) + '</div><span class="pfbtn" data-dic="copy" style="cursor:pointer">Copy corrected text</span>' : '<div class="note">Looks fine. Nothing to change.</div>') : '') + '</div></div>';
+            h += '<div class="group pad"><b>🌍 Other languages</b><div class="note" style="margin:4px 0 8px">English ⇄ Urdu is built in. For about 40 more languages (Arabic, Hindi, Turkish, French, Spanish and more) you can download an offline pack once, then Baba AI translates without internet. Pashto, Sindhi and Punjabi are not available offline (Google does not offer them); Baba AI still does them online.</div><span class="pfbtn" data-act="win:look" style="cursor:pointer">⬇ Download language packs</span></div>';
+            return h;
+        }
+        try { VIEWS.dict = vDic; LIVE.dict = 0; WINS.push({ id: 'dict', ic: '📖', c: '#5e5ce6', n: 'Dictionary and spelling', t: 'Dictionary', sub: 'English ⇄ Urdu dictionary, spelling and grammar help (offline)' }); } catch (e) { }
+        document.addEventListener('input', function (e) { var el = e.target; if (!el || !el.getAttribute) { return; } var k = el.getAttribute('data-dic-in'); if (!k) { return; } ST[k] = el.value; if (k === 'q') { var r = document.getElementById('dicres'); if (r) { r.innerHTML = card(lookup(ST.q)); } } }, true);
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest && e.target.closest('[data-dic]'); if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-dic');
+            if (a.indexOf('q:') === 0) { ST.q = a.slice(2); try { renderView(true); } catch (er) { } }
+            else if (a === 'fix') { var t = document.getElementById('dict'); if (t) { ST.t = t.value; } try { renderView(true); } catch (er) { } }
+            else if (a === 'copy') { var g = grammar(ST.t); try { navigator.clipboard.writeText(g.text); toast('Copied'); } catch (er) { } }
+        }, true);
+        /* ---- Baba AI: "X in Urdu", "meaning of X", Urdu words, and typo repair ---- */
+        var _pa = pfAnswer;
+        pfAnswer = function (raw) {
+            try {
+                var r0 = String(raw || ''), m;
+                if (/[؀-ۿ]/.test(r0) && r0.trim().split(/\s+/).length <= 3) { var rr = lookup(r0); if (rr.kind === 'hit') { return { title: 'Urdu → English', html: '<b>' + e3(rr.r[1]) + '</b> = <b>' + e3(rr.r[0]) + '</b><br>' + e3(rr.r[2]) + '<br><span class="pfbtn" data-act="win:dict">📖 Open dictionary</span>', score: 9 }; } }
+                if ((m = r0.toLowerCase().match(/(?:meaning of|translate|urdu (?:of|for|meaning of)|what is|what's)\s+["“]?([a-z' ]{2,30})["”]?\s*(?:in urdu|mean in urdu|ka matlab|ka urdu)?\s*\??$/)) || (m = r0.toLowerCase().match(/^([a-z' ]{2,30})\s+(?:in urdu|urdu meaning|ka matlab|ka urdu|urdu mein)\s*\??$/))) {
+                    var w = m[1].trim(), asks = /urdu|matlab|meaning|translate/.test(r0.toLowerCase()); var rs = lookup(w);
+                    if (asks && rs.kind === 'hit') { return { title: 'Urdu meaning', html: '<b>' + e3(rs.r[0]) + '</b> = <span dir="rtl" style="font-size:20px">' + e3(rs.r[1]) + '</span><br>Say it: ' + e3(rs.r[2]) + '<br><span class="pfbtn" data-act="win:dict">📖 Open dictionary</span>', score: 9 }; }
+                }
+            } catch (e) { }
+            return _pa.apply(this, arguments);
+        };
+        /* typo repair for Baba's matching: only long words (6+ letters) with exactly one close known word */
+        var _n = pfNorm;
+        pfNorm = function (q) {
+            var s = _n(q); try {
+                var V = vocab(); s = s.replace(/[a-z]{6,}/g, function (w) { if (V[w]) { return w; } var c = suggest(w, 2); return c.length === 1 || (c.length > 1 && lev(w, c[0], 2) < lev(w, c[1], 2)) ? c[0] : w; });
+            } catch (e) { } return s;
+        };
+        window.__dic = { v: 1, lookup: lookup, suggest: suggest, grammar: grammar, size: ROWS.length };
+    } catch (e) { try { console.error('p9dic', e); } catch (e2) { } }
+})();
+/* ===== CX: p9dic2: subject dictionaries (medical, internet, business, science, world and history). Starter packs are built in and work offline. Anything else you look up online (free dictionary + Wikipedia) is saved on the phone, so it works offline next time. Baba AI uses all of it. ===== */
+(function () {
+    try {
+        var MEDS = [["Paracetamol (Panadol, Calpol)", "Common medicine for mild pain and fever. Available without prescription. Too much damages the liver, so never go above the label dose and do not combine it with other products that also contain paracetamol.", "پیراسیٹامول (پیناڈول، کالپول)"], ["Ibuprofen (Brufen)", "Pain, fever and inflammation (for example toothache, muscle pain). Take with food. Can upset the stomach and harm kidneys; avoid with stomach ulcers, kidney disease, in late pregnancy, or if told to avoid it by your doctor.", "آئبوپروفین (بروفن)"], ["Diclofenac (Voltral, Voltaren)", "Strong anti-inflammatory for joint, back and muscle pain. Take with food; can hurt the stomach, kidneys and heart with long use. Ask a doctor for repeated use.", "ڈائکلوفیناک (وولٹرال)"], ["Mefenamic acid (Ponstan)", "Pain relief, often used for period pain and toothache. Take with food; avoid with stomach ulcers or kidney problems.", "میفینامک ایسڈ (پونسٹان)"], ["Naproxen (Synflex)", "Anti-inflammatory pain medicine for joints, muscles and period pain. Take with food; same cautions as other NSAIDs.", "نیپروکسن (سنفلیکس)"], ["Aspirin (Disprin)", "Pain and fever, and in low dose a blood thinner prescribed for the heart. Can cause stomach bleeding. Not for children with fever or flu-like illness.", "اسپرین (ڈسپرین)"], ["Amoxicillin (Amoxil)", "Antibiotic for some bacterial infections (ear, throat, chest). Prescription medicine. Finish the course the doctor gives; never use it for colds or flu, which are viruses.", "اموکسیسیلن"], ["Co-amoxiclav (Augmentin)", "Stronger antibiotic combination for bacterial infections. Prescription only. Tell the doctor if you ever had a penicillin allergy.", "اگمینٹن"], ["Azithromycin (Zithromax, Azomax)", "Antibiotic for some chest, throat and skin infections. Prescription only; take exactly as the doctor says.", "ازیتھرومائسن"], ["Ciprofloxacin (Cipro)", "Antibiotic for some urine, stomach and chest infections. Prescription only; can affect tendons and is not for general use.", "سپروفلوکساسن"], ["Metronidazole (Flagyl)", "Antibiotic for some stomach, dental and parasite infections. Prescription only. Do not drink alcohol during the course and for 2 days after.", "میٹرونیڈازول (فلیجل)"], ["Cetirizine (Zyrtec)", "Antihistamine for allergy, itching, hives and runny nose. Can cause sleepiness; be careful driving.", "سیٹریزین (زائرٹیک)"], ["Loratadine (Clarityne)", "Non-drowsy antihistamine for allergy symptoms.", "لوراٹاڈین (کلیریٹائن)"], ["Omeprazole (Risek, Losec)", "Reduces stomach acid for heartburn and ulcers. Usually taken before a meal. Long use should be reviewed by a doctor.", "اومیپرازول (رِسک)"], ["Esomeprazole (Nexum)", "Acid reducer similar to omeprazole for heartburn and reflux.", "ایسومیپرازول (نیکسم)"], ["Pantoprazole (Controloc, Pantoloc)", "Acid reducer for heartburn, reflux and ulcers.", "پینٹوپرازول"], ["Domperidone (Motilium)", "Helps nausea, vomiting and bloating. Not for long use without a doctor, especially if you have heart rhythm problems.", "ڈومپیریڈون (موٹیلیئم)"], ["ORS (oral rehydration salts)", "Salt and sugar powder mixed in clean water. The first treatment for diarrhoea and vomiting to prevent dehydration, including in children. Mix exactly as the packet says. See a doctor if there is blood, high fever or no improvement.", "او آر ایس"], ["Loperamide (Imodium)", "Slows diarrhoea in adults. Not for children, and not if there is blood in the stool or high fever.", "لوپیرامائیڈ (امیوڈیم)"], ["Salbutamol (Ventolin inhaler)", "Quick-relief inhaler for asthma and wheezing. If you need it more than usual, see a doctor.", "سالبیوٹامول (وینٹولن)"], ["Montelukast (Singulair)", "Prescription medicine to prevent asthma and allergy symptoms. Take as the doctor says.", "مونٹیلوکاسٹ"], ["Metformin (Glucophage)", "First-choice tablet for type 2 diabetes. Prescription only; usually taken with meals. Never change the dose yourself.", "میٹفارمن (گلوکوفیج)"], ["Amlodipine (Norvasc)", "Prescription tablet for high blood pressure and chest pain. Can cause ankle swelling.", "املوڈیپین (نورواسک)"], ["Atorvastatin (Lipitor)", "Prescription tablet to lower cholesterol. Report unexplained muscle pain to your doctor.", "ایٹورواسٹیٹن (لپٹور)"], ["Levothyroxine (Eltroxin, Euthyrox)", "Prescription replacement for thyroid hormone. Usually taken on an empty stomach in the morning; blood tests guide the dose.", "لیووتھائروکسن"], ["Prednisolone", "Prescription steroid that calms inflammation and allergy. Do not stop suddenly after long use; many side effects with long use.", "پریڈنیسولون"], ["Povidone-iodine (Betadine)", "Antiseptic for cleaning small cuts and scrapes. Not for deep wounds or people with iodine allergy.", "پووڈون آیوڈین (بیٹاڈین)"], ["Zinc (zinc sulphate)", "Given with ORS to help children recover from diarrhoea. Use the dose a doctor or the packet says.", "زنک"], ["Multivitamin (Surbex-Z, Centrum)", "Supplement for people who do not get enough from food. Does not replace a healthy diet. Do not take extra doses.", "ملٹی وٹامن (سربیکس زیڈ)"], ["Vitamin D", "Supports bones and muscles; common deficiency. A blood test and a doctor can tell if you need it and how much.", "وٹامن ڈی"], ["Folic acid", "B vitamin important before and during early pregnancy and for some anaemias. Take the dose a doctor advises.", "فولک ایسڈ"], ["Calcium", "Supplement for bone health when diet is low in calcium. Often combined with vitamin D.", "کیلشیم"]];
+        var PK = {"medical": [["blood pressure", "The force of blood pushing on the walls of your arteries. High blood pressure (hypertension) often has no symptoms but raises the risk of heart attack and stroke.", "بلڈ پریشر / فشارِ خون"], ["diabetes", "A long-term condition where blood sugar stays too high because the body makes too little insulin or cannot use it well.", "ذیابیطس / شوگر"], ["insulin", "A hormone made by the pancreas that lets the body use sugar from food for energy.", "انسولین"], ["antibiotic", "A medicine that kills or stops bacteria. It does not work against viruses such as colds and flu.", "اینٹی بائیوٹک"], ["virus", "A tiny germ that needs living cells to multiply. Examples: flu, COVID-19, hepatitis.", "وائرس"], ["bacteria", "Single-cell germs. Some cause infections, many are harmless or helpful.", "جراثیم / بیکٹیریا"], ["vaccine", "A preparation that trains the body's defence to recognise a germ so you are protected later.", "ویکسین / ٹیکہ"], ["infection", "When germs enter the body and multiply, causing illness.", "انفیکشن / عفونت"], ["inflammation", "The body's response to injury or infection: redness, heat, swelling and pain.", "سوزش"], ["fever", "A body temperature higher than normal (about 38 °C / 100.4 °F or more). A sign the body is fighting something.", "بخار"], ["cholesterol", "A fatty substance in the blood. Too much 'bad' (LDL) cholesterol can block arteries.", "کولیسٹرول"], ["symptom", "A sign of illness that a person feels, such as pain or tiredness.", "علامت"], ["diagnosis", "The doctor's finding of what illness a person has.", "تشخیص"], ["prescription", "A doctor's written order for a medicine.", "نسخہ"], ["dose", "The amount of medicine to take at one time.", "خوراک / مقدار"], ["allergy", "The body reacting strongly to something harmless such as dust, pollen or a food.", "الرجی"], ["asthma", "A lung condition where the airways narrow, causing wheezing and breathlessness.", "دمہ"], ["anemia", "Too few healthy red blood cells, causing tiredness and pale skin. Often caused by low iron.", "خون کی کمی"], ["hypertension", "Long-term high blood pressure.", "بلند فشارِ خون"], ["stroke", "Sudden loss of blood flow to part of the brain. It is an emergency: seek help immediately.", "فالج / اسٹروک"], ["heart attack", "When blood flow to part of the heart is blocked. It is an emergency: seek help immediately.", "دل کا دورہ"], ["cancer", "A disease where abnormal cells grow out of control and can spread.", "کینسر / سرطان"], ["tumor", "A lump of abnormal cells. It can be harmless (benign) or cancerous (malignant).", "رسولی / ٹیومر"], ["paracetamol", "A common medicine for pain and fever (also called acetaminophen). Too much can seriously damage the liver, so never exceed the label dose.", "پیراسیٹامول"], ["ibuprofen", "An anti-inflammatory medicine for pain and fever. Can upset the stomach; avoid with some conditions unless a doctor agrees.", "آئبوپروفین"], ["dehydration", "When the body loses more water than it takes in.", "پانی کی کمی"], ["vitamin", "A nutrient the body needs in small amounts to stay healthy.", "وٹامن"], ["protein", "A nutrient that builds and repairs muscles and other tissues.", "پروٹین"], ["calorie", "A unit of energy in food.", "حرارہ / کیلوری"], ["BMI", "Body Mass Index: weight divided by height squared. A rough guide, not a diagnosis.", "باڈی ماس انڈیکس"], ["first aid", "Basic help given to an injured or ill person before a doctor or ambulance arrives.", "ابتدائی طبی امداد"]], "internet": [["internet", "A worldwide network of connected computers that share information.", "انٹرنیٹ"], ["website", "A set of web pages under one address.", "ویب سائٹ"], ["browser", "A program used to open websites, such as Chrome or Firefox.", "براؤزر"], ["server", "A computer that stores data or runs a service for other computers.", "سرور"], ["IP address", "A number that identifies a device on a network.", "آئی پی ایڈریس"], ["DNS", "The system that turns a website name (like google.com) into its IP address.", "ڈی این ایس"], ["Wi-Fi", "Wireless way to connect devices to the internet using radio waves.", "وائی فائی"], ["VPN", "Virtual Private Network: an encrypted tunnel for your internet traffic that hides your location from websites.", "وی پی این"], ["password manager", "An app that stores strong, different passwords for all your accounts.", "پاس ورڈ مینیجر"], ["two-factor authentication", "A second proof of identity (like a code) besides your password. Strongly recommended for exchange accounts.", "دو مرحلہ تصدیق"], ["phishing", "A fake message or website made to steal your passwords or money. Never enter keys or passwords on links you were sent.", "فشنگ / جعلی پیغام"], ["malware", "Harmful software such as viruses, spyware or ransomware.", "مالویئر"], ["encryption", "Scrambling data so only the right person can read it.", "خفیہ کاری"], ["cloud", "Storing or running things on internet servers instead of your own device.", "کلاؤڈ"], ["API", "A way for one program to talk to another. Exchange API keys let apps read or trade on your account; never share them.", "اے پی آئی"], ["blockchain", "A shared record of transactions kept by many computers and very hard to change.", "بلاک چین"], ["cryptocurrency", "Digital money that uses cryptography and a blockchain, such as Bitcoin.", "کرپٹو کرنسی"], ["bitcoin", "The first and largest cryptocurrency, created in 2009.", "بٹ کوائن"], ["smart contract", "A program on a blockchain that runs automatically when its conditions are met.", "سمارٹ کنٹریکٹ"], ["NFT", "Non-fungible token: a unique digital item recorded on a blockchain.", "این ایف ٹی"], ["app", "A program for a phone or computer.", "ایپ"], ["bug", "A mistake in a program that makes it behave wrongly.", "خرابی / بگ"], ["cookie", "A small file a website saves in your browser to remember you.", "کوکی"], ["bandwidth", "How much data can move through a connection per second.", "بینڈ وڈتھ"], ["download", "Copy a file from the internet to your device.", "ڈاؤن لوڈ"], ["upload", "Send a file from your device to the internet.", "اپ لوڈ"], ["artificial intelligence", "Computer systems that do tasks that normally need human thinking, such as understanding language or images.", "مصنوعی ذہانت"]], "business": [["inflation", "A general rise in prices over time, so each rupee or dollar buys less.", "مہنگائی / افراطِ زر"], ["deflation", "A general fall in prices over time.", "تفریطِ زر"], ["recession", "A period when the economy shrinks for months: less spending, more job losses.", "کساد بازاری"], ["GDP", "Gross Domestic Product: the total value of goods and services a country makes in a year.", "مجموعی قومی پیداوار"], ["interest rate", "The cost of borrowing money, shown as a percent per year. Central banks raise it to cool inflation.", "شرحِ سود"], ["central bank", "The main bank of a country that controls money supply and interest rates (in Pakistan: State Bank of Pakistan).", "مرکزی بینک"], ["budget", "A plan for how much money will come in and go out.", "بجٹ"], ["revenue", "Money a business earns from sales before costs.", "آمدنی"], ["profit margin", "Profit as a percent of sales.", "منافع کا تناسب"], ["asset", "Something valuable that you own.", "اثاثہ"], ["liability", "Money you owe.", "ذمہ داری / قرض"], ["equity", "The owners' share of a business after debts are paid.", "ایکویٹی / ملکیتی حصہ"], ["capital", "Money used to start or grow a business or investment.", "سرمایہ"], ["diversification", "Spreading money across different investments to reduce risk.", "تنوع"], ["portfolio", "The collection of all your investments.", "پورٹ فولیو"], ["compound interest", "Interest earned on both your money and on earlier interest.", "مرکب سود"], ["stock exchange", "A market where company shares are bought and sold (in Pakistan: PSX).", "اسٹاک ایکسچینج"], ["IPO", "Initial Public Offering: a company sells shares to the public for the first time.", "ابتدائی عوامی پیشکش"], ["ETF", "Exchange-traded fund: a basket of investments you can buy like one share.", "ای ٹی ایف"], ["mutual fund", "A pool of many people's money managed by professionals.", "میوچل فنڈ"], ["supply and demand", "Prices rise when many want something that is scarce, and fall when there is plenty and few want it.", "رسد و طلب"], ["tax", "Money paid to the government.", "ٹیکس / محصول"], ["audit", "An official check of accounts.", "آڈٹ"], ["startup", "A new young company trying to grow fast.", "اسٹارٹ اپ"], ["contract", "A written agreement between people or companies.", "معاہدہ"], ["monopoly", "When one company controls a whole market.", "اجارہ داری"], ["export", "Selling goods to another country.", "برآمد"], ["import", "Buying goods from another country.", "درآمد"], ["trade deficit", "When a country imports more than it exports.", "تجارتی خسارہ"], ["exchange rate", "How much of one currency you get for another.", "شرحِ تبادلہ"]], "science": [["atom", "The smallest unit of an element, made of protons, neutrons and electrons.", "ایٹم / ذرہ"], ["molecule", "Two or more atoms joined together.", "سالمہ / مالیکیول"], ["gravity", "The force that pulls objects toward each other, such as toward the Earth.", "کششِ ثقل"], ["energy", "The ability to do work or cause change.", "توانائی"], ["electricity", "Energy from moving electric charge.", "بجلی"], ["photosynthesis", "How plants use sunlight, water and carbon dioxide to make food and oxygen.", "ضیائی تالیف"], ["evolution", "The slow change of living things over many generations.", "ارتقاء"], ["DNA", "The molecule that carries the instructions for building a living thing.", "ڈی این اے"], ["cell", "The basic building block of all living things.", "خلیہ"], ["ecosystem", "A community of living things and their environment.", "ماحولیاتی نظام"], ["climate change", "Long-term change in Earth's average weather, mostly from burning fossil fuels.", "موسمیاتی تبدیلی"], ["solar system", "The Sun and everything that orbits it: eight planets, moons and more.", "نظامِ شمسی"], ["galaxy", "A huge group of stars, gas and dust. Ours is the Milky Way.", "کہکشاں"], ["velocity", "Speed in a given direction.", "رفتار / سمتی رفتار"], ["acid", "A sour substance that turns blue litmus red.", "تیزاب"], ["pH", "A scale from 0 to 14 showing how acidic or basic something is; 7 is neutral.", "پی ایچ"], ["renewable energy", "Energy from sources that do not run out, such as sun, wind and water.", "قابلِ تجدید توانائی"]], "world": [["democracy", "A system where people choose their leaders by voting.", "جمہوریت"], ["constitution", "The basic law of a country that sets out how it is run and protects rights.", "آئین"], ["parliament", "The group of elected people who make a country's laws.", "پارلیمان"], ["United Nations", "An organisation of almost all countries, founded in 1945 to keep peace and help cooperation.", "اقوامِ متحدہ"], ["IMF", "International Monetary Fund: lends money to countries with money problems and gives them conditions.", "عالمی مالیاتی ادارہ"], ["World Bank", "An organisation that lends money to poorer countries for development.", "عالمی بینک"], ["NATO", "North Atlantic Treaty Organization: a military alliance of North American and European countries.", "نیٹو"], ["OPEC", "Organization of the Petroleum Exporting Countries: oil-producing countries that coordinate oil output.", "اوپیک"], ["G20", "A group of the 20 biggest economies that meet to discuss the world economy.", "جی 20"], ["sanctions", "Penalties one country puts on another, such as trade bans.", "پابندیاں"], ["treaty", "A formal agreement between countries.", "معاہدہ"], ["Pakistan", "A country in South Asia, independent on 14 August 1947, capital Islamabad.", "پاکستان"], ["Islamabad", "The capital city of Pakistan, founded in the 1960s.", "اسلام آباد"], ["Partition of 1947", "The division of British India into India and Pakistan in August 1947.", "تقسیمِ ہند"], ["Industrial Revolution", "The change from hand work to machines that began in Britain in the 1700s.", "صنعتی انقلاب"], ["World War II", "The global war from 1939 to 1945 that involved most countries.", "دوسری جنگِ عظیم"], ["Cold War", "The tense rivalry between the USA and the Soviet Union from about 1947 to 1991, without direct war.", "سرد جنگ"], ["Silk Road", "Ancient trade routes linking China with the Middle East and Europe.", "شاہراہِ ریشم"], ["Mughal Empire", "A great empire that ruled most of South Asia from 1526 to the 1850s.", "مغلیہ سلطنت"], ["CPEC", "China-Pakistan Economic Corridor: a set of road, port and energy projects linking China and Pakistan.", "سی پیک"], ["election", "A vote to choose leaders.", "انتخابات"], ["human rights", "Basic freedoms and protections every person should have.", "انسانی حقوق"]]}, NAMES = { medical: '🩺 Medical', internet: '🌐 Internet and tech', business: '💼 Business and economy', science: '🔬 Science', world: '🌍 World, history, politics' };
+        PK.medicine = MEDS; NAMES.medicine = '💊 Medicines';
+        var IDX = {}, CK = 'mintoosuite_dicache', CACHE = {};
+        try { CACHE = JSON.parse(localStorage.getItem(CK) || '{}') || {}; } catch (e) { CACHE = {}; }
+        Object.keys(PK).forEach(function (s) { PK[s].forEach(function (r) { var o = { s: s, t: r[0], d: r[1], u: r[2] }; IDX[r[0].toLowerCase()] = o; var m = /^([^(]+?)\s*\((.+)\)$/.exec(r[0]); if (m) { IDX[m[1].toLowerCase().trim()] = o; m[2].split(/,\s*/).forEach(function (x) { x = x.toLowerCase().trim(); if (x && !IDX[x]) { IDX[x] = o; } }); } }); });
+        function e3(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function save() { try { var k = Object.keys(CACHE); if (k.length > 300) { k.sort(function (a, b) { return CACHE[a].at - CACHE[b].at; }); k.slice(0, k.length - 300).forEach(function (x) { delete CACHE[x]; }); } localStorage.setItem(CK, JSON.stringify(CACHE)); } catch (e) { } }
+        function find(q) {
+            q = String(q || '').toLowerCase().trim().replace(/^(what is|what are|define|meaning of|explain|who is|what's)\s+/, '').replace(/[?.!]+$/, '').trim(); if (!q) { return null; }
+            if (IDX[q]) { return IDX[q]; } if (CACHE[q]) { return { s: 'saved', t: CACHE[q].t, d: CACHE[q].d, u: '', src: CACHE[q].src }; }
+            var alt = q.replace(/(es|s)$/, ''); if (IDX[alt]) { return IDX[alt]; } if (CACHE[alt]) { return { s: 'saved', t: CACHE[alt].t, d: CACHE[alt].d, u: '', src: CACHE[alt].src }; }
+            return null;
+        }
+        function search(q, subj) {
+            q = String(q || '').toLowerCase().trim(); var out = [];
+            var seenO = [];
+            Object.keys(IDX).forEach(function (k) { var r = IDX[k]; if (seenO.indexOf(r) >= 0) { return; } if (subj && subj !== 'all' && r.s !== subj) { return; } if (!q || k.indexOf(q) >= 0 || r.d.toLowerCase().indexOf(q) >= 0 || r.u.indexOf(q) >= 0) { seenO.push(r); out.push(r); } });
+            return out;
+        }
+        function online(q) {
+            q = String(q || '').trim(); if (!q) { return Promise.reject(0); }
+            var w = encodeURIComponent(q.replace(/\s+/g, '_'));
+            function wiki() { return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + w, { cache: 'no-store' }).then(function (r) { if (!r.ok) { throw 0; } return r.json(); }).then(function (j) { if (!j || !j.extract || j.type === 'disambiguation') { throw 0; } return { t: j.title || q, d: String(j.extract).slice(0, 700), src: 'Wikipedia' }; }); }
+            var single = /^[a-z\-']+$/i.test(q);
+            var p = single ? fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(q.toLowerCase()), { cache: 'no-store' }).then(function (r) { if (!r.ok) { throw 0; } return r.json(); }).then(function (j) { var m = j && j[0] && j[0].meanings || [], d = m.slice(0, 3).map(function (x) { return (x.partOfSpeech ? x.partOfSpeech + ': ' : '') + (x.definitions && x.definitions[0] && x.definitions[0].definition || ''); }).filter(Boolean).join(' • '); if (!d) { throw 0; } return { t: j[0].word || q, d: d.slice(0, 700), src: 'Free Dictionary' }; }).catch(wiki) : wiki();
+            return p.then(function (r) { CACHE[q.toLowerCase()] = { t: r.t, d: r.d, src: r.src, at: Date.now() }; save(); return r; });
+        }
+        var ST = { q: '', s: 'all', net: null, busy: 0, msg: '' };
+        function medLinks(r) { if (r.s !== 'medicine') { return ''; } var g = r.t.split(' (')[0], q1 = encodeURIComponent(g + ' price in Pakistan'), q2 = encodeURIComponent('buy ' + g + ' online Pakistan pharmacy'); return '<div style="margin-top:6px"><a class="pfbtn" target="_blank" rel="noopener noreferrer" style="text-decoration:none" href="https://www.google.com/search?q=' + q1 + '">💰 Check price in Pakistan</a><a class="pfbtn" target="_blank" rel="noopener noreferrer" style="text-decoration:none" href="https://www.google.com/search?q=' + q2 + '">🛒 Where to buy</a></div><div class="note" style="margin-top:4px">Prices change and are set by the maker within limits set by DRAP. Buy only from a licensed pharmacy (physical shop or a registered online pharmacy), check the packet seal and expiry, ask for the receipt, and use a prescription for antibiotics and other prescription medicines. Dose: follow the label or your doctor.</div>'; }
+        function card(r) { return medLinks(r) ? cardBase(r) + medLinks(r) : cardBase(r); }
+        function cardBase(r) { return '<div class="row" style="display:block"><b>' + e3(r.t) + '</b> <span class="mut" style="font-size:11px">' + (r.s === 'saved' ? '💾 ' + e3(r.src || 'saved') : e3(NAMES[r.s] || r.s)) + '</span><div style="margin:4px 0;font-size:14px;line-height:1.45">' + e3(r.d) + '</div>' + (r.u ? '<div dir="rtl" style="font-size:18px;margin-top:2px">' + e3(r.u) + '</div>' : '') + '</div>'; }
+        function box() {
+            var tabs = ['all'].concat(Object.keys(PK)), res = search(ST.q, ST.s).slice(0, 14), exact = find(ST.q), saved = Object.keys(CACHE).length, total = Object.keys(PK).reduce(function (n, k) { return n + PK[k].length; }, 0);
+            var h = '<div class="group pad"><b>📚 Subject dictionaries</b><div class="note" style="margin:4px 0 8px">' + total + ' built-in entries work offline. Look up anything else online once and it is saved on this phone (' + saved + ' saved) for offline use later. Baba AI uses all of it.</div>' +
+                '<div class="m7ind" data-noswipe="1">' + tabs.map(function (t) { return '<span class="' + (ST.s === t ? 'on' : '') + '" data-dic2="s:' + t + '">' + (t === 'all' ? 'All' : e3(NAMES[t])) + '</span>'; }).join('') + '</div>' +
+                '<div class="m7q"><span>🔍</span><input data-dic2-in="1" id="dic2q" placeholder="Try: diabetes, VPN, inflation, Mughal Empire…" value="' + e3(ST.q) + '" autocomplete="off" autocapitalize="off"></div>' +
+                '<div style="margin:8px 0">' + (exact && ST.q ? card(exact) : '') + (res.filter(function (r) { return !exact || r.t !== exact.t; }).map(card).join('') || (!exact ? '<div class="note">Nothing built-in for this.</div>' : '')) + '</div>' +
+                (ST.q ? '<span class="pfbtn" data-dic2="net" style="background:#0a84ff;color:#fff;font-weight:700;cursor:pointer">' + (ST.busy ? '… looking up' : '🌐 Look up online and save') + '</span>' : '') + (ST.msg ? '<div class="note" style="margin-top:6px">' + e3(ST.msg) + '</div>' : '') +
+                '<div class="note" style="margin-top:8px">Medical entries are general information, not medical advice. For health problems talk to a doctor or pharmacist. Online results come from Wikipedia and the Free Dictionary and can be wrong; check important facts.</div></div>';
+            return h;
+        }
+        var _v = VIEWS.dict;
+        if (typeof _v === 'function') { VIEWS.dict = function () { var h = _v.apply(this, arguments), m = '<div class="group pad"><b>🌍 Other languages</b>'; return h.indexOf(m) >= 0 ? h.replace(m, box() + m) : h + box(); }; }
+        document.addEventListener('input', function (e) { var el = e.target; if (el && el.getAttribute && el.getAttribute('data-dic2-in')) { ST.q = el.value; ST.msg = ''; clearTimeout(ST.tm); ST.tm = setTimeout(function () { if (S.win === 'dict') { var f = document.getElementById('dic2q'), p = f ? f.selectionStart : 0; try { renderView(true); } catch (er) { } var g = document.getElementById('dic2q'); if (g) { g.focus(); try { g.setSelectionRange(p, p); } catch (er) { } } } }, 250); } }, true);
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest && e.target.closest('[data-dic2]'); if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-dic2');
+            if (a.indexOf('s:') === 0) { ST.s = a.slice(2); try { renderView(true); } catch (er) { } }
+            else if (a === 'net' && !ST.busy) { ST.busy = 1; ST.msg = ''; try { renderView(true); } catch (er) { } online(ST.q).then(function () { ST.busy = 0; ST.msg = 'Saved for offline use.'; try { renderView(true); } catch (er) { } }, function () { ST.busy = 0; ST.msg = 'Could not find it online (no internet, or no entry). Try another spelling.'; try { renderView(true); } catch (er) { } }); }
+        }, true);
+        var _pa = pfAnswer;
+        pfAnswer = function (raw) {
+            try {
+                var q = String(raw || '').trim(), m = q.toLowerCase().match(/^(?:what is|what are|define|meaning of|explain|who is|what's|tell me about)\s+(?:an? |the )?(.{2,40}?)\s*\??$/) || q.toLowerCase().match(/^(.{2,40}?)\s+(?:meaning|definition)\s*\??$/);
+                if (m) { var r = find(m[1]); if (r) { return { title: r.t, html: esc(r.d) + (r.u ? '<br><span dir="rtl" style="font-size:18px">' + esc(r.u) + '</span>' : '') + (r.s === 'medical' || r.s === 'medicine' ? '<br><small>General information, not medical advice. Ask a doctor or pharmacist before taking any medicine.</small>' : '') + (r.s === 'medicine' ? medLinks(r) : '') + '<br><span class="pfbtn" data-act="win:dict">📚 Open dictionaries</span>', score: 9 }; } }
+            } catch (e) { }
+            return _pa.apply(this, arguments);
+        };
+        window.__dic2 = { v: 1, find: find, search: search, online: online, packs: PK, cache: CACHE };
+    } catch (e) { try { console.error('p9dic2', e); } catch (e2) { } }
+})();
+/* ===== CY: p9play: Google Play rules. The app no longer offers an APK download inside itself (Play forbids apps that update outside Play). A new-version notice just points to the store listing. ===== */
+(function () {
+    try {
+        mwUpdBanner = function () {
+            var L = S.upd && S.upd.latest; if (!L || mwBuildNum(L) <= mwBuildNum(BUILD) || updSnoozed(L)) { return ''; }
+            return '<div class="mwupd" style="display:block"><b>⬆️ New version ' + esc(L) + ' is available</b> (you have ' + esc(BUILD) + ')<div style="margin-top:6px"><a href="market://details?id=com.mintoosuite.terminal" style="display:inline-block;padding:8px 14px;border-radius:12px;background:#fff;color:#0a84ff;font-weight:700;text-decoration:none;margin-right:8px">Open Google Play</a></div></div>';
+        };
+        window.__play = { v: 1 };
+    } catch (e) { try { console.error('p9play', e); } catch (e2) { } }
 })();
 
 function renderView(keep) {
