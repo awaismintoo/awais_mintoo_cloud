@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.197';
+var BUILD = '2026-10-31.205';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -12498,18 +12498,18 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 var s = st(o.r, rf.r, 0), lg = st(o.r, rf.r, 1); L[R[0]] = { corr: s.corr, beta: s.beta, lead: lg.corr };
                 if (!best || Math.abs(s.corr) > Math.abs(best.corr)) { best = { ref: R[0], corr: s.corr, beta: s.beta }; }
             });
-            o.L = L; o.best = best && Math.abs(best.corr) >= 0.6 ? best : null;
+            o.L = L; o.best = best && Math.abs(best.corr) >= 0.3 ? best : null; if (o.best) { o.best.weak = Math.abs(best.corr) < 0.6; }
         }
         function wanted() {
             var u = Object.keys(S.tick || {}).filter(function (s) { return /USDT$/.test(s) && !STABLE.test(s) && REFS.every(function (R) { return R[1].indexOf(s) < 0; }); });
             u.sort(function (a, b) { return (S.tick[b].q || 0) - (S.tick[a].q || 0); });
-            var top = u.slice(0, 40); try { var mxl = ((S.mx && S.mx.spot) || []).filter(function (r) { return r.s && !(S.tick && S.tick[r.s]) && !STABLE.test(r.s) && (r.q || 0) > 300000; }).sort(function (a, b) { return (b.q || 0) - (a.q || 0); }).slice(0, 25); mxl.forEach(function (r) { top.push(r.s); }); } catch (e) { } Object.keys(LK.vis).forEach(function (s) { if (top.indexOf(s) < 0) { top.push(s); } }); return top.slice(0, 80);
+            var top = u.slice(0, 90); try { var mxl = ((S.mx && S.mx.spot) || []).filter(function (r) { return r.s && !(S.tick && S.tick[r.s]) && !STABLE.test(r.s) && (r.q || 0) > 300000; }).sort(function (a, b) { return (b.q || 0) - (a.q || 0); }).slice(0, 25); mxl.forEach(function (r) { top.push(r.s); }); } catch (e) { } Object.keys(LK.vis).forEach(function (s) { if (top.indexOf(s) < 0) { top.push(s); } }); return top.slice(0, 80);
         }
         function pump() {
             if (LK.busy) { return; } var need = false;
             LK.rt = LK.rt || {}; REFS.forEach(function (R, i) { var rf = LK.ref[R[0]]; if ((!rf && Date.now() - (LK.rt[R[0]] || 0) > 120000) || (rf && Date.now() - rf.at > 900000)) { need = true; LK.busy = 1; LK.rt[R[0]] = Date.now(); loadRef(i, 0).then(function () { LK.busy = 0; REFS.forEach(function (x) { }); Object.keys(LK.coin).forEach(analyse); badges(); }); } });
             if (need) { return; }
-            var todo = wanted().filter(function (s) { var o = LK.coin[s]; return !o || (Date.now() - o.at > 1800000 && !o.fail) || (o.fail && Date.now() - o.at > 300000); }).slice(0, 4);
+            var todo = wanted().filter(function (s) { var o = LK.coin[s]; return !o || (Date.now() - o.at > 1800000 && !o.fail) || (o.fail && Date.now() - o.at > 300000); }).slice(0, 6);
             if (!todo.length) { return; } LK.busy = 1;
             Promise.all(todo.map(function (s) { return kl(s).then(function (c) { LK.coin[s] = { at: Date.now(), c: c, r: rets(c) }; analyse(s); }).catch(function () { LK.coin[s] = { at: Date.now(), fail: 1 }; }); })).then(function () { LK.busy = 0; LK.n++; badges(); });
         }
@@ -12519,7 +12519,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var r6 = ret(rf.c, 6), r24 = ret(rf.c, 24), c6 = ret(o.c, 6), c24 = ret(o.c, 24), ex = b.beta * r6, gap = ex - c6, lean = 0, txt;
             if (Math.abs(ex) >= 0.003) { lean = ex > 0 ? 1 : -1; }
             if (lean > 0) { txt = (gap > 0.005 ? 'Lagging ' + b.ref + ': may catch UP' : 'Supported UP by ' + b.ref); } else if (lean < 0) { txt = (gap < -0.005 ? 'Lagging ' + b.ref + ': may be dragged DOWN' : 'Pressure DOWN from ' + b.ref); } else { txt = 'No clear push from ' + b.ref + ' right now'; }
-            return { ref: b.ref, corr: b.corr, beta: b.beta, r6: r6, r24: r24, c6: c6, c24: c24, ex: ex, lean: lean, txt: txt, inv: b.corr < 0, strong: Math.abs(b.corr) >= 0.8 };
+            return { ref: b.ref, corr: b.corr, beta: b.beta, r6: r6, r24: r24, c6: c6, c24: c24, ex: ex, lean: lean, txt: txt, inv: b.corr < 0, strong: Math.abs(b.corr) >= 0.8, weak: !!b.weak };
         }
         window.__lkOutlook = outlook;
         function strength(ref) {
@@ -12959,7 +12959,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             : '<div class="group pad" style="border-left:5px solid #34c759"><b>🔒 Real trading is LOCKED</b><div class="note">The real bot cannot start, auto-start or place orders on its own. Orders you place yourself in a ticket still ask for your confirmation. To let the real bot work, tap Unlock and confirm.</div><div class="idbt" style="display:flex;gap:8px;margin-top:6px"><span class="btn tap kpb" data-lk="unlock">Unlock real bot</span></div>' + (LK.msg ? '<div class="warn">' + esc(LK.msg) + '</div>' : '') + '</div>';
         return h + _rc.apply(this, arguments);
     };
-    document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-lk]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-lk'); if (a === 'lock') { LK.un = false; LK.msg = ''; rbHalt('Real trading locked by you'); } else { (window.__ask || function (t, b, y, c, cb) { cb(); })('🔓 Unlock the real bot?', 'This lets the Baba Bot trade real money once you press Start. It locks again when you close the app.', 'Yes, unlock', '#ff3b30', function () { LK.un = true; LK.msg = ''; renderView(true); }); return; } renderView(true); }, true);
+    document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-lk="lock"],[data-lk="unlock"]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-lk'); if (a === 'lock') { LK.un = false; LK.msg = ''; rbHalt('Real trading locked by you'); } else { (window.__ask || function (t, b, y, c, cb) { cb(); })('🔓 Unlock the real bot?', 'This lets the Baba Bot trade real money once you press Start. It locks again when you close the app.', 'Yes, unlock', '#ff3b30', function () { LK.un = true; LK.msg = ''; renderView(true); }); return; } renderView(true); }, true);
     window.__lkUnlock = function () { LK.un = true; LK.msg = ''; };
     /* ---- 2) trade this plan: beautiful card + fill the ticket (Binance and other exchanges) ---- */
     var EXN = { bin: 'Binance Futures', bitget: 'Bitget', bybit: 'Bybit', okx: 'OKX', mexc: 'MEXC Spot' };
@@ -17386,7 +17386,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             var h = '<div style="display:flex;gap:6px;margin-bottom:10px">' + [['new', '✨ New'], ['dash', '📊 Dashboard (' + A.list.length + ')']].map(function (t) { return '<span data-xk="satab:' + t[0] + '" style="flex:1;text-align:center;padding:9px;border-radius:12px;font-weight:700;background:' + (G.tab === t[0] ? '#111;color:#fff' : '#8881') + '">' + t[1] + '</span>'; }).join('') + '</div>';
             return h + (G.tab === 'dash' ? dashView() : newView());
         }
-        WINS.push({ id: 'agent', ic: '🧠', c: '#8b5cf6', n: 'Strategy Agent (AI)', t: 'Agent', sub: 'Describe a plan in words. Baba builds it, you confirm, it runs in Paper mode with Pause and Terminate' }); LIVE.agent = 0; VIEWS.agent = vAgent;
+        WINS.push({ id: 'agent', ic: '🧠', c: '#8b5cf6', n: 'Strategy (AI)', t: 'Strategy', sub: 'Describe a plan in words. Baba builds it, you confirm, it runs in Paper mode with Pause and Terminate' }); LIVE.agent = 0; VIEWS.agent = vAgent;
 
         /* ---------- 4. buttons ---------- */
         document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-xin') === 'satx') { G.text = t.value; } });
@@ -18812,7 +18812,7 @@ try {
             });
         }
         function scanB() {
-            try { var T0 = S.tick || {}, ks = Object.keys(T0).filter(function (s) { return /USDT$/.test(s) && !JUNK.test(s); }); if (ks.length > 50) { var firstB = !K.binit, fr = []; ks.forEach(function (s) { if (!K.b[s]) { K.b[s] = 1; if (!firstB) { fr.push(s); } } }); if (firstB) { K.binit = Date.now(); } if (fr.length) { saveK(); fr.forEach(function (s) { var b = s.replace(/USDT$/, ''), pr = +(T0[s] && T0[s].p) || 0; if (gate('NB:' + b, 1)) { fire({ kind: 'new', sym: b, bn: s, p: pr, title: '🆕 NEW COIN on Binance futures: ' + b, body: 'Just appeared in the Binance list. Price now ' + fmt(pr), warn: WARN }); } }); } else if (firstB) { saveK(); } } } catch (e) { }
+            try { var T0 = S.tick || {}, ks = Object.keys(T0).filter(function (s) { return /USDT$/.test(s) && !JUNK.test(s); }); if (ks.length > 50) { var firstB = !K.binit, fr = []; ks.forEach(function (s) { if (!K.b[s]) { var f0 = S.fst && S.fst[s]; if (S.fst && !(f0 && f0.st === 'TRADING' && (!f0.ob || f0.ob <= Date.now()))) { return; } K.b[s] = 1; if (!firstB) { fr.push(s); } } }); if (firstB) { K.binit = Date.now(); } if (fr.length) { saveK(); fr.forEach(function (s) { var b = s.replace(/USDT$/, ''), pr = +(T0[s] && T0[s].p) || 0; if (gate('NB:' + b, 1)) { fire({ kind: 'new', sym: b, bn: s, p: pr, title: '🆕 NEW COIN on Binance futures: ' + b, body: 'Just appeared in the Binance list. Price now ' + fmt(pr), warn: WARN }); } }); } else if (firstB) { saveK(); } } } catch (e) { }
             try { var T = S.tick || {}; Object.keys(T).forEach(function (s) { var t = T[s]; if (!/USDT$/.test(s) || !t || !(t.p > 0) || JUNK.test(s)) { return; } judge('BN:' + s, s.replace(/USDT$/, ''), +t.p, +t.q || 0, +t.chg || 0, '', 'Binance'); }); } catch (e) { }
         }
         function cycle() {
@@ -18834,7 +18834,7 @@ try {
         X.on('pumpon', function (v) { cfg.on = v === 'on'; saveC(); X.again(); }); X.on('pumphi', function (v) { cfg.hi = v === 'on'; saveC(); X.again(); });
         document.addEventListener('click', function (e) { var el = e.target.closest && e.target.closest('[data-pump="test"]'); if (!el) { return; } e.preventDefault(); e.stopPropagation(); fire({ kind: 'new', sym: 'TEST', spec: '', title: '🆕 TEST: this is how a new-coin alert looks', body: 'If you can see and feel this, alerts work on this phone.', warn: WARN }); }, true);
         function logHtml(n) {
-            var L = LOG.slice(0, n || 8); if (!L.length) { return '<div class="note">No alerts yet. When a coin is newly listed on MEXC or Binance, or jumps fast, it appears here and stays until you clear it.</div>'; }
+            var L = LOG.filter(function (x) { try { if (x.kind === 'new' && x.bn && S.fst && /Binance futures/.test(x.title || '')) { var f = S.fst[x.bn]; return !!(f && f.st === 'TRADING'); } } catch (e) { } return true; }).slice(0, n || 8); if (!L.length) { return '<div class="note">No alerts yet. When a coin is newly listed on MEXC or Binance, or jumps fast, it appears here and stays until you clear it.</div>'; }
             return L.map(function (x) { var ago = Math.max(0, Math.round((Date.now() - x.t) / 60000)), when = ago < 60 ? ago + ' min ago' : ago < 1440 ? Math.round(ago / 60) + ' h ago' : Math.round(ago / 1440) + ' d ago'; return '<div class="row tap" data-pump="logopen:' + (LOG.indexOf(x)) + '" style="display:block;cursor:pointer;scroll-snap-align:start"><b>' + (x.mega ? '🚨 ' : '') + e3(x.title) + '</b><div class="note" style="margin:2px 0 0">' + e3(x.body) + ' · ' + when + '</div></div>'; }).join('');
         }
         function homeCard() { return '<div class="group pad" id="mwpumpcard"><div style="display:flex;justify-content:space-between;align-items:center"><b>🔔 New coins and pumps</b><span class="mut" style="font-size:12px" data-act="win:radar">See all ›</span></div><div style="margin-top:6px"><div id="mwpumpscroll" data-noswipe="1" style="max-height:214px;overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y proximity;touch-action:pan-y;scrollbar-width:none">' + logHtml(12) + '</div>' + (LOG.length > 3 ? '<div class="mut" style="font-size:11px;text-align:center;margin-top:4px">⇅ swipe up or down to see more (' + Math.min(LOG.length, 12) + ')</div>' : '') + '</div></div>'; }
@@ -19834,21 +19834,27 @@ try {
     } catch (e) { try { console.log('hold', e); } catch (er) { } }
 })();
 
-/* Menu tidy: drop menu buttons that already live in More / Profile */
+/* Menu tidy: hide menu buttons that already live in More / Profile (only those) */
 (function () {
     try {
-        function inMore() { var s = { account: 1, lockui: 1, ptrade: 1, glance: 1, mdet: 1 }; try { MW_GROUPS.forEach(function (g) { g[1].forEach(function (id) { s[id] = 1; }); }); } catch (e) { } return s; }
+        var cache = null, cacheAt = 0;
+        function inMore() {
+            if (cache && Date.now() - cacheAt < 4000) return cache;
+            var s = { account: 1, lockui: 1 };
+            try { var h = String(mwTiles()); var re = /data-act="win:([a-z0-9_]+)"/g, m; while ((m = re.exec(h))) { s[m[1]] = 1; } } catch (e) { }
+            cache = s; cacheAt = Date.now(); return s;
+        }
         function clean() {
             try {
                 var m = document.getElementById('sheetMenu'); if (!m) return;
                 var s = inMore();
                 [].slice.call(m.querySelectorAll('[data-act^="win:"]')).forEach(function (b) {
                     var id = (b.getAttribute('data-act') || '').slice(4);
-                    if (s[id]) b.remove();
+                    b.style.display = s[id] ? 'none' : '';
                 });
             } catch (e) { }
         }
-        window.__menuGone = function () { return Object.keys(inMore()); }; setInterval(clean, 400);
+        window.__menuGone = function () { return Object.keys(inMore()); }; setInterval(clean, 600);
         document.addEventListener('click', function () { setTimeout(clean, 60); setTimeout(clean, 300); }, true);
     } catch (e) { }
 })();
@@ -19883,6 +19889,78 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             return String(h).replace(/<div class="m8row"><span[^>]*data-m8="rb:ack[12]"[\s\S]*?<\/span><\/div>/g, '').replace(/<input class="m7inp" data-m7in="rbph"[^>]*>/g, '');
         };
     } catch (e) { try { console.log('px1', e); } catch (er) { } }
+})();
+
+/* ===== chart full screen tidy + Trade tab (replaces Bots tab; trade bar minimises into it) ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent =
+            '#fsbtn.back{bottom:auto!important;top:calc(8px + env(safe-area-inset-top))!important;right:10px!important;height:auto!important;padding:7px 14px!important;z-index:10000!important}' +
+            'html[data-fs="cv"] #view.fsx>*:not(.pchead):not(.m7row):not(#cplv):not(.mwhascv){display:none!important}' +
+            'html[data-fs="cv"] #view.fsx{padding:44px 8px 8px!important}' +
+            'html[data-fs="cv"] #view.fsx #cv{height:calc(100vh - 215px)!important;min-height:240px}' +
+            'html[data-fs="cv"] #mwtb,html[data-fs="cv"] .cpbar,html[data-fs="cv"] #mwsp,html[data-fs="cv"] #mwspb{display:none!important}' +
+            'html.mwtmin #mwtb,html.mwtmin .cpbar{display:none!important}' +
+            '.mwmn{flex:0 0 auto;align-self:center;padding:6px 10px;border-radius:12px;background:rgba(120,120,128,.18);font:700 12px -apple-system,Segoe UI,sans-serif;cursor:pointer;color:inherit}' +
+            '#tabs .mwTradeTab svg{width:24px;height:24px}' +
+            '@keyframes mwtpulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 rgba(52,199,89,0))}50%{transform:scale(1.18);filter:drop-shadow(0 0 7px rgba(52,199,89,.95))}}' +
+            '#tabs .mwTradeTab.mwanim svg{animation:mwtpulse 1.1s ease-in-out infinite}#tabs .mwTradeTab.mwanim{color:#34c759}';
+        document.head.appendChild(st);
+        var TW = { tpro: 1, analyst: 1, story: 1, mexcd: 1, chart: 1, xtrade: 1, strade: 1 };
+        var minim = false, lastWin = '';
+        function tradeActive() {
+            try { if (S.rb && S.rb.running) return true; } catch (e) { }
+            try { if (S.fb && S.fb.on) return true; } catch (e) { }
+            try { if (S.tp && S.tp.pos && S.tp.pos.length) return true; } catch (e) { }
+            try { var a = JSON.parse(localStorage.getItem('mintoosuite_ptrade') || 'null'); if (a && a.pos && a.pos.length) return true; } catch (e) { }
+            return false;
+        }
+        function setMin(v) { minim = !!v; document.documentElement.classList.toggle('mwtmin', minim); tick(); }
+        var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 4v3M7 17v3M17 7v3M17 14v4"/><rect x="5" y="7" width="4" height="10" rx="1"/><rect x="15" y="10" width="4" height="4" rx="1"/></svg>';
+        function tick() {
+            try {
+                var win = S.win, on = !!TW[win];
+                if (win !== lastWin) { lastWin = win; if (minim) { minim = false; document.documentElement.classList.remove('mwtmin'); } }
+                var fs = S.fsKey || ''; document.documentElement.setAttribute('data-fs', fs);
+                var cv = document.getElementById('cv'); if (cv) { var g = cv.closest('.group'); if (g && !g.classList.contains('mwhascv')) { g.classList.add('mwhascv'); } }
+                var tabs = document.getElementById('tabs'); if (!tabs) return;
+                var t = tabs.querySelector('.mwTradeTab') || [].slice.call(tabs.querySelectorAll('.tab')).filter(function (x) { return x.getAttribute('data-act') === 'win:botpro' || /^\s*Bots\s*$/.test(x.innerText || ''); })[0];
+                if (t) {
+                    if (!t.classList.contains('mwTradeTab')) { t.classList.add('mwTradeTab'); t.setAttribute('data-act', 'mwtrade'); t.setAttribute('data-noswipe', '1'); t.setAttribute('data-mwkeep', '1'); t.innerHTML = ICON + '<span>Trade</span>'; }
+                    var anim = (minim && on) || tradeActive();
+                    t.classList.toggle('mwanim', !!anim);
+                    t.classList.toggle('on', on && !minim);
+                }
+                if (on) {
+                    var bar = document.getElementById('mwtb');
+                    if (bar && !bar.querySelector('.mwmn')) { bar.insertAdjacentHTML('beforeend', '<span class="mwmn" data-mwmn="1">▾</span>'); }
+                    var cp = document.querySelector('.cpbar'); if (cp && !cp.querySelector('.mwmn')) { cp.insertAdjacentHTML('beforeend', '<span class="mwmn" data-mwmn="1">▾</span>'); }
+                }
+            } catch (e) { }
+        }
+        document.addEventListener('click', function (e) {
+            var m = e.target.closest ? e.target.closest('[data-mwmn]') : null;
+            if (m) { e.preventDefault(); e.stopPropagation(); setMin(true); return; }
+            var t = e.target.closest ? e.target.closest('.mwTradeTab') : null;
+            if (t) { e.preventDefault(); e.stopPropagation(); if (TW[S.win]) { setMin(!minim); } else { try { gotoWin('tpro'); } catch (er) { } } }
+        }, true);
+        window.__tradeTab = { min: setMin, active: tradeActive };
+        setInterval(tick, 500);
+    } catch (e) { try { console.log('px2', e); } catch (er) { } }
+})();
+/* More: make sure the full Trade ticket and Bots are easy to find */
+(function () { try { var g = MW_GROUPS[0][1]; ['tpro'].forEach(function (id) { if (g.indexOf(id) < 0) { g.splice(Math.min(1, g.length), 0, id); } }); } catch (e) { } })();
+/* Binance new-coin popups only for contracts Binance itself lists as TRADING (status kept from exchangeInfo) */
+(function () {
+    try {
+        var _fj = fetchJSON;
+        fetchJSON = function (p) {
+            var r = _fj.apply(this, arguments);
+            try { if (/\/fapi\/v1\/exchangeInfo/.test(String(p))) { r.then(function (j) { try { var m = {}; (j.symbols || []).forEach(function (x) { var ut = String(x.underlyingType || '').toUpperCase(), sb = JSON.stringify(x.underlyingSubType || []).toLowerCase(); var coin = x.contractType === 'PERPETUAL' && ut !== 'EQUITY' && !/tradfi|equity|stock|etf|commodity|metal|index|fx/.test(sb); m[x.symbol] = { st: coin ? x.status : 'X', ob: +x.onboardDate || 0 }; }); S.fst = m; try { if (S.newc && S.newc.list) { S.newc.list = S.newc.list.filter(function (c) { var f = m[c.sym]; return f && f.st === 'TRADING'; }); } } catch (e) { } } catch (e) { } }, function () { }); } } catch (e) { }
+            return r;
+        };
+    } catch (e) { }
 })();
 
 function renderView(keep) {
