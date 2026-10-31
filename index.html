@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.118';
+var BUILD = '2026-10-31.122';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -10975,9 +10975,17 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             else { h = 'Information shown for you to read. For a full explanation of this screen, tap the "?" next to its title, or ask the Baba AI.'; }
             return [txt || 'Info', h];
         }
-        function show(t, b) {
+        function show(t, b, el) {
             var o = document.getElementById('mwexp'); if (!o) { o = document.createElement('div'); o.id = 'mwexp'; o.setAttribute('data-mwkeep', '1'); document.body.appendChild(o); }
-            o.innerHTML = '<b>' + e2(t) + '</b>' + e2(b); o.style.display = 'block'; clearTimeout(hideT); hideT = setTimeout(function () { o.style.display = 'none'; }, 4200);
+            o.innerHTML = '<b>' + e2(t) + '</b>' + e2(b);
+            o.style.cssText = 'display:block;position:fixed;z-index:99990;width:min(300px,calc(100vw - 24px));box-sizing:border-box;padding:10px 13px;border-radius:16px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);color:#111;border:1px solid rgba(255,255,255,.65);box-shadow:0 8px 28px rgba(0,0,0,.22);font:13px/1.4 system-ui,sans-serif;pointer-events:none;left:12px;top:12px;bottom:auto;right:auto;transform:none;opacity:0;transition:opacity .15s';
+            var bs = o.querySelector('b'); if (bs) { bs.style.cssText = 'display:block;font-size:14px;margin-bottom:3px;color:#111'; }
+            try {
+                var vw = window.innerWidth, vh = window.innerHeight, r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null, w = o.offsetWidth, h = o.offsetHeight;
+                if (r) { var cx = r.left + r.width / 2, left = Math.max(12, Math.min(vw - w - 12, cx - w / 2)), below = r.bottom + 10, top = (below + h < vh - 70) ? below : Math.max(12, r.top - h - 10); o.style.left = left + 'px'; o.style.top = top + 'px'; }
+                else { o.style.left = Math.max(12, (vw - w) / 2) + 'px'; o.style.top = Math.max(12, vh / 2 - h / 2) + 'px'; }
+            } catch (er) { }
+            requestAnimationFrame(function () { o.style.opacity = '1'; }); clearTimeout(hideT); hideT = setTimeout(function () { o.style.opacity = '0'; setTimeout(function () { o.style.display = 'none'; }, 180); }, 4200);
         }
         document.addEventListener('click', function (e) {
             var t = e.target; if (!t || !t.closest || t.closest(SKIP)) { return; }
@@ -10988,7 +10996,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 if (MUT !== m0 || S.win !== w0 || fetchN !== f0 || Math.abs(window.pageYOffset - y0) > 2 || document.activeElement !== a) { return; }
                 if (document.getElementById('mwst') || Date.now() - lastShow < 1500) { return; }
                 var tx = (el.innerText || el.textContent || '').trim(); if (!tx && !el.querySelector('svg,img') && el.tagName !== 'svg' && el.tagName !== 'IMG') { return; }
-                lastShow = Date.now(); var d = describe(el); show(d[0], d[1]);
+                lastShow = Date.now(); var d = describe(el); show(d[0], d[1], el);
             }, 750);
         }, false);
     } catch (e) { try { console.log('p9zszd', e); } catch (er) { } }
@@ -13715,6 +13723,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }, true);
         /* choosing Beginner/Pro or Classic from the old buttons must still work: they run first (capture order) and we only repaint */
         document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-lk]')) { setTimeout(paint, 0); } }, false);
+        window.__pal = { PAL: PAL, DESC: DESC };
     } catch (e) { }
 })();
 /* ===== .59 SMART GUARD for Bot Baba (paper): checks recommendations, bigger trend, Bitcoin, volatility, volume, news, history before every entry;
@@ -15095,8 +15104,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         var SN = [['ut1', 'UT Bot (default 1, ATR 10)'], ['ut2', 'UT Bot (calmer 2, ATR 10)'], ['st', 'Supertrend (10, 3)'], ['ema', 'EMA 9/21 cross'], ['rsi', 'RSI bounce (buy 30, exit 50)'], ['baba', 'Bot Baba rule (UT + Supertrend + EMA50 agree)']];
         function sim(K, pos) {
-            var tr = [], cur = 0, ent = 0, i, p, px, n = K.length;
-            for (i = 0; i < n - 1; i++) { p = pos[i] || 0; if (p !== cur) { px = K[i + 1].o; if (cur) { tr.push(cur * (px / ent - 1) - 2 * FEE); } if (p) { ent = px; } cur = p; } }
+            var tr = [], cur = 0, ent = 0, i, p, px, n = K.length; tr.sd = [];
+            for (i = 0; i < n - 1; i++) { p = pos[i] || 0; if (p !== cur) { px = K[i + 1].o; if (cur) { tr.push(cur * (px / ent - 1) - 2 * FEE); tr.sd.push(cur); } if (p) { ent = px; } cur = p; } }
             return tr;
         }
         function wil(w, n) { if (!n) { return 0; } var z = 1.64, p = w / n; return (p + z * z / (2 * n) - z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))) / (1 + z * z / n); }
@@ -15237,7 +15246,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         function mk(m, d) {
             var K = d.K, S0 = strategies(K), o = { name: m[0], n: K.length, src: d.src, st: {}, days: Math.round((K[K.length - 1].t - K[0].t) / 86400000) };
-            SN.forEach(function (s) { var tr = sim(K, S0[s[0]]); o.st[s[0]] = { tr: tr, s: stats(tr), pos: S0[s[0]][K.length - 1], from: 0 }; });
+            SN.forEach(function (s) { var tr = sim(K, S0[s[0]]); o.st[s[0]] = { tr: tr, trB: tr.filter(function (x, q) { return tr.sd[q] > 0; }), trS: tr.filter(function (x, q) { return tr.sd[q] < 0; }), s: stats(tr), pos: S0[s[0]][K.length - 1], from: 0 }; });
             o.bh = (K[K.length - 1].c / K[Math.min(50, K.length - 1)].o - 1) * 100; o.px = K[K.length - 1].c; o.stop = S0._u2.stop[K.length - 1];
             var u = S0._u2, p = u.pos[K.length - 1], i = K.length - 1; while (i > 0 && u.pos[i - 1] === p) { i--; } o.since = K.length - 1 - i;
             return o;
@@ -15250,16 +15259,17 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 '<div class="note" style="margin:6px 0 0"><b>About "99.9% accuracy":</b> no indicator on earth can honestly do that. A bot can show a high win rate by taking many tiny wins and a few huge losses, by repainting old signals, or by showing only lucky coins. What counts is win rate <b>and</b> the size of wins versus losses, after fees, on many trades. This page shows exactly that, with the number of trades, so you can see the truth.</div>', '#0a84ff');
             h += X.seg('labtf', [['15m', '15 minutes'], ['1h', '1 hour'], ['4h', '4 hours']], t);
             h += '<button class="btn" data-xk="labrun:1" ' + (LAB.busy ? 'disabled' : '') + '>' + (LAB.busy ? 'Testing… ' + LAB.done + '/' + LAB.tot : (names.length ? 'Run the test again' : 'Run the test (about 20 seconds)')) + '</button>';
+            if (LAB.t && LAB.t !== t && !LAB.busy) { h += '<div class="note" style="color:#ff9f0a">Showing the old ' + LAB.t + ' result. Tap Run to test ' + t + '.</div>'; }
             if (LAB.msg) { h += '<div class="note">' + e2(LAB.msg) + '</div>'; }
             if (!names.length) { return h + '<div class="note">Tap the button. Nothing is stored or sent; your phone downloads past prices and does the maths.</div>'; }
             var R = names.map(function (n) { return LAB.res[n]; });
-            h += '<div class="group pad"><b>Result across ' + R.length + ' markets (' + (LAB.t || t) + ' candles, about ' + R[0].days + ' days each)</b><div style="overflow-x:auto" data-noswipe="1"><table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px"><tr style="text-align:left"><th>Rule</th><th>Trades</th><th>Won</th><th>Avg/trade</th><th>Profit factor</th><th>Markets +</th><th>Verdict</th></tr>';
+            h += '<div class="group pad"><b>Result across ' + R.length + ' markets (' + (LAB.t || t) + ' candles, about ' + R[0].days + ' days each)</b><div style="overflow-x:auto" data-noswipe="1"><table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px"><tr style="text-align:left"><th>Rule</th><th>Trades</th><th>Won</th><th>Avg/trade</th><th>Profit factor</th><th>Markets +</th><th>Verdict (buy + sell)</th></tr>';
             SN.forEach(function (s) {
-                var all = [], pos = 0; R.forEach(function (r) { all = all.concat(r.st[s[0]].tr); if (r.st[s[0]].s.sum > 0) { pos++; } });
-                var a = stats(all), ok = a.n >= 100 && a.avg > 0 && a.pf >= 1.2 && pos / R.length >= 0.6;
-                h += '<tr style="border-top:1px solid var(--line,#e5e5ea)"><td style="padding:6px 4px 6px 0"><b>' + e2(s[1]) + '</b></td><td>' + a.n + '</td><td>' + Math.round(a.win * 100) + '%</td><td style="color:' + (a.avg >= 0 ? '#16a34a' : '#dc2626') + '">' + (a.avg >= 0 ? '+' : '') + a.avg.toFixed(2) + '%</td><td>' + a.pf.toFixed(2) + '</td><td>' + pos + '/' + R.length + '</td><td>' + (ok ? pill('Edge seen', '#16a34a') : pill('Not proven', '#ff9f0a')) + '</td></tr>';
+                var all = [], allB = [], allS = [], pos = 0; R.forEach(function (r) { all = all.concat(r.st[s[0]].tr); allB = allB.concat(r.st[s[0]].trB); allS = allS.concat(r.st[s[0]].trS); if (r.st[s[0]].s.sum > 0) { pos++; } });
+                var a = stats(all), sb = stats(allB), ss = stats(allS), ok = a.n >= 100 && a.avg > 0 && a.pf >= 1.2 && pos / R.length >= 0.6;
+                h += '<tr style="border-top:1px solid var(--line,#e5e5ea)"><td style="padding:6px 4px 6px 0"><b>' + e2(s[1]) + '</b></td><td>' + a.n + '</td><td>' + Math.round(a.win * 100) + '%</td><td style="color:' + (a.avg >= 0 ? '#16a34a' : '#dc2626') + '">' + (a.avg >= 0 ? '+' : '') + a.avg.toFixed(2) + '%</td><td>' + a.pf.toFixed(2) + '</td><td>' + pos + '/' + R.length + '</td><td>' + (ok ? pill('Edge seen', '#16a34a') : pill('Not proven', '#ff9f0a')) + '<div class="note" style="margin:3px 0 0;font-size:10px">Buy (long) ' + sb.n + ' trades: ' + (sb.avg >= 0 ? '+' : '') + sb.avg.toFixed(2) + '%<br>Sell (short) ' + ss.n + ' trades: ' + (ss.avg >= 0 ? '+' : '') + ss.avg.toFixed(2) + '%</div></td></tr>';
             });
-            h += '</table></div><div class="note" style="margin:8px 0 0">"Edge seen" needs 100+ trades, profit after fees, profit factor 1.2+, and profit in 60% of markets. Even then it is only the past. "Not proven" means the rule did not clear that bar on this data. Most single indicators do not.</div></div>';
+            h += '</table></div><div class="note" style="margin:8px 0 0">"Edge seen" needs 100+ trades, profit after fees, profit factor 1.2+, and profit in 60% of markets. Even then it is only the past. "Not proven" means the rule, <b>buying and selling (short) together</b>, did not clear that bar on this data. Under every verdict the small lines show the Buy side and the Sell side separately, so you can see which side hurts. If both are negative, the rule loses in both directions. Most single indicators do not.</div></div>';
             h += '<div class="group pad"><b>Right now, by market</b><div style="overflow-x:auto" data-noswipe="1"><table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px"><tr style="text-align:left"><th>Market</th><th>Price</th><th>UT Bot</th><th>Supertrend</th><th>Bot Baba</th></tr>';
             R.forEach(function (r) {
                 h += '<tr style="border-top:1px solid var(--line,#e5e5ea)"><td style="padding:6px 4px 6px 0"><b>' + e2(r.name) + '</b><div class="note" style="margin:0;font-size:10px">' + e2(r.src) + '</div></td><td>' + fp(r.px, r.name) + '</td><td>' + sideTxt(r.st.ut2.pos) + '<div class="note" style="margin:0;font-size:10px">' + r.since + ' candles · stop ' + fp(r.stop, r.name) + '</div></td><td>' + sideTxt(r.st.st.pos) + '</td><td>' + sideTxt(r.st.baba.pos) + '</td></tr>';
@@ -15273,6 +15283,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             return h + '<div class="group pad"><div class="note" style="margin:0">Honest limits: past candles, a short window, simple fee model, no guarantee. Use stops, small size, and the practice bot first.</div></div>';
         }
         X.on('labrun', function () { runLab(); });
+        try { document.addEventListener('click', function (e) { var b = e.target && e.target.closest ? e.target.closest('[data-xk^="labtf:"]') : null; if (b) { setTimeout(function () { if (!LAB.busy && S.win === 'siglab') { runLab(); } }, 120); } }); } catch (e) { }
         try {
             VIEWS.siglab = vLab; LIVE.siglab = 0;
             WINS.push({ id: 'siglab', ic: '🔬', c: '#0a84ff', n: 'Signal Lab', t: 'Signal Lab', sub: 'Honest accuracy test of UT Bot, Supertrend, RSI and Bot Baba on past candles' });
@@ -15376,13 +15387,13 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             function tabs() { return [['bots', '🤖 Bots & AI'], ['ob', 'Order book'], ['depth', 'Depth'], ['trades', 'Trades']]; }
             function curTab() { var t = g('cpt', 'bots'); return ['bots', 'ob', 'depth', 'trades'].indexOf(t) >= 0 ? t : 'bots'; }
             function obHtml(sym, d) {
-                if (!d || !d.bids) { return '<div class="note">Loading…</div>'; }
+                if (!d || !d.bids) { return '<div class="note" style="min-height:200px">' + (OBS.why ? '⚠️ ' + e2(OBS.why) : 'Loading…') + '</div>'; }
                 var mx = 0; d.bids.concat(d.asks).forEach(function (r) { mx = Math.max(mx, +r[1]); });
                 function col(rows, c) { return rows.slice(0, 12).map(function (r) { return '<div class="r"><i style="background:' + c + ';width:' + Math.round(+r[1] / (mx || 1) * 100) + '%"></i><span style="color:' + c + '">' + fp(+r[0], sym) + '</span><span>' + vol(+r[1]) + '</span></div>'; }).join(''); }
-                return '<div class="cpob"><div><div class="note" style="margin:0 4px 2px">Buyers (bids)</div>' + col(d.bids, '#16a34a') + '</div><div><div class="note" style="margin:0 4px 2px">Sellers (asks)</div>' + col(d.asks, '#dc2626') + '</div></div>';
+                return '<div class="cpob"><div><div class="note" style="margin:0 4px 2px">Buyers (bids)</div>' + col(d.bids, '#16a34a') + '</div><div><div class="note" style="margin:0 4px 2px">Sellers (asks)</div>' + col(d.asks, '#dc2626') + '</div></div><div class="note" style="margin:4px 0 0">Source: ' + e2(OB[sym + '~src'] || 'Binance futures') + '</div>';
             }
             function depthHtml(sym, d) {
-                if (!d || !d.bids) { return '<div class="note">Loading…</div>'; }
+                if (!d || !d.bids) { return '<div class="note" style="min-height:200px">' + (OBS.why ? '⚠️ ' + e2(OBS.why) : 'Loading…') + '</div>'; }
                 var W = 300, H = 120, b = d.bids.map(function (r) { return [+r[0], +r[1]]; }), a = d.asks.map(function (r) { return [+r[0], +r[1]]; }), cb = 0, ca = 0;
                 var B = b.map(function (r) { cb += r[1]; return [r[0], cb]; }).reverse(), A = a.map(function (r) { ca += r[1]; return [r[0], ca]; });
                 var lo = B[0][0], hi = A[A.length - 1][0], mxv = Math.max(cb, ca) || 1;
@@ -15391,7 +15402,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:150px">' + path(B, '#16a34a') + path(A, '#dc2626') + '</svg><div class="note" style="margin:2px 0 0">Green: total buy orders waiting below the price. Red: total sell orders waiting above it. A taller wall can hold price back, but walls can be pulled at any time.</div>';
             }
             function trHtml(sym, d) {
-                if (!Array.isArray(d)) { return '<div class="note">Loading…</div>'; }
+                if (!Array.isArray(d)) { return '<div class="note" style="min-height:200px">' + (OBS.why ? '⚠️ ' + e2(OBS.why) : 'Loading…') + '</div>'; }
                 return '<div class="cpob" style="grid-template-columns:1fr;gap:0">' + d.slice(-30).reverse().map(function (r) { var up = !r.m; return '<div class="r"><span style="color:' + (up ? '#16a34a' : '#dc2626') + '">' + fp(+r.p, sym) + '</span><span>' + vol(+r.q) + '</span><span class="note" style="margin:0">' + new Date(r.T).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '</span></div>'; }).join('') + '</div>';
             }
             function botsHtml(sym) {
@@ -15406,12 +15417,45 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 var t = curTab(); if (t === 'bots') { return botsHtml(sym); } if (!isUSDT(sym)) { return '<div class="note">Order book, depth and trades are shown for Binance coins only.</div>'; }
                 return t === 'ob' ? obHtml(sym, OB[sym]) : t === 'depth' ? depthHtml(sym, OB[sym]) : trHtml(sym, OB[sym + '~t']);
             }
-            function refresh() { var el = document.getElementById('cpBody'), s = sym0(); if (el && S.win === 'chart') { el.innerHTML = bodyHtml(s); } }
+            function refresh() { var el = document.getElementById('cpBody'), s = sym0(); if (el && S.win === 'chart') { var nh = bodyHtml(s); if (el.__h !== nh) { el.__h = nh; el.innerHTML = nh; } } }
+            /* Order book, depth and trades: try Binance futures, then Binance spot data, then OKX, then Gate. Remember what worked, slow down when sources fail, and say so instead of showing "Loading…" forever. */
+            var OBS = { src: {}, fail: 0, next: 0, why: '' };
+            function nd(a) { return Array.isArray(a) ? a.map(function (r) { return [r[0], r[1]]; }) : []; }
+            function srcList(s, t) {
+                var b = s.replace(/USDT$/, ''), L = [];
+                if (t === 'trades') {
+                    L.push(['Binance futures', 'https://fapi.binance.com/fapi/v1/trades?symbol=' + s + '&limit=30', function (j) { return j; }]);
+                    L.push(['Binance spot', 'https://data-api.binance.vision/api/v3/trades?symbol=' + s + '&limit=30', function (j) { return j.map(function (r) { return { p: r.price, q: r.qty, T: r.time, m: r.isBuyerMaker }; }); }]);
+                    L.push(['OKX', 'https://www.okx.com/api/v5/market/trades?instId=' + b + '-USDT-SWAP&limit=30', function (j) { return (j.data || []).slice().reverse().map(function (r) { return { p: r.px, q: r.sz, T: +r.ts, m: r.side === 'sell' }; }); }]);
+                    L.push(['Gate', 'https://api.gateio.ws/api/v4/spot/trades?currency_pair=' + b + '_USDT&limit=30', function (j) { return j.slice().reverse().map(function (r) { return { p: r.price, q: r.amount, T: +(r.create_time_ms || r.create_time * 1000), m: r.side === 'sell' }; }); }]);
+                } else {
+                    var n = t === 'depth' ? 50 : 15;
+                    L.push(['Binance futures', 'https://fapi.binance.com/fapi/v1/depth?symbol=' + s + '&limit=' + n, function (j) { return { bids: nd(j.bids), asks: nd(j.asks) }; }]);
+                    L.push(['Binance spot', 'https://data-api.binance.vision/api/v3/depth?symbol=' + s + '&limit=' + n, function (j) { return { bids: nd(j.bids), asks: nd(j.asks) }; }]);
+                    L.push(['OKX', 'https://www.okx.com/api/v5/market/books?instId=' + b + '-USDT-SWAP&sz=' + n, function (j) { var d = (j.data || [])[0] || {}; return { bids: nd(d.bids), asks: nd(d.asks) }; }]);
+                    L.push(['Gate', 'https://api.gateio.ws/api/v4/spot/order_book?currency_pair=' + b + '_USDT&limit=' + n, function (j) { return { bids: nd(j.bids), asks: nd(j.asks) }; }]);
+                }
+                var first = OBS.src[s + t]; if (first != null && L[first]) { var x = L.splice(first, 1)[0]; L.unshift(x); }
+                return L;
+            }
             function poll() {
                 var s = sym0(), t = curTab(); if ((window.__safe && window.__safe()) || S.win !== 'chart' || !s || !isUSDT(s) || t === 'bots' || document.hidden) { return; }
-                var u = t === 'trades' ? 'https://fapi.binance.com/fapi/v1/trades?symbol=' + s + '&limit=30' : 'https://fapi.binance.com/fapi/v1/depth?symbol=' + s + '&limit=' + (t === 'depth' ? 50 : 15);
-                fetchText(u, 6000).then(function (tx) { var j = JSON.parse(tx); if (t === 'trades') { OB[s + '~t'] = j; } else { OB[s] = j; } if (curTab() === t && sym0() === s) { refresh(); } }).catch(function () { });
+                if (Date.now() < OBS.next) { return; }
+                var L = srcList(s, t), k = s + t;
+                var tryNext = function (i) {
+                    if (i >= L.length) { OBS.fail++; OBS.next = Date.now() + Math.min(30000, 2500 * Math.pow(2, OBS.fail)); OBS.why = 'Binance and the backup sources did not answer (the exchange may be busy or limiting this phone). Trying again in a few seconds.'; if (curTab() === t && sym0() === s) { refresh(); } return; }
+                    var e = L[i];
+                    fetchText(e[1], 6000).then(function (tx) {
+                        var j = JSON.parse(tx), out = e[2](j);
+                        if (t === 'trades' ? !(Array.isArray(out) && out.length) : !(out && out.bids && out.bids.length)) { throw new Error('empty'); }
+                        OBS.fail = 0; OBS.why = ''; OBS.src[k] = srcOf(e[0], t);
+                        if (t === 'trades') { OB[s + '~t'] = out; OB[s + '~tsrc'] = e[0]; } else { OB[s] = out; OB[s + '~src'] = e[0]; }
+                        if (curTab() === t && sym0() === s) { refresh(); }
+                    }).catch(function () { tryNext(i + 1); });
+                };
+                tryNext(0);
             }
+            function srcOf(name, t) { return ['Binance futures', 'Binance spot', 'OKX', 'Gate'].indexOf(name); }
             setInterval(poll, 2500);
             function loadFin(sym) {
                 if (FIN[sym] || FIN[sym + '~'] || !window.__mwStory) { return; } FIN[sym + '~'] = 1;
@@ -15422,7 +15466,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 var h = _vc2.apply(this, arguments), sym = sym0(); if (!sym) { return h; }
                 try {
                     loadPerf(sym); if (curTab() === 'bots') { loadFin(sym); } else { setTimeout(poll, 50); }
-                    var sec = '<div class="sh">Tools</div><div class="group pad" style="padding:8px">' + X.seg('cpt', tabs(), curTab()) + '<div id="cpBody">' + bodyHtml(sym) + '</div></div>';
+                    var sec = '<div class="sh">Tools</div><div class="group pad" style="padding:8px">' + X.seg('cpt', tabs(), curTab()) + '<div id="cpBody" style="min-height:230px;overflow-anchor:none">' + bodyHtml(sym) + '</div></div>';
                     var bar = '<div class="cpbar" data-noswipe="1">' + (isUSDT(sym) ? '<div class="lg" data-xk="cpTrade:LONG">Long</div><div class="sh2" data-xk="cpTrade:SHORT">Short</div>' : '') + '<div class="ic" data-xk="cpt:bots">🤖<br>Bots</div><div class="ic" data-xk="anBaba2:' + e2(sym) + '">🧓<br>Baba AI</div></div>';
                     var key = '<div class="group pad"><div class="sh" style="margin:0 0 6px">Why this chart';
                     var k = h.indexOf(key); h = k >= 0 ? h.slice(0, k) + sec + h.slice(k) : h + sec;
@@ -16751,17 +16795,17 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         function refreshPacks() { if (!trOk()) { return; } tcall('trHave', [], function (ok, data) { if (ok) { haveRaw = String(data || ''); P.packs = {}; haveRaw.split(',').forEach(function (c) { if (c) { P.packs[c] = 1; } }); sv(); if (S.win === 'look') { X.again(); } } }); }
         function has(l) { return l === 'en' ? true : !!P.packs[l]; }
         function packBox() {
-            var ok = trOk(), h = '<div class="group pad"><b>📴 Offline languages</b> <span class="mut" style="font-size:12px">' + PACKS.length + ' languages</span><div class="note" style="margin:4px 0 8px">Download a language once (about 30 MB each, needs internet). After that, typed text can be translated with no internet. ' + (ok ? '' : '<b>Not set up in this copy of the app.</b> ') + 'Reading text from the camera still needs internet. Offline reading of Urdu and Arabic pictures is not available on Android.</div>';
+            var ok = trOk(), h = '<div class="group pad"><b>📴 Offline languages</b> <span class="mut" style="font-size:12px">' + PACKS.length + ' languages</span><div class="note" style="margin:4px 0 8px">Download a language once (about 30 MB each, needs internet). After that, typed text can be translated with no internet. ' + (ok ? '' : '<b>This copy has no offline translator yet. The newest installer adds it.</b> ') + 'Reading text from the camera still needs internet. Offline reading of Urdu and Arabic pictures is not available on Android.</div>';
             h += '<div style="max-height:340px;overflow:auto" data-noswipe="1">';
             PACKS.forEach(function (p) {
                 var ready = p[0] === 'en' || P.packs[p[0]], bz = busyPack[p[0]];
-                h += '<div class="row"><span>' + e2(p[1]) + '</span><span>' + (ready ? '<span style="color:#16a34a;font-weight:800">✅ Ready</span>' : bz ? '<span class="mut">Downloading…</span>' : ok ? '<button class="btn sec" style="width:auto;padding:6px 12px;font-size:13px" data-xk="trdl:' + p[0] + '">⬇ Download</button>' : '<span class="mut">–</span>') + '</span></div>';
+                h += '<div class="row"><span>' + e2(p[1]) + '</span><span>' + (ready ? '<span style="color:#16a34a;font-weight:800">✅ Ready</span>' : bz ? '<span class="mut">Downloading…</span>' : '<button class="btn sec" style="width:auto;padding:6px 12px;font-size:13px" data-xk="trdl:' + p[0] + '">⬇ Download</button>') + '</span></div>';
             });
             return h + '</div></div><div class="note" style="margin:6px 0 0">Pashto, Sindhi and Punjabi are not available offline (Google does not offer them). Baba AI still translates them online.</div>';
         }
         try { var _vl = VIEWS.look; VIEWS.look = function () { setTimeout(refreshPacks, 50); return _vl.apply(this, arguments) + packBox(); }; } catch (e) { }
         X.on('trdl', function (l) {
-            if (busyPack[l] || l === 'en') { return; } busyPack[l] = 1; X.again(); say('Downloading… keep the app open');
+            if (busyPack[l] || l === 'en') { return; } if (!trOk()) { say('This copy of the app does not have the offline translator inside yet. Install the newest installer (it adds it), then this button downloads the language.'); return; } busyPack[l] = 1; X.again(); say('Downloading… keep the app open');
             tcall('trDownload', [l], function (ok, data) { busyPack[l] = 0; if (ok) { P.packs[l] = 1; sv(); say('Ready: ' + l.toUpperCase()); } else { say(String(data || 'Download failed. Check the internet and try again.')); } X.again(); });
         });
         function guess(t) { if (/[؀-ۿ]/.test(t)) { return /[ٹڈڑںےہھی]/.test(t) ? 'ur' : 'ar'; } if (/[一-鿿]/.test(t)) { return 'zh'; } if (/[àâçéèêëîïôûùüÿœ]|\b(le|la|les|des|est|une|bonjour|merci|je|vous)\b/i.test(t)) { return 'fr'; } return 'en'; }
@@ -17461,6 +17505,227 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         } catch (e) { }
         setInterval(live, 2500); setTimeout(live, 600);
     } catch (e) { try { console.error('p9zszzv', e); } catch (e2) { } }
+})();
+/* ===== CO: p9zszzw: Look Studio. Mode, Motion (one switch), a theme gallery with a live mini-preview on every card (tap = applied at once, with Undo), and a Style panel: shape, font, tab bar, icons, press effect, spacing. Themes now carry a whole style, not only colours. ===== */
+(function () {
+    try {
+        var P0 = window.__pal; if (!P0) { return; }
+        var PAL = P0.PAL, DESC = P0.DESC, SK = 'mintoosuite_sty', PK = 'mintoosuite_pal', ON = 'mintoosuite_palon', MK = 'mintoosuite_mode', CK = 'mintoosuite_calm', FK = 'mintoosuite_fx';
+        function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function sv(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+        function e2(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        var STY = {}; try { STY = JSON.parse(g(SK) || '{}') || {}; } catch (e) { STY = {}; }
+        /* what each theme brings by itself (shape, font, tab bar, icons, press, spacing). "Auto" in the Style panel follows this. */
+        var BASE = { r: 'round', f: 'sys', t: 'flat', i: 'norm', p: 'none', d: 'cozy', k: 'line', l: 'grid' };
+        var TD = {
+            violet: { t: 'float', i: 'glow', k:'orb' }, ocean: { t: 'float', i: 'glow', k:'duo',l:'big' }, sunset: { r: 'pill', t: 'float', p: 'pop', k:'badge' }, forest: { i: 'thin', k:'ring' }, gold: { f: 'serif', i: 'bold', k:'badge',l:'big' },
+            rose: { r: 'pill', t: 'float', i: 'glow', k:'orb' }, mint: { t: 'float', k:'duo' }, royal: { r: 'pill', f: 'serif', i: 'glow', k:'badge',l:'big' }, crimson: { r: 'sharp', f: 'cond', i: 'bold', p: 'pop', k:'badge',l:'dense' },
+            aurora: { r: 'pill', t: 'float', i: 'glow', k:'orb',l:'big' }, cyber: { r: 'sharp', f: 'mono', i: 'bold', k:'ring',l:'dense' }, graphite: { r: 'sharp', f: 'cond', i: 'thin', k:'duo',l:'list' }, copper: { f: 'serif', k:'duo' },
+            sky: { r: 'pill', t: 'float', k:'orb' }, lava: { r: 'sharp', i: 'bold', p: 'pop', k:'orb',l:'dense' }, black: { i: 'thin', k:'ring',l:'list' },
+            ai: { r: 'pill', t: 'float', i: 'glow', p: 'glow', k:'orb' }, holo: { r: 'pill', t: 'float', i: 'glow', p: 'glow', k:'ring',l:'big' }, matrix: { r: 'sharp', f: 'mono', i: 'bold', d: 'compact', k:'ring',l:'list' },
+            space: { t: 'float', i: 'glow', k:'orb',l:'big' }, tokyo: { r: 'sharp', f: 'cond', t: 'float', i: 'glow', p: 'pop', k:'badge',l:'dense' }, plasma: { r: 'pill', t: 'float', i: 'glow', p: 'pop', k:'orb',l:'big' },
+            quantum: { t: 'float', i: 'glow', k:'duo',l:'big' }, carbon: { r: 'sharp', f: 'cond', i: 'bold', d: 'compact', k:'badge',l:'dense' }, pearl: { t: 'float', i: 'thin', k:'duo',l:'big' }, emerald: { t: 'float', k:'ring' },
+            solar: { r: 'pill', i: 'bold', k:'badge',l:'big' }, midnight: { t: 'float', i: 'glow', k:'duo',l:'list' }
+        };
+        var TAGS = { glass: ['ai', 'holo', 'tokyo', 'midnight'], light: ['pearl'], sharp: ['crimson', 'cyber', 'graphite', 'lava', 'matrix', 'tokyo', 'carbon'], ai: ['ai', 'holo', 'matrix', 'space', 'tokyo', 'plasma', 'quantum', 'midnight'] };
+        function themeKey() { return g(ON) === '1' && PAL[g(PK)] ? g(PK) : ''; }
+        function eff() {
+            var k = themeKey(), d = {}, o; for (o in BASE) { d[o] = BASE[o]; } if (k && TD[k]) { for (o in TD[k]) { d[o] = TD[k][o]; } }
+            var r = {}; for (o in d) { r[o] = (STY[o] && STY[o] !== 'auto') ? STY[o] : d[o]; } return r;
+        }
+        /* ---------- style engine (CSS only, so nothing flickers or moves) ---------- */
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        var H = 'html[data-mws-';
+        st.textContent =
+            H + 'r="sharp"] #view .group,' + H + 'r="sharp"] #view .m7card,' + H + 'r="sharp"] #view .xkcard,' + H + 'r="sharp"] #view .tile,' + H + 'r="sharp"] #view .c2,' + H + 'r="sharp"] #mwcc .bn2>div,' + H + 'r="sharp"] #view .mood,' + H + 'r="sharp"] #view .stc{border-radius:6px!important}'
+            + H + 'r="sharp"] #view .btn,' + H + 'r="sharp"] #view .segc span,' + H + 'r="sharp"] .fmstrip button,' + H + 'r="sharp"] #view .tzchip,' + H + 'r="sharp"] #view .o{border-radius:4px!important}'
+            + H + 'r="pill"] #view .group,' + H + 'r="pill"] #view .m7card,' + H + 'r="pill"] #view .xkcard,' + H + 'r="pill"] #view .tile,' + H + 'r="pill"] #view .c2,' + H + 'r="pill"] #mwcc .bn2>div,' + H + 'r="pill"] #view .mood{border-radius:30px!important}'
+            + H + 'r="pill"] #view .btn,' + H + 'r="pill"] #view .segc span,' + H + 'r="pill"] .fmstrip button,' + H + 'r="pill"] #view .tzchip,' + H + 'r="pill"] #view .o{border-radius:999px!important}'
+            + H + 'f="mono"] *:not(svg):not(path){font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Roboto Mono",monospace!important;letter-spacing:-.2px}'
+            + H + 'f="serif"] *:not(svg):not(path){font-family:"Noto Serif",Georgia,"Times New Roman",serif!important}'
+            + H + 'f="cond"] *:not(svg):not(path){font-family:"sans-serif-condensed","Roboto Condensed","Arial Narrow",sans-serif!important}'
+            + H + 't="float"] .tabs{left:10px!important;right:10px!important;width:auto!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;border-radius:26px!important;border:1px solid rgba(128,128,128,.25)!important;box-shadow:0 12px 32px rgba(0,0,0,.30)!important;-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);background:var(--glass,rgba(255,255,255,.8))!important}'
+            + H + 't="float"] #view{padding-bottom:96px}'
+            + H + 'i="thin"] .tab svg,' + H + 'i="thin"] .c3 svg{stroke-width:1.3!important}'
+            + H + 'i="bold"] .tab svg,' + H + 'i="bold"] .c3 svg{stroke-width:2.8!important}'
+            + H + 'i="glow"] .tab.on svg,' + H + 'i="glow"] .c3 svg{filter:drop-shadow(0 0 6px var(--blu,#5b8cff))}'
+            + H + 'p="pop"] #view .tile:active,' + H + 'p="pop"] #view .c2:active,' + H + 'p="pop"] #view .c3:active,' + H + 'p="pop"] #view .btn:active,' + H + 'p="pop"] .tab:active{transform:scale(.92)!important}'
+            + H + 'p="glow"] #view .tile:active,' + H + 'p="glow"] #view .c2:active,' + H + 'p="glow"] #view .c3:active,' + H + 'p="glow"] #view .btn:active{box-shadow:0 0 22px var(--blu,#5b8cff)!important}'
+            + H + 'd="compact"] #view .group.pad{padding:9px 12px!important;margin-bottom:6px!important}'
+            + H + 'd="roomy"] #view .group.pad{padding:20px 18px!important;margin-bottom:16px!important}'
+            + H + 'k="duo"] .tile .ic svg,' + H + 'k="duo"] .tab svg,' + H + 'k="duo"] .c3 svg{fill:currentColor!important;fill-opacity:.2}'
+            + H + 'k="badge"] .tile .ic{background:linear-gradient(135deg,var(--blu,#5b8cff),#a05bff)!important;color:#fff!important;box-shadow:0 6px 14px rgba(0,0,0,.28)}'
+            + H + 'k="badge"] .tab.on svg{background:linear-gradient(135deg,var(--blu,#5b8cff),#a05bff);color:#fff;border-radius:10px;padding:4px;box-sizing:content-box;margin:-4px 0 0}'
+            + H + 'k="ring"] .tile .ic{background:transparent!important;border:2px solid var(--blu,#5b8cff);border-radius:50%!important;color:var(--blu,#5b8cff)!important}'
+            + H + 'k="ring"] .tab.on svg{border:2px solid currentColor;border-radius:50%;padding:3px;box-sizing:content-box;margin:-5px 0 0}'
+            + H + 'k="orb"] .tile .ic{border-radius:50%!important;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.6),var(--blu,#5b8cff) 70%)!important;color:#fff!important;box-shadow:0 0 18px var(--blu,#5b8cff)}'
+            + H + 'k="orb"] .tab.on svg{filter:drop-shadow(0 0 7px var(--blu,#5b8cff))}'
+            + H + 'l="big"] .tiles{grid-template-columns:1fr 1fr!important;gap:12px}' + H + 'l="big"] .tile{padding:20px 8px 16px!important;font-size:14px}' + H + 'l="big"] .tile .ic{width:58px;height:58px}' + H + 'l="big"] .tile .ic svg{width:30px;height:30px}'
+            + H + 'l="list"] .tiles{grid-template-columns:1fr!important;gap:8px}' + H + 'l="list"] .tile{display:flex!important;align-items:center;gap:14px;text-align:left!important;padding:10px 14px!important;font-size:14px}' + H + 'l="list"] .tile .ic{margin:0!important;flex:none}'
+            + H + 'l="dense"] .tiles{grid-template-columns:repeat(4,1fr)!important;gap:6px}' + H + 'l="dense"] .tile{padding:9px 2px 8px!important;font-size:10.5px;border-radius:12px}' + H + 'l="dense"] .tile .ic{width:36px;height:36px;margin-bottom:4px}'
+            + 'html.mwcalm [data-mws-p] *{transition:none!important}'
+            /* Look Studio widgets */
+            + '.stm{position:relative;height:118px;border-radius:12px;overflow:hidden;padding:8px;box-sizing:border-box;border:1px solid rgba(128,128,128,.25)}.stm .stl{height:6px;width:46%;border-radius:3px;opacity:.85;margin-bottom:7px}.stm .stk{height:22px;border-radius:8px;margin-bottom:6px;box-sizing:border-box}.stm .str{display:flex;gap:5px}.stm .str i{flex:1;height:16px;border-radius:6px}.stm .stg{height:20px;border-radius:9px;margin-top:6px}.stm .std{position:absolute;right:8px;top:8px;display:flex;gap:3px}.stm .std b{width:7px;height:7px;border-radius:50%}'
+            + '.stgal{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.stc{border-radius:18px;padding:8px;border:2px solid transparent;background:rgba(128,128,128,.08);cursor:pointer;position:relative}.stc.on{border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.22)}.stc b{display:block;font-size:14px;margin:7px 2px 0}.stc small{display:block;opacity:.7;font-size:11.5px;margin:1px 2px 2px;line-height:1.3}.stc .sto{position:absolute;top:12px;left:12px;background:#16a34a;color:#fff;border-radius:9px;padding:1px 7px;font:800 10px/16px system-ui,sans-serif;z-index:2}'
+            + '.stflt{display:flex;gap:6px;overflow-x:auto;margin:8px 0 2px;padding-bottom:4px}.stflt span{flex:none;padding:6px 13px;border-radius:16px;background:rgba(128,128,128,.14);font-size:13px;font-weight:700;cursor:pointer}.stflt span.on{background:#0a84ff;color:#fff}'
+            + '.stseg{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0 9px}.stseg span{flex:1 1 auto;text-align:center;padding:8px 10px;border-radius:12px;background:rgba(128,128,128,.14);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}.stseg span.on{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff}'
+            + '.stbig{display:flex;gap:8px;margin-top:8px}.stbig div{flex:1;text-align:center;padding:14px 6px;border-radius:16px;background:rgba(128,128,128,.12);cursor:pointer;font-weight:800;font-size:15px}.stbig div small{display:block;font-weight:500;opacity:.7;font-size:11.5px;margin-top:2px}.stbig div.on{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff}.stbig div.on small{opacity:.9}'
+            + '#mwundo{position:fixed;left:12px;right:12px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:99980;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:16px;background:rgba(255,255,255,.78);-webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);color:#111;border:1px solid rgba(255,255,255,.7);box-shadow:0 8px 28px rgba(0,0,0,.25);font:600 14px system-ui,sans-serif}#mwundo b{flex:1}#mwundo span{padding:6px 12px;border-radius:10px;background:#0a84ff;color:#fff;font-weight:700;cursor:pointer}';
+        document.head.appendChild(st);
+        function applyStyle() {
+            try { var h = document.documentElement, e = eff(); h.setAttribute('data-mws-r', e.r); h.setAttribute('data-mws-f', e.f); h.setAttribute('data-mws-t', e.t); h.setAttribute('data-mws-i', e.i); h.setAttribute('data-mws-p', e.p); h.setAttribute('data-mws-d', e.d); h.setAttribute('data-mws-k', e.k); h.setAttribute('data-mws-l', e.l); } catch (er) { }
+        }
+        try { var _at = applyTheme; applyTheme = function () { var r = _at.apply(this, arguments); applyStyle(); return r; }; } catch (e) { }
+        applyStyle();
+        /* ---------- mini preview of a theme (drawn with CSS, so it is sharp on any screen) ---------- */
+        function mini(k) {
+            var p = k ? PAL[k] : null, bg = p ? p.bg : '#f2f2f7', c1 = p ? p.c1 : '#fff', c2 = p ? p.c2 : '#f7f7fb', line = p ? p.line : 'rgba(0,0,0,.12)', a = p ? p.a : '#0a84ff', b = p ? p.b : '#5e5ce6', up = p ? p.up : '#16a34a', dn = p ? p.dn : '#dc2626', tx = p ? p.tx : '#111';
+            var td = k && TD[k] ? TD[k] : {}, rad = td.r === 'sharp' ? 3 : td.r === 'pill' ? 13 : 8;
+            var bgs = 'background-color:' + bg + ';' + (p && p.fx ? 'background-image:' + p.fx + ';' + (p.fxs ? 'background-size:' + p.fxs + ';' : '') + (p.fxr ? 'background-repeat:' + p.fxr + ';' : '') : '');
+            var card = 'background:' + (p && p.glass ? 'linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.04))' : 'linear-gradient(160deg,' + c1 + ',' + c2 + ')') + ';border:1px solid ' + line + ';border-radius:' + rad + 'px';
+            return '<div class="stm" style="' + bgs + '"><div class="std"><b style="background:' + up + '"></b><b style="background:' + dn + '"></b></div><div class="stl" style="background:' + tx + '"></div><div class="stk" style="' + card + '"></div><div class="str"><i style="' + card + '"></i><i style="' + card + '"></i></div><div class="stg" style="background:linear-gradient(135deg,' + a + ',' + b + ');border-radius:' + (td.r === 'sharp' ? 3 : 10) + 'px;box-shadow:0 4px 12px ' + a + '66"></div></div>';
+        }
+        var G = { flt: 'all', undo: null };
+        function inTag(k, t) { return TAGS[t] && TAGS[t].indexOf(k) > -1; }
+        function describeStyle() {
+            var e = eff(); return ({ sharp: 'Sharp corners', round: 'Rounded', pill: 'Pill shapes' }[e.r]) + ' · ' + ({ sys: 'Clean font', mono: 'Code font', serif: 'Serif font', cond: 'Condensed font' }[e.f]) + ' · ' + (e.t === 'float' ? 'Floating tab bar' : 'Flat tab bar') + ' · ' + ({ norm: 'Normal', thin: 'Thin', bold: 'Bold', glow: 'Glowing' }[e.i]) + ' icons';
+        }
+        function seg(key, opts) { var cur = STY[key] || 'auto'; return '<div class="stseg">' + opts.map(function (o) { return '<span class="' + (cur === o[0] ? 'on' : '') + '" data-ss="' + key + ':' + o[0] + '">' + o[1] + '</span>'; }).join('') + '</div>'; }
+        function stopCard() {
+            var cur = window.__stopMode ? window.__stopMode.get() : 'full';
+            return '<div class="group pad"><b>STOP button on screen</b><div class="note" style="margin:2px 0 0">The round red button that stops all bots. Hidden works while the real bot is off.</div><div class="stseg">' + [['full', 'Full'], ['dot', 'Small dot'], ['hide', 'Hidden']].map(function (m) { return '<span class="' + (cur === m[0] ? 'on' : '') + '" data-sm="' + m[0] + '">' + m[1] + '</span>'; }).join('') + '</div></div>';
+        }
+        var _prev = VIEWS.look;
+        function vStudio() {
+            var old = ''; try { old = typeof _prev === 'function' ? _prev.apply(this, arguments) : ''; } catch (er) { }
+            var i = old.indexOf('<div class="group pad"><b>📴 Offline languages'), tail = i >= 0 ? old.slice(i) : '';
+            var m = g(MK) || 'pro', calm = g(CK) === '1', fx = g(FK) || 'off', mo = calm || fx === 'off' ? 'off' : fx, k = themeKey(), q = k ? PAL[k] : null;
+            var h = '<div class="group pad"><div style="display:flex;gap:12px;align-items:center"><div style="width:96px;flex:none">' + mini(k) + '</div><div style="min-width:0"><div style="opacity:.7;font-size:12px">Your look right now</div><div style="font-size:19px;font-weight:800">' + (q ? q.e + ' ' + e2(q.n) : '☀️ Classic') + '</div><div style="font-size:12.5px;opacity:.75;margin-top:2px">' + e2(describeStyle()) + '</div></div></div></div>';
+            h += '<div class="group pad"><b>Mode</b><div class="note" style="margin:2px 0 0">Same app, different amount of buttons. Nothing is deleted.</div><div class="stbig">'
+                + [['beginner', '🌱 Beginner', 'Few simple buttons'], ['pro', '⚡ Pro', 'Everything'], ['trader', '📈 Trader', 'Only trading tools']].map(function (o) { return '<div class="' + (m === o[0] ? 'on' : '') + '" data-sm2="' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div></div>';
+            h += '<div class="group pad"><b>Motion</b><div class="note" style="margin:2px 0 0">One switch for all movement. “Off” also calms every animation and saves battery.</div><div class="stbig">'
+                + [['off', '⏸ Off', 'Calm, no motion'], ['soft', '✨ Soft', 'Smooth changes'], ['rich', '🌈 Rich', 'Glow and shine']].map(function (o) { return '<div class="' + (mo === o[0] ? 'on' : '') + '" data-sf2="' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div>'
+                + '<div class="note" style="margin:10px 0 0"><b>Tap feedback</b> (a faint dim when you tap; never while scrolling)</div><div class="stbig">'
+                + [['off', 'Off', 'Nothing at all'], ['soft', 'Faint', 'Very light dim']].map(function (o) { var tp = ''; try { tp = localStorage.getItem('mintoosuite_tapfx') || 'soft'; } catch (er) { tp = 'soft'; } return '<div class="' + (tp === o[0] ? 'on' : '') + '" data-sf2="tap:' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div></div>';
+            var fl = [['all', 'All'], ['dark', 'Dark'], ['glass', 'Glass'], ['ai', 'AI'], ['sharp', 'Sharp'], ['light', 'Light']];
+            var keys = Object.keys(PAL).filter(function (x) { return PAL[x].bg; });
+            var list = keys.filter(function (x) { return G.flt === 'all' || (G.flt === 'dark' ? !inTag(x, 'light') : inTag(x, G.flt)); });
+            h += '<div class="group pad"><b>Themes</b> <span class="mut" style="font-size:12px">' + (keys.length + 1) + ' looks. Tap one: the whole app changes at once.</span><div class="stflt">' + fl.map(function (f) { return '<span class="' + (G.flt === f[0] ? 'on' : '') + '" data-sx="' + f[0] + '">' + f[1] + '</span>'; }).join('') + '</div><div class="stgal">'
+                + (G.flt === 'all' ? '<div class="stc' + (!k ? ' on' : '') + '" data-sa="off">' + (!k ? '<span class="sto">APPLIED</span>' : '') + mini('') + '<b>☀️ Classic</b><small>Plain light or dark, the original look</small></div>' : '')
+                + list.map(function (x) { var p = PAL[x], d = DESC[x] || ['', '']; return '<div class="stc' + (k === x ? ' on' : '') + '" data-sa="' + x + '">' + (k === x ? '<span class="sto">APPLIED</span>' : '') + mini(x) + '<b>' + p.e + ' ' + e2(p.n) + '</b><small>' + e2(d[1] || '') + '</small></div>'; }).join('') + '</div></div>';
+            h += '<div class="group pad"><b>Style</b><div class="note" style="margin:2px 0 6px">Each theme brings its own style. Change any part here, or leave it on Auto.</div>'
+                + '<div class="note" style="margin:6px 0 0"><b>Shape</b></div>' + seg('r', [['auto', 'Auto'], ['sharp', 'Sharp'], ['round', 'Rounded'], ['pill', 'Pill']])
+                + '<div class="note" style="margin:0"><b>Font</b></div>' + seg('f', [['auto', 'Auto'], ['sys', 'Clean'], ['mono', 'Code'], ['serif', 'Serif'], ['cond', 'Narrow']])
+                + '<div class="note" style="margin:0"><b>Bottom bar</b></div>' + seg('t', [['auto', 'Auto'], ['flat', 'Flat'], ['float', 'Floating']])
+                + '<div class="note" style="margin:0"><b>Icons</b></div>' + seg('i', [['auto', 'Auto'], ['thin', 'Thin'], ['norm', 'Normal'], ['bold', 'Bold'], ['glow', 'Glow']])
+                + '<div class="note" style="margin:0"><b>Icon set</b></div>' + seg('k', [['auto', 'Auto'], ['line', 'Outline'], ['duo', 'Duotone'], ['badge', 'Badge'], ['ring', 'Ring'], ['orb', 'Orb']])
+                + '<div class="note" style="margin:0"><b>Layout of the window grid</b></div>' + seg('l', [['auto', 'Auto'], ['grid', 'Grid'], ['big', 'Big 2-column'], ['list', 'List'], ['dense', 'Dense 4-column']])
+                + '<div class="note" style="margin:0"><b>When you press</b></div>' + seg('p', [['auto', 'Auto'], ['none', 'Plain'], ['pop', 'Pop'], ['glow', 'Glow']])
+                + '<div class="note" style="margin:0"><b>Spacing</b></div>' + seg('d', [['auto', 'Auto'], ['compact', 'Compact'], ['cozy', 'Cozy'], ['roomy', 'Roomy']])
+                + '<div class="stseg"><span data-sr="1">↺ Style back to Auto</span></div></div>';
+            return h + stopCard() + '<div class="note">Beginner mode only hides buttons from the Menu. Nothing is deleted and you can switch back any time.</div>' + tail;
+        }
+        VIEWS.look = vStudio;
+        /* ---------- taps ---------- */
+        function again() { try { renderView(true); } catch (er) { } }
+        function snack(txt, undo) {
+            var o = document.getElementById('mwundo'); if (o) { o.remove(); }
+            o = document.createElement('div'); o.id = 'mwundo'; o.setAttribute('data-mwkeep', '1'); o.innerHTML = '<b>' + e2(txt) + '</b><span data-su="1">Undo</span>'; document.body.appendChild(o); G.undo = undo;
+            clearTimeout(snack.t); snack.t = setTimeout(function () { var x = document.getElementById('mwundo'); if (x) { x.remove(); } }, 7000);
+        }
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-sa],[data-ss],[data-sx],[data-sm2],[data-sf2],[data-sr],[data-su]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            if (el.hasAttribute('data-sa')) {
+                var k = el.getAttribute('data-sa'), prev = { on: g(ON), pal: g(PK), sty: g(SK) }, nm = k === 'off' ? 'Classic' : PAL[k].n;
+                if (k === 'off') { sv(ON, '0'); } else { sv(PK, k); sv(ON, '1'); sv('mintoosuite_theme', 'dark'); if (k === 'pearl') { sv('mintoosuite_theme', 'light'); } }
+                STY = {}; sv(SK, '{}');
+                try { applyTheme(); } catch (er) { } applyStyle(); try { mwHostSig = ''; buildNav(); } catch (er) { } again();
+                snack(nm + ' applied', prev); return;
+            }
+            if (el.hasAttribute('data-su')) { var u = G.undo; if (u) { sv(ON, u.on == null ? '0' : u.on); if (u.pal) { sv(PK, u.pal); } sv(SK, u.sty || '{}'); try { STY = JSON.parse(u.sty || '{}') || {}; } catch (er) { STY = {}; } try { applyTheme(); } catch (er) { } applyStyle(); try { mwHostSig = ''; buildNav(); } catch (er) { } again(); } var x = document.getElementById('mwundo'); if (x) { x.remove(); } return; }
+            if (el.hasAttribute('data-sx')) { G.flt = el.getAttribute('data-sx'); again(); return; }
+            if (el.hasAttribute('data-ss')) { var a = el.getAttribute('data-ss').split(':'); STY[a[0]] = a[1]; sv(SK, JSON.stringify(STY)); applyStyle(); again(); return; }
+            if (el.hasAttribute('data-sr')) { STY = {}; sv(SK, '{}'); applyStyle(); again(); return; }
+            if (el.hasAttribute('data-sm2')) { sv(MK, el.getAttribute('data-sm2')); try { applyTheme(); } catch (er) { } try { mwHostSig = ''; buildNav(); } catch (er) { } again(); return; }
+            if (el.hasAttribute('data-sf2') && el.getAttribute('data-sf2').indexOf('tap:') === 0) { try { localStorage.setItem('mintoosuite_tapfx', el.getAttribute('data-sf2').slice(4)); } catch (er) { } again(); return; }
+            if (el.hasAttribute('data-sf2')) { var f = el.getAttribute('data-sf2'); if (f === 'off') { sv(CK, '1'); sv(FK, 'off'); } else { sv(CK, '0'); sv(FK, f); } try { applyTheme(); } catch (er) { } again(); return; }
+        }, true);
+        window.__studio = { eff: eff, STY: STY, TD: TD, apply: applyStyle };
+    } catch (e) { try { console.error('p9zszzw', e); } catch (e2) { } }
+})();
+/* ===== CP: p9zszzx: calm touch. (1) Segmented tabs: the sliding blue bar piled up (one per redraw) and stayed on; it is now removed, the white pill already shows the choice. (2) Tap feedback: no more scale / dark flash on touch-down (that flashed while scrolling). A faint dim only after a real tap (click), with an Off switch in Look & mode. ===== */
+(function () {
+    try {
+        var st = document.createElement('style');
+        st.textContent = '*{-webkit-tap-highlight-color:transparent}'
+            + '.mwind{display:none!important}'
+            + 'button:active,.btn:active,.pfbtn:active,[data-act]:active,[data-m7]:active,[data-m19]:active,.chip:active,[role=button]:active,.row.tap:active,.m7card:active,.row[data-act]:active,.row[data-m7]:active,#view .tile:active,#view .c2:active,#view .btn:active{transform:none!important;filter:none!important;opacity:1!important;background-color:inherit}'
+            + '.segc span:active,.m7row span:active{background-color:inherit}'
+            + '.mwtp{opacity:.82!important;transition:opacity .1s ease!important}';
+        document.head.appendChild(st);
+        mwInd = function () { try { var v = document.getElementById('view'); if (v) { [].forEach.call(v.querySelectorAll('.mwind'), function (n) { n.remove(); }); } if (S) { S.swFrom = null; } } catch (e) { } };
+        var tm = 0;
+        document.addEventListener('click', function (e) {
+            var m = 'soft'; try { m = localStorage.getItem('mintoosuite_tapfx') || 'soft'; } catch (er) { }
+            if (m === 'off') { return; }
+            var t = e.target && e.target.closest ? e.target.closest('button,.btn,.tile,.c2,.c3,.chip,[data-act],[data-xk],[data-m7],[role=button],.row.tap,.segc span') : null;
+            if (!t) { return; }
+            t.classList.add('mwtp'); clearTimeout(tm); tm = setTimeout(function () { try { t.classList.remove('mwtp'); } catch (er) { } }, 140);
+        }, true);
+
+        /* ---------- popups & toasts appear next to where you tapped ---------- */
+        var LX = innerWidth / 2, LY = innerHeight * 0.6, busy = 0;
+        document.addEventListener('pointerdown', function (e) { LX = e.clientX; LY = e.clientY; }, true);
+        function near(el) {
+            try {
+                if (busy || !el) { return; } busy = 1;
+                var r = el.getBoundingClientRect(), w = r.width, h = r.height, vw = innerWidth, vh = innerHeight;
+                var l = Math.max(8, Math.min(vw - w - 8, LX - w / 2)), t = LY - h - 22; if (t < 8) { t = LY + 26; } t = Math.max(8, Math.min(vh - h - 8, t));
+                el.style.setProperty('left', l + 'px', 'important'); el.style.setProperty('top', t + 'px', 'important'); el.style.setProperty('bottom', 'auto', 'important'); el.style.setProperty('right', 'auto', 'important'); el.style.setProperty('transform', 'none', 'important');
+                setTimeout(function () { busy = 0; }, 0);
+            } catch (e) { busy = 0; }
+        }
+        var TOASTS = { swtoast: 1, qtoast: 1, toast: 1 }, WATCH = {};
+        function hook(el) {
+            if (!el || !el.id || WATCH[el.id] === el) { return; }
+            if (TOASTS[el.id]) { WATCH[el.id] = el; new MutationObserver(function () { if (!busy) { near(el); } }).observe(el, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['style'] }); }
+            else if (el.id === 'mwHelp') {
+                WATCH[el.id] = el;
+                new MutationObserver(function () { var b = el.querySelector('.mwpb'); if (!b || el.style.display !== 'flex' || busy) { return; } b.style.setProperty('position', 'fixed', 'important'); b.style.setProperty('width', Math.min(320, innerWidth - 24) + 'px', 'important'); b.style.setProperty('max-width', 'none', 'important'); near(b); }).observe(el, { childList: true, attributes: true, attributeFilter: ['style'] });
+            }
+        }
+        function scan() { Object.keys(TOASTS).concat(['mwHelp']).forEach(function (id) { hook(document.getElementById(id)); }); }
+        new MutationObserver(scan).observe(document.body, { childList: true });
+        scan();
+        st.textContent += '#mwHelp{background:rgba(0,0,0,.05)!important;align-items:flex-start!important;justify-content:flex-start!important}#mwHelp .mwpb{background:rgba(255,255,255,.74)!important;color:#111!important;-webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5);border:1px solid rgba(255,255,255,.7);border-radius:16px!important;padding:14px!important;box-shadow:0 10px 30px rgba(0,0,0,.22)!important}#mwHelp .mwpb p{margin:6px 0 10px!important;font-size:14px}#swtoast,#qtoast,#toast{max-width:min(320px,calc(100vw - 24px))!important;white-space:normal;text-align:center}';
+        window.__calm = { v: 1 };
+    } catch (e) { try { console.error('p9zszzx', e); } catch (e2) { } }
+})();
+/* ===== CQ: p9zszzy: one Ideas window with three tabs (Best / All / Plan). Best Picks and Master Plan no longer have their own menu entries; every old link opens the right tab. ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX;
+        var vB = VIEWS.best, vP = VIEWS.plan, vI = VIEWS.ideas;
+        var TABS = [['best', '⭐ Best (top picks)'], ['all', '📋 All (full list)'], ['plan', '🧭 Plan (gold & big coins)']];
+        function cur() { var t = KX.idT; return t === 'all' || t === 'plan' ? t : 'best'; }
+        function call(f) { try { return f.apply(null, []); } catch (e) { return '<div class="note">This part could not load: ' + X.e2(e && e.message) + '</div>'; } }
+        VIEWS.ideas = function () {
+            var t = cur(), h = X.seg('idT', TABS, t);
+            return h + call(t === 'best' ? vB : t === 'plan' ? vP : vI);
+        };
+        LIVE.ideas = 1;
+        try { var w = winDef('ideas'); if (w) { w.n = 'Ideas'; w.t = 'Ideas'; w.sub = 'Best picks, the full ranked list and the Master Plan, in one place'; } } catch (e) { }
+        var _g = gotoWin;
+        gotoWin = function (id) {
+            var a = [].slice.call(arguments, 1);
+            if (id === 'best' || id === 'plan') { KX.idT = id === 'best' ? 'best' : 'plan'; X.save(); id = 'ideas'; }
+            return _g.apply(this, [id].concat(a));
+        };
+        var _mt = mwTiles;
+        mwTiles = function () { var h = _mt.apply(this, arguments); ['best', 'plan'].forEach(function (id) { h = h.replace(new RegExp('<div class="tile[^"]*" data-act="win:' + id + '"><div class="ic"[\\s\\S]*?</div>[^<]*</div>', 'g'), ''); }); return h; };
+        var st = document.createElement('style'); st.textContent = '#sheetMenu [data-act="win:best"],#sheetMenu [data-act="win:plan"]{display:none!important}'; document.head.appendChild(st);
+        window.__ideasTabs = { cur: cur };
+    } catch (e) { try { console.error('p9zszzy', e); } catch (e2) { } }
 })();
 
 function renderView(keep) {
