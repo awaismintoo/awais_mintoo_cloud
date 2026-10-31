@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.154';
+var BUILD = '2026-10-31.157';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -11097,7 +11097,17 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 var px = TP ? TP.priceOf(sym) : 0, h = '<div class="sh">Final recommendation</div>', K2 = window.__kx, acts = '';
                 if (K2) { acts = '<div class="group pad" data-noswipe="1"><div class="note" style="margin:0 0 4px">Look closer:</div>' + (px > 0 ? '<button class="btn sec" data-act="chart:' + sym + '" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">📈 Open chart</button>' : '') + K2.go('Analyst', 'analyst') + '</div>'; }
                 var vt = null; try { vt = window.__brief && window.__brief.veto ? window.__brief.veto(sym, side === 'WAIT' ? 'LONG' : side) : null; } catch (e) { }
-                if (side === 'WAIT') { return h + acts + '<div class="group pad"><b>⏸ WAIT: no trade now.</b><div class="note" style="margin:4px 0 0">The reading is mixed. Waiting is also a position. Come back when price reaches a level above, or use a price alert.</div></div>'; }
+                if (side === 'WAIT') {
+                    var wh = h + acts + '<div class="group pad"><b>⏸ WAIT: no trade now.</b><div class="note" style="margin:4px 0 0">The reading is mixed. Waiting is also a position. Come back when price reaches a level above, or use a price alert.</div></div>';
+                    try {
+                        if (TP && px > 0) {
+                            var dw = Math.max(0.03, Math.min(0.06, 0.045)), exw = S.tick && S.tick[sym] ? 'bin' : (S.xch === 'bitget' ? 'bitget' : 'mexc'), fw = !!(S.tick && S.tick[sym]);
+                            var PL = TP.mkPlan(sym, 'LONG', px, px * (1 - dw), px * (1 + 1.5 * dw), 0, exw, fw), PS = TP.mkPlan(sym, 'SHORT', px, px * (1 + dw), px * (1 - 1.5 * dw), 0, exw, fw);
+                            if (PL || PS) { wh += '<div class="sh">Rough plans (no clean setup)</div><div class="group pad"><div class="note" style="margin:0">⚠ The app sees no clean setup right now, so these two plans are only a normal-size stop and target around the live price. They are weaker than a normal recommendation. Use only a small amount you can afford to lose.</div></div>' + (PL ? TP.tcard(PL, 'Rough plan') : '') + (PS ? TP.tcard(PS, 'Rough plan') : ''); }
+                        }
+                    } catch (e) { }
+                    return wh;
+                }
                 h += '<div class="group pad"><b style="color:' + (side === 'LONG' ? '#16a34a' : '#dc2626') + '">' + (side === 'LONG' ? '🟢 Lean BUY / LONG' : '🔴 Lean SELL / SHORT') + '</b>' + (vt && vt.vetoBest && vt.notes && vt.notes.length ? '<div class="note" style="margin:4px 0 0">⚠ Caution: ' + e2(vt.notes.join('; ')) + '</div>' : '') + '<div class="note" style="margin:4px 0 0">This is the same reading as above, turned into numbers. The stop is based on how far this coin normally moves (about 3% to 6%) and the target is 1.5 times the stop distance. Not a promise.</div></div>';
                 if (!TP || !(px > 0)) { return h + acts + '<div class="group pad"><div class="note" style="margin:0">This market is not listed for trading inside the app, so there is no order button. For gold, silver, oil and currencies use Exness Desk.</div>' + (window.__kx ? window.__kx.go('Exness Desk', 'exdesk') : '') + '</div>'; }
                 var d = Math.max(0.03, Math.min(0.06, side === 'LONG' ? (px - (A.sup || px * 0.97)) / px : 0.045)), sl = side === 'LONG' ? px * (1 - d) : px * (1 + d), tp = side === 'LONG' ? px * (1 + 1.5 * d) : px * (1 - 1.5 * d);
@@ -18197,6 +18207,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
         st.textContent =
             /* 1. never two first-run popups together */
+            '#mwcc,#mwcc .mood{width:100%!important;max-width:100%!important;box-sizing:border-box}'+
             '#pfp .pfm1.me,#pfp .pfm1.user,.pcmsgs .me,.pcmsgs .user{background:rgba(120,140,255,.30)!important;box-shadow:none!important;color:var(--tx,#fff)!important;border:1px solid rgba(160,175,255,.35)}'+'#pfp .pfh,html[data-win="baba"] .bbhero,html[data-win="pchat"] .bbhero{background:rgba(255,255,255,.07)!important;color:var(--tx,#fff)!important;border:1px solid rgba(255,255,255,.12)}'+'#pfp .pfchips span,#pfp .pbt,.pfm1 .pfbtn,.pcmsgs .pfbtn,.pcmsgs [data-pfq],.pcmsgs [data-pfgo]{background:rgba(255,255,255,.08)!important;color:var(--tx,#fff)!important;border:1px solid rgba(255,255,255,.16)!important;box-shadow:none!important;background-image:none!important}'+
             '#pfp{-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4)}'+'#pfp .pfh{padding:8px 12px!important;gap:10px}#pfp .pfh small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}'+'#pfp .pfmsgs .pfm1:first-child:not(.me):has(~ .pfm1){display:none}'+'#pfp .pfchips{flex-wrap:nowrap;overflow-x:auto;padding:4px 12px;scrollbar-width:none}#pfp .pfchips::-webkit-scrollbar{display:none}'+'#pftools,#pfp .pbtools{display:flex;flex-wrap:nowrap!important;overflow-x:auto;gap:6px;padding:2px 12px;margin:0!important;scrollbar-width:none}#pfp .pbt{flex:0 0 auto}'+
             '.pcmsgs,#pfmsgs{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}html[data-win="pchat"] #view,html[data-win="baba"] #view{overscroll-behavior-y:contain}' +
@@ -18639,7 +18650,7 @@ try {
         var H = {}, FIRED = {}, ST = { at: 0, ok: 0, err: '', n: 0, last: null };
         var cfg = { on: true, hi: false }; try { cfg = Object.assign(cfg, JSON.parse(localStorage.getItem(CFG) || '{}')); } catch (e) { }
         try { K = Object.assign(K, JSON.parse(localStorage.getItem(KN) || '{}')); } catch (e) { }
-        K.s = K.s || {}; K.f = K.f || {}; K.b = K.b || {};
+        K.s = K.s || {}; K.f = K.f || {}; K.b = K.b || {}; K.bs = K.bs || {};
         function saveK() { try { localStorage.setItem(KN, JSON.stringify(K)); } catch (e) { } }
         function saveC() { try { localStorage.setItem(CFG, JSON.stringify(cfg)); } catch (e) { } }
         function e3(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -18691,10 +18702,12 @@ try {
         function gate(sym, tier) { var k = sym, f = FIRED[k] || 0; if (tier <= f) { return false; } FIRED[k] = tier; setTimeout(function () { if (FIRED[k] === tier) { delete FIRED[k]; } }, 2 * 3600000); return true; }
         function judge(sym, name, p, vol, chg24, spec, venue) {
             var now = Date.now(), r = ring(sym, p, now); if (!(p > 0)) { return; }
+            if (r.length > 1) { var pv = r[r.length - 2][1]; if (pv > 0 && (p / pv > 6 || p / pv < 1 / 6)) { r.pop(); return; } }
             var t5 = cfg.hi ? 6 : 10, t15 = cfg.hi ? 12 : 20, d5 = rise(r, 5 * 60000, now), d15 = rise(r, 15 * 60000, now), tier = 0, why = '';
             if (d5 !== null && d5 >= t5 * 2) { tier = 2; why = '+' + d5.toFixed(0) + '% in 5 minutes'; } else if (d5 !== null && d5 >= t5) { tier = 1; why = '+' + d5.toFixed(0) + '% in 5 minutes'; }
             else if (d15 !== null && d15 >= t15 * 2) { tier = 2; why = '+' + d15.toFixed(0) + '% in 15 minutes'; } else if (d15 !== null && d15 >= t15) { tier = 1; why = '+' + d15.toFixed(0) + '% in 15 minutes'; }
             else if (r.length <= 2 && chg24 >= 60) { tier = 1; why = '+' + chg24.toFixed(0) + '% today'; }
+            var mx = Math.max(d5 || 0, d15 || 0); if (mx > 30 && r.length > 2 && !(chg24 >= mx * 0.5)) { return; }
             var mega = (d5 !== null && d5 >= 25) || (d15 !== null && d15 >= 50) || (r.length <= 2 && chg24 >= 300); if (mega && vol >= 15000 && gate('MEGA:' + sym, 1)) { fire({ kind: 'pump', mega: true, sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: name + ' is exploding on ' + venue, body: (d5 !== null && d5 >= 25 ? '+' + d5.toFixed(0) + '% in 5 minutes' : d15 !== null && d15 >= 50 ? '+' + d15.toFixed(0) + '% in 15 minutes' : '+' + chg24.toFixed(0) + '% today') + ' · now ' + fmt(p), warn: WARN }); return; }
             if (tier && vol >= (cfg.hi ? 15000 : 40000) && gate(sym, tier)) { fire({ kind: 'pump', sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: '🚀 ' + name + ' is pumping on ' + venue, body: why + ' · now ' + fmt(p) + (chg24 ? ' · ' + (chg24 >= 0 ? '+' : '') + chg24.toFixed(0) + '% today' : ''), warn: WARN }); }
         }
@@ -18716,7 +18729,17 @@ try {
                 a.forEach(function (x) { var sym = String(x.symbol || ''); if (!/USDT$/.test(sym) || JUNK.test(sym)) { return; } var b = sym.replace(/USDT$/, ''), p = +x.price; if (!K.s[sym]) { K.s[sym] = 1; if (!first) { fresh.push({ b: b, p: p }); } } ring('MS:' + sym, p, Date.now()); });
                 fresh.forEach(function (c) { if (gate('NS:' + c.b, 1)) { fire({ kind: 'new', sym: c.b, spec: c.b + '@mexcs', title: '🆕 NEW COIN on MEXC: ' + c.b + '/USDT', body: 'Just listed for trading. Price now ' + fmt(c.p), warn: WARN }); } });
                 /* spot pump check from our own price history (no volume figure in this list, so use a higher bar) */
-                a.forEach(function (x) { var sym = String(x.symbol || ''); if (!/USDT$/.test(sym) || JUNK.test(sym) || !K.f[sym.replace(/USDT$/, '_USDT')]) { return; } });
+                a.forEach(function (x) { var sym = String(x.symbol || ''); if (!/USDT$/.test(sym) || JUNK.test(sym) || K.f[sym.replace(/USDT$/, '_USDT')]) { return; } var r = H['MS:' + sym], now2 = Date.now(), d5 = r ? rise(r, 5 * 60000, now2) : null, d15 = r ? rise(r, 15 * 60000, now2) : null, mx = Math.max(d5 || 0, d15 || 0); if (mx >= 25 && gate('MSP:' + sym, mx >= 50 ? 2 : 1)) { var b2 = sym.replace(/USDT$/, ''); fire({ kind: 'pump', mega: mx >= 50, sym: 'MS:' + sym, up: true, spec: b2 + '@mexcs', bn: '', p: +x.price, title: (mx >= 50 ? '🚨 ' : '🚀 ') + b2 + ' is ' + (mx >= 50 ? 'exploding' : 'pumping') + ' on MEXC spot', body: '+' + mx.toFixed(0) + '% in ' + (d5 !== null && d5 >= 25 ? '5' : '15') + ' minutes · now ' + fmt(+x.price), warn: WARN }); } });
+                saveK(); return a.length;
+            });
+        }
+        function scanBS() {
+            return jget('https://api.binance.com/api/v3/ticker/price').then(function (a) {
+                if (!Array.isArray(a) || a.length < 100) { throw new Error('bad data'); } var fresh = [], first = !K.bsinit, now = Date.now();
+                a.forEach(function (x) { var sym = String(x.symbol || ''); if (!/USDT$/.test(sym) || JUNK.test(sym)) { return; } var b = sym.replace(/USDT$/, ''), p = +x.price; if (!(p > 0)) { return; } if (!K.bs[sym]) { K.bs[sym] = 1; if (!first && !K.b[sym]) { fresh.push({ b: b, p: p }); } } ring('BS:' + sym, p, now); });
+                if (first) { K.bsinit = now; }
+                fresh.forEach(function (c) { if (gate('NBS:' + c.b, 1)) { fire({ kind: 'new', sym: c.b, spec: '', bn: c.b + 'USDT', title: '🆕 NEW COIN on Binance spot: ' + c.b + '/USDT', body: 'Just listed for trading. Price now ' + fmt(c.p), warn: WARN }); } });
+                a.forEach(function (x) { var sym = String(x.symbol || ''); if (!/USDT$/.test(sym) || JUNK.test(sym) || (S.tick && S.tick[sym])) { return; } var r = H['BS:' + sym], d5 = r ? rise(r, 5 * 60000, now) : null, d15 = r ? rise(r, 15 * 60000, now) : null, mx = Math.max(d5 || 0, d15 || 0); if (mx >= 25 && gate('BSP:' + sym, mx >= 50 ? 2 : 1)) { var b2 = sym.replace(/USDT$/, ''); fire({ kind: 'pump', mega: mx >= 50, sym: 'BS:' + sym, up: true, spec: '', bn: sym, p: +x.price, title: (mx >= 50 ? '🚨 ' : '🚀 ') + b2 + ' is ' + (mx >= 50 ? 'exploding' : 'pumping') + ' on Binance spot', body: '+' + mx.toFixed(0) + '% in ' + (d5 !== null && d5 >= 25 ? '5' : '15') + ' minutes · now ' + fmt(+x.price), warn: WARN }); } });
                 saveK(); return a.length;
             });
         }
@@ -18729,6 +18752,7 @@ try {
             Promise.all([scanF().catch(function (e) { ST.err = 'MEXC futures: ' + (e && e.message || e); return 0; }), (now - (cycle.s || 0) > 28000 ? (cycle.s = now, scanS().catch(function (e) { ST.err = 'MEXC spot: ' + (e && e.message || e); return 0; })) : Promise.resolve(0))]).then(function (v) {
                 if (v[0] || v[1]) { ST.ok = Date.now(); ST.n = (v[0] || 0) + (v[1] || 0); ST.err = ''; if (!K.init) { K.init = Date.now(); saveK(); } }
             }); scanB();
+            if (now - (cycle.bs || 0) > 28000 && S.tick && Object.keys(S.tick).length > 50) { cycle.bs = now; scanBS().catch(function (e) { ST.err = 'Binance spot: ' + (e && e.message || e); }); }
         }
         setTimeout(cycle, 4000);
         setInterval(function () { cycle(); }, 15000);
@@ -18743,9 +18767,9 @@ try {
         document.addEventListener('click', function (e) { var el = e.target.closest && e.target.closest('[data-pump="test"]'); if (!el) { return; } e.preventDefault(); e.stopPropagation(); fire({ kind: 'new', sym: 'TEST', spec: '', title: '🆕 TEST: this is how a new-coin alert looks', body: 'If you can see and feel this, alerts work on this phone.', warn: WARN }); }, true);
         function logHtml(n) {
             var L = LOG.slice(0, n || 8); if (!L.length) { return '<div class="note">No alerts yet. When a coin is newly listed on MEXC or Binance, or jumps fast, it appears here and stays until you clear it.</div>'; }
-            return L.map(function (x) { var ago = Math.max(0, Math.round((Date.now() - x.t) / 60000)), when = ago < 60 ? ago + ' min ago' : ago < 1440 ? Math.round(ago / 60) + ' h ago' : Math.round(ago / 1440) + ' d ago'; return '<div class="row tap" data-pump="logopen:' + (LOG.indexOf(x)) + '" style="display:block;cursor:pointer"><b>' + (x.mega ? '🚨 ' : '') + e3(x.title) + '</b><div class="note" style="margin:2px 0 0">' + e3(x.body) + ' · ' + when + '</div></div>'; }).join('');
+            return L.map(function (x) { var ago = Math.max(0, Math.round((Date.now() - x.t) / 60000)), when = ago < 60 ? ago + ' min ago' : ago < 1440 ? Math.round(ago / 60) + ' h ago' : Math.round(ago / 1440) + ' d ago'; return '<div class="row tap" data-pump="logopen:' + (LOG.indexOf(x)) + '" style="display:block;cursor:pointer;scroll-snap-align:start"><b>' + (x.mega ? '🚨 ' : '') + e3(x.title) + '</b><div class="note" style="margin:2px 0 0">' + e3(x.body) + ' · ' + when + '</div></div>'; }).join('');
         }
-        function homeCard() { return '<div class="group pad" id="mwpumpcard"><div style="display:flex;justify-content:space-between;align-items:center"><b>🔔 New coins and pumps</b><span class="mut" style="font-size:12px" data-act="win:radar">See all ›</span></div><div style="margin-top:6px">' + logHtml(3) + '</div></div>'; }
+        function homeCard() { return '<div class="group pad" id="mwpumpcard"><div style="display:flex;justify-content:space-between;align-items:center"><b>🔔 New coins and pumps</b><span class="mut" style="font-size:12px" data-act="win:radar">See all ›</span></div><div style="margin-top:6px"><div id="mwpumpscroll" data-noswipe="1" style="max-height:214px;overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y proximity;touch-action:pan-y;scrollbar-width:none">' + logHtml(12) + '</div>' + (LOG.length > 3 ? '<div class="mut" style="font-size:11px;text-align:center;margin-top:4px">⇅ swipe up or down to see more (' + Math.min(LOG.length, 12) + ')</div>' : '') + '</div></div>'; }
         document.addEventListener('click', function (e) { var el = e.target.closest && e.target.closest('[data-pump^="logopen:"]'); if (!el) { return; } e.preventDefault(); e.stopPropagation(); var x = LOG[+el.getAttribute('data-pump').slice(9)]; if (x) { try { openA(x); } catch (er) { } } }, true);
         X.on('pumpclr', function () { LOG = []; try { localStorage.setItem(LK, '[]'); } catch (e) { } X.again(); });
         try {
