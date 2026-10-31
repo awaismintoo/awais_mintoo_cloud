@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.223';
+var BUILD = '2026-10-31.228';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -12498,18 +12498,18 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 var s = st(o.r, rf.r, 0), lg = st(o.r, rf.r, 1); L[R[0]] = { corr: s.corr, beta: s.beta, lead: lg.corr };
                 if (!best || Math.abs(s.corr) > Math.abs(best.corr)) { best = { ref: R[0], corr: s.corr, beta: s.beta }; }
             });
-            o.L = L; o.best = best && Math.abs(best.corr) >= 0.3 ? best : null; if (o.best) { o.best.weak = Math.abs(best.corr) < 0.6; }
+            o.L = L; o.near = best; o.best = best && Math.abs(best.corr) >= 0.3 ? best : null; if (o.best) { o.best.weak = Math.abs(best.corr) < 0.6; }
         }
         function wanted() {
             var u = Object.keys(S.tick || {}).filter(function (s) { return /USDT$/.test(s) && !STABLE.test(s) && REFS.every(function (R) { return R[1].indexOf(s) < 0; }); });
             u.sort(function (a, b) { return (S.tick[b].q || 0) - (S.tick[a].q || 0); });
-            var top = u.slice(0, 90); try { var mxl = ((S.mx && S.mx.spot) || []).filter(function (r) { return r.s && !(S.tick && S.tick[r.s]) && !STABLE.test(r.s) && (r.q || 0) > 300000; }).sort(function (a, b) { return (b.q || 0) - (a.q || 0); }).slice(0, 25); mxl.forEach(function (r) { top.push(r.s); }); } catch (e) { } Object.keys(LK.vis).forEach(function (s) { if (top.indexOf(s) < 0) { top.push(s); } }); return top.slice(0, 80);
+            var top = u.slice(0, 90); try { var mxl = ((S.mx && S.mx.spot) || []).filter(function (r) { return r.s && !(S.tick && S.tick[r.s]) && !STABLE.test(r.s) && (r.q || 0) > 300000; }).sort(function (a, b) { return (b.q || 0) - (a.q || 0); }).slice(0, 25); mxl.forEach(function (r) { top.push(r.s); }); } catch (e) { } var vis = Object.keys(LK.vis).filter(function (s) { return !STABLE.test(s) && REFS.every(function (R) { return R[1].indexOf(s) < 0; }); }); top = vis.concat(top.filter(function (s) { return vis.indexOf(s) < 0; })); return top.slice(0, 220);
         }
         function pump() {
             if (LK.busy) { return; } var need = false;
             LK.rt = LK.rt || {}; REFS.forEach(function (R, i) { var rf = LK.ref[R[0]]; if ((!rf && Date.now() - (LK.rt[R[0]] || 0) > 120000) || (rf && Date.now() - rf.at > 900000)) { need = true; LK.busy = 1; LK.rt[R[0]] = Date.now(); loadRef(i, 0).then(function () { LK.busy = 0; REFS.forEach(function (x) { }); Object.keys(LK.coin).forEach(analyse); badges(); }); } });
             if (need) { return; }
-            var todo = wanted().filter(function (s) { var o = LK.coin[s]; return !o || (Date.now() - o.at > 1800000 && !o.fail) || (o.fail && Date.now() - o.at > 300000); }).slice(0, 6);
+            var todo = wanted().filter(function (s) { var o = LK.coin[s]; return !o || (Date.now() - o.at > 1800000 && !o.fail) || (o.fail && Date.now() - o.at > 300000); }).slice(0, 8);
             if (!todo.length) { return; } LK.busy = 1;
             Promise.all(todo.map(function (s) { return kl(s).then(function (c) { LK.coin[s] = { at: Date.now(), c: c, r: rets(c) }; analyse(s); }).catch(function () { LK.coin[s] = { at: Date.now(), fail: 1 }; }); })).then(function () { LK.busy = 0; LK.n++; badges(); });
         }
@@ -12552,7 +12552,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                         var tx = (el.textContent || '').trim().replace(/\s*\/?\s*USDT(\.P)?$/, ''); if (!/^[A-Z0-9]{2,12}$/.test(tx)) { continue; }
                         var sym = tx + 'USDT'; if (!(S.tick && S.tick[sym]) && !LK.coin[sym]) { continue; } seen[sym] = 1; var o = LK.coin[sym];
                         var nx = el.nextElementSibling; var has = nx && nx.classList && nx.classList.contains('lkb');
-                        if (!o || !o.best) { if (has) { nx.remove(); } continue; }
+                        if (!o) { var pend = '<span class="lkb n" data-lk="' + sym + '" data-noswipe="1" style="opacity:.55">🔗…</span>'; if (has) { if (nx.outerHTML !== pend) { nx.outerHTML = pend; } } else { el.insertAdjacentHTML('afterend', pend); } continue; }
+                        if (!o.best) { var own = o.fail ? '<span class="lkb n" data-lk="' + sym + '" data-noswipe="1" style="opacity:.7">🔗 own</span>' : '<span class="lkb n" data-lk="' + sym + '" data-noswipe="1">🔗 own</span>'; if (has) { if (nx.outerHTML !== own) { nx.outerHTML = own; } } else { el.insertAdjacentHTML('afterend', own); } continue; }
                         var h = badgeHtml(sym); if (!h) { continue; }
                         if (has) { if (nx.outerHTML !== h) { nx.outerHTML = h; } } else { el.insertAdjacentHTML('afterend', h); }
                     }
@@ -12571,7 +12572,12 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         function popup() {
             var sym = LK.open, d = document.getElementById('lkpop'); if (!sym) { if (d) { d.remove(); } return; }
-            var o = outlook(sym), b = sym.replace('USDT', ''); if (!o) { LK.open = null; if (d) { d.remove(); } return; }
+            var o = outlook(sym), b = sym.replace('USDT', ''); if (!o) {
+                var cc = LK.coin[sym], nr = cc && cc.near, hh = '<div class="lkc" data-lkc="1"><div class="lkh"><b style="font-size:18px">🔗 ' + e2(b) + (cc && !cc.fail ? ' moves on its own' : ' link not measured yet') + '</b><span data-lkx="1" style="font-size:22px;padding:0 6px;cursor:pointer">✕</span></div>';
+                if (cc && !cc.fail && nr) { hh += '<div class="note" style="margin:6px 0">Over the last 7 days (hourly) ' + e2(b) + ' did not follow BTC, ETH or Gold in a clear way. The closest was <b>' + e2(nr.ref) + '</b> at only <b>' + Math.round(Math.abs(nr.corr) * 100) + '%</b> link. So its news, listing, volume and its own buyers and sellers matter more than the big coins.</div>'; REFS.forEach(function (R) { var x = cc.L && cc.L[R[0]]; if (x) { hh += '<div class="lkr"><span>' + e2(R[0]) + '</span><span>link <b>' + Math.round(x.corr * 100) + '%</b></span></div>'; } }); }
+                else { hh += '<div class="note" style="margin:6px 0">' + (cc && cc.fail ? 'Not enough hourly history for this coin to measure a link.' : 'Measuring which big coin this one follows. Check again in a few seconds.') + '</div>'; }
+                hh += '<div style="display:flex;gap:8px;margin-top:10px"><span class="btn tap" data-ci="' + sym + '" style="flex:1;text-align:center;margin:0">ℹ️ Coin info</span><span class="btn sec tap" data-lkch="' + sym + '" style="flex:1;text-align:center;margin:0">Open chart</span></div></div>';
+                if (!d) { d = document.createElement('div'); d.id = 'lkpop'; d.setAttribute('data-noswipe', '1'); document.body.appendChild(d); } d.innerHTML = hh; return; }
             var col2 = o.lean > 0 ? '#1a9e50' : o.lean < 0 ? '#e0352b' : '#8e8e93', cn = LK.coin[sym];
             var h = '<div class="lkc" data-lkc="1"><div class="lkh"><b style="font-size:18px">🔗 ' + e2(b) + ' ' + (o.inv ? 'moves OPPOSITE to ' : 'follows ') + e2(o.ref) + '</b><span data-lkx="1" style="font-size:22px;padding:0 6px;cursor:pointer">✕</span></div>';
             h += '<div class="lkv" style="color:' + col2 + '">' + (o.lean > 0 ? '▲ ' : o.lean < 0 ? '▼ ' : '• ') + e2(o.txt) + '</div>';
@@ -12639,7 +12645,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             } catch (e) { }
             return c + h;
         }; }
-        setInterval(pump, 6000); setTimeout(pump, 2500);
+        setInterval(pump, 4500); setTimeout(pump, 2500);
         window.__lkDbg = { LK: LK, outlook: outlook, pump: pump, badges: badges };
     } catch (e) { try { console.log('lk', e); } catch (er) { } }
 })();
@@ -15611,7 +15617,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
         st.textContent = '.nav-in{box-sizing:border-box}#pfm.top .pfbub{bottom:auto!important;top:44px}';
         document.head.appendChild(st);
-        setInterval(function () { try { var n = document.querySelector('.nav-in'), p = document.getElementById('pfm'); if (!n) { return; } var r = p ? p.getBoundingClientRect() : null, atRight = r && r.top < 80 && r.left > window.innerWidth - 70; var want = atRight ? '46px' : ''; if (n.style.paddingRight !== want) { n.style.paddingRight = want; } } catch (e) { } }, 700);
+        setInterval(function () { try { var n = document.querySelector('.nav-in'), p = document.getElementById('pfm'); if (!n) { return; } var r = p ? p.getBoundingClientRect() : null, atRight = r && r.top < 80 && r.left > window.innerWidth - 70; if (n.style.paddingRight) { n.style.paddingRight = ''; } } catch (e) { } }, 700);
         function navY() { var n = document.querySelector('.nav-in'); if (!n) { return 8; } var r = n.getBoundingClientRect(); return Math.max(2, Math.round(r.top + (r.height - 38) / 2)); }
         var _pp = pfPos;
         pfPos = function () {
@@ -20249,7 +20255,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         var _mtn = mwTiles;
         mwTiles = function () {
             var h = _mtn.apply(this, arguments);
-            try { if (h.indexOf('data-act="win:news"') < 0 && typeof VIEWS.news === 'function') { var w = winDef('news'), t = '<div class="tile" data-act="win:news"><div class="ic" style="background:' + ((w && w.c) || '#ff453a') + '22">' + ((w && w.ic) || '📰') + '</div>' + ((w && (w.t || w.n)) || 'News') + '</div>', i = h.indexOf('data-act="win:market"'); if (i >= 0) { var j = h.indexOf('</div></div>', i); h = h.slice(0, j + 12) + t + h.slice(j + 12); } else { h += t; } } } catch (e) { }
+            try { if (h.indexOf('data-act="win:news"') < 0 && typeof VIEWS.news === 'function') { var w = winDef('news'), t = '<div class="tile" data-act="win:news"><div class="ic" style="background:' + ((w && w.c) || '#ff453a') + '22">📰</div>' + ((w && (w.t || w.n)) || 'News') + '</div>', i = h.indexOf('data-act="win:market"'); if (i >= 0) { var j1 = h.indexOf('</div>', i), j2 = h.indexOf('</div>', j1 + 6); h = h.slice(0, j2 + 6) + t + h.slice(j2 + 6); } else { h += t; } } } catch (e) { }
             return h;
         };
     } catch (e) { try { console.log('mt', e); } catch (er) { } }
@@ -20270,6 +20276,26 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         ];
         A.forEach(function (a) { try { PF_APP.push(a); } catch (e) { } });
     } catch (e) { try { console.log('bofl', e); } catch (er) { } }
+})();
+
+/* ===== full-screen button sits on the chart itself (top-right corner), hidden when the chart is off screen ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '#fsbtn:not(.back){font-size:0!important;width:36px!important;height:30px!important;min-width:0!important;padding:0!important;border-radius:9px!important;bottom:auto!important;left:auto!important;box-shadow:0 2px 8px rgba(0,0,0,.35)!important;display:flex;align-items:center;justify-content:center;z-index:9000!important}#fsbtn:not(.back):after{content:"⛶";font-size:19px;color:#fff;line-height:1}';
+        document.head.appendChild(st);
+        var b = null;
+        function place() {
+            try {
+                b = b || document.getElementById('fsbtn'); if (!b || b.classList.contains('back')) return;
+                var t = document.getElementById('cv') || document.querySelector('[data-fsw]'); if (!t) { b.style.setProperty('display', 'none', 'important'); return; }
+                var r = t.getBoundingClientRect(), vh = window.innerHeight, top = Math.max(r.top + 6, 66);
+                if (r.bottom < 100 || r.top > vh - 120 || top > r.bottom - 36 || top > vh - 130) { b.style.setProperty('display', 'none', 'important'); return; }
+                b.style.setProperty('display', 'flex', 'important'); b.style.setProperty('top', top + 'px', 'important'); b.style.setProperty('right', Math.max(8, window.innerWidth - r.right + 8) + 'px', 'important'); b.style.setProperty('bottom', 'auto', 'important');
+            } catch (e) { }
+        }
+        setInterval(place, 250); window.addEventListener('scroll', place, true);
+    } catch (e) { try { console.log('fsb', e); } catch (er) { } }
 })();
 /* ===== p9sim: Paper Trade Pro. A pretend Binance Futures account that answers the same calls as the real one. =====
    When the trading mode is PAPER, Trade Pro, positions, SL/TP, trailing and the close buttons all run on this
@@ -20555,7 +20581,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
 (function () {
     try {
         var CSS = document.createElement('style');
-        CSS.textContent = '#mwCI{position:fixed;inset:0;z-index:99991;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}#mwCI .bx{background:var(--card,#fff);color:var(--tx,#111);width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:22px 22px 0 0;padding:14px 14px 28px;-webkit-overflow-scrolling:touch}#mwCI .g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}#mwCI .c{background:rgba(127,127,127,.12);border-radius:12px;padding:8px 10px}#mwCI .c small{display:block;opacity:.65;font-size:11.5px}#mwCI .c b{font-size:14.5px}#mwCI h4{margin:12px 0 2px;font-size:14px}#mwCI .tr{display:flex;justify-content:space-between;font-size:12px;font-variant-numeric:tabular-nums;padding:1px 2px}.mwci{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:10px;background:rgba(10,132,255,.18);color:#0a84ff;font-size:11.5px;font-weight:800;vertical-align:middle}';
+        CSS.textContent = '#mwCI{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}#mwCI .bx{background:var(--card,#fff);color:var(--tx,#111);width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:22px 22px 0 0;padding:14px 14px 28px;-webkit-overflow-scrolling:touch}#mwCI .g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}#mwCI .c{background:rgba(127,127,127,.12);border-radius:12px;padding:8px 10px}#mwCI .c small{display:block;opacity:.65;font-size:11.5px}#mwCI .c b{font-size:14.5px}#mwCI h4{margin:12px 0 2px;font-size:14px}#mwCI .tr{display:flex;justify-content:space-between;font-size:12px;font-variant-numeric:tabular-nums;padding:1px 2px}.mwcit{cursor:pointer;background:rgba(10,132,255,.16)!important;color:#0a84ff!important}.mwcit:before{content:"ℹ️ "}.mwi{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-right:5px;border-radius:50%;background:#0a84ff;color:#fff!important;font:800 11px/1 Georgia,serif;font-style:italic;vertical-align:middle;cursor:pointer;flex:none;-webkit-text-fill-color:#fff}.mwci{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:10px;background:rgba(10,132,255,.18);color:#0a84ff;font-size:11.5px;font-weight:800;vertical-align:middle}';
         document.head.appendChild(CSS);
         var el = null, sym = '', fut = true, D = {}, tm = null;
         function fmt(v) { v = +v; if (!isFinite(v)) return '-'; return v >= 1000 ? v.toLocaleString('en-US', { maximumFractionDigits: 2 }) : v >= 1 ? v.toFixed(4) : v.toPrecision(5); }
@@ -20565,13 +20591,19 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         function pc(v) { return v == null ? '-' : '<span style="color:' + (v >= 0 ? '#16a34a' : '#dc2626') + '">' + (v >= 0 ? '+' : '') + v.toFixed(1) + '%</span>'; }
         function cell(a, b) { return '<div class="c"><small>' + a + '</small><b>' + b + '</b></div>'; }
         function api(path) { return (fut ? 'https://fapi.binance.com/fapi/v1' : 'https://api.binance.com/api/v3') + path; }
-        function get(path) { return fetchJSON(api(path)); }
+        function jt(u) { return fetchText(u, 10000).then(function (t) { var j = JSON.parse(t); if (j && !Array.isArray(j) && (j.code < 0 || j.msg && !j.symbol && !j.lastPrice && !j.openInterest && !j.markPrice)) { throw new Error('x'); } return j; }); }
+        function get(path) {
+            var F = 'https://fapi.binance.com/fapi/v1', Sp = 'https://api.binance.com/api/v3', V = 'https://data-api.binance.vision/api/v3', fo = fut && !/\/(premiumIndex|openInterest)/.test(path) ? [F, Sp, V] : fut ? [F] : [Sp, V], i = 0;
+            if (/premiumIndex|openInterest/.test(path) && !fut) { return Promise.reject(new Error('spot')); }
+            function nx() { if (i >= fo.length) { return Promise.reject(new Error('none')); } var u = fo[i++] + path; return jt(u).catch(nx); }
+            return nx();
+        }
         function render() {
             if (!el) return; var b = el.querySelector('.bx'), p = S.tick && S.tick[sym] ? S.tick[sym].p : (D.t ? +D.t.lastPrice : 0), k = D.k || [], t = D.t, h = '';
             var base = sym.replace(/USDT$/, '');
             h += '<div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:19px">' + base + '</b><span style="opacity:.6"> /USDT · ' + (fut ? 'Binance Futures' : 'Binance Spot') + '</span></div><span data-ci="x" style="padding:6px 12px;border-radius:10px;background:rgba(127,127,127,.2);font-weight:800">✕</span></div>';
             h += '<div style="font-size:24px;font-weight:900;margin:4px 0">' + (p ? fmt(p) : '…') + (t ? ' <span style="font-size:14px">' + pc(+t.priceChangePercent) + ' 24h</span>' : '') + '</div>';
-            h += '<h4>📅 History</h4><div class="g">' + cell('Listed (first trade)', D.first ? dt(D.first) : '…') + cell('Age', D.first ? age(D.first) : '…') + cell('Price when listed', D.k0 ? fmt(D.k0) : '…') + cell('Since listing', D.k0 && p ? pc((p / D.k0 - 1) * 100) : '…') + '</div>';
+            h += '<h4>📅 History</h4><div class="g">' + cell('Listed (first trade)', D.first ? dt(D.first) : (D.late ? '—' : '…')) + cell('Age', D.first ? age(D.first) : (D.late ? '—' : '…')) + cell('Price when listed', D.k0 ? fmt(D.k0) : (D.late ? '—' : '…')) + cell('Since listing', D.k0 && p ? pc((p / D.k0 - 1) * 100) : (D.late ? '—' : '…')) + '</div>';
             if (D.ath) { h += '<div class="g">' + cell('All-time high (' + dt(D.athT) + ')', fmt(D.ath) + '<br><small>' + pc((p / D.ath - 1) * 100) + ' from it</small>') + cell('All-time low (' + dt(D.atlT) + ')', fmt(D.atl) + '<br><small>' + pc((p / D.atl - 1) * 100) + ' from it</small>') + '</div>'; }
             if (k.length > 8) {
                 var c = k.map(function (x) { return +x[4]; }), last = c.length - 1, ch = function (n) { return last - n >= 0 ? (c[last] / c[last - n] - 1) * 100 : null; };
@@ -20581,7 +20613,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             if (t) { h += '<h4>📊 Volume today (24h)</h4><div class="g">' + cell('Volume (USDT)', '$' + big(t.quoteVolume)) + cell('Volume (coins)', big(t.volume)) + cell('24h high', fmt(t.highPrice)) + cell('24h low', fmt(t.lowPrice)) + cell('Trades in 24h', big(t.count)) + cell('Avg price 24h', fmt(t.weightedAvgPrice)) + '</div>'; }
             if (fut && D.pi) { h += '<h4>⚙ Futures</h4><div class="g">' + cell('Funding rate', (+D.pi.lastFundingRate * 100).toFixed(4) + '%<br><small>' + (+D.pi.lastFundingRate > 0 ? 'longs pay shorts' : 'shorts pay longs') + '</small>') + cell('Next funding', D.pi.nextFundingTime ? new Date(+D.pi.nextFundingTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-') + cell('Mark price', fmt(D.pi.markPrice)) + cell('Open interest', D.oi ? big(+D.oi.openInterest * (p || 1)) + ' USDT' : '…') + '</div>'; }
             h += '<h4>🧾 Latest trades (live)</h4>';
-            if (D.tr && D.tr.length) { h += D.tr.slice(-14).reverse().map(function (x) { return '<div class="tr" style="color:' + (x.m ? '#dc2626' : '#16a34a') + '"><span>' + (x.m ? 'Sell' : 'Buy') + ' ' + fmt(x.p) + '</span><span>' + big(+x.q) + '</span><span>' + new Date(x.T || x.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '</span></div>'; }).join(''); } else { h += '<div class="note">Loading…</div>'; }
+            if (D.tr && D.tr.length) { h += D.tr.slice(-14).reverse().map(function (x) { return '<div class="tr" style="color:' + (x.m ? '#dc2626' : '#16a34a') + '"><span>' + (x.m ? 'Sell' : 'Buy') + ' ' + fmt(x.p) + '</span><span>' + big(+x.q) + '</span><span>' + new Date(x.T || x.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '</span></div>'; }).join(''); } else { h += '<div class="note">' + (D.late ? 'Trades are not available right now.' : 'Loading…') + '</div>'; }
             h += '<div class="note" style="margin:10px 0 0">Data comes live from Binance. Past performance does not predict the future. This is not financial advice.</div>';
             b.innerHTML = h;
         }
@@ -20592,8 +20624,10 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             get('/klines?symbol=' + s + '&interval=1d&limit=400').then(function (k) { if (ok() && Array.isArray(k)) { D.k = k; render(); } }, function () { });
             get('/klines?symbol=' + s + '&interval=1d&startTime=0&limit=1').then(function (k) { if (ok() && Array.isArray(k) && k[0]) { D.first = +k[0][0]; D.k0 = +k[0][1]; render(); } }, function () { });
             get('/klines?symbol=' + s + '&interval=1w&limit=1000').then(function (k) { if (!ok() || !Array.isArray(k) || !k.length) return; var hi = k[0], lo = k[0]; k.forEach(function (x) { if (+x[2] > +hi[2]) hi = x; if (+x[3] < +lo[3]) lo = x; }); D.ath = +hi[2]; D.athT = +hi[0]; D.atl = +lo[3]; D.atlT = +lo[0]; render(); }, function () { });
-            if (fut) { fetchJSON(api('/premiumIndex?symbol=' + s).replace('/fapi/v1/premiumIndex', '/fapi/v1/premiumIndex')).then(function (p) { if (ok() && p && p.markPrice) { D.pi = p; render(); } }, function () { }); get('/openInterest?symbol=' + s).then(function (o) { if (ok() && o && o.openInterest) { D.oi = o; render(); } }, function () { }); }
+            if (fut) { get('/premiumIndex?symbol=' + s).then(function (p) { if (ok() && p && p.markPrice) { D.pi = p; render(); } }, function () { }); get('/openInterest?symbol=' + s).then(function (o) { if (ok() && o && o.openInterest) { D.oi = o; render(); } }, function () { }); }
             tr();
+            setTimeout(function () { if (el && s === sym) { D.late = 1; render(); } }, 8000);
+            setTimeout(function () { if (el && s === sym && !D.t && !D.k) { var bx = el.querySelector('.bx'); if (bx && !bx.querySelector('.nodata')) { bx.insertAdjacentHTML('beforeend', '<div class="note nodata" style="margin-top:8px"><b>No Binance data for ' + s.replace('USDT', '') + '.</b> It may be listed only on MEXC or Bitget, or the connection is slow. Open its chart for the exchange data.</div>'); } } }, 7000);
         }
         function tr() { if (!el) return; var s = sym; get('/trades?symbol=' + s + '&limit=20').then(function (a) { if (el && s === sym && Array.isArray(a)) { D.tr = a.map(function (x) { return { p: x.price, q: x.qty, T: x.time, m: x.isBuyerMaker }; }); render(); } }, function () { }); }
         window.__coinInfo = function (symbol) {
@@ -20604,17 +20638,43 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             loadAll(); clearInterval(tm); tm = setInterval(function () { if (!el) { clearInterval(tm); return; } tr(); try { var p = S.tick[sym]; if (p) render(); } catch (e) { } }, 3000);
         };
         function closeCI() { if (el) { el.remove(); el = null; } clearInterval(tm); }
-        document.addEventListener('click', function (e) {
+        window.addEventListener('click', function (e) {
             var t = e.target && e.target.closest ? e.target.closest('[data-ci]') : null;
-            if (t) { e.preventDefault(); e.stopPropagation(); var k = t.getAttribute('data-ci'); if (k === 'x') closeCI(); else window.__coinInfo(k); return; }
+            if (t) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); var k = t.getAttribute('data-ci'); if (k === 'x') closeCI(); else window.__coinInfo(k); return; }
             if (el && e.target === el) { closeCI(); }
         }, true);
+        /* a small round blue "i" button before every coin name, on every screen */
+        var bases = null, bt = 0;
+        function baseSet() { if (bases && Date.now() - bt < 15000) return bases; var b = {}; try { Object.keys(S.tick || {}).forEach(function (k) { if (/USDT$/.test(k)) b[k.slice(0, -4)] = 1; }); } catch (e) { } try { ((S.mx && S.mx.fut) || []).concat((S.mx && S.mx.spot) || []).forEach(function (r) { if (r.s) b[String(r.s).replace(/USDT$/, '')] = 1; }); } catch (e) { } try { var B = (window.XCH && XCH.bg) || {}; (B.fut || []).concat(B.spot || []).forEach(function (r) { if (r.s) b[String(r.s).replace(/USDT$/, '')] = 1; }); } catch (e) { } bases = b; bt = Date.now(); return b; }
+        var sc = 0;
+        function scanI() {
+            if (sc) return; sc = setTimeout(function () {
+                sc = 0;
+                try {
+                    var B = baseSet(), els = document.querySelectorAll('b,strong,.sym,.nm'), n = 0;
+                    for (var i = 0; i < els.length && n < 400; i++) {
+                        var el = els[i]; if (el.children.length || el.closest('#mwCI,#lkpop,#mwAsk,#tabs,#tiles,.sheet,#pfp,.mwmt,.mwqt,.tabbar,button,.btn,input,textarea,#mwtb,.mwTradeTab')) continue;
+                        var tx = (el.textContent || '').trim().replace(/\s*\/?\s*USDT(\.P)?$/, ''); if (!/^[A-Z0-9]{2,12}$/.test(tx) || !B[tx]) continue;
+                        var pv = el.previousElementSibling; if (pv && pv.classList && pv.classList.contains('mwi')) { if (pv.getAttribute('data-ci') !== tx + 'USDT') pv.setAttribute('data-ci', tx + 'USDT'); continue; }
+                        if (el.parentElement && el.parentElement.querySelector(':scope > .mwci')) continue;
+                        n++; var b = document.createElement('span'); b.className = 'mwi'; b.setAttribute('data-ci', tx + 'USDT'); b.setAttribute('data-noswipe', '1'); b.textContent = 'i'; el.parentNode.insertBefore(b, el);
+                    }
+                } catch (e) { }
+            }, 500);
+        }
+        try { new MutationObserver(function (m) { if (m.some(function (x) { return !(x.target.classList && x.target.classList.contains('mwi')); })) scanI(); }).observe(document.body, { childList: true, subtree: true }); } catch (e) { }
+        setInterval(scanI, 2500);
         /* an "ℹ️ Info" chip next to the coin name on chart/coin headers and the live trade window */
         setInterval(function () {
             try {
                 [].forEach.call(document.querySelectorAll('.pchead,.cph'), function (h) {
                     if (h.querySelector('.mwci')) return; var m = /([A-Z0-9]{2,15}USDT)/.exec(h.textContent || ''); if (!m) return;
                     var b = h.querySelector('b') || h.firstElementChild; if (!b) return; var c = document.createElement('span'); c.className = 'mwci'; c.setAttribute('data-ci', m[1]); c.textContent = 'ℹ️ Info'; b.appendChild(c);
+                });
+                [].forEach.call(document.querySelectorAll('.m7tag:not([data-ci])'), function (g) {
+                    if (g.closest('#mwCI,#lkpop,#mwAsk')) return; var p = g.parentElement, nm = null;
+                    for (var up = 0; up < 3 && p && !nm; up++, p = p.parentElement) { var bs = p.querySelectorAll('b,strong'); for (var q = 0; q < bs.length; q++) { var tx = (bs[q].textContent || '').trim(); if (!bs[q].children.length && /^[A-Z0-9]{2,15}$/.test(tx)) { nm = tx; break; } } }
+                    if (nm) { g.setAttribute('data-ci', /USDT$/.test(nm) ? nm : nm + 'USDT'); g.classList.add('mwcit'); g.setAttribute('data-noswipe', '1'); }
                 });
                 var lt = document.querySelector('#mwLT .h b'); if (lt && !lt.querySelector('.mwci') && window.__liveSym) { var c2 = document.createElement('span'); c2.className = 'mwci'; c2.setAttribute('data-ci', window.__liveSym()); c2.textContent = 'ℹ️ Info'; lt.appendChild(c2); }
             } catch (e) { }
