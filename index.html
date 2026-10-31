@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.195';
+var BUILD = '2026-10-31.197';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -6785,7 +6785,7 @@ function vTpro() {
     h += '</div>';
     if (C.err) { h += '<div class="warn">' + esc(C.err) + '</div>'; }
     else { h += '<div class="group"><div class="row"><span>Quantity</span><b>' + C.qtyS + ' ' + esc(base(T.sym)) + '</b></div><div class="row"><span>Position value</span><b>$' + C.notional.toFixed(2) + '</b></div><div class="row"><span>Margin needed (' + C.lev + '×)</span><b>$' + C.margin.toFixed(2) + '</b></div><div class="row"><span>Est. liquidation price</span><b class="dn">' + fmtP(C.liq, T.sym) + '</b></div><div class="row"><span>Est. fees (in and out)</span><b>$' + C.fees.toFixed(2) + '</b></div>' + (C.sl ? '<div class="row"><span>Loss if stop-loss hits</span><b class="dn">−$' + C.lossAtSl.toFixed(2) + '</b></div>' : '') + (C.tp ? '<div class="row"><span>Profit if take-profit hits</span><b class="up">+$' + Math.max(0, C.gainAtTp).toFixed(2) + '</b></div>' : '') + '</div>' + (C.warn ? '<div class="warn">' + esc(C.warn) + '</div>' : '') + (C.liqNote ? '<div class="note">' + esc(C.liqNote) + '</div>' : '') + '<div class="note">Estimates only (Binance shows exact numbers). Slippage can make a fill worse.</div>'; }
-    if (live && has) { h += '<div class="group pad"><div class="note" style="margin:0 0 4px">Type TRADE to allow a live order</div>' + tpIn('conf', 'TRADE', T.conf, ' autocapitalize="characters"') + '</div>'; }
+    if (live && has) { h += '<div class="group pad"><div class="note" style="margin:0 0 4px">Real money: a confirm window will appear when you tap the button.</div></div>'; }
     h += '<div style="margin:10px 0">' + tpBtn('go:0', (long ? '▲ Open Long ' : '▼ Open Short ') + esc(base(T.sym)) + (T.type === 'MARKET' ? ' (Market)' : ' (' + (TP_TYPES.filter(function (z) { return z[0] === T.type; })[0] || [0, ''])[1] + ')'), long ? '#34c759' : '#ff3b30', true) + '</div>';
     if (T.log.length) { h += '<div class="group pad" id="tpLog"><div class="note" style="margin:0">' + T.log.map(esc).join('<br>') + '</div></div>'; }
     h += sh('Positions') + '<div class="group">';
@@ -6813,7 +6813,14 @@ function tpGo() {
     function say(t) { T.log.push(t); renderView(true); }
     if (T.busy) { return; } T.log = [];
     if (!tpHas()) { say('Connect your Binance key first.'); return; } if (C.err) { say(C.err); return; }
-    if (live && String(T.conf).trim().toUpperCase() !== 'TRADE') { say('Type TRADE in the box to confirm a live order.'); return; }
+    if (live && String(T.conf).trim().toUpperCase() !== 'TRADE') {
+        var o = document.getElementById('mwRealOk'); if (o) { o.remove(); }
+        o = document.createElement('div'); o.id = 'mwRealOk';
+        o.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:18px';
+        o.innerHTML = '<div style="background:var(--card,#fff);color:var(--tx,#111);border-radius:20px;padding:18px;max-width:380px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4)"><div style="font-weight:800;font-size:18px;color:#d70015">REAL MONEY order</div><div style="margin:10px 0;font-size:15px;line-height:1.5">' + (long ? '▲ LONG ' : '▼ SHORT ') + '<b>' + esc(base(sym)) + '</b> · ' + esc(String(T.type).replace(/_/g, ' ')) + '<br>Size $' + C.notional.toFixed(2) + ' · margin $' + C.margin.toFixed(2) + ' · ' + C.lev + '×<br>Stop-loss: ' + (C.sl ? fmtP(C.sl, sym) : 'none') + ' · Target: ' + (C.tp ? fmtP(C.tp, sym) : 'none') + '</div><div style="font-size:13px;opacity:.75;margin-bottom:12px">This sends a real order to your Binance Futures account. You can lose this money.</div><div style="display:flex;gap:10px"><button data-ro="no" style="flex:1;padding:14px;border:0;border-radius:14px;background:#e5e5ea;color:#111;font-weight:700;font-size:16px">Cancel</button><button data-ro="yes" style="flex:1;padding:14px;border:0;border-radius:14px;background:#34c759;color:#fff;font-weight:800;font-size:16px">Yes, place order</button></div></div>';
+        o.addEventListener('click', function (ev) { var b = ev.target.closest ? ev.target.closest('[data-ro]') : null; if (!b && ev.target !== o) { return; } ev.stopPropagation(); ev.preventDefault(); var yes = b && b.getAttribute('data-ro') === 'yes'; o.remove(); if (yes) { T.conf = 'TRADE'; tpGo(); } }, true);
+        document.body.appendChild(o); return;
+    }
     var px = C.price, tr = tpN(T.trig), lim = tpN(T.price), f = S.filt[sym] || {}, dt = C.dt, fmt = function (v) { return (+v).toFixed(dt); };
     if (T.type === 'LIMIT' && !(lim > 0)) { say('Enter the limit price.'); return; } if ((T.type === 'STOP' || T.type === 'STOP_MARKET' || T.type === 'TAKE_PROFIT_MARKET') && !(tr > 0)) { say('Enter the trigger price.'); return; } if (T.type === 'STOP' && !(lim > 0)) { say('Enter the limit price.'); return; }
     var live_px = S.tick[sym].p;
@@ -7713,6 +7720,7 @@ setInterval(function () { if (S.win === 'chart' && !document.hidden) { plRefresh
     document.addEventListener('touchstart', function (e) {
         st = null; if (!e.touches || e.touches.length !== 1) { return; } var t = e.touches[0], W = window.innerWidth || 360;
         if (t.clientX < 26 || t.clientX > W - 26) { return; }
+        if (/^(tpro|xtrade|strade|tdet|hold|trade|rbot|botpro|tmode)$/.test(S.win)) { return; }
         if (S.fsKey || (S.win === 'chart' && e.target && e.target.closest && e.target.closest('#cv'))) { return; }
         try { if (localStorage.getItem('mintoosuite_swipe') === '0') { return; } } catch (er) { }
         if (blocked(e.target)) { return; }
@@ -12948,10 +12956,11 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     setInterval(function () { if (!LK.un) { rbHalt('Baba Bot stopped: real trading is locked'); } }, 3000);
     var _rc = rbCard; rbCard = function () {
         var h = LK.un ? '<div class="group pad" style="border-left:5px solid #ff3b30"><b>🔓 Real trading is UNLOCKED</b><div class="note">The real bot may start only when you press Start. It locks again every time the app is closed and reopened.</div><div class="idbt" style="display:flex;gap:8px"><span class="btn sec tap kpb" data-lk="lock">🔒 Lock again</span></div></div>'
-            : '<div class="group pad" style="border-left:5px solid #34c759"><b>🔒 Real trading is LOCKED</b><div class="note">The real bot cannot start, auto-start or place orders on its own. Orders you place yourself in a ticket still ask for your confirmation. To let the real bot work, type UNLOCK below.</div><input class="tin" id="lkIn" placeholder="Type UNLOCK"><div class="idbt" style="display:flex;gap:8px;margin-top:6px"><span class="btn tap kpb" data-lk="unlock">Unlock real bot</span></div>' + (LK.msg ? '<div class="warn">' + esc(LK.msg) + '</div>' : '') + '</div>';
+            : '<div class="group pad" style="border-left:5px solid #34c759"><b>🔒 Real trading is LOCKED</b><div class="note">The real bot cannot start, auto-start or place orders on its own. Orders you place yourself in a ticket still ask for your confirmation. To let the real bot work, tap Unlock and confirm.</div><div class="idbt" style="display:flex;gap:8px;margin-top:6px"><span class="btn tap kpb" data-lk="unlock">Unlock real bot</span></div>' + (LK.msg ? '<div class="warn">' + esc(LK.msg) + '</div>' : '') + '</div>';
         return h + _rc.apply(this, arguments);
     };
-    document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-lk]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-lk'); if (a === 'lock') { LK.un = false; LK.msg = ''; rbHalt('Real trading locked by you'); } else { var v = ((document.getElementById('lkIn') || {}).value || '').trim().toUpperCase(); if (v === 'UNLOCK') { LK.un = true; LK.msg = ''; } else { LK.msg = 'Type the word UNLOCK exactly.'; } } renderView(true); }, true);
+    document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-lk]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); var a = el.getAttribute('data-lk'); if (a === 'lock') { LK.un = false; LK.msg = ''; rbHalt('Real trading locked by you'); } else { (window.__ask || function (t, b, y, c, cb) { cb(); })('🔓 Unlock the real bot?', 'This lets the Baba Bot trade real money once you press Start. It locks again when you close the app.', 'Yes, unlock', '#ff3b30', function () { LK.un = true; LK.msg = ''; renderView(true); }); return; } renderView(true); }, true);
+    window.__lkUnlock = function () { LK.un = true; LK.msg = ''; };
     /* ---- 2) trade this plan: beautiful card + fill the ticket (Binance and other exchanges) ---- */
     var EXN = { bin: 'Binance Futures', bitget: 'Bitget', bybit: 'Bybit', okx: 'OKX', mexc: 'MEXC Spot' };
     function priceOf(sym) { var t = S.tick && S.tick[sym]; if (t && t.p > 0) { return t.p; } var b = (sym || '').replace(/USDT$/, ''); try { var X = S.mx || {}, r = (X.fut || []).concat(X.spot || []).filter(function (x) { return x.s === b; })[0]; if (r) { return r.p; } var B = (window.XCH && XCH.bg) || {}; r = (B.fut || []).concat(B.spot || []).filter(function (x) { return x.s === b; })[0]; if (r) { return r.p; } } catch (e) { } return null; }
@@ -19017,7 +19026,7 @@ try {
                 try {
                     FS.sym = nm(c.sym); FS.side = c.side === 'SHORT' ? 'SHORT' : 'LONG'; FS.type = 'MARKET'; FS.lev = c.lev || 3; FS.pct = c.pct || 10;
                     var px = price(FS.sym), L = FS.side === 'LONG'; if (!(px > 0)) { return 'No live price for ' + bs(FS.sym) + ' yet. Wait a few seconds and try again.'; }
-                    FS.sl = String(+(px * (L ? 0.98 : 1.02)).toPrecision(6)); FS.tp = String(+(px * (L ? 1.03 : 0.97)).toPrecision(6));
+                    FS.sl = String(+(px * (L ? 0.98 : 1.02)).toPrecision(6)); FS.tp = String(+(px * (L ? 1.03 : 0.97)).toPrecision(6)); if (c.sl > 0 && (L ? c.sl < px : c.sl > px)) { FS.sl = String(c.sl); } if (c.tp > 0 && (L ? c.tp > px : c.tp < px)) { FS.tp = String(c.tp); }
                     place(); var m = FS.msg; FS.sl = ''; FS.tp = ''; FS.msg = ''; return m.replace(/<[^>]+>/g, '');
                 } catch (e) { return 'Could not place the paper trade.'; }
             } };
@@ -19068,11 +19077,12 @@ try {
         window.__tw = { mode: mode, pop: pop, run: function (c) { return run(c); } };
         function go(id) { try { gotoWin(id); } catch (e) { } }
         var BYPASS = 0;
+        function ask(t, b, y, col, cb) { if (window.__ask) { window.__ask(t, b, y, col, cb); } else if (window.confirm(t + ' ' + String(b).replace(/<[^>]+>/g, ' '))) { cb(); } }
         function run(c) {
             var m = mode(), M = MODES[m];
-            if (m === 'pm') { try { window.__ptrade.open({ sym: c.sym, side: c.side, sl: c.sl, tp: c.tp }); } catch (er) { go('quest'); } }
-            else if (m === 'pb') { go('paper'); }
-            else if (m === 'rb') { go('rbot'); }
+            if (m === 'pm') { ask('🧪 Paper trade (virtual money)', (c.side === 'SHORT' ? '▼ SHORT ' : '▲ LONG ') + '<b>' + String(c.sym || '').replace(/USDT$/, '') + '</b><br>Stop-loss and target are set for you. No real money is used.', 'Yes, open paper trade', '#007aff', function () { var r = ''; try { r = window.__ptrade.quick({ sym: c.sym, side: c.side, sl: c.sl, tp: c.tp }); } catch (er) { r = 'Could not place the paper trade.'; } toast(r || 'Paper trade opened'); try { renderView(true); } catch (er) { } }); }
+            else if (m === 'pb') { ask('🧪 Start the paper bot?', 'The paper bot trades virtual money only, using live prices. You can press the STOP button any time.', 'Yes, start paper bot', '#007aff', function () { try { var F = S.fb; if (!F.on) { F.on = true; F.last = 0; F.lockUntil = 0; F.note = ''; fbScan(); fbSave(); } toast('🟢 Paper bot is running (virtual money)'); renderView(true); } catch (er) { go('paper'); } }); }
+            else if (m === 'rb') { ask('💵 Start the REAL-MONEY bot?', 'The Baba Bot will place <b>real orders</b> on your Binance account by itself, each with a stop-loss and take-profit. You can lose money. You can press STOP any time.', 'Yes, start real bot', '#ff3b30', function () { try { if (!rbKeys()) { toast('Add your Binance key first (Profile › Connections)'); go('rbot'); return; } if (window.__lkUnlock) { window.__lkUnlock(); } if (!S.rb.armed) { rbActivate(true); } rbStart(); toast(S.rb.running ? '🟢 Real bot is running' : (S.rb.note || 'Real bot could not start; open Baba Bot')); renderView(true); } catch (er) { go('rbot'); } }); }
             else if (c.el) { BYPASS = 1; try { c.el.click(); } catch (er) { } BYPASS = 0; } else { try { S.tp.sym = c.sym; S.tp.side = c.side; } catch (er) { } go('tpro'); setTimeout(function () { if (document.documentElement.getAttribute('data-win') !== 'tpro') { try { S.tp.sym = c.sym; S.tp.side = c.side; } catch (er) { } go('tpro'); } }, 700); setTimeout(function () { if (document.documentElement.getAttribute('data-win') !== 'tpro') { try { S.hist = []; S.win = 'tpro'; renderView(true); } catch (er) { } } }, 1500); }
             pop();
         }
@@ -19844,6 +19854,36 @@ try {
 })();
 /* keep Guided tour in the menu (its anchor button moved to More) */
 setInterval(function () { try { var m = document.getElementById('sheetMenu'), r = m && m.querySelector('[data-act="reload"]'); if (r && !m.querySelector('[data-act="coachtour"]')) r.insertAdjacentHTML('beforebegin', '<button class="btn sec" data-act="coachtour">🧭 Guided tour (arrows)</button>'); } catch (e) { } }, 600);
+
+/* ===== one-click trading: confirmation windows instead of typing ===== */
+(function () {
+    try {
+        window.__ask = function (title, body, yes, col, cb) {
+            try {
+                var o = document.getElementById('mwAsk'); if (o) { o.remove(); }
+                o = document.createElement('div'); o.id = 'mwAsk'; o.setAttribute('data-noswipe', '1');
+                o.style.cssText = 'position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:18px';
+                o.innerHTML = '<div style="background:var(--card,#fff);color:var(--tx,#111);border-radius:20px;padding:18px;max-width:380px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4)"><div style="font-weight:800;font-size:18px">' + title + '</div><div style="margin:10px 0 14px;font-size:15px;line-height:1.5">' + body + '</div><div style="display:flex;gap:10px"><button data-ak="no" style="flex:1;padding:14px;border:0;border-radius:14px;background:#e5e5ea;color:#111;font-weight:700;font-size:16px">Cancel</button><button data-ak="yes" style="flex:1.4;padding:14px;border:0;border-radius:14px;background:' + (col || '#34c759') + ';color:#fff;font-weight:800;font-size:16px">' + yes + '</button></div></div>';
+                o.addEventListener('click', function (ev) { var b = ev.target.closest ? ev.target.closest('[data-ak]') : null; if (!b && ev.target !== o) { return; } ev.stopPropagation(); ev.preventDefault(); var y = b && b.getAttribute('data-ak') === 'yes'; o.remove(); if (y) { try { cb(); } catch (e) { } } }, true);
+                document.body.appendChild(o);
+            } catch (e) { }
+        };
+        /* real bot: activate by confirmation, no ticking boxes or typing */
+        var _ra = rbActivate;
+        rbActivate = function (force) {
+            var R = S.rb;
+            if (force === true) { R.ack1 = true; R.ack2 = true; R.ph = 'ACTIVATE REAL BOT'; return _ra(); }
+            if (!rbKeys()) { R.note = 'Add your Binance API key and secret in the Trade window first.'; return rbDraw(); }
+            var live = trCfg().net === 'live';
+            window.__ask('💵 Activate the Baba Bot?', (live ? '<b style="color:#d70015">REAL MONEY.</b> ' : 'TEST mode. ') + 'I understand I can lose all the margin this bot uses, stops can slip in fast markets, and no profit is promised.', 'Yes, activate', live ? '#ff3b30' : '#34c759', function () { rbActivate(true); });
+        };
+        var _rc2 = rbCard;
+        rbCard = function () {
+            var h = _rc2.apply(this, arguments);
+            return String(h).replace(/<div class="m8row"><span[^>]*data-m8="rb:ack[12]"[\s\S]*?<\/span><\/div>/g, '').replace(/<input class="m7inp" data-m7in="rbph"[^>]*>/g, '');
+        };
+    } catch (e) { try { console.log('px1', e); } catch (er) { } }
+})();
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
