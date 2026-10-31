@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.161';
+var BUILD = '2026-10-31.165';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -13376,7 +13376,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var LK = 'mintoosuite_look', MK = 'mintoosuite_mode';
         function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
         function sv(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
-        var BEGIN = { overview: 1, ideas: 1, market: 1, chart: 1, analyst: 1, academy: 1, videos: 1, prof: 1, pchat: 1, botpro: 1, botdoc: 1, risk: 1, hist: 1, me: 1, plans: 1, help: 1, helpc: 1, support: 1, legal: 1, news: 1, badges: 1, look: 1, movers: 1, aboutapp: 1, account: 1, wallet: 1, pbrain: 1 };
+        var BEGIN = { overview: 1, ideas: 1, market: 1, chart: 1, analyst: 1, academy: 1, videos: 1, prof: 1, pchat: 1, botpro: 1, botdoc: 1, risk: 1, hist: 1, me: 1, plans: 1, help: 1, helpc: 1, support: 1, legal: 1, news: 1, badges: 1, look: 1, movers: 1, aboutapp: 1, account: 1, wallet: 1, pbrain: 1, ptrade: 1, tmode: 1, bpx: 1, radar: 1, quest: 1, words: 1, dict: 1 };
         // ---------- Neon CSS (colours and shapes only: no layout changes, so nothing can jump) ----------
         var st = document.createElement('style'); st.id = 'mwneoncss'; st.setAttribute('data-mwkeep', '1');
         st.textContent =
@@ -18825,55 +18825,257 @@ try {
         }, true);
     } catch (e) { try { console.log('nav', e); } catch (er) { } }
 })();
-/* ===== p9tw: "How do you want to trade?" sheet. Tapping Long / Short / Trade this first offers: real money, real auto bot, paper auto bot, paper money by hand. ===== */
+/* ===== p9pt: Paper Trading (looks and works like a real order ticket, virtual money). Separate from Money Quest. ===== */
 (function () {
     try {
-        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
-        st.textContent = '#twback{position:fixed;left:0;right:0;top:0;bottom:0;z-index:9300;background:rgba(0,0,0,.45);display:flex;align-items:flex-end}#twsh{width:100%;max-height:86vh;overflow:auto;border-radius:22px 22px 0 0;padding:14px 14px calc(16px + env(safe-area-inset-bottom));background:var(--card,rgba(255,255,255,.92));color:var(--tx,#111);-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border-top:1px solid var(--line,rgba(128,128,128,.3));box-shadow:0 -8px 30px rgba(0,0,0,.3)}#twsh h3{margin:0 0 2px;font-size:17px}#twsh .tws{font-size:12.5px;opacity:.7;margin:0 0 10px}#twsh .two{display:flex;gap:12px;align-items:center;padding:12px;border-radius:16px;margin:8px 0;background:rgba(128,128,128,.12);border:1px solid rgba(128,128,128,.22);cursor:pointer}#twsh .two .ic{font-size:26px;flex:none}#twsh .two b{display:block;font-size:15px}#twsh .two small{display:block;font-size:12px;opacity:.7;line-height:1.35}#twsh .two.real{border-color:rgba(229,56,59,.55)}#twsh .two.paper{border-color:rgba(52,199,89,.55)}#twsh .twx{text-align:center;padding:10px;opacity:.7;cursor:pointer}';
-        document.head.appendChild(st);
-        var CTX = null, BYPASS = 0;
+        var KEY = 'mintoosuite_ptrade', FEE = 0.0004, A = null;
+        function fresh() { return { bal: 10000, start: 10000, pos: [], ord: [], hist: [], nid: 1 }; }
+        try { A = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { A = null; } if (!A || !A.pos) { A = fresh(); }
+        function save() { try { localStorage.setItem(KEY, JSON.stringify(A)); } catch (e) { } }
+        var FS = { sym: 'BTCUSDT', side: 'LONG', type: 'MARKET', lev: 5, pct: 10, lp: '', sl: '', tp: '', tab: 'pos', confirm: 0, msg: '' };
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function nm(s) { s = String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); return s && !/USDT$/.test(s) ? s + 'USDT' : s; }
         function bs(s) { return String(s || '').replace(/USDT$/, ''); }
-        function close() { var d = document.getElementById('twback'); if (d) { d.remove(); } CTX = null; }
-        function snap(v, a) { var b = a[0]; a.forEach(function (x) { if (Math.abs(x - v) < Math.abs(b - v)) { b = x; } }); return b; }
-        function open(c) {
-            CTX = c; close(); CTX = c;
-            var side = c.side === 'SHORT' ? 'SHORT (price down)' : 'LONG (price up)', d = document.createElement('div'); d.id = 'twback'; d.setAttribute('data-noswipe', '1');
-            d.innerHTML = '<div id="twsh"><h3>How do you want to trade ' + bs(c.sym) + '?</h3><div class="tws">' + side + '. Pick one. Paper money is pretend money, so nothing real is risked.</div>' +
-                '<div class="two paper" data-tw="pm"><span class="ic">🎮</span><span><b>Paper money, by hand</b><small>Practice with pretend money. Easiest. Safe for children too.</small></span></div>' +
-                '<div class="two paper" data-tw="pb"><span class="ic">🧪</span><span><b>Paper money, auto bot</b><small>A bot trades pretend money for you, so you can watch how it does.</small></span></div>' +
-                '<div class="two real" data-tw="rm"><span class="ic">💵</span><span><b>Real money, by hand</b><small>You place the order yourself on your exchange account.</small></span></div>' +
-                '<div class="two real" data-tw="rb"><span class="ic">🤖</span><span><b>Real money, auto bot</b><small>Baba Bot trades for you with your own keys. It is switched off until you activate it.</small></span></div>' +
-                '<div class="twx" data-tw="x">Cancel</div></div>';
-            document.body.appendChild(d);
+        function price(sym) { try { return +(window.__tplan && __tplan.priceOf(sym)) || 0; } catch (e) { return 0; } }
+        function fp(v, sym) { try { return fmtP(+v, sym); } catch (e) { return (+v).toPrecision(6); } }
+        function m2(v) { return (v < 0 ? '-' : '') + '$' + Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+        function used() { return A.pos.reduce(function (a, p) { return a + p.margin; }, 0) + A.ord.reduce(function (a, o) { return a + o.margin; }, 0); }
+        function upnl(p, px) { px = px || price(p.sym) || p.entry; return (p.side === 'LONG' ? px - p.entry : p.entry - px) * p.qty; }
+        function equity() { return A.bal + A.pos.reduce(function (a, p) { return a + upnl(p); }, 0); }
+        function avail() { return Math.max(0, A.bal - used()); }
+        function liq(side, entry, lev) { return side === 'LONG' ? entry * (1 - 1 / lev + 0.005) : entry * (1 + 1 / lev - 0.005); }
+        function openPos(o, px) {
+            var q = o.notional / px, p = { id: A.nid++, sym: o.sym, side: o.side, lev: o.lev, entry: px, qty: q, margin: o.margin, sl: o.sl, tp: o.tp, liq: liq(o.side, px, o.lev), at: Date.now() };
+            A.bal -= o.notional * FEE; A.pos.push(p); save(); return p;
         }
+        function closePos(i, px, why) {
+            var p = A.pos[i]; if (!p) { return; } var pl = upnl(p, px) - p.qty * px * FEE; if (why === 'LIQ') { pl = -p.margin; }
+            A.bal += pl; A.pos.splice(i, 1); A.hist.unshift({ sym: p.sym, side: p.side, lev: p.lev, entry: p.entry, exit: px, pl: pl, why: why, at: Date.now(), t0: p.at }); A.hist = A.hist.slice(0, 60); save();
+        }
+        function check() {
+            var ch = 0, i;
+            for (i = A.pos.length - 1; i >= 0; i--) {
+                var p = A.pos[i], px = price(p.sym); if (!(px > 0)) { continue; } var L = p.side === 'LONG';
+                if (L ? px <= p.liq : px >= p.liq) { closePos(i, p.liq, 'LIQ'); ch = 1; }
+                else if (p.sl > 0 && (L ? px <= p.sl : px >= p.sl)) { closePos(i, p.sl, 'Stop-loss'); ch = 1; }
+                else if (p.tp > 0 && (L ? px >= p.tp : px <= p.tp)) { closePos(i, p.tp, 'Take-profit'); ch = 1; }
+            }
+            for (i = A.ord.length - 1; i >= 0; i--) {
+                var o = A.ord[i], q = price(o.sym); if (!(q > 0)) { continue; }
+                if (o.side === 'LONG' ? q <= o.lp : q >= o.lp) { A.ord.splice(i, 1); openPos(o, o.lp); ch = 1; }
+            }
+            return ch;
+        }
+        function place() {
+            var sym = nm(FS.sym), px = price(sym); FS.msg = '';
+            if (!sym || !(px > 0)) { FS.msg = 'No live price for ' + esc(bs(sym)) + ' yet. Check the coin name.'; return; }
+            var margin = Math.floor(avail() * FS.pct) / 100; if (margin < 1) { FS.msg = 'Not enough free paper money.'; return; }
+            var sl = +FS.sl || 0, tp = +FS.tp || 0, L = FS.side === 'LONG', lp = +FS.lp || 0, ent = FS.type === 'LIMIT' ? lp : px;
+            if (FS.type === 'LIMIT' && !(lp > 0)) { FS.msg = 'Type a limit price.'; return; }
+            if (sl > 0 && (L ? sl >= ent : sl <= ent)) { FS.msg = 'Stop-loss must be ' + (L ? 'below' : 'above') + ' the entry price.'; return; }
+            if (tp > 0 && (L ? tp <= ent : tp >= ent)) { FS.msg = 'Take-profit must be ' + (L ? 'above' : 'below') + ' the entry price.'; return; }
+            var o = { sym: sym, side: FS.side, lev: FS.lev, margin: margin, notional: margin * FS.lev, sl: sl, tp: tp, lp: lp };
+            if (FS.type === 'LIMIT') { A.ord.push(o); save(); FS.msg = '✅ Limit order placed.'; FS.tab = 'ord'; } else { var p = openPos(o, px); FS.msg = '✅ Paper ' + FS.side + ' opened at ' + fp(px, sym) + '.'; FS.tab = 'pos'; }
+        }
+        function ticket() {
+            var sym = nm(FS.sym), px = price(sym), L = FS.side === 'LONG', margin = Math.floor(avail() * FS.pct) / 100, nt = margin * FS.lev;
+            var sl = +FS.sl || 0, risk = sl > 0 && px > 0 ? nt * Math.abs(px - sl) / px : 0;
+            var chips = function (k, arr, cur, fmt) { return '<div style="display:flex;gap:6px;margin:6px 0">' + arr.map(function (v) { return '<span class="ptc' + (+cur === v ? ' on' : '') + '" data-pt="' + k + ':' + v + '">' + fmt(v) + '</span>'; }).join('') + '</div>'; };
+            return '<div class="ptt"><div style="display:flex;gap:8px;align-items:center"><input class="tin" id="ptsym" data-ptin="sym" value="' + esc(bs(sym)) + '" style="flex:1;font-weight:800;font-size:16px;text-transform:uppercase"><div id="ptpx" style="font-weight:800;font-size:17px">' + (px > 0 ? fp(px, sym) : '…') + '</div></div>' +
+                '<div class="ptsd"><span class="' + (L ? 'on g' : '') + '" data-pt="side:LONG">▲ Buy / Long</span><span class="' + (!L ? 'on r' : '') + '" data-pt="side:SHORT">▼ Sell / Short</span></div>' +
+                '<div class="ptsd"><span class="' + (FS.type === 'MARKET' ? 'on' : '') + '" data-pt="type:MARKET">Market</span><span class="' + (FS.type === 'LIMIT' ? 'on' : '') + '" data-pt="type:LIMIT">Limit</span></div>' +
+                (FS.type === 'LIMIT' ? '<input class="tin" data-ptin="lp" inputmode="decimal" placeholder="Limit price" value="' + esc(FS.lp) + '" style="width:100%;box-sizing:border-box">' : '') +
+                '<div class="note" style="margin:8px 0 0">Size: part of your free paper money (' + m2(avail()) + ')</div>' + chips('pct', [10, 25, 50, 100], FS.pct, function (v) { return v + '%'; }) +
+                '<div class="note" style="margin:0">Leverage (borrowed power: wins and losses both grow) <span data-act="win:words" style="cursor:pointer;font-weight:800;color:#0a84ff">?</span></div>' + chips('lev', [1, 2, 3, 5, 10, 20], FS.lev, function (v) { return v + '×'; }) +
+                '<div style="display:flex;gap:8px"><input class="tin" data-ptin="sl" inputmode="decimal" placeholder="Stop-loss price" value="' + esc(FS.sl) + '" style="flex:1;min-width:0"><input class="tin" data-ptin="tp" inputmode="decimal" placeholder="Take-profit price" value="' + esc(FS.tp) + '" style="flex:1;min-width:0"></div>' +
+                '<div class="ptsm" id="ptsm">' + sumLine(px, margin, nt, risk) + '</div>' +
+                (FS.msg ? '<div class="note" style="margin:6px 0 0">' + FS.msg + '</div>' : '') +
+                '<div class="ptgo ' + (L ? 'g' : 'r') + '" data-pt="go:1">' + (L ? 'Buy / Long ' : 'Sell / Short ') + esc(bs(sym)) + '</div></div>';
+        }
+        function sumLine(px, margin, nt, risk) { return 'Margin ' + m2(margin) + ' · Position ' + m2(nt) + (risk > 0 ? ' · <b>You risk about ' + m2(risk) + '</b>' : ' · <span style="color:#d97706">No stop-loss set</span>') + (px > 0 && margin > 0 ? ' · Liquidation ≈ ' + fp(liq(FS.side, px, FS.lev), nm(FS.sym)) : ''); }
+        function list() {
+            var h = '';
+            if (FS.tab === 'pos') {
+                if (!A.pos.length) { return '<div class="note" style="padding:10px">No open positions. Use the ticket above to open one.</div>'; }
+                A.pos.forEach(function (p, i) { var px = price(p.sym) || p.entry, u = upnl(p, px), pc = u / p.margin * 100; h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + esc(bs(p.sym)) + ' <span style="color:' + (p.side === 'LONG' ? '#16a34a' : '#dc2626') + '">' + (p.side === 'LONG' ? 'Long' : 'Short') + ' ' + p.lev + '×</span></b><b style="color:' + (u >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(u) + ' (' + (pc >= 0 ? '+' : '') + pc.toFixed(1) + '%)</b></div><div class="note" style="margin:3px 0 0">Entry ' + fp(p.entry, p.sym) + ' · Now ' + fp(px, p.sym) + ' · Margin ' + m2(p.margin) + (p.sl ? ' · SL ' + fp(p.sl, p.sym) : '') + (p.tp ? ' · TP ' + fp(p.tp, p.sym) : '') + ' · Liq ' + fp(p.liq, p.sym) + '</div><div style="display:flex;gap:6px;margin-top:6px"><span class="ptc" data-pt="close:' + i + '">Close all</span><span class="ptc" data-pt="half:' + i + '">Close half</span>' + (p.sl !== p.entry ? '<span class="ptc" data-pt="be:' + i + '">Stop to break-even</span>' : '') + '</div></div>'; });
+            } else if (FS.tab === 'ord') {
+                if (!A.ord.length) { return '<div class="note" style="padding:10px">No waiting orders.</div>'; }
+                A.ord.forEach(function (o, i) { h += '<div class="ptp"><b>' + esc(bs(o.sym)) + ' ' + o.side + ' limit ' + fp(o.lp, o.sym) + '</b><div class="note" style="margin:3px 0 0">Margin ' + m2(o.margin) + ' · ' + o.lev + '×</div><div style="margin-top:6px"><span class="ptc" data-pt="cancel:' + i + '">Cancel</span></div></div>'; });
+            } else {
+                if (!A.hist.length) { return '<div class="note" style="padding:10px">No closed trades yet.</div>'; }
+                A.hist.slice(0, 30).forEach(function (x) { h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + esc(bs(x.sym)) + ' ' + x.side + ' ' + x.lev + '×</b><b style="color:' + (x.pl >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(x.pl) + '</b></div><div class="note" style="margin:2px 0 0">' + fp(x.entry, x.sym) + ' → ' + fp(x.exit, x.sym) + ' · ' + esc(x.why) + '</div></div>'; });
+            }
+            return h;
+        }
+        function head() {
+            var e = equity(), pl = e - A.start;
+            return '<div class="ptb">🟢 PAPER TRADING · virtual money, nothing real is risked</div><div class="group pad" id="pthd"><div style="display:flex;justify-content:space-between"><div><div class="note" style="margin:0">Equity</div><b style="font-size:20px">' + m2(e) + '</b></div><div style="text-align:right"><div class="note" style="margin:0">Total profit / loss</div><b style="font-size:16px;color:' + (pl >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(pl) + '</b></div></div><div class="note" style="margin:4px 0 0">Free: ' + m2(avail()) + ' · Positions: ' + A.pos.length + '</div></div>';
+        }
+        function vP() {
+            var tabs = [['pos', 'Positions (' + A.pos.length + ')'], ['ord', 'Orders (' + A.ord.length + ')'], ['hist', 'History']];
+            return head() + '<div class="group pad">' + ticket() + '</div><div class="ptsd" style="margin:8px 0 0">' + tabs.map(function (t) { return '<span class="' + (FS.tab === t[0] ? 'on' : '') + '" data-pt="tab:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div><div id="ptlist">' + list() + '</div>' +
+                '<div class="note" style="text-align:center;margin:10px 0"><span data-pt="reset:1" style="cursor:pointer;text-decoration:underline">' + (FS.confirm ? 'Tap again to reset to $10,000' : 'Reset paper account') + '</span></div><div class="note">Paper prices come from the live market. Fees 0.04% per side are charged like a real exchange. Real results will differ (slippage, spreads). Not financial advice.</div>';
+        }
+        try {
+            WINS.push({ id: 'ptrade', ic: '🧾', c: '#16a34a', n: 'Paper Trading', t: 'Paper Trading', sub: 'Real-looking order ticket with virtual money' }); LIVE.ptrade = 0; VIEWS.ptrade = vP;
+            var g = MW_GROUPS[0][1]; if (g.indexOf('ptrade') < 0) { var k = g.indexOf('quest'); g.splice(k < 0 ? g.length : k, 0, 'ptrade'); }
+        } catch (e) { }
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '.ptb{background:#16a34a;color:#fff;font-weight:800;font-size:12.5px;text-align:center;padding:7px;border-radius:12px;margin:0 0 8px}.ptsd{display:flex;gap:6px;margin:8px 0}.ptsd span{flex:1;text-align:center;padding:10px 4px;border-radius:12px;font-weight:700;font-size:13px;background:rgba(128,128,128,.14);cursor:pointer}.ptsd span.on{background:#0a84ff;color:#fff}.ptsd span.on.g{background:#16a34a}.ptsd span.on.r{background:#dc2626}.ptc{display:inline-block;padding:8px 12px;border-radius:12px;font-size:12.5px;font-weight:700;background:rgba(128,128,128,.16);cursor:pointer;flex:1;text-align:center}.ptc.on{background:#0a84ff;color:#fff}.ptsm{font-size:12px;opacity:.85;margin:8px 0;line-height:1.5}.ptgo{text-align:center;color:#fff;font-weight:800;font-size:16px;padding:14px;border-radius:14px;cursor:pointer;margin-top:8px}.ptgo.g{background:#16a34a}.ptgo.r{background:#dc2626}.ptp{padding:10px 12px;margin:6px 0;border-radius:14px;background:rgba(128,128,128,.1);border:1px solid rgba(128,128,128,.2)}';
+        document.head.appendChild(st);
+        function again() { try { renderView(true); } catch (e) { } }
+        document.addEventListener('click', function (e) {
+            var t = e.target.closest ? e.target.closest('[data-pt]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation();
+            var v = t.getAttribute('data-pt'), i = v.indexOf(':'), k = v.slice(0, i), a = v.slice(i + 1); FS.msg = ''; if (k !== 'reset') { FS.confirm = 0; }
+            if (k === 'side' || k === 'type' || k === 'tab') { FS[k] = a; if (k === 'side') { FS.sl = ''; FS.tp = ''; } }
+            else if (k === 'pct' || k === 'lev') { FS[k] = +a; }
+            else if (k === 'go') { place(); }
+            else if (k === 'close') { closePos(+a, price(A.pos[+a].sym) || A.pos[+a].entry, 'Closed by you'); }
+            else if (k === 'half') { var p = A.pos[+a]; if (p) { var px = price(p.sym) || p.entry, h = p.qty / 2, pl = upnl({ side: p.side, entry: p.entry, qty: h }, px) - h * px * FEE; A.bal += pl; p.qty = h; p.margin = p.margin / 2; A.hist.unshift({ sym: p.sym, side: p.side, lev: p.lev, entry: p.entry, exit: px, pl: pl, why: 'Closed half', at: Date.now() }); save(); } }
+            else if (k === 'be') { var q = A.pos[+a]; if (q) { q.sl = q.entry; save(); } }
+            else if (k === 'cancel') { A.ord.splice(+a, 1); save(); }
+            else if (k === 'reset') { if (FS.confirm) { A = fresh(); save(); FS.confirm = 0; FS.msg = 'New paper account: $10,000.'; } else { FS.confirm = 1; } }
+            again();
+        }, true);
+        document.addEventListener('input', function (e) { var t = e.target; if (!t || !t.getAttribute) { return; } var k = t.getAttribute('data-ptin'); if (!k) { return; } FS[k] = t.value; if (k === 'sym') { var px = price(nm(t.value)), el = document.getElementById('ptpx'); if (el) { el.textContent = px > 0 ? fp(px, nm(t.value)) : '…'; } } }, true);
+        setInterval(function () {
+            try {
+                var ch = check(); if (document.documentElement.getAttribute('data-win') !== 'ptrade') { return; }
+                var sym = nm(FS.sym), px = price(sym), el = document.getElementById('ptpx'); if (el && px > 0) { el.textContent = fp(px, sym); }
+                var hd = document.getElementById('pthd'); if (hd) { hd.outerHTML = head().replace(/^.*?(<div class="group pad" id="pthd")/, '$1'); }
+                var l = document.getElementById('ptlist'); if (l) { l.innerHTML = list(); }
+                var sm = document.getElementById('ptsm'); if (sm) { var margin = Math.floor(avail() * FS.pct) / 100, nt = margin * FS.lev, sl = +FS.sl || 0; sm.innerHTML = sumLine(px, margin, nt, sl > 0 && px > 0 ? nt * Math.abs(px - sl) / px : 0); }
+            } catch (e) { }
+        }, 1000);
+        window.__ptrade = { open: function (c) { try { if (c.sym) { FS.sym = nm(c.sym); } FS.side = c.side === 'SHORT' ? 'SHORT' : 'LONG'; FS.type = 'MARKET'; FS.sl = ''; FS.tp = ''; FS.msg = ''; FS.tab = 'pos'; if (c.sl > 0) { FS.sl = String(+(+c.sl).toPrecision(6)); } if (c.tp > 0) { FS.tp = String(+(+c.tp).toPrecision(6)); } } catch (e) { } gotoWin('ptrade'); }, A: function () { return A; }, check: check };
+    } catch (e) { try { console.log('pt', e); } catch (er) { } }
+})();
+/* ===== p9tw: persistent Trading mode (More > Trading options). Long/Short/Trade-this go straight to the chosen mode, a pop-up names it until closed, a small badge stays on trading screens. ===== */
+(function () {
+    try {
+        var MK = 'mintoosuite_tmode', MODES = {
+            pm: { ic: '🧾', n: 'Paper money, by hand', d: 'A real-looking order ticket with virtual money. Easiest, safe for children.', real: 0, win: 'ptrade' },
+            pb: { ic: '🧪', n: 'Paper money, auto bot', d: 'A bot trades pretend money for you.', real: 0, win: 'paper' },
+            rm: { ic: '💵', n: 'Real money, by hand', d: 'You place the order yourself on your exchange.', real: 1, win: 'tpro' },
+            rb: { ic: '🤖', n: 'Real money, auto bot', d: 'Baba Bot trades with your own keys (switched off until you activate it).', real: 1, win: 'rbot' }
+        }, ARM = '';
+        function mode() { var m = ''; try { m = localStorage.getItem(MK) || ''; } catch (e) { } return MODES[m] ? m : 'rm'; }
+        function setMode(m) { try { localStorage.setItem(MK, m); } catch (e) { } }
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '#twpop{position:fixed;left:10px;right:10px;top:76px;z-index:9300;border-radius:16px;padding:12px 14px;color:#fff;box-shadow:0 8px 26px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}#twpop.p{background:rgba(22,163,74,.92)}#twpop.r{background:rgba(220,38,38,.93)}#twpop .tb{flex:1;font-size:13.5px;line-height:1.35}#twpop .tb b{display:block;font-size:15px}#twpop .tc{font-size:20px;padding:4px 8px;cursor:pointer}#twpop .tch{font-size:12px;font-weight:800;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.22);cursor:pointer}#twbadge{position:fixed;right:8px;top:106px;z-index:7000;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:10px;color:#fff;pointer-events:none;display:none;opacity:.92}#twbadge.p{background:#16a34a}#twbadge.r{background:#dc2626}.twc{display:flex;gap:12px;align-items:center;padding:12px;border-radius:16px;margin:8px 0;background:rgba(128,128,128,.12);border:2px solid rgba(128,128,128,.22);cursor:pointer}.twc.on{border-color:#0a84ff;background:rgba(10,132,255,.14)}.twc .ic{font-size:26px;flex:none}.twc b{display:block;font-size:15px}.twc small{display:block;font-size:12px;opacity:.75;line-height:1.35}.twc.r.on{border-color:#dc2626;background:rgba(220,38,38,.12)}.twc.p.on{border-color:#16a34a;background:rgba(22,163,74,.13)}';
+        document.head.appendChild(st);
+        function bs(s) { return String(s || '').replace(/USDT$/, ''); }
+        function label(m) { return (MODES[m].real ? 'REAL MONEY' : 'PAPER') + ' · ' + MODES[m].n; }
+        function vT() {
+            var cur = mode(), h = '<div class="group pad"><b style="font-size:17px">⚙ Trading options</b><div class="note" style="margin:4px 0 0">Choose once. Then every Long, Short and Trade button in the app goes straight to this mode, and stays until you change it here.</div></div>';
+            Object.keys(MODES).forEach(function (k) {
+                var M = MODES[k], on = k === cur, ask = ARM === k;
+                h += '<div class="twc ' + (M.real ? 'r' : 'p') + (on ? ' on' : '') + '" data-tm="' + k + '"><span class="ic">' + M.ic + '</span><span><b>' + M.n + (on ? ' ✔' : '') + '</b><small>' + (ask ? '⚠ Real money can be lost. Tap again to confirm.' : M.d) + '</small></span></div>';
+            });
+            return h + '<div class="note">Paper = pretend money, nothing real is risked. Real = your own exchange account. Not financial advice.</div>';
+        }
+        try {
+            WINS.push({ id: 'tmode', ic: '⚙', c: '#0a84ff', n: 'Trading options', t: 'Trading options', sub: 'Pick paper or real, by hand or auto bot, once' }); LIVE.tmode = 0; VIEWS.tmode = vT;
+            var g = MW_GROUPS[0][1]; if (g.indexOf('tmode') < 0) { var k = g.indexOf('quest'); g.splice(k < 0 ? g.length : k + 1, 0, 'tmode'); }
+        } catch (e) { }
+        function closePop() { var d = document.getElementById('twpop'); if (d) { d.remove(); } badge(); }
+        function pop() {
+            var m = mode(), M = MODES[m], d = document.getElementById('twpop'); if (d) { d.remove(); }
+            d = document.createElement('div'); d.id = 'twpop'; d.className = M.real ? 'r' : 'p'; d.setAttribute('data-noswipe', '1');
+            d.innerHTML = '<span style="font-size:26px">' + M.ic + '</span><div class="tb"><b>' + (M.real ? 'REAL MONEY' : 'PAPER (pretend money)') + '</b>' + M.n + '. Change it in More › Trading options.</div><span class="tch" data-tw="chg">Change</span><span class="tc" data-tw="x" aria-label="Close">✕</span>';
+            document.body.appendChild(d); badge();
+        }
+        var BW = { tpro: 1, ptrade: 1, quest: 1, paper: 1, rbot: 1, xtrade: 1, bots: 1, hub: 1 };
+        function badge() {
+            var b = document.getElementById('twbadge'); if (!b) { b = document.createElement('div'); b.id = 'twbadge'; document.body.appendChild(b); }
+            var w = document.documentElement.getAttribute('data-win'), m = mode(), M = MODES[m];
+            if (BW[w] && !document.getElementById('twpop')) { b.className = M.real ? 'r' : 'p'; b.textContent = (M.real ? 'REAL · ' : 'PAPER · ') + M.n; b.style.display = 'block'; } else { b.style.display = 'none'; }
+        }
+        setInterval(badge, 700);
         function go(id) { try { gotoWin(id); } catch (e) { } }
-        window.addEventListener("click", function (e) {
+        var BYPASS = 0;
+        function run(c) {
+            var m = mode(), M = MODES[m];
+            if (m === 'pm') { try { window.__ptrade.open({ sym: c.sym, side: c.side, sl: c.sl, tp: c.tp }); } catch (er) { go('quest'); } }
+            else if (m === 'pb') { go('paper'); }
+            else if (m === 'rb') { go('rbot'); }
+            else if (c.el) { BYPASS = 1; try { c.el.click(); } catch (er) { } BYPASS = 0; } else { try { S.tp.sym = c.sym; S.tp.side = c.side; } catch (er) { } go('tpro'); }
+            pop();
+        }
+        window.addEventListener('click', function (e) {
             var t = e.target && e.target.closest ? e.target : null; if (!t) { return; }
             var o = t.closest('[data-tw]');
-            if (o) {
-                e.preventDefault(); e.stopPropagation(); var k = o.getAttribute('data-tw'), c = CTX; close(); if (!c || k === 'x') { return; }
-                if (k === 'pm') {
-                    try { var F = window.__qDbg && window.__qDbg.F; if (F) { F.sym = c.sym; F.side = c.side; if (c.slp > 0) { F.sl = snap(c.slp, [0.5, 1, 2, 3]); F.rr = snap(c.rr || 2, [1, 2, 3]); } } } catch (er) { }
-                    go('quest'); try { window.__huPush && window.__huPush('Paper trade ready: ' + bs(c.sym) + ' ' + c.side + '. Tap "Open trade".'); } catch (er) { }
-                } else if (k === 'pb') { go('paper'); }
-                else if (k === 'rb') { go('rbot'); }
-                else if (k === 'rm') {
-                    if (c.el) { BYPASS = 1; try { c.el.click(); } catch (er) { } BYPASS = 0; } else { try { S.tp.sym = c.sym; S.tp.side = c.side; } catch (er) { } go('tpro'); }
-                }
-                return;
+            if (o) { e.preventDefault(); e.stopPropagation(); var k = o.getAttribute('data-tw'); if (k === 'x') { closePop(); } else if (k === 'chg') { closePop(); go('tmode'); } return; }
+            var tm = t.closest('[data-tm]');
+            if (tm) {
+                e.preventDefault(); e.stopPropagation(); var m2 = tm.getAttribute('data-tm'); if (!MODES[m2]) { return; }
+                if (MODES[m2].real && m2 !== mode() && ARM !== m2) { ARM = m2; } else { ARM = ''; setMode(m2); if (document.getElementById('twpop')) { pop(); } }
+                try { renderView(true); } catch (er) { } return;
             }
-            if (t.id === 'twback') { close(); return; }
             if (BYPASS) { return; }
             var a = t.closest('[data-xk^="cpTrade:"]'), p = t.closest('[data-plan]');
-            if (a) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); var sd = a.getAttribute('data-xk').split(':')[1]; open({ sym: (S.chart && S.chart.sym) || '', side: sd === 'SHORT' ? 'SHORT' : 'LONG' }); }
+            if (a) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); var sd = a.getAttribute('data-xk').split(':')[1]; run({ sym: (S.chart && S.chart.sym) || '', side: sd === 'SHORT' ? 'SHORT' : 'LONG' }); }
             else if (p) {
                 var f = String(p.getAttribute('data-plan') || '').split('|'); if (f.length < 7) { return; }
                 e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-                var en = +f[3], sl = +f[4], tp = +f[5], slp = en > 0 ? Math.abs(en - sl) / en * 100 : 0, rr = Math.abs(en - sl) > 0 ? Math.abs(tp - en) / Math.abs(en - sl) : 2;
-                open({ sym: f[1], side: f[2] === 'SHORT' ? 'SHORT' : 'LONG', slp: slp, rr: rr, el: p });
+                var en = +f[3], sl = +f[4], tp = +f[5];
+                run({ sym: f[1], side: f[2] === 'SHORT' ? 'SHORT' : 'LONG', sl: sl, tp: tp, slp: en > 0 ? Math.abs(en - sl) / en * 100 : 0, rr: Math.abs(en - sl) > 0 ? Math.abs(tp - en) / Math.abs(en - sl) : 2, el: p });
             }
         }, true);
     } catch (e) { try { console.log('tw', e); } catch (er) { } }
+})();
+/* ===== p9sp: plain names for confusing windows + a "What do you want to do now?" card on Home ===== */
+(function () {
+    try {
+        var REN = { radar: ['New coin alerts', 'Newly listed coins and fast pumps on MEXC and Binance'], proof: ['My results', 'Your own past results, checked honestly'], botdoc: ['Fix my bot', 'Finds why a bot is not trading'], errlog: ['Errors', 'Things that went wrong, in plain words'], around: ['Popular near you', 'Local markets and offers'], glance: ['Today at a glance', 'The few numbers that matter today'], hu: ['Alerts on screen', 'Small pop-up alerts inside the app'] };
+        Object.keys(REN).forEach(function (id) { try { var w = winDef(id); if (w) { w.n = REN[id][0]; w.t = REN[id][0]; if (REN[id][1]) { w.sub = REN[id][1]; } } } catch (e) { } });
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '#mwnow{margin:0 0 8px}#mwnow .nb{display:flex;gap:8px;margin-top:8px}#mwnow .nb span{flex:1;text-align:center;padding:11px 6px;border-radius:14px;font-weight:700;font-size:13px;background:rgba(128,128,128,.14);border:1px solid rgba(128,128,128,.25);cursor:pointer}#mwnow .nb span small{display:block;font-weight:500;font-size:10.5px;opacity:.7}';
+        document.head.appendChild(st);
+        function card() {
+            return '<div class="group pad" id="mwnow"><b>👋 What do you want to do now?</b><div class="nb">' +
+                '<span data-act="win:ptrade">🧾 Practice<small>pretend money</small></span>' +
+                '<span data-act="win:bpx">⭐ See top picks<small>watch the market</small></span>' +
+                '<span data-act="win:tmode">💵 Trade for real<small>choose how</small></span></div><div class="note" style="margin:8px 0 0"><span data-act="win:words" style="cursor:pointer;text-decoration:underline">📘 Confused by a word? Open Simple words</span></div></div>';
+        }
+
+        /* ---------- Simple words: every trading word in 3 layers (one line, example, detail) ---------- */
+        var G = [
+            ['Leverage', 'Borrowed power. It makes wins and losses bigger.', 'With 10× leverage, a 1% price move changes your money by 10%. $100 can control $1,000. A 10% move against you can wipe out the $100.', 'Roman Urdu: udhaar ki taqat. Nafa bhi 10 guna, nuksan bhi 10 guna.'],
+            ['Margin', 'The money locked as a deposit for one trade.', 'If you use $100 margin at 5×, the trade size is $500. You get the margin back when the trade closes, plus or minus profit or loss.', 'Roman Urdu: trade ke liye rakhi hui zamanat ki raqam.'],
+            ['Stop-loss', 'An automatic exit that limits how much you can lose.', 'You buy at 100 and set stop-loss at 95. If price falls to 95 the trade closes, so the loss is about 5%.', 'Roman Urdu: nuksan rokne ka khud-kar band. Hamesha lagayen.'],
+            ['Take-profit', 'An automatic exit that locks in a gain.', 'You buy at 100 and set take-profit at 110. When price reaches 110 the trade closes with about 10% profit.', 'Roman Urdu: munafa pakarne ka khud-kar band.'],
+            ['Long / Buy', 'You win if the price goes UP.', 'Buy at 100, price goes to 110: you gain. Price goes to 90: you lose.', 'Roman Urdu: qeemat barhe to nafa.'],
+            ['Short / Sell', 'You win if the price goes DOWN.', 'Sell at 100, price drops to 90: you gain. Price rises to 110: you lose. Spot markets cannot short.', 'Roman Urdu: qeemat gire to nafa.'],
+            ['Liquidation', 'The exchange closes your trade because the margin is used up.', 'At 10× leverage a move of about 10% against you can liquidate you and you lose the whole margin. Use a stop-loss before that.', 'Roman Urdu: poori zamanat khatam, trade zabardasti band.'],
+            ['Funding fee', 'A small fee paid or received every 8 hours for holding a futures trade.', 'If funding is +0.01%, longs pay shorts that amount each 8 hours. It is small, but it adds up on long holds.', 'Roman Urdu: futures trade rakhne ki chhoti fees.'],
+            ['ATR', 'How much the price usually moves. Bigger means wilder.', 'If ATR is 2% a day, a stop-loss 0.5% away will probably be hit by normal noise. Stops are often 1 to 2 times ATR away.', 'Roman Urdu: qeemat aam tor par kitni hilti hai.'],
+            ['Spread and slippage', 'The small extra cost of buying and selling.', 'Spread is the gap between buy and sell price. Slippage is when your order fills at a slightly worse price in a fast market.', 'Roman Urdu: kharidne aur bechne ki qeemat ka farq.'],
+            ['Spot and Futures', 'Spot: you own the coin. Futures: you bet on price with leverage.', 'Spot can only profit when price rises and cannot be liquidated. Futures can go long or short with leverage and can be liquidated.', 'Roman Urdu: spot mein coin ke malik, futures mein sirf qeemat par daao.'],
+            ['Paper trading', 'Practice with pretend money. Nothing real is risked.', 'The prices are real, the money is virtual. Good for learning before using real money.', 'Roman Urdu: nakli paise se mashq.'],
+            ['Pump', 'A very fast price jump, often on small or new coins.', 'Pumps often reverse quickly. Many people buy near the top and lose. Use small size and a stop-loss.', 'Roman Urdu: achanak tez izafa, aksar jaldi wapis girta hai.']
+        ];
+        function vWords() {
+            var h = '<div class="group pad"><b style="font-size:17px">📘 Simple words</b><div class="note" style="margin:4px 0 0">Every trading word in plain language. Tap a word to open it. Not financial advice.</div></div>';
+            G.forEach(function (x, i) { var on = window.__wOpen === i; h += '<div class="group pad" data-wd="' + i + '" style="cursor:pointer"><b>' + x[0] + '</b><div style="margin-top:2px">' + x[1] + '</div>' + (on ? '<div class="note" style="margin:6px 0 0"><b>Example:</b> ' + x[2] + '</div><div class="note" style="margin:4px 0 0">' + x[3] + '</div>' : '<div class="note" style="margin:4px 0 0;opacity:.6">Tap for an example ▾</div>') + '</div>'; });
+            return h;
+        }
+        try { WINS.push({ id: 'words', ic: '📘', c: '#0a84ff', n: 'Simple words', t: 'Simple words', sub: 'Every trading word explained in plain language, with Roman Urdu' }); LIVE.words = 0; VIEWS.words = vWords; var g2 = MW_GROUPS[0][1]; if (g2.indexOf('words') < 0) { var k2 = g2.indexOf('ptrade'); g2.splice(k2 < 0 ? g2.length : k2 + 1, 0, 'words'); } } catch (e) { }
+        document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-wd]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); var i = +t.getAttribute('data-wd'); window.__wOpen = window.__wOpen === i ? -1 : i; try { renderView(true); } catch (er) { } }, true);
+
+        /* fresh installs start in Beginner (simple) mode; people who already chose keep their choice */
+        try { if (!localStorage.getItem('mintoosuite_mode') && !localStorage.getItem('mintoosuite_agree') && !localStorage.getItem('mintoosuite_acct')) { localStorage.setItem('mintoosuite_mode', 'beginner'); } } catch (e) { }
+        /* Plain look: no glass blur or see-through panels, for easier reading */
+        var PK2 = 'mintoosuite_plain';
+        function plainOn() { try { return localStorage.getItem(PK2) === '1'; } catch (e) { return false; } }
+        function paintPlain() { try { document.documentElement.classList.toggle('mwplain', plainOn()); } catch (e) { } }
+        var st2 = document.createElement('style'); st2.setAttribute('data-mwkeep', '1');
+        st2.textContent = 'html.mwplain *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}html.mwplain #pfp,html.mwplain #twsh,html.mwplain #mwnav b,html.mwplain .group,html.mwplain .tile{background-color:var(--card,#fff)!important;background-image:none!important}html.mwplain body{background-image:none!important}';
+        document.head.appendChild(st2); paintPlain();
+        try { var _vl = VIEWS.look; if (typeof _vl === 'function') { VIEWS.look = function () { return _vl.apply(this, arguments) + '<div class="group pad"><b>Plain look</b><div class="note" style="margin:2px 0 8px">Turns off the glass blur and see-through panels so text is easier to read. Colours stay the same.</div><div class="ptsd"><span class="' + (plainOn() ? '' : 'on') + '" data-pln="0">Glass (default)</span><span class="' + (plainOn() ? 'on' : '') + '" data-pln="1">Plain</span></div></div>'; }; } } catch (e) { }
+        document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-pln]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); try { localStorage.setItem(PK2, t.getAttribute('data-pln')); } catch (er) { } paintPlain(); try { renderView(true); } catch (er) { } }, true);
+        var _vo = VIEWS.overview; if (typeof _vo === 'function') { VIEWS.overview = function () { var h = _vo.apply(this, arguments); return card() + h; }; }
+    } catch (e) { try { console.log('sp', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
