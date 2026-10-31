@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.232';
+var BUILD = '2026-10-31.233';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -4291,6 +4291,36 @@ document.addEventListener('click', function (e) {
 })();
 
 /* mw-v108 */
+/* ===== p9gd: write guard. A screen part that is given exactly the same content it already shows is left alone, so nothing flickers (this is what made the app blink everywhere) ===== */
+(function () {
+    try {
+        var tmp = document.createElement('div'), ihd = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML'), tcd = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent'), cdd = Object.getOwnPropertyDescriptor(CharacterData.prototype, 'data'), cnd = Object.getOwnPropertyDescriptor(Element.prototype, 'className');
+        var stat = window.__guard = { skipped: 0, wrote: 0 };
+        if (ihd && ihd.set) {
+            Object.defineProperty(Element.prototype, 'innerHTML', { configurable: true, enumerable: ihd.enumerable, get: ihd.get, set: function (v) {
+                try {
+                    v = String(v);
+                    if (v.length < 60000 && this.nodeName !== 'SCRIPT' && this.nodeName !== 'STYLE' && this.nodeName !== 'TEXTAREA' && this.nodeName !== 'TEMPLATE') {
+                        var cur = ihd.get.call(this);
+                        if (cur === v) { stat.skipped++; return; }
+                        if (cur.length === 0 && v.length === 0) { return; }
+                        ihd.set.call(tmp, v); var norm = ihd.get.call(tmp); ihd.set.call(tmp, '');
+                        if (norm === cur) { stat.skipped++; return; }
+                    }
+                } catch (e) { }
+                stat.wrote++; ihd.set.call(this, v);
+            } });
+        }
+        if (tcd && tcd.set) {
+            Object.defineProperty(Node.prototype, 'textContent', { configurable: true, enumerable: tcd.enumerable, get: tcd.get, set: function (v) {
+                try { if (this.nodeType === 1) { var s = v === null || v === undefined ? '' : String(v); if (this.childNodes.length === 1 && this.firstChild.nodeType === 3 && this.firstChild.data === s) { stat.skipped++; return; } if (this.childNodes.length === 0 && s === '') { return; } } } catch (e) { }
+                tcd.set.call(this, v);
+            } });
+        }
+        if (cdd && cdd.set) { Object.defineProperty(CharacterData.prototype, 'data', { configurable: true, enumerable: cdd.enumerable, get: cdd.get, set: function (v) { try { if (this.data === String(v)) { return; } } catch (e) { } cdd.set.call(this, v); } }); }
+        if (cnd && cnd.set) { Object.defineProperty(Element.prototype, 'className', { configurable: true, enumerable: cnd.enumerable, get: cnd.get, set: function (v) { try { if (cnd.get.call(this) === v) { return; } } catch (e) { } cnd.set.call(this, v); } }); }
+    } catch (e) { try { console.log('guard', e); } catch (er) { } }
+})();
 // ===== v10.8 · part A: link fix, show/hide password, nicer icons, paper-account reset =====
 document.addEventListener('click', function (e) { var a = e.target && e.target.closest ? e.target.closest('a[href="#"]') : null; if (a) { e.preventDefault(); } }, true);
 (function () {
@@ -7624,7 +7654,7 @@ function fcMini(sym) {
             document.querySelectorAll('.fsx').forEach(function (e) { if (!key || e !== find(key)) { e.classList.remove('fsx'); } });
             if (key) { el = find(key); if (el && !el.classList.contains('fsx')) { el.classList.add('fsx'); } if (!el) { S.fsKey = ''; key = ''; } }
             var has = !!document.getElementById('cv') || !!document.querySelector('[data-fsw]');
-            var dd = (key || has) ? 'block' : 'none', cc = key ? 'back' : '', tt = key ? '✕ Back' : '⛶ Full screen'; if (key) { b.__k = null; if (b.__d !== 'k') { b.__d = 'k'; b.style.display = 'block'; } } else if (b.__d === 'k') { b.__d = ''; b.style.removeProperty('display'); } if (!key && !window.__fsPlaced) { b.style.display = dd; } if (b.className !== cc) { b.className = cc; } if (b.__t !== tt) { b.__t = tt; b.textContent = tt; }
+            var dd = (key || has) ? 'block' : 'none', cc = key ? 'back' : '', tt = key ? '✕ Back' : '⛶ Full screen'; if (key) { if (b.__k !== null) { ['top', 'right', 'bottom', 'left'].forEach(function (q) { b.style.removeProperty(q); }); } b.__k = null; if (b.__d !== 'k') { b.__d = 'k'; b.style.display = 'block'; } } else if (b.__d === 'k') { b.__d = ''; b.style.removeProperty('display'); } if (!key && !window.__fsPlaced) { b.style.display = dd; } if (b.className !== cc) { b.className = cc; } if (b.__t !== tt) { b.__t = tt; b.textContent = tt; }
             document.body.style.overflow = key ? 'hidden' : '';
         } catch (e) { }
     }
@@ -15200,11 +15230,12 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             c.save(); c.beginPath(); c.rect(0, ytop, m.W, m.ph); c.clip();
             if (on2) {
                 c.font = '10px -apple-system,Segoe UI,sans-serif'; c.textAlign = 'left';
-                C.lv.res.concat(C.lv.sup).forEach(function (lv) {
-                    var yy = (m.yr || m.y)(lv.p); if (yy < ytop || yy > ybot) { return; }
+                var usedY = [];
+                C.lv.res.concat(C.lv.sup).sort(function (a, b) { return Math.abs(a.p - K[K.length - 1].c) - Math.abs(b.p - K[K.length - 1].c); }).forEach(function (lv) {
+                    var yy = (m.yr || m.y)(lv.p); if (yy < ytop + 4 || yy > ybot - 4) { return; } if (usedY.some(function (u0) { return Math.abs(u0 - yy) < 24; })) { return; } usedY.push(yy);
                     var isR = lv.p > K[K.length - 1].c, col = isR ? m.RD : m.GR, x0 = Math.max(0, m.xs(Math.max(lv.i, m.start)) - 4);
                     c.strokeStyle = col; c.globalAlpha = 0.75; c.lineWidth = 1.2; c.setLineDash([6, 4]); c.beginPath(); c.moveTo(x0, yy); c.lineTo(m.W, yy); c.stroke(); c.setLineDash([]);
-                    c.globalAlpha = 1; c.fillStyle = col; c.fillText((isR ? 'Resistance ' : 'Support ') + fp(lv.p, m.sym), 4, yy - 3);
+                    c.globalAlpha = 1; c.fillStyle = col; c.textAlign = 'right'; c.fillText((isR ? 'R ' : 'S ') + fp(lv.p, m.sym), m.W - 4, yy - 3); c.textAlign = 'left';
                 });
             }
             if (on1) {
@@ -16670,21 +16701,19 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         }
         function isFS() { return S.fsKey === 'cv' && S.win === 'chart' && document.getElementById('cv'); }
         function railHtml() {
-            var h = '', cur = DS.cat;
-            CATS.forEach(function (c) { h += '<div class="drb' + (DS.fly === c[0] ? ' on' : '') + '" data-xk="drfly:' + c[0] + '"><i>' + (ICON[c[0]] || '•') + '</i><small>' + c[0] + '</small></div>'; });
-            h += '<div class="drs"></div>';
-            h += '<div class="drb' + (DS.magnet ? ' on' : '') + '" data-xk="drmag:1"><i>🧲</i><small>Magnet</small></div>';
-            h += '<div class="drb' + (DS.hide ? ' on' : '') + '" data-xk="drhide:1"><i>' + (DS.hide ? '🙈' : '👁') + '</i><small>' + (DS.hide ? 'Hidden' : 'Show') + '</small></div>';
-            h += '<div class="drb" data-xk="dr:undo"><i>↶</i><small>Undo</small></div><div class="drb" data-xk="dr:del"><i>🗑</i><small>Delete</small></div><div class="drb" data-xk="dr:clear"><i>⌫</i><small>Clear</small></div>';
-            h += '<div class="drb" data-xk="drguide:1"><i>ⓘ</i><small>Guide</small></div><div class="drb' + (DS.land ? ' on' : '') + '" data-xk="drrot:1"><i>⟳</i><small>Rotate</small></div>';
-            h += '<div class="drs"></div>' + ['f59e0b', '38bdf8', '16a34a', 'dc2626', 'a855f7', 'e5e7eb'].map(function (cl) { return '<div class="drc" data-xk="drc:' + cl + '" style="background:#' + cl + ';outline:' + (DCOL === '#' + cl ? '3px solid var(--tx,#111)' : '0') + '"></div>'; }).join('');
-            var f = '';
-            if (DS.fly) { var cat = CATS.filter(function (c) { return c[0] === DS.fly; })[0]; if (cat) { f = '<div id="drFly"><b>' + cat[0] + '</b>' + cat[1].map(function (t) { return '<div class="drt' + (DS.tool === t[0] ? ' on' : '') + '"><span data-xk="dr:' + t[0] + '">' + t[1] + '</span><u data-xk="drtip:' + t[0] + '">ⓘ</u></div>'; }).join('') + '</div>'; } }
-            return '<div id="drRail" data-noswipe="1">' + h + '</div>' + f + (DS.tool ? '<div id="drNow" data-noswipe="1">' + ((TIPS[DS.tool] || ['', ''])[0]) + ' <span data-xk="dr:done">✕</span></div>' : '');
+            var h = '';
+            function chip(k, ic, nm, on) { return '<div class="drb' + (on ? ' on' : '') + '" data-xk="' + k + '"><i>' + ic + '</i><small>' + nm + '</small></div>'; }
+            h += chip('drrot:1', '⟳', 'Rotate', DS.land) + chip('drmag:1', '🧲', 'Magnet', DS.magnet) + chip('drhide:1', DS.hide ? '🙈' : '👁', DS.hide ? 'Hidden' : 'Show', DS.hide) + chip('dr:undo', '↶', 'Undo') + chip('dr:del', '🗑', 'Delete', DS.tool === 'del') + chip('dr:clear', '⌫', 'Clear') + chip('drguide:1', 'ⓘ', 'Guide');
+            h += '<div class="drs"></div>' + ['f59e0b', '38bdf8', '16a34a', 'dc2626', 'a855f7', 'e5e7eb'].map(function (cl) { return '<div class="drc" data-xk="drc:' + cl + '" style="background:#' + cl + ';outline:' + (DCOL === '#' + cl ? '3px solid var(--tx,#111)' : '0') + '"></div>'; }).join('') + '<div class="drs"></div>';
+            CATS.forEach(function (c) {
+                h += chip('drfly:' + c[0], ICON[c[0]] || '•', c[0], DS.fly === c[0]);
+                if (DS.fly === c[0]) { c[1].forEach(function (t) { h += '<div class="drt' + (DS.tool === t[0] ? ' on' : '') + '"><span data-xk="dr:' + t[0] + '">' + t[1] + '</span><u data-xk="drtip:' + t[0] + '">ⓘ</u></div>'; }); h += '<div class="drs"></div>'; }
+            });
+            return '<div id="drRail" data-noswipe="1">' + h + '</div>' + (DS.tool ? '<div id="drNow" data-noswipe="1">' + ((TIPS[DS.tool] || ['', ''])[0]) + ' · tap the chart <span data-xk="dr:done">✕ stop</span></div>' : '');
         }
         (function () {
             var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
-            st.textContent = '#drWS{position:fixed;left:0;top:0;bottom:0;z-index:9996;pointer-events:none}#drRail{pointer-events:auto;position:absolute;left:0;top:calc(52px + env(safe-area-inset-top));bottom:8px;width:52px;overflow-y:auto;background:var(--card,#fff);border-right:1px solid rgba(128,128,128,.25);border-radius:0 12px 12px 0;box-shadow:2px 0 14px rgba(0,0,0,.18);padding:4px 0}.drb{display:flex;flex-direction:column;align-items:center;padding:6px 0;margin:1px 3px;border-radius:9px;color:var(--tx,#111);cursor:pointer}.drb i{font-style:normal;font-size:19px;line-height:22px}.drb small{font-size:8.5px;font-weight:700;opacity:.8}.drb.on{background:#2563eb;color:#fff}.drs{height:1px;background:rgba(128,128,128,.3);margin:4px 8px}.drc{width:22px;height:22px;border-radius:50%;margin:5px auto;cursor:pointer}#drFly{pointer-events:auto;position:absolute;left:56px;top:calc(52px + env(safe-area-inset-top));max-height:calc(100vh - 80px);overflow-y:auto;min-width:190px;background:var(--card,#fff);color:var(--tx,#111);border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.35);padding:8px 6px;border:1px solid rgba(128,128,128,.25)}#drFly b{display:block;padding:2px 8px 6px;font-size:12px;opacity:.7}.drt{display:flex;justify-content:space-between;align-items:center;border-radius:8px}.drt span{flex:1;padding:9px 10px;font-weight:700;font-size:13px}.drt u{padding:9px 12px;text-decoration:none;opacity:.6}.drt.on{background:#2563eb;color:#fff}#drNow{pointer-events:auto;position:absolute;left:60px;bottom:14px;background:#2563eb;color:#fff;font-weight:800;font-size:12px;padding:7px 12px;border-radius:18px;box-shadow:0 3px 12px rgba(0,0,0,.35)}#drNow span{margin-left:8px}html[data-drfs] .fsx{padding-left:58px!important}';
+            st.textContent = '#drWS{position:fixed;left:0;right:0;top:0;z-index:9996;pointer-events:none}#drRail{pointer-events:auto;display:flex;align-items:center;gap:2px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;margin:calc(4px + env(safe-area-inset-top)) 92px 0 4px;height:46px;background:var(--card,#fff);border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.25);padding:0 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}#drRail::-webkit-scrollbar{display:none}.drb{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;height:40px;border-radius:9px;color:var(--tx,#111);cursor:pointer}.drb i{font-style:normal;font-size:17px;line-height:19px}.drb small{font-size:8.5px;font-weight:700;opacity:.8;line-height:10px}.drb.on{background:#2563eb;color:#fff}.drs{flex:none;width:1px;height:26px;background:rgba(128,128,128,.4);margin:0 4px}.drc{flex:none;width:20px;height:20px;border-radius:50%;margin:0 3px;cursor:pointer}.drt{flex:none;display:flex;align-items:center;border-radius:9px;background:rgba(128,128,128,.14);margin:0 2px;color:var(--tx,#111)}.drt span{padding:10px 8px 10px 10px;font-weight:700;font-size:12px}.drt u{padding:10px 8px;text-decoration:none;opacity:.6;font-size:12px}.drt.on{background:#2563eb;color:#fff}#drNow{pointer-events:auto;position:fixed;left:10px;bottom:calc(14px + env(safe-area-inset-bottom));background:#2563eb;color:#fff;font-weight:800;font-size:12px;padding:7px 12px;border-radius:18px;box-shadow:0 3px 12px rgba(0,0,0,.35)}#drNow span{margin-left:8px;opacity:.85}html[data-drfs] .fsx{padding:62px 6px 8px!important}html[data-drfs] .fsx>*:not(.mwhascv){display:none!important}html[data-drfs] .fsx .mwhascv>*:not(:has(#cv)):not(.cph){display:none!important}html[data-drfs] .fsx #cv{height:calc(100vh - 78px)!important;min-height:200px}html[data-drfs] .fsx{min-height:100vh}';
             document.head.appendChild(st);
             var last = '', wasFS = false;
             setInterval(function () {
@@ -20954,6 +20983,44 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             } catch (e) { }
         }, 800);
     } catch (e) { try { console.log('ci', e); } catch (er) { } }
+})();
+/* ===== p9heal: Guardian. Quietly watches the app and repairs it: screen flicker, error loops, stuck chart, dead price feed, stuck loading, Baba AI not answering. Everything it does is written to the Problem log. ===== */
+(function () {
+    try {
+        var G = window.__guardian = { fixes: [], checks: 0 }, muts = 0, top = {}, started = Date.now();
+        function log(t) { G.fixes.push(new Date().toTimeString().slice(0, 8) + ' ' + t); if (G.fixes.length > 30) { G.fixes.shift(); } try { if (window.__mwRec) { window.__mwRec('guardian', t); } } catch (e) { } }
+        function path(n) { var e = n && n.nodeType === 1 ? n : (n && n.parentElement), p = [], i; for (i = 0; e && i < 3; i++, e = e.parentElement) { p.push(e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (e.className && typeof e.className === 'string' ? '.' + e.className.split(' ')[0] : '')); } return p.join('<'); }
+        var mo = new MutationObserver(function (ms) { muts += ms.length; if (ms.length > 40) { ms = ms.slice(0, 40); } ms.forEach(function (m) { if (m.type === 'childList' || m.type === 'characterData') { var k = path(m.target); top[k] = (top[k] || 0) + 1; } }); });
+        function watch() { try { mo.observe(document.body, { subtree: true, childList: true, characterData: true }); } catch (e) { } }
+        if (document.body) { watch(); } else { document.addEventListener('DOMContentLoaded', watch); }
+        var errs = [], calmSet = 0;
+        window.addEventListener('error', function () { errs.push(Date.now()); });
+        window.addEventListener('unhandledrejection', function () { errs.push(Date.now()); });
+        var chartSince = 0, lastRepaint = 0, offSince = 0;
+        setInterval(function () {
+            try {
+                if (document.hidden) { muts = 0; top = {}; return; }
+                G.checks++; var n = Date.now();
+                /* 1. flicker: too many screen rewrites per second */
+                var rate = muts / 10; var worst = Object.keys(top).sort(function (a, b) { return top[b] - top[a]; })[0];
+                if (rate > 120 && !calmSet && !document.documentElement.classList.contains('mwcalm')) { calmSet = 1; try { document.documentElement.classList.add('mwcalm', 'mwnolive'); localStorage.setItem('mintoosuite_calm', '1'); } catch (e) { } log('Screen was rewriting ' + Math.round(rate) + ' times a second (mostly ' + (worst || '?') + '). Calm look switched on.'); try { toast('🛠 The screen was flickering, so the Calm look is on. Change it in Look & mode.'); } catch (e) { } }
+                else if (rate > 60) { log('Busy screen: ' + Math.round(rate) + ' rewrites/s at ' + (worst || '?')); }
+                muts = 0; top = {};
+                /* 2. error loop */
+                errs = errs.filter(function (t) { return n - t < 60000; });
+                if (errs.length > 25) { errs = []; log('Many errors in a minute: screen redrawn'); try { renderView(true); } catch (e) { } }
+                /* 3. chart stuck without candles */
+                try { if (S.win === 'chart' && S.chart && S.chart.sym && !(S.chart.k && S.chart.k.length)) { if (!chartSince) { chartSince = n; } else if (n - chartSince > 25000) { chartSince = 0; log('Chart had no candles for 25 s: reloaded ' + S.chart.sym); loadChart(); } } else { chartSince = 0; } } catch (e) { }
+                /* 4. feed dead while online */
+                try { if (navigator.onLine) { var a = dataAge(); if (isFinite(a) && a > 45000) { log('Prices were ' + Math.round(a / 1000) + ' s old: feed restarted'); reconnect(); pollREST(true); } } } catch (e) { }
+                /* 5. page lost its content */
+                try { var v = document.getElementById('view'); if (v && !v.children.length && S.win) { if (!offSince) { offSince = n; } else if (n - offSince > 8000) { offSince = 0; log('Screen was empty: redrawn'); renderView(true); } } else { offSince = 0; } } catch (e) { }
+                /* 6. Baba AI present */
+                try { if (typeof PF_APP === 'undefined' || !PF_APP.length) { log('Baba AI answer list is empty'); } } catch (e) { }
+            } catch (e) { }
+        }, 10000);
+        window.__guardianReport = function () { return { checks: G.checks, fixes: G.fixes.slice(), guard: window.__guard }; };
+    } catch (e) { try { console.log('heal', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
