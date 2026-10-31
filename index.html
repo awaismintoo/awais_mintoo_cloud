@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.144';
+var BUILD = '2026-10-31.153';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5604,7 +5604,7 @@ function pfAnswer(raw) {
     var best = null, bs = 0, all = PF_APP.concat(PF_KB);
     all.forEach(function (e, n) { var s = pfHit(e[0], q) * (n < PF_APP.length ? 1.4 : 1); if (s > bs) { bs = s; best = e; } });
     if (wantsCoin && !(bs >= 4 && !/price|chart/.test(q))) { out.title = base(sym); out.html = pfCoinCard(sym); return out; }
-    if (best && bs >= 1) { out.score = bs; out.title = best[1]; out.html = esc(best[2]); var wid = PF_WIN[best[1]]; if (wid) { out.html += '<br>' + btn('win:' + wid, 'Open ' + pfWinName(wid) + ' ›'); } if (/long|short|buy|sell|trade/.test(q) && !sym) { out.html += '<br><small>Not financial advice.</small>'; } return out; }
+    if (best && (bs >= 2 || (bs >= 1 && q.trim().split(' ').length <= 2))) { out.score = bs; out.title = best[1]; out.html = esc(best[2]); var wid = PF_WIN[best[1]]; if (wid) { out.html += '<br>' + btn('win:' + wid, 'Open ' + pfWinName(wid) + ' ›'); } if (/long|short|buy|sell|trade/.test(q) && !sym) { out.html += '<br><small>Not financial advice.</small>'; } return out; }
     if (sym) { out.title = base(sym); out.html = pfCoinCard(sym); return out; }
     if (wf) { out.title = wf.n; out.html = esc(wf.sub || '') + '<br>' + btn('win:' + wf.id, 'Open ' + wf.n + ' ›'); return out; }
     if (/best.*(pick|trade)|which coin|what should i (buy|trade)|recommend/.test(q)) { out.title = 'Recommendations'; out.html = 'I cannot tell you what to buy, and nobody can promise profit. The strictest list in the app is <b>Best Picks</b>, and <b>At a glance</b> shows everything in one place.<br>' + btn('win:best', 'Open Best Picks') + btn('win:glance', 'Open At a glance'); return out; }
@@ -11133,13 +11133,13 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             for (i = 0; i < toks.length; i++) { u = toks[i].toUpperCase(); if (YMAP[u]) { return u; } }
             for (i = 0; i < toks.length; i++) { u = toks[i].toUpperCase(); if (!STOP[u] && S.tick && S.tick[u + 'USDT']) { return u; } }
             for (i = 0; i < toks.length; i++) { u = toks[i].toUpperCase(); if (!STOP[u] && /^[A-Z0-9]{2,8}$/.test(toks[i]) && toks[i] === toks[i].toUpperCase() && /[A-Z]/.test(u)) { return u; } }
-            for (i = toks.length - 1; i >= 0; i--) { u = toks[i].toUpperCase(); if (!STOP[u] && /^[A-Za-z]{2,6}$/.test(toks[i])) { return u; } }
+            for (i = toks.length - 1; i >= 0; i--) { u = toks[i].toUpperCase(); if (!STOP[u] && /^[A-Za-z]{2,6}$/.test(toks[i]) && /(^| )(price of|chart of|chart for|story of|story for|analy[sz]e|why is|why did|why does)\s+(the )?[a-z]{2,6}( |$|\?)/i.test(String(raw)) && new RegExp('(price of|chart of|chart for|story of|story for|analy[sz]e|why is|why did|why does)\\s+(the )?' + toks[i] + '\\b', 'i').test(String(raw))) { return u; } }
             return '';
         }
         var _pa = pfAnswer;
         pfAnswer = function (raw) {
             var q = String(raw || '').toLowerCase();
-            if (/(why|explain|story|analy[sz]|happening|reason|details?|what do you see|kya ho|kyun|kyon).*|(sell|buy).*(signal|says|saying|tell)/.test(q) && !/screen|window|indicator|what is (rsi|macd|ema)|leverage|funding rate/.test(q)) {
+            if (/(why|explain|story|analy[sz]|happening|reason|details?|what do you see|kya ho|kyun|kyon).*|(sell|buy).*(signal|says|saying|tell)/.test(q) && !/screen|window|indicator|what is (rsi|macd|ema)|leverage|funding rate|alert|notif|stop.?loss|take.?profit|profit and loss|margin|liquidat|how (do|to|can) i/.test(q)) {
                 var sym = findSym(raw);
                 if (sym && (YMAP[sym] || /(sell|buy|why|story|explain|analy|happening|reason|chart|candle|coin)/.test(q))) {
                     var id = 'stq' + Date.now();
@@ -17408,6 +17408,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         PF_APP.push(['adx|average directional', 'ADX (trend strength)', 'ADX measures how strong a trend is, not its direction. Under about 20 = weak or sideways market (trend tools give false signals), above 25 = a real trend. Use it as a filter: only follow UT Bot or Supertrend signals when the trend is strong. This app does not draw ADX yet; our Trend channel and Swing structure show the same thing by eye.']);
         PF_APP.push(['smart guard', 'Smart Guard', 'Smart Guard is the safety layer of the bots: it limits the amount per trade, stops trading for a while after losses, blocks new trades when the market is too wild, and always uses a stop-loss. It reduces damage; it cannot make a bad strategy profitable. Keep it on.']);
         PF_APP.push(['dictionary|urdu dictionary|english urdu|spelling|grammar|translate word|urdu meaning', 'Dictionary and spelling', 'Open the Dictionary window (Profile > Dictionary and spelling): type an English word to see Urdu with how to say it, or an Urdu word to see English. It works without internet and has trading and everyday words. The same box fixes common spelling mistakes, i to I, a/an, repeated words and capital letters in English text. You can also ask me in chat: "profit in urdu" or "meaning of risk". For about 40 other languages download an offline pack from Look and language > Offline languages. Pashto, Sindhi and Punjabi are not available offline, but I still translate them online. The same window has Subject dictionaries (medical, internet, business, science, world and history): built-in entries work offline, and anything you look up online is saved on the phone for offline use later. Ask me "what is diabetes" or "define zebra" and I answer from them.']);
+        PF_APP.push(['new coin alert|new listing alert|pump alert|why no alert|no alert|no alerts|missed|new coin|newly listed|just listed|listing|pumping|100x|1000x|moon|nomausdt|noma|alert for new coin|why did you not tell|why didnt you tell', 'New coin and pump alerts', 'The app now watches MEXC (spot and futures) and Binance all the time. Open Radar to see the Pump and new-coin alerts box: it shows when MEXC was last checked, how many coins are watched, and has a Send a test alert button. A coin that was never seen before gives a purple NEW COIN banner; a coin that jumps (+10% in 5 minutes, +20% in 15 minutes, or already +60% today) gives a green PUMP banner, with vibration and a notification-bar message. The first time you open the app after installing, it only learns the current coin list and stays quiet, so a coin that listed before that cannot alert. Alerts need the app to be running; switch on Background in Menu so it keeps running, though Android can still stop apps to save battery. HONEST: a huge percentage on a brand-new coin is common and usually reverses; most late buyers lose. Use small money you can afford to lose, a stop-loss, and never chase after the jump. No one, including this app, can promise which listing will keep rising.']);
         PF_APP.push(['tradingview|live chart|freezing|frozen|not loading|candles not loading|418|blocked|realtime|real time', 'Live chart and TradingView', 'On the Chart window you can switch between 📊 Our chart (UT Bot signals, support/resistance, Long/Short) and 📺 TradingView live. Our chart moves with every price tick and is corrected from the exchange every 5 seconds. If Binance blocks the phone (HTTP 418) the app switches by itself to Bybit, OKX, Binance spot data or Gate, so charts and prices keep updating. The line above the chart shows the source and how fresh it is. Links to TradingView and other sites are under the chart.']);
         PF_APP.push(['signal lab|not proven|edge seen|99.9|accuracy|indicator test|ut bot accuracy', 'Signal Lab', 'Signal Lab replays UT Bot, Supertrend, EMA cross, RSI and Bot Baba on past candles of 10 markets, with fees. The verdict covers buying and selling (short) together. Under each verdict you see the Buy side and the Sell side separately. “Not proven” means the rule did not make money after fees, with enough trades, in most markets. No indicator can honestly promise 99.9%. Changing the time frame runs the test again.']);
         PF_WIN['Repair centre'] = 'health';
@@ -18192,9 +18193,13 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
 /* ===== CT: p9ux: reviewer fixes. One first-run popup at a time, no Home blocks flashing on other windows, bigger tap targets, clearer text colours, swipe arrows fade. ===== */
 (function () {
     try {
+        var KX = (window.__kx && window.__kx.KX) || {};
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
         st.textContent =
             /* 1. never two first-run popups together */
+            '#pfp .pfm1.me,#pfp .pfm1.user,.pcmsgs .me,.pcmsgs .user{background:rgba(120,140,255,.30)!important;box-shadow:none!important;color:var(--tx,#fff)!important;border:1px solid rgba(160,175,255,.35)}'+'#pfp .pfh,html[data-win="baba"] .bbhero,html[data-win="pchat"] .bbhero{background:rgba(255,255,255,.07)!important;color:var(--tx,#fff)!important;border:1px solid rgba(255,255,255,.12)}'+'#pfp .pfchips span,#pfp .pbt,.pfm1 .pfbtn,.pcmsgs .pfbtn,.pcmsgs [data-pfq],.pcmsgs [data-pfgo]{background:rgba(255,255,255,.08)!important;color:var(--tx,#fff)!important;border:1px solid rgba(255,255,255,.16)!important;box-shadow:none!important;background-image:none!important}'+
+            '#pfp{-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4)}'+'#pfp .pfh{padding:8px 12px!important;gap:10px}#pfp .pfh small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}'+'#pfp .pfmsgs .pfm1:first-child:not(.me):has(~ .pfm1){display:none}'+'#pfp .pfchips{flex-wrap:nowrap;overflow-x:auto;padding:4px 12px;scrollbar-width:none}#pfp .pfchips::-webkit-scrollbar{display:none}'+'#pftools,#pfp .pbtools{display:flex;flex-wrap:nowrap!important;overflow-x:auto;gap:6px;padding:2px 12px;margin:0!important;scrollbar-width:none}#pfp .pbt{flex:0 0 auto}'+
+            '.pcmsgs,#pfmsgs{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}html[data-win="pchat"] #view,html[data-win="baba"] #view{overscroll-behavior-y:contain}' +
             'body:has(#wtour) #mwMode{display:none!important}' +
             'body:has(#wtour) #mwcoach,body:has(#wtour) #mwtoast{display:none!important}' +
             /* 2. Home-only blocks never show on other windows (no flash, no 300px jump) */
@@ -18211,6 +18216,9 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             '#plstrip{padding:6px 10px!important}#plstrip .note{display:none}#plstrip>div:first-child{margin-bottom:0!important}' +
             '#view .group.pad:has([data-stq^="sym:"]){padding:4px 8px!important;margin-bottom:6px!important}' +
             '#fsbtn{bottom:142px!important}html[data-win="chart"] #view{padding-bottom:150px}' +
+            /* 7. Baba AI windows stay quiet: no tip pop-ups, coach cards or toasts on top of the chat */
+            'html[data-win="baba"] #huPop,html[data-win="prof"] #huPop,html[data-win="pchat"] #huPop,html[data-win="baba"] #mwcoach,html[data-win="prof"] #mwcoach,html[data-win="pchat"] #mwcoach,html[data-win="baba"] #mwtoast,html[data-win="pchat"] #mwtoast{display:none!important}' +
+            'html[data-win="baba"] .bbhero{padding:8px 12px!important}html[data-win="baba"] .bbhero .av{transform:scale(.7);transform-origin:left center;margin-right:-8px}' +
             /* 5. swipe arrows: visible for 3 seconds after opening, then faint */
             '#mwsl,#mwsr{opacity:.0;animation:uxfade 3.2s ease-out 1}@keyframes uxfade{0%{opacity:.9}70%{opacity:.9}100%{opacity:0}}' +
             '#mwsl:active,#mwsr:active{opacity:.9}';
@@ -18218,6 +18226,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         // keep html[data-win] in step with the open window (checked often, cheap)
         var last = '';
         setInterval(function () { try { var w = window.__kDbg && window.__kDbg.S && window.__kDbg.S.win; if (w && w !== last) { last = w; document.documentElement.setAttribute('data-win', w); } } catch (e) { } }, 16);
+        try { if (KX.bWel === undefined) { KX.bWel = '0'; } } catch (e) { }
         window.__ux = { v: 1 };
     } catch (e) { try { console.error('p9ux', e); } catch (e2) { } }
 })();
@@ -18416,6 +18425,15 @@ try {
             } catch (e) { }
             return _pa.apply(this, arguments);
         };
+        /* a plain word like LOSS, STOP or ALERT must never be treated as a coin; "why/how/explain" questions are explanations, not chart requests */
+        var NOCOIN = /^(loss|stop|take|profit|risk|alert|alerts|order|entry|exit|target|margin|long|short|bull|bear|trend|price|chart|coin|coins|news|help|plan|fund|buy|sell|gain|move|pump|dump|spot|fees?|rate|tick|why|how|what|when|where|about|this|that|with|from|have|will|your|name)$/i;
+        try { var _pc = pfCoin; pfCoin = function (raw) { var q = String(raw || ''), s = _pc.apply(this, arguments); if (!s) { return s; } var b = String(s).replace(/USDT$/i, ''); if (NOCOIN.test(b) && !/(^|\s)(price|chart)(\s|$)/i.test(q.replace(b, ''))) { return null; } if (/^\s*(why|how come|explain|what is|what are|what does|how do|how does|how can)\b/i.test(q) && !/\b(price of|chart of|analy[sz]e)\b/i.test(q)) { return null; } return s; }; } catch (e) { }
+        var OFF = /\b(weather|temperature today|football|cricket score|match score|movie|recipe|song lyrics|joke|horoscope|who won)\b/i, ONT = /\b(coin|trade|trading|price|chart|market|crypto|binance|mexc|bitcoin|gold|stock|invest|alert|bot)\b/i;
+        var _off = pfAnswer;
+        pfAnswer = function (raw) {
+            try { var q = String(raw || ''); if (OFF.test(q) && !ONT.test(q)) { return { title: 'Outside my area', html: 'I am built for trading, markets and this app, so I will not guess about that. A web search will answer it better.<br><a class="pfbtn" href="https://www.google.com/search?q=' + encodeURIComponent(q.slice(0, 120)) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">🔎 Search the web</a>', score: 9 }; } } catch (e) { }
+            return _off.apply(this, arguments);
+        };
         window.__bb = { v: 1 };
     } catch (e) { try { console.error('p9bb', e); } catch (e2) { } }
 })();
@@ -18612,6 +18630,134 @@ try {
         };
         window.__play = { v: 1 };
     } catch (e) { try { console.error('p9play', e); } catch (e2) { } }
+})();
+/* ===== CZ: p9new: Pump and new-coin watch. Every 15-30 s it asks MEXC (spot and futures) for the full coin list and prices. A coin that was never seen before = NEW COIN alert. A coin that jumps fast (+10% in 5 min, +20% in 15 min, or already +60% today when first seen) = PUMP alert. Alerts appear as a big banner at the top of the app, vibrate, and go to the notification bar. Binance coins are watched from the live feed the app already has. ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, KN = 'mintoosuite_known_syms', CFG = 'mintoosuite_pumpcfg';
+        var K = { s: {}, f: {}, b: {}, init: 0, binit: 0 }, LOG = [], LK = 'mintoosuite_pumplog'; try { LOG = JSON.parse(localStorage.getItem(LK) || '[]') || []; } catch (e) { LOG = []; }
+        var H = {}, FIRED = {}, ST = { at: 0, ok: 0, err: '', n: 0, last: null };
+        var cfg = { on: true, hi: false }; try { cfg = Object.assign(cfg, JSON.parse(localStorage.getItem(CFG) || '{}')); } catch (e) { }
+        try { K = Object.assign(K, JSON.parse(localStorage.getItem(KN) || '{}')); } catch (e) { }
+        K.s = K.s || {}; K.f = K.f || {}; K.b = K.b || {};
+        function saveK() { try { localStorage.setItem(KN, JSON.stringify(K)); } catch (e) { } }
+        function saveC() { try { localStorage.setItem(CFG, JSON.stringify(cfg)); } catch (e) { } }
+        function e3(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function fmt(p) { try { return fmtP(p, 'X'); } catch (e) { return p >= 100 ? p.toFixed(2) : p >= 1 ? p.toFixed(4) : p.toPrecision(4); } }
+        var JUNK = /(3L|3S|5L|5S|UP|DOWN|BULL|BEAR)USDT$/;
+        function jget(u) { return fetch(u, { cache: 'no-store' }).then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); }); }
+        /* ---------- the big alert ---------- */
+        var Q = [], showing = 0;
+        function banner(a) {
+            var old = document.getElementById('mwpump'); if (old) { old.remove(); }
+            var d = document.createElement('div'); d.id = 'mwpump'; d.setAttribute('data-mwkeep', '1'); d.setAttribute('role', 'alert');
+            var col = a.kind === 'new' ? '#7c3aed' : (a.up === false ? '#dc2626' : '#16a34a');
+            d.style.cssText = 'position:fixed;left:8px;right:8px;top:max(8px,env(safe-area-inset-top));z-index:2147483200;padding:12px 14px;border-radius:18px;background:' + col + ';color:#fff;box-shadow:0 8px 30px rgba(0,0,0,.5);font:600 14px/1.35 -apple-system,Segoe UI,sans-serif;animation:mwpin .35s ease-out';
+            d.innerHTML = '<div style="font-size:17px;font-weight:800">' + e3(a.title) + '</div><div style="margin-top:3px;font-weight:600">' + e3(a.body) + '</div><div style="margin-top:6px;font-size:12px;opacity:.92;font-weight:500">' + e3(a.warn) + '</div><div style="margin-top:8px;display:flex;gap:8px"><span data-pump="open" style="padding:7px 14px;border-radius:12px;background:#fff;color:' + col + ';font-weight:800">Open chart</span><span data-pump="x" style="padding:7px 14px;border-radius:12px;background:rgba(255,255,255,.25)">Dismiss</span></div>';
+            d._a = a; document.body.appendChild(d);
+            try { if (navigator.vibrate) { navigator.vibrate([250, 120, 250, 120, 500]); } } catch (e) { }
+            clearTimeout(banner.tm); banner.tm = setTimeout(function () { var x = document.getElementById('mwpump'); if (x === d) { d.remove(); } showing = 0; next(); }, 25000);
+        }
+        function next() { if (showing || !Q.length) { return; } showing = 1; banner(Q.shift()); }
+        function native(a) { try { var n = window.MintooNative; if (n && n.notify && window.__mwTok) { n.notify(window.__mwTok, a.title, a.body); } else if ('Notification' in window && Notification.permission === 'granted') { new Notification(a.title, { body: a.body }); } } catch (e) { } }
+        var AU = null, ALT = 0;
+        function siren(on) { try { clearInterval(ALT); if (AU) { try { AU.close(); } catch (e) { } AU = null; } if (!on) { return; } var C = window.AudioContext || window.webkitAudioContext; if (!C) { return; } AU = new C(); var beep = function () { try { var o = AU.createOscillator(), g = AU.createGain(); o.type = 'square'; o.frequency.value = 880; g.gain.value = 0.25; o.connect(g); g.connect(AU.destination); o.start(); o.frequency.setValueAtTime(660, AU.currentTime + 0.25); o.stop(AU.currentTime + 0.5); } catch (e) { } try { if (navigator.vibrate) { navigator.vibrate([300, 150, 300]); } } catch (e) { } }; beep(); ALT = setInterval(beep, 1200); } catch (e) { } }
+        function tpPlan(p) { var f = function (m) { return fmt(p * m); }; return '<div style="margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.28);font-size:13px;font-weight:500;line-height:1.5"><b>Manual take-profit plan (you place these on your exchange):</b><br>• Sell 1/3 now or near ' + fmt(p) + '<br>• Sell 1/3 at ' + f(1.3) + ' (+30%)<br>• Keep the last 1/3 with a trailing stop 15% below the highest price it reaches<br>• Stop-loss for the whole position: ' + f(0.85) + ' (-15%)<br>Never put in more than you can lose. Fast pumps can reverse in seconds.</div>'; }
+        function alarm(a) {
+            var old = document.getElementById('mwalarm'); if (old) { old.remove(); } var d = document.createElement('div'); d.id = 'mwalarm'; d.setAttribute('data-mwkeep', '1'); d.setAttribute('role', 'alertdialog');
+            d.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:rgba(150,0,0,.96);color:#fff;padding:max(18px,env(safe-area-inset-top)) 18px 18px;overflow:auto;font:600 15px/1.4 -apple-system,Segoe UI,sans-serif;animation:mwflash 1s infinite alternate';
+            d.innerHTML = '<div style="font-size:30px;font-weight:900;margin-top:20px">🚨 COME FOR TRADE NOW</div><div style="font-size:21px;font-weight:800;margin-top:10px">' + e3(a.title) + '</div><div style="font-size:17px;margin-top:6px">' + e3(a.body) + '</div>' + (a.p ? tpPlan(a.p) : '') + '<div style="margin-top:10px;font-size:12.5px;font-weight:500;opacity:.95">' + e3(a.warn) + '</div><div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><span data-pump="aopen" style="padding:12px 20px;border-radius:14px;background:#fff;color:#b00000;font-weight:900;font-size:16px">Open chart</span><span data-pump="aquiet" style="padding:12px 20px;border-radius:14px;background:rgba(255,255,255,.25);font-weight:800;font-size:16px">Stop alarm</span></div>';
+            d._a = a; document.body.appendChild(d); siren(1);
+        }
+        function fire(a) {
+            try { LOG.unshift({ t: Date.now(), kind: a.kind, mega: !!a.mega, sym: a.sym, title: a.title, body: a.body, spec: a.spec || '', bn: a.bn || '', p: a.p || 0 }); LOG = LOG.slice(0, 60); localStorage.setItem(LK, JSON.stringify(LOG)); } catch (e) { }
+            if (a.mega) { alarm(a); native(a); try { if (window.__huPush) { window.__huPush('pump:' + a.sym + 'mega', '🚨', a.title, a.body, '', 'bad', 600000); } } catch (e) { } ST.last = { t: Date.now(), title: a.title, body: a.body }; return; }
+            Q.push(a); if (Q.length > 4) { Q.shift(); } next(); native(a);
+            try { if (window.__huPush) { window.__huPush('pump:' + a.sym + a.kind, a.kind === 'new' ? '🆕' : '🚀', a.title, a.body, '', 'warn', 600000); } } catch (e) { }
+            ST.last = { t: Date.now(), title: a.title, body: a.body };
+        }
+        var WARN = 'Very risky: new and fast-moving coins can double or lose 90% in minutes, spreads are wide and exits can be hard. Never risk money you cannot lose, use a stop-loss, and do not chase after the jump.';
+        document.addEventListener('click', function (e) {
+            var al = e.target.closest && e.target.closest('[data-pump="aopen"],[data-pump="aquiet"]'); if (al) { e.preventDefault(); e.stopPropagation(); var dd = document.getElementById('mwalarm'), aa = dd && dd._a; siren(0); if (dd) { dd.remove(); } if (al.getAttribute('data-pump') === 'aopen' && aa) { try { openA(aa); } catch (er) { } } return; }
+            var el = e.target.closest && e.target.closest('[data-pump]'); if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var d = document.getElementById('mwpump'), a = d && d._a, v = el.getAttribute('data-pump');
+            if (v === 'open' && a) { try { openA(a); } catch (er) { } } if (false) { try { if (a.spec && window.__mxOpen) { window.__mxOpen(a.spec); } else { var s = document.createElement('div'); s.setAttribute('data-act', 'win:radar'); document.body.appendChild(s); s.click(); s.remove(); } } catch (er) { } }
+            if (d) { d.remove(); } showing = 0; clearTimeout(banner.tm); next();
+        }, true);
+        /* ---------- detection ---------- */
+        function openA(a) { if (a.spec && window.__mxOpen) { window.__mxOpen(a.spec); return; } var s = document.createElement('div'); s.setAttribute('data-act', a.bn ? 'chart:' + a.bn : 'win:radar'); document.body.appendChild(s); s.click(); s.remove(); }
+        function ring(sym, p, t) { var r = H[sym] || (H[sym] = []); r.push([t, p]); while (r.length && t - r[0][0] > 20 * 60000) { r.shift(); } return r; }
+        function rise(r, ms, now) { var base = null, i; for (i = 0; i < r.length; i++) { if (now - r[i][0] <= ms) { base = r[i]; break; } } if (!base || now - base[0] < ms * 0.35) { return null; } return (r[r.length - 1][1] / base[1] - 1) * 100; }
+        function gate(sym, tier) { var k = sym, f = FIRED[k] || 0; if (tier <= f) { return false; } FIRED[k] = tier; setTimeout(function () { if (FIRED[k] === tier) { delete FIRED[k]; } }, 2 * 3600000); return true; }
+        function judge(sym, name, p, vol, chg24, spec, venue) {
+            var now = Date.now(), r = ring(sym, p, now); if (!(p > 0)) { return; }
+            var t5 = cfg.hi ? 6 : 10, t15 = cfg.hi ? 12 : 20, d5 = rise(r, 5 * 60000, now), d15 = rise(r, 15 * 60000, now), tier = 0, why = '';
+            if (d5 !== null && d5 >= t5 * 2) { tier = 2; why = '+' + d5.toFixed(0) + '% in 5 minutes'; } else if (d5 !== null && d5 >= t5) { tier = 1; why = '+' + d5.toFixed(0) + '% in 5 minutes'; }
+            else if (d15 !== null && d15 >= t15 * 2) { tier = 2; why = '+' + d15.toFixed(0) + '% in 15 minutes'; } else if (d15 !== null && d15 >= t15) { tier = 1; why = '+' + d15.toFixed(0) + '% in 15 minutes'; }
+            else if (r.length <= 2 && chg24 >= 60) { tier = 1; why = '+' + chg24.toFixed(0) + '% today'; }
+            var mega = (d5 !== null && d5 >= 25) || (d15 !== null && d15 >= 50) || (r.length <= 2 && chg24 >= 300); if (mega && vol >= 15000 && gate('MEGA:' + sym, 1)) { fire({ kind: 'pump', mega: true, sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: name + ' is exploding on ' + venue, body: (d5 !== null && d5 >= 25 ? '+' + d5.toFixed(0) + '% in 5 minutes' : d15 !== null && d15 >= 50 ? '+' + d15.toFixed(0) + '% in 15 minutes' : '+' + chg24.toFixed(0) + '% today') + ' · now ' + fmt(p), warn: WARN }); return; }
+            if (tier && vol >= (cfg.hi ? 15000 : 40000) && gate(sym, tier)) { fire({ kind: 'pump', sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: '🚀 ' + name + ' is pumping on ' + venue, body: why + ' · now ' + fmt(p) + (chg24 ? ' · ' + (chg24 >= 0 ? '+' : '') + chg24.toFixed(0) + '% today' : ''), warn: WARN }); }
+        }
+        function scanF() {
+            return jget('https://contract.mexc.com/api/v1/contract/ticker').then(function (j) {
+                var a = j && j.data; if (!Array.isArray(a)) { throw new Error('bad data'); } var fresh = [], first = !K.init, m = {};
+                a.forEach(function (x) {
+                    var sym = String(x.symbol || ''), b = sym.replace(/_USDT$/, ''); if (!/_USDT$/.test(sym) || JUNK.test(b + 'USDT')) { return; } m[sym] = 1; var p = +x.lastPrice;
+                    if (!K.f[sym]) { K.f[sym] = 1; if (!first) { fresh.push({ b: b, p: p }); } }
+                    judge('MF:' + sym, b, p, +x.amount24 || 0, (+x.riseFallRate || 0) * 100, b + '@mexcf', 'MEXC futures');
+                });
+                fresh.forEach(function (c) { if (gate('NF:' + c.b, 1)) { fire({ kind: 'new', sym: c.b, spec: c.b + '@mexcf', title: '🆕 NEW COIN on MEXC futures: ' + c.b, body: 'Just listed. Price now ' + fmt(c.p), warn: WARN }); } });
+                saveK(); return a.length;
+            });
+        }
+        function scanS() {
+            return jget('https://api.mexc.com/api/v3/ticker/price').then(function (a) {
+                if (!Array.isArray(a)) { throw new Error('bad data'); } var fresh = [], first = !K.init;
+                a.forEach(function (x) { var sym = String(x.symbol || ''); if (!/USDT$/.test(sym) || JUNK.test(sym)) { return; } var b = sym.replace(/USDT$/, ''), p = +x.price; if (!K.s[sym]) { K.s[sym] = 1; if (!first) { fresh.push({ b: b, p: p }); } } ring('MS:' + sym, p, Date.now()); });
+                fresh.forEach(function (c) { if (gate('NS:' + c.b, 1)) { fire({ kind: 'new', sym: c.b, spec: c.b + '@mexcs', title: '🆕 NEW COIN on MEXC: ' + c.b + '/USDT', body: 'Just listed for trading. Price now ' + fmt(c.p), warn: WARN }); } });
+                /* spot pump check from our own price history (no volume figure in this list, so use a higher bar) */
+                a.forEach(function (x) { var sym = String(x.symbol || ''); if (!/USDT$/.test(sym) || JUNK.test(sym) || !K.f[sym.replace(/USDT$/, '_USDT')]) { return; } });
+                saveK(); return a.length;
+            });
+        }
+        function scanB() {
+            try { var T0 = S.tick || {}, ks = Object.keys(T0).filter(function (s) { return /USDT$/.test(s) && !JUNK.test(s); }); if (ks.length > 50) { var firstB = !K.binit, fr = []; ks.forEach(function (s) { if (!K.b[s]) { K.b[s] = 1; if (!firstB) { fr.push(s); } } }); if (firstB) { K.binit = Date.now(); } if (fr.length) { saveK(); fr.forEach(function (s) { var b = s.replace(/USDT$/, ''), pr = +(T0[s] && T0[s].p) || 0; if (gate('NB:' + b, 1)) { fire({ kind: 'new', sym: b, bn: s, p: pr, title: '🆕 NEW COIN on Binance futures: ' + b, body: 'Just appeared in the Binance list. Price now ' + fmt(pr), warn: WARN }); } }); } else if (firstB) { saveK(); } } } catch (e) { }
+            try { var T = S.tick || {}; Object.keys(T).forEach(function (s) { var t = T[s]; if (!/USDT$/.test(s) || !t || !(t.p > 0) || JUNK.test(s)) { return; } judge('BN:' + s, s.replace(/USDT$/, ''), +t.p, +t.q || 0, +t.chg || 0, '', 'Binance'); }); } catch (e) { }
+        }
+        function cycle() {
+            if (!cfg.on) { return; } var now = Date.now(); ST.at = now;
+            Promise.all([scanF().catch(function (e) { ST.err = 'MEXC futures: ' + (e && e.message || e); return 0; }), (now - (cycle.s || 0) > 28000 ? (cycle.s = now, scanS().catch(function (e) { ST.err = 'MEXC spot: ' + (e && e.message || e); return 0; })) : Promise.resolve(0))]).then(function (v) {
+                if (v[0] || v[1]) { ST.ok = Date.now(); ST.n = (v[0] || 0) + (v[1] || 0); ST.err = ''; if (!K.init) { K.init = Date.now(); saveK(); } }
+            }); scanB();
+        }
+        setTimeout(cycle, 4000);
+        setInterval(function () { cycle(); }, 15000);
+        /* ---------- settings + test, shown at the top of the Radar window ---------- */
+        function panel() {
+            var last = ST.ok ? Math.round((Date.now() - ST.ok) / 1000) + ' s ago' : 'not yet';
+            return '<div class="group pad"><b>🔔 Pump and new-coin alerts</b><div class="note" style="margin:4px 0 8px">Watches MEXC (spot and futures) and Binance all the time. A big banner, vibration and a notification-bar alert appear when a coin is newly listed or jumps fast. It cannot tell you which jumps will continue: most fast pumps fall back, and no one can promise profit.</div>' +
+                '<div class="m7ind" data-noswipe="1"><span class="' + (cfg.on ? 'on' : '') + '" data-xk="pumpon:' + (cfg.on ? 'off' : 'on') + '">' + (cfg.on ? '✓ Alerts ON' : 'Alerts OFF') + '</span><span class="' + (!cfg.hi ? 'on' : '') + '" data-xk="pumphi:off">Normal</span><span class="' + (cfg.hi ? 'on' : '') + '" data-xk="pumphi:on">More alerts</span><span data-pump="test" style="cursor:pointer">Send a test alert</span></div>' +
+                '<div class="note" style="margin-top:6px">Last check of MEXC: ' + e3(last) + ' · ' + (ST.n || 0) + ' coins watched · ' + Object.keys(K.s).length + ' spot + ' + Object.keys(K.f).length + ' futures known' + (ST.err ? ' · <span style="color:#ff453a">' + e3(ST.err) + '</span>' : '') + (ST.last ? '<br>Last alert: ' + e3(ST.last.title) : '') + '</div><div class="note" style="margin-top:4px">For alerts while the app is closed, switch on Background in Menu. Android can still stop apps to save battery.</div></div>';
+        }
+        X.on('pumpon', function (v) { cfg.on = v === 'on'; saveC(); X.again(); }); X.on('pumphi', function (v) { cfg.hi = v === 'on'; saveC(); X.again(); });
+        document.addEventListener('click', function (e) { var el = e.target.closest && e.target.closest('[data-pump="test"]'); if (!el) { return; } e.preventDefault(); e.stopPropagation(); fire({ kind: 'new', sym: 'TEST', spec: '', title: '🆕 TEST: this is how a new-coin alert looks', body: 'If you can see and feel this, alerts work on this phone.', warn: WARN }); }, true);
+        function logHtml(n) {
+            var L = LOG.slice(0, n || 8); if (!L.length) { return '<div class="note">No alerts yet. When a coin is newly listed on MEXC or Binance, or jumps fast, it appears here and stays until you clear it.</div>'; }
+            return L.map(function (x) { var ago = Math.max(0, Math.round((Date.now() - x.t) / 60000)), when = ago < 60 ? ago + ' min ago' : ago < 1440 ? Math.round(ago / 60) + ' h ago' : Math.round(ago / 1440) + ' d ago'; return '<div class="row tap" data-pump="logopen:' + (LOG.indexOf(x)) + '" style="display:block;cursor:pointer"><b>' + (x.mega ? '🚨 ' : '') + e3(x.title) + '</b><div class="note" style="margin:2px 0 0">' + e3(x.body) + ' · ' + when + '</div></div>'; }).join('');
+        }
+        function homeCard() { return '<div class="group pad" id="mwpumpcard"><div style="display:flex;justify-content:space-between;align-items:center"><b>🔔 New coins and pumps</b><span class="mut" style="font-size:12px" data-act="win:radar">See all ›</span></div><div style="margin-top:6px">' + logHtml(3) + '</div></div>'; }
+        document.addEventListener('click', function (e) { var el = e.target.closest && e.target.closest('[data-pump^="logopen:"]'); if (!el) { return; } e.preventDefault(); e.stopPropagation(); var x = LOG[+el.getAttribute('data-pump').slice(9)]; if (x) { try { openA(x); } catch (er) { } } }, true);
+        X.on('pumpclr', function () { LOG = []; try { localStorage.setItem(LK, '[]'); } catch (e) { } X.again(); });
+        try {
+            var _vo = VIEWS.overview; if (typeof _vo === 'function') { VIEWS.overview = function () { var h = _vo.apply(this, arguments); return homeCard() + h; }; }
+        } catch (e) { }
+        try {
+            var _vr = VIEWS.radar; if (typeof _vr === 'function') { VIEWS.radar = function () { return panel() + '<div class="group pad"><b>Alert history</b> <span class="mut" style="font-size:12px;cursor:pointer" data-xk="pumpclr:1">Clear</span><div style="margin-top:6px">' + logHtml(30) + '</div></div>' + _vr.apply(this, arguments); }; }
+            var _vh = VIEWS.overview; if (typeof _vh === 'function') { /* Home keeps its layout; alerts appear on top of any window */ }
+        } catch (e) { }
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = '@keyframes mwpin{0%{transform:translateY(-30px);opacity:0}100%{transform:none;opacity:1}}@keyframes mwflash{0%{background:rgba(150,0,0,.96)}100%{background:rgba(210,20,20,.96)}}'; document.head.appendChild(st);
+        window.__pump = { v: 1, LOG: function () { return LOG; }, alarm: alarm, cfg: cfg, K: K, H: H, judge: judge, fire: fire, cycle: cycle, ST: ST };
+    } catch (e) { try { console.error('p9new', e); } catch (e2) { } }
 })();
 
 function renderView(keep) {
