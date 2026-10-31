@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.114';
+var BUILD = '2026-10-31.116';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5331,8 +5331,7 @@ glRows = function () {
 var _ov111 = VIEWS.overview;
 VIEWS.overview = function () {
     var n = 0; try { n = bpList('fh').length + bpList('day').length; } catch (e) {}
-    var card = '<div class="group pad tap" data-m10="bestopen" style="border-left:4px solid #ff9f0a"><div style="display:flex;justify-content:space-between;align-items:center"><b>⭐ Best Picks</b><span class="mut">' + (n ? n + ' ready' : 'waiting for a strong setup') + ' ›</span></div><div class="mut" style="font-size:12.5px;margin-top:4px">The few most reliable ideas for the next hours and the whole day. A suggestion only.</div></div>' +
-        '<div class="group pad tap" data-m10="glopen" style="margin-top:8px"><div style="display:flex;justify-content:space-between;align-items:center"><b>🗂 At a glance</b><span class="mut">every recommendation ›</span></div></div>';
+    var card = '<div class="group pad tap" data-m10="bestopen" style="border-left:4px solid #ff9f0a"><div style="display:flex;justify-content:space-between;align-items:center"><b>⭐ Best Picks</b><span class="mut">' + (n ? n + ' ready' : 'waiting for a strong setup') + ' ›</span></div><div class="mut" style="font-size:12.5px;margin-top:4px">The few most reliable ideas for the next hours and the whole day. A suggestion only.</div></div>';
     return card + _ov111.apply(this, arguments);
 };
 document.addEventListener('click', function (e) {
@@ -8327,7 +8326,6 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
     /* ---------- promo banners (the app's own, no outside ads) ---------- */
     var PROMOS = [
         ['learn', 'Learn to trade, step by step', '36 lessons + 13 animated clips. Free.', 'win:academy', 210, '🎓'],
-        ['ideas', 'Today\'s ranked Trade Ideas', 'Best first, with the reasons shown.', 'win:ideas', 30, '⭐'],
         ['safe', 'Safety first', 'Use a stop-loss. Risk 1%. Never share keys.', 'clip:risk', 140, '🛡'],
         ['chat', 'Ask Baba AI anything', 'Answers with pictures and videos.', 'win:pchat', 280, '💬'],
         ['verify', 'Get verified the safe way', 'Checklist for exchange identity checks.', 'win:verify', 195, '🪪']
@@ -15440,7 +15438,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         try { VIEWS.proof = vProof; LIVE.proof = 0; if (!winDef('proof') || winDef('proof').id !== 'proof') { WINS.push({ id: 'proof', ic: '🧾', c: '#34c759', n: 'Proof', t: 'Proof', sub: 'Honest practice scoreboard with a pass-mark' }); } } catch (e) { try { WINS.push({ id: 'proof', ic: '🧾', c: '#34c759', n: 'Proof', t: 'Proof', sub: 'Honest practice scoreboard' }); VIEWS.proof = vProof; LIVE.proof = 0; } catch (e2) { } }
         var FAM = [
-            ['Home', ['overview', 'ideas', 'radar', 'brief', 'mood', 'movers', 'analyst', 'live']],
+            ['Home', ['overview', 'ideas', 'radar', 'brief', 'movers', 'analyst', 'live']],
             ['Markets', ['market', 'find', 'chart', 'siglab', 'gold', 'rates', 'news', 'newc', 'split']],
             ['Exchanges', ['exchanges', 'exness', 'compare', 'exdesk', 'mexc', 'bitget']],
             ['Trade', ['hub', 'tpro', 'xtrade', 'trade', 'terminal', 'risk', 'hist', 'copy', 'signals']],
@@ -17376,6 +17374,56 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             return out;
         };
     } catch (e) { try { console.error('p9zszzu', e); } catch (e2) { } }
+})();
+/* ===== CK: p9zszzv: one clean, sharp "depth" look for every window and Home (Binance-style sheets, soft glow background, layered cards), and LIVE tab buttons with counts ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent =
+            /* pure soft background: tiny glow in the corners, no flicker (not fixed-attachment) */
+            'body{background-image:radial-gradient(120% 40% at 0% 0%,rgba(124,92,255,.10),transparent 60%),radial-gradient(90% 36% at 100% 4%,rgba(0,196,180,.09),transparent 62%)!important;background-repeat:no-repeat!important;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}'
+            /* cards: rounded, layered shadow, top highlight = gentle 3D */
+            + '#view .group,#view .m7card,#view .xkcard{border-radius:20px!important;box-shadow:0 1px 0 rgba(255,255,255,.65) inset,0 8px 22px rgba(40,30,110,.09),0 1px 3px rgba(40,30,110,.08)!important;border-color:rgba(124,92,255,.14)}'
+            + '#view .tile,#view .c2,#mwcc .bn2>div{border-radius:18px!important;box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 6px 16px rgba(40,30,110,.10),0 1px 2px rgba(40,30,110,.08)!important;transition:transform .12s}'
+            + '#view .tile:active,#view .c2:active,#view .btn:active{transform:translateY(1px) scale(.985)}'
+            + '#view .btn{border-radius:14px}'
+            + '#view .segc span,#view .segc button{border-radius:12px}'
+            + '.fmstrip button{border-radius:18px!important;box-shadow:0 3px 9px rgba(40,30,110,.10)}'
+            + '.tab-bar,#tabs,.tabs{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}'
+            + '@media (prefers-color-scheme:dark){#view .group,#view .m7card,#view .xkcard{box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 8px 24px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.4)!important;border-color:rgba(160,140,255,.22)}#view .tile,#view .c2,#mwcc .bn2>div{box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 6px 18px rgba(0,0,0,.45)!important}}'
+            + '#view>.tzchip.tzs{display:flex!important;width:100%!important;max-width:100%!important;box-sizing:border-box;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px!important;padding:7px 12px!important;margin:0 0 6px!important;white-space:nowrap}.stbtn{flex:none;margin:0;padding:4px 2px;background:none;color:inherit;font:800 13px system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none}.stbtn::after{content:"";width:8px;height:8px;border-radius:50%;background:#16a34a;animation:lvr 1.8s infinite}html.mwcalm .stbtn::after{animation:none}'
+            /* live badges */
+            + '.lvb{display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:1px 6px;border-radius:9px;background:rgba(22,163,74,.16);color:#16a34a;font:800 11px system-ui,sans-serif;vertical-align:middle}.lvb::before{content:"";width:6px;height:6px;border-radius:50%;background:#16a34a;animation:lvp 1.6s infinite}@keyframes lvp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}'
+            + 'html.mwcalm .lvb::before{animation:none}'
+            + '.lvd{position:relative}.lvd::after{content:"";position:absolute;top:8px;right:10px;width:8px;height:8px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 0 rgba(22,163,74,.6);animation:lvr 1.8s infinite}@keyframes lvr{0%{box-shadow:0 0 0 0 rgba(22,163,74,.55)}100%{box-shadow:0 0 0 9px rgba(22,163,74,0)}}html.mwcalm .lvd::after{animation:none}';
+        document.head.appendChild(st);
+        function cnt(id) {
+            try {
+                if (id === 'ideas') { var n = 0; try { n = bpList('fh').length + bpList('day').length; } catch (e) { } return n; }
+                if (id === 'radar') { var r = window.__radar && window.__radar.R; return r && r.rows ? r.rows.length : 0; }
+                if (id === 'movers') { return (S.risers || []).length; }
+                if (id === 'brief') { return -1; } if (id === 'analyst' || id === 'live') { return -1; }
+            } catch (e) { } return 0;
+        }
+        function live() {
+            try {
+                document.querySelectorAll('.fmstrip button[data-act^="win:"]').forEach(function (b) {
+                    var id = b.getAttribute('data-act').slice(4); if (!/^(ideas|radar|brief|movers|analyst|live)$/.test(id)) { return; }
+                    var n = cnt(id), old = b.querySelector('.lvb'), t = n > 0 ? String(n > 99 ? '99+' : n) : n < 0 ? 'live' : '';
+                    if (!t) { if (old) { old.remove(); } return; }
+                    if (old) { if (old.textContent !== t) { old.textContent = t; } } else { b.insertAdjacentHTML('beforeend', '<span class="lvb">' + t + '</span>'); }
+                });
+                var hv = document.getElementById('view'), tz = hv && hv.querySelector('.tzchip');
+                if (tz && S.win === 'overview' && !tz.querySelector('.stbtn')) { tz.classList.add('tzs'); tz.insertAdjacentHTML('beforeend', '<span class="stbtn" data-act="win:agent" data-noswipe="1">🧠 Strategy</span>'); }
+                else if (tz && S.win !== 'overview') { var sb = tz.querySelector('.stbtn'); if (sb) { sb.remove(); tz.classList.remove('tzs'); } }
+                var home = document.getElementById('view'); if (home) {
+                    home.querySelectorAll('[data-act="win:analyst"],[data-act="win:risk"],[data-act="win:news"],[data-act="win:rates"],[data-act="win:alerts"]').forEach(function (e) { if (!e.closest('.fmstrip') && !e.classList.contains('lvd') && e.getBoundingClientRect().width > 50 && e.getBoundingClientRect().width < 200) { e.classList.add('lvd'); } });
+                }
+            } catch (e) { }
+        }
+        setInterval(live, 2500); setTimeout(live, 600);
+        try { new MutationObserver(function () { clearTimeout(live.t); live.t = setTimeout(live, 250); }).observe(document.getElementById('view') || document.body, { childList: true }); } catch (e) { }
+    } catch (e) { try { console.error('p9zszzv', e); } catch (e2) { } }
 })();
 
 function renderView(keep) {
