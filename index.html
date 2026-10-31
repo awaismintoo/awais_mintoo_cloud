@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.209';
+var BUILD = '2026-10-31.219';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -6757,7 +6757,7 @@ function tpBtn(act, tx, col, wide) { return '<span class="pfbtn" data-m20="' + a
 function vTpro() {
     var T = S.tp, c = trCfg(), live = c.net === 'live', has = tpHas(), t = S.tick[T.sym], long = T.side === 'LONG', C = tpCalc(), h = '';
     if (has && !T.at && !T.busy) { tpRefresh(); }
-    h += '<div class="warn" style="margin-top:0;' + (live ? 'background:rgba(229,56,59,.14);color:var(--red)' : '') + '">' + (live ? '🔴 LIVE: real money on your Binance Futures account.' : '🔵 TEST MODE: Binance testnet, fake money. Change it in Profile > Connections or the Trade window.') + '</div>';
+    h += '<div class="warn" style="margin-top:0;' + (live ? 'background:rgba(229,56,59,.14);color:var(--red)' : c.net === 'sim' ? 'background:rgba(10,132,255,.14)' : '') + '">' + (c.net === 'sim' ? '🧪 PAPER TRADING: this is the real Trade Pro ticket, but with pretend money. Nothing is sent to Binance. Switch to real in the Trading options.' : live ? '🔴 LIVE: real money on your Binance Futures account.' : '🔵 TEST MODE: Binance testnet, fake money. Change it in Profile > Connections or the Trade window.') + '</div>';
     if (!has) { h += '<div class="group pad"><b>Connect your Binance key first</b><div class="note">Orders need your own API key (withdrawals OFF).</div>' + tpBtn('conn:0', 'Connect Binance key', '#0a84ff') + '</div>'; }
     h += '<div class="m7q"><span>🔍</span><input data-m20in="symIn" placeholder="Coin, e.g. BTC, SOL, XAU" value="' + esc(T.symIn) + '" autocomplete="off"><button class="btn" style="width:auto;margin:0;padding:6px 14px" data-m20="setsym:0">Go</button></div>';
     h += '<div class="group pad"><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:20px">' + esc(base(T.sym)) + '/USDT</b> <small class="mut">Perpetual</small></div><div style="text-align:right"><b style="font-size:20px">' + (t ? fmtP(t.p, T.sym) : '…') + '</b><div class="' + (chgOf(T.sym).v >= 0 ? 'up' : 'dn') + '" style="font-size:13px">' + (t ? pct(chgOf(T.sym).v) : '') + '</div></div></div>' +
@@ -6793,7 +6793,7 @@ function vTpro() {
     T.pos.forEach(function (x) {
         var amt = +x.positionAmt, lv = +x.leverage || 1, entry = +x.entryPrice, mp = +x.markPrice, up = +x.unRealizedProfit, mg = Math.abs(amt) * entry / lv, roe = mg ? up / mg * 100 : 0, isL = amt > 0, ps = x.positionSide && x.positionSide !== 'BOTH' ? x.positionSide : '';
         h += '<div class="row" style="display:block"><div style="display:flex;justify-content:space-between"><b>' + esc(x.symbol) + ' ' + (isL ? '▲ LONG' : '▼ SHORT') + ' ' + lv + '× ' + esc((x.marginType || '').toLowerCase()) + '</b><b class="' + (up >= 0 ? 'up' : 'dn') + '">' + usd(up) + ' (' + roe.toFixed(1) + '%)</b></div><div class="note" style="margin:3px 0">Size ' + Math.abs(amt) + ' · Entry ' + fmtP(entry, x.symbol) + ' · Mark ' + fmtP(mp, x.symbol) + ' · Liq ' + (+x.liquidationPrice ? fmtP(+x.liquidationPrice, x.symbol) : '–') + '</div>' +
-            (window.__pbox ? window.__pbox({ sym: x.symbol, side: isL ? 'LONG' : 'SHORT', entry: entry, mark: mp, qty: Math.abs(amt), margin: mg, lev: lv, liq: +x.liquidationPrice, at: +x.updateTime, sl: tpLvl(x.symbol, 'S'), tp: tpLvl(x.symbol, 'T'), kind: '💵 Real, Binance' }) : '') + [25, 50, 100].map(function (p) { return tpBtn('close:' + x.symbol + ':' + (isL ? 'SELL' : 'BUY') + ':' + Math.abs(amt) + ':' + p + ':' + ps, p === 100 ? 'Close all' : 'Close ' + p + '%', p === 100 ? '#ff3b30' : ''); }).join('') + tpBtn('use:' + x.symbol, 'Open ticket') + '</div>';
+            (window.__pbox ? window.__pbox({ sym: x.symbol, side: isL ? 'LONG' : 'SHORT', entry: entry, mark: mp, qty: Math.abs(amt), margin: mg, lev: lv, liq: +x.liquidationPrice, at: +x.updateTime, sl: tpLvl(x.symbol, 'S'), tp: tpLvl(x.symbol, 'T'), kind: (trCfg().net === 'sim' ? '🧪 Paper (Trade Pro)' : '💵 Real, Binance') }) : '') + [25, 50, 100].map(function (p) { return tpBtn('close:' + x.symbol + ':' + (isL ? 'SELL' : 'BUY') + ':' + Math.abs(amt) + ':' + p + ':' + ps, p === 100 ? 'Close all' : 'Close ' + p + '%', p === 100 ? '#ff3b30' : ''); }).join('') + tpBtn('use:' + x.symbol, 'Open ticket') + '</div>';
     });
     h += '</div>' + sh('Open orders') + '<div class="group">';
     var oo = (T.ord || []).map(function (o) { return { kind: 'o', id: o.orderId, sym: o.symbol, side: o.side, type: o.type, px: +o.price || +o.stopPrice, qty: o.origQty, ro: o.reduceOnly }; }).concat((T.algo || []).map(function (o) { return { kind: 'a', id: o.algoId, sym: o.symbol, side: o.side, type: o.orderType || o.type, px: +o.triggerPrice || +o.stopPrice, qty: o.quantity || o.origQty, ro: o.reduceOnly }; }));
@@ -19024,12 +19024,15 @@ try {
         window.__ptrade = { open: function (c) { try { if (c.sym) { FS.sym = nm(c.sym); } FS.side = c.side === 'SHORT' ? 'SHORT' : 'LONG'; FS.type = 'MARKET'; FS.sl = ''; FS.tp = ''; FS.msg = ''; FS.tab = 'pos'; if (c.sl > 0) { FS.sl = String(+(+c.sl).toPrecision(6)); } if (c.tp > 0) { FS.tp = String(+(+c.tp).toPrecision(6)); } } catch (e) { } gotoWin('ptrade'); }, A: function () { return A; }, check: check,
             quick: function (c) {
                 try {
-                    FS.sym = nm(c.sym); FS.side = c.side === 'SHORT' ? 'SHORT' : 'LONG'; FS.type = 'MARKET'; FS.lev = c.lev || 3; FS.pct = c.pct || 10;
+                    FS.sym = nm(c.sym); FS.side = c.side === 'SHORT' ? 'SHORT' : 'LONG'; FS.type = 'MARKET'; FS.lev = c.lev || 3; FS.pct = c.pct || 10; if (c.margin > 0) { var av = avail(); FS.pct = Math.max(0.01, Math.min(100, c.margin / (av || 1) * 100)); }
                     var px = price(FS.sym), L = FS.side === 'LONG'; if (!(px > 0)) { return 'No live price for ' + bs(FS.sym) + ' yet. Wait a few seconds and try again.'; }
-                    FS.sl = String(+(px * (L ? 0.98 : 1.02)).toPrecision(6)); FS.tp = String(+(px * (L ? 1.03 : 0.97)).toPrecision(6)); if (c.sl > 0 && (L ? c.sl < px : c.sl > px)) { FS.sl = String(c.sl); } if (c.tp > 0 && (L ? c.tp > px : c.tp < px)) { FS.tp = String(c.tp); }
+                    FS.sl = String(+(px * (L ? 0.98 : 1.02)).toPrecision(6)); FS.tp = String(+(px * (L ? 1.03 : 0.97)).toPrecision(6)); if (c.slPct != null) { FS.sl = c.slPct > 0 ? String(+(px * (L ? 1 - c.slPct / 100 : 1 + c.slPct / 100)).toPrecision(6)) : ''; } if (c.tpPct != null) { FS.tp = c.tpPct > 0 ? String(+(px * (L ? 1 + c.tpPct / 100 : 1 - c.tpPct / 100)).toPrecision(6)) : ''; } if (c.sl > 0 && (L ? c.sl < px : c.sl > px)) { FS.sl = String(c.sl); } if (c.tp > 0 && (L ? c.tp > px : c.tp < px)) { FS.tp = String(c.tp); }
                     place(); var m = FS.msg; FS.sl = ''; FS.tp = ''; FS.msg = ''; return m.replace(/<[^>]+>/g, '');
                 } catch (e) { return 'Could not place the paper trade.'; }
-            } };
+            },
+            close: function (i) { try { var p = A.pos[+i]; if (!p) { return false; } closePos(+i, price(p.sym) || p.entry, 'Closed by you'); return true; } catch (e) { return false; } },
+            closeAll: function () { var n = 0; try { for (var i = A.pos.length - 1; i >= 0; i--) { var p = A.pos[i]; closePos(i, price(p.sym) || p.entry, 'Closed by you (stop all)'); n++; } A.ord = []; save(); } catch (e) { } return n; },
+            avail: function () { return avail(); } };
     } catch (e) { try { console.log('pt', e); } catch (er) { } }
 })();
 /* ===== p9tw: persistent Trading mode (More > Trading options). Long/Short/Trade-this go straight to the chosen mode, a pop-up names it until closed, a small badge stays on trading screens. ===== */
@@ -19080,9 +19083,18 @@ try {
         function ask(t, b, y, col, cb) { if (window.__ask) { window.__ask(t, b, y, col, cb); } else if (window.confirm(t + ' ' + String(b).replace(/<[^>]+>/g, ' '))) { cb(); } }
         function run(c) {
             var m = mode(), M = MODES[m];
-            if (m === 'pm') { ask('🧪 Paper trade (virtual money)', (c.side === 'SHORT' ? '▼ SHORT ' : '▲ LONG ') + '<b>' + String(c.sym || '').replace(/USDT$/, '') + '</b><br>Stop-loss and target are set for you. No real money is used.', 'Yes, open paper trade', '#007aff', function () { var r = ''; try { r = window.__ptrade.quick({ sym: c.sym, side: c.side, sl: c.sl, tp: c.tp }); } catch (er) { r = 'Could not place the paper trade.'; } toast(r || 'Paper trade opened'); try { renderView(true); } catch (er) { } }); }
-            else if (m === 'pb') { ask('🧪 Start the paper bot?', 'The paper bot trades virtual money only, using live prices. You can press the STOP button any time.', 'Yes, start paper bot', '#007aff', function () { try { var F = S.fb; if (!F.on) { F.on = true; F.last = 0; F.lockUntil = 0; F.note = ''; fbScan(); fbSave(); } toast('🟢 Paper bot is running (virtual money)'); renderView(true); } catch (er) { go('paper'); } }); }
-            else if (m === 'rb') { ask('💵 Start the REAL-MONEY bot?', 'The Baba Bot will place <b>real orders</b> on your Binance account by itself, each with a stop-loss and take-profit. You can lose money. You can press STOP any time.', 'Yes, start real bot', '#ff3b30', function () { try { if (!rbKeys()) { toast('Add your Binance key first (Profile › Connections)'); go('rbot'); return; } if (window.__lkUnlock) { window.__lkUnlock(); } if (!S.rb.armed) { rbActivate(true); } rbStart(); toast(S.rb.running ? '🟢 Real bot is running' : (S.rb.note || 'Real bot could not start; open Baba Bot')); renderView(true); } catch (er) { go('rbot'); } }); }
+            var NOTE = '<div class="nt">Margin mode: <b>Isolated</b> (a loss can never go beyond the margin you set). For Cross margin, limit or stop orders, trailing and the rest, open the full ticket from More › Trade Pro.</div>';
+            if (m === 'pm') {
+                var dsl = c.slp > 0 ? Math.round(c.slp * 10) / 10 : 2, dtp = c.sl > 0 && c.tp > 0 && c.slp > 0 ? Math.round(c.slp * (c.rr || 1.5) * 10) / 10 : 3;
+                var F0 = JSON.parse(JSON.stringify(window.__fields.pm)); F0[2].v = [1, 2, 3, 5].indexOf(Math.round(dsl)) >= 0 && Math.abs(dsl - Math.round(dsl)) < 0.05 ? Math.round(dsl) : F0[2].v; if (c.slp > 0) { F0[2].opts.push([dsl, dsl + '%']); F0[2].v = dsl; } if (c.tp > 0 && c.sl > 0) { F0[3].opts.push([dtp, dtp + '%']); F0[3].v = dtp; }
+                window.__askForm('🧪 Paper trade (virtual money)', (c.side === 'SHORT' ? '▼ SHORT ' : '▲ LONG ') + '<b>' + String(c.sym || '').replace(/USDT$/, '') + '</b>' + NOTE, F0, 'Yes, open paper trade', '#007aff', function (v) { var r = ''; try { r = window.__ptrade.quick({ sym: c.sym, side: c.side, lev: v.lev, margin: v.margin, slPct: v.sl, tpPct: v.tp }); } catch (er) { r = 'Could not place the paper trade.'; } toast(r || 'Paper trade opened'); try { renderView(true); } catch (er) { } }, 'pm');
+            }
+            else if (m === 'pb') {
+                window.__askForm('🧪 Start the paper bot?', 'The paper bot trades virtual money only, using live prices. STOP stops it any time.' + NOTE, window.__fields.pb, 'Yes, start paper bot', '#007aff', function (v) { try { var F = S.fb; F.stake = v.stake; F.sl = v.sl; F.maxOpen = v.maxOpen; if (!F.on) { F.on = true; F.last = 0; F.lockUntil = 0; F.note = ''; fbScan(); } fbSave(); toast('🟢 Paper bot is running (virtual money)'); renderView(true); } catch (er) { go('paper'); } }, 'pb');
+            }
+            else if (m === 'rb') {
+                window.__askForm('💵 Start the REAL-MONEY bot?', 'The Baba Bot will place <b>real orders</b> on your Binance account by itself, each with a stop-loss and take-profit. You can lose money. STOP stops it any time.' + NOTE, window.__fields.rb, 'Yes, start real bot', '#ff3b30', function (v) { try { if (!rbKeys()) { toast('Add your Binance key first (Profile › Connections)'); go('rbot'); return; } var R = S.rb; R.margin = v.margin; R.lev = v.lev; R.slp = v.slp; R.tpp = v.tpp; R.maxOpen = v.maxOpen; R.dayLoss = v.dayLoss; if (window.__lkUnlock) { window.__lkUnlock(); } if (!R.armed) { rbActivate(true); } rbStart(); rbSave(); toast(R.running ? '🟢 Real bot is running' : (R.note || 'Real bot could not start; open Baba Bot')); renderView(true); } catch (er) { go('rbot'); } }, 'rb');
+            }
             else if (c.el) { BYPASS = 1; try { c.el.click(); } catch (er) { } BYPASS = 0; } else { try { S.tp.sym = c.sym; S.tp.side = c.side; } catch (er) { } go('tpro'); setTimeout(function () { if (document.documentElement.getAttribute('data-win') !== 'tpro') { try { S.tp.sym = c.sym; S.tp.side = c.side; } catch (er) { } go('tpro'); } }, 700); setTimeout(function () { if (document.documentElement.getAttribute('data-win') !== 'tpro') { try { S.hist = []; S.win = 'tpro'; renderView(true); } catch (er) { } } }, 1500); }
             pop();
         }
@@ -19557,16 +19569,17 @@ try {
         function hgt() { return D.size === 'min' ? 52 : D.size === 'max' ? Math.round(window.innerHeight * 0.82) : Math.round(window.innerHeight * 0.4); }
         function base(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/USDT$/, ''); }
         function fp2(v, s) { try { return fmtP(v, s); } catch (e) { return String(v); } }
+        window.__posItems = function () { posList(); return window.__lastItems || []; };
         function posList() {
-            var h = '', n = 0;
-            function add(title, o) { n++; h += '<div style="margin-top:6px"><b>' + title + '</b>' + (window.__pbox ? window.__pbox(o) : '') + '<div style="display:flex;gap:6px"><span data-sp="trade:' + o.sym + '" style="padding:8px 10px;border-radius:10px;background:#0a84ff;color:#fff;font-weight:700;font-size:12.5px">Open trade window</span><span data-sp="chart:' + base(o.sym) + '" style="padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.25);font-weight:700;font-size:12.5px">📈 Chart</span></div></div>'; }
-            try { var A = window.__ptrade && window.__ptrade.A(); if (A && A.pos) { A.pos.forEach(function (p) { add('🧾 Paper ' + base(p.sym) + ' ' + p.side + ' ' + p.lev + '×', { sym: p.sym, side: p.side, entry: p.entry, qty: p.qty, margin: p.margin, lev: p.lev, sl: p.sl, tp: p.tp, liq: p.liq, at: p.at, kind: '🧾 Paper by hand' }); }); } } catch (e) { }
-            try { (S.bot.open || []).forEach(function (p) { add('🧪 Paper bot ' + base(p.sym) + ' ' + p.side, { sym: p.sym, side: p.side, entry: p.entry, notional: p.notional, margin: p.margin, lev: p.lev, sl: p.sl, tp: p.tp, at: p.at, kind: '🧪 Paper bot' }); }); } catch (e) { }
-            try { (S.fb.open || []).forEach(function (p) { add('🤖 Bot Baba ' + base(p.sym) + ' ' + (p.sg > 0 ? 'LONG' : 'SHORT'), { sym: p.sym, side: p.sg > 0 ? 'LONG' : 'SHORT', entry: p.entry, notional: p.size, sl: p.entry * (1 - p.sg * (p.sl || S.fb.sl) / 100), tp: p.tp ? p.entry * (1 + p.sg * p.tp / 100) : 0, at: p.t0, kind: '🤖 Bot Baba (paper)' }); }); } catch (e) { }
-            try { (S.rb.open || []).forEach(function (p) { add('💵 Baba Bot ' + base(p.sym) + ' ' + (p.sg > 0 ? 'LONG' : 'SHORT'), { sym: p.sym, side: p.sg > 0 ? 'LONG' : 'SHORT', entry: +p.entry, qty: +(p.amt || p.qtyS), margin: p.margin, lev: p.lev, sl: +p.sl, tp: +p.tp, at: p.t0, kind: '💵 Baba Bot (real)' }); }); } catch (e) { }
-            try { ((S.tp && S.tp.pos) || []).forEach(function (x) { var amt = +x.positionAmt, lv = +x.leverage || 1; add('💵 Binance ' + base(x.symbol) + ' ' + (amt > 0 ? 'LONG' : 'SHORT'), { sym: x.symbol, side: amt > 0 ? 'LONG' : 'SHORT', entry: +x.entryPrice, mark: +x.markPrice, qty: Math.abs(amt), margin: Math.abs(amt) * +x.entryPrice / lv, lev: lv, liq: +x.liquidationPrice, at: +x.updateTime, sl: tpLvl(x.symbol, 'S'), tp: tpLvl(x.symbol, 'T'), kind: '💵 Real, Binance' }); }); } catch (e) { }
+            var h = '', n = 0; window.__lastItems = [];
+            function add(title, o, ck) { n++; window.__lastItems.push({ title: title, o: o, ck: ck || '' }); h += '<div style="margin-top:6px"><b>' + title + '</b>' + (ck ? '<span data-sp="close:' + ck + '" style="float:right;padding:5px 10px;border-radius:10px;background:#ff3b30;color:#fff;font-weight:800;font-size:12px">⏹ Close</span>' : '') + (window.__pbox ? window.__pbox(o) : '') + '<div style="display:flex;gap:6px"><span data-sp="live:' + (window.__liveReg ? window.__liveReg(o, ck) : 0) + '" style="padding:8px 10px;border-radius:10px;background:#0a84ff;color:#fff;font-weight:700;font-size:12.5px">📺 Live trade window</span><span data-sp="chart:' + base(o.sym) + '" style="padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.25);font-weight:700;font-size:12.5px">📈 Chart</span></div></div>'; }
+            try { var A = window.__ptrade && window.__ptrade.A(); if (A && A.pos) { A.pos.forEach(function (p) { add('🧾 Paper ' + base(p.sym) + ' ' + p.side + ' ' + p.lev + '×', { sym: p.sym, side: p.side, entry: p.entry, qty: p.qty, margin: p.margin, lev: p.lev, sl: p.sl, tp: p.tp, liq: p.liq, at: p.at, kind: '🧾 Paper by hand' }, 'pp:' + p.id); }); } } catch (e) { }
+            try { (S.bot.open || []).forEach(function (p) { add('🧪 Paper bot ' + base(p.sym) + ' ' + p.side, { sym: p.sym, side: p.side, entry: p.entry, notional: p.notional, margin: p.margin, lev: p.lev, sl: p.sl, tp: p.tp, at: p.at, kind: '🧪 Paper bot' }, 'bp:' + p.sym + ':' + p.at); }); } catch (e) { }
+            try { (S.fb.open || []).forEach(function (p) { add('🤖 Bot Baba ' + base(p.sym) + ' ' + (p.sg > 0 ? 'LONG' : 'SHORT'), { sym: p.sym, side: p.sg > 0 ? 'LONG' : 'SHORT', entry: p.entry, notional: p.size, sl: p.entry * (1 - p.sg * (p.sl || S.fb.sl) / 100), tp: p.tp ? p.entry * (1 + p.sg * p.tp / 100) : 0, at: p.t0, kind: '🤖 Bot Baba (paper)' }, 'fb:' + p.t0); }); } catch (e) { }
+            try { (S.rb.open || []).forEach(function (p) { add('💵 Baba Bot ' + base(p.sym) + ' ' + (p.sg > 0 ? 'LONG' : 'SHORT'), { sym: p.sym, side: p.sg > 0 ? 'LONG' : 'SHORT', entry: +p.entry, qty: +(p.amt || p.qtyS), margin: p.margin, lev: p.lev, sl: +p.sl, tp: +p.tp, at: p.t0, kind: '💵 Baba Bot (real)' }, 'rb:' + p.sym); }); } catch (e) { }
+            try { ((S.tp && S.tp.pos) || []).forEach(function (x) { var amt = +x.positionAmt, lv = +x.leverage || 1; add((window.__simOn && window.__simOn() ? '🧪 Paper Pro ' : '💵 Binance ') + base(x.symbol) + ' ' + (amt > 0 ? 'LONG' : 'SHORT'), { sym: x.symbol, side: amt > 0 ? 'LONG' : 'SHORT', entry: +x.entryPrice, mark: +x.markPrice, qty: Math.abs(amt), margin: Math.abs(amt) * +x.entryPrice / lv, lev: lv, liq: +x.liquidationPrice, at: +x.updateTime, sl: tpLvl(x.symbol, 'S'), tp: tpLvl(x.symbol, 'T'), kind: (window.__simOn && window.__simOn() ? '🧪 Paper (Trade Pro)' : '💵 Real, Binance') }, 'br:' + x.symbol + ':' + (amt > 0 ? 'L' : 'S')); }); } catch (e) { }
             try { (window.__holds ? window.__holds() : []).forEach(function (x) { add('🪙 Spot ' + base(x.sym) + ' (' + x.ex + ')', { sym: x.sym, side: 'LONG', entry: x.entry, qty: x.qty, tp: x.tp, sl: x.sl, at: x.at, spot: 1, kind: '🪙 Spot holding' }); }); } catch (e) { }
-            if (!n) { h = '<div class="note" style="padding:10px">No open trades right now (paper, bots or real). Use the Watch tab to open one.</div>'; }
+            if (!n) { h = '<div class="note" style="padding:10px">No open trades right now (paper, bots or real). Use the Watch tab to open one.</div>'; } else { h = '<div style="display:flex;gap:8px;margin:2px 0 4px"><span data-sp="stopall" style="flex:1;text-align:center;padding:11px;border-radius:12px;background:#d70015;color:#fff;font-weight:800;font-size:14px">⛔ Force stop ALL (' + n + ')</span></div>' + h; }
             return h;
         }
         function watch() {
@@ -19581,6 +19594,7 @@ try {
             var h = '', R = S.rb || {}, F = S.fb || {}, B = S.bot || {}, any = false;
             function line(t, c) { any = true; h += '<div class="rw"><div style="flex:1">' + t + '</div>' + (c || '') + '</div>'; }
             line('💵 Baba Bot (real): <b>' + (R.armed && R.running ? (R.paused ? 'PAUSED' : 'ON') : 'off') + '</b>' + (R.running ? ' · today ' + (+R.dayPnl || 0).toFixed(2) + ' USDT' : ''), '<span class="bt" data-sp="win:rbot" style="background:#64748b">Open</span>');
+            line('🧓 Baba AI reminders: <b>' + (window.__bRemState ? window.__bRemState() : '') + '</b>', '<span class="bt" data-sp="brem" style="background:#64748b">' + (window.__bRemAsleep && window.__bRemAsleep() ? 'Wake up' : 'Sleep 1h') + '</span>');
             line('🤖 Bot Baba (paper): <b>' + (F.on ? 'ON' : 'off') + '</b> · ' + ((F.open || []).length) + ' open', '<span class="bt" data-sp="win:botpro" style="background:#64748b">Open</span>');
             line('🧪 Paper bot: <b>' + (B.on ? 'ON' : 'off') + '</b> · ' + ((B.open || []).length) + ' open', '<span class="bt" data-sp="win:bot" style="background:#64748b">Open</span>');
             var p = false; try { p = window.__pausedNow(); } catch (e) { }
@@ -19614,11 +19628,11 @@ try {
             else if (k === 'add') { var i = dock.querySelector('[data-spin]'), c = base(i && i.value); if (c && D.wl.indexOf(c) < 0) { D.wl.unshift(c); } }
             else if (k.indexOf('del:') === 0) { D.wl = D.wl.filter(function (c) { return c !== k.slice(4); }); }
             else if (k.indexOf('long:') === 0) { trade(k.slice(5), 'LONG'); } else if (k.indexOf('short:') === 0) { trade(k.slice(6), 'SHORT'); }
-            else if (k.indexOf('trade:') === 0) { trade(k.slice(6), 'LONG'); }
+            else if (k.indexOf('trade:') === 0) { trade(k.slice(6), 'LONG'); } else if (k.indexOf('live:') === 0) { try { window.__liveOpen(+k.slice(5)); } catch (er) { toast('Could not open: ' + er.message); } }
             else if (k.indexOf('chart:') === 0) { var c2 = document.createElement('div'); c2.setAttribute('data-act', 'chart:' + k.slice(6) + 'USDT'); document.body.appendChild(c2); c2.click(); c2.remove(); }
             else if (k.indexOf('lk:') === 0) { try { window.__lkOpen(k.slice(3)); } catch (er) { } }
             else if (k.indexOf('win:') === 0) { gotoWin(k.slice(4)); }
-            else if (k === 'pause') { try { window.__pauseAll(); } catch (er) { } } else if (k === 'stop') { try { window.__stopAll(); } catch (er) { } }
+            else if (k.indexOf('close:') === 0) { try { window.__closeKey(k.slice(6)); } catch (er) { } } else if (k === 'brem') { try { window.__bRemToggle(); } catch (er) { } } else if (k === 'stopall') { try { window.__forceAll(); } catch (er) { } } else if (k === 'pause') { try { window.__pauseAll(); } catch (er) { } } else if (k === 'stop') { try { window.__stopAll(); } catch (er) { } }
             save(); paint(true);
         }, true);
         (function () { var sx = 0, sy = 0, st0 = 0, el = null; function tk(e) { return e.target.closest ? e.target.closest('[data-sp]') : null; } document.addEventListener('touchstart', function (e) { el = tk(e); if (el) { var t = e.touches[0]; sx = t.clientX; sy = t.clientY; st0 = Date.now(); } }, { passive: true }); document.addEventListener('touchend', function (e) { if (!el) { return; } var t = e.changedTouches[0]; if (Math.abs(t.clientX - sx) < 12 && Math.abs(t.clientY - sy) < 12 && Date.now() - st0 < 700) { e.preventDefault(); el.click(); } el = null; }, { passive: false }); })();
@@ -20000,6 +20014,579 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         try { new MutationObserver(function (m) { if (m.some(function (x) { return !(x.target.classList && x.target.classList.contains('mwmk')); })) scan(); }).observe(document.body, { childList: true, subtree: true }); } catch (e) { }
         setInterval(scan, 3000);
     } catch (e) { try { console.log('mk', e); } catch (er) { } }
+})();
+
+/* ===== settings dialog for one-click trades: margin, leverage, stop-loss, take-profit ... (paper, paper bot, real bot) ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '#mwAsk .fl{margin:10px 0 3px;font-size:12px;font-weight:700;opacity:.75}#mwAsk .ch{display:flex;flex-wrap:wrap;gap:6px}#mwAsk .ch span{padding:8px 12px;border-radius:11px;background:rgba(120,120,128,.16);font-weight:700;font-size:14px}#mwAsk .ch span.on{background:#0a84ff;color:#fff}#mwAsk input.fi{width:84px;padding:7px 8px;border-radius:10px;border:1px solid rgba(128,128,128,.4);font-size:14px;background:transparent;color:inherit}#mwAsk .nt{font-size:12px;opacity:.7;margin-top:10px;line-height:1.4}';
+        document.head.appendChild(st);
+        var QK = 'mintoosuite_qset';
+        function ld() { try { return JSON.parse(localStorage.getItem(QK) || '{}') || {}; } catch (e) { return {}; } }
+        window.__qset = ld;
+        window.__askForm = function (title, intro, fields, yes, col, cb, kind) {
+            var saved = ld()[kind || ''] || {};
+            var body = intro || '';
+            fields.forEach(function (f) {
+                var cur = saved[f.k] != null ? saved[f.k] : f.v;
+                body += '<div class="fl">' + f.label + '</div><div class="ch" data-fk="' + f.k + '">' + f.opts.map(function (o) { return '<span data-fv="' + o[0] + '"' + (String(o[0]) === String(cur) ? ' class="on"' : '') + '>' + o[1] + '</span>'; }).join('') + (f.input ? '<input class="fi" data-fi="' + f.k + '" inputmode="decimal" placeholder="' + f.input + '">' : '') + '</div>';
+            });
+            window.__ask(title, body, yes, col, function () { });
+            var o = document.getElementById('mwAsk'); if (!o) return;
+            o.addEventListener('click', function (ev) {
+                var c = ev.target.closest ? ev.target.closest('[data-fv]') : null;
+                if (c) { ev.stopPropagation(); [].slice.call(c.parentNode.children).forEach(function (x) { x.classList.remove('on'); }); c.classList.add('on'); var inp = c.parentNode.querySelector('input'); if (inp) inp.value = ''; return; }
+                var y = ev.target.closest ? ev.target.closest('[data-ak="yes"]') : null;
+                if (y) {
+                    var vals = {}; fields.forEach(function (f) {
+                        var row = o.querySelector('[data-fk="' + f.k + '"]'), inp = row && row.querySelector('input'), on = row && row.querySelector('.on');
+                        var v = inp && inp.value !== '' ? +inp.value : (on ? +on.getAttribute('data-fv') : +f.v); vals[f.k] = isFinite(v) ? v : +f.v;
+                    });
+                    var all = ld(); all[kind || ''] = vals; try { localStorage.setItem(QK, JSON.stringify(all)); } catch (e) { }
+                    ev.stopPropagation(); ev.preventDefault(); o.remove(); try { cb(vals); } catch (e) { }
+                }
+            }, true);
+        };
+        var chips = function (a, sfx) { return a.map(function (x) { return [x, x + (sfx || '')]; }); };
+        var offc = function (a, sfx) { return [[0, 'Off']].concat(chips(a, sfx)); };
+        window.__fields = {
+            pm: [{ k: 'margin', label: 'Margin for this trade (USDT, fake money)', opts: chips([10, 25, 50, 100, 250], '$'), v: 25, input: 'other $' },
+            { k: 'lev', label: 'Leverage', opts: chips([1, 2, 3, 5, 10, 20, 50], '×'), v: 3 },
+            { k: 'sl', label: 'Stop-loss (% from entry)', opts: offc([1, 2, 3, 5], '%'), v: 2, input: 'other %' },
+            { k: 'tp', label: 'Take-profit (% from entry)', opts: offc([2, 3, 5, 10], '%'), v: 3, input: 'other %' }],
+            pb: [{ k: 'stake', label: 'Margin per trade (USDT, fake money)', opts: chips([5, 10, 25, 50], '$'), v: 10, input: 'other $' },
+            { k: 'sl', label: 'Stop-loss (%)', opts: chips([1, 2, 3, 5], '%'), v: 3, input: 'other %' },
+            { k: 'maxOpen', label: 'Most trades open at once', opts: chips([1, 2, 4, 6]), v: 4 }],
+            rb: [{ k: 'margin', label: 'Margin per trade (USDT, REAL)', opts: chips([5, 10, 20, 50], '$'), v: 10, input: 'other $' },
+            { k: 'lev', label: 'Leverage', opts: chips([1, 2, 3, 5, 10], '×'), v: 3 },
+            { k: 'slp', label: 'Stop-loss (%)', opts: chips([1, 2, 3, 5], '%'), v: 2, input: 'other %' },
+            { k: 'tpp', label: 'Take-profit (%)', opts: chips([2, 3, 5, 10], '%'), v: 3, input: 'other %' },
+            { k: 'maxOpen', label: 'Most trades open at once', opts: chips([1, 2, 3]), v: 2 },
+            { k: 'dayLoss', label: 'Stop for the day after losing (USDT)', opts: chips([10, 20, 50, 100], '$'), v: 20, input: 'other $' }]
+        };
+    } catch (e) { try { console.log('px3', e); } catch (er) { } }
+})();
+
+/* ===== close one trade / force stop everything (asks first) ===== */
+(function () {
+    try {
+        function pxOf(sym) { try { var t = S.tick && S.tick[sym]; if (t && t.p > 0) return t.p; } catch (e) { } return 0; }
+        function closeReal(sym, long) {
+            var x = ((S.tp && S.tp.pos) || []).filter(function (p) { return p.symbol === sym && ((+p.positionAmt > 0) === !!long); })[0]; if (!x) return Promise.resolve(false);
+            var amt = Math.abs(+x.positionAmt), side = long ? 'SELL' : 'BUY', p = { symbol: sym, side: side, type: 'MARKET', quantity: String(x.positionAmt < 0 ? -x.positionAmt : x.positionAmt), newOrderRespType: 'RESULT' };
+            if (S.tp.dual) { p.positionSide = long ? 'LONG' : 'SHORT'; } else { p.reduceOnly = 'true'; }
+            return trCall('POST', '/fapi/v1/order', p).then(function () { return trCall('DELETE', '/fapi/v1/algoOpenOrders', { symbol: sym }).catch(function () { }).then(function () { return trCall('DELETE', '/fapi/v1/allOpenOrders', { symbol: sym }).catch(function () { }); }); }).then(function () { try { tpLoad(); } catch (e) { } return true; });
+        }
+        function doClose(key) {
+            var k = key.split(':'), kind = k[0], r = Promise.resolve(false);
+            if (kind === 'pp') { var A = window.__ptrade.A(), i = A.pos.map(function (p) { return String(p.id); }).indexOf(k[1]); if (i >= 0) window.__ptrade.close(i); r = Promise.resolve(i >= 0); }
+            else if (kind === 'fb') { var F = S.fb, j = F.open.map(function (p) { return String(p.t0); }).indexOf(k[1]); if (j >= 0) { fbClose(j, pxOf(F.open[j].sym) || F.open[j].entry, 'Closed by you'); fbSave(); } r = Promise.resolve(j >= 0); }
+            else if (kind === 'rb') { var p3 = (S.rb.open || []).filter(function (p) { return p.sym === k[1]; })[0]; if (p3) { r = Promise.resolve(rbCloseOne(p3, 'closed by you')).then(function () { return true; }); } }
+            else if (kind === 'bp') { var bi = -1; S.bot.open.forEach(function (p, ix) { if (p.sym === k[1] && String(p.at) === k[2]) bi = ix; }); if (bi >= 0) { var bp = S.bot.open[bi]; botClose(bi, pxOf(bp.sym) || bp.entry, 'manual'); } r = Promise.resolve(bi >= 0); }
+            else if (kind === 'br') { r = closeReal(k[1], k[2] === 'L'); }
+            r.then(function (ok) { toast(ok ? '✅ Trade closed' : 'Could not find that trade (already closed?)'); try { renderView(true); } catch (e) { } }, function (e) { toast('❌ ' + (e && e.message || e)); });
+        }
+        window.__closeKey = function (key) {
+            var real = /^rb:/.test(key) || (/^br:/.test(key) && !(window.__simOn && window.__simOn()));
+            window.__ask(real ? '💵 Close this REAL trade?' : '⏹ Close this trade?', real ? 'This sends a real market order to Binance to close the position now.' : 'This closes the practice trade now at the current price.', 'Yes, close it', real ? '#ff3b30' : '#0a84ff', function () { doClose(key); });
+        };
+        window.__forceAll = function () {
+            var simm = window.__simOn && window.__simOn(), nReal = (simm ? 0 : ((S.tp && S.tp.pos) || []).length) + ((S.rb && S.rb.open) || []).length;
+            window.__ask('⛔ Force stop everything?', 'This stops <b>all bots</b> and closes <b>every open trade</b>: practice trades now' + (nReal ? ', and <b style="color:#d70015">' + nReal + ' REAL position(s) on Binance at market price</b>' : '') + '.', 'Yes, stop all', '#d70015', function () {
+                var jobs = [];
+                try { window.__stopAll(); } catch (e) { }
+                try { window.__ptrade.closeAll(); } catch (e) { }
+                try { for (var bi2 = S.bot.open.length - 1; bi2 >= 0; bi2--) { botClose(bi2, pxOf(S.bot.open[bi2].sym) || S.bot.open[bi2].entry, 'manual'); } } catch (e) { }
+                try { for (var i = S.fb.open.length - 1; i >= 0; i--) { fbClose(i, pxOf(S.fb.open[i].sym) || S.fb.open[i].entry, 'Closed by you (stop all)'); } fbSave(); } catch (e) { }
+                try { if (S.rb && S.rb.open && S.rb.open.length) { jobs.push(Promise.resolve(rbCloseAll('force stop all'))); } } catch (e) { }
+                try { ((S.tp && S.tp.pos) || []).slice().forEach(function (x) { jobs.push(closeReal(x.symbol, +x.positionAmt > 0).catch(function () { })); }); } catch (e) { }
+                Promise.all(jobs).then(function () { toast('⛔ Everything stopped and closed'); try { renderView(true); } catch (e) { } }, function (e) { toast('Stopped, but a real close failed: ' + (e && e.message || e) + '. Check Binance now.'); });
+                toast('⛔ Stopping everything…');
+            });
+        };
+    } catch (e) { try { console.log('px4', e); } catch (er) { } }
+})();
+
+/* ===== Live trade window: candles + entry/SL/TP/liq lines + live P&L + order book + close ===== */
+(function () {
+    try {
+        var REG = [], cur = null, tf = '5m', cds = [], book = null, tm1 = null, tm2 = null, tm3 = null, el = null;
+        window.__liveReg = function (o, ck) { var i = REG.length; REG.push({ o: o, ck: ck || '' }); if (REG.length > 60) { REG.shift(); i--; if (i < 0) i = 0; REG.base = (REG.base || 0) + 1; } return i + (REG.base || 0); };
+        var css = document.createElement('style');
+        css.textContent = '#mwLT{position:fixed;inset:0;z-index:99990;background:#0b0e11;color:#eaecef;display:flex;flex-direction:column;font-family:system-ui,sans-serif}#mwLT .h{display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));background:#161a1e}#mwLT .h b{font-size:17px}#mwLT .bk{padding:6px 12px;border-radius:10px;background:#2b3139;font-weight:800}#mwLT .tfs{display:flex;gap:6px;padding:6px 10px;background:#161a1e}#mwLT .tfs span{padding:5px 11px;border-radius:8px;background:#2b3139;font-size:12.5px;font-weight:700}#mwLT .tfs span.on{background:#f0b90b;color:#000}#mwLT canvas{width:100%;height:42vh;display:block;background:#0b0e11;flex:none}#mwLT .bd{flex:1;overflow:auto;padding:8px 12px 24px;-webkit-overflow-scrolling:touch}#mwLT .bt2{display:flex;gap:8px;margin:8px 0}#mwLT .bt2 span{flex:1;text-align:center;padding:12px 6px;border-radius:12px;font-weight:800;font-size:13px}#mwLT .ob{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11.5px;font-variant-numeric:tabular-nums}#mwLT .ob div{position:relative;display:flex;justify-content:space-between;padding:1px 4px}#mwLT .pbx *{color:#eaecef}';
+        document.head.appendChild(css);
+        function px() { var o = cur.o; var t = S.tick && S.tick[o.sym]; return t && t.p > 0 ? t.p : (cds.length ? cds[cds.length - 1].c : 0); }
+        function fmt(v) { v = +v; if (!isFinite(v)) return '-'; return v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(5); }
+        function load() {
+            if (!cur) return; var sym = cur.o.sym, spot = !!cur.o.spot;
+            var u = (spot ? 'https://api.binance.com/api/v3' : 'https://fapi.binance.com/fapi/v1') + '/klines?symbol=' + sym + '&interval=' + tf + '&limit=100';
+            fetchJSON(u).then(function (a) { if (!Array.isArray(a) || a.length < 5) throw 0; return a; }, function () { return fetchJSON('https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=' + tf + '&limit=100'); }).then(function (a) {
+                if (!cur || cur.o.sym !== sym || !Array.isArray(a)) return;
+                cds = a.map(function (k) { return { t: +k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5] }; }); draw();
+            }, function () { });
+            fetchJSON((spot ? 'https://api.binance.com/api/v3' : 'https://fapi.binance.com/fapi/v1') + '/depth?symbol=' + sym + '&limit=8').then(function (d) { if (d && d.bids) { book = d; drawBook(); } }, function () { });
+        }
+        function drawBook() {
+            var b = el && el.querySelector('.ob'); if (!b || !book) return;
+            var A = (book.asks || []).slice(0, 7).reverse(), B = (book.bids || []).slice(0, 7);
+            b.innerHTML = '<div style="flex-direction:column;display:block"><div style="opacity:.6">Buyers (bids)</div>' + B.map(function (r) { return '<div style="color:#0ecb81"><span>' + fmt(r[0]) + '</span><span>' + (+r[1]).toFixed(2) + '</span></div>'; }).join('') + '</div><div style="display:block"><div style="opacity:.6">Sellers (asks)</div>' + A.map(function (r) { return '<div style="color:#f6465d"><span>' + fmt(r[0]) + '</span><span>' + (+r[1]).toFixed(2) + '</span></div>'; }).join('') + '</div>';
+        }
+        function draw() {
+            if (!el || !cur || !cds.length) return; var cv = el.querySelector('canvas'), r = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight; if (!W) return;
+            cv.width = W * r; cv.height = H * r; var g = cv.getContext('2d'); g.setTransform(r, 0, 0, r, 0, 0); g.clearRect(0, 0, W, H);
+            var o = cur.o, p = px(), c = cds.slice(); var last = c[c.length - 1]; if (p > 0) { last = { t: last.t, o: last.o, h: Math.max(last.h, p), l: Math.min(last.l, p), c: p, v: last.v }; c[c.length - 1] = last; }
+            var lv = [o.entry, o.sl, o.tp, o.liq].filter(function (v) { return v > 0; }), hi = Math.max.apply(null, c.map(function (k) { return k.h; })), lo = Math.min.apply(null, c.map(function (k) { return k.l; }));
+            lv.forEach(function (v) { var d = Math.abs(v - p) / p; if (d < 0.25) { hi = Math.max(hi, v); lo = Math.min(lo, v); } });
+            var pad = (hi - lo) * 0.06 || hi * 0.001; hi += pad; lo -= pad; var AX = 58, CH = H - 18, VH = 38, n = c.length, bw = (W - AX) / n;
+            function Y(v) { return 4 + (hi - v) / (hi - lo) * (CH - VH - 8); }
+            g.font = '10px system-ui'; g.fillStyle = '#848e9c'; g.strokeStyle = 'rgba(132,142,156,.15)'; g.lineWidth = 1;
+            for (var i = 0; i <= 4; i++) { var v = lo + (hi - lo) * i / 4, y = Y(v); g.beginPath(); g.moveTo(0, y); g.lineTo(W - AX, y); g.stroke(); g.fillText(fmt(v), W - AX + 4, y + 3); }
+            var vm = Math.max.apply(null, c.map(function (k) { return k.v; })) || 1;
+            c.forEach(function (k, i) { var x = i * bw + bw / 2, up = k.c >= k.o, col = up ? '#0ecb81' : '#f6465d'; g.strokeStyle = col; g.fillStyle = col; g.beginPath(); g.moveTo(x, Y(k.h)); g.lineTo(x, Y(k.l)); g.stroke(); var y1 = Y(Math.max(k.o, k.c)), y2 = Y(Math.min(k.o, k.c)); g.fillRect(x - bw * 0.35, y1, bw * 0.7, Math.max(1, y2 - y1)); g.globalAlpha = .4; var vh = k.v / vm * (VH - 4); g.fillRect(x - bw * 0.35, CH - vh, bw * 0.7, vh); g.globalAlpha = 1; });
+            function line(v, col, lab, dash) { if (!(v > 0) || v < lo || v > hi) return; var y = Y(v); g.strokeStyle = col; g.setLineDash(dash || [5, 4]); g.beginPath(); g.moveTo(0, y); g.lineTo(W - AX, y); g.stroke(); g.setLineDash([]); g.fillStyle = col; g.fillRect(W - AX, y - 7, AX, 14); g.fillStyle = '#000'; g.font = 'bold 10px system-ui'; g.fillText(fmt(v), W - AX + 3, y + 3); g.fillStyle = col; g.fillText(lab, 4, y - 3); }
+            line(o.entry, '#f0b90b', 'ENTRY', [2, 3]); line(o.sl, '#f6465d', 'STOP LOSS'); line(o.tp, '#0ecb81', 'TAKE PROFIT'); line(o.liq, '#a855f7', 'LIQUIDATION'); line(p, '#eaecef', 'NOW', [1, 2]);
+            g.fillStyle = '#848e9c'; g.font = '10px system-ui'; g.fillText('volume', 4, CH - VH + 8);
+            var sgn = /SHORT/i.test(o.side) ? -1 : 1, qty = o.qty > 0 ? o.qty : (o.notional > 0 ? o.notional / o.entry : 0), u = (p - o.entry) * sgn * qty;
+            var hd = el.querySelector('.pl'); if (hd) { hd.innerHTML = '<span style="color:' + (u >= 0 ? '#0ecb81' : '#f6465d') + ';font-weight:900;font-size:17px">' + (u >= 0 ? '+' : '') + u.toFixed(2) + ' USDT</span><br><span style="font-size:11px;opacity:.75">' + fmt(p) + ' · ' + ((p - o.entry) / o.entry * 100 * sgn).toFixed(2) + '%' + (o.margin > 0 ? ' · ROE ' + (u / o.margin * 100).toFixed(1) + '%' : '') + '</span>'; }
+        }
+        window.__liveOpen = function (i) {
+            var r = REG[i - (REG.base || 0)]; if (!r) { toast('Trade list refreshed - tap the trade again'); return; }
+            cur = r; cds = []; book = null; if (el) el.remove();
+            var o = r.o, long = !/SHORT/i.test(o.side); el = document.createElement('div'); el.id = 'mwLT';
+            var tfs = ['1m', '5m', '15m', '1h', '4h', '1d'];
+            el.innerHTML = '<div class="h"><span class="bk" data-lt="x">‹ Back</span><div style="flex:1"><b>' + String(o.sym).replace('USDT', '') + '<span style="opacity:.6;font-size:12px">/USDT</span></b> <span style="padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800;background:' + (long ? '#0ecb81' : '#f6465d') + ';color:#000">' + (long ? 'LONG' : 'SHORT') + (o.lev ? ' ' + o.lev + 'x' : '') + '</span><div style="font-size:11px;opacity:.65">' + (o.kind || '') + ' · ' + (o.spot ? 'Spot' : 'Futures') + '</div></div><div class="pl" style="text-align:right"></div></div><div class="tfs">' + tfs.map(function (t) { return '<span data-lt="tf:' + t + '" class="' + (t === tf ? 'on' : '') + '">' + t + '</span>'; }).join('') + '</div><canvas></canvas><div class="bd">' + (window.__pbox ? window.__pbox(o) : '') + '<div class="bt2">' + (r.ck ? '<span data-lt="close" style="background:#f6465d;color:#fff">⏹ Close this trade</span>' : '') + (/^(fb|br):/.test(r.ck) ? '<span data-lt="edit" style="background:#0a84ff;color:#fff">✏ Change SL/TP</span>' : '') + '<span data-lt="chart" style="background:#2b3139">📈 Full chart</span><span data-lt="tpro" style="background:#2b3139">⚙ Trade Pro</span></div><div style="font-weight:800;margin:6px 0 2px">Order book (live)</div><div class="ob"></div></div>';
+            document.body.appendChild(el); load(); draw(); clearInterval(tm1); clearInterval(tm2); clearInterval(tm3);
+            tm1 = setInterval(draw, 1000); tm2 = setInterval(load, 5000);
+        };
+        function close() { clearInterval(tm1); clearInterval(tm2); if (el) { el.remove(); el = null; } cur = null; }
+        window.__liveClose = close; window.__liveSym = function () { return cur ? cur.o.sym : ''; };
+        document.addEventListener('click', function (e) {
+            var t = e.target && e.target.closest ? e.target.closest('[data-lt]') : null; if (!t || !el || !el.contains(t)) return; e.preventDefault(); e.stopPropagation();
+            var k = t.getAttribute('data-lt');
+            if (k === 'x') { close(); } else if (k.indexOf('tf:') === 0) { tf = k.slice(3); [].forEach.call(el.querySelectorAll('.tfs span'), function (s) { s.classList.toggle('on', s.getAttribute('data-lt') === k); }); cds = []; load(); }
+            else if (k === 'close') { var ck = cur.ck; window.__closeKey(ck); } else if (k === 'edit') { try { window.__editSLTP(cur.ck, cur.o, function () { draw(); try { var pb = el.querySelector('.pbx'); if (pb) { pb.setAttribute('data-pbo', JSON.stringify(cur.o)); } } catch (e) { } }); } catch (er) { toast('Could not edit: ' + er.message); } }
+            else if (k === 'chart') { var sy = cur.o.sym; close(); var c2 = document.createElement('div'); c2.setAttribute('data-act', 'chart:' + sy); document.body.appendChild(c2); c2.click(); c2.remove(); }
+            else if (k === 'tpro') { var sy2 = cur.o.sym; close(); try { window.__tw.run({ sym: sy2, side: 'LONG' }); } catch (er) { gotoWin('tpro'); } }
+        }, true);
+        /* if the trade disappears (closed), leave the live window after the close confirm */
+        setInterval(function () { try { if (cur && cur.ck) { var live = (window.__liveStill ? window.__liveStill(cur.ck) : true); if (live === false) { close(); } } } catch (e) { } }, 2000);
+        window.__liveStill = function (key) {
+            var k = key.split(':');
+            if (k[0] === 'pp') return window.__ptrade.A().pos.some(function (p) { return String(p.id) === k[1]; });
+            if (k[0] === 'fb') return (S.fb.open || []).some(function (p) { return String(p.t0) === k[1]; });
+            if (k[0] === 'bp') return (S.bot.open || []).some(function (p) { return p.sym === k[1] && String(p.at) === k[2]; });
+            if (k[0] === 'rb') return (S.rb.open || []).some(function (p) { return p.sym === k[1]; });
+            if (k[0] === 'br') return ((S.tp && S.tp.pos) || []).some(function (p) { return p.symbol === k[1] && ((+p.positionAmt > 0) === (k[2] === 'L')); });
+            return true;
+        };
+    } catch (e) { try { console.log('live', e); } catch (er) { } }
+})();
+
+/* pulse the small blue split-screen button while any trade or bot is active, on every screen */
+(function () {
+    try {
+        var st = document.createElement('style');
+        st.textContent = '@keyframes mwfab{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(10,132,255,.7)}50%{transform:scale(1.2);box-shadow:0 0 0 12px rgba(10,132,255,0)}}#mwspb.mwanim{animation:mwfab 1.2s ease-in-out infinite;background:#0a84ff!important}';
+        document.head.appendChild(st);
+        setInterval(function () { try { var b = document.getElementById('mwspb'); if (b) { b.classList.toggle('mwanim', !!(window.__tradeTab && window.__tradeTab.active())); } } catch (e) { } }, 700);
+    } catch (e) { }
+})();
+
+/* ===== Baba AI keeps reminding about active trades (can be put to sleep) + Baba AI answers about trade controls ===== */
+(function () {
+    try {
+        var KS = 'mintoosuite_bsleep', KI = 'mintoosuite_bremin', last = Date.now(), box = null;
+        function gs() { try { return +localStorage.getItem(KS) || 0; } catch (e) { return 0; } }
+        function ss(v) { try { localStorage.setItem(KS, String(v)); } catch (e) { } }
+        function mins() { try { return Math.max(1, +localStorage.getItem(KI) || 5); } catch (e) { return 5; } }
+        window.__bRemAsleep = function () { return gs() > Date.now(); };
+        window.__bRemState = function () { var g = gs(); return g > Date.now() ? (g - Date.now() > 864e5 ? 'asleep (off)' : 'asleep until ' + new Date(g).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : 'on, every ' + mins() + ' min'; };
+        window.__bRemToggle = function () { if (gs() > Date.now()) { ss(0); toast('🧓 Baba AI is awake: reminders on'); } else { ss(Date.now() + 36e5); toast('😴 Baba AI reminders asleep for 1 hour'); } try { renderView(true); } catch (e) { } };
+        function stats() {
+            var n = 0, pnl = 0, real = 0;
+            try { var A = window.__ptrade.A(); n += A.pos.length; } catch (e) { }
+            try { n += (S.fb.open || []).length; } catch (e) { }
+            try { n += (S.rb.open || []).length; } catch (e) { }
+            try { ((S.tp && S.tp.pos) || []).forEach(function (p) { n++; real += +p.unRealizedProfit || +p.unrealizedProfit || 0; }); } catch (e) { }
+            return { n: n, real: real };
+        }
+        function hide() { if (box) { box.remove(); box = null; } }
+        function show(st) {
+            hide(); box = document.createElement('div'); box.id = 'mwBR';
+            box.style.cssText = 'position:fixed;left:10px;right:10px;top:calc(8px + env(safe-area-inset-top));z-index:99995;background:#1c2530;color:#fff;border-radius:16px;padding:11px 12px;box-shadow:0 8px 26px rgba(0,0,0,.45);font-size:13.5px;border:1px solid #0a84ff';
+            var b = 'display:inline-block;padding:8px 11px;border-radius:10px;font-weight:800;font-size:12.5px;margin:6px 6px 0 0;';
+            box.innerHTML = '<b>🧓 Baba AI: ' + st.n + ' trade' + (st.n > 1 ? 's are' : ' is') + ' running</b>' + (st.real ? ' · real P&L ' + (st.real >= 0 ? '+' : '') + st.real.toFixed(2) + ' USDT' : '') + '<div style="opacity:.8;font-size:12px;margin-top:2px">Check your stop-loss and take-profit. I will remind you every ' + mins() + ' min.</div><span data-br="open" style="' + b + 'background:#0a84ff">📊 See trades</span><span data-br="s1" style="' + b + 'background:#475569">😴 Sleep 1 hour</span><span data-br="sd" style="' + b + 'background:#475569">😴 Sleep today</span><span data-br="ok" style="' + b + 'background:#16a34a">OK</span>';
+            document.body.appendChild(box); setTimeout(hide, 20000);
+        }
+        document.addEventListener('click', function (e) {
+            var t = e.target && e.target.closest ? e.target.closest('[data-br]') : null; if (!t) return; e.preventDefault(); e.stopPropagation();
+            var k = t.getAttribute('data-br'); hide();
+            if (k === 's1') { ss(Date.now() + 36e5); toast('😴 Baba AI reminders asleep for 1 hour. Wake me in the Trades panel > Bots tab.'); }
+            else if (k === 'sd') { var d = new Date(); d.setHours(24, 0, 0, 0); ss(d.getTime()); toast('😴 Baba AI reminders asleep until midnight. Wake me in the Trades panel > Bots tab.'); }
+            else if (k === 'open') { try { var f = document.getElementById('mwspb'); var dk = document.getElementById('mwsp'); if (f && (!dk || dk.style.display === 'none')) f.click(); } catch (er) { } }
+        }, true);
+        window.__bRemNow = function () { var st = stats(); if (st.n > 0) show(st); };
+        setInterval(function () {
+            try { if (gs() > Date.now()) return; if (Date.now() - last < mins() * 60000) return; var st = stats(); if (st.n < 1) { last = Date.now() - mins() * 60000 + 30000; return; } last = Date.now(); show(st); try { if (navigator.vibrate) navigator.vibrate(80); } catch (e) { } } catch (e) { }
+        }, 15000);
+        try {
+            PF_APP.push(['stop trade|close trade|force stop|stop all|stop selected|close all|band karo|trade band|sab band|ٹریڈ بند|بند کر|سب بند|فورس', 'How to stop one trade or force stop all', 'Open the Trades panel: tap the small blue button (it pulses while a trade is running). Every trade has a red "Close" button: tap it, then confirm, and that one trade closes at the current price. At the top is the red "Force stop ALL" button: it stops every bot and closes every open trade (practice, bot and real Binance trades) after one confirmation. Real trades close with a market order, so check your Binance after. In Urdu: نیلے بٹن سے ٹریڈز کھولیں، ہر ٹریڈ پر سرخ Close دبائیں، یا اوپر Force stop ALL سے سب بند کریں۔']);
+            PF_APP.push(['margin|leverage|isolated|cross|stop loss|take profit|\\bsl\\b|\\btp\\b|set sl|set tp|لیوریج|مارجن|سٹاپ لاس|ٹیک پرافٹ|آئسولیٹڈ', 'Setting margin, leverage, SL and TP', 'When you tap Long or Short (or start a bot), a small settings window opens first. There you choose the margin in dollars, the leverage, the Stop-loss % and the Take-profit %, and the margin mode (Isolated). Then you confirm and the trade opens. Practice and bot trades always use Isolated. Cross margin, limit orders, stop-limit and trailing stop are in Trade Pro (More > Trade Pro). For a running trade tap "Live trade window" to see its entry, stop-loss, take-profit and liquidation lines on a live chart.']);
+            PF_APP.push(['remind|alert|sleep baba|wake baba|reminder|yaad dahani|یاد دہانی|الرٹ|سلیپ', 'Baba AI trade reminders', 'While any trade or bot is running, Baba AI shows a reminder every 5 minutes with the number of trades and your real P&L. Tap "Sleep 1 hour" or "Sleep today" to silence it. To wake me again: open the Trades panel (blue button) > Bots tab > "Wake up". The blue button also pulses while a trade is active.']);
+            PF_APP.push(['live trade|trade window|candles|order book|track trade|لائیو ٹریڈ', 'Live trade window', 'In the Trades panel tap "Live trade window" on any trade. It opens a full screen with live candles, volume, lines for entry, stop-loss, take-profit and liquidation, live profit or loss, the order book, and buttons to close the trade, open the full chart or open Trade Pro.']);
+        } catch (e) { }
+    } catch (e) { try { console.log('br', e); } catch (er) { } }
+})();
+/* ===== p9sim: Paper Trade Pro. A pretend Binance Futures account that answers the same calls as the real one. =====
+   When the trading mode is PAPER, Trade Pro, positions, SL/TP, trailing and the close buttons all run on this
+   engine with pretend money. Nothing is ever sent to Binance in paper mode. Prices are the live prices. */
+(function () {
+    try {
+        var KEY = 'mintoosuite_psim', FEE_T = 0.0005, FEE_M = 0.0002;
+        var Z;
+        function load() { try { var j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && j.pos) { return j; } } catch (e) { } return { bal: 1000, pos: {}, ord: [], algo: [], lev: {}, mt: {}, id: 1000, hist: [], at: Date.now() }; }
+        Z = load();
+        function save() { try { localStorage.setItem(KEY, JSON.stringify(Z)); } catch (e) { } }
+        function tmode() { try { return localStorage.getItem('mintoosuite_tmode') || 'rm'; } catch (e) { return 'rm'; } }
+        function paper() { var m = tmode(); if (m !== 'pm' && m !== 'pb') { return false; } try { if (S.rb && S.rb.running) { return false; } } catch (e) { } return true; }
+        window.__simOn = paper; window.__sim = { get: function () { return Z; }, save: save, reset: function (b) { Z = { bal: +b > 0 ? +b : 1000, pos: {}, ord: [], algo: [], lev: {}, mt: {}, id: 1000, hist: [], at: Date.now() }; save(); } };
+        function px(sym) { if (window.__simPx && window.__simPx[sym]) { return +window.__simPx[sym]; } var t = S.tick && S.tick[sym]; return t && t.p > 0 ? +t.p : 0; }
+        function err(code, msg) { var e = new Error('Binance: ' + msg + ' (' + code + ')'); e.code = code; return e; }
+        function nid() { return ++Z.id; }
+        function f(n, d) { return String(+(+n).toFixed(d == null ? 8 : d)); }
+        function lev(sym) { return Z.lev[sym] || 5; }
+        function mt(sym) { return Z.mt[sym] || 'ISOLATED'; }
+        function upnl(p, m) { return (m - p.entry) * p.amt; }
+        function marginOf(p) { return Math.abs(p.amt) * p.entry / p.lev; }
+        function liqOf(p) {
+            var q = Math.abs(p.amt), L = p.lev, long = p.amt > 0;
+            if (p.mt === 'CROSS') { var w = Z.bal; return long ? Math.max(0, p.entry - w / q * 0.98) : p.entry + w / q * 0.98; }
+            return long ? p.entry * (1 - 1 / L + 0.004) : p.entry * (1 + 1 / L - 0.004);
+        }
+        function usedMargin() { var s = 0; Object.keys(Z.pos).forEach(function (k) { s += marginOf(Z.pos[k]); }); (Z.ord || []).forEach(function (o) { if (!o.reduceOnly) { s += o.origQty * (o.price || px(o.symbol)) / lev(o.symbol); } }); return s; }
+        function unreal() { var s = 0; Object.keys(Z.pos).forEach(function (k) { var m = px(k); if (m) { s += upnl(Z.pos[k], m); } }); return s; }
+        function pushHist(sym, side, qty, pr, pnl, why) { Z.hist.unshift({ t: Date.now(), sym: sym, side: side, qty: qty, px: pr, pnl: pnl, why: why || '' }); if (Z.hist.length > 200) { Z.hist.length = 200; } }
+        /* fill: apply a trade of qty at price to the one-way position */
+        function fill(sym, side, qty, price, maker, why) {
+            var sg = side === 'BUY' ? 1 : -1, p = Z.pos[sym], fee = qty * price * (maker ? FEE_M : FEE_T), realized = 0;
+            Z.bal -= fee;
+            if (!p) { Z.pos[sym] = { amt: sg * qty, entry: price, lev: lev(sym), mt: mt(sym), t: Date.now() }; }
+            else if ((p.amt > 0) === (sg > 0)) { var na = Math.abs(p.amt) + qty; p.entry = (p.entry * Math.abs(p.amt) + price * qty) / na; p.amt = sg * na; }
+            else {
+                var cq = Math.min(qty, Math.abs(p.amt)); realized = (price - p.entry) * (p.amt > 0 ? 1 : -1) * cq; Z.bal += realized;
+                var left = Math.abs(p.amt) - cq; pushHist(sym, p.amt > 0 ? 'LONG' : 'SHORT', cq, price, realized - fee, why);
+                if (left < 1e-12) { delete Z.pos[sym]; var rest = qty - cq; if (rest > 1e-12) { Z.pos[sym] = { amt: sg * rest, entry: price, lev: lev(sym), mt: mt(sym), t: Date.now() }; } }
+                else { p.amt = (p.amt > 0 ? 1 : -1) * left; }
+            }
+            if (!Z.pos[sym]) { Z.ord = Z.ord.filter(function (o) { return !(o.symbol === sym && o.reduceOnly); }); Z.algo = Z.algo.filter(function (o) { return !(o.symbol === sym && o.reduceOnly); }); }
+            return realized;
+        }
+        function posAmt(sym) { return Z.pos[sym] ? Z.pos[sym].amt : 0; }
+        function reduceQty(sym, side, qty) { var a = posAmt(sym); if (!a || (side === 'BUY') === (a > 0)) { return 0; } return Math.min(qty, Math.abs(a)); }
+        function newOrd(p) { return { orderId: nid(), symbol: p.symbol, side: p.side, type: p.type, price: f(+p.price || 0), stopPrice: '0', origQty: +p.quantity, executedQty: '0', status: 'NEW', timeInForce: p.timeInForce || 'GTC', reduceOnly: p.reduceOnly === 'true' || p.reduceOnly === true, clientOrderId: p.newClientOrderId || 'sim' + Date.now(), time: Date.now(), updateTime: Date.now(), positionSide: 'BOTH', workingType: 'CONTRACT_PRICE', closePosition: false }; }
+        function order(p) {
+            var sym = p.symbol, side = p.side, type = p.type, q = +p.quantity, m = px(sym), ro = p.reduceOnly === 'true' || p.reduceOnly === true;
+            if (!m) { throw err(-1121, 'No live price for ' + sym + ' yet.'); }
+            if (!(q > 0)) { throw err(-1102, 'Quantity must be above zero.'); }
+            if (ro) { var rq = reduceQty(sym, side, q); if (!(rq > 0)) { throw err(-2022, 'ReduceOnly Order is rejected.'); } q = rq; }
+            else { var need = q * m / lev(sym) * 1.001, av = Z.bal + unreal() - usedMargin(); if (need > av) { throw err(-2019, 'Margin is insufficient.'); } }
+            if (type === 'MARKET') { fill(sym, side, q, m, false, 'market'); save(); return { orderId: nid(), symbol: sym, side: side, type: 'MARKET', status: 'FILLED', origQty: String(q), executedQty: String(q), avgPrice: f(m), price: '0', cumQuote: f(q * m), reduceOnly: ro, clientOrderId: p.newClientOrderId || '', updateTime: Date.now() }; }
+            if (type === 'LIMIT') {
+                var lp = +p.price; if (!(lp > 0)) { throw err(-1102, 'Price is required.'); }
+                var cross = side === 'BUY' ? lp >= m : lp <= m;
+                if (cross) { if (p.timeInForce === 'GTX') { throw err(-5022, 'Post Only order would have immediately matched and taken.'); } fill(sym, side, q, m, false, 'limit'); save(); return { orderId: nid(), symbol: sym, side: side, type: 'LIMIT', status: 'FILLED', origQty: String(q), executedQty: String(q), avgPrice: f(m), price: f(lp), reduceOnly: ro, updateTime: Date.now() }; }
+                if (p.timeInForce === 'IOC' || p.timeInForce === 'FOK') { return { orderId: nid(), symbol: sym, side: side, type: 'LIMIT', status: 'EXPIRED', origQty: String(q), executedQty: '0', avgPrice: '0', price: f(lp) }; }
+                var o = newOrd(Object.assign({}, p, { quantity: q })); o.reduceOnly = ro; Z.ord.push(o); save(); return Object.assign({}, o, { avgPrice: '0', executedQty: '0' });
+            }
+            throw err(-4014, 'Order type not supported here.');
+        }
+        function algo(p) {
+            var sym = p.symbol, side = p.side, type = p.type, m = px(sym), ro = p.reduceOnly === 'true' || p.reduceOnly === true || p.closePosition === 'true', q = +p.quantity;
+            if (!m) { throw err(-1121, 'No live price for ' + sym + ' yet.'); }
+            if (!(q > 0) && !p.closePosition) { throw err(-1102, 'Quantity must be above zero.'); }
+            if (ro && !reduceQty(sym, side, q || 1e-9)) { throw err(-2022, 'ReduceOnly Order is rejected.'); }
+            var o = { algoId: nid(), symbol: sym, side: side, type: type, orderType: type, algoType: 'CONDITIONAL', quantity: String(q), origQty: String(q), reduceOnly: ro, workingType: p.workingType || 'MARK_PRICE', positionSide: 'BOTH', time: Date.now(), algoStatus: 'NEW', closePosition: p.closePosition === 'true' };
+            if (type === 'TRAILING_STOP_MARKET') { var cb = +p.callbackRate; if (!(cb >= 0.1 && cb <= 10)) { throw err(-2021, 'Callback rate must be between 0.1 and 10.'); } o.callbackRate = String(cb); o.activatePrice = p.activatePrice ? String(p.activatePrice) : ''; o.peak = 0; o.on = !p.activatePrice; }
+            else {
+                var tg = +p.triggerPrice; if (!(tg > 0)) { throw err(-1102, 'Trigger price is required.'); }
+                o.triggerPrice = String(tg); o.stopPrice = String(tg);
+                var isStopLike = type === 'STOP' || type === 'STOP_MARKET';
+                var wouldNow = isStopLike ? (side === 'BUY' ? tg <= m : tg >= m) : (side === 'BUY' ? tg >= m : tg <= m);
+                if (wouldNow) { throw err(-2021, 'Order would immediately trigger.'); }
+                if (type === 'STOP') { var lp = +p.price; if (!(lp > 0)) { throw err(-1102, 'Price is required for Stop-Limit.'); } o.price = String(lp); }
+            }
+            Z.algo.push(o); save(); return Object.assign({}, o, { algoStatus: 'NEW' });
+        }
+        function trigger(o, m) {
+            Z.algo = Z.algo.filter(function (x) { return x !== o; });
+            var q = +o.quantity; if (o.reduceOnly || o.closePosition) { q = o.closePosition ? Math.abs(posAmt(o.symbol)) : reduceQty(o.symbol, o.side, q); if (!(q > 0)) { return; } }
+            if (o.type === 'STOP') { var lp = +o.price, cross = o.side === 'BUY' ? lp >= m : lp <= m; if (cross) { fill(o.symbol, o.side, q, m, false, 'stop-limit'); } else { var n = newOrd({ symbol: o.symbol, side: o.side, type: 'LIMIT', price: lp, quantity: q, reduceOnly: o.reduceOnly }); n.reduceOnly = !!o.reduceOnly; Z.ord.push(n); } }
+            else { fill(o.symbol, o.side, q, m, false, o.type === 'STOP_MARKET' ? 'stop-loss' : o.type === 'TAKE_PROFIT_MARKET' ? 'take-profit' : 'trailing stop'); }
+            try { window.__simNote && window.__simNote(o, m); } catch (e) { }
+        }
+        function tick() {
+            try {
+                var chg = false;
+                Z.ord.slice().forEach(function (o) {
+                    var m = px(o.symbol); if (!m) { return; } var lp = +o.price, hit = o.side === 'BUY' ? m <= lp : m >= lp; if (!hit) { return; }
+                    var q = o.origQty; if (o.reduceOnly) { q = reduceQty(o.symbol, o.side, q); if (!(q > 0)) { Z.ord = Z.ord.filter(function (x) { return x !== o; }); chg = true; return; } }
+                    Z.ord = Z.ord.filter(function (x) { return x !== o; }); fill(o.symbol, o.side, q, lp, true, 'limit'); chg = true;
+                });
+                Z.algo.slice().forEach(function (o) {
+                    var m = px(o.symbol); if (!m) { return; }
+                    if (o.type === 'TRAILING_STOP_MARKET') {
+                        var cb = +o.callbackRate / 100, sell = o.side === 'SELL';
+                        if (!o.on) { var ap = +o.activatePrice; if (sell ? m >= ap : m <= ap) { o.on = true; o.peak = m; chg = true; } return; }
+                        if (!o.peak) { o.peak = m; }
+                        if (sell) { if (m > o.peak) { o.peak = m; chg = true; } if (m <= o.peak * (1 - cb)) { trigger(o, m); chg = true; } }
+                        else { if (m < o.peak) { o.peak = m; chg = true; } if (m >= o.peak * (1 + cb)) { trigger(o, m); chg = true; } }
+                        return;
+                    }
+                    var tg = +o.triggerPrice, stopLike = o.type === 'STOP' || o.type === 'STOP_MARKET', hit = stopLike ? (o.side === 'BUY' ? m >= tg : m <= tg) : (o.side === 'BUY' ? m <= tg : m >= tg);
+                    if (hit) { trigger(o, m); chg = true; }
+                });
+                Object.keys(Z.pos).forEach(function (sym) {
+                    var p = Z.pos[sym], m = px(sym); if (!m) { return; } var lq = liqOf(p);
+                    if (p.amt > 0 ? m <= lq : m >= lq) {
+                        var loss = p.mt === 'CROSS' ? Z.bal : marginOf(p); Z.bal = Math.max(0, Z.bal - loss); pushHist(sym, p.amt > 0 ? 'LONG' : 'SHORT', Math.abs(p.amt), lq, -loss, 'LIQUIDATED'); delete Z.pos[sym];
+                        Z.ord = Z.ord.filter(function (o) { return o.symbol !== sym; }); Z.algo = Z.algo.filter(function (o) { return o.symbol !== sym; }); chg = true;
+                        try { toast('💥 PAPER ' + sym + ' was liquidated (pretend money).'); } catch (e) { }
+                    }
+                });
+                if (chg) { save(); }
+            } catch (e) { }
+        }
+        setInterval(tick, 1000);
+        window.__trCall = function () { return trCall.apply(null, arguments); };
+        var _trCall = trCall, _trCfg = trCfg;
+        trCfg = function () { var c = _trCfg(); if (paper()) { return { key: 'SIM', sec: 'SIM', net: 'sim', margin: c.margin }; } return c; };
+        trCall = function (method, path, params) {
+            if (!paper()) { return _trCall(method, path, params); }
+            var p = params || {};
+            return new Promise(function (res, rej) {
+                try { res(sim(method, path, p)); } catch (e) { rej(e); }
+            });
+        };
+        function posRisk(only) {
+            return Object.keys(Z.pos).filter(function (s) { return !only || s === only; }).map(function (s) {
+                var p = Z.pos[s], m = px(s) || p.entry, u = upnl(p, m);
+                return { symbol: s, positionAmt: f(p.amt), entryPrice: f(p.entry), markPrice: f(m), unRealizedProfit: f(u), unrealizedProfit: f(u), liquidationPrice: f(liqOf(p)), leverage: String(p.lev), marginType: p.mt === 'CROSS' ? 'cross' : 'isolated', isolatedMargin: f(p.mt === 'CROSS' ? 0 : marginOf(p) + u), positionSide: 'BOTH', notional: f(p.amt * m), updateTime: p.t };
+            });
+        }
+        function sim(method, path, p) {
+            if (path.indexOf('/balance') > 0) { var um = usedMargin(), un = unreal(); return [{ asset: 'USDT', balance: f(Z.bal, 4), crossWalletBalance: f(Z.bal, 4), crossUnPnl: f(un, 4), availableBalance: f(Math.max(0, Z.bal + un - um), 4) }]; }
+            if (path.indexOf('/positionRisk') > 0) { return posRisk(p.symbol); }
+            if (path === '/fapi/v1/openOrders') { return Z.ord.filter(function (o) { return !p.symbol || o.symbol === p.symbol; }).map(function (o) { return Object.assign({}, o, { origQty: f(o.origQty), avgPrice: '0' }); }); }
+            if (path === '/fapi/v1/openAlgoOrders') { return Z.algo.filter(function (o) { return !p.symbol || o.symbol === p.symbol; }); }
+            if (path === '/fapi/v1/positionSide/dual') { return { dualSidePosition: false }; }
+            if (path === '/fapi/v1/leverageBracket') { return [{ symbol: p.symbol, brackets: [{ bracket: 1, initialLeverage: 100 }] }]; }
+            if (path === '/fapi/v1/marginType' && method === 'POST') { if (Z.pos[p.symbol] && Z.pos[p.symbol].mt !== p.marginType) { throw err(-4047, 'Margin type cannot be changed if there exists open orders or a position.'); } if (mt(p.symbol) === p.marginType) { throw err(-4046, 'No need to change margin type.'); } Z.mt[p.symbol] = p.marginType; save(); return { code: 200, msg: 'success' }; }
+            if (path === '/fapi/v1/leverage' && method === 'POST') { var L = Math.max(1, Math.min(125, Math.round(+p.leverage) || 1)); Z.lev[p.symbol] = L; if (Z.pos[p.symbol]) { Z.pos[p.symbol].lev = L; } save(); return { symbol: p.symbol, leverage: L, maxNotionalValue: '1000000' }; }
+            if (path === '/fapi/v1/order' && method === 'POST') { return order(p); }
+            if (path === '/fapi/v1/algoOrder' && method === 'POST') { return algo(p); }
+            if (path === '/fapi/v1/order' && method === 'DELETE') { var n0 = Z.ord.length; Z.ord = Z.ord.filter(function (o) { return String(o.orderId) !== String(p.orderId); }); save(); if (Z.ord.length === n0) { throw err(-2011, 'Unknown order sent.'); } return { status: 'CANCELED' }; }
+            if (path === '/fapi/v1/algoOrder' && method === 'DELETE') { var n1 = Z.algo.length; Z.algo = Z.algo.filter(function (o) { return String(o.algoId) !== String(p.algoId); }); save(); if (Z.algo.length === n1) { throw err(-2011, 'Unknown order sent.'); } return { algoStatus: 'CANCELED' }; }
+            if (path === '/fapi/v1/allOpenOrders' && method === 'DELETE') { Z.ord = Z.ord.filter(function (o) { return o.symbol !== p.symbol; }); save(); return { code: 200, msg: 'success' }; }
+            if (path === '/fapi/v1/algoOpenOrders' && method === 'DELETE') { Z.algo = Z.algo.filter(function (o) { return o.symbol !== p.symbol; }); save(); return { code: 200, msg: 'success' }; }
+            if (path === '/fapi/v1/income') { return Z.hist.filter(function (h) { return !p.startTime || h.t >= +p.startTime; }).map(function (h) { return { symbol: h.sym, incomeType: 'REALIZED_PNL', income: f(h.pnl), asset: 'USDT', time: h.t }; }); }
+            throw err(-1, 'Paper mode: ' + path + ' is not available.');
+        }
+        /* a visible note when something fires by itself */
+        window.__simNote = function (o, m) { var nm = { STOP_MARKET: 'Stop-loss', TAKE_PROFIT_MARKET: 'Take-profit', TRAILING_STOP_MARKET: 'Trailing stop', STOP: 'Stop-limit' }[o.type] || 'Order'; try { toast('🧪 PAPER ' + nm + ' hit on ' + o.symbol + ' at ' + f(m, 6)); } catch (e) { } try { if (S.win === 'tpro') { tpLoad().then(function () { renderView(true); }); } } catch (e) { } };
+        /* when the pretend positions change, refresh the cached lists so every screen is right */
+        var lastMode = '', lastSig = '';
+        setInterval(function () {
+            try {
+                var on = paper(), key = on ? 'p' : 'r';
+                if (key !== lastMode) { lastMode = key; try { S.tp.pos = []; S.tp.ord = []; S.tp.algo = []; S.tp.bal = null; S.tp.at = 0; } catch (e) { } try { if (S.win === 'tpro') { renderView(true); } } catch (e) { } }
+                if (on) { var sig = JSON.stringify([Object.keys(Z.pos).map(function (k) { return Z.pos[k].amt; }), Z.ord.length, Z.algo.length]); if (sig !== lastSig) { lastSig = sig; if (!S.tp.busy) { tpLoad().then(function () { if (S.win === 'tpro') { renderView(true); } }); } } }
+            } catch (e) { }
+        }, 1500);
+    } catch (e) { try { console.log('sim', e); } catch (er) { } }
+})();
+/* ===== p9bt: bot windows get an "Open trades" panel (tap a trade = live window), bot settings, stop, and Change SL/TP ===== */
+(function () {
+    try {
+        var CSS = document.createElement('style');
+        CSS.textContent = '.mwbt .r{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid rgba(127,127,127,.2)}.mwbt .r:first-of-type{border-top:0}.mwbt .bb{padding:8px 11px;border-radius:10px;font-weight:800;font-size:12.5px;color:#fff;display:inline-block;margin:6px 6px 0 0}';
+        document.head.appendChild(CSS);
+        var KIND = { botpro: /Bot Baba/, rbot: /Baba Bot/, bot: /Paper bot/ };
+        function pnlOf(o) { var t = S.tick && S.tick[o.sym], p = t && t.p; if (!(p > 0) || !(o.entry > 0)) return null; var sg = /SHORT/i.test(o.side) ? -1 : 1; return (p - o.entry) / o.entry * 100 * sg; }
+        function card(win) {
+            var items = []; try { items = (window.__posItems ? window.__posItems() : []).filter(function (x) { return KIND[win].test(x.o.kind || ''); }); } catch (e) { }
+            var h = '<div class="group pad mwbt"><b>📊 Open trades of this bot (' + items.length + ')</b>';
+            if (!items.length) { h += '<div class="note" style="margin:4px 0 0">None right now. When the bot opens a trade it appears here: tap it for the live window with candles, stop-loss, take-profit and a Close button.</div>'; }
+            items.forEach(function (x) {
+                var o = x.o, pl = pnlOf(o), long = !/SHORT/i.test(o.side), i = window.__liveReg(o, x.ck);
+                h += '<div class="r" data-bt="live:' + i + '" style="cursor:pointer"><div style="flex:1"><b>' + String(o.sym).replace('USDT', '') + '</b> <span style="color:' + (long ? '#16a34a' : '#dc2626') + ';font-weight:800">' + (long ? '▲ LONG' : '▼ SHORT') + '</span>' + (o.lev ? ' ' + o.lev + '×' : '') + '<div class="note" style="margin:1px 0 0">Entry ' + o.entry + (o.sl > 0 ? ' · SL ' + (+o.sl).toPrecision(6) : '') + (o.tp > 0 ? ' · TP ' + (+o.tp).toPrecision(6) : '') + '</div></div>' + (pl == null ? '' : '<b style="color:' + (pl >= 0 ? '#16a34a' : '#dc2626') + '">' + (pl >= 0 ? '+' : '') + pl.toFixed(2) + '%</b>') + '<span class="bb" style="background:#0a84ff;margin:0">📺</span>' + (x.ck ? '<span class="bb" data-bt="close:' + x.ck + '" style="background:#ff3b30;margin:0">⏹</span>' : '') + '</div>';
+            });
+            if (win !== 'bot') { h += '<span class="bb" data-bt="set:' + win + '" style="background:#0a84ff">⚙ Bot settings (margin, SL, TP…)</span>'; }
+            h += '<span class="bb" data-bt="stopbots" style="background:#475569">⏹ Stop all bots</span><span class="bb" data-bt="force" style="background:#d70015">⛔ Force stop ALL</span></div>';
+            return h;
+        }
+        ['rbot', 'bot'].forEach(function (w) { var v = VIEWS[w]; if (typeof v === 'function') { VIEWS[w] = function () { var h = ''; try { h = card(w); } catch (e) { } return h + v.apply(this, arguments); }; } });
+        var ptab = 'pro';
+        document.addEventListener('click', function (e) { var t = e.target && e.target.closest ? e.target.closest('[data-ppt]') : null; if (t) { ptab = t.getAttribute('data-ppt'); } }, true);
+        try { var _ps = window.__paperSet; window.__paperSet = function (a) { try { ptab = a[1]; } catch (e) { } if (_ps) _ps(a); }; var _bs2 = window.__babaSet; window.__babaSet = function (a) { try { if (a[0] === 'paper') ptab = a[1]; } catch (e) { } if (_bs2) _bs2(a); }; } catch (e) { }
+        var _vp = VIEWS.paper; if (typeof _vp === 'function') { VIEWS.paper = function () { var h = _vp.apply(this, arguments); try { if (ptab === 'pro') { var c = card('botpro'), i = h.indexOf('<div class="bbtabs">'), j = i >= 0 ? h.indexOf('</div>', i) : -1; h = j > 0 ? h.slice(0, j + 6) + c + h.slice(j + 6) : c + h; } } catch (e) { } return h; }; }
+        document.addEventListener('click', function (e) {
+            var t = e.target && e.target.closest ? e.target.closest('[data-bt]') : null; if (!t) return; e.preventDefault(); e.stopPropagation();
+            var k = t.getAttribute('data-bt');
+            try {
+                if (k.indexOf('live:') === 0) { window.__liveOpen(+k.slice(5)); }
+                else if (k.indexOf('close:') === 0) { window.__closeKey(k.slice(6)); }
+                else if (k === 'stopbots') { window.__ask('⏹ Stop all bots?', 'No new trades will open. Trades already open keep their stop-loss and take-profit.', 'Yes, stop bots', '#475569', function () { try { window.__stopAll(); } catch (er) { } toast('⏹ All bots stopped'); try { renderView(true); } catch (er) { } }); }
+                else if (k === 'force') { window.__forceAll(); }
+                else if (k === 'set:botpro') { window.__askForm('🤖 Bot Baba settings', 'Used for the next trades the bot opens (paper money).', window.__fields.pb, 'Save settings', '#0a84ff', function (v) { var F = S.fb; F.stake = v.stake; F.sl = v.sl; F.maxOpen = v.maxOpen; try { fbSave(); } catch (er) { } toast('✅ Bot settings saved'); try { renderView(true); } catch (er) { } }, 'pb'); }
+                else if (k === 'set:rbot') { window.__askForm('💵 Baba Bot settings', '<b style="color:#d70015">REAL money.</b> Used for the next real trades the bot opens.', window.__fields.rb, 'Save settings', '#d70015', function (v) { var R = S.rb; R.margin = v.margin; R.lev = v.lev; R.slp = v.slp; R.tpp = v.tpp; R.maxOpen = v.maxOpen; R.dayLoss = v.dayLoss; try { rbSave(); } catch (er) { } toast('✅ Bot settings saved'); try { renderView(true); } catch (er) { } }, 'rb'); }
+            } catch (er) { try { toast('Could not do that: ' + er.message); } catch (e2) { } }
+        }, true);
+        /* change stop-loss / take-profit of a running trade (Bot Baba paper, or any Trade Pro / real Binance position) */
+        window.__editSLTP = function (ck, o, done) {
+            var k = ck.split(':'), kind = k[0], fields = [{ k: 'sl', label: 'Stop-loss (% from entry)', opts: [[1, '1%'], [2, '2%'], [3, '3%'], [5, '5%']], v: 2, input: 'other %' }, { k: 'tp', label: 'Take-profit (% from entry)', opts: [[0, 'Off'], [2, '2%'], [3, '3%'], [5, '5%'], [10, '10%']], v: 3, input: 'other %' }];
+            var real = kind === 'br' && !(window.__simOn && window.__simOn());
+            window.__askForm('✏ Change SL / TP', (real ? '<b style="color:#d70015">REAL Binance trade.</b> The old stop and target are cancelled and new ones placed.' : 'Applies to this trade now.'), fields, 'Apply', real ? '#d70015' : '#0a84ff', function (v) {
+                var sg = /SHORT/i.test(o.side) ? -1 : 1, sl = o.entry * (1 - sg * v.sl / 100), tp = v.tp > 0 ? o.entry * (1 + sg * v.tp / 100) : 0;
+                if (kind === 'fb') {
+                    var p = S.fb.open.filter(function (x) { return String(x.t0) === k[1]; })[0]; if (!p) { toast('Trade not found'); return; }
+                    p.sl = v.sl; p.tp = v.tp; try { fbSave(); } catch (e) { } o.sl = sl; o.tp = tp; toast('✅ SL / TP changed'); done && done(); return;
+                }
+                if (kind === 'br') {
+                    var sym = k[1], fl = S.filt[sym] || {}, tick = fl.tick || 0.0001, d = decOf(tick), rd = function (x) { return String(+(Math.round(x / tick) * tick).toFixed(d)); }, long = k[2] === 'L', cl = long ? 'SELL' : 'BUY';
+                    var pos = ((S.tp && S.tp.pos) || []).filter(function (x) { return x.symbol === sym && ((+x.positionAmt > 0) === long); })[0]; if (!pos) { toast('Position not found'); return; }
+                    var q = String(Math.abs(+pos.positionAmt)), ps = S.tp.dual ? { positionSide: long ? 'LONG' : 'SHORT' } : { reduceOnly: 'true' };
+                    toast('Changing SL / TP…');
+                    trCall('GET', '/fapi/v1/openAlgoOrders', { symbol: sym }).catch(function () { return []; }).then(function (a) {
+                        a = Array.isArray(a) ? a : ((a && (a.orders || a.data)) || []);
+                        return Promise.all(a.filter(function (x) { return x.symbol === sym && /^(STOP_MARKET|TAKE_PROFIT_MARKET)$/.test(x.orderType || x.type) && (x.reduceOnly === true || x.reduceOnly === 'true' || x.closePosition === true || x.closePosition === 'true'); }).map(function (x) { return trCall('DELETE', '/fapi/v1/algoOrder', { algoId: x.algoId }).catch(function () { }); }));
+                    }).then(function () {
+                        return trCall('POST', '/fapi/v1/algoOrder', Object.assign({ algoType: 'CONDITIONAL', symbol: sym, side: cl, type: 'STOP_MARKET', quantity: q, triggerPrice: rd(sl), workingType: 'MARK_PRICE' }, ps));
+                    }).then(function () { return tp ? trCall('POST', '/fapi/v1/algoOrder', Object.assign({ algoType: 'CONDITIONAL', symbol: sym, side: cl, type: 'TAKE_PROFIT_MARKET', quantity: q, triggerPrice: rd(tp), workingType: 'MARK_PRICE' }, ps)) : null; })
+                        .then(function () { o.sl = +rd(sl); o.tp = tp ? +rd(tp) : 0; try { tpLoad(); } catch (e) { } toast('✅ SL / TP changed'); done && done(); }, function (e) { toast('❌ ' + e.message + ' - check your open orders now.'); try { tpLoad(); } catch (e2) { } });
+                }
+            }, 'sltp');
+        };
+    } catch (e) { try { console.log('bt', e); } catch (er) { } }
+})();
+/* ===== p9wt: "Exchange tabs" in My Wallet: Binance-style Custom Tabs for Binance, Bitget, Bitget Wallet, OKX, OKX Wallet, MEXC, Bybit ===== */
+(function () {
+    try {
+        var K = 'mintoosuite_wtabs', KE = 'mintoosuite_wtex';
+        var EX = [
+            { id: 'bn', n: 'Binance', c: '#f0b90b', h: 'https://www.binance.com/en', u: { p2p: 'https://p2p.binance.com/en', buy: 'https://www.binance.com/en/buy-sell-crypto', card: 'https://www.binance.com/en/cards', dep: 'https://www.binance.com/en/my/wallet/account/main/deposit/crypto', pay: 'https://www.binance.com/en/binance-pay', scan: 'https://www.binance.com/en/binance-pay', disc: 'https://www.binance.com/en/square', earn: 'https://www.binance.com/en/earn', mkt: 'https://www.binance.com/en/markets/overview', trd: 'https://www.binance.com/en/trade/BTC_USDT', fut: 'https://www.binance.com/en/futures/BTCUSDT', ast: 'https://www.binance.com/en/my/wallet/account/overview' } },
+            { id: 'bg', n: 'Bitget', c: '#00c2c7', h: 'https://www.bitget.com/', u: { p2p: 'https://www.bitget.com/p2p-trading', buy: 'https://www.bitget.com/buy-crypto', card: 'https://www.bitget.com/card', dep: 'https://www.bitget.com/asset/recharge', pay: 'https://www.bitget.com/', scan: 'https://www.bitget.com/', disc: 'https://www.bitget.com/', earn: 'https://www.bitget.com/earn', mkt: 'https://www.bitget.com/markets', trd: 'https://www.bitget.com/spot/BTCUSDT', fut: 'https://www.bitget.com/futures/usdt/BTCUSDT', ast: 'https://www.bitget.com/asset' } },
+            { id: 'bw', n: 'Bitget Wallet', c: '#00a3ff', h: 'https://web3.bitget.com/en', u: { p2p: 'https://web3.bitget.com/en', buy: 'https://web3.bitget.com/en', card: 'https://web3.bitget.com/en', dep: 'https://web3.bitget.com/en', pay: 'https://web3.bitget.com/en', scan: 'https://web3.bitget.com/en', disc: 'https://web3.bitget.com/en', earn: 'https://web3.bitget.com/en', mkt: 'https://web3.bitget.com/en', trd: 'https://web3.bitget.com/en/swap', fut: 'https://web3.bitget.com/en', ast: 'https://web3.bitget.com/en' } },
+            { id: 'ok', n: 'OKX', c: '#111111', h: 'https://www.okx.com/', u: { p2p: 'https://www.okx.com/p2p-markets', buy: 'https://www.okx.com/buy-crypto', card: 'https://www.okx.com/card', dep: 'https://www.okx.com/balance/recharge', pay: 'https://www.okx.com/pay', scan: 'https://www.okx.com/pay', disc: 'https://www.okx.com/', earn: 'https://www.okx.com/earn', mkt: 'https://www.okx.com/markets/prices', trd: 'https://www.okx.com/trade-spot/btc-usdt', fut: 'https://www.okx.com/trade-swap/btc-usdt-swap', ast: 'https://www.okx.com/balance/overview' } },
+            { id: 'ow', n: 'OKX Wallet', c: '#4b4b4b', h: 'https://web3.okx.com/', u: { p2p: 'https://web3.okx.com/', buy: 'https://web3.okx.com/', card: 'https://web3.okx.com/', dep: 'https://web3.okx.com/', pay: 'https://web3.okx.com/', scan: 'https://web3.okx.com/', disc: 'https://web3.okx.com/', earn: 'https://web3.okx.com/', mkt: 'https://web3.okx.com/', trd: 'https://web3.okx.com/dex-swap', fut: 'https://web3.okx.com/', ast: 'https://web3.okx.com/portfolio' } },
+            { id: 'mx', n: 'MEXC', c: '#2a6df4', h: 'https://www.mexc.com/', u: { p2p: 'https://p2p.mexc.com/', buy: 'https://www.mexc.com/buy-crypto', card: 'https://www.mexc.com/', dep: 'https://www.mexc.com/assets/deposit', pay: 'https://www.mexc.com/', scan: 'https://www.mexc.com/', disc: 'https://www.mexc.com/', earn: 'https://www.mexc.com/earn', mkt: 'https://www.mexc.com/markets', trd: 'https://www.mexc.com/exchange/BTC_USDT', fut: 'https://futures.mexc.com/exchange/BTC_USDT', ast: 'https://www.mexc.com/assets' } },
+            { id: 'by', n: 'Bybit', c: '#f7a600', h: 'https://www.bybit.com/', u: { p2p: 'https://www.bybit.com/fiat/trade/otc', buy: 'https://www.bybit.com/buy-crypto', card: 'https://www.bybit.com/', dep: 'https://www.bybit.com/user/assets/deposit', pay: 'https://www.bybit.com/', scan: 'https://www.bybit.com/', disc: 'https://www.bybit.com/', earn: 'https://www.bybit.com/earn', mkt: 'https://www.bybit.com/en/markets/overview', trd: 'https://www.bybit.com/trade/spot/BTC/USDT', fut: 'https://www.bybit.com/trade/usdt/BTCUSDT', ast: 'https://www.bybit.com/user/assets/home' } }
+        ];
+        var TABS = [['mkt', '📈', 'Markets', 'Live prices and coins'], ['trd', '🔄', 'Trade', 'Spot trading'], ['fut', '📑', 'Futures', 'Futures and perpetuals'], ['ast', '👛', 'Assets', 'Balances and overview'], ['p2p', '🧑‍🤝‍🧑', 'P2P', 'Buy directly from users with local payments'], ['buy', '↕', 'Buy / Sell', 'Purchase crypto fast'], ['card', '💳', 'Card', 'Use your crypto and enjoy cashback rewards'], ['dep', '📥', 'Deposit', 'Deposit via multiple payments'], ['pay', '💸', 'Pay', 'Send, receive and spend crypto'], ['scan', '🔳', 'Scan', 'Scan QR code to pay instantly'], ['disc', '🔭', 'Discover', 'Explore earn & launchpool'], ['earn', '🌱', 'Earn', 'Grow your assets']];
+        var DEF = ['mkt', 'trd', 'fut', 'ast'];
+        function jget(k, d) { try { var v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? d : v; } catch (e) { return d; } }
+        function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+        function e2(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+        var edit = 0;
+        function cur() { var id = jget(KE, 'bn'); return EX.filter(function (x) { return x.id === id; })[0] || EX[0]; }
+        function mine() { var m = jget(K, DEF); return m.filter(function (id) { return TABS.some(function (t) { return t[0] === id; }); }); }
+        function tab(id) { return TABS.filter(function (t) { return t[0] === id; })[0]; }
+        var CSS = document.createElement('style');
+        CSS.textContent = '.wxt{border-radius:18px;padding:12px;margin-bottom:12px;background:var(--card,#fff);box-shadow:0 1px 6px rgba(0,0,0,.08)}.wxt .ex{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch}.wxt .ex span{flex:none;padding:7px 12px;border-radius:14px;font-weight:700;font-size:13px;background:rgba(127,127,127,.15);white-space:nowrap}.wxt .ex span.on{color:#fff}.wxt .strip{display:flex;justify-content:space-around;border-radius:16px;padding:10px 4px;background:rgba(127,127,127,.1);margin:4px 0 10px}.wxt .strip a,.wxt .strip div{flex:1;text-align:center;font-size:12px;font-weight:700;color:inherit;text-decoration:none;position:relative}.wxt .strip i{display:block;font-style:normal;font-size:22px;margin-bottom:2px}.wxt .strip b.m{position:absolute;top:-8px;right:6px;width:22px;height:22px;border-radius:11px;background:rgba(127,127,127,.35);font-size:15px;line-height:21px}.wxt .gr{display:grid;grid-template-columns:1fr 1fr;gap:10px}.wxt .tl{position:relative;border:1px solid rgba(127,127,127,.25);border-radius:16px;padding:12px;min-height:96px;color:inherit;text-decoration:none;display:block}.wxt .tl i{font-style:normal;font-size:24px}.wxt .tl b{display:block;margin-top:6px;font-size:15px}.wxt .tl small{display:block;opacity:.65;font-size:12px;margin-top:2px}.wxt .tl .pm{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:15px;background:rgba(127,127,127,.2);text-align:center;line-height:30px;font-weight:800;font-size:18px}';
+        document.head.appendChild(CSS);
+        function card() {
+            var ex = cur(), m = mine(), h = '<div class="wxt" data-noswipe="1"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:16px">🌐 Exchange tabs</b><span data-wx="edit" style="padding:6px 12px;border-radius:12px;background:rgba(127,127,127,.2);font-weight:800;font-size:12.5px">' + (edit ? '✔ Done' : '✏ Custom tabs') + '</span></div>';
+            h += '<div class="note" style="margin:4px 0 2px">Pick an exchange or wallet, then open its pages in your browser. Add, remove and reorder the tabs you use most.</div><div class="ex">' + EX.map(function (x) { return '<span data-wx="ex:' + x.id + '" class="' + (x.id === ex.id ? 'on' : '') + '" style="' + (x.id === ex.id ? 'background:' + x.c : '') + '">' + e2(x.n) + '</span>'; }).join('') + '</div>';
+            h += '<div class="strip">' + m.map(function (id, i) { var t = tab(id); return edit ? '<div><i>' + t[1] + '</i>' + e2(t[2]) + '<br><span data-wx="left:' + i + '" style="padding:0 6px">◀</span><span data-wx="right:' + i + '" style="padding:0 6px">▶</span><b class="m" data-wx="rm:' + id + '">−</b></div>' : '<a href="' + e2(ex.u[id] || ex.h) + '" target="_blank" rel="noopener"><i>' + t[1] + '</i>' + e2(t[2]) + '</a>'; }).join('') + (m.length ? '' : '<div class="note">No tabs. Tap Custom tabs and add some.</div>') + '</div>';
+            if (edit) {
+                h += '<div class="note" style="margin:0 0 8px">Tap + to add a tab to your strip, − to remove. Your choice is saved on this phone.</div><div class="gr">' + TABS.map(function (t) { var on = m.indexOf(t[0]) >= 0; return '<div class="tl"><span class="pm" data-wx="' + (on ? 'rm:' : 'add:') + t[0] + '">' + (on ? '−' : '+') + '</span><i>' + t[1] + '</i><b>' + e2(t[2]) + '</b><small>' + e2(t[3]) + '</small></div>'; }).join('') + '</div>';
+            } else {
+                h += '<div class="gr">' + TABS.map(function (t) { return '<a class="tl" href="' + e2(ex.u[t[0]] || ex.h) + '" target="_blank" rel="noopener"><i>' + t[1] + '</i><b>' + e2(t[2]) + '</b><small>' + e2(t[3]) + '</small></a>'; }).join('') + '</div>';
+            }
+            h += '<div class="note" style="margin:10px 0 0">These open the exchange or wallet website in your browser, where you sign in yourself. This app never sees your exchange password and does not hold your money there. Page addresses can change on the exchange side; if one does not open the right page, it falls back to the site.</div></div>';
+            return h;
+        }
+        var _w = VIEWS.wallet; if (typeof _w === 'function') { VIEWS.wallet = function () { var h = ''; try { h = card(); } catch (e) { } return h + _w.apply(this, arguments); }; }
+        document.addEventListener('click', function (e) {
+            var t = e.target && e.target.closest ? e.target.closest('[data-wx]') : null; if (!t) return; e.preventDefault(); e.stopPropagation();
+            var a = t.getAttribute('data-wx').split(':'), k = a[0], m = mine();
+            if (k === 'edit') { edit = edit ? 0 : 1; } else if (k === 'ex') { jset(KE, a[1]); }
+            else if (k === 'add') { if (m.indexOf(a[1]) < 0) { m.push(a[1]); jset(K, m); } } else if (k === 'rm') { jset(K, m.filter(function (x) { return x !== a[1]; })); }
+            else if (k === 'left' || k === 'right') { var i = +a[1], j = k === 'left' ? i - 1 : i + 1; if (j >= 0 && j < m.length) { var x = m[i]; m[i] = m[j]; m[j] = x; jset(K, m); } }
+            try { renderView(true); } catch (er) { }
+        }, true);
+        window.__wtabs = { edit: function () { return edit; } };
+    } catch (e) { try { console.log('wt', e); } catch (er) { } }
+})();
+/* ===== p9ci: Coin info box: launch date, history, volume, range, funding, open interest, live trades ===== */
+(function () {
+    try {
+        var CSS = document.createElement('style');
+        CSS.textContent = '#mwCI{position:fixed;inset:0;z-index:99991;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}#mwCI .bx{background:var(--card,#fff);color:var(--tx,#111);width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:22px 22px 0 0;padding:14px 14px 28px;-webkit-overflow-scrolling:touch}#mwCI .g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}#mwCI .c{background:rgba(127,127,127,.12);border-radius:12px;padding:8px 10px}#mwCI .c small{display:block;opacity:.65;font-size:11.5px}#mwCI .c b{font-size:14.5px}#mwCI h4{margin:12px 0 2px;font-size:14px}#mwCI .tr{display:flex;justify-content:space-between;font-size:12px;font-variant-numeric:tabular-nums;padding:1px 2px}.mwci{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:10px;background:rgba(10,132,255,.18);color:#0a84ff;font-size:11.5px;font-weight:800;vertical-align:middle}';
+        document.head.appendChild(CSS);
+        var el = null, sym = '', fut = true, D = {}, tm = null;
+        function fmt(v) { v = +v; if (!isFinite(v)) return '-'; return v >= 1000 ? v.toLocaleString('en-US', { maximumFractionDigits: 2 }) : v >= 1 ? v.toFixed(4) : v.toPrecision(5); }
+        function big(v) { v = +v; if (!isFinite(v)) return '-'; var a = Math.abs(v); return a >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : a >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : a >= 1e3 ? (v / 1e3).toFixed(1) + 'K' : v.toFixed(2); }
+        function dt(t) { return t ? new Date(t).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) : '-'; }
+        function age(t) { if (!t) return ''; var d = Math.floor((Date.now() - t) / 864e5), y = Math.floor(d / 365), m = Math.floor((d % 365) / 30); return y > 0 ? y + ' y ' + m + ' m' : m > 0 ? m + ' months' : d + ' days'; }
+        function pc(v) { return v == null ? '-' : '<span style="color:' + (v >= 0 ? '#16a34a' : '#dc2626') + '">' + (v >= 0 ? '+' : '') + v.toFixed(1) + '%</span>'; }
+        function cell(a, b) { return '<div class="c"><small>' + a + '</small><b>' + b + '</b></div>'; }
+        function api(path) { return (fut ? 'https://fapi.binance.com/fapi/v1' : 'https://api.binance.com/api/v3') + path; }
+        function get(path) { return fetchJSON(api(path)); }
+        function render() {
+            if (!el) return; var b = el.querySelector('.bx'), p = S.tick && S.tick[sym] ? S.tick[sym].p : (D.t ? +D.t.lastPrice : 0), k = D.k || [], t = D.t, h = '';
+            var base = sym.replace(/USDT$/, '');
+            h += '<div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:19px">' + base + '</b><span style="opacity:.6"> /USDT · ' + (fut ? 'Binance Futures' : 'Binance Spot') + '</span></div><span data-ci="x" style="padding:6px 12px;border-radius:10px;background:rgba(127,127,127,.2);font-weight:800">✕</span></div>';
+            h += '<div style="font-size:24px;font-weight:900;margin:4px 0">' + (p ? fmt(p) : '…') + (t ? ' <span style="font-size:14px">' + pc(+t.priceChangePercent) + ' 24h</span>' : '') + '</div>';
+            h += '<h4>📅 History</h4><div class="g">' + cell('Listed (first trade)', D.first ? dt(D.first) : '…') + cell('Age', D.first ? age(D.first) : '…') + cell('Price when listed', D.k0 ? fmt(D.k0) : '…') + cell('Since listing', D.k0 && p ? pc((p / D.k0 - 1) * 100) : '…') + '</div>';
+            if (D.ath) { h += '<div class="g">' + cell('All-time high (' + dt(D.athT) + ')', fmt(D.ath) + '<br><small>' + pc((p / D.ath - 1) * 100) + ' from it</small>') + cell('All-time low (' + dt(D.atlT) + ')', fmt(D.atl) + '<br><small>' + pc((p / D.atl - 1) * 100) + ' from it</small>') + '</div>'; }
+            if (k.length > 8) {
+                var c = k.map(function (x) { return +x[4]; }), last = c.length - 1, ch = function (n) { return last - n >= 0 ? (c[last] / c[last - n] - 1) * 100 : null; };
+                var yr = k.slice(-365), hi = Math.max.apply(null, yr.map(function (x) { return +x[2]; })), lo = Math.min.apply(null, yr.map(function (x) { return +x[3]; }));
+                h += '<h4>📈 Performance</h4><div class="g">' + cell('7 days', pc(ch(7))) + cell('30 days', pc(ch(30))) + cell('90 days', pc(ch(90))) + cell('1 year', pc(ch(365))) + cell('52-week high', fmt(hi)) + cell('52-week low', fmt(lo)) + '</div>';
+            }
+            if (t) { h += '<h4>📊 Volume today (24h)</h4><div class="g">' + cell('Volume (USDT)', '$' + big(t.quoteVolume)) + cell('Volume (coins)', big(t.volume)) + cell('24h high', fmt(t.highPrice)) + cell('24h low', fmt(t.lowPrice)) + cell('Trades in 24h', big(t.count)) + cell('Avg price 24h', fmt(t.weightedAvgPrice)) + '</div>'; }
+            if (fut && D.pi) { h += '<h4>⚙ Futures</h4><div class="g">' + cell('Funding rate', (+D.pi.lastFundingRate * 100).toFixed(4) + '%<br><small>' + (+D.pi.lastFundingRate > 0 ? 'longs pay shorts' : 'shorts pay longs') + '</small>') + cell('Next funding', D.pi.nextFundingTime ? new Date(+D.pi.nextFundingTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-') + cell('Mark price', fmt(D.pi.markPrice)) + cell('Open interest', D.oi ? big(+D.oi.openInterest * (p || 1)) + ' USDT' : '…') + '</div>'; }
+            h += '<h4>🧾 Latest trades (live)</h4>';
+            if (D.tr && D.tr.length) { h += D.tr.slice(-14).reverse().map(function (x) { return '<div class="tr" style="color:' + (x.m ? '#dc2626' : '#16a34a') + '"><span>' + (x.m ? 'Sell' : 'Buy') + ' ' + fmt(x.p) + '</span><span>' + big(+x.q) + '</span><span>' + new Date(x.T || x.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '</span></div>'; }).join(''); } else { h += '<div class="note">Loading…</div>'; }
+            h += '<div class="note" style="margin:10px 0 0">Data comes live from Binance. Past performance does not predict the future. This is not financial advice.</div>';
+            b.innerHTML = h;
+        }
+        function loadAll() {
+            var s = sym;
+            function ok() { return el && s === sym; }
+            get('/ticker/24hr?symbol=' + s).then(function (t) { if (ok() && t && t.lastPrice) { D.t = t; render(); } }, function () { });
+            get('/klines?symbol=' + s + '&interval=1d&limit=400').then(function (k) { if (ok() && Array.isArray(k)) { D.k = k; render(); } }, function () { });
+            get('/klines?symbol=' + s + '&interval=1d&startTime=0&limit=1').then(function (k) { if (ok() && Array.isArray(k) && k[0]) { D.first = +k[0][0]; D.k0 = +k[0][1]; render(); } }, function () { });
+            get('/klines?symbol=' + s + '&interval=1w&limit=1000').then(function (k) { if (!ok() || !Array.isArray(k) || !k.length) return; var hi = k[0], lo = k[0]; k.forEach(function (x) { if (+x[2] > +hi[2]) hi = x; if (+x[3] < +lo[3]) lo = x; }); D.ath = +hi[2]; D.athT = +hi[0]; D.atl = +lo[3]; D.atlT = +lo[0]; render(); }, function () { });
+            if (fut) { fetchJSON(api('/premiumIndex?symbol=' + s).replace('/fapi/v1/premiumIndex', '/fapi/v1/premiumIndex')).then(function (p) { if (ok() && p && p.markPrice) { D.pi = p; render(); } }, function () { }); get('/openInterest?symbol=' + s).then(function (o) { if (ok() && o && o.openInterest) { D.oi = o; render(); } }, function () { }); }
+            tr();
+        }
+        function tr() { if (!el) return; var s = sym; get('/trades?symbol=' + s + '&limit=20').then(function (a) { if (el && s === sym && Array.isArray(a)) { D.tr = a.map(function (x) { return { p: x.price, q: x.qty, T: x.time, m: x.isBuyerMaker }; }); render(); } }, function () { }); }
+        window.__coinInfo = function (symbol) {
+            sym = String(symbol).toUpperCase().replace(/[^A-Z0-9]/g, ''); if (!/USDT$/.test(sym)) sym += 'USDT';
+            fut = !!(S.tick && S.tick[sym]) && !(S.sp && S.sp[sym]); D = {}; if (el) el.remove();
+            el = document.createElement('div'); el.id = 'mwCI'; el.innerHTML = '<div class="bx"></div>'; document.body.appendChild(el); render();
+            get('/ticker/24hr?symbol=' + sym).then(function () { }, function () { if (fut) { fut = false; loadAll(); } });
+            loadAll(); clearInterval(tm); tm = setInterval(function () { if (!el) { clearInterval(tm); return; } tr(); try { var p = S.tick[sym]; if (p) render(); } catch (e) { } }, 3000);
+        };
+        function closeCI() { if (el) { el.remove(); el = null; } clearInterval(tm); }
+        document.addEventListener('click', function (e) {
+            var t = e.target && e.target.closest ? e.target.closest('[data-ci]') : null;
+            if (t) { e.preventDefault(); e.stopPropagation(); var k = t.getAttribute('data-ci'); if (k === 'x') closeCI(); else window.__coinInfo(k); return; }
+            if (el && e.target === el) { closeCI(); }
+        }, true);
+        /* an "ℹ️ Info" chip next to the coin name on chart/coin headers and the live trade window */
+        setInterval(function () {
+            try {
+                [].forEach.call(document.querySelectorAll('.pchead,.cph'), function (h) {
+                    if (h.querySelector('.mwci')) return; var m = /([A-Z0-9]{2,15}USDT)/.exec(h.textContent || ''); if (!m) return;
+                    var b = h.querySelector('b') || h.firstElementChild; if (!b) return; var c = document.createElement('span'); c.className = 'mwci'; c.setAttribute('data-ci', m[1]); c.textContent = 'ℹ️ Info'; b.appendChild(c);
+                });
+                var lt = document.querySelector('#mwLT .h b'); if (lt && !lt.querySelector('.mwci') && window.__liveSym) { var c2 = document.createElement('span'); c2.className = 'mwci'; c2.setAttribute('data-ci', window.__liveSym()); c2.textContent = 'ℹ️ Info'; lt.appendChild(c2); }
+            } catch (e) { }
+        }, 800);
+    } catch (e) { try { console.log('ci', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
