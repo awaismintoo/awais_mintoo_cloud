@@ -80,15 +80,28 @@ cat > privacy.html <<'MINTOO_PRIV_END'
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MintooSuite Privacy Policy</title>
 <style>body{font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;max-width:720px;margin:0 auto;padding:20px;color:#111}h1{font-size:26px}h2{font-size:18px;margin-top:26px}</style></head><body>
 <h1>MintooSuite Privacy Policy</h1><p>Last updated: 20 October 2026</p>
-<h2>Summary</h2><p>MintooSuite has no account or login of its own, no ads and no analytics. We collect no personal information. If you choose to use the optional Binance trading feature, your own Binance API keys stay on your device and are sent only to Binance. Your settings and the virtual (paper) trading account are stored only on your own device.</p>
-<h2>What the app stores on your device</h2><p>Your language, theme, leverage choice, notification settings, a log of the ideas the app showed you, the virtual paper-trading account, and, only if you add them, your Binance API key and secret. These are kept in the app's private storage on your device and are never sent to us. You can erase all of it by clearing the app's storage in your phone settings.</p>
-<h2>Network requests the app makes</h2><p>To show live prices and news, the app contacts public services: Binance public market data (binance.com), and public news feeds (CoinDesk, Cointelegraph, BBC, Google News) through relay services (allorigins.win, corsproxy.io, codetabs.com, rss2json.com). Those services can see your device's IP address in the normal way when you connect to them. The app sends them no personal information. If you add Binance API keys, the app also sends signed requests directly from your device to Binance (fapi.binance.com, or the Binance testnet in Test mode) to check your balance and to place or close the orders you confirm. We never receive your keys or your orders. The app does not connect to Exness.</p>
+<h2>Summary</h2><p>MintooSuite works mostly on your phone. We do not sell your data and we do not collect your name, ID or exchange passwords on our own servers. Some optional features use outside services, listed below. Last updated 30 October 2026.</p>
+<h2>What the app stores on your device</h2><p>Your settings (language, theme, zoom, alerts), the ideas and practice (pretend-money) trades the app showed you, saved Wikipedia notes and your Baba AI chat. Exchange API keys are kept on the phone, encrypted with the Android Keystore when the phone supports it, and are sent only to the exchange you chose. The 12 wallet words stay on the phone only. We cannot read or recover them.</p>
+<h2>Optional online account</h2><p>If you create an online account, your email address and a password check are stored by Google Firebase Authentication so you can sign in again. You can ask us to delete the account by email.</p>
+<h2>Ads and analytics</h2><p>The free version may show banner ads from Google AdMob on safe screens (never on trading, wallet or chart screens). Google may use the advertising ID for this, and shows its own consent screen where the law requires it. Usage analytics (Firebase Analytics) are off unless you switch them on. You can change this in the app.</p>
+<h2>Network requests the app makes</h2><p>Live prices, news and market data come from public services such as Binance, MEXC, Bitget, Bybit, OKX, CoinGecko, Google News, Wikipedia and open-meteo (weather). Those services see your phone's internet address like any website would. If you use Baba AI online and agree to it, the text you type is sent to a free third-party AI service to get an answer. Do not type secrets, passwords or ID numbers into it.</p>
+<h2>Permissions and why</h2><p>Notifications and background service: price alerts and bots you switch on. Battery optimisation: so alerts keep working. Display over other apps: floating alerts, only if you allow it. Location: optional, for local markets, offers and the world clock. Microphone: only when you press the mic. Camera and photos/files: only to attach a picture or file you choose. You can turn any of them off in Android settings.</p>
+<h2>Deleting your data</h2><p>In the app: Profile, then "Delete my account and data", and tap to confirm. This wipes everything stored on your phone. You can also clear the app's storage or uninstall it. To delete your online account (email and sign-in record) without the app, see <a href="delete-account.html">how to delete your account</a> or email awaisrajpoot2@yahoo.com.</p>
 <h2>Notifications</h2><p>If you allow notifications, the app shows local alerts generated on your device. No notification data is sent to us.</p>
 <h2>No financial advice</h2><p>The app shows market information and rule-based ideas. It is not financial advice, nothing it shows is guaranteed, and trading can lose money. The app places a real order only if you have added your own Binance API keys, and only after you review and confirm that order. Leveraged trading can lose your whole margin quickly. You are responsible for every order. Never give an API key withdrawal permission.</p>
 <h2>Children</h2><p>The app is not intended for anyone under 18.</p>
 <h2>Contact</h2><p>Muhammad Awais, Broadway Street, Greens Avenue, Park Road, Islamabad, Pakistan<br>Email: awaisrajpoot2@yahoo.com</p>
 </body></html>
 MINTOO_PRIV_END
+cat > delete-account.html <<'MINTOO_DEL_END'
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MintooSuite: Delete your account and data</title>
+<style>body{font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;max-width:720px;margin:0 auto;padding:20px;color:#111}h1{font-size:26px}h2{font-size:18px;margin-top:26px}</style></head><body>
+<h1>Delete your MintooSuite account and data</h1><p>App: MintooSuite (com.mintoosuite.terminal). Developer: Muhammad Awais, Islamabad, Pakistan. Last updated: 31 October 2026.</p>
+<h2>Option 1: inside the app (fastest)</h2><ol><li>Open MintooSuite.</li><li>Go to Profile.</li><li>Tap "Delete my account and data", then tap again to confirm.</li></ol><p>This erases all data stored on your phone by the app: settings, practice trades, saved notes, Baba AI chat and API keys. The app then restarts clean.</p>
+<h2>Option 2: by email</h2><p>If you cannot open the app, email <a href="mailto:awaisrajpoot2@yahoo.com?subject=Delete%20my%20MintooSuite%20account">awaisrajpoot2@yahoo.com</a> from the address you signed up with, with the subject "Delete my MintooSuite account". We will delete your online sign-in record (email address and password check kept by Google Firebase Authentication) within 30 days and reply to confirm.</p>
+<h2>What is deleted, and what is kept</h2><ul><li>Deleted: your online account (email and sign-in record) and everything the app stored on your phone.</li><li>Not held by us: exchange API keys, wallet words and trade history. They live only on your phone, so they are removed when you use Option 1 or uninstall the app.</li><li>Not controlled by us: data held by outside services you used, such as your exchange or Google. Ask them directly. Google ad data is handled under Google's own policy.</li><li>Kept: nothing about you, except a short note that a deletion was requested, if the law requires it.</li></ul>
+<p>See also the <a href="privacy.html">Privacy Policy</a>.</p></body></html>
+MINTOO_DEL_END
 cat > app.b64 <<'MINTOO_B64_END'
 H4sIAH4G12oC/8y9X48jSZIf+F6fIipnekh2kpEkM5mVxazMVlZVdnft1L+tzJqe2UKpESSDZFQG
 GayIYP7p3AL24bQSDgcI0Em7wEHAHu7h9nQ4QXcnHCAJ97ZfYvU6ONzr6SOc/czcI9wjgkzWdI2k
@@ -1071,7 +1084,8 @@ backup = os.path.join(bdir, 'index.html.bak_' + time.strftime('%Y%m%d_%H%M%S'))
 shutil.copy2(path, backup); print('Backup saved:', backup)
 open(path, 'wb').write(data)
 try:
-    shutil.copy(os.path.join(HERE, 'privacy.html'), os.path.join(proj, 'privacy.html')); print('privacy.html added')
+    for _pg in ('privacy.html', 'delete-account.html'):
+        shutil.copy(os.path.join(HERE, _pg), os.path.join(proj, _pg)); print(_pg + ' added')
 except Exception as e:
     print('privacy note:', e)
 print('MintooSuite v9.3 installed.')
@@ -1089,7 +1103,7 @@ if os.path.isdir(os.path.join(proj, '.git')):
     ident = []
     if not git('config', 'user.email').stdout.strip():
         ident = ['-c', 'user.name=MintooSuite', '-c', 'user.email=mintoosuite@users.noreply.github.com']
-    git('add', 'index.html'); git('add', 'privacy.html')
+    git('add', 'index.html'); git('add', 'privacy.html'); git('add', 'delete-account.html')
     c = subprocess.run(['git', '-C', proj] + ident + ['commit', '-m', 'MintooSuite v9.3: Binance trading, Exness window, exact digits, Match Binance %'], capture_output=True, text=True)
     print((c.stdout or c.stderr).strip().splitlines()[0] if (c.stdout or c.stderr).strip() else 'commit done')
     p = git('push', 'origin', 'HEAD')
