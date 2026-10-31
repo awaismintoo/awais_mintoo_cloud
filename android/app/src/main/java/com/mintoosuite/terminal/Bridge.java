@@ -30,6 +30,15 @@ final class Bridge {
 
     private boolean ok(String tok) { return tok != null && tok.equals(WebHolder.TOKEN); }
 
+    /* ----- chart rotation: the page asks to lock landscape / portrait, or go back to automatic ----- */
+    @JavascriptInterface
+    public void orient(String tok, String mode) {
+        if (!ok(tok)) { return; }
+        final MainActivity a = MainActivity.cur; if (a == null) { return; }
+        final int o = "land".equals(mode) ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE : ("port".equals(mode) ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT : android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        a.runOnUiThread(new Runnable() { public void run() { try { a.setRequestedOrientation(o); } catch (Exception e) { } } });
+    }
+
     /* ----- ads: the page tells us whether a banner may be shown on the current screen ----- */
     @JavascriptInterface
     public void adsShow(String tok, boolean show) { if (ok(tok)) { AdsHelper.show(show); } }

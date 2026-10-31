@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.230';
+var BUILD = '2026-10-31.232';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -3420,7 +3420,9 @@ function drawChart() {
     var dpr = window.devicePixelRatio || 1, w = cvs.clientWidth, h = cvs.clientHeight; if (!w || !h) { return; }
     if (cvs.width !== Math.round(w * dpr) || cvs.height !== Math.round(h * dpr)) { cvs.width = Math.round(w * dpr); cvs.height = Math.round(h * dpr); }
     var g = cvs.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-    var C = S.cx, ch = S.chart, K = ch.k, note = $('chartNote'), info = $('chartInfo'), GR = '#2ebd85', RD = '#f6465d', LN = cv('--line'), MT = cv('--mut'), TX = cv('--tx');
+    var DK0 = document.documentElement.getAttribute('data-theme') === 'dark';
+    g.fillStyle = DK0 ? '#131722' : '#ffffff'; g.fillRect(0, 0, w, h);
+    var C = S.cx, ch = S.chart, K = ch.k, note = $('chartNote'), info = $('chartInfo'), GR = '#26a69a', RD = '#ef5350', LN = DK0 ? 'rgba(42,46,57,.9)' : 'rgba(224,227,235,.9)', MT = DK0 ? '#787b86' : '#6a6d78', TX = DK0 ? '#d1d4dc' : '#131722';
     g.font = '11px -apple-system,Segoe UI,sans-serif';
     if (!K.length) { g.fillStyle = MT; g.fillText(ch.err || 'Loading candles…', 12, 24); if (note) { note.textContent = ch.err || ''; } return; }
     var padR = 62, padT = 6, axisH = 18, subH = C.sub === 'VOL' ? 70 : 84, ph = h - padT - axisH - subH - 8, W = w - padR;
@@ -3438,7 +3440,7 @@ function drawChart() {
     v.forEach(function (x) { if (x.h > hi) { hi = x.h; } if (x.l < lo) { lo = x.l; } if (x.v > vmax) { vmax = x.v; } });
     function inc(arr) { if (!arr) { return; } for (var j = start; j < end; j++) { var q = arr[j]; if (q !== null && q !== undefined) { var val = typeof q === 'object' ? q.v : q; if (val > hi) { hi = val; } if (val < lo) { lo = val; } } } }
     inc(ind.ma7); inc(ind.ma25); inc(ind.e9); inc(ind.e21); if (ind.bo) { inc(ind.bo.up); inc(ind.bo.lo); } inc(ind.vw);
-    var pad = (hi - lo) * 0.06 || hi * 0.001; hi += pad; lo -= pad; if (C.vz && C.vz !== 1) { var mid0 = (hi + lo) / 2 + (C.vp || 0) * (hi - lo), half0 = (hi - lo) / 2 / C.vz; hi = mid0 + half0; lo = mid0 - half0; } var span = hi - lo, yr = function (p) { return padT + (hi - p) / span * ph; }, y = function (p) { var q = yr(p); return (C.vz && C.vz !== 1) ? Math.max(padT - 1, Math.min(padT + ph + 1, q)) : q; }, xs = function (j) { return (j - start) * cw + cw * 1.0 + cw / 2; };
+    var pad = (hi - lo) * 0.06 || hi * 0.001; hi += pad; lo -= pad; if ((C.vz && C.vz !== 1) || C.vp) { var mid0 = (hi + lo) / 2 + (C.vp || 0) * (hi - lo), half0 = (hi - lo) / 2 / (C.vz || 1); hi = mid0 + half0; lo = mid0 - half0; } var span = hi - lo, yr = function (p) { return padT + (hi - p) / span * ph; }, y = function (p) { var q = yr(p); return ((C.vz && C.vz !== 1) || C.vp) ? Math.max(padT - 1, Math.min(padT + ph + 1, q)) : q; }, xs = function (j) { return (j - start) * cw + cw * 1.0 + cw / 2; };
     g.lineWidth = 1;
     for (i = 0; i <= 4; i++) { var gy = padT + ph * i / 4, gp = hi - span * i / 4; g.strokeStyle = LN; g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke(); g.fillStyle = MT; g.textAlign = 'left'; g.fillText(fmtP(gp, ch.sym), W + 4, gy + 4); }
     // time axis in the chosen time zone
@@ -3451,9 +3453,9 @@ function drawChart() {
     var bw = Math.max(2, cw * 0.72);
     v.forEach(function (x, jj) {
         var j = start + jj, up = x.c >= x.o, col = up ? GR : RD, cx = xs(j), yt = y(Math.max(x.o, x.c)), yb = y(Math.min(x.o, x.c)), bh = Math.max(1.5, yb - yt), live = (j === K.length - 1);
-        g.strokeStyle = col; g.lineWidth = Math.max(1, Math.min(2, cw * 0.12)); g.beginPath(); g.moveTo(cx, y(x.h)); g.lineTo(cx, y(x.l)); g.stroke();
-        var gr = g.createLinearGradient(cx - bw / 2, 0, cx + bw / 2, 0); gr.addColorStop(0, up ? '#58e0a8' : '#ff8396'); gr.addColorStop(0.45, col); gr.addColorStop(1, up ? '#168a63' : '#b8293c');
-        if (live) { g.shadowColor = col; g.shadowBlur = 10; } else { g.shadowColor = 'rgba(0,0,0,.22)'; g.shadowBlur = 3; g.shadowOffsetY = 1; }
+        g.strokeStyle = col; g.lineWidth = 1; g.beginPath(); g.moveTo(Math.round(cx) + .5, y(x.h)); g.lineTo(Math.round(cx) + .5, y(x.l)); g.stroke();
+        var gr = col;
+        g.shadowBlur = 0;
         g.fillStyle = gr; g.fillRect(cx - bw / 2, yt, bw, bh); g.shadowBlur = 0; g.shadowOffsetY = 0;
         if (C.sub === 'VOL') { var vh = vmax ? x.v / vmax * (subH - 18) : 0, vg = g.createLinearGradient(0, h - axisH - vh, 0, h - axisH); vg.addColorStop(0, up ? 'rgba(46,189,133,.85)' : 'rgba(246,70,93,.85)'); vg.addColorStop(1, up ? 'rgba(46,189,133,.25)' : 'rgba(246,70,93,.25)'); g.fillStyle = vg; g.fillRect(cx - bw / 2, padT + ph + axisH + (subH - 18 - vh) + 8, bw, vh); }
     });
@@ -7622,7 +7624,7 @@ function fcMini(sym) {
             document.querySelectorAll('.fsx').forEach(function (e) { if (!key || e !== find(key)) { e.classList.remove('fsx'); } });
             if (key) { el = find(key); if (el && !el.classList.contains('fsx')) { el.classList.add('fsx'); } if (!el) { S.fsKey = ''; key = ''; } }
             var has = !!document.getElementById('cv') || !!document.querySelector('[data-fsw]');
-            b.style.display = (key || has) ? 'block' : 'none'; b.className = key ? 'back' : ''; b.textContent = key ? '✕ Back' : '⛶ Full screen';
+            var dd = (key || has) ? 'block' : 'none', cc = key ? 'back' : '', tt = key ? '✕ Back' : '⛶ Full screen'; if (key) { b.__k = null; if (b.__d !== 'k') { b.__d = 'k'; b.style.display = 'block'; } } else if (b.__d === 'k') { b.__d = ''; b.style.removeProperty('display'); } if (!key && !window.__fsPlaced) { b.style.display = dd; } if (b.className !== cc) { b.className = cc; } if (b.__t !== tt) { b.__t = tt; b.textContent = tt; }
             document.body.style.overflow = key ? 'hidden' : '';
         } catch (e) { }
     }
@@ -15254,11 +15256,11 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                     e.stopImmediatePropagation(); e.preventDefault();
                     var now = Date.now(); if (now - lastTap < 350) { S.cx.vz = 1; S.cx.vp = 0; cxDraw(); lastTap = 0; return; } lastTap = now;
                     ax = { id: e.pointerId, y: e.clientY, z: S.cx.vz || 1 }; try { c.setPointerCapture(e.pointerId); } catch (er) { }
-                } else { pn = { id: e.pointerId, y: e.clientY, p: S.cx.vp || 0 }; }
+                } else if (!(window.__drawOn && window.__drawOn())) { pn = { id: e.pointerId, y: e.clientY, p: S.cx.vp || 0 }; }
             }, true);
             document.addEventListener('pointermove', function (e) {
                 if (ax && e.pointerId === ax.id) { var dy = e.clientY - ax.y; S.cx.vz = Math.max(0.3, Math.min(10, ax.z * Math.exp(-dy / 140))); if (Math.abs(S.cx.vz - 1) < 0.04) { S.cx.vz = 1; } cxDraw(); return; }
-                if (pn && e.pointerId === pn.id && (S.cx.vz || 1) !== 1) { var d2 = e.clientY - pn.y; S.cx.vp = Math.max(-3, Math.min(3, pn.p + d2 / ph() / S.cx.vz)); cxDraw(); }
+                if (pn && e.pointerId === pn.id) { var d2 = e.clientY - pn.y; if (!pn.on && Math.abs(d2) < 6) { return; } pn.on = 1; S.cx.vp = Math.max(-3, Math.min(3, pn.p + d2 / ph() / (S.cx.vz || 1))); cxDraw(); }
             });
             function up(e) { if (ax && e.pointerId === ax.id) { ax = null; } if (pn && e.pointerId === pn.id) { pn = null; } }
             document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
@@ -16406,53 +16408,323 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
         /* ---------- drawing tools ---------- */
         var DK = 'mintoosuite_draw', DR = {}; try { DR = JSON.parse(localStorage.getItem(DK) || '{}') || {}; } catch (e) { DR = {}; }
-        var DS = { tool: '', pend: null };
+        var DS = { tool: '', pend: null }; window.__drawOn = function () { return !!DS.tool; };
         function dsave() { try { localStorage.setItem(DK, JSON.stringify(DR)); } catch (e) { } }
         function mine() { var s = sym0(); return DR[s] || (DR[s] = []); }
+        var DCOL = '#f59e0b', TOOLS = [['h', '― Line'], ['v', '| Vertical'], ['t', '⟋ Trend'], ['ray', '↗ Ray'], ['ext', '↔ Extended'], ['arr', '➚ Arrow'], ['rect', '▭ Box'], ['ch', '▤ Channel'], ['f', 'Fib'], ['fx', 'Fib ext'], ['meas', '📏 Measure'], ['long', '▲ Long'], ['short', '▼ Short'], ['txt', 'T Text'], ['brush', '✎ Brush'], ['del', '🗑 Delete one']], NPT = { h: 1, v: 1, txt: 1, t: 2, ray: 2, ext: 2, arr: 2, rect: 2, f: 2, fx: 2, meas: 2, long: 2, short: 2, ch: 3 }, BR = null;
+
+        /* ---------- full TradingView-style tool catalogue ---------- */
+        var CATS = [
+            ['Lines', [['h', '― Horizontal line'], ['v', '| Vertical line'], ['hray', '⇥ Horizontal ray'], ['cross', '✛ Cross line'], ['t', '⟋ Trend line'], ['ray', '↗ Ray'], ['ext', '↔ Extended line'], ['arr', '➚ Arrow'], ['infoline', 'ⓘ Info line']]],
+            ['Channels', [['ch', '▤ Parallel channel'], ['pf', '⋔ Pitchfork'], ['regr', '≈ Regression trend'], ['fchan', 'Fib channel']]],
+            ['Fib', [['f', 'Fib retracement'], ['fx', 'Fib extension'], ['fchan', 'Fib channel'], ['ftz', 'Fib time zones'], ['fspeed', 'Fib speed fan'], ['fcirc', 'Fib circles']]],
+            ['Gann', [['gfan', 'Gann fan'], ['gbox', 'Gann box']]],
+            ['Patterns', [['abcd', 'ABCD'], ['xabcd', 'XABCD harmonic'], ['hs', 'Head & shoulders'], ['imp', 'Elliott impulse'], ['cor', 'Elliott correction']]],
+            ['Shapes', [['rect', '▭ Box'], ['ellipse', '⬭ Ellipse'], ['circle', '○ Circle'], ['triangle', '△ Triangle'], ['poly', '⬠ Polygon'], ['brush', '✎ Brush'], ['hl', '🖍 Highlighter']]],
+            ['Measure', [['meas', '📏 Measure'], ['dr', 'Date range'], ['pr', 'Price range'], ['dpr', 'Date & price range'], ['proj', 'Forecast'], ['long', '▲ Long plan'], ['short', '▼ Short plan'], ['avwap', 'Anchored VWAP'], ['vprof', 'Volume profile']]],
+            ['Cycles', [['cycles', 'Cycle lines'], ['sine', 'Sine wave'], ['ftz', 'Fib time zones']]],
+            ['Notes', [['txt', 'T Text'], ['pin', '⚑ Price flag'], ['e1', '📍'], ['e2', '⭐'], ['e3', '🚀'], ['e4', '⚠️'], ['e5', '👍'], ['e6', '👎'], ['del', '🗑 Delete one']]]
+        ];
+        var NEWT = { hray: 1, cross: 1, pin: 1, e1: 1, e2: 1, e3: 1, e4: 1, e5: 1, e6: 1, infoline: 2, dr: 2, pr: 2, dpr: 2, ellipse: 2, circle: 2, triangle: 3, pf: 3, regr: 2, fchan: 3, ftz: 2, fspeed: 2, fcirc: 2, gfan: 2, gbox: 2, avwap: 1, vprof: 2, abcd: 4, xabcd: 5, hs: 7, imp: 6, cor: 4, cycles: 2, sine: 2, proj: 2, poly: 99 }, EMO = { e1: '📍', e2: '⭐', e3: '🚀', e4: '⚠️', e5: '👍', e6: '👎' };
+        TOOLS = []; CATS.forEach(function (c) { c[1].forEach(function (t) { if (!TOOLS.some(function (q) { return q[0] === t[0]; })) { TOOLS.push(t); } }); });
+        DS.pp = []; DS.cat = 'Lines';
+        function drawNew(c, m, d, col, Y) {
+            var K = m.K, P = (d.p || []).map(function (q) { return [xOfT(m, q.t), Y(q.p), q]; }), n = P.length, W = m.W, T0 = m.padT, T1 = m.padT + m.ph, i, a = P[0], b = P[1];
+            function L(x1, y1, x2, y2, ext) { var dx = x2 - x1, dy = y2 - y1; if (ext && (dx || dy)) { var k = 4000 / Math.max(1e-6, Math.hypot(dx, dy)); x2 = x1 + dx * k; y2 = y1 + dy * k; } c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+            function tag(txt, x, y, cl) { c.save(); c.font = '700 10px -apple-system,Segoe UI,sans-serif'; var w = c.measureText(txt).width + 8; c.fillStyle = cl || col; c.fillRect(x, y - 11, w, 15); c.fillStyle = '#fff'; c.fillText(txt, x + 4, y); c.restore(); }
+            function fillA(al) { c.globalAlpha = al; c.fill(); c.globalAlpha = 1; }
+            function poly(pts, labels) { c.beginPath(); pts.forEach(function (q, j) { if (j) { c.lineTo(q[0], q[1]); } else { c.moveTo(q[0], q[1]); } }); c.stroke(); pts.forEach(function (q, j) { c.beginPath(); c.arc(q[0], q[1], 3, 0, 6.3); c.fill(); if (labels) { tag(labels[j], q[0] - 6, q[1] + (j % 2 ? -8 : 20), col); } }); }
+            function barsBetween(t1, t2) { var lo = Math.min(t1, t2), hi = Math.max(t1, t2), q = 0; K.forEach(function (x) { if (x.t >= lo && x.t <= hi) { q++; } }); return q; }
+            var k = d.k;
+            if (EMO[k]) { c.font = '20px sans-serif'; c.fillText(EMO[k], a[0] - 10, a[1] + 7); return; }
+            if (k === 'hray') { L(a[0], a[1], W, a[1]); tag(fp(a[2].p, m.sym), Math.max(0, W - 60), a[1] - 3); }
+            else if (k === 'cross') { L(0, a[1], W, a[1]); L(a[0], T0, a[0], T1); }
+            else if (k === 'pin') { L(a[0], a[1], a[0], a[1] - 26); tag(fp(a[2].p, m.sym), a[0], a[1] - 26); c.beginPath(); c.arc(a[0], a[1], 3.5, 0, 6.3); c.fill(); }
+            else if (k === 'infoline') { L(a[0], a[1], b[0], b[1]); var pc = (b[2].p - a[2].p) / a[2].p * 100; tag((pc >= 0 ? '+' : '') + pc.toFixed(2) + '% · ' + fp(b[2].p - a[2].p, m.sym) + ' · ' + barsBetween(a[2].t, b[2].t) + ' bars', (a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 6); }
+            else if (k === 'dr') { c.beginPath(); c.rect(Math.min(a[0], b[0]), T0, Math.abs(b[0] - a[0]), T1 - T0); fillA(.1); L(a[0], T0, a[0], T1); L(b[0], T0, b[0], T1); tag(barsBetween(a[2].t, b[2].t) + ' bars', Math.min(a[0], b[0]) + 4, T0 + 16); }
+            else if (k === 'pr') { c.beginPath(); c.rect(0, Math.min(a[1], b[1]), W, Math.abs(b[1] - a[1])); fillA(.1); L(0, a[1], W, a[1]); L(0, b[1], W, b[1]); var pc2 = (b[2].p - a[2].p) / a[2].p * 100; tag((pc2 >= 0 ? '+' : '') + pc2.toFixed(2) + '%  ' + fp(b[2].p - a[2].p, m.sym), 6, Math.min(a[1], b[1]) + 16); }
+            else if (k === 'dpr') { c.beginPath(); c.rect(Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1])); fillA(.12); c.stroke(); var pc3 = (b[2].p - a[2].p) / a[2].p * 100; tag((pc3 >= 0 ? '+' : '') + pc3.toFixed(2) + '% · ' + barsBetween(a[2].t, b[2].t) + ' bars', Math.min(a[0], b[0]) + 4, Math.min(a[1], b[1]) + 16); }
+            else if (k === 'ellipse') { c.beginPath(); c.ellipse((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.max(1, Math.abs(b[0] - a[0]) / 2), Math.max(1, Math.abs(b[1] - a[1]) / 2), 0, 0, 6.3); fillA(.12); c.stroke(); }
+            else if (k === 'circle') { c.beginPath(); c.arc(a[0], a[1], Math.max(1, Math.hypot(b[0] - a[0], b[1] - a[1])), 0, 6.3); fillA(.1); c.stroke(); }
+            else if (k === 'triangle' || k === 'poly') { if (n > 1) { c.beginPath(); P.forEach(function (q, j) { if (j) { c.lineTo(q[0], q[1]); } else { c.moveTo(q[0], q[1]); } }); c.closePath(); fillA(.12); c.stroke(); } }
+            else if (k === 'pf' && n > 2) { var C2 = P[2], M = [(b[0] + C2[0]) / 2, (b[1] + C2[1]) / 2], dx = M[0] - a[0], dy = M[1] - a[1]; c.beginPath(); c.moveTo(b[0], b[1]); c.lineTo(b[0] + dx * 40, b[1] + dy * 40); c.lineTo(C2[0] + dx * 40, C2[1] + dy * 40); c.lineTo(C2[0], C2[1]); c.closePath(); fillA(.08); L(a[0], a[1], a[0] + dx * 40, a[1] + dy * 40); L(b[0], b[1], b[0] + dx * 40, b[1] + dy * 40); L(C2[0], C2[1], C2[0] + dx * 40, C2[1] + dy * 40); L(b[0], b[1], C2[0], C2[1]); }
+            else if (k === 'regr' && n > 1) {
+                var lo = Math.min(a[2].t, b[2].t), hi = Math.max(a[2].t, b[2].t), xs2 = [], ys2 = [], q2;
+                K.forEach(function (x, j) { if (x.t >= lo && x.t <= hi) { xs2.push(j); ys2.push(x.c); } });
+                if (xs2.length > 2) { var N = xs2.length, sx = 0, sy = 0, sxy = 0, sxx = 0; for (i = 0; i < N; i++) { sx += xs2[i]; sy += ys2[i]; sxy += xs2[i] * ys2[i]; sxx += xs2[i] * xs2[i]; } var sl = (N * sxy - sx * sy) / (N * sxx - sx * sx || 1), ic = (sy - sl * sx) / N, sd = 0; for (i = 0; i < N; i++) { var rr = ys2[i] - (ic + sl * xs2[i]); sd += rr * rr; } sd = Math.sqrt(sd / N);
+                    var x0 = m.xs(xs2[0]), x1 = m.xs(xs2[N - 1]); [[0, 1], [2, .6], [-2, .6]].forEach(function (z) { c.globalAlpha = z[1]; L(x0, Y(ic + sl * xs2[0] + z[0] * sd), x1, Y(ic + sl * xs2[N - 1] + z[0] * sd)); }); c.globalAlpha = 1; tag('trend ' + (sl >= 0 ? 'up' : 'down') + ' · ±2σ band', x0 + 4, Y(ic + sl * xs2[0] + 2 * sd) - 4); }
+            }
+            else if (k === 'fchan' && n > 2) { var C3 = P[2], off = C3[1] - (a[1] + (b[1] - a[1]) * ((C3[0] - a[0]) / ((b[0] - a[0]) || 1))); [0, .236, .382, .5, .618, .786, 1].forEach(function (lv) { c.globalAlpha = lv === .618 ? 1 : .7; L(a[0], a[1] + off * lv, b[0], b[1] + off * lv, 1); }); c.globalAlpha = 1; }
+            else if (k === 'ftz') { var sp = Math.abs(b[0] - a[0]) || 10, x0f = Math.min(a[0], b[0]); [0, 1, 2, 3, 5, 8, 13, 21, 34, 55].forEach(function (f) { var xx = x0f + f * sp; if (xx <= W) { c.globalAlpha = .75; L(xx, T0, xx, T1); c.globalAlpha = 1; c.fillText(String(f), xx + 3, T0 + 12); } }); }
+            else if (k === 'fspeed') { var dxs = b[0] - a[0], dys = b[1] - a[1]; [.25, .382, .5, .618, .75, 1].forEach(function (lv) { L(a[0], a[1], b[0], a[1] + dys * lv, 1); L(a[0], a[1], a[0] + dxs * lv, b[1], 1); }); }
+            else if (k === 'fcirc') { var rad = Math.hypot(b[0] - a[0], b[1] - a[1]); [.382, .5, .618, 1, 1.618].forEach(function (lv) { c.beginPath(); c.arc(a[0], a[1], rad * lv, 0, 6.3); c.stroke(); }); }
+            else if (k === 'gfan') { var gx = b[0] - a[0], gy = b[1] - a[1]; [8, 4, 3, 2, 1, .5, 1 / 3, .25, .125].forEach(function (r) { c.globalAlpha = r === 1 ? 1 : .65; L(a[0], a[1], a[0] + gx, a[1] + gy * r, 1); }); c.globalAlpha = 1; }
+            else if (k === 'gbox') { var bx = Math.min(a[0], b[0]), by = Math.min(a[1], b[1]), bw = Math.abs(b[0] - a[0]), bh = Math.abs(b[1] - a[1]); c.strokeRect(bx, by, bw, bh); for (i = 1; i < 8; i++) { c.globalAlpha = i === 4 ? .8 : .3; L(bx + bw * i / 8, by, bx + bw * i / 8, by + bh); L(bx, by + bh * i / 8, bx + bw, by + bh * i / 8); } c.globalAlpha = .8; L(bx, by, bx + bw, by + bh); L(bx, by + bh, bx + bw, by); c.globalAlpha = 1; }
+            else if (k === 'avwap') { var cs = 0, cv = 0, st = false; c.beginPath(); K.forEach(function (x) { if (x.t < a[2].t) { return; } var tp = (x.h + x.l + x.c) / 3; cs += tp * x.v; cv += x.v; var xx = xOfT(m, x.t), yy = Y(cs / (cv || 1)); if (!st) { c.moveTo(xx, yy); st = true; } else { c.lineTo(xx, yy); } }); c.lineWidth = 2; c.stroke(); c.lineWidth = 1.5; tag('Anchored VWAP', a[0] + 4, a[1] - 8); }
+            else if (k === 'vprof' && n > 1) { var lo2 = Math.min(a[2].t, b[2].t), hi2 = Math.max(a[2].t, b[2].t), pl = Infinity, ph2 = -Infinity, sel = []; K.forEach(function (x) { if (x.t >= lo2 && x.t <= hi2) { sel.push(x); pl = Math.min(pl, x.l); ph2 = Math.max(ph2, x.h); } });
+                if (sel.length && ph2 > pl) { var NB = 24, bins = []; for (i = 0; i < NB; i++) { bins.push(0); } sel.forEach(function (x) { var bi = Math.min(NB - 1, Math.floor(((x.h + x.l) / 2 - pl) / (ph2 - pl) * NB)); bins[bi] += x.v; }); var mx = Math.max.apply(null, bins) || 1, poc = bins.indexOf(mx), xl = Math.min(a[0], b[0]), wd = Math.abs(b[0] - a[0]) * 0.6 + 20;
+                    for (i = 0; i < NB; i++) { var yt = Y(pl + (i + 1) / NB * (ph2 - pl)), yb2 = Y(pl + i / NB * (ph2 - pl)); c.globalAlpha = i === poc ? .75 : .35; c.fillRect(xl, yt, wd * bins[i] / mx, Math.max(1, yb2 - yt - 1)); } c.globalAlpha = 1; tag('POC ' + fp(pl + (poc + .5) / NB * (ph2 - pl), m.sym), xl + 4, Y(pl + (poc + .5) / NB * (ph2 - pl)) - 3, '#f59e0b'); } }
+            else if (k === 'abcd') { poly(P, ['A', 'B', 'C', 'D']); }
+            else if (k === 'xabcd') { poly(P, ['X', 'A', 'B', 'C', 'D']); c.globalAlpha = .1; c.beginPath(); c.moveTo(P[0][0], P[0][1]); c.lineTo(P[1][0], P[1][1]); c.lineTo(P[2][0], P[2][1]); c.closePath(); c.fill(); c.beginPath(); c.moveTo(P[2][0], P[2][1]); c.lineTo(P[3][0], P[3][1]); c.lineTo(P[4][0], P[4][1]); c.closePath(); c.fill(); c.globalAlpha = 1; }
+            else if (k === 'imp') { poly(P, ['0', '1', '2', '3', '4', '5']); }
+            else if (k === 'cor') { poly(P, ['0', 'A', 'B', 'C']); }
+            else if (k === 'hs') { poly(P, ['', 'LS', '', 'Head', '', 'RS', '']); L(P[2][0], P[2][1], P[4][0], P[4][1], 1); }
+            else if (k === 'cycles') { var cp = Math.abs(b[0] - a[0]) || 20; for (var xx2 = Math.min(a[0], b[0]); xx2 < W; xx2 += cp) { c.globalAlpha = .6; L(xx2, T0, xx2, T1); } c.globalAlpha = 1; }
+            else if (k === 'sine') { var half = Math.abs(b[0] - a[0]) || 40, am = (b[1] - a[1]) / 2, mid = (a[1] + b[1]) / 2, xs0 = a[0] < b[0] ? a[0] : a[0] - 2 * half; c.beginPath(); for (var xx3 = xs0; xx3 <= W; xx3 += 3) { var yy3 = mid - am * Math.cos((xx3 - xs0) / half * Math.PI); if (xx3 === xs0) { c.moveTo(xx3, yy3); } else { c.lineTo(xx3, yy3); } } c.stroke(); }
+            else if (k === 'proj') { var up2 = b[2].p >= a[2].p, pc4 = (b[2].p - a[2].p) / a[2].p * 100, pcl = up2 ? '#16a34a' : '#dc2626'; c.strokeStyle = pcl; c.fillStyle = pcl; c.setLineDash([6, 4]); L(a[0], a[1], b[0], b[1]); c.setLineDash([]); var an = Math.atan2(b[1] - a[1], b[0] - a[0]); c.beginPath(); c.moveTo(b[0], b[1]); c.lineTo(b[0] - 11 * Math.cos(an - .45), b[1] - 11 * Math.sin(an - .45)); c.lineTo(b[0] - 11 * Math.cos(an + .45), b[1] - 11 * Math.sin(an + .45)); c.closePath(); c.fill(); tag('Forecast ' + (pc4 >= 0 ? '+' : '') + pc4.toFixed(2) + '%', b[0] + 6, b[1], pcl); }
+        }
         function drawDraw(c, m) {
+            if (DS.hide && !DS.tool) { return; }
             var L = (DR[m.sym] || []).slice(), Y = m.yr || m.y;
             if (DS.pend) { L.push({ k: 'pend', a: DS.pend }); }
+            (DS.pp || []).forEach(function (q) { L.push({ k: 'pend', a: q }); });
+            if (BR && BR.pts.length > 1) { L.push({ k: 'brush', pts: BR.pts, c: DCOL, w: BR.hl ? 13 : 0, al: .3 }); }
             if (!L.length) { return; }
-            c.save(); c.beginPath(); c.rect(0, m.padT, m.W, m.ph); c.clip(); c.font = '10px -apple-system,Segoe UI,sans-serif'; c.textAlign = 'left'; c.lineWidth = 1.4;
+            c.save(); c.beginPath(); c.rect(0, m.padT, m.W, m.ph); c.clip(); c.font = '10px -apple-system,Segoe UI,sans-serif'; c.textAlign = 'left'; c.lineWidth = 1.5;
+            function ln(x1, y1, x2, y2, mode) {
+                var dx = x2 - x1, dy = y2 - y1;
+                if (mode && (dx || dy)) { var k = 4000 / Math.max(1e-6, Math.hypot(dx, dy)); x2 = x1 + dx * k; y2 = y1 + dy * k; if (mode === 2) { x1 = x1 - dx * k; y1 = y1 - dy * k; } }
+                c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+            }
+            function dot(x, y, col) { c.fillStyle = col; c.beginPath(); c.arc(x, y, 3.5, 0, 6.3); c.fill(); }
+            function tag(txt, x, y, col) { c.font = '700 10px -apple-system,Segoe UI,sans-serif'; var w = c.measureText(txt).width + 8; c.fillStyle = col; c.fillRect(x, y - 11, w, 15); c.fillStyle = '#fff'; c.fillText(txt, x + 4, y); }
             L.forEach(function (d) {
-                if (d.k === 'h') { var y = Y(d.p); c.strokeStyle = '#f59e0b'; c.setLineDash([]); c.beginPath(); c.moveTo(0, y); c.lineTo(m.W, y); c.stroke(); c.fillStyle = '#f59e0b'; c.fillText(fp(d.p, m.sym), 4, y - 3); }
-                else if (d.k === 'pend') { var xp = xOfT(m, d.a.t), yp = Y(d.a.p); c.fillStyle = '#f59e0b'; c.beginPath(); c.arc(xp, yp, 5, 0, 6.3); c.fill(); }
-                else if (d.k === 't') { c.strokeStyle = '#38bdf8'; c.beginPath(); c.moveTo(xOfT(m, d.a.t), Y(d.a.p)); c.lineTo(xOfT(m, d.b.t), Y(d.b.p)); c.stroke(); }
-                else if (d.k === 'f') {
-                    var xa = xOfT(m, d.a.t), xb = xOfT(m, d.b.t), x0 = Math.min(xa, xb);
-                    [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1].forEach(function (lv) {
-                        var p = d.b.p + (d.a.p - d.b.p) * lv, yy = Y(p); c.strokeStyle = lv === 0.618 ? '#f59e0b' : 'rgba(160,160,255,.8)'; c.setLineDash(lv === 0 || lv === 1 ? [] : [5, 4]);
-                        c.beginPath(); c.moveTo(x0, yy); c.lineTo(m.W, yy); c.stroke(); c.fillStyle = 'rgba(160,160,255,1)'; c.fillText(lv + '  ' + fp(p, m.sym), x0 + 3, yy - 3);
-                    }); c.setLineDash([]);
+                var col = d.c || DCOL; c.strokeStyle = col; c.fillStyle = col; c.setLineDash([]);
+                if (NEWT[d.k]) { drawNew(c, m, d, col, Y); return; }
+                if (d.k === 'h') { var y = Y(d.p); ln(0, y, m.W, y); c.fillText(fp(d.p, m.sym), 4, y - 3); }
+                else if (d.k === 'v') { var xv = xOfT(m, d.t); c.beginPath(); c.moveTo(xv, m.padT); c.lineTo(xv, m.padT + m.ph); c.stroke(); }
+                else if (d.k === 'pend') { c.fillStyle = DCOL; c.beginPath(); c.arc(xOfT(m, d.a.t), Y(d.a.p), 5, 0, 6.3); c.fill(); }
+                else if (d.k === 'txt') { var xt = xOfT(m, d.t), yt = Y(d.p); c.font = '700 12px -apple-system,Segoe UI,sans-serif'; var tw = c.measureText(d.s).width + 10; c.globalAlpha = .9; c.fillRect(xt, yt - 14, tw, 20); c.globalAlpha = 1; c.fillStyle = '#fff'; c.fillText(d.s, xt + 5, yt); }
+                else if (d.k === 'brush') { if (d.w) { c.lineWidth = d.w; c.globalAlpha = d.al || .3; c.lineCap = 'round'; } c.beginPath(); d.pts.forEach(function (q, i) { var xq = xOfT(m, q.t), yq = Y(q.p); if (i) { c.lineTo(xq, yq); } else { c.moveTo(xq, yq); } }); c.stroke(); c.globalAlpha = 1; c.lineWidth = 1.5; }
+                else if (d.a && d.b) {
+                    var xa = xOfT(m, d.a.t), ya = Y(d.a.p), xb = xOfT(m, d.b.t), yb = Y(d.b.p);
+                    if (d.k === 't') { ln(xa, ya, xb, yb); dot(xa, ya, col); dot(xb, yb, col); }
+                    else if (d.k === 'ray') { ln(xa, ya, xb, yb, 1); dot(xa, ya, col); }
+                    else if (d.k === 'ext') { ln(xa, ya, xb, yb, 2); dot(xa, ya, col); dot(xb, yb, col); }
+                    else if (d.k === 'arr') { ln(xa, ya, xb, yb); var an = Math.atan2(yb - ya, xb - xa); c.beginPath(); c.moveTo(xb, yb); c.lineTo(xb - 11 * Math.cos(an - .45), yb - 11 * Math.sin(an - .45)); c.lineTo(xb - 11 * Math.cos(an + .45), yb - 11 * Math.sin(an + .45)); c.closePath(); c.fill(); }
+                    else if (d.k === 'rect') { c.globalAlpha = .16; c.fillRect(Math.min(xa, xb), Math.min(ya, yb), Math.abs(xb - xa), Math.abs(yb - ya)); c.globalAlpha = 1; c.strokeRect(Math.min(xa, xb), Math.min(ya, yb), Math.abs(xb - xa), Math.abs(yb - ya)); }
+                    else if (d.k === 'meas') {
+                        var up = d.b.p >= d.a.p, mc = up ? '#16a34a' : '#dc2626'; c.fillStyle = mc; c.globalAlpha = .15; c.fillRect(Math.min(xa, xb), Math.min(ya, yb), Math.abs(xb - xa), Math.abs(yb - ya)); c.globalAlpha = 1; c.strokeStyle = mc; ln(xa, ya, xb, yb); c.strokeRect(Math.min(xa, xb), Math.min(ya, yb), Math.abs(xb - xa), Math.abs(yb - ya));
+                        var pc = (d.b.p - d.a.p) / d.a.p * 100; tag((pc >= 0 ? '+' : '') + pc.toFixed(2) + '%  ' + fp(d.b.p - d.a.p, m.sym), Math.min(xa, xb) + 4, Math.min(ya, yb) + 16, mc);
+                    }
+                    else if (d.k === 'f') {
+                        var x0 = Math.min(xa, xb);
+                        [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1].forEach(function (lv) {
+                            var p = d.b.p + (d.a.p - d.b.p) * lv, yy = Y(p); c.strokeStyle = lv === 0.618 ? '#f59e0b' : 'rgba(160,160,255,.8)'; c.setLineDash(lv === 0 || lv === 1 ? [] : [5, 4]);
+                            c.beginPath(); c.moveTo(x0, yy); c.lineTo(m.W, yy); c.stroke(); c.fillStyle = 'rgba(160,160,255,1)'; c.fillText(lv + '  ' + fp(p, m.sym), x0 + 3, yy - 3);
+                        }); c.setLineDash([]);
+                    }
+                    else if (d.k === 'fx') {
+                        var x1 = Math.min(xa, xb);
+                        [0, 0.618, 1, 1.272, 1.618, 2, 2.618].forEach(function (lv) {
+                            var p = d.a.p + (d.b.p - d.a.p) * lv, yy = Y(p); c.strokeStyle = lv === 1.618 ? '#f59e0b' : 'rgba(56,189,248,.85)'; c.setLineDash(lv === 0 || lv === 1 ? [] : [5, 4]);
+                            c.beginPath(); c.moveTo(x1, yy); c.lineTo(m.W, yy); c.stroke(); c.fillStyle = 'rgba(56,189,248,1)'; c.fillText(lv + '  ' + fp(p, m.sym), x1 + 3, yy - 3);
+                        }); c.setLineDash([]);
+                    }
+                    else if (d.k === 'long' || d.k === 'short') {
+                        var sg = d.k === 'long' ? 1 : -1, tp = d.b.p, sl = d.a.p - (tp - d.a.p) / 2, ys = Y(sl), yt2 = Y(tp), xr = Math.max(xa, xb) + 0, xl = Math.min(xa, xb), w = Math.max(60, Math.abs(xb - xa));
+                        c.globalAlpha = .18; c.fillStyle = '#16a34a'; c.fillRect(xl, Math.min(ya, yt2), w, Math.abs(yt2 - ya)); c.fillStyle = '#dc2626'; c.fillRect(xl, Math.min(ya, ys), w, Math.abs(ys - ya)); c.globalAlpha = 1;
+                        c.strokeStyle = '#94a3b8'; ln(xl, ya, xl + w, ya); var pr = (tp - d.a.p) / d.a.p * 100 * sg;
+                        tag((d.k === 'long' ? 'Long ' : 'Short ') + 'target ' + (pr >= 0 ? '+' : '') + pr.toFixed(2) + '%  · risk:reward 2:1', xl + 4, Math.min(ya, yt2) + 14, '#16a34a'); tag('stop ' + fp(sl, m.sym), xl + 4, Math.max(ya, ys) - 4, '#dc2626');
+                    }
+                    else if (d.k === 'ch' && d.c3) {
+                        var yc = Y(d.c3.p), off = yc - (ya + (yb - ya) * ((xOfT(m, d.c3.t) - xa) / ((xb - xa) || 1)));
+                        ln(xa, ya, xb, yb, 2); ln(xa, ya + off, xb, yb + off, 2); c.globalAlpha = .08; c.beginPath(); c.moveTo(xa, ya); c.lineTo(xb, yb); c.lineTo(xb, yb + off); c.lineTo(xa, ya + off); c.closePath(); c.fill(); c.globalAlpha = 1;
+                        c.setLineDash([4, 4]); ln(xa, ya + off / 2, xb, yb + off / 2, 2); c.setLineDash([]);
+                    }
                 }
             });
             c.restore();
+        }
+        function dist(d, m, x, y) {
+            var Y = m.yr || m.y, best = 1e9;
+            function seg(x1, y1, x2, y2) { var dx = x2 - x1, dy = y2 - y1, l = dx * dx + dy * dy, t = l ? Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / l)) : 0; return Math.hypot(x - (x1 + t * dx), y - (y1 + t * dy)); }
+            if (d.k === 'h') { return Math.abs(y - Y(d.p)); } if (d.k === 'v') { return Math.abs(x - xOfT(m, d.t)); } if (d.k === 'txt') { return Math.hypot(x - xOfT(m, d.t) - 20, y - Y(d.p) + 4); }
+            if (d.k === 'brush') { d.pts.forEach(function (q) { best = Math.min(best, Math.hypot(x - xOfT(m, q.t), y - Y(q.p))); }); return best; }
+            if (d.p) { d.p.forEach(function (q, j) { var xq = xOfT(m, q.t), yq = Y(q.p); best = Math.min(best, Math.hypot(x - xq, y - yq)); if (j) { var pq = d.p[j - 1]; best = Math.min(best, seg(xOfT(m, pq.t), Y(pq.p), xq, yq)); } }); if (d.k === 'hray' || d.k === 'cross' || d.k === 'pr') { best = Math.min(best, Math.abs(y - Y(d.p[0].p))); } if (d.k === 'cross' || d.k === 'dr') { best = Math.min(best, Math.abs(x - xOfT(m, d.p[0].t))); } return best; }
+            if (d.a && d.b) { var xa = xOfT(m, d.a.t), ya = Y(d.a.p), xb = xOfT(m, d.b.t), yb = Y(d.b.p); return Math.min(seg(xa, ya, xb, yb), Math.hypot(x - xa, y - ya), Math.hypot(x - xb, y - yb), (d.k === 'f' || d.k === 'fx') ? Math.abs(y - ya) : 1e9, (d.k === 'rect' || d.k === 'meas' || d.k === 'long' || d.k === 'short') ? (x > Math.min(xa, xb) && x < Math.max(xa, xb) && y > Math.min(ya, yb) && y < Math.max(ya, yb) ? 0 : 1e9) : 1e9); }
+            return best;
+        }
+
+
+        function askText(cb) {
+            var o = document.getElementById('drAsk'); if (o) { o.remove(); }
+            o = document.createElement('div'); o.id = 'drAsk'; o.setAttribute('data-noswipe', '1'); o.style.cssText = 'position:fixed;left:60px;right:12px;top:30%;z-index:9200;background:var(--card,#fff);color:var(--tx,#111);padding:12px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.45);display:flex;gap:8px;align-items:center';
+            o.innerHTML = '<input id="drAskI" maxlength="40" placeholder="Type your note" style="flex:1;min-width:0;padding:10px;border-radius:9px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;font-size:15px"><b id="drAskOk" style="padding:10px 14px;background:#2563eb;color:#fff;border-radius:9px">Add</b><b id="drAskNo" style="padding:10px">✕</b>';
+            document.body.appendChild(o); var i = document.getElementById('drAskI'); setTimeout(function () { try { i.focus(); } catch (e) { } }, 50);
+            function done(v) { o.remove(); cb(v); }
+            document.getElementById('drAskOk').onclick = function () { done(i.value.trim()); }; document.getElementById('drAskNo').onclick = function () { done(''); }; i.onkeydown = function (e) { if (e.key === 'Enter') { done(i.value.trim()); } };
+        }
+        function snap(pt, x, y) {
+            try {
+                var K = LM.K, Y = LM.yr || LM.y, i = Math.max(0, Math.min(K.length - 1, Math.round((x - LM.xs(0)) / (LM.xs(1) - LM.xs(0))))), k = K[i], best = null, bd = 18;
+                [k.o, k.h, k.l, k.c].forEach(function (v) { var d = Math.abs(Y(v) - y); if (d < bd) { bd = d; best = v; } });
+                if (best !== null) { return { t: k.t, p: best }; } return { t: k.t, p: pt.p };
+            } catch (e) { return pt; }
         }
         document.addEventListener('pointerdown', function (e) {
             if (!DS.tool || !e.target || e.target.id !== 'cv' || !LM) { return; }
             var r = e.target.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; if (x > r.width - 62) { return; }
             e.stopImmediatePropagation(); e.preventDefault();
-            var pt = { t: Math.round(tOfX(LM, x)), p: pOfY(LM, y) };
-            if (DS.tool === 'h') { mine().push({ k: 'h', p: pt.p }); dsave(); }
-            else if (!DS.pend) { DS.pend = pt; say('Now tap the second point'); }
-            else { mine().push({ k: DS.tool, a: DS.pend, b: pt }); DS.pend = null; dsave(); }
+            var pt = { t: Math.round(tOfX(LM, x)), p: pOfY(LM, y) }, T = DS.tool; if (DS.magnet && T !== 'brush' && T !== 'hl' && T !== 'del') { pt = snap(pt, x, y); }
+            if (T === 'del') { var l0 = mine(), bi = -1, bd = 28; l0.forEach(function (d, i) { var q = dist(d, LM, x, y); if (q < bd) { bd = q; bi = i; } }); if (bi >= 0) { l0.splice(bi, 1); dsave(); say('Removed.'); } else { say('Tap right on a drawing to remove it'); } redraw(); return; }
+            if (NEWT[T]) {
+                DS.pp = DS.pp || []; if (T === 'poly' && DS.pp.length > 2 && Math.hypot(xOfT(LM, DS.pp[0].t) - x, (LM.yr || LM.y)(DS.pp[0].p) - y) < 16) { mine().push({ k: 'poly', p: DS.pp.slice(), c: DCOL }); DS.pp = []; dsave(); redraw(); bar(); return; }
+                DS.pp.push(pt); var need = NEWT[T];
+                if (DS.pp.length >= need) { mine().push({ k: T, p: DS.pp.slice(), c: DCOL }); DS.pp = []; dsave(); say('Drawn. Tap again for another, or pick a new tool.'); } else { say(T === 'poly' ? 'Tap more points; tap the first dot to close' : 'Point ' + (DS.pp.length + 1) + ' of ' + need); }
+                redraw(); bar(); return;
+            }
+            if (T === 'hl') { BR = { pts: [pt], id: e.pointerId, hl: 1 }; try { e.target.setPointerCapture(e.pointerId); } catch (er) { } return; }
+            if (T === 'brush') { BR = { pts: [pt], id: e.pointerId }; try { e.target.setPointerCapture(e.pointerId); } catch (er) { } return; }
+            if (T === 'h') { mine().push({ k: 'h', p: pt.p, c: DCOL }); dsave(); }
+            else if (T === 'v') { mine().push({ k: 'v', t: pt.t, c: DCOL }); dsave(); }
+            else if (T === 'txt') { askText(function (sx) { if (sx) { mine().push({ k: 'txt', t: pt.t, p: pt.p, s: sx.slice(0, 40), c: DCOL }); dsave(); redraw(); } }); }
+            else if (!DS.pend) { DS.pend = pt; say(NPT[T] === 3 ? 'Now tap the second point' : 'Now tap the second point'); }
+            else if (T === 'ch' && !DS.pend2) { DS.pend2 = pt; say('Last tap: how wide the channel is'); }
+            else if (T === 'ch') { mine().push({ k: 'ch', a: DS.pend, b: DS.pend2, c3: pt, c: DCOL }); DS.pend = null; DS.pend2 = null; dsave(); }
+            else { mine().push({ k: T, a: DS.pend, b: pt, c: DCOL }); DS.pend = null; dsave(); }
             redraw(); bar();
         }, true);
+        document.addEventListener('pointermove', function (e) {
+            if (!BR || e.pointerId !== BR.id || !LM) { return; }
+            var cv = document.getElementById('cv'); if (!cv) { return; } var r = cv.getBoundingClientRect(); BR.pts.push({ t: Math.round(tOfX(LM, e.clientX - r.left)), p: pOfY(LM, e.clientY - r.top) }); e.preventDefault(); redraw();
+        }, true);
+        function brEnd(e) { if (BR && e.pointerId === BR.id) { if (BR.pts.length > 2) { var bd0 = { k: 'brush', pts: BR.pts, c: DCOL }; if (BR.hl) { bd0.w = 13; bd0.al = .3; } mine().push(bd0); dsave(); } BR = null; redraw(); } }
+        document.addEventListener('pointerup', brEnd, true); document.addEventListener('pointercancel', brEnd, true);
 
+
+        /* ---------- tool guide popups: name + purpose for every drawing tool ---------- */
+        var TIPS = {
+            h: ['Horizontal line', 'Marks one price level across the whole chart. Use it for support, resistance, your entry or a target. Tap once where you want it.'],
+            v: ['Vertical line', 'Marks one moment in time, for example a news event or where a move started. Tap once.'],
+            t: ['Trend line', 'Joins two points to show the direction price is following. Tap the first point, then the second.'],
+            ray: ['Ray', 'Like a trend line but it keeps going to the right, to show where price may run next. Tap two points.'],
+            ext: ['Extended line', 'A trend line that continues in both directions, useful for long trends. Tap two points.'],
+            arr: ['Arrow', 'Points at something you want to remember on the chart, such as a signal candle. Tap start, then tip.'],
+            rect: ['Box', 'Shades an area of price and time, for example a range, a zone where price bounced or a supply/demand zone. Tap two opposite corners.'],
+            ch: ['Parallel channel', 'Two parallel lines that hold price in a rising, falling or sideways lane. Tap two points for the first line, then a third tap for how wide the channel is.'],
+            f: ['Fibonacci retracement', 'Shows the usual pull-back levels (0.236, 0.382, 0.5, 0.618, 0.786) after a move. Tap the start of the move, then the end. The 0.618 level is highlighted.'],
+            fx: ['Fibonacci extension', 'Shows where a move may reach next (1.272, 1.618, 2, 2.618 of the first leg). Tap the start and the end of the first leg.'],
+            meas: ['Measure', 'Tells you how many percent and how much price between two points. Green is up, red is down. Tap two points.'],
+            long: ['Long position planner', 'Plan a buy: first tap = entry, second tap = target. The stop is drawn automatically at half the distance, so reward is 2 to 1. It is only a drawing, no trade is placed.'],
+            short: ['Short position planner', 'Plan a sell: first tap = entry, second tap = target below it. Stop is drawn automatically above, reward 2 to 1. It is only a drawing, no trade is placed.'],
+            txt: ['Text note', 'Writes your own short note (up to 40 letters) on the chart. Tap where it should sit and type.'],
+            brush: ['Brush', 'Free hand drawing. Press and drag your finger on the chart, lift to finish.'],
+            del: ['Delete one', 'Tap right on any drawing to remove just that one. Undo takes back the last one, Clear all removes everything on this coin.']
+        };
+
+        var T2 = {
+            hray: ['Horizontal ray', 'A price level that starts where you tap and runs to the right. Good for a level that only matters from now on.'],
+            cross: ['Cross line', 'A horizontal and a vertical line crossing at one point: marks both the price and the time of an event.'],
+            infoline: ['Info line', 'A line between two points that prints percent change, price change and number of candles on it.'],
+            pf: ['Andrews pitchfork', 'Three taps: the start, then a high and a low of the next swing. Draws a middle line and two parallel lines; price often travels inside this lane and reacts at the lines.'],
+            regr: ['Regression trend', 'Tap the start and end of a section. The best-fit line through those candles is drawn with two outer bands (±2 standard deviations). Price far outside the bands is stretched.'],
+            fchan: ['Fib channel', 'Tap two points for the trend, then a third for the width. Draws parallel lines at the Fibonacci distances (0.236 to 1) to find the next lanes.'],
+            ftz: ['Fib time zones', 'Vertical lines at Fibonacci spacing (1, 2, 3, 5, 8, 13…) from your start. Turning points sometimes land near them. Tap the start, then one unit of distance.'],
+            fspeed: ['Fib speed fan', 'Fan of lines from a start point through the 0.25, 0.382, 0.5, 0.618 and 0.75 levels of a move, showing how steeply price may rise or fall.'],
+            fcirc: ['Fib circles', 'Circles around a centre at Fibonacci multiples of the distance you tap; used to spot time and price turning zones together.'],
+            gfan: ['Gann fan', 'Lines from a start point at Gann angles (1x1, 1x2, 2x1, 1x3 …). The 1x1 line is the main balance line; staying above it is bullish, below is bearish.'],
+            gbox: ['Gann box', 'A grid box (8 by 8 with diagonals) over a price and time range, used to look for balanced support, resistance and turning points.'],
+            abcd: ['ABCD pattern', 'Four taps A, B, C, D. The classic harmonic where leg CD often equals leg AB. Use it to plan where a move may end.'],
+            xabcd: ['XABCD harmonic', 'Five taps X, A, B, C, D (Gartley, Bat, Butterfly and Crab all use this shape). D is the possible reversal zone.'],
+            hs: ['Head and shoulders', 'Seven taps: start, left shoulder, dip, head, dip, right shoulder, end. The neckline joins the two dips; a break of it is the classic sell signal.'],
+            imp: ['Elliott impulse wave', 'Six taps for waves 0, 1, 2, 3, 4, 5: the five-wave move with the trend.'],
+            cor: ['Elliott correction wave', 'Four taps for 0, A, B, C: the three-wave pull-back against the trend.'],
+            ellipse: ['Ellipse', 'An oval over two corners; highlight a rounded area such as a bottom or a top.'],
+            circle: ['Circle', 'Tap the centre then any point on the edge.'],
+            triangle: ['Triangle', 'Three taps; outline a triangle pattern or any three-point area.'],
+            poly: ['Polygon', 'Tap as many points as you like; tap the first dot to close the shape.'],
+            hl: ['Highlighter', 'A wide see-through pen to mark a stretch of candles. Press, drag, lift.'],
+            dr: ['Date range', 'Two vertical lines with a shaded band that count how many candles are between them.'],
+            pr: ['Price range', 'Two horizontal lines with a shaded band showing the percent and price distance.'],
+            dpr: ['Date and price range', 'A box that shows percent change and number of candles together.'],
+            proj: ['Forecast', 'Draw where YOU think price will go: dashed arrow with the expected percent. A personal plan, not a prediction by the app.'],
+            avwap: ['Anchored VWAP', 'Tap a candle: draws the volume weighted average price starting from it. Shows who is in profit since that moment; price above is stronger.'],
+            vprof: ['Volume profile', 'Tap the start and end of a range: horizontal bars show where most trading happened. The longest bar (POC) is the price the market accepted most.'],
+            cycles: ['Cycle lines', 'Repeating vertical lines at equal spacing, to test if turns repeat at regular intervals.'],
+            sine: ['Sine wave', 'Tap a low and a high: a repeating wave to look for regular swings.'],
+            pin: ['Price flag', 'A flag on a candle that prints the exact price you tapped.'],
+            e1: ['Pin emoji', 'Stamp 📍 on the chart to mark a spot.'], e2: ['Star emoji', 'Stamp ⭐ on something important.'], e3: ['Rocket emoji', 'Stamp 🚀 on a breakout.'], e4: ['Warning emoji', 'Stamp ⚠️ where you were careful or where danger showed.'], e5: ['Thumbs up', 'Stamp 👍 on a good entry or sign.'], e6: ['Thumbs down', 'Stamp 👎 on a bad entry or sign.']
+        };
+        Object.keys(T2).forEach(function (k) { TIPS[k] = T2[k]; });
+        function tipShow(k) {
+            var t = TIPS[k]; if (!t) { return; } var o = document.getElementById('drTip'); if (!o) { o = document.createElement('div'); o.id = 'drTip'; o.setAttribute('data-noswipe', '1'); o.style.cssText = 'position:fixed;left:10px;right:10px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:9100;background:var(--card,#fff);color:var(--tx,#111);border-radius:14px;padding:11px 14px;box-shadow:0 6px 24px rgba(0,0,0,.4);font:13px/1.45 -apple-system,Segoe UI,sans-serif;border:1px solid rgba(128,128,128,.3)'; document.body.appendChild(o); }
+            var all = k === 'all'; o.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">' + t[0] + '</b><span id="drTipX" style="padding:2px 10px;font-weight:800;cursor:pointer">✕</span></div><div style="margin-top:4px">' + t[1] + '</div>'; o.style.display = 'block';
+            clearTimeout(o.__t); o.__t = setTimeout(function () { o.style.display = 'none'; }, 9000);
+        }
+        function guideShow() {
+            var o = document.getElementById('drTip'); if (!o) { tipShow('h'); o = document.getElementById('drTip'); } o.style.maxHeight = '60vh'; o.style.overflow = 'auto';
+            o.innerHTML = '<div style="display:flex;justify-content:space-between"><b style="font-size:14px">Drawing tools guide</b><span id="drTipX" style="padding:2px 10px;font-weight:800;cursor:pointer">✕</span></div>' + CATS.map(function (c) { return '<div style="margin-top:10px;font-weight:800;color:#f59e0b">' + c[0] + '</div>' + c[1].map(function (t) { var d = TIPS[t[0]]; return d ? '<div style="margin-top:6px"><b>' + t[1] + ' · ' + d[0] + '</b><br>' + d[1] + '</div>' : ''; }).join(''); }).join(''); o.style.display = 'block'; clearTimeout(o.__t);
+        }
+        document.addEventListener('click', function (e) { if (e.target && e.target.id === 'drTipX') { var o = document.getElementById('drTip'); if (o) { o.style.display = 'none'; } } }, true);
+        X.on('drguide', function () { guideShow(); });
+        window.__drawGuide = TIPS;
+
+        /* ---------- full-screen drawing workspace (left rail like TradingView, rotate, magnet, hide) ---------- */
+        var ICON = { Lines: '╱', Channels: '▤', Fib: 'ϕ', Gann: '▦', Patterns: '⌇', Shapes: '▭', Measure: '📏', Cycles: '∿', Notes: '✎' };
+        DS.magnet = 1; DS.hide = 0; DS.land = 0; DS.fly = '';
+        function orient(m) {
+            try { var n = window.MintooNative; if (n && n.orient && window.__mwTok) { n.orient(window.__mwTok, m); return true; } } catch (e) { }
+            try { if (screen.orientation && screen.orientation.lock) { screen.orientation.lock(m === 'land' ? 'landscape' : m === 'port' ? 'portrait' : 'any').catch(function () { }); return true; } } catch (e) { }
+            return false;
+        }
+        function isFS() { return S.fsKey === 'cv' && S.win === 'chart' && document.getElementById('cv'); }
+        function railHtml() {
+            var h = '', cur = DS.cat;
+            CATS.forEach(function (c) { h += '<div class="drb' + (DS.fly === c[0] ? ' on' : '') + '" data-xk="drfly:' + c[0] + '"><i>' + (ICON[c[0]] || '•') + '</i><small>' + c[0] + '</small></div>'; });
+            h += '<div class="drs"></div>';
+            h += '<div class="drb' + (DS.magnet ? ' on' : '') + '" data-xk="drmag:1"><i>🧲</i><small>Magnet</small></div>';
+            h += '<div class="drb' + (DS.hide ? ' on' : '') + '" data-xk="drhide:1"><i>' + (DS.hide ? '🙈' : '👁') + '</i><small>' + (DS.hide ? 'Hidden' : 'Show') + '</small></div>';
+            h += '<div class="drb" data-xk="dr:undo"><i>↶</i><small>Undo</small></div><div class="drb" data-xk="dr:del"><i>🗑</i><small>Delete</small></div><div class="drb" data-xk="dr:clear"><i>⌫</i><small>Clear</small></div>';
+            h += '<div class="drb" data-xk="drguide:1"><i>ⓘ</i><small>Guide</small></div><div class="drb' + (DS.land ? ' on' : '') + '" data-xk="drrot:1"><i>⟳</i><small>Rotate</small></div>';
+            h += '<div class="drs"></div>' + ['f59e0b', '38bdf8', '16a34a', 'dc2626', 'a855f7', 'e5e7eb'].map(function (cl) { return '<div class="drc" data-xk="drc:' + cl + '" style="background:#' + cl + ';outline:' + (DCOL === '#' + cl ? '3px solid var(--tx,#111)' : '0') + '"></div>'; }).join('');
+            var f = '';
+            if (DS.fly) { var cat = CATS.filter(function (c) { return c[0] === DS.fly; })[0]; if (cat) { f = '<div id="drFly"><b>' + cat[0] + '</b>' + cat[1].map(function (t) { return '<div class="drt' + (DS.tool === t[0] ? ' on' : '') + '"><span data-xk="dr:' + t[0] + '">' + t[1] + '</span><u data-xk="drtip:' + t[0] + '">ⓘ</u></div>'; }).join('') + '</div>'; } }
+            return '<div id="drRail" data-noswipe="1">' + h + '</div>' + f + (DS.tool ? '<div id="drNow" data-noswipe="1">' + ((TIPS[DS.tool] || ['', ''])[0]) + ' <span data-xk="dr:done">✕</span></div>' : '');
+        }
+        (function () {
+            var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+            st.textContent = '#drWS{position:fixed;left:0;top:0;bottom:0;z-index:9996;pointer-events:none}#drRail{pointer-events:auto;position:absolute;left:0;top:calc(52px + env(safe-area-inset-top));bottom:8px;width:52px;overflow-y:auto;background:var(--card,#fff);border-right:1px solid rgba(128,128,128,.25);border-radius:0 12px 12px 0;box-shadow:2px 0 14px rgba(0,0,0,.18);padding:4px 0}.drb{display:flex;flex-direction:column;align-items:center;padding:6px 0;margin:1px 3px;border-radius:9px;color:var(--tx,#111);cursor:pointer}.drb i{font-style:normal;font-size:19px;line-height:22px}.drb small{font-size:8.5px;font-weight:700;opacity:.8}.drb.on{background:#2563eb;color:#fff}.drs{height:1px;background:rgba(128,128,128,.3);margin:4px 8px}.drc{width:22px;height:22px;border-radius:50%;margin:5px auto;cursor:pointer}#drFly{pointer-events:auto;position:absolute;left:56px;top:calc(52px + env(safe-area-inset-top));max-height:calc(100vh - 80px);overflow-y:auto;min-width:190px;background:var(--card,#fff);color:var(--tx,#111);border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.35);padding:8px 6px;border:1px solid rgba(128,128,128,.25)}#drFly b{display:block;padding:2px 8px 6px;font-size:12px;opacity:.7}.drt{display:flex;justify-content:space-between;align-items:center;border-radius:8px}.drt span{flex:1;padding:9px 10px;font-weight:700;font-size:13px}.drt u{padding:9px 12px;text-decoration:none;opacity:.6}.drt.on{background:#2563eb;color:#fff}#drNow{pointer-events:auto;position:absolute;left:60px;bottom:14px;background:#2563eb;color:#fff;font-weight:800;font-size:12px;padding:7px 12px;border-radius:18px;box-shadow:0 3px 12px rgba(0,0,0,.35)}#drNow span{margin-left:8px}html[data-drfs] .fsx{padding-left:58px!important}';
+            document.head.appendChild(st);
+            var last = '', wasFS = false;
+            setInterval(function () {
+                try {
+                    var on = !!isFS(), ws = document.getElementById('drWS');
+                    if (on && DS.menu !== 0) {
+                        if (!ws) { ws = document.createElement('div'); ws.id = 'drWS'; document.body.appendChild(ws); }
+                        var hh = railHtml(); if (hh !== last) { last = hh; ws.innerHTML = hh; }
+                        if (!document.documentElement.hasAttribute('data-drfs')) { document.documentElement.setAttribute('data-drfs', '1'); try { window.dispatchEvent(new Event('resize')); } catch (e) { } }
+                    } else {
+                        if (ws) { ws.remove(); last = ''; }
+                        if (document.documentElement.hasAttribute('data-drfs')) { document.documentElement.removeAttribute('data-drfs'); try { window.dispatchEvent(new Event('resize')); } catch (e) { } }
+                    }
+                    if (wasFS && !on && DS.land) { DS.land = 0; orient('auto'); }
+                    wasFS = on;
+                } catch (e) { }
+            }, 300);
+        })();
+        X.on('drfull', function () { DS.menu = 1; var b = document.getElementById('fsbtn'); if (b && !b.classList.contains('back')) { b.click(); } say('Full screen: use the tool rail on the left'); });
+        X.on('drfly', function (v) { DS.fly = DS.fly === v ? '' : v; DS.cat = v; });
+        X.on('drmag', function () { DS.magnet = DS.magnet ? 0 : 1; say(DS.magnet ? 'Magnet on: points snap to the candle open, high, low or close' : 'Magnet off'); });
+        X.on('drhide', function () { DS.hide = DS.hide ? 0 : 1; say(DS.hide ? 'Drawings hidden (not deleted)' : 'Drawings shown'); redraw(); });
+        X.on('drrot', function () { DS.land = DS.land ? 0 : 1; var ok = orient(DS.land ? 'land' : 'port'); if (!ok) { say('Turn your phone sideways (auto-rotate must be on)'); } });
+        X.on('drtip', function (v) { tipShow(v); });
         /* ---------- tool bar (one slim row) ---------- */
         function bar() { var el = document.getElementById('ctBar'); if (el) { el.innerHTML = barHtml(); } }
         function barHtml() {
-            var h = '<span class="' + (KX.jr === 'on' ? 'on' : '') + '" data-xk="jr:' + (KX.jr === 'on' ? 'off' : 'on') + '">App calls</span><span class="' + (DS.tool ? 'on' : '') + '" data-xk="dr:' + (DS.tool ? 'done' : 'menu') + '">✏ Draw</span>';
-            if (DS.tool || DS.menu) { h += '<span class="' + (DS.tool === 'h' ? 'on' : '') + '" data-xk="dr:h">― Line</span><span class="' + (DS.tool === 't' ? 'on' : '') + '" data-xk="dr:t">⟋ Trend</span><span class="' + (DS.tool === 'f' ? 'on' : '') + '" data-xk="dr:f">Fib</span><span data-xk="dr:undo">Undo</span><span data-xk="dr:clear">Clear</span>'; }
+            var h = '<span class="' + (KX.jr === 'on' ? 'on' : '') + '" data-xk="jr:' + (KX.jr === 'on' ? 'off' : 'on') + '">App calls</span>';
+            h += '<span data-xk="drfull:1">⛶ Draw tools (full screen)</span>';
             return h;
         }
         X.on('jr', function (v) { KX.jr = v; X.save(); redraw(); bar(); if (v !== 'on') { var t = document.getElementById('jrInfo'); if (t) { t.remove(); } } });
+        X.on('drcat', function (v) { DS.cat = v; bar(); });
+        X.on('drc', function (v) { DCOL = '#' + v; bar(); });
         X.on('dr', function (v) {
             if (v === 'menu') { DS.menu = 1; DS.tool = 'h'; say('Tap the chart to place a line. Pick another tool if you like.'); }
-            else if (v === 'done') { DS.tool = ''; DS.pend = null; DS.menu = 0; }
-            else if (v === 'undo') { var l = mine(); if (DS.pend) { DS.pend = null; } else { l.pop(); dsave(); } }
-            else if (v === 'clear') { DR[sym0()] = []; dsave(); DS.pend = null; }
-            else { DS.tool = v; DS.pend = null; DS.menu = 1; say(v === 'h' ? 'Tap the chart to place a line' : 'Tap two points on the chart'); }
+            else if (v === 'done') { DS.tool = ''; DS.pp = []; DS.pend = null; DS.pend2 = null; DS.fly = ''; }
+            else if (v === 'undo') { var l = mine(); if (DS.pp && DS.pp.length) { DS.pp.pop(); } else if (DS.pend) { DS.pend = null; } else { l.pop(); dsave(); } }
+            else if (v === 'clear') { DR[sym0()] = []; dsave(); DS.pend = null; DS.pp = []; }
+            else { DS.tool = v; DS.pend = null; DS.pend2 = null; DS.pp = []; DS.menu = 1; tipShow(v); say((NPT[v] === 1 || NEWT[v] === 1) ? 'Tap the chart to place it' : v === 'brush' ? 'Draw with your finger' : v === 'del' ? 'Tap a drawing to remove it' : 'Tap the first point on the chart'); }
             redraw(); bar();
         });
 
@@ -17952,7 +18224,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             } catch (e) { busy = 0; }
         }, 1000);
         setInterval(function () {
-            try { var el = document.getElementById('cplv'); if (!el) { return; } var a = LV.at ? Math.max(0, Math.round((Date.now() - LV.at) / 1000)) : -1, ok = a >= 0 && a < 15; var tx = (ok ? '● LIVE' : '○ reconnecting') + ' · ' + LV.src + (ok ? ' · updated ' + (a <= 1 ? 'just now' : a + 's ago') : ''); if (el.getAttribute('data-t') !== tx) { el.setAttribute('data-t', tx); el.textContent = tx; el.style.color = ok ? '#16a34a' : '#ff9f0a'; } } catch (e) { }
+            try { var el = document.getElementById('cplv'); if (!el) { return; } var a = LV.at ? Math.max(0, Math.round((Date.now() - LV.at) / 1000)) : -1, ok = a >= 0 && a < 15; var tx = (ok ? '● LIVE' : '○ reconnecting') + ' · ' + LV.src + ''; if (el.getAttribute('data-t') !== tx) { el.setAttribute('data-t', tx); el.textContent = tx; el.style.color = ok ? '#16a34a' : '#ff9f0a'; } } catch (e) { }
         }, 1000);
         /* ---------- links to top sites ---------- */
         function links(sym) {
@@ -20239,7 +20511,9 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         }, 15000);
         try {
             PF_APP.push(['stop trade|close trade|force stop|stop all|stop selected|close all|band karo|trade band|sab band|ٹریڈ بند|بند کر|سب بند|فورس', 'How to stop one trade or force stop all', 'Open the Trades panel: tap the small blue button (it pulses while a trade is running). Every trade has a red "Close" button: tap it, then confirm, and that one trade closes at the current price. At the top is the red "Force stop ALL" button: it stops every bot and closes every open trade (practice, bot and real Binance trades) after one confirmation. Real trades close with a market order, so check your Binance after. In Urdu: نیلے بٹن سے ٹریڈز کھولیں، ہر ٹریڈ پر سرخ Close دبائیں، یا اوپر Force stop ALL سے سب بند کریں۔']);
-            PF_APP.push(['margin|leverage|isolated|cross|stop loss|take profit|\\bsl\\b|\\btp\\b|set sl|set tp|لیوریج|مارجن|سٹاپ لاس|ٹیک پرافٹ|آئسولیٹڈ', 'Setting margin, leverage, SL and TP', 'When you tap Long or Short (or start a bot), a small settings window opens first. There you choose the margin in dollars, the leverage, the Stop-loss % and the Take-profit %, and the margin mode (Isolated). Then you confirm and the trade opens. Practice and bot trades always use Isolated. Cross margin, limit orders, stop-limit and trailing stop are in Trade Pro (More > Trade Pro). For a running trade tap "Live trade window" to see its entry, stop-loss, take-profit and liquidation lines on a live chart.']);
+            PF_APP.push(['draw|drawing|drawing tool|trend ?line|fib|fibonacci|channel|rectangle|box|ray|arrow|brush|measure|long position|short position|support line|resistance line|horizontal line|vertical line|note on chart|لائن|ڈرا|ڈرائنگ|چارٹ پر لکھ|فبوناچی|ٹرینڈ', 'Drawing tools on the chart', 'Open any chart and tap Draw (pencil). You get: Line (one price level), Vertical, Trend, Ray, Extended line, Arrow, Box, Parallel channel, Fib retracement, Fib extension, Measure (percent between two points), Long and Short planners (entry, target and automatic stop, 2 to 1), Text note, Brush (free hand) and Delete one. Pick a colour from the dots. Tap a tool and a guide card tells you its name and purpose; the Tool guide button lists them all. Undo removes the last drawing, Clear all removes every drawing on that coin. Long and Short planners are only drawings, they never place a trade. Drawings are saved on your phone for each coin.'],
+            ['chart look|chart background|clean chart|candle colour|candle color|tradingview|trading view|چارٹ کا رنگ', 'Chart look and TradingView', 'The chart now has a clean flat background and flat candles like TradingView, with a subtle grid. Drag the chart up or down to move the price window; the price numbers on the right move with it. Drag the numbers to stretch or squeeze, double tap them to reset. All the drawing tools you need are built in, so you do not need to open TradingView.'],
+            ['margin|leverage|isolated|cross|stop loss|take profit|\\bsl\\b|\\btp\\b|set sl|set tp|لیوریج|مارجن|سٹاپ لاس|ٹیک پرافٹ|آئسولیٹڈ', 'Setting margin, leverage, SL and TP', 'When you tap Long or Short (or start a bot), a small settings window opens first. There you choose the margin in dollars, the leverage, the Stop-loss % and the Take-profit %, and the margin mode (Isolated). Then you confirm and the trade opens. Practice and bot trades always use Isolated. Cross margin, limit orders, stop-limit and trailing stop are in Trade Pro (More > Trade Pro). For a running trade tap "Live trade window" to see its entry, stop-loss, take-profit and liquidation lines on a live chart.']);
             PF_APP.push(['remind|alert|sleep baba|wake baba|reminder|yaad dahani|یاد دہانی|الرٹ|سلیپ', 'Baba AI trade reminders', 'While any trade or bot is running, Baba AI shows a reminder every 5 minutes with the number of trades and your real P&L. Tap "Sleep 1 hour" or "Sleep today" to silence it. To wake me again: open the Trades panel (blue button) > Bots tab > "Wake up". The blue button also pulses while a trade is active.']);
             PF_APP.push(['live trade|trade window|candles|order book|track trade|لائیو ٹریڈ', 'Live trade window', 'In the Trades panel tap "Live trade window" on any trade. It opens a full screen with live candles, volume, lines for entry, stop-loss, take-profit and liquidation, live profit or loss, the order book, and buttons to close the trade, open the full chart or open Trade Pro.']);
         } catch (e) { }
@@ -20288,13 +20562,13 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         function place() {
             try {
                 b = b || document.getElementById('fsbtn'); if (!b || b.classList.contains('back')) return;
-                var t = document.getElementById('cv') || document.querySelector('[data-fsw]'); if (!t) { b.style.setProperty('display', 'none', 'important'); return; }
+                var t = document.getElementById('cv') || document.querySelector('[data-fsw]'); if (!t) { if (b.__k !== 'h') { b.__k = 'h'; b.__q = null; b.style.setProperty('display', 'none', 'important'); } return; }
                 var r = t.getBoundingClientRect(), vh = window.innerHeight, top = Math.max(r.top + 6, 66);
-                if (r.bottom < 100 || r.top > vh - 120 || top > r.bottom - 36 || top > vh - 130) { b.style.setProperty('display', 'none', 'important'); return; }
-                b.style.setProperty('display', 'flex', 'important'); b.style.setProperty('top', top + 'px', 'important'); b.style.setProperty('right', Math.max(8, window.innerWidth - r.right + 8) + 'px', 'important'); b.style.setProperty('bottom', 'auto', 'important');
+                if (r.bottom < 100 || r.top > vh - 120 || top > r.bottom - 36 || top > vh - 130) { if (b.__k !== 'h') { b.__k = 'h'; b.__q = null; b.style.setProperty('display', 'none', 'important'); } return; }
+                var tq = Math.round(top), rq = Math.round(Math.max(8, window.innerWidth - r.right + 8)); if (b.__q && b.__k !== 'h' && Math.abs(b.__q[0] - tq) <= 2 && Math.abs(b.__q[1] - rq) <= 2) { return; } b.__q = [tq, rq]; var k2 = 'f|' + tq + '|' + rq; if (b.__k !== k2) { b.__k = k2; b.style.setProperty('display', 'flex', 'important'); b.style.setProperty('top', Math.round(top) + 'px', 'important'); b.style.setProperty('right', Math.round(Math.max(8, window.innerWidth - r.right + 8)) + 'px', 'important'); b.style.setProperty('bottom', 'auto', 'important'); }
             } catch (e) { }
         }
-        setInterval(place, 250); window.addEventListener('scroll', place, true);
+        window.__fsPlaced = 1; (function(){ var L={}; var _sp=null; })(); setInterval(place, 400); window.addEventListener('scroll', place, true);
     } catch (e) { try { console.log('fsb', e); } catch (er) { } }
 })();
 /* ===== p9sim: Paper Trade Pro. A pretend Binance Futures account that answers the same calls as the real one. =====
