@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.244';
+var BUILD = '2026-10-31.247';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -21451,6 +21451,323 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             PF_APP.push(['custom hours|custom horizon|my own hours|any hours|custom plan|plan for any coin|plan finder|should i trade|no trade|wait for|hourly plan|whole day plan|analyser plan|analyzer plan|مخصوص گھنٹے|کسی بھی سکے کا پلان', 'Plan finder and custom hours', 'Open Analyser (More > Analyser). The Plan finder card at the top: type any coin (BTC, SOL, DOGE), pick 30 min, 1 h, 2 h, 4 h, 6 h, 12 h, whole day, 3 days or type your own hours, and tap Plan. You get one clear answer: LONG (buy), SHORT (sell), No trade, or Wait (with what to wait for and when to check again). LONG and SHORT come with entry, stop, target, estimated chance and the reasons. In Ideas, the "Custom hours" chip re-scores every idea for your own time horizon. Scanner keeps working quietly behind Ideas (open it from the tab bar); New Plan stays in More; open them from the links at the bottom of Ideas. All of this is an estimate, not financial advice.']);
         } catch (e) { }
     } catch (e) { try { console.error('p9pl', e); } catch (e2) { } }
+})();
+/* ===== p9zfix: stable idea-row heights. Rows in Ideas (idRow, p9zl.js:61) get chips injected AFTER every render by
+   p9ci.js scanI (.mwi "i"), p9zszt.js (.lkb link badge) and p9px.js:661-692 scan() (.mwmk "Binance · Futures").
+   Each render wipes them (25px line), 0.1-3s later they are re-added and line 1 wraps (46px) = the 21px "dance".
+   Line 2/3 (hzl + backtest text, Target/Stop) change 1<->4 lines as data arrives. Fix: one non-wrapping flex line + reserved text lines. ===== */
+(function () {
+    try {
+        var L = 17.5, HH = 26, css = document.createElement('style'); css.setAttribute('data-mwkeep', '1');
+        css.textContent =
+            /* line 1: never wraps, always 25px; injected chips shrink with an ellipsis, LONG/SHORT and BEST stay visible */
+            '.idr .idm>div:first-child{display:flex;align-items:center;flex-wrap:nowrap;height:25px;min-height:25px;max-height:25px;overflow:hidden;white-space:nowrap}' +
+            '.idr .idm>div:first-child>*{flex:none}' +
+            '.idr .idm>div:first-child>.mwmk,.idr .idm>div:first-child>.lkb{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}' +
+            '.idr .idm>div:first-child>.badge,.idr .idm>div:first-child>.idst{margin-left:5px}' +
+            '.idr .idm>div:first-child>b{margin-left:0}' +
+            /* line 2 (horizon + tested N past signals ...): reserve 4 lines, clamp at 4 */
+            '.idr .idm>div.note:nth-child(2){line-height:' + L + 'px;min-height:' + (4 * L) + 'px;max-height:' + (4 * L) + 'px;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4}' +
+            /* line 3 (Target / Stop / expected): reserve 2 lines */
+            '.idr .idm>div.note:nth-child(3){line-height:' + L + 'px;min-height:' + (2 * L) + 'px;max-height:' + (2 * L) + 'px;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}' +
+            '.idr .idch{display:block;min-height:19px;overflow:hidden;white-space:nowrap}' +
+            '.idr .idp{min-height:45px}' +
+            '.idhint{display:none!important}';
+        document.head.appendChild(css);
+        /* swipe hint (p9zszg.js:48): a node inserted before the first .idr every 1.2s after each render, wiped by the next render.
+           The morph then re-maps hint->row by index (rows slide by 26-38px, "idr 758>0" shifts). Never insert it; swiping still works. */
+        var _ib = Node.prototype.insertBefore;
+        Node.prototype.insertBefore = function (n, ref) {
+            if (n && n.className === 'idhint') { return n; }
+            return _ib.call(this, n, ref);
+        };
+    } catch (e) { try { console.error('p9zfix', e); } catch (e2) { } }
+})();
+/* ===== revB: stop the Home/Ideas card header from growing by one line (about 19-21 px) every few seconds =====
+   Cause: p9m.js (DOM morph) wipes the decorations that p9ci.js (round blue "i" button .mwi, inserted BEFORE the coin <b>),
+   p9zsy.js (.mwcoin svg inside <b>) and p9h.js (live % chip) add, then they are re-added 30 ms / 500 ms / 2.5 s later.
+   In the card header ".who > div" the coin name is <b style="display:block">, so a .mwi that appears before it sits on its own
+   line box (+18..21 px) until the next render removes it again -> everything below (.why, .group ...) jumps up and down.
+   Fix 1 (CSS): make the header row a wrapping flex row so [i][name][chip] is always ONE row and the small caption is always the 2nd row.
+   Fix 2 (JS): after every renderView put the "i" button and coin icon back in the same task, before the browser paints. */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '.who>div{display:flex;flex-wrap:wrap;align-items:center;min-width:0}' +
+            '.who>div>small{flex:0 0 100%;order:5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+            '.who>div>b{order:1;white-space:nowrap;min-height:20px}.who>div>.mwi{order:0}.who>div>.badge{order:2}' +
+            '.pm small{display:block;min-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}' +
+            '.why>div{min-height:18px}';
+        document.head.appendChild(st);
+        function sync() {
+            try {
+                var v = document.getElementById('view'); if (!v) { return; }
+                [].forEach.call(v.querySelectorAll('.who > div > b'), function (b) {
+                    if (b.querySelector('.mwcoin') === null && !b.children.length && typeof window.mwCoinIcon === 'function') {
+                        var m = /^(?:1000)?([A-Z0-9]{2,6}?)(?:\/?(?:USDT|USDC|USD|BUSD))?(?:\.P|_.*)?$/.exec((b.textContent || '').trim());
+                        var s = m && window.mwCoinIcon(m[1], 18); if (s) { b.setAttribute('data-ci', '1'); b.insertAdjacentHTML('afterbegin', s); }
+                    }
+                    var tx = (b.textContent || '').trim().replace(/\s*\/?\s*USDT(\.P)?$/, ''), pv = b.previousElementSibling;
+                    if (pv && pv.classList && pv.classList.contains('mwi')) { return; }
+                    if (/^[A-Z0-9]{2,12}$/.test(tx) && S.tick && S.tick[tx + 'USDT']) {
+                        var i = document.createElement('span'); i.className = 'mwi'; i.setAttribute('data-ci', tx + 'USDT'); i.setAttribute('data-noswipe', '1'); i.textContent = 'i'; b.parentNode.insertBefore(i, b);
+                    }
+                });
+            } catch (e) { }
+        }
+        var _rv = renderView; renderView = function () { var r = _rv.apply(this, arguments); sync(); return r; };
+    } catch (e) { }
+})();
+/* ===== p9stab: GLOBAL layout-stability layer. Works without knowing the cause of a shift.
+   1) CSS: scroll anchoring ON, one-line clamps on status/price/chip/sub lines, containment on repeated rows.
+   2) HEIGHT RATCHET: every block box in #view / #mwHome is watched (ResizeObserver). The moment a box goes
+      bigger-then-smaller (or smaller-then-bigger) = it is oscillating (a line that wraps 1<->2 lines, a list that
+      gains/loses a row, a placeholder that comes and goes). The innermost such box gets min-height = tallest size
+      seen, written as a CSS rule keyed by its position path, so it survives re-rendering and is applied BEFORE paint.
+      It can only grow, never shrink.
+   3) CULPRIT FINDER: layout-shift entries name the moved node; we walk up from it, watch the boxes above it, and log
+      which box really changed (log kind 'stab').
+   4) RELEASE: any real tap/click/change, navigation (S.win), width change, full-screen chart => all pins dropped.
+   Never touches: canvas/svg/img/video, fixed/absolute/sticky boxes, horizontal or inner scrollers, animated heights,
+   the bottom dock/nav/sheets/banner (they are outside #view), full-screen chart (S.fsKey, html[data-drfs]). ===== */
+(function () {
+    if (window.__stab) { return; }
+    var ST = window.__stab = { on: true, pins: {}, hist: {}, nobs: 0, cb: 0, ms: 0, shifts: 0, cls: 0, pinned: 0, released: 0, culprits: [], logged: {}, nlog: 0, skip: {} };
+    var ROOTS = ['view', 'mwHome'], MAXPIN = 80, MAXGAP = 160, MAXGAP2 = 420, MAXOBS = 2500, DEPTH = 7, TTL = 300000;
+    var intentUntil = 0, curWin = '', lastW = window.innerWidth, painted = '';
+
+    /* ---------- (1) CSS ---------- */
+    try {
+        var st = document.createElement('style'); st.id = 'p9stabcss'; st.setAttribute('data-mwkeep', '1');
+        st.textContent =
+            /* browser keeps the thing you are looking at in place when something ABOVE it changes height */
+            'html,body,#view,#mwHome{overflow-anchor:auto!important}' +
+            /* one-line clamps: status / price / chip / sub lines can never wrap to a 2nd line and push the rest down */
+            '#view .m7r .l>small,#view .ph .who>small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}' +
+            '#view .m7r .r>div,#view .m7r .r>small{white-space:nowrap}' +
+            /* repeated cards: their inside can never push the outside around */
+            '#view .m7r,#view .xkcard{contain:layout style}';
+        document.head.appendChild(st);
+    } catch (e) { }
+    var pst = document.createElement('style'); pst.id = 'p9stabpins'; pst.setAttribute('data-mwkeep', '1'); try { document.head.appendChild(pst); } catch (e) { }
+
+    function rec(k, t) { try { if (window.__mwRec) { window.__mwRec(k, t); } } catch (e) { } }
+    function note(key, t) { var n = Date.now(); if (ST.nlog > 25 || (ST.logged[key] && n - ST.logged[key] < 300000)) { return; } ST.logged[key] = n; ST.nlog++; rec('stab', t); }
+    function win() { try { return (typeof S !== 'undefined' && S.win) || ''; } catch (e) { return ''; } }
+    function fsOn() { try { return !!(document.documentElement.hasAttribute('data-drfs') || (typeof S !== 'undefined' && S.fsKey)); } catch (e) { return false; } }
+    function rootOf(el) { while (el && el.nodeType === 1) { if (el.id && ROOTS.indexOf(el.id) >= 0) { return el; } el = el.parentElement; } return null; }
+
+    /* path selector from the root: #view>div:nth-child(3)>div:nth-child(2) */
+    function sel(el) {
+        var p = [], x = el, n = 0;
+        while (x && x.nodeType === 1 && !(x.id && ROOTS.indexOf(x.id) >= 0)) {
+            var i = 1, s = x; while ((s = s.previousElementSibling)) { i++; }
+            p.unshift(x.tagName.toLowerCase() + ':nth-child(' + i + ')'); x = x.parentElement; if (++n > DEPTH + 3) { return ''; }
+        }
+        return x && p.length ? '#' + x.id + '>' + p.join('>') : '';
+    }
+    var BAD = /^(CANVAS|SVG|IMG|VIDEO|IFRAME|INPUT|TEXTAREA|SELECT|SCRIPT|STYLE|CIRCLE|PATH|G|TEXT|USE|DETAILS|SUMMARY)$/i;
+    function eligible(el) {
+        try {
+            if (!el.isConnected || BAD.test(el.nodeName) || el instanceof SVGElement || el.id === 'cv' || el.hidden) { return false; }
+            if (el.style.height || el.style.maxHeight) { return false; }
+            var cs = getComputedStyle(el), d = cs.display;
+            if (!/^(block|flex|grid|list-item|flow-root|table)$/.test(d)) { return false; }
+            if (/^(fixed|absolute|sticky)$/.test(cs.position)) { return false; }
+            if (/(auto|scroll|hidden)/.test(cs.overflowX) && cs.overflowX !== 'visible' && el.scrollWidth > el.clientWidth + 1) { return false; }   /* horizontal scrollers */
+            if (/(auto|scroll)/.test(cs.overflowY)) { return false; }                                                                       /* inner scroll boxes */
+            if (cs.animationName !== 'none' && cs.animationDuration !== '0s') { return false; }
+            if (parseFloat(cs.transitionDuration) > 0 && /height|all/.test(cs.transitionProperty)) { return false; }
+            if (el.querySelector('canvas,#cv,.fsx,video')) { return false; }                                                              /* charts */
+            if (el.parentElement && el.parentElement.querySelector(':scope>canvas,:scope>svg[role=img],:scope>[data-fsw]')) { return false; }   /* siblings of a chart */
+            for (var a = el.parentElement, i = 0; a && i < 12; a = a.parentElement, i++) {
+                if (a.id && ROOTS.indexOf(a.id) >= 0) { break; }
+                var pc = getComputedStyle(a); if (/(auto|scroll)/.test(pc.overflowX) || pc.position === 'fixed' || a.classList.contains('fsx') || a.hasAttribute('open') && a.nodeName === 'DETAILS') { return false; }
+            }
+            return true;
+        } catch (e) { return false; }
+    }
+    function cssPx(el, bb) { var cs = getComputedStyle(el); if (cs.boxSizing === 'border-box') { return bb; } return Math.max(0, bb - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0) - (parseFloat(cs.borderTopWidth) || 0) - (parseFloat(cs.borderBottomWidth) || 0)); }
+
+    /* ---------- pins as a stylesheet (survives re-render, applied before paint) ---------- */
+    function paint() {
+        var s = '', k, n = Date.now(), c = 0;
+        for (k in ST.pins) { if (n - ST.pins[k].t > TTL || (ST.pins[k].el && !ST.pins[k].el.isConnected && false)) { delete ST.pins[k]; continue; } s += k + '{min-height:' + ST.pins[k].px + 'px!important}'; c++; }
+        if (s !== painted) { painted = s; pst.textContent = s; }
+        ST.pinned = c;
+    }
+    /* rows of one list that oscillate the same way (same from/to, >=3 twins) => one rule for every row of that kind */
+    function parts(k) { return k.split('>'); }
+    function twinSel(el, level) { /* selector of el with the nth-child at `level` replaced by tag.class */
+        var p = parts(sel(el)), x = el, i, chain = [];
+        for (i = p.length - 1; i >= 1; i--) { chain[i] = x; x = x.parentElement; }
+        var c = chain[level]; if (!c) { return ''; }
+        var cl = c.classList && c.classList[0]; p[level] = c.tagName.toLowerCase() + (cl && /^[\w-]+$/.test(cl) ? '.' + cl : '');
+        return p.join('>');
+    }
+    function generalize(now) {
+        var groups = {}, k, pn;
+        for (k in ST.pins) {
+            pn = ST.pins[k]; if (!pn.el || !pn.el.isConnected || pn.gen) { continue; }
+            var p = parts(k), lv;
+            for (lv = 1; lv < p.length; lv++) {
+                var g = twinSel(pn.el, lv); if (!g || g === k) { continue; }
+                var id = g + '|' + Math.round(pn.from) + '|' + Math.round(pn.to);
+                (groups[id] = groups[id] || { sel: g, px: 0, n: 0 }); groups[id].n++; groups[id].px = Math.max(groups[id].px, pn.px);
+            }
+        }
+        for (var id2 in groups) { var gr = groups[id2]; if (gr.n >= 3 && !ST.pins[gr.sel] && Object.keys(ST.pins).length < MAXPIN + 20) { ST.pins[gr.sel] = { px: gr.px, t: now, gen: 1, from: 0, to: gr.px }; note('g' + gr.sel, 'pinned all ' + gr.sel.replace(/:nth-child/g, '').slice(0, 70) + ' to ' + Math.round(gr.px) + 'px (' + gr.n + ' rows oscillated the same way)'); } }
+    }
+    function release(why) {
+        var had = Object.keys(ST.pins).length;
+        ST.pins = {}; if (Object.keys(ST.hist).length > 4000) { ST.hist = {}; } painted = ''; try { pst.textContent = ''; } catch (e) { }
+        if (had) { ST.released++; }
+        ST.why = why;
+    }
+    ST.release = release;
+    ST.off = function () { ST.on = false; release('off'); try { st.remove(); } catch (e) { } try { ro && ro.disconnect(); } catch (e) { } };
+
+    /* ---------- (2) the ratchet ---------- */
+    var obs = typeof WeakSet === 'function' ? new WeakSet() : null, ro = null;
+    function heightOf(e) { try { if (e.borderBoxSize && e.borderBoxSize.length) { return e.borderBoxSize[0].blockSize; } } catch (er) { } return e.target.getBoundingClientRect().height; }
+    function onRO(entries) {
+        if (!ST.on) { return; }
+        var t0 = performance.now(), now = Date.now(), cands = [], i, e, el, h, k, r;
+        ST.cb++;
+        for (i = 0; i < entries.length; i++) {
+            e = entries[i]; el = e.target; if (!el.isConnected) { continue; }
+            h = Math.round(heightOf(e) * 2) / 2; if (!h) { continue; }
+            k = sel(el); if (!k) { continue; }
+            var hk = curWin + '|' + k; r = ST.hist[hk];
+            if (!r) { ST.hist[hk] = { h: h, max: h, dir: 0, rev: 0, t: now, ring: [h] }; continue; }
+            if (Math.abs(h - r.h) < 0.5) { continue; }
+            if (now - r.t > 60000) { r.rev = 0; r.dir = 0; r.ring = [r.h]; }          /* slow drift is not oscillation */
+            var d = h > r.h ? 1 : -1;
+            if (r.dir && d !== r.dir) { r.rev++; }
+            r.dir = d; r.h = h; r.t = now; r.ring.push(h); if (r.ring.length > 8) { r.ring.shift(); }
+            var mx = h; var gap = r.rev >= 2 ? MAXGAP2 : MAXGAP; r.ring.forEach(function (q) { if (q > mx && q - h <= gap) { mx = q; } }); r.max = mx;   /* tallest recent size close to now (old skeletons/placeholders are ignored) */
+            var pn = ST.pins[k]; if (pn && h > pn.top) { pn.top = h; pn.px = Math.max(pn.px, cssPx(el, h)); pn.t = now; }
+            if (r.rev >= 1 && h < mx - 0.5 && now >= intentUntil && !fsOn() && !pn) { cands.push({ el: el, k: k, r: r }); }
+        }
+        if (cands.length) {
+            /* pin only the innermost oscillating boxes (a wrapping line, not the 6 parents that grew with it) */
+            cands = cands.filter(function (c) { if (eligible(c.el)) { return true; } ST.skip[c.k] = 1; return false; });
+            var keep = cands.filter(function (a) { return !cands.some(function (b) { return b !== a && a.el.contains(b.el); }); }), added = 0;
+            keep.forEach(function (c) {
+                if (Object.keys(ST.pins).length >= MAXPIN) { return; }
+                ST.pins[c.k] = { px: cssPx(c.el, c.r.max), t: now, from: c.r.h, to: c.r.max, top: c.r.max, el: c.el }; added++;
+                note('p' + c.k, 'pinned ' + c.k.replace(/:nth-child/g, '').slice(0, 70) + ' ' + Math.round(c.r.h) + '<->' + Math.round(c.r.max) + 'px (height can only grow now)');
+            });
+            if (added) { generalize(now); paint(); }
+        }
+        ST.ms += performance.now() - t0;
+    }
+    function watch(el, depth) {
+        if (!ro || !el || el.nodeType !== 1 || ST.nobs > MAXOBS) { return; }
+        if (!(el instanceof SVGElement) && !BAD.test(el.nodeName)) { if (!obs || !obs.has(el)) { try { ro.observe(el); if (obs) { obs.add(el); } ST.nobs++; } catch (e) { } } }
+        if (depth > 0 && !(el instanceof SVGElement)) { for (var c = el.firstElementChild; c; c = c.nextElementSibling) { watch(c, depth - 1); } }
+    }
+    try {
+        ro = new ResizeObserver(onRO);
+        var mo = new MutationObserver(function (ms) {
+            if (!ST.on) { return; }
+            var w = win(), t0 = performance.now();
+            if (w !== curWin) { curWin = w; release('nav'); }
+            ms.forEach(function (m) {
+                if (m.type !== 'childList') { return; }
+                for (var i = 0; i < m.addedNodes.length; i++) {
+                    var n = m.addedNodes[i]; if (n.nodeType !== 1) { continue; }
+                    var rt = rootOf(n); if (!rt) { continue; }
+                    var dep = 0, x = n; while (x && x !== rt) { dep++; x = x.parentElement; }
+                    if (dep <= DEPTH) { watch(n, DEPTH - dep); }
+                }
+            });
+            ST.ms += performance.now() - t0;
+        });
+        function arm() {
+            ROOTS.forEach(function (id) { var r = document.getElementById(id); if (r && !r.__stabArmed) { r.__stabArmed = 1; mo.observe(r, { childList: true, subtree: true }); watch(r, DEPTH); } });
+        }
+        arm(); setInterval(arm, 2000);
+    } catch (e) { ST.err = String(e); }
+
+    /* ---------- (5) let scroll anchoring actually work: the app's 200 ms "scroll lock" (p9? setInterval -> window.scrollTo(0,lockY))
+       undoes every correction the browser makes, which turns each height change above the screen into a visible jump.
+       A scroll move that the USER did not cause is treated as the browser's anchor correction; the lock's revert is ignored
+       until the user touches/scrolls again or the window changes. App scrolls from renderView/gotoWin and scrollTo(0,0) pass. ---------- */
+    ST.blocked = 0; ST.anchorMoves = 0;
+    try {
+        var lastUser = 0, anchorAt = 0, anchorY = -1, anchorWin = '', lastY = window.pageYOffset || 0, ownAt = 0, osc = window.scrollTo;
+        ['touchstart', 'touchmove', 'touchend', 'wheel', 'keydown', 'pointerdown', 'pointerup', 'mousedown', 'click', 'change'].forEach(function (n) { document.addEventListener(n, function () { lastUser = Date.now(); }, { capture: true, passive: true }); });
+        window.addEventListener('scroll', function () {
+            var y = window.pageYOffset || 0, n = Date.now();
+            if (ST.on && n - lastUser > 900 && n - ownAt > 80 && Math.abs(y - lastY) >= 1) { anchorAt = n; anchorY = y; anchorWin = win(); ST.anchorMoves++; }
+            lastY = y;
+        }, { passive: true });
+        window.scrollTo = function () {
+            try {
+                var a = arguments[0], y = (a && typeof a === 'object') ? a.top : arguments[1], n = Date.now();
+                if (ST.on && typeof y === 'number' && y > 1 && anchorY >= 0 && lastUser < anchorAt && win() === anchorWin && Math.abs((window.pageYOffset || 0) - anchorY) < 2 && Math.abs(y - anchorY) > 1 && !/renderView|_rvC|gotoWin|flush|ixback/.test(String(new Error().stack || ''))) { ST.blocked++; return; }
+                ownAt = n;
+            } catch (e) { }
+            return osc.apply(this, arguments);
+        };
+    } catch (e) { }
+
+    /* ---------- (4) release rules: user intent, navigation, width change, full-screen chart ---------- */
+    function intent() { intentUntil = Date.now() + 900; release('tap'); }
+    ['click', 'change', 'submit'].forEach(function (n) { document.addEventListener(n, function (e) { if (e.isTrusted !== false) { intent(); } }, true); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Enter') { intent(); } }, true);
+    window.addEventListener('resize', function () { if (Math.abs(window.innerWidth - lastW) > 40) { lastW = window.innerWidth; release('width'); } });
+    window.addEventListener('orientationchange', function () { release('rotate'); });
+    window.addEventListener('popstate', function () { release('nav'); });
+    setInterval(function () {
+        try {
+            if (!ST.on) { return; }
+            var w = win(); if (w !== curWin) { curWin = w; release('nav'); }
+            if (fsOn() && Object.keys(ST.pins).length) { release('fullscreen'); }
+            paint();
+        } catch (e) { }
+    }, 700);
+
+    /* ---------- (3) culprit finder driven by layout-shift entries ---------- */
+    try {
+        new PerformanceObserver(function (l) {
+            l.getEntries().forEach(function (e) {
+                if (e.hadRecentInput || e.value < 0.001) { return; }
+                ST.shifts++; ST.cls += e.value;
+                var s = (e.sources || [])[0]; if (!s || !s.node || !s.node.isConnected) { return; }
+                var n = s.node, dy = Math.round(s.currentRect.y - s.previousRect.y), x, p, ck = '';
+                /* walk up; every earlier sibling at every level is a suspect: make sure it is being watched (deeper) so a repeat is caught */
+                for (x = n.nodeType === 1 ? n : n.parentElement; x && !(x.id && ROOTS.indexOf(x.id) >= 0); x = x.parentElement) {
+                    for (p = x.previousElementSibling; p; p = p.previousElementSibling) { watch(p, 4); }
+                }
+                ck = sel(n.nodeType === 1 ? n : n.parentElement);
+                ST.culprits.push((win() + ' ' + ck + ' dy=' + dy).slice(0, 120)); if (ST.culprits.length > 12) { ST.culprits.shift(); }
+                if (Math.abs(dy) >= 3) { note('s' + ck + dy, 'shift ' + dy + 'px of ' + ck.replace(/:nth-child/g, '').slice(0, 70) + (ST.pinned ? ' (pins: ' + ST.pinned + ')' : '')); }
+            });
+        }).observe({ type: 'layout-shift', buffered: false });
+    } catch (e) { }
+    window.__stabReport = function () { return { blocked: ST.blocked, anchorMoves: ST.anchorMoves, pins: ST.pins, pinned: ST.pinned, obs: ST.nobs, cb: ST.cb, ms: Math.round(ST.ms), shifts: ST.shifts, cls: +ST.cls.toFixed(3), culprits: ST.culprits.slice(), released: ST.released, skip: Object.keys(ST.skip).slice(0, 8), hist: Object.keys(ST.hist).slice(0, 3).map(function (k) { return k + JSON.stringify(ST.hist[k]); }), why: ST.why, err: ST.err }; };
+})();
+/* ===== p9wa: Baba AI knows where things are (so the free online AI never guesses screen locations) ===== */
+(function () {
+    try {
+        PF_APP.push(['where is wallet|where is my wallet|find wallet|open wallet|wallet icon|wallet button|my wallet|wallet kahan|والٹ', 'Where is the Wallet', 'My Wallet is not on the bottom bar. Tap More (bottom right) and tap the green 👛 My Wallet tile near the top (it is also a tab inside the Around you window, next to PSX, Offers and Brokers). Inside it you can see balances, receive coins, send, and see your 12-word backup. Write the 12 words on paper: they are the only way to recover it. There is no Vault or Gold Wallet; the wallet is self-custody and the keys stay on this phone.']);
+        PF_APP.push(['where can i find|how do i open|how to open|which button|which tab|which window|kahan milega', 'Where things are', 'Bottom bar: Home, Zoom, Ideas, Markets, Trade, More. Ideas has tabs: Ideas, Scanner, New Plan, Trading Analyst. More has all the other windows in groups: Trading options (Paper Trading, bots), Detail pages (New Plan, Market mood, Coin details), Account and Lock in Profile (tap your round picture top right), Problem log in More. Menu (top right) has Appearance, Language, About this copy and Check for a new version. Tell me the name of what you look for and I will say exactly where it is.']);
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '.tile.wlx{background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(14,165,233,.14));box-shadow:inset 0 0 0 1.5px rgba(16,185,129,.55)}.tile.wlx .ic{background:linear-gradient(135deg,#10b981,#0ea5e9)!important;color:#fff;font-size:22px}.tile.wlx::after{content:"SELF-CUSTODY";display:block;font-size:8.5px;letter-spacing:.8px;font-weight:800;color:#059669;margin-top:2px}';
+        document.head.appendChild(st);
+        var _mw = mwTiles; mwTiles = function () {
+            var h = _mw.apply(this, arguments);
+            try {
+                if (typeof VIEWS.wallet !== 'function') { return h; }
+                h = h.replace(/<div class="tile[^"]*" data-act="win:wallet">[\s\S]*?<\/div><\/div>/g, '');
+                var wt = '<div class="tile wlx' + (S.win === 'wallet' ? ' on' : '') + '" data-act="win:wallet"><div class="ic">👛</div>My Wallet</div>', i = h.indexOf('data-act="win:analyst"');
+                if (i >= 0) { var j = h.indexOf('</div></div>', i); if (j >= 0) { j += 12; return h.slice(0, j) + wt + h.slice(j); } }
+                var k = h.indexOf('<div class="tile'); return k < 0 ? wt + h : h.slice(0, k) + wt + h.slice(k);
+            } catch (e) { return h; }
+        };
+    } catch (e) { }
 })();
 /* ===== p9heal: Guardian. Quietly watches the app and repairs it: screen flicker, error loops, stuck chart, dead price feed, stuck loading, Baba AI not answering. Everything it does is written to the Problem log. ===== */
 (function () {
