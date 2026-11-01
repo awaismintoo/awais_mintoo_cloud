@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.264';
+var BUILD = '2026-10-31.265';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -3541,8 +3541,8 @@ function cxInfo(k, i, closes, ind) {
         if (!pts[e.pointerId]) { return; } pts[e.pointerId] = { x: e.clientX, y: e.clientY }; var ids = Object.keys(pts), w = (e.target.clientWidth || 300);
         if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y) || 1; S.cx.n = Math.max(15, Math.min(400, Math.round(startN * startD / d))); cxDraw(); return; }
         if (tz && ids.length === 1) { S.cx.n = Math.max(15, Math.min(400, Math.round(tz.n * Math.exp(-(e.clientX - tz.x) / 160)))); cxDraw(); return; } /* drag the time numbers sideways to zoom time, like TradingView */
-        var dx = e.clientX - sx; if (Math.abs(dx) > 5) { moved = 1; tap = null; } var per = (w - 62) / (S.cx.n + 2);
-        if (moved) { var of9 = Math.max(0, soff + dx / per), oi9 = Math.floor(of9); S.cx.off = oi9; S.cx.fx = of9 > 0 ? (of9 - oi9) * per : 0; cxDraw(); } /* smooth: the chart follows the finger pixel by pixel */
+        var dx = e.clientX - sx; if (Math.abs(dx) > 9) { moved = 1; tap = null; } var per = (w - 62) / (S.cx.n + 2);
+        if (moved) { var K9 = S.chart.k || [], n9 = Math.max(15, Math.min(S.cx.n, K9.length)), mo9 = Math.max(0, K9.length - n9), raw9 = soff + dx / per, of9 = Math.max(0, Math.min(mo9, raw9)), oi9; if (of9 !== raw9) { sx = e.clientX; soff = of9; } /* at an end of the data the finger is re-anchored, so turning back moves the chart at once (no dead zone) */ oi9 = Math.floor(of9); S.cx.off = oi9; S.cx.fx = of9 > 0 ? (of9 - oi9) * per : 0; cxDraw(); } /* smooth: the chart follows the finger pixel by pixel */
     });
     function up(e) {
         if (!pts[e.pointerId]) { return; } delete pts[e.pointerId]; tz = null;
@@ -13637,18 +13637,18 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     } catch (e) { }
     /* press-and-drag shows the crosshair under the finger (short press-and-slide, like Binance) */
     (function () {
-        var mode = false, timer = 0, sx = 0, sy = 0, id = -1;
+        var mode = false, timer = 0, sx = 0, sy = 0, id = -1, lp = null;
         function idx(e) {
             var cv = document.getElementById('cv'), K = S.chart.k, C = S.cx; if (!cv || !K.length) { return -1; } var r = cv.getBoundingClientRect(), x = e.clientX - r.left, W = r.width - 62, n = Math.max(15, Math.min(C.n, K.length)), end = K.length - Math.min(C.off, Math.max(0, K.length - n)), start = Math.max(0, end - n), per = W / (n + 2);
             var j = start + Math.floor(x / per); return (x < 0 || x > W || j < start || j >= end) ? -1 : j;
         }
-        document.addEventListener('pointerdown', function (e) { if (!e.target || e.target.id !== 'cv') { return; } mode = false; sx = e.clientX; sy = e.clientY; id = e.pointerId; clearTimeout(timer); timer = setTimeout(function () { mode = true; var j = idx({ clientX: sx, clientY: sy }); if (j >= 0) { S.cx.sel = j; cxDraw(); } try { navigator.vibrate && navigator.vibrate(8); } catch (er) { } }, 260); }, true);
+        document.addEventListener('pointerdown', function (e) { if (!e.target || e.target.id !== 'cv') { return; } mode = false; sx = e.clientX; sy = e.clientY; id = e.pointerId; clearTimeout(timer); timer = setTimeout(function () { mode = true; var j = idx({ clientX: sx, clientY: sy }); lp = { pre: S.cx.sel, j: j, mv: 0 }; if (j >= 0) { S.cx.sel = j; cxDraw(); } try { navigator.vibrate && navigator.vibrate(8); } catch (er) { } }, 260); }, true);
         document.addEventListener('pointermove', function (e) {
             if (e.pointerId !== id) { return; }
-            if (!mode) { if (Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) > 10) { clearTimeout(timer); } return; }
-            e.stopImmediatePropagation(); var j = idx(e); if (j >= 0 && j !== S.cx.sel) { S.cx.sel = j; cxDraw(); }
+            if (!mode) { if (Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) > 16) { clearTimeout(timer); } return; }
+            e.stopImmediatePropagation(); var j = idx(e); if (lp && j !== lp.j) { lp.mv = 1; } if (j >= 0 && j !== S.cx.sel) { S.cx.sel = j; cxDraw(); }
         }, true);
-        function end(e) { clearTimeout(timer); if (mode) { e.stopImmediatePropagation(); } mode = false; id = -1; }
+        function end(e) { clearTimeout(timer); if (mode) { e.stopImmediatePropagation(); if (lp && !lp.mv && lp.pre === lp.j && lp.pre >= 0 && e.type === 'pointerup') { S.cx.sel = -1; cxDraw(); } } /* a slow tap on the already selected candle closes the box (it used to re-select it forever) */ mode = false; lp = null; id = -1; }
         document.addEventListener('pointerup', end, true); document.addEventListener('pointercancel', end, true);
     })();
     /* when Binance's live stream is blocked, refresh the last candles every 2 s so the chart still moves */
@@ -13713,7 +13713,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     ['pointerup', 'pointercancel', 'scroll'].forEach(function (n) { document.addEventListener(n, function () { clearTimeout(tmr); tmr = setTimeout(clear, 120); }, true); });
     var SLOW = [], ERR = [];
     var LK = 'mintoosuite_errlog';
-    function recLog(kind, txt) { try { var a = []; try { a = JSON.parse(localStorage.getItem(LK) || '[]') || []; } catch (e) { } a.push(new Date().toLocaleString() + ' [' + kind + '] ' + txt + ' (' + (S.win || '') + ', build ' + BUILD + ')'); if (a.length > 150) { a = a.slice(-150); } localStorage.setItem(LK, JSON.stringify(a)); } catch (e) { } }
+    function recLog(kind, txt) { try { if (kind === 'error' && /ResizeObserver loop/i.test(String(txt))) { return; } /* harmless browser notice, not a fault */ var a = []; try { a = JSON.parse(localStorage.getItem(LK) || '[]') || []; } catch (e) { } a.push(new Date().toLocaleString() + ' [' + kind + '] ' + txt + ' (' + (S.win || '') + ', build ' + BUILD + ')'); if (a.length > 150) { a = a.slice(-150); } localStorage.setItem(LK, JSON.stringify(a)); } catch (e) { } }
     window.__mwRec = recLog;
     try { new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { if (e.duration >= 600) { SLOW.push(new Date().toTimeString().slice(0, 8) + ' ' + Math.round(e.duration) + 'ms after ' + (last || '-') + ' (' + (S.win || '') + ')'); if (SLOW.length > 4) { SLOW.shift(); } recLog('slow', Math.round(e.duration) + 'ms after ' + (last || '-')); } }); }).observe({ entryTypes: ['longtask'] }); } catch (e) { }
     window.addEventListener('error', function (e) { ERR.push(new Date().toTimeString().slice(0, 8) + ' ' + String(e.message || '').slice(0, 70) + ' @' + String(e.filename || '').split('/').pop().slice(0, 12) + ':' + (e.lineno || '')); if (ERR.length > 3) { ERR.shift(); } recLog('error', String(e.message || '') + ' @' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '') + ':' + (e.colno || '')); });
@@ -22031,6 +22031,43 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         setInterval(diagnose, 20000);
         window.__doctor = { run: diagnose, pins: function () { return pinned; } };
     } catch (e) { try { console.error('p9doc', e); } catch (e2) { } }
+})();
+
+/* ===== Doctor's findings: reads the whole Problem log and says, for every kind of trouble, how often, the exact cause and what was done or what to do ===== */
+(function () {
+    try {
+        function lines() { try { return JSON.parse(localStorage.getItem('mintoosuite_errlog') || '[]') || []; } catch (e) { return []; } }
+        function esc2(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        var RULES = [
+            [/\[error\] ResizeObserver/i, 'Browser layout notice', 'The phone browser told us a box resized twice in one frame (ResizeObserver). It is a harmless notice from the screen engine, not a fault in your trades or data.', 'Nothing to do. New builds no longer record it.', 'info'],
+            [/\[guardian\] Prices were (\d+) s old/i, 'Prices stopped updating', 'No new prices arrived for a while. Usual causes: the phone slept or the app was in the background, weak internet, or the exchange stream was blocked.', 'The Guardian restarted the price feed by itself. If it happens often on Wi-Fi, try mobile data (or the other way round).', 'med'],
+            [/\[guardian\] Heaviest repeating jobs/i, 'Slow background jobs', 'Some timers repeat every 0.5–1 s and each takes long (see the numbers in the line). On an old or busy phone this makes taps feel late.', 'Close other heavy apps. The Guardian lists the busiest job so it can be trimmed in a future update.', 'med'],
+            [/\[stab\] shift (\d+)px of/i, 'Screen shifted', 'A box moved sideways or up/down by that many pixels while loading (usually when prices or pictures arrive late).', 'The Doctor pins a minimum height on boxes that keep jumping. Nothing needed from you.', 'low'],
+            [/\[stab\] pinned/i, 'Box height was pinned', 'A box changed height again and again, so the app fixed its minimum height to stop the jumping.', 'Already repaired. If a screen still jumps, send a recording and tell me which screen.', 'low'],
+            [/\[jump\]/i, 'Screen jump recorded', 'The page layout moved after loading. The line names the part that moved and the pixel change.', 'The Doctor pins boxes that jump 3 times or more.', 'low'],
+            [/\[slow\] (\d+)ms after ([^\(]+)/i, 'Slow moment', 'A single action blocked the screen for more than 0.6 seconds. The line says which tap came just before.', 'Usually a big redraw. If it repeats for the same tap, tell me that tap so it can be made lighter.', 'med'],
+            [/\[promise\]/i, 'Network request failed', 'A request to an exchange or data site did not finish (blocked site, no internet, or the site was busy).', 'The app retries by itself. A VPN or another network often helps with blocked sites.', 'med'],
+            [/\[error\] (?!ResizeObserver)/i, 'Code error', 'A part of the app raised an error. The line ends with file:line:column so it can be found exactly.', 'Send me this line. The Doctor redraws the screen if the same error repeats 5 times.', 'high'],
+            [/\[doctor\]/i, 'Doctor action', 'The Doctor repaired something by itself (see the text).', 'No action needed.', 'ok']
+        ];
+        window.__docReport = function () {
+            var L = lines(), out = [];
+            RULES.forEach(function (r) {
+                var m = L.filter(function (l) { return r[0].test(l); }); if (!m.length) { return; }
+                var last = m[m.length - 1], ex = (last.replace(/^[^\]]*\]\s*/, '').replace(/\s*\(.*build [^)]*\)\s*$/, '')).slice(0, 150), builds = {}; m.forEach(function (l) { var b = /build ([\d.\-]+)/.exec(l); if (b) { builds[b[1]] = 1; } });
+                out.push({ n: m.length, title: r[1], cause: r[2], fix: r[3], lvl: r[4], ex: ex, last: (last.split(' [')[0] || ''), builds: Object.keys(builds).slice(-3) });
+            });
+            var rank = { high: 0, med: 1, low: 2, info: 3, ok: 4 }; out.sort(function (a, b) { return rank[a.lvl] - rank[b.lvl] || b.n - a.n; }); return out;
+        };
+        function card() {
+            var R = window.__docReport(); if (!R.length) { return '<div class="group pad"><b>🩺 Doctor\'s findings</b><div class="note">The log is empty, nothing to diagnose.</div></div>'; }
+            var col = { high: '#ff3b30', med: '#ff9500', low: '#34c759', info: '#8e8e93', ok: '#0a84ff' };
+            return '<div class="group pad"><b>🩺 Doctor\'s findings</b><div class="note" style="margin:4px 0 8px">Every kind of trouble in the log, how often, the cause, and what to do. Newest builds only change the counts.</div>' + R.map(function (r) {
+                return '<div style="margin:8px 0;padding:8px 10px;border-left:4px solid ' + col[r.lvl] + ';background:rgba(127,127,127,.08);border-radius:8px"><b>' + esc2(r.title) + '</b> <span class="note" style="margin:0">× ' + r.n + ' · last ' + esc2(r.last) + '</span><div class="note" style="margin:4px 0 0"><b>Cause:</b> ' + esc2(r.cause) + '</div><div class="note" style="margin:3px 0 0"><b>Fix:</b> ' + esc2(r.fix) + '</div><div class="note" style="margin:3px 0 0;font-size:11px;opacity:.8">Example: ' + esc2(r.ex) + '</div></div>';
+            }).join('') + '</div>';
+        }
+        ['log', 'errlog'].forEach(function (k) { var f = VIEWS[k]; if (typeof f === 'function') { VIEWS[k] = function () { var h = f.apply(this, arguments); try { return typeof h === 'string' ? card() + h : h; } catch (e) { return h; } }; } });
+    } catch (e) { try { console.error('p9doc2', e); } catch (e2) { } }
 })();
 /* ===== p9xg: Exness Gold Practice - paper trading + paper auto bot for XAUUSD with Exness Standard style costs (spread only, no commission), lots, margin, stop-out, market hours. Virtual money only. ===== */
 (function () {
