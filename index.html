@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.249';
+var BUILD = '2026-10-31.251';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -21764,6 +21764,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
 /* ===== p9wa: Baba AI knows where things are (so the free online AI never guesses screen locations) ===== */
 (function () {
     try {
+        PF_APP.push(['where is log|where is the log|where is my log|find log|problem log|app log|error log|log in app|logs window|log kahan|لاگ', 'Where is the Problem log', 'Menu (top right, the three-line button) then Problem log. It is also a tile in More, next to My Wallet. It shows every error, slow moment and screen jump saved on this phone, with Copy and Email buttons. If something flickers or freezes, copy the first lines and send them to me.']);
         PF_APP.push(['where is wallet|where is my wallet|find wallet|open wallet|wallet icon|wallet button|my wallet|wallet kahan|والٹ', 'Where is the Wallet', 'My Wallet is not on the bottom bar. Tap More (bottom right) and tap the green 👛 My Wallet tile near the top (it is also a tab inside the Around you window, next to PSX, Offers and Brokers). Inside it you can see balances, receive coins, send, and see your 12-word backup. Write the 12 words on paper: they are the only way to recover it. There is no Vault or Gold Wallet; the wallet is self-custody and the keys stay on this phone.']);
         PF_APP.push(['where can i find|how do i open|how to open|which button|which tab|which window|kahan milega', 'Where things are', 'Bottom bar: Home, Zoom, Ideas, Markets, Trade, More. Ideas has tabs: Ideas, Scanner, New Plan, Trading Analyst. More has all the other windows in groups: Trading options (Paper Trading, bots), Detail pages (New Plan, Market mood, Coin details), Account and Lock in Profile (tap your round picture top right), Problem log in More. Menu (top right) has Appearance, Language, About this copy and Check for a new version. Tell me the name of what you look for and I will say exactly where it is.']);
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
@@ -21772,6 +21773,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         var _mw = mwTiles; mwTiles = function () {
             var h = _mw.apply(this, arguments);
             try {
+                if (typeof VIEWS.log === 'function' && h.indexOf('data-act="win:log"') < 0) { var lt = '<div class="tile" data-act="win:log"><div class="ic">🧯</div>Problem log</div>', q = h.indexOf('<div class="tile'); if (q >= 0) { h = h.slice(0, q) + lt + h.slice(q); } }
                 if (typeof VIEWS.wallet !== 'function') { return h; }
                 h = h.replace(/<div class="tile[^"]*" data-act="win:wallet">[\s\S]*?<\/div><\/div>/g, '');
                 var wt = '<div class="tile wlx' + (S.win === 'wallet' ? ' on' : '') + '" data-act="win:wallet"><div class="ic">👛</div>My Wallet</div>', i = h.indexOf('data-act="win:analyst"');
@@ -21781,6 +21783,8 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         };
     } catch (e) { }
 })();
+/* "Where is log / wallet in our app" must answer from app help, never from the coin locator */
+(function () { try { var _pa = pfAnswer; pfAnswer = function (q) { var low = String(q || '').toLowerCase(); if (/\b(log|logs|problem log|wallet)\b/.test(low) && /(where|find|open|kahan|which)/.test(low) && !/\busdt\b/.test(low)) { var key = /wallet/.test(low) ? 'Where is the Wallet' : 'Where is the Problem log'; for (var i = 0; i < PF_APP.length; i++) { if (PF_APP[i][1] === key) { return { title: key, html: esc(PF_APP[i][2]) }; } } } return _pa(q); }; } catch (e) { } })();
 /* ===== p9fs: full-screen chart keeps a slim legend like TradingView (symbol, timeframe, OHLC, change, indicators, auto-scale) ===== */
 (function () {
     try {
@@ -21789,13 +21793,14 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             '#fsHud .r{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-height:18px}#fsHud .r2{white-space:nowrap;overflow:hidden}#fsHud b{font-weight:800;color:#fff}#fsHud .up{color:#26a69a}#fsHud .dn{color:#ef5350}' +
             '#fsHud .c{pointer-events:auto;padding:2px 6px;border-radius:7px;background:rgba(120,123,134,.28);color:#d1d4dc;font-weight:700;min-height:18px;line-height:14px}#fsHud .c.on{background:#2962ff;color:#fff}' +
             '#fsHud.min .r2,#fsHud.min .r3{display:none}#fsHud.tool .c,body:has(#drNow) #fsHud .c{pointer-events:none;opacity:.55}';
+        st.textContent += '#fsHud .hsy{font-weight:800;color:#fff}#fsHud .r{flex-wrap:nowrap;overflow:hidden;height:18px}#fsHud .r3{flex-wrap:wrap;height:auto}#fsHud{min-height:46px;box-sizing:border-box;contain:layout paint}#fsHud.min{min-height:28px}#fsHud .r2{height:18px}';
         document.head.appendChild(st);
         var hud = null, last = '', mini = false, more = false, TF = ['1m', '5m', '15m', '1h', '4h', '1d'], OV = ['MA', 'EMA', 'BOLL', 'SAR', 'SUPER', 'VWAP'];
         function fsOn() { return S && S.fsKey === 'cv'; }
         function build() {
             var ch = S.chart, K = ch && ch.k; if (!K || !K.length) { return ''; }
             var C = S.cx, ix = C.sel >= 0 && C.sel < K.length ? C.sel : K.length - 1, k = K[ix], cls = k.c >= k.o ? 'up' : 'dn', chg = k.o ? (k.c - k.o) / k.o * 100 : 0, f = function (v) { try { return fmtP(v, ch.sym); } catch (e) { return String(v); } };
-            var r1 = '<div class="r"><b>' + esc(ch.sym) + '</b>' + TF.map(function (t) { return '<span class="c' + (ch.tf === t ? ' on' : '') + '" data-act="tf:' + t + '">' + t + '</span>'; }).join('') + '<span class="c" data-xk="fshud:more">' + (more ? '✕' : '⋯') + '</span></div>';
+            var r1 = '<div class="r"><span class="hsy">' + esc(ch.sym) + '</span>' + TF.map(function (t) { return '<span class="c' + (ch.tf === t ? ' on' : '') + '" data-act="tf:' + t + '">' + t + '</span>'; }).join('') + '<span class="c" data-xk="fshud:more">' + (more ? '✕' : '⋯') + '</span></div>';
             var r2 = '<div class="r r2"><span class="' + cls + '">O ' + f(k.o) + ' H ' + f(k.h) + ' L ' + f(k.l) + ' C ' + f(k.c) + ' ' + (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%</span></div>';
             var r3 = '<div class="r r3">' + OV.map(function (o) { return '<span class="c' + (C.ov && C.ov[o] ? ' on' : '') + '" data-xk="fshud:' + o + '">' + o + '</span>'; }).join('') + '<span class="c" data-xk="fshud:auto">Auto scale</span></div>';
             return r1 + (mini ? '' : r2) + (more ? r3 : '');
@@ -21804,7 +21809,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             var on = fsOn() && !(window.__drawOn && window.__drawOn()); /* hidden while a drawing tool is active, so taps always reach the chart */
             if (!on) { if (hud) { hud.style.display = 'none'; } return; }
             if (!hud) { hud = document.createElement('div'); hud.id = 'fsHud'; hud.setAttribute('data-noswipe', '1'); document.body.appendChild(hud); }
-            var html = build(); if (html !== last) { hud.innerHTML = html; last = html; }
+            var html = build(); if (!html) { html = last; } if (html !== last) { hud.innerHTML = html; last = html; }
             hud.className = (mini ? 'min' : '') + (document.getElementById('drNow') ? ' tool' : '');
             var rail = document.getElementById('drRail'), t = rail ? Math.round(rail.getBoundingClientRect().bottom) + 4 : 48; if (!(t > 0 && t < 200)) { t = 48; }
             var ts = t + 'px'; if (hud.style.top !== ts) { hud.style.top = ts; }
@@ -21821,6 +21826,28 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
 })();
 /* steady status line above the chart: always one line high, so "reconnecting" <-> "live" never moves the chart */
 (function () { try { var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = '#cplv{display:block;min-height:16px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#chartInfo{min-height:34px}'; document.head.appendChild(st); } catch (e) { } })();
+
+/* ===== p9fs2: full-screen bottom bar (indicators, signals, auto scale) so options are never hidden ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '#fsBar{position:fixed;left:0;right:0;bottom:0;z-index:9991;display:none;gap:6px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:rgba(19,23,34,.94);box-sizing:border-box}#fsBar span{flex:1 1 0;text-align:center;padding:9px 4px;border-radius:10px;background:rgba(120,123,134,.28);color:#d1d4dc;font:700 12px -apple-system,Segoe UI,sans-serif;cursor:pointer;white-space:nowrap}#fsBar span.on{background:#2962ff;color:#fff}' +
+            'html[data-fs="cv"] #fsBar{display:flex}html:has(#drNow) #fsBar{display:none!important}' +
+            'html[data-fs="cv"] #view.fsx{padding-bottom:54px!important;min-height:0!important;max-height:100vh!important;height:100vh!important;box-sizing:border-box}html[data-fs="cv"] #view.fsx *{min-height:0}html[data-fs="cv"] #view.fsx #cv{min-height:240px;height:calc(100vh - 165px)!important}html[data-fs="cv"] .bn,html[data-fs="cv"] #banner,html[data-fs="cv"] #mwtoast,html[data-fs="cv"] #qtoast,html[data-fs="cv"] #swtoast,html[data-fs="cv"] #huPop,html[data-fs="cv"] #mwcoach,html[data-drfs] #huPop{display:none!important}' +
+            'html[data-fsp] #view.fsx .mwhascv>.m7ind.fsrow{display:flex!important;flex-wrap:nowrap;overflow-x:auto;margin:3px 0}html[data-fsp][data-fs] #view.fsx #cv{height:calc(100vh - 330px)!important}html[data-fsp] #view.fsx .mwhascv>.m7ind.fsrow>*{flex:0 0 auto}';
+        document.head.appendChild(st);
+        var bar = document.createElement('div'); bar.id = 'fsBar'; bar.setAttribute('data-noswipe', '1'); bar.setAttribute('data-mwkeep', '1');
+        bar.innerHTML = '<span data-xk="fsbar:ind">📊 Indicators</span><span data-xk="fsbar:auto">⇕ Auto scale</span><span data-xk="fsbar:out">⛶ Exit</span>';
+        document.body.appendChild(bar);
+        function tag() { try { if (!(S && S.fsKey === 'cv')) { document.documentElement.removeAttribute('data-fsp'); return; } var rows = document.querySelectorAll('#view.fsx .mwhascv>.m7ind'); for (var i = 0; i < rows.length; i++) { var t = (rows[i].textContent || '').replace(/\s+/g, ' ').trim(), want = /^MA\s*EMA/i.test(t) || /^VOL\s*MACD/i.test(t) || /^UT\s*Bot/i.test(t); if (want !== rows[i].classList.contains('fsrow')) { rows[i].classList.toggle('fsrow', want); } } var on = document.documentElement.hasAttribute('data-fsp'); if (bar.firstChild.classList.contains('on') !== on) { bar.firstChild.classList.toggle('on', on); } } catch (e) { } }
+        setInterval(tag, 500);
+        window.__kx && window.__kx.on('fsbar', function (v) {
+            if (v === 'ind') { var h = document.documentElement; if (h.hasAttribute('data-fsp')) { h.removeAttribute('data-fsp'); } else { h.setAttribute('data-fsp', '1'); } tag(); try { window.dispatchEvent(new Event('resize')); setTimeout(function () { try { drawChart(); } catch (e) { } }, 60); } catch (e) { } }
+            else if (v === 'auto') { S.cx.vz = 1; S.cx.vp = 0; S.cx.base = null; try { cxDraw(); } catch (e) { } }
+            else if (v === 'out') { var b = document.getElementById('fsbtn'); if (b) { b.click(); } }
+        });
+    } catch (e) { try { console.error('p9fs2', e); } catch (e2) { } }
+})();
 /* ===== p9heal: Guardian. Quietly watches the app and repairs it: screen flicker, error loops, stuck chart, dead price feed, stuck loading, Baba AI not answering. Everything it does is written to the Problem log. ===== */
 (function () {
     try {
