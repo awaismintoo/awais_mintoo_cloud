@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.258';
+var BUILD = '2026-10-31.260';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -3446,10 +3446,16 @@ function drawChart() {
     var dHi9 = hi, dLo9 = lo; var man9 = (C.vz && C.vz !== 1) || C.vp; if (man9) { if (!C.base) { C.base = { hi: hi, lo: lo }; } hi = C.base.hi; lo = C.base.lo; } else { C.base = null; } /* manual price scale = locked range, like TradingView: the picture no longer drifts while you look at it */
     if ((C.vz && C.vz !== 1) || C.vp) { var mid0 = (hi + lo) / 2 + (C.vp || 0) * (hi - lo), half0 = (hi - lo) / 2 / (C.vz || 1); hi = mid0 + half0; lo = mid0 - half0; var minOv = 0.65 * Math.min(hi - lo, dHi9 - dLo9), sh9 = 0; if (hi < dLo9 + minOv) { sh9 = dLo9 + minOv - hi; } else if (lo > dHi9 - minOv) { sh9 = dHi9 - minOv - lo; } if (sh9) { hi += sh9; lo += sh9; var bh9 = C.base.hi - C.base.lo; if (bh9 > 0) { C.vp = ((hi + lo) / 2 - (C.base.hi + C.base.lo) / 2) / bh9; } } /* hard limit like Binance and TradingView: the candles can never be dragged out of the frame */ } C.pb = padT + ph; C.ph = ph; var span = hi - lo, yr = function (p) { return padT + (hi - p) / span * ph; }, y = function (p) { var q = yr(p); return Math.max(-1e6, Math.min(1e6, q)); }, xs = function (j) { return (j - start) * cw + cw * 1.0 + cw / 2 + (C.fx || 0); };
     g.lineWidth = 1;
-    for (i = 0; i <= 4; i++) { var gy = padT + ph * i / 4, gp = hi - span * i / 4; g.strokeStyle = LN; g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke(); g.fillStyle = MT; g.textAlign = 'left'; g.fillText(fmtP(gp, ch.sym), W + 4, gy + 4); }
-    // time axis in the chosen time zone
-    var every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(W / (CX_MS[ch.tf] >= 86400 ? 70 : 115))))); g.fillStyle = MT; g.textAlign = 'center';
-    for (i = start; i < end; i += every) { var tt = K[i].t, lab = CX_MS[ch.tf] >= 86400 ? m7fmt(tt, 'd') : m7fmt(tt, 'dt'); g.fillText(lab, Math.min(W - 24, Math.max(24, xs(i))), padT + ph + 14); }
+    /* price scale like TradingView: round numbers that stay attached to the candles when you pan or stretch */
+    var rawS = span / 5, mag9 = Math.pow(10, Math.floor(Math.log(rawS) / Math.LN10)), nm9 = rawS / mag9, stp9 = (nm9 < 1.5 ? 1 : nm9 < 3 ? 2 : nm9 < 7 ? 5 : 10) * mag9, p9 = Math.ceil(lo / stp9 - 1e-9) * stp9, cnt9 = 0;
+    g.fillStyle = MT; g.textAlign = 'left';
+    for (; p9 <= hi + stp9 * 1e-6 && cnt9 < 14; p9 += stp9, cnt9++) { var pv9 = Math.round(p9 / stp9) * stp9, gy = yr(pv9); if (gy < padT - 1 || gy > padT + ph + 1) { continue; } g.strokeStyle = LN; g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke(); g.fillText(fmtP(pv9, ch.sym), W + 4, gy + 4); }
+    /* time scale: round clock times that move together with the candles */
+    var tfm9 = CX_MS[ch.tf] * 1000, perPx9 = cw / tfm9, minGap9 = (CX_MS[ch.tf] >= 86400 ? 70 : 105) / perPx9, NT9 = [60e3, 300e3, 900e3, 1800e3, 3600e3, 7200e3, 14400e3, 21600e3, 43200e3, 86400e3, 172800e3, 604800e3, 2592000e3], iv9 = NT9[NT9.length - 1], q9;
+    for (q9 = 0; q9 < NT9.length; q9++) { if (NT9[q9] >= minGap9 && NT9[q9] >= tfm9) { iv9 = NT9[q9]; break; } }
+    g.fillStyle = MT; g.textAlign = 'center';
+    var t0v = K[start].t, tEnd9 = K[start].t + (W / cw) * tfm9, tk9 = Math.ceil((t0v - tfm9) / iv9) * iv9;
+    for (var tc9 = 0; tk9 <= tEnd9 && tc9 < 14; tk9 += iv9, tc9++) { var tx9 = xs(start) + (tk9 - t0v) * perPx9; if (tx9 < 18 || tx9 > W - 18) { continue; } g.fillText(iv9 >= 86400e3 ? m7fmt(tk9, 'd') : m7fmt(tk9, 'dt'), tx9, padT + ph + 14); }
     g.textAlign = 'left';
     g.save(); g.beginPath(); g.rect(0, padT, W, ph); g.clip(); /* anything outside the price pane is cut, never squashed onto an edge */
     // Bollinger fill
@@ -19503,6 +19509,8 @@ try {
             var n = Date.now(), c = RC[sy]; if (c && n - c.t < 4000) { return c; }
             var r = { side: 'WAIT', t: n };
             try { var eL = idEdge(idFactors({ sym: sy, side: 'LONG' })), eS = idEdge(idFactors({ sym: sy, side: 'SHORT' })), mx = Math.max(eL, eS); if (mx >= 0.1 && Math.abs(eL - eS) >= 0.08) { r.side = eL > eS ? 'LONG' : 'SHORT'; } } catch (e) { }
+            /* second opinion from Baba's experience engine, so the bar and the chart never disagree silently */
+            try { if (r.side !== 'WAIT' && window.__babaExp && S.chart && S.chart.sym === sy && S.chart.k && S.chart.k.length > 80) { var xp = window.__babaExp(sy, r.side, S.chart.k); if (xp) { r.conv = xp.conv; r.veto = !!xp.veto; r.why = xp.hard && xp.hard[0] || ''; } } } catch (e) { }
             RC[sy] = r; return r;
         }
         window.__recSide = function (sy) { return rec(sy).side; };
@@ -19510,7 +19518,7 @@ try {
         function tick() {
             var w = document.documentElement.getAttribute('data-win'), show = !!WIN[w] && !!sym() && !document.getElementById('twback');
             bar.style.display = show ? 'flex' : 'none'; bar.className = w === 'chart' ? 'ch' : '';
-            if (show) { var r = rec(sym()); bar.children[3].textContent = r.side === 'WAIT' ? '⭐ Recommended: WAIT (no clear edge)' : '⭐ Recommended: ' + (r.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + ' · tap to trade'; bar.children[3].style.background = r.side === 'WAIT' ? '#f59e0b' : r.side === 'LONG' ? '#86efac' : '#fca5a5'; }
+            if (show) { var r = rec(sym()); bar.children[3].textContent = r.side === 'WAIT' ? '⭐ Recommended: WAIT (no clear edge)' : '⭐ Recommended: ' + (r.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + (r.veto ? ' · Baba says WAIT' + (r.why ? ' (' + String(r.why).slice(0, 24) + ')' : '') : (r.conv ? ' · ' + r.conv + '% sure' : '') + ' · tap to trade'); bar.children[3].style.background = (r.side === 'WAIT' || r.veto) ? '#f59e0b' : r.side === 'LONG' ? '#86efac' : '#fca5a5'; }
             if (show) { var sd = side(); bar.children[0].classList.toggle('on', w === 'tpro' && sd === 'LONG'); bar.children[1].classList.toggle('on', w === 'tpro' && sd === 'SHORT'); }
         }
         setInterval(tick, 500);
