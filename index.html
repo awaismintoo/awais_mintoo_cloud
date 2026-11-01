@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.266';
+var BUILD = '2026-10-31.272';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -3417,7 +3417,7 @@ function cxChSearch() {
 function m7rowsAll(q) { var sv = S.m7.mk.q; S.m7.mk.q = q; var r = m7rows(); S.m7.mk.q = sv; return r; }
 function drawChart() {
     var cvs = $('cv'); if (!cvs) { return; }
-    var dpr = window.devicePixelRatio || 1, w = cvs.clientWidth, h = cvs.clientHeight; if (!w || !h) { return; }
+    var dpr = Math.min(window.devicePixelRatio || 1, 2), w = cvs.clientWidth, h = cvs.clientHeight; if (!w || !h) { return; }
     if (cvs.width !== Math.round(w * dpr) || cvs.height !== Math.round(h * dpr)) { cvs.width = Math.round(w * dpr); cvs.height = Math.round(h * dpr); }
     var g = cvs.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
     var DK0 = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -8370,6 +8370,16 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
               var n = t < 4 ? 1 : 4, s = '', i, w = n === 1 ? 240 : 54; for (i = 0; i < n; i++) { s += Rc(40 + i * (n === 1 ? 0 : 62), 50, w, 60, ['rgba(10,132,255,.35)', 'rgba(255,159,10,.35)', 'rgba(48,209,88,.35)', 'rgba(191,90,242,.35)'][i], 10); }
               return s + T(160, 150, n === 1 ? 'All in one: all or nothing' : 'Spread out: steadier', n === 1 ? R : G, 'middle', 14);
           } }
+        ,{ id: 'fees', t: 'Fees and spread eat profit', d: 12, lesson: 37, cap: [[0, 'Every trade has a cost: the exchange fee and the spread (the gap between buy and sell price).'], [4, 'A trade that gains 0.30% but costs 0.20% leaves only 0.10%.'], [8, 'So a good plan must beat its costs. Test with costs counted, on practice money first.']],
+          draw: function (t) {
+              var w1 = 200 * cl(t / 3);
+              return Rc(40, 50, w1, 26, G, 5) + T(44, 44, 'Gross gain 0.30%', G) + (t > 4 ? Rc(40 + 200 * cl((t - 4) / 3) * 0.667, 50, 200 * 0.333 * cl((t - 4) / 3), 26, R, 5) + T(44, 100, 'Fees + spread 0.20%', R) : '') + (t > 8 ? T(160, 150, 'Left for you: 0.10%', Y, 'middle', 15) : '');
+          } },
+        { id: 'rest', t: 'When a bot should rest', d: 12, lesson: 38, cap: [[0, 'A bot scores itself honestly: wins, losses, fees and profit factor.'], [4, 'If 20 or more closed trades lose money after costs, it rests for 6 hours.'], [8, 'Resting is not failure. Protecting your balance comes first.']],
+          draw: function (t) {
+              var a = [[0, 70], [.3, 85], [.5, 100], [.7, 125], [1, 140]];
+              return line(a, t / 6, 30, 290, R, 3.5) + (t > 4 ? T(160, 40, 'Net loss after costs', R, 'middle', 13) : '') + (t > 7 ? Rc(110, 150, 100, 26, Y, 8) + T(160, 168, 'REST 6 h', '#000', 'middle', 14) : '');
+          } }
     ];
     function clipById(id) { var i; for (i = 0; i < CLIPS.length; i++) { if (CLIPS[i].id === id) { return CLIPS[i]; } } return null; }
     function clipForLesson(n) { var i, r = null; for (i = 0; i < CLIPS.length; i++) { if (+CLIPS[i].lesson === +n) { r = r || CLIPS[i]; } } return r; }
@@ -12847,7 +12857,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function vPaper() {
             var h = '<div class="group pad"><b style="font-size:17px">🧪 Paper Bot</b>' + window.__qh('Paper = practice with virtual money and real prices. Nothing here spends your real money. Use it to prove a plan before the Baba Real Bot is even unlocked.') + '<div class="note" style="margin:4px 0 0">Practice bots, their results, the Strategy Lab and the history test: all in one place. Virtual money only.</div></div>';
             h += '<div class="bbtabs">' + Object.keys(PT).map(function (k) { return '<span class="' + (PP.tab === k ? 'on' : '') + '" data-ppt="' + k + '">' + PT[k][0] + '</span>'; }).join('') + '</div>';
-            var v = SRC[PP.tab] || VIEWS[PT[PP.tab][1]]; try { h += v ? v() : ''; } catch (e) { h += '<div class="warn">This part could not open: ' + e2(e.message) + '</div>'; }
+            var v = VIEWS[PT[PP.tab][1]] || SRC[PP.tab]; /* always the newest version, so guards and score cards added later show up */ try { h += v ? v() : ''; } catch (e) { h += '<div class="warn">This part could not open: ' + e2(e.message) + '</div>'; }
             return h;
         }
         ['gridbot', 'botpro', 'lab', 'botdoc', 'btest'].forEach(function (id) { SRC[({ gridbot: 'grid', botpro: 'pro', lab: 'lab', botdoc: 'doc', btest: 'test' })[id]] = VIEWS[id]; });
@@ -13991,7 +14001,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         VIEWS.botpro = function () {
             var h = _vb.apply(this, arguments), g = G(), F = S.fb, now = Date.now();
             function tg(k, n, d) { return '<div class="row tap" data-gd="' + k + '"><span><b>' + n + '</b><br><small class="mut">' + d + '</small></span><b>' + (g[k] ? '✅ ON' : '⚪ OFF') + '</b></div>'; }
-            var card = sh('🛡 Smart Guard') + '<div class="group pad" style="border-left:5px solid ' + (g.on ? '#34c759' : '#8e8e93') + '"><div class="ph"><b>' + (g.on ? 'ON: checks before every entry' : 'OFF: old behaviour') + '</b><span class="btn sec tap kpb" style="padding:6px 12px;width:auto" data-gd="on">' + (g.on ? 'Turn off' : 'Turn on') + '</span></div><div class="note">Before the bot enters it now checks the recommendations, the 1-hour trend, Bitcoin, volatility, volume, news and its own history. The stop and target are sized to each coin\'s volatility (target ' + g.rr + ' × the stop), the stop moves to break-even, half the profit is locked, and a trade that goes nowhere closes after 8 hours. No filter can promise profit: it only removes the weakest trades.</div></div>' +
+            var card = (window.__bqCard ? window.__bqCard() : '') + sh('🛡 Smart Guard') + '<div class="group pad" style="border-left:5px solid ' + (g.on ? '#34c759' : '#8e8e93') + '"><div class="ph"><b>' + (g.on ? 'ON: checks before every entry' : 'OFF: old behaviour') + '</b><span class="btn sec tap kpb" style="padding:6px 12px;width:auto" data-gd="on">' + (g.on ? 'Turn off' : 'Turn on') + '</span></div><div class="note">Before the bot enters it now checks the recommendations, the 1-hour trend, Bitcoin, volatility, volume, news and its own history. The stop and target are sized to each coin\'s volatility (target ' + g.rr + ' × the stop), the stop moves to break-even, half the profit is locked, and a trade that goes nowhere closes after 8 hours. No filter can promise profit: it only removes the weakest trades.</div></div>' +
                 (g.on ? '<div class="group">' + tg('rec', 'Recommendations & factor score', 'volume, trend, news, history, sources') + tg('htf', 'Bigger trend (1 hour)', 'do not fight the 1h trend') + tg('btc', 'Bitcoin direction', 'skip when Bitcoin moves against the trade') + tg('vol', 'Volatility, volume, stretch', 'skip quiet, wild or chased moves') + tg('news', 'News', 'skip when headlines point the other way') + tg('hist', 'Own history & daily limit', '3% daily loss, 3 losses rest, same-way limit') + '</div>' : '') +
                 '<div class="note" style="margin:8px 0 4px">Target compared with the stop</div><div class="m7row">' + [1.2, 1.6, 2, 2.5].map(function (x) { return '<span class="' + (g.rr === x ? 'on' : '') + '" data-gd="rr:' + x + '">' + x + ' ×</span>'; }).join('') + '</div>' +
                 sh('Why trades were skipped', F.skips.length) + (F.skips.length ? '<div class="group">' + F.skips.slice(0, 8).map(function (x) { return '<div class="row" style="align-items:flex-start"><span><b>' + esc(base(x.sym)) + '</b> ' + (x.sg > 0 ? 'LONG' : 'SHORT') + ' <small class="mut">' + Math.round((now - x.at) / 60000) + ' min ago</small><br><small>' + esc(x.why) + '</small></span></div>'; }).join('') + '</div>' : '<div class="group pad mut">Nothing skipped yet. Skipped trades appear here with the reason.</div>') +
@@ -21998,7 +22008,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
 (function () {
     try {
         var seen = 0, pinned = {}, pinCount = 0, lastRedraw = 0, redrawn = 0, cxAt = 0, lt0 = 0, ds = document.createElement('style'); ds.setAttribute('data-mwkeep', '1'); document.head.appendChild(ds);
-        var _o = window.__cxOver; window.__cxOver = function () { cxAt = Date.now(); return _o ? _o.apply(this, arguments) : undefined; };
+        var lastM = null, _o = window.__cxOver; window.__cxOver = function () { cxAt = Date.now(); try { lastM = arguments[1]; } catch (e) { } return _o ? _o.apply(this, arguments) : undefined; };
         function note(t) { try { if (window.__mwRec) { window.__mwRec('doctor', t); } } catch (e) { } }
         function lines() { try { return JSON.parse(localStorage.getItem('mintoosuite_errlog') || '[]') || []; } catch (e) { return []; } }
         function when(l) { var d = Date.parse((l.split(' [')[0] || '').replace(/,/, '')); return isFinite(d) ? d : 0; }
@@ -22029,7 +22039,40 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             } catch (e) { }
         }
         setInterval(diagnose, 20000);
-        window.__doctor = { run: diagnose, pins: function () { return pinned; } };
+        /* chart watchdog: if the candles have slid out of the frame (any way it happened) the price scale is re-fitted at once */
+        var oofN = 0, oofAt = 0;
+        function chartCheck(force) {
+            try {
+                var m = lastM, cv = document.getElementById('cv'); if (!m || !cv || !cv.offsetParent || S.win !== 'chart' || !m.K || !(m.end > m.start)) { oofN = 0; return false; }
+                var hv = -Infinity, lv = Infinity, j; for (j = m.start; j < m.end; j++) { var q = m.K[j]; if (q) { if (q.h > hv) { hv = q.h; } if (q.l < lv) { lv = q.l; } } }
+                if (!isFinite(hv) || !isFinite(lv)) { return false; }
+                var yT = m.yr(hv), yB = m.yr(lv), p0 = m.padT, p1 = m.padT + m.ph, out = yB < p0 + 0.1 * m.ph || yT > p1 - 0.1 * m.ph || yT > p1 || yB < p0;
+                if (!out) { oofN = 0; return false; }
+                oofN++; if (oofN < 2 && !force) { return false; }
+                oofN = 0; S.cx.vz = 1; S.cx.vp = 0; S.cx.base = null; try { cxDraw(); } catch (e) { }
+                if (Date.now() - oofAt > 30000) { oofAt = Date.now(); note('Candles had slid out of the chart frame: price scale re-fitted'); }
+                return true;
+            } catch (e) { return false; }
+        }
+        setInterval(chartCheck, 700);
+        /* restart memory: if the app was restarted by the phone or the watchdog (not closed by you), go back to where you were */
+        var HB = 'mintoosuite_hb';
+        function beat(clean) { try { var c = S.chart || {}; localStorage.setItem(HB, JSON.stringify({ t: Date.now(), clean: clean ? 1 : 0, win: S.win || '', sym: c.sym || '', tf: c.tf || '' })); } catch (e) { } }
+        setInterval(function () { if (!document.hidden) { beat(0); } }, 2500);
+        try {
+            var hb = JSON.parse(localStorage.getItem(HB) || 'null');
+            if (hb && Date.now() - hb.t < 120000 && hb.win && hb.win !== 'overview' && hb.win !== 'home') {
+                setTimeout(function () {
+                    try {
+                        note('App restarted by itself (phone memory or watchdog) while on ' + hb.win + (hb.sym ? ' ' + hb.sym : '') + ': taking you back');
+                        var c = document.createElement('div');
+                        if (hb.win === 'chart' && hb.sym) { c.setAttribute('data-act', 'chart:' + hb.sym); } else { c.setAttribute('data-act', 'win:' + hb.win); }
+                        document.body.appendChild(c); c.click(); c.remove();
+                    } catch (e) { }
+                }, 3500);
+            }
+        } catch (e) { }
+        window.__doctor = { run: diagnose, pins: function () { return pinned; }, chartCheck: chartCheck, test: function (vp) { S.cx.vz = 2; S.cx.vp = vp; S.cx.base = null; cxDraw(); } };
     } catch (e) { try { console.error('p9doc', e); } catch (e2) { } }
 })();
 
@@ -22068,6 +22111,26 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         }
         ['log', 'errlog'].forEach(function (k) { var f = VIEWS[k]; if (typeof f === 'function') { VIEWS[k] = function () { var h = f.apply(this, arguments); try { return typeof h === 'string' ? card() + h : h; } catch (e) { return h; } }; } });
     } catch (e) { try { console.error('p9doc2', e); } catch (e2) { } }
+})();
+/* ===== Baba AI -> Doctor: when you tell Baba the app or chart has a problem, Baba sends the Doctor to work and reports what happened ===== */
+(function () {
+    try {
+        var _pa = pfAnswer;
+        pfAnswer = function (q) {
+            var low = String(q || '').toLowerCase();
+            if (window.__doctor && /(fix|repair|heal|doctor|check)/.test(low) && /(app|chart|candle|screen|freez|frozen|stuck|restart|prices?|lag|slow)/.test(low) && !/(how|where|what is|kya|kahan)\b/.test(low)) {
+                var did = [], before = 0;
+                try { var L0 = JSON.parse(localStorage.getItem('mintoosuite_errlog') || '[]').length; before = L0; } catch (e) { }
+                try { if (window.__doctor.chartCheck(true)) { did.push('re-fitted the chart so the candles are back inside the frame'); } } catch (e) { }
+                try { window.__doctor.run(); } catch (e) { }
+                try { if (typeof cxDraw === 'function' && S.win === 'chart') { cxDraw(); did.push('repainted the chart'); } } catch (e) { }
+                try { var L1 = JSON.parse(localStorage.getItem('mintoosuite_errlog') || '[]'); L1.slice(before).filter(function (l) { return /\[doctor\]/.test(l); }).forEach(function (l) { did.push(l.replace(/^[^\]]*\]\s*\[doctor\]\s*/, '').replace(/\s*\(.*build [^)]*\)\s*$/, '')); }); } catch (e) { }
+                try { window.__mwRec('doctor', 'Baba AI asked the Doctor to check the app (' + q.slice(0, 40) + ')'); } catch (e) { }
+                return { title: 'Baba asked the Doctor', html: esc(did.length ? 'The Doctor did this: ' + did.join('; ') + '.' : 'The Doctor checked the log, the chart and the screen layout and found nothing that needed repair right now. If something still looks wrong, send me a short recording and say which screen.') + '<br><span class="note">See Menu > Problem log > Doctor\'s findings for the full list.</span>' };
+            }
+            return _pa(q);
+        };
+    } catch (e) { try { console.error('p9doc3', e); } catch (e2) { } }
 })();
 /* ===== p9xg: Exness Gold Practice - paper trading + paper auto bot for XAUUSD with Exness Standard style costs (spread only, no commission), lots, margin, stop-out, market hours. Virtual money only. ===== */
 (function () {
@@ -22265,6 +22328,454 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         }, 1000);
         window.__xgold = { A: function () { return A; }, quote: quote, check: check, open: openPos, close: closePos, botTick: botTick, sig: function () { return SIG; }, setSig: function (s) { SIG = s; }, closedAt: closedAt, spreadFactor: spreadFactor };
     } catch (e) { try { console.log('xg', e); } catch (er) { } }
+})();
+/* ===== p9bc: clean Baba AI page. Few tabs, chat first, extra tools, more tabs and quick topics hidden until you ask for them ===== */
+(function () {
+    try {
+        var X = window.__kx; if (!X || typeof VIEWS === 'undefined' || !VIEWS.baba) { return; }
+        var KX = X.KX;
+        if (!KX.bCl) { KX.bCl = 1; KX.bWel = '0'; try { X.save(); } catch (e) { } } /* one time: the long welcome card starts hidden */
+        function close(h, start) { /* index just after the </div> that closes the <div> opening at start */
+            var re = /<div\b|<\/div>/g, d = 0, m; re.lastIndex = start;
+            while ((m = re.exec(h))) { if (m[0] === '</div>') { d--; if (d === 0) { return re.lastIndex; } } else { d++; } }
+            return -1;
+        }
+        var _v = VIEWS.baba;
+        VIEWS.baba = function () {
+            var o = _v.apply(this, arguments); if (typeof o !== 'string') { return o; }
+            try {
+                o = o.replace('Ask anything: trading, science, health, gaming, news, school to university, coding. Creates documents, slides, pictures and video scripts.', 'Ask anything. Creates documents, slides and pictures.');
+                /* 1. tabs: Chat, Wiki, Library, then More */
+                var ti = o.indexOf('<div class="bbtabs"');
+                if (ti >= 0) {
+                    var te = close(o, ti), bar = o.slice(ti, te), sp = bar.match(/<span\b[^>]*>[\s\S]*?<\/span>/g) || [], keep = /bT:(chat|enc|lib)|data-bbt="chat"/, shown = [], hid = [], hidActive = false;
+                    sp.forEach(function (s) { if (keep.test(s)) { shown.push(s); } else { hid.push(s); if (/class="on"/.test(s)) { hidActive = true; } } });
+                    if (sp.length && hid.length) {
+                        var open = KX.bMore === '1' || hidActive;
+                        var bar2 = bar.slice(0, bar.indexOf('>') + 1) + shown.join('') + '<span class="' + (open ? 'on' : '') + '" data-xk="bMore:' + (open && !hidActive ? '0' : '1') + '">⋯ More</span>' + (open ? '<div style="flex:0 0 100%;display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + hid.join('') + '</div>' : '') + '</div>';
+                        o = o.slice(0, ti) + bar2 + o.slice(te);
+                    }
+                }
+                /* 2. chat tools: mic and attach stay, the rest sits behind one button */
+                var pi = o.indexOf('<div class="pbtools">');
+                if (pi >= 0) {
+                    var pe = close(o, pi), tools = o.slice(pi, pe), ts = tools.match(/<span\b[^>]*>[\s\S]*?<\/span>/g) || [];
+                    if (ts.length > 3) { var more = KX.bTools === '1'; o = o.slice(0, pi) + '<div class="pbtools">' + ts.slice(0, 2).join('') + (more ? ts.slice(2).join('') : '') + '<span class="pbt" data-xk="bTools:' + (more ? '0' : '1') + '" title="More tools">' + (more ? '✕' : '⋯') + '</span></div>' + o.slice(pe); }
+                }
+                /* 3. quick topics fold away */
+                var qi = o.indexOf('<div class="group pad"><b>Quick topics</b>');
+                if (qi >= 0) {
+                    var qe = close(o, qi);
+                    if (KX.bQT !== '1') { o = o.slice(0, qi) + '<div class="group pad" style="padding:10px 14px"><span data-xk="bQT:1" style="cursor:pointer;display:block"><b>Quick topics</b> <span class="note" style="margin:0">tap to show ▾</span></span></div>' + o.slice(qe); }
+                    else { o = o.slice(0, qi) + o.slice(qi, qe).replace('<b>Quick topics</b>', '<span data-xk="bQT:0" style="cursor:pointer;float:right;font-size:12px;opacity:.7">hide ▴</span><b>Quick topics</b>') + o.slice(qe); }
+                }
+            } catch (e) { }
+            return o;
+        };
+        ['bMore', 'bTools', 'bQT'].forEach(function (k) { X.on(k, function (v) { KX[k] = v; X.save(); X.again(); }); });
+    } catch (e) { try { console.log('p9bc', e); } catch (er) { } }
+})();
+
+/* ===== Baba AI encyclopedia: new topics (Exness practice, Doctor, restart, chart gestures, honest accuracy) ===== */
+(function () {
+    try {
+        if (typeof PF_APP === 'undefined') { return; }
+        PF_APP.push(['doctor|doctor findings|fix the app|fix chart|self repair|auto repair|problem log analysis|why error|what is the cause', 'Doctor and Problem log', 'The Doctor reads the Problem log every 20 seconds and repairs what it can: it pins boxes that keep jumping, restarts stale prices, repaints a frozen chart, re-fits a chart whose candles slid out of the frame, and asks the live trade window again for candles. Menu > Problem log now starts with “Doctor’s findings”: each kind of trouble, how often, the cause and the fix. Tell me “fix the chart” or “fix the app” and I send the Doctor to work and report what it did. Harmless browser notices (ResizeObserver) are no longer recorded.', 'win:log']);
+        PF_APP.push(['app restarted|went to home|go back to home|back to home|home by itself|goes back to home|closed by itself|restart by itself|goes home|kicked out|window closed|crash|crashed', 'The app went back to Home by itself', 'The phone can restart the app’s screen engine when memory is low, and the app has a watchdog that reloads a screen that stops answering for 25 seconds. If that happens, the Doctor now notices at start-up (it saves where you were every few seconds), writes a line in the Problem log and takes you back to the window or chart you were on. Close other heavy apps, keep the app out of battery saving, and send me the Problem log lines if it repeats.', 'win:log']);
+        PF_APP.push(['chart detail box|details box|candle details|candle info|tap candle|open high low close|crosshair', 'Candle details box', 'Tap a candle to see its time, open, high, low, close, change, volume and RSI. Tap the same candle again (or the empty area) to close the box. Press and hold, then slide, to move a crosshair along the candles. A slow tap works the same as a quick one.', 'win:chart']);
+        PF_APP.push(['drag chart|chart slides|chart goes away|chart disappears|pan chart|scroll chart|chart limit|frame limit', 'Moving the chart with your finger', 'One finger moves the chart: sideways for time, up or down for price. At the newest and oldest candle the chart stops and follows you straight back when you turn. Pinch (or drag the time numbers) zooms time; drag the price numbers to stretch price. The candles can never be dragged out of the frame, and the price numbers and time numbers always move with them. If it ever looks wrong, say “fix the chart”.', 'win:chart']);
+        PF_APP.push(['100%|hundred percent|always win|never lose|guaranteed|perfect bot|accuracy of bot|bot accuracy|win rate|sure profit', 'Can a bot be 100% accurate?', 'No. No bot, indicator or person can be right every time, because prices depend on millions of other people and on news nobody can predict. What the bots here do honestly: trade only when several checks agree, risk a small fixed amount per trade with a stop-loss, pay realistic fees and spread in practice, skip weak setups, and stop after a loss limit. Judge a bot by its history (Signal Lab and History Test show fees included), the size of its worst losing streak, and the money you can afford to lose, never by a promised percentage. Beware of anyone who promises 100%.', 'win:btest']);
+    } catch (e) { try { console.log('p9bc2', e); } catch (er) { } }
+})();
+/* ===== p9bq: Baba Practice Bot expectancy guard. Looks at the last 20 closed practice trades AFTER fees and slippage. If they lost money the bot rests 6 hours and says why; shows the numbers on the bot page. ===== */
+(function () {
+    try {
+        var N = 20, REST = 6 * 3600000;
+        function stats(arr) {
+            var a = (arr || []).slice(0, N), n = a.length, w = a.filter(function (x) { return x.usd > 0; }), l = a.filter(function (x) { return x.usd <= 0; });
+            var gw = w.reduce(function (s, x) { return s + x.usd; }, 0), gl = -l.reduce(function (s, x) { return s + x.usd; }, 0), net = gw - gl, pf = gl > 0 ? gw / gl : (gw > 0 ? 99 : 0);
+            var pct = n ? a.reduce(function (s, x) { return s + (+x.pct || 0); }, 0) / n : 0;
+            return { n: n, wins: w.length, wr: n ? w.length / n * 100 : 0, net: net, pf: pf, avgPct: pct };
+        }
+        /* verdict: rest only when there is enough evidence (20 trades) and the result after fees is clearly negative */
+        function verdict(F) {
+            var s = stats(F.closed), start = +F.start || 1000;
+            if (s.n < N) { return { s: s, rest: false, why: 'Need ' + N + ' closed trades to judge (have ' + s.n + ').' }; }
+            if (s.net < -start * 0.02 && s.pf < 0.85) { return { s: s, rest: true, why: 'Last ' + N + ' trades lost $' + Math.abs(s.net).toFixed(2) + ' after fees (profit factor ' + s.pf.toFixed(2) + ', wins ' + Math.round(s.wr) + '%).' }; }
+            return { s: s, rest: false, why: 'Last ' + N + ' trades: net $' + s.net.toFixed(2) + ' after fees, profit factor ' + s.pf.toFixed(2) + '.' };
+        }
+        var _scan = fbScan;
+        fbScan = function () {
+            try {
+                var F = S.fb; if (F && F.on) {
+                    var now = Date.now(), last = F.closed && F.closed[0] ? F.closed[0].t1 : 0;
+                    if (!(F.lockUntil > now) && last && last > (F.bqChecked || 0)) {
+                        F.bqChecked = last; var v = verdict(F);
+                        if (v.rest) { F.lockUntil = now + REST; if (!F.skips) { F.skips = []; } F.skips.unshift({ sym: '—', sg: 0, why: 'Resting 6 hours: ' + v.why + ' The bot will not trade until the rest is over.', at: now }); F.skips = F.skips.slice(0, 40); try { window.__mwRec && window.__mwRec('bot', 'Baba Practice Bot rested 6 h: ' + v.why); } catch (e) { } try { window.__huPush && window.__huPush('bq' + now, '😴', 'Baba Practice Bot is resting', v.why, 'win:botpro', 'bad', 1000); } catch (e) { } try { fbSave(); } catch (e) { } }
+                    }
+                }
+            } catch (e) { }
+            return _scan.apply(this, arguments);
+        };
+        window.__bqCard = function () {
+            try {
+                var v = verdict(S.fb), s = v.s, col = s.n < N ? '#8e8e93' : (s.net >= 0 ? '#16a34a' : '#dc2626');
+                return '<div class="group pad" style="border-left:5px solid ' + col + '"><b>📊 Honest score (last ' + Math.min(N, s.n) + ' trades, after fees)</b><div class="note" style="margin:4px 0 0">' + (s.n ? 'Net <b style="color:' + col + '">' + (s.net >= 0 ? '+' : '-') + '$' + Math.abs(s.net).toFixed(2) + '</b> · wins ' + Math.round(s.wr) + '% · profit factor ' + s.pf.toFixed(2) + ' · average ' + (s.avgPct >= 0 ? '+' : '') + s.avgPct.toFixed(2) + '% per trade' : 'No closed trades yet.') + '</div><div class="note" style="margin:4px 0 0">' + v.why + ' If the last ' + N + ' lose clearly, the bot rests 6 hours by itself. Practice results do not promise real results.</div></div>';
+            } catch (e) { return ''; }
+        };
+        window.__bq = { stats: stats, verdict: verdict };
+    } catch (e) { try { console.log('p9bq', e); } catch (er) { } }
+})();
+/* ===== p9pin: 18+ confirmation and Parent controls. A parent PIN, a Practice-only child mode that locks every real-money screen, and an age gate. ===== */
+(function () {
+    try {
+        var K = 'mintoosuite_parent', AK = 'mintoosuite_age18', P = { h: '', s: '', child: 0, fails: 0, lockUntil: 0 }, sess = 0, busy = false;
+        var LOCKED = ['rbot', 'tpro', 'xtrade', 'strade', 'hold', 'wallet'];
+        try { var o = JSON.parse(localStorage.getItem(K) || 'null'); if (o && typeof o === 'object') { P = Object.assign(P, o); } } catch (e) { }
+        function save() { try { localStorage.setItem(K, JSON.stringify(P)); } catch (e) { } }
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function hex(buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
+        function hash(pin, salt) {
+            var s = 'mintoo|' + salt + '|' + pin;
+            try { if (window.crypto && crypto.subtle) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(hex); } } catch (e) { }
+            var h = 5381, i; for (i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; } return Promise.resolve('x' + (h >>> 0).toString(16));
+        }
+        function hasPin() { return !!P.h; }
+        function active() { return !!P.child && Date.now() > sess; } /* child mode on and no parent session */
+        function overlay(inner) {
+            var d = document.getElementById('mwpin'); if (d) { d.remove(); }
+            d = document.createElement('div'); d.id = 'mwpin'; d.setAttribute('data-mwkeep', '1'); d.setAttribute('data-noswipe', '1');
+            d.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(10,12,20,.62);display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;-webkit-backdrop-filter:none';
+            d.innerHTML = '<div style="background:var(--card,#fff);color:var(--tx,#111);border-radius:20px;max-width:380px;width:100%;padding:20px 18px;box-shadow:0 12px 40px rgba(0,0,0,.35);max-height:92vh;overflow:auto">' + inner + '</div>';
+            document.body.appendChild(d); return d;
+        }
+        function closeOv() { var d = document.getElementById('mwpin'); if (d) { d.remove(); } }
+        var BTN = 'display:block;width:100%;box-sizing:border-box;padding:13px;border-radius:14px;border:0;font-size:15px;font-weight:800;margin-top:10px;';
+        /* ---- ask for the parent PIN; resolves true when right ---- */
+        function askPin(msg) {
+            return new Promise(function (res) {
+                if (!hasPin()) { res(true); return; }
+                function draw(err) {
+                    var wait = P.lockUntil - Date.now();
+                    var d = overlay('<b style="font-size:18px">🔐 Parent PIN</b><div class="note" style="margin:6px 0 10px">' + esc(msg || 'Ask a parent to enter the PIN.') + '</div>' + (wait > 0 ? '<div class="warn">Too many wrong tries. Wait ' + Math.ceil(wait / 60000) + ' minute(s).</div>' : '<input id="mwpinin" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="PIN" style="width:100%;box-sizing:border-box;font-size:22px;letter-spacing:6px;text-align:center;padding:12px;border-radius:12px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit">') + (err ? '<div class="note" style="color:#dc2626;margin:6px 0 0">' + esc(err) + '</div>' : '') + (wait > 0 ? '' : '<button id="mwpinok" style="' + BTN + 'background:#0a84ff;color:#fff">Unlock</button>') + '<button id="mwpinno" style="' + BTN + 'background:rgba(128,128,128,.2);color:inherit">Cancel</button>');
+                    var i = d.querySelector('#mwpinin'), ok = d.querySelector('#mwpinok');
+                    d.querySelector('#mwpinno').onclick = function () { closeOv(); res(false); };
+                    if (ok) { var go = function () { var v = (i.value || '').trim(); hash(v, P.s).then(function (h) { if (h === P.h) { P.fails = 0; save(); closeOv(); res(true); } else { P.fails++; if (P.fails >= 5) { P.fails = 0; P.lockUntil = Date.now() + 300000; } save(); draw(P.lockUntil > Date.now() ? '' : 'Wrong PIN.'); } }); }; ok.onclick = go; i.addEventListener('keydown', function (e) { if (e.key === 'Enter') { go(); } }); setTimeout(function () { try { i.focus(); } catch (e) { } }, 100); }
+                }
+                draw('');
+            });
+        }
+        /* ---- create a PIN (two entries) ---- */
+        function createPin(msg) {
+            return new Promise(function (res) {
+                function draw(err) {
+                    var d = overlay('<b style="font-size:18px">🔐 Create parent PIN</b><div class="note" style="margin:6px 0 10px">' + esc(msg || 'Choose 4 to 8 digits. A parent keeps it. Write it down: if it is lost, the only way back is Erase all data in the app.') + '</div>' +
+                        '<input id="mwp1" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN" style="width:100%;box-sizing:border-box;font-size:20px;text-align:center;padding:11px;border-radius:12px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit"><input id="mwp2" type="password" inputmode="numeric" maxlength="8" placeholder="Same PIN again" style="width:100%;box-sizing:border-box;font-size:20px;text-align:center;padding:11px;border-radius:12px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;margin-top:8px">' +
+                        (err ? '<div class="note" style="color:#dc2626;margin:6px 0 0">' + esc(err) + '</div>' : '') + '<button id="mwpsave" style="' + BTN + 'background:#0a84ff;color:#fff">Save PIN</button><button id="mwpno" style="' + BTN + 'background:rgba(128,128,128,.2);color:inherit">Cancel</button>');
+                    d.querySelector('#mwpno').onclick = function () { closeOv(); res(false); };
+                    d.querySelector('#mwpsave').onclick = function () {
+                        var a = d.querySelector('#mwp1').value.trim(), b = d.querySelector('#mwp2').value.trim();
+                        if (!/^\d{4,8}$/.test(a)) { draw('Use 4 to 8 digits only.'); return; } if (a !== b) { draw('The two PINs are not the same.'); return; }
+                        if (/^(\d)\1+$/.test(a) || a === '1234' || a === '123456' || a === '0000') { draw('That PIN is too easy to guess. Pick another.'); return; }
+                        var s = String(Math.random()).slice(2, 12) + Date.now(); hash(a, s).then(function (h) { P.s = s; P.h = h; P.fails = 0; save(); closeOv(); res(true); });
+                    };
+                }
+                draw('');
+            });
+        }
+        /* ---- 18+ gate, once ---- */
+        function ageGate() {
+            if (localStorage.getItem(AK) || busy) { return; } busy = true;
+            var d = overlay('<div style="font-size:34px;text-align:center">🔞</div><b style="font-size:19px;display:block;text-align:center;margin-top:4px">Before you start</b>' +
+                '<div class="note" style="margin:10px 0 0;line-height:1.5">MintooSuite is a trading tool for people aged <b>18 or older</b>. Trading can lose money quickly. Nothing in this app is financial advice or a promise of profit. Never risk money you cannot afford to lose.</div>' +
+                '<div class="note" style="margin:8px 0 0;line-height:1.5">If you are <b>under 18</b>, you may use only <b>Practice mode</b> (virtual money) and only with a parent’s permission. A parent sets a PIN that locks every real-money screen.</div>' +
+                '<button id="mwa18" style="' + BTN + 'background:#16a34a;color:#fff">I am 18 or older and I understand</button><button id="mwau" style="' + BTN + 'background:rgba(128,128,128,.2);color:inherit">I am under 18 (Practice mode)</button>');
+            d.querySelector('#mwa18').onclick = function () { try { localStorage.setItem(AK, JSON.stringify({ t: Date.now(), adult: 1 })); } catch (e) { } closeOv(); busy = false; };
+            d.querySelector('#mwau').onclick = function () {
+                try { localStorage.setItem(AK, JSON.stringify({ t: Date.now(), adult: 0 })); } catch (e) { }
+                P.child = 1; save();
+                var fin = function () { closeOv(); busy = false; try { renderView(true); } catch (e) { } };
+                if (hasPin()) { fin(); } else { createPin('A parent must create a PIN now. It keeps real-money screens locked.').then(function (ok) { if (!ok) { /* no PIN: child mode stays on, nothing real can be opened without it */ } fin(); }); }
+            };
+        }
+        function maybeGate() { try { var a = JSON.parse(localStorage.getItem('mintoosuite_agree') || 'null'); if (a && a.t && !localStorage.getItem(AK) && !document.getElementById('mwpin') && !document.getElementById('mwMode') && !document.getElementById('mwAgree') && !document.getElementById('mwAna') && !document.getElementById('wtour') && localStorage.getItem('mintoosuite_mode') && !document.querySelector('#agreeScr,.agreeScr,#agree')) { ageGate(); } } catch (e) { } }
+        setInterval(maybeGate, 3000); setTimeout(maybeGate, 2500);
+        /* ---- guards ---- */
+        function blockMsg(id) { return 'Real-money screens are locked in Practice mode. Ask a parent to enter the PIN.'; }
+        function tryOpen(id, then) {
+            if (!active()) { then(); return; }
+            if (!hasPin()) { /* child mode without a PIN cannot be unlocked: create one first */ createPin('Child mode is on but there is no PIN. A parent must create one now.').then(function (ok) { if (ok) { sess = Date.now() + 15 * 60000; then(); } }); return; }
+            askPin(blockMsg(id)).then(function (ok) { if (ok) { sess = Date.now() + 15 * 60000; then(); } });
+        }
+        document.addEventListener('click', function (e) {
+            if (!P.child) { return; }
+            var el = e.target.closest ? e.target.closest('[data-act],[data-lk]') : null; if (!el) { return; }
+            var act = el.getAttribute('data-act') || '', lk = el.getAttribute('data-lk') || '', m = /^win:([a-z0-9]+)$/.exec(act);
+            if ((m && LOCKED.indexOf(m[1]) >= 0) || lk === 'unlock') { if (active()) { e.preventDefault(); e.stopImmediatePropagation(); tryOpen(m ? m[1] : 'unlock', function () { try { el.click(); } catch (er) { } }); } }
+        }, true);
+        try { var _g = gotoWin; gotoWin = function (id) { var a = arguments, self = this; if (P.child && active() && LOCKED.indexOf(id) >= 0) { tryOpen(id, function () { _g.apply(self, a); }); return; } return _g.apply(this, a); }; } catch (e) { }
+        try { var _rs = rbStart; rbStart = function () { if (P.child && active()) { return; } return _rs.apply(this, arguments); }; } catch (e) { }
+        try { var _ul = window.__lkUnlock; if (_ul) { window.__lkUnlock = function () { if (P.child && active()) { return; } return _ul.apply(this, arguments); }; } } catch (e) { }
+        /* ---- the Parent controls window ---- */
+        function vParent() {
+            var sess2 = Date.now() < sess, h = '<div class="group pad"><b style="font-size:17px">👨‍👩‍👧 Parent controls</b><div class="note" style="margin:6px 0 0">Keeps younger people to Practice mode. With <b>Practice-only child mode</b> ON, these stay locked until a parent enters the PIN: ' + LOCKED.map(function (x) { return esc((WINS.filter(function (w) { return w.id === x; })[0] || { n: x }).n); }).join(', ') + ', and the Baba Real Bot cannot start. Paper trading, bots on virtual money, lessons and charts stay open.</div></div>';
+            h += '<div class="group pad"><div class="row"><span><b>Parent PIN</b></span><b>' + (hasPin() ? '✅ set' : '⚪ not set') + '</b></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><span class="btn sec tap" data-par="pin" style="width:auto;padding:10px 16px;display:inline-block">' + (hasPin() ? 'Change PIN' : 'Create PIN') + '</span>' + (hasPin() ? '<span class="btn sec tap" data-par="rmpin" style="width:auto;padding:10px 16px;display:inline-block">Remove PIN</span>' : '') + '</div></div>';
+            h += '<div class="group pad"><div class="row"><span><b>Practice-only child mode</b><br><small class="mut">' + (P.child ? (sess2 ? 'ON (a parent has unlocked real screens for a few minutes)' : 'ON: real-money screens are locked') : 'OFF: everything is open') + '</small></span><b>' + (P.child ? '✅ ON' : '⚪ OFF') + '</b></div><span class="btn tap" data-par="child" style="width:auto;padding:10px 16px;display:inline-block;margin-top:8px">' + (P.child ? 'Turn OFF (PIN needed)' : 'Turn ON') + '</span></div>';
+            h += '<div class="group pad"><b>18+ confirmation</b><div class="note" style="margin:4px 0 8px">' + (function () { try { var a = JSON.parse(localStorage.getItem(AK) || 'null'); return a ? (a.adult ? 'This phone was confirmed as 18 or older.' : 'This phone was set up as under 18 (Practice mode).') : 'Not answered yet.'; } catch (e) { return ''; } })() + '</div><span class="btn sec tap" data-par="age" style="width:auto;padding:10px 16px;display:inline-block">Ask again</span></div>';
+            h += '<div class="warn">A PIN stops casual use. It cannot stop a person who can reinstall the app or has the phone’s settings. For young children, also use Android Family Link and keep your exchange API keys out of the app.</div>';
+            return h;
+        }
+        WINS.push({ id: 'parent', ic: '👨‍👩‍👧', c: '#5856d6', n: 'Parent controls (PIN, 18+)', t: 'Parent controls', sub: 'Parent PIN, Practice-only child mode, 18+ confirmation' }); LIVE.parent = 0; VIEWS.parent = vParent;
+        try { var gi = -1; MW_GROUPS.forEach(function (gr, ix) { if (gr[1].indexOf('lockui') >= 0) { gi = ix; } }); if (gi >= 0) { var ar = MW_GROUPS[gi][1]; if (ar.indexOf('parent') < 0) { ar.splice(ar.indexOf('lockui') + 1, 0, 'parent'); } } else { MW_GROUPS[MW_GROUPS.length - 1][1].push('parent'); } } catch (e) { }
+        try { MW_HELP.parent = 'Create a parent PIN and switch on Practice-only child mode so younger users cannot open real-money screens. Confirm 18+ on this phone.'; PF_WIN['Parent controls'] = 'parent'; PF_APP.push(['parent|parental|child mode|kids|children|under 18|age 18|18+|minor|family', 'Parent controls', 'Windows > Parent controls: create a parent PIN, switch on Practice-only child mode (real-money screens and the real bot stay locked until the PIN is entered), and see the 18+ confirmation. A PIN is a simple lock, not a replacement for Android Family Link.', 'win:parent']); } catch (e) { }
+        document.addEventListener('click', function (e) {
+            var t = e.target.closest ? e.target.closest('[data-par]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); var a = t.getAttribute('data-par'), again = function () { try { renderView(true); } catch (er) { } };
+            if (a === 'pin') { (hasPin() ? askPin('Enter the current PIN first.') : Promise.resolve(true)).then(function (ok) { if (ok) { createPin().then(again); } }); }
+            else if (a === 'rmpin') { askPin('Enter the PIN to remove it.').then(function (ok) { if (ok) { P.h = ''; P.s = ''; P.child = 0; save(); again(); } }); }
+            else if (a === 'child') { if (!P.child) { (hasPin() ? Promise.resolve(true) : createPin('Create a PIN first: it is needed to turn child mode off.')).then(function (ok) { if (ok) { P.child = 1; sess = 0; save(); again(); } }); } else { askPin('Enter the PIN to turn child mode off.').then(function (ok) { if (ok) { P.child = 0; save(); again(); } }); } }
+            else if (a === 'age') { askPin('Parent PIN needed to change this.').then(function (ok) { if (ok) { try { localStorage.removeItem(AK); } catch (er) { } busy = false; setTimeout(maybeGate, 200); } }); }
+        }, true);
+        window.__parent = { state: function () { return { pin: hasPin(), child: !!P.child, active: active() }; }, ask: askPin, create: createPin, gate: ageGate, setSess: function (ms) { sess = ms; } };
+    } catch (e) { try { console.log('p9pin', e); } catch (er) { } }
+})();
+/* ===== p9fin: final alignment. Cost and safety strip on Scanner, New Plan, Best, Ideas, Analyst; "Move money" helper; new lessons; help entries ===== */
+(function () {
+    try {
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function beginner() { try { return /begin|new|easy|simple/i.test(localStorage.getItem('mintoosuite_mode') || ''); } catch (e) { return false; } }
+        function childOn() { try { return !!(window.__parent && window.__parent.state().child); } catch (e) { return false; } }
+        /* ---- strip shown above the recommendation screens ---- */
+        function strip(kind) {
+            var b = beginner(), h = '<div class="group pad" style="border-left:4px solid #0a84ff"><b style="font-size:14px">✅ Read this before you act on any idea</b>' +
+                '<div class="note" style="margin:6px 0 0;line-height:1.5">• <b>Costs come first.</b> A trade pays an exchange fee (about 0.02% to 0.06% each way on futures) plus the spread. Round trip often costs 0.10% to 0.20%. A target smaller than that is not worth taking.<br>' +
+                '• <b>An idea is a possibility, not a promise.</b> Even a strong signal fails often. Size so that one loss is small (1% of the balance or less).<br>' +
+                '• <b>Practice first.</b> Try it in Paper trading, Baba Practice Bot or Exness Gold Practice. Judge after 20 or more closed trades, <i>after costs</i>.<br>' +
+                '• <b>Stop-loss on every trade.</b> If the news is big, wait.' + (b ? '<br>• <b>Beginner tip:</b> choose ONE idea, use the smallest size and read the “why” line before you start.' : '') + (childOn() ? '<br>• <b>Practice-only child mode is ON:</b> real-money screens are locked.' : '') + '</div>' +
+                '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><span class="btn sec tap" data-act="win:paper" style="width:auto;padding:8px 14px;display:inline-block">Practice now</span><span class="btn sec tap" data-act="win:academy" style="width:auto;padding:8px 14px;display:inline-block">Learn costs</span></div></div>';
+            return h;
+        }
+        ['scanner', 'morning', 'plan', 'best', 'bpx', 'ideas', 'glance', 'analyst', 'exdesk'].forEach(function (k) {
+            var v = VIEWS[k]; if (typeof v !== 'function' || v.__fin) { return; }
+            var w = function () { var h = v.apply(this, arguments); try { return strip(k) + h; } catch (e) { return h; } }; w.__fin = 1; VIEWS[k] = w;
+        });
+        /* ---- "Yes, move money" helper ---- */
+        var MV = { i: 0, d: {} }; try { MV.d = JSON.parse(localStorage.getItem('mintoosuite_move') || '{}') || {}; } catch (e) { }
+        var STEPS = [
+            ['Decide the amount you can afford to lose', 'Use only spare money. Not rent, food, loans or borrowed money. Start small, for example the price of a meal. Write the amount down.'],
+            ['Open and verify your exchange account', 'Use only the official app or website (type the address yourself). Finish identity check (KYC) and turn on two-factor login with an authenticator app.'],
+            ['Check the rules where you live', 'In Pakistan, buying crypto rules can change. Read your exchange’s notice and local law. If unsure, ask a qualified person. Practice mode needs none of this.'],
+            ['Pick the safest way to add money', 'Use the exchange’s own “Buy crypto” or P2P section with verified merchants and its escrow. Never send money to a stranger in a chat, and never release crypto before you see the money in your own account.'],
+            ['Send a tiny test first', 'Move a very small amount and check that it arrived. Check the network and address letter by letter. A wrong network can lose the coins for good.'],
+            ['Never share secrets', 'No one from this app, Binance, Exness or any bank will ask for your password, codes or seed words. If someone does, it is a scam.'],
+            ['Keep trading money apart', 'Keep only what you plan to trade on the exchange. Savings stay in the bank. Set a daily loss limit and stop when you reach it.'],
+            ['Start with practice results', 'Move real money only after 20 or more practice trades that stayed positive after costs, and only if you accept that you can lose it all.']
+        ];
+        function save() { try { localStorage.setItem('mintoosuite_move', JSON.stringify(MV.d)); } catch (e) { } }
+        function vMove() {
+            var done = 0; STEPS.forEach(function (s, i) { if (MV.d[i]) { done++; } });
+            var h = '<div class="group pad"><b style="font-size:17px">💸 Move money safely</b><div class="note" style="margin:6px 0 0">A checklist for the day you decide to use real money. <b>This app never moves money for you.</b> Tap “Yes, I did this” after each step. Progress: ' + done + ' of ' + STEPS.length + '.</div></div>';
+            STEPS.forEach(function (s, i) {
+                h += '<div class="group pad"><div class="row"><span><b>' + (i + 1) + '. ' + esc(s[0]) + '</b></span><b>' + (MV.d[i] ? '✅' : '⚪') + '</b></div><div class="note" style="margin:6px 0 8px;line-height:1.5">' + esc(s[1]) + '</div>' +
+                    '<span class="btn ' + (MV.d[i] ? 'sec ' : '') + 'tap" data-mv="' + i + '" style="width:auto;padding:9px 16px;display:inline-block">' + (MV.d[i] ? 'Undo' : 'Yes, I did this') + '</span></div>';
+            });
+            h += '<div class="warn">' + (done === STEPS.length ? 'All steps ticked. Go slowly. Start with the smallest amount.' : 'Do not skip steps. If you are under 18, stay in Practice mode.') + '</div>';
+            h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><span class="btn sec tap" data-act="win:academy" style="width:auto;padding:9px 16px;display:inline-block">Academy</span><span class="btn sec tap" data-act="win:parent" style="width:auto;padding:9px 16px;display:inline-block">Parent controls</span></div>';
+            return h;
+        }
+        WINS.push({ id: 'moveit', ic: '💸', c: '#30d158', n: 'Move money safely (helper)', t: 'Move money', sub: 'Step-by-step checklist with Yes, I did this; the app never moves money' }); LIVE.moveit = 0; VIEWS.moveit = vMove;
+        try { MW_GROUPS.forEach(function (g) { if (g[1].indexOf('wallet') >= 0 && g[1].indexOf('moveit') < 0) { g[1].splice(g[1].indexOf('wallet') + 1, 0, 'moveit'); } }); } catch (e) { }
+        document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-mv]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); var i = +t.getAttribute('data-mv'); MV.d[i] = MV.d[i] ? 0 : 1; save(); try { renderView(true); } catch (er) { } }, true);
+        MW_HELP.moveit = 'A checklist for moving real money safely. You tick each step yourself. The app never moves money.';
+        /* ---- Academy lessons ---- */
+        var L = [
+            [37, 2, 'Fees, spread and break-even', 5, 'Every trade costs money before it can earn.\n• Fee: the exchange charges a small percent on each side (open and close).\n• Spread: the gap between buy price and sell price. Gold on Exness often has a spread of about 30 cents per ounce; it widens at night and on news.\n• Break-even: the move needed just to pay the costs. If costs are 0.15%, a target of 0.10% can never win.\nThe bots in this app count fees and spread. Always judge results AFTER costs.', [['A trade gains 0.30% and costs 0.20%. What is left?', ['0.30%', '0.10%', '0.50%'], 1, 'Costs are subtracted: 0.30 - 0.20 = 0.10.'], ['When does the spread usually widen?', ['At night and on news', 'Never', 'Only on Sundays'], 0, 'Thin or fast markets widen the spread.']], 'trading fees and spread explained for beginners', 'fee|fees|spread|break even|commission|cost of trading|slippage'],
+            [38, 2, 'The bot’s honest score and when to rest', 5, 'The Baba Practice Bot keeps a score: wins, losses, net profit after costs and profit factor (gross wins divided by gross losses).\n• Below 20 closed trades the score means little.\n• At 20 or more trades, if the net result is clearly negative and profit factor is below 0.85, the bot rests for 6 hours.\n• A rest is protection, not failure. Check the Smart Guard card in the Paper hub.\nNo bot can be 100% accurate. A good bot wins sometimes, loses small and keeps costs low.', [['Profit factor below 1 means?', ['Wins smaller than losses overall', 'Always profit', 'Nothing'], 0, 'Gross wins divided by gross losses under 1 is a net loser.'], ['How many closed trades before judging a bot?', ['2', '20 or more', '1'], 1, 'Small samples mislead.']], 'profit factor and expectancy explained', 'honest score|expectancy|profit factor|bot rest|smart guard|win rate'],
+            [39, 3, 'Practice gold like Exness (with spread)', 5, 'Exness Gold Practice in this app uses virtual money and a spread-only cost model. You choose lots, stop and target. Margin, leverage and stop-out are simulated.\n• It is practice only: Exness real trading is done in MT4 or MT5, not here.\n• Confirm spread, contract size, margin and stop-out in the MT5 Specification and enter them in Settings.\n• Gold prices come from Binance XAUUSDT futures, so they can differ slightly from Exness.', [['Can this app place real Exness trades?', ['Yes', 'No, practice only', 'Only on Sunday'], 1, 'Real Exness trades need MT4 or MT5.']], 'exness gold xauusd how to trade for beginners', 'exness|xauusd|gold practice|lots|stop out|margin'],
+            [40, 0, 'Age 18+ and parent controls', 3, 'Trading is for adults. If you are under 18 use Practice mode only, with a parent’s permission.\n• Parents: Windows > Parent controls. Create a PIN and switch on Practice-only child mode.\n• Real-money screens and the Baba Real Bot stay locked until the PIN is entered.\n• A PIN is a simple lock. Use Android Family Link as well for young children.', [['Who may trade real money?', ['Anyone', '18 or older', 'Only children'], 1, 'Real trading is for adults.']], 'parental controls on android family link', 'parent|child|under 18|age|kids|minor'],
+            [41, 3, 'Moving money safely', 5, 'Open Windows > Move money safely for a checklist.\n• Use only spare money; verify the account; follow local law.\n• Use the exchange’s own P2P escrow. Never release crypto before the money is in your account.\n• Send a tiny test first and check the network.\n• Nobody legitimate asks for your password, codes or seed words.', [['What should you send first?', ['Everything', 'A tiny test amount', 'Nothing, just trust'], 1, 'A test shows the route works.']], 'how to deposit to binance safely p2p', 'move money|deposit|withdraw|p2p|send money|transfer']
+        ];
+        try { L.forEach(function (l) { if (!acById(l[0])) { AC.push(l); } }); } catch (e) { }
+        /* ---- help and baba knowledge ---- */
+        try {
+            PF_APP.push(['fee|fees|spread|break even|commission|cost', 'Fees and spread', 'Every trade pays a fee and the spread. Round trip often costs 0.10% to 0.20%. Targets smaller than that cannot win. The bots here count costs. See Academy lesson 37.', 'win:academy'],
+                ['move money|deposit|transfer money|yes move|send money', 'Move money safely', 'Windows > Move money safely is a checklist you tick yourself. The app never moves money.', 'win:moveit'],
+                ['scanner|new plan|day plan|best picks|ideas|analyst', 'Scanner, New Plan, Best, Ideas, Analyst', 'They show ideas ranked by checks, each with entry, stop and targets. They are possibilities, not promises. A cost reminder now sits at the top of each. Try ideas in Practice first.', 'win:best']);
+        } catch (e) { }
+        try { var T = TOUR; if (T && T.length && !T.some(function (t) { return t[0] === 'parent'; })) { T.push(['parent', 'Safety and parents', 'Windows > Parent controls sets a parent PIN and a Practice-only child mode. Windows > Move money safely is a checklist for real money. The app is for ages 18 and over.']); } } catch (e) { }
+        window.__fin = { steps: STEPS.length, strip: strip };
+    } catch (e) { try { console.log('p9fin', e); } catch (er) { } }
+})();
+/* ===== p9bl: Baba AI chat: links fold behind an arrow; Google-style question suggestions while typing and related questions ===== */
+(function () {
+    try {
+        var CONT = '#pcmsgs,#pfmsgs', LK = 'a[href],.pfbtn,[data-pfgo],[data-pcgo],[data-pfq]';
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        var css = document.createElement('style'); css.textContent = '.mwlkt{display:inline-block;margin-top:8px;padding:5px 12px;border-radius:14px;background:rgba(128,128,128,.18);font-size:12.5px;font-weight:700;cursor:pointer;user-select:none}.mwlkb{margin-top:6px;display:none;flex-wrap:wrap;gap:6px}.mwlkb.on{display:flex}.mwlkb .pfbtn{margin:0}#mwsg{position:fixed;z-index:2147482000;background:var(--card,#fff);color:var(--tx,#111);border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.3);border:1px solid rgba(128,128,128,.25);overflow:hidden;display:none}#mwsg div{padding:10px 14px;font-size:14px;border-bottom:1px solid rgba(128,128,128,.15);cursor:pointer}#mwsg div:last-child{border-bottom:0}#mwsg b{font-weight:800}.mwrel{margin-top:8px}.mwrel span{display:inline-block;margin:3px 4px 0 0;padding:6px 11px;border-radius:14px;background:rgba(10,132,255,.14);font-size:12.5px;cursor:pointer}';
+        document.head.appendChild(css);
+        /* ---- fold links ---- */
+        function fold(root) {
+            var els = Array.prototype.slice.call(root.querySelectorAll(LK)).filter(function (x) { return !x.closest('.mwlkb') && !x.closest('.mwrel'); });
+            if (!els.length) { return; }
+            /* group by nearest bubble: parent chain until direct child of container */
+            var groups = [];
+            els.forEach(function (x) { var b = x; while (b.parentNode && b.parentNode !== root) { b = b.parentNode; } var g = groups.filter(function (q) { return q.b === b; })[0]; if (!g) { g = { b: b, a: [] }; groups.push(g); } g.a.push(x); });
+            groups.forEach(function (g) {
+                var wrap = document.createElement('div'); wrap.className = 'mwlk';
+                var t = document.createElement('span'); t.className = 'mwlkt'; t.setAttribute('data-mwlk', '1'); t.textContent = '▸ Links & options (' + g.a.length + ')';
+                var box = document.createElement('div'); box.className = 'mwlkb';
+                g.a.forEach(function (x) { box.appendChild(x); });
+                wrap.appendChild(t); wrap.appendChild(box);
+                var note = g.b.querySelector('.note:last-child'); if (note && note.parentNode) { note.parentNode.insertBefore(wrap, note); } else { g.b.appendChild(wrap); }
+            });
+        }
+        document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-mwlk]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); var b = t.nextSibling, n = b.querySelectorAll(LK).length; b.classList.toggle('on'); t.textContent = (b.classList.contains('on') ? '▾ Hide links & options (' : '▸ Links & options (') + n + ')'; }, true);
+        /* ---- question pool ---- */
+        var pool = null;
+        function build() {
+            var q = {}; function add(s) { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length > 3 && s.length < 90) { q[s] = 1; } }
+            try { PC_CHIPS.forEach(function (g) { g[1].forEach(add); }); } catch (e) { }
+            try { AC.forEach(function (l) { add('What is ' + l[2].toLowerCase() + '?'); add('Explain ' + l[2].toLowerCase()); }); } catch (e) { }
+            try { PF_APP.forEach(function (r) { add(r[1] + '?'); }); } catch (e) { }
+            ['What is the best time to trade gold?', 'Why did the app go back to Home?', 'How do I start with practice money?', 'How do I set a stop loss?', 'Can a bot be 100% accurate?', 'How do fees and spread work?', 'What is the Parent PIN?', 'How do I move money safely?', 'What is a candle?', 'What is leverage?', 'How much should I risk per trade?', 'What is Exness Gold Practice?', 'What does the Doctor do?', 'Is this financial advice?', 'How do I read the chart?'].forEach(add);
+            return Object.keys(q);
+        }
+        function words(s) { return String(s).toLowerCase().split(/[^a-z0-9%+]+/).filter(Boolean); }
+        function suggest(text, n) {
+            if (!pool) { pool = build(); } var w = words(text), lt = String(text).toLowerCase().trim();
+            if (!w.length) { return pool.filter(function (x) { return /^(what is|how do|why|can)/i.test(x); }).slice(0, n); }
+            var last = w[w.length - 1], res = [];
+            pool.forEach(function (c) {
+                var lc = c.toLowerCase(), s = 0; if (lc === lt) { return; } if (lc.indexOf(lt) === 0) { s += 6; } else if (lc.indexOf(lt) > 0) { s += 3; }
+                var cw = words(c); w.forEach(function (x, i) { if (cw.indexOf(x) >= 0) { s += 2; } else if (i === w.length - 1 && cw.some(function (y) { return y.indexOf(x) === 0; })) { s += 1.5; } });
+                if (s >= 2.5 || (w.length === 1 && s >= 1.5)) { res.push([s - c.length / 200, c]); }
+            });
+            res.sort(function (a, b) { return b[0] - a[0]; }); return res.slice(0, n).map(function (r) { return r[1]; });
+        }
+        /* ---- dropdown ---- */
+        var box = document.createElement('div'); box.id = 'mwsg'; box.setAttribute('data-mwkeep', '1'); document.body.appendChild(box); var cur = null;
+        function hide() { box.style.display = 'none'; }
+        function show(inp) {
+            cur = inp; var list = suggest(inp.value, 6); if (!list.length) { hide(); return; }
+            var r = inp.getBoundingClientRect(), up = r.top > window.innerHeight * 0.45, w = Math.min(r.width, window.innerWidth - 16);
+            box.innerHTML = list.map(function (s) { var v = inp.value.trim(), i = v ? s.toLowerCase().indexOf(v.toLowerCase()) : -1; return '<div data-sg="' + esc(s) + '">🔍 ' + (i >= 0 ? esc(s.slice(0, i)) + '<b>' + esc(s.slice(i, i + v.length)) + '</b>' + esc(s.slice(i + v.length)) : esc(s)) + '</div>'; }).join('');
+            box.style.width = w + 'px'; box.style.left = Math.max(8, r.left) + 'px'; box.style.display = 'block';
+            if (up) { box.style.top = 'auto'; box.style.bottom = (window.innerHeight - r.top + 4) + 'px'; } else { box.style.bottom = 'auto'; box.style.top = (r.bottom + 4) + 'px'; }
+        }
+        function ask(inp, q) {
+            hide(); inp.value = q;
+            if (inp.id === 'pfq' && typeof pfAsk === 'function') { pfAsk(q); } else if (inp.id === 'pcq') { var b = document.querySelector('[data-pcs]'); if (b) { b.click(); } }
+        }
+        document.addEventListener('input', function (e) { var t = e.target; if (t && (t.id === 'pcq' || t.id === 'pfq')) { show(t); } }, true);
+        document.addEventListener('focusin', function (e) { var t = e.target; if (t && (t.id === 'pcq' || t.id === 'pfq')) { show(t); } }, true);
+        document.addEventListener('pointerdown', function (e) { var d = e.target.closest ? e.target.closest('#mwsg [data-sg]') : null; if (d) { e.preventDefault(); e.stopPropagation(); if (cur) { ask(cur, d.getAttribute('data-sg')); } } else if (!(e.target.id === 'pcq' || e.target.id === 'pfq')) { hide(); } }, true);
+        document.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === 'Escape') { hide(); } }, true);
+        /* ---- related questions after each answer + link folding ---- */
+        var raf = 0;
+        function pass() {
+            raf = 0; Array.prototype.forEach.call(document.querySelectorAll(CONT), function (root) {
+                fold(root);
+                var last = root.lastElementChild; if (last && !last.querySelector('.mwrel') && last.querySelector('.mwlk') ) {
+                    var txt = (last.innerText || '').slice(0, 160), rel = suggest(txt.split(/\n/)[0], 4).filter(function (s) { return txt.toLowerCase().indexOf(s.toLowerCase()) < 0; }).slice(0, 3);
+                    if (rel.length) { var d = document.createElement('div'); d.className = 'mwrel'; d.innerHTML = '<div class="note" style="margin:0">People also ask</div>' + rel.map(function (s) { return '<span data-pfq="' + esc(s) + '" data-mwrel="1">' + esc(s) + '</span>'; }).join(''); last.appendChild(d); }
+                }
+            });
+        }
+        new MutationObserver(function () { if (!raf) { raf = setTimeout(pass, 120); } }).observe(document.body, { childList: true, subtree: true });
+        /* related chips ask through the chat that is open */
+        document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-mwrel]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); var q = t.getAttribute('data-pfq'), pc = document.getElementById('pcq'), pf = document.getElementById('pfq'); if (pc && pc.offsetParent) { pc.value = q; var b = document.querySelector('[data-pcs]'); if (b) { b.click(); } } else if (pf && typeof pfAsk === 'function') { pfAsk(q); } }, true);
+        window.__bl = { suggest: suggest, fold: fold, pass: pass };
+    } catch (e) { try { console.log('p9bl', e); } catch (er) { } }
+})();
+/* ===== p9ft: one clear front door for all idea screens ===== */
+(function () {
+    try {
+        var R = [['best', '⭐', 'Best picks', 'The few strongest setups right now. Start here if you are new.'], ['ideas', '📋', 'Trade ideas', 'Every idea in one ranked list, with the reason for each.'], ['scanner', '🔍', 'Scanner', 'Which coins are moving and why.'], ['morning', '🧭', 'New plan for the day', 'A simple plan for the next hours and the whole day.'], ['analyst', '🎯', 'Analyst', 'Type one coin, gold or a currency and get a full plan.'], ['glance', '🗂', 'At a glance', 'All recommendations as a table.']];
+        function vFind() {
+            var h = '<div class="group pad"><b style="font-size:17px">🧭 Find a trade</b><div class="note" style="margin:6px 0 0;line-height:1.5">Pick what you want to do. Every screen shows entry, stop and targets with the reason. They are possibilities, not promises, and costs come first. Try ideas in Practice before real money.</div></div>';
+            R.forEach(function (r) { h += '<div class="group pad"><div class="row tap" data-act="win:' + r[0] + '"><span>' + r[1] + ' <b>' + r[2] + '</b><br><small class="mut">' + r[3] + '</small></span><b>›</b></div></div>'; });
+            h += '<div class="group pad"><div class="row tap" data-act="win:paper"><span>🧪 <b>Practice it first</b><br><small class="mut">Virtual money, costs counted.</small></span><b>›</b></div></div>';
+            return h;
+        }
+        WINS.push({ id: 'findtrade', ic: '🧭', c: '#0a84ff', n: 'Find a trade (start here)', t: 'Find a trade', sub: 'One place to reach Best picks, Ideas, Scanner, New plan, Analyst' }); LIVE.findtrade = 0; VIEWS.findtrade = vFind;
+        try { MW_GROUPS[0][1].splice(1, 0, 'findtrade'); } catch (e) { }
+        try { MW_HELP.findtrade = 'A front door for every idea screen. Best picks for beginners, Analyst for one coin.'; PF_APP.push(['find a trade|which screen|where to start|best screen|what should i open', 'Find a trade', 'Windows > Find a trade lists every idea screen with one line on when to use it. New users should start with Best picks, then practice.', 'win:findtrade']); } catch (e) { }
+    } catch (e) { try { console.log('p9ft', e); } catch (er) { } }
+})();
+/* ===== p9nc: Native chart (experimental). Needs the experimental installer; the chart itself is drawn by Android, this page only supplies data and position. ===== */
+(function () {
+    try {
+        var NC = { sym: 'BTCUSDT', iv: '15m', data: null, busy: 0, at: 0, shown: false, last: '' };
+        var IVS = ['1m', '5m', '15m', '1h', '4h', '1d'];
+        function nat() { try { var n = window.MintooNative; return n && typeof n.nchartPlace === 'function' && window.__mwTok ? n : null; } catch (e) { return null; } }
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function load() {
+            if (NC.busy) { return; } NC.busy = 1; var sym = NC.sym, iv = NC.iv;
+            fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + encodeURIComponent(sym) + '&interval=' + iv + '&limit=500').then(function (r) { return r.json(); }).then(function (a) {
+                NC.busy = 0; if (!Array.isArray(a) || !a.length) { return; }
+                NC.data = a.map(function (x) { return [x[0], +x[1], +x[2], +x[3], +x[4], +x[5]]; }); NC.at = Date.now(); push();
+            }).catch(function () { NC.busy = 0; });
+        }
+        function push() { var n = nat(); if (n && NC.data) { try { n.nchartData(window.__mwTok, JSON.stringify(NC.data), NC.sym + ' · ' + NC.iv); } catch (e) { } } }
+        function overlayOpen() { try { return !!document.querySelector('[id^="sheet"].open,#mwpin,#wtour,#pfp.on,#huPop,.mwpop'); } catch (e) { return false; } }
+        function hide() { var n = nat(); if (n && NC.shown) { try { n.nchartHide(window.__mwTok); } catch (e) { } } NC.shown = false; NC.last = ''; }
+        function sync() {
+            var n = nat(); if (!n) { return; }
+            var box = document.getElementById('ncBox');
+            if (!box || S.win !== 'nchart' || overlayOpen() || document.hidden) { hide(); return; }
+            var r = box.getBoundingClientRect(); var want = Math.max(240, Math.round(window.innerHeight - r.top - 96)); if (r.top > 0 && Math.abs(r.height - want) > 3) { box.style.height = want + 'px'; box.style.minHeight = '0'; r = box.getBoundingClientRect(); } if (r.top < 0 || r.bottom > window.innerHeight - 60 || r.width < 40) { hide(); return; }
+            var d = window.devicePixelRatio || 1, k = Math.round(r.left * d) + ',' + Math.round(r.top * d) + ',' + Math.round(r.width * d) + ',' + Math.round(r.height * d);
+            if (k !== NC.last || !NC.shown) { NC.last = k; NC.shown = true; var q = k.split(',').map(Number); try { n.nchartPlace(window.__mwTok, q[0], q[1], q[2], q[3]); } catch (e) { } if (NC.data) { push(); } }
+        }
+        setInterval(sync, 250);
+        setInterval(function () { if (S.win === 'nchart' && nat() && Date.now() - NC.at > 5000) { load(); } }, 2000);
+        function vNc() {
+            var n = nat(), h = '<div class="group pad"><b style="font-size:17px">⚡ Native chart (experimental)</b><div class="note" style="margin:6px 0 0;line-height:1.5">Drawn by Android itself, not by the web page. <b>Drag</b> to move, <b>pinch</b> to zoom, <b>hold</b> a finger on a candle for its details, <b>tap</b> to close the details, <b>double-tap</b> to reset. It cannot slide out of the frame. If anything looks wrong, use the normal Chart and tell Baba what happened.</div></div>';
+            h += '<div class="group pad"><div style="display:flex;gap:6px"><input id="ncSym" class="tin" value="' + esc(NC.sym) + '" style="flex:1;min-width:0;text-transform:uppercase" autocomplete="off"><span class="btn tap" data-nc="go" style="width:auto;padding:10px 16px;display:inline-block">Load</span></div>' +
+                '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + IVS.map(function (v) { return '<span class="btn ' + (v === NC.iv ? '' : 'sec ') + 'tap" data-nc="iv:' + v + '" style="width:auto;padding:8px 14px;display:inline-block">' + v + '</span>'; }).join('') + '</div></div>';
+            h += '<div id="ncBox" style="height:56vh;min-height:260px;border-radius:14px;background:rgba(128,128,128,.12);display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;box-sizing:border-box">' + (n ? '<span class="note">Loading…</span>' : '<span class="note">The native chart is only in the experimental installer (GD). This normal build cannot show it.</span>') + '</div>';
+            setTimeout(function () { if (n) { if (!NC.data) { load(); } else { push(); } } }, 50);
+            return h;
+        }
+        WINS.push({ id: 'nchart', ic: '⚡', c: '#ff9f0a', n: 'Native chart (experimental)', t: 'Native chart', sub: 'Android-drawn chart: smooth drag, pinch zoom, hold for candle details' }); LIVE.nchart = 0; VIEWS.nchart = vNc;
+        try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Markets' || /Main/.test(g[0])) { if (g[1].indexOf('nchart') < 0 && g[1].indexOf('chart') >= 0) { g[1].splice(g[1].indexOf('chart') + 1, 0, 'nchart'); } } }); } catch (e) { }
+        try { MW_HELP.nchart = 'An experimental chart drawn by Android. Drag, pinch, hold for details.'; } catch (e) { }
+        document.addEventListener('click', function (e) {
+            var t = e.target.closest ? e.target.closest('[data-nc]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); var a = t.getAttribute('data-nc');
+            if (a === 'go') { var i = document.getElementById('ncSym'); var v = String((i && i.value) || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (v) { if (!/USDT$/.test(v)) { v += 'USDT'; } NC.sym = v; NC.data = null; NC.at = 0; try { renderView(true); } catch (er) { } } }
+            else if (a.indexOf('iv:') === 0) { NC.iv = a.slice(3); NC.data = null; NC.at = 0; try { renderView(true); } catch (er) { } }
+        }, true);
+        window.__nc = { state: NC, sync: sync };
+    } catch (e) { try { console.log('p9nc', e); } catch (er) { } }
+})();
+/* ===== p9tid: tidy Windows menu. Everyday screens stay visible; the rest sit under an arrow per group. Screens you open twice or more stay visible. ===== */
+(function () {
+    try {
+        var CORE = ['overview', 'findtrade', 'best', 'analyst', 'chart', 'market', 'news', 'paper', 'xgold', 'academy', 'videos', 'baba', 'helpc', 'parent', 'moveit', 'lockui', 'safety', 'nchart', 'wallet', 'ptrade', 'tmode'];
+        var VK = 'mintoosuite_wvis', V = {}, open = {};
+        try { V = JSON.parse(localStorage.getItem(VK) || '{}') || {}; } catch (e) { V = {}; }
+        function keep(id) { return CORE.indexOf(id) >= 0 || (V[id] || 0) >= 2 || (typeof S !== 'undefined' && S.win === id); }
+        var css = document.createElement('style'); css.textContent = '.mwmt{grid-column:1/-1;margin:2px 0 4px;padding:9px 14px;border-radius:14px;background:rgba(128,128,128,.16);font-size:13px;font-weight:800;cursor:pointer;user-select:none}.mwmore{display:none}.mwmore.on{display:contents}'; document.head.appendChild(css);
+        var _mt = mwTiles;
+        mwTiles = function () {
+            var h = _mt.apply(this, arguments), parts = h.split('<div class="mwgh">'), out = parts[0];
+            for (var i = 1; i < parts.length; i++) {
+                var p = parts[i], k = p.indexOf('</div>'), name = p.slice(0, k), rest = p.slice(k + 6), tiles = rest.match(/<div class="tile[^>]*>[\s\S]*?<\/div>[^<]*<\/div>/g) || [];
+                if (!tiles.length) { out += '<div class="mwgh">' + p; continue; }
+                var shown = '', hid = '', n = 0;
+                tiles.forEach(function (t) { var m = /data-act="win:([a-z0-9_]+)"/.exec(t), id = m ? m[1] : ''; if (!id || keep(id)) { shown += t; } else { hid += t; n++; } });
+                out += '<div class="mwgh">' + name + '</div>' + shown;
+                if (n) { var on = !!open[name]; out += '<div class="mwmt" data-mwm="' + name.replace(/"/g, '') + '">' + (on ? '▾ Hide' : '▸ Show') + ' ' + n + ' more in ' + name + '</div><div class="mwmore' + (on ? ' on' : '') + '">' + hid + '</div>'; }
+            }
+            return out;
+        };
+        document.addEventListener('click', function (e) {
+            var t = e.target.closest ? e.target.closest('[data-mwm]') : null;
+            if (t) { e.preventDefault(); e.stopPropagation(); var g = t.getAttribute('data-mwm'); open[g] = !open[g]; var el = document.getElementById('tiles'); if (el) { el.innerHTML = mwTiles(); } return; }
+            var w = e.target.closest ? e.target.closest('#tiles [data-act^="win:"]') : null;
+            if (w) { var id = w.getAttribute('data-act').slice(4); V[id] = (V[id] || 0) + 1; try { localStorage.setItem(VK, JSON.stringify(V)); } catch (er) { } }
+        }, true);
+        window.__tid = { core: CORE };
+    } catch (e) { try { console.log('p9tid', e); } catch (er) { } }
 })();
 
 function renderView(keep) {

@@ -30,6 +30,16 @@ final class Bridge {
 
     private boolean ok(String tok) { return tok != null && tok.equals(WebHolder.TOKEN); }
 
+    /* ----- experimental native chart: the page gives it data and a place on the screen ----- */
+    @JavascriptInterface
+    public void nchartPlace(String tok, int x, int y, int w, int h) { if (ok(tok)) { NativeChart.place(x, y, w, h); } }
+
+    @JavascriptInterface
+    public void nchartData(String tok, String json, String label) { if (ok(tok)) { NativeChart.data(json, label == null ? "" : label); } }
+
+    @JavascriptInterface
+    public void nchartHide(String tok) { if (ok(tok)) { NativeChart.hide(); } }
+
     /* ----- chart rotation: the page asks to lock landscape / portrait, or go back to automatic ----- */
     @JavascriptInterface
     public void orient(String tok, String mode) {

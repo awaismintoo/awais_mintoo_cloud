@@ -36,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
     private long leftAt = 0L;
     private boolean night;
 
+    FrameLayout rootView() { return root; }
+
     interface BioDo { String run(javax.crypto.Cipher c) throws Exception; }
 
     @Override
