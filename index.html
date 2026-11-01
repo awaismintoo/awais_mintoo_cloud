@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.274';
+var BUILD = '2026-10-31.275';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -19179,17 +19179,20 @@ try {
         function openA(a) { if (a.spec && window.__mxOpen) { window.__mxOpen(a.spec); return; } var s = document.createElement('div'); s.setAttribute('data-act', a.bn ? 'chart:' + a.bn : 'win:radar'); document.body.appendChild(s); s.click(); s.remove(); }
         function ring(sym, p, t) { var r = H[sym] || (H[sym] = []); r.push([t, p]); while (r.length && t - r[0][0] > 20 * 60000) { r.shift(); } return r; }
         function rise(r, ms, now) { var base = null, i; for (i = 0; i < r.length; i++) { if (now - r[i][0] <= ms) { base = r[i]; break; } } if (!base || now - base[0] < ms * 0.35) { return null; } return (r[r.length - 1][1] / base[1] - 1) * 100; }
-        function gate(sym, tier) { var k = sym, f = FIRED[k] || 0; if (tier <= f) { return false; } FIRED[k] = tier; setTimeout(function () { if (FIRED[k] === tier) { delete FIRED[k]; } }, 2 * 3600000); return true; }
+        var PFK = 'mintoosuite_pumpfired', PF = {}; try { PF = JSON.parse(localStorage.getItem(PFK) || '{}') || {}; } catch (e) { PF = {}; }
+        function pfSave() { try { var n = Date.now(); Object.keys(PF).forEach(function (k) { if (n - PF[k].t > 24 * 3600000) { delete PF[k]; } }); localStorage.setItem(PFK, JSON.stringify(PF)); } catch (e) { } }
+        /* an alert is remembered across app restarts, so a restart can never repeat the same alert; a "since midnight" alert is sent at most once per 12 hours */
+        function gate(sym, tier, today) { var k = sym, f = FIRED[k] || 0; if (tier <= f) { return false; } var o = PF[k], n = Date.now(); if (o && tier <= o.tier && n - o.t < (o.today || today ? 12 * 3600000 : 2 * 3600000)) { return false; } FIRED[k] = tier; PF[k] = { t: n, tier: tier, today: today ? 1 : 0 }; pfSave(); setTimeout(function () { if (FIRED[k] === tier) { delete FIRED[k]; } }, 2 * 3600000); return true; }
         function judge(sym, name, p, vol, chg24, spec, venue) {
             var now = Date.now(), r = ring(sym, p, now); if (!(p > 0)) { return; }
             if (r.length > 1) { var pv = r[r.length - 2][1]; if (pv > 0 && (p / pv > 6 || p / pv < 1 / 6)) { r.pop(); return; } }
-            var t5 = cfg.hi ? 6 : 10, t15 = cfg.hi ? 12 : 20, d5 = rise(r, 5 * 60000, now), d15 = rise(r, 15 * 60000, now), tier = 0, why = '';
+            var t5 = cfg.hi ? 6 : 10, t15 = cfg.hi ? 12 : 20, d5 = rise(r, 5 * 60000, now), d15 = rise(r, 15 * 60000, now), tier = 0, why = '', td = 0;
             if (d5 !== null && d5 >= t5 * 2) { tier = 2; why = '+' + d5.toFixed(0) + '% in 5 minutes'; } else if (d5 !== null && d5 >= t5) { tier = 1; why = '+' + d5.toFixed(0) + '% in 5 minutes'; }
             else if (d15 !== null && d15 >= t15 * 2) { tier = 2; why = '+' + d15.toFixed(0) + '% in 15 minutes'; } else if (d15 !== null && d15 >= t15) { tier = 1; why = '+' + d15.toFixed(0) + '% in 15 minutes'; }
-            else if (r.length <= 2 && chg24 >= 60) { tier = 1; why = '+' + chg24.toFixed(0) + '% today'; }
+            else if (r.length <= 2 && chg24 >= 60) { tier = 1; td = 1; why = '+' + chg24.toFixed(0) + '% since the day began (it may already have peaked, check the chart)'; }
             var mx = Math.max(d5 || 0, d15 || 0); if (mx > 30 && r.length > 2 && !(chg24 >= mx * 0.5)) { return; }
             var mega = (d5 !== null && d5 >= 25) || (d15 !== null && d15 >= 50) || (r.length <= 2 && chg24 >= 300); if (mega && vol >= 15000 && gate('MEGA:' + sym, 1)) { fire({ kind: 'pump', mega: true, sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: name + ' is exploding on ' + venue, body: (d5 !== null && d5 >= 25 ? '+' + d5.toFixed(0) + '% in 5 minutes' : d15 !== null && d15 >= 50 ? '+' + d15.toFixed(0) + '% in 15 minutes' : '+' + chg24.toFixed(0) + '% today') + ' · now ' + fmt(p), warn: WARN }); return; }
-            if (tier && vol >= (cfg.hi ? 15000 : 40000) && gate(sym, tier)) { fire({ kind: 'pump', sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: '🚀 ' + name + ' is pumping on ' + venue, body: why + ' · now ' + fmt(p) + (chg24 ? ' · ' + (chg24 >= 0 ? '+' : '') + chg24.toFixed(0) + '% today' : ''), warn: WARN }); }
+            if (tier && vol >= (cfg.hi ? 15000 : 40000) && gate(sym, tier, td)) { fire({ kind: 'pump', sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: '🚀 ' + name + ' is pumping on ' + venue, body: why + ' · now ' + fmt(p) + (chg24 ? ' · ' + (chg24 >= 0 ? '+' : '') + chg24.toFixed(0) + '% today' : ''), warn: WARN }); }
         }
         function scanF() {
             return jget('https://contract.mexc.com/api/v1/contract/ticker').then(function (j) {
@@ -22756,7 +22759,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         var VK = 'mintoosuite_wvis', V = {}, open = {};
         try { V = JSON.parse(localStorage.getItem(VK) || '{}') || {}; } catch (e) { V = {}; }
         function keep(id) { return CORE.indexOf(id) >= 0 || (V[id] || 0) >= 2 || (typeof S !== 'undefined' && S.win === id); }
-        var css = document.createElement('style'); css.textContent = '.mwmt{grid-column:1/-1;align-self:start;height:auto!important;min-height:0!important;margin:2px 0 4px;padding:12px 14px;border-radius:14px;background:rgba(128,128,128,.22)!important;color:var(--tx,#111)!important;opacity:1!important;box-shadow:none!important;font-size:14px;font-weight:800;line-height:1.2;cursor:pointer;user-select:none}.mwmore{display:none}.mwmore.on{display:contents}'; document.head.appendChild(css);
+        var css = document.createElement('style'); css.textContent = '.mwmt{grid-column:1/-1;align-self:start;height:auto!important;min-height:0!important;margin:2px 0 4px;padding:12px 14px;border-radius:14px;background:rgba(128,128,128,.22)!important;color:var(--tx,#111)!important;opacity:1!important;box-shadow:none!important;font-size:14px;font-weight:800;line-height:1.2;cursor:pointer;user-select:none}.mwmore{display:none}body:has(.sheet.open) #mwtb,body:has(.sheet.open) #mwsp,body:has(.sheet.open) #mwPS,body:has(#mwpin) #mwtb{display:none!important}.mwmore.on{display:contents}'; document.head.appendChild(css);
         var _mt = mwTiles;
         mwTiles = function () {
             var h = _mt.apply(this, arguments), parts = h.split('<div class="mwgh">'), out = parts[0];

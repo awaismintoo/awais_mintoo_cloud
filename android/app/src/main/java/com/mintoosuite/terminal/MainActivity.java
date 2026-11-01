@@ -87,12 +87,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         AdsHelper.pause();
+        WebHolder.fg(false);
         super.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        WebHolder.fg(true);
         AdsHelper.resume();
     }
 

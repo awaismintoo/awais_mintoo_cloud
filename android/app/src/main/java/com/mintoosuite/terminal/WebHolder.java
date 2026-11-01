@@ -140,6 +140,13 @@ final class WebHolder {
 
     /* native freeze watchdog: asks the page a trivial question every 6 s; if the page has not answered for 25 s while it is on screen, reload it (at most 3 times in 10 minutes) */
     private static boolean wdOn = false;
+    private static volatile boolean fgOn = true;
+
+    /* the watchdog only counts silence while the app is on the screen (not while you are in another app or the recorder) */
+    static void fg(boolean on) {
+        fgOn = on;
+        wdLastOk = System.currentTimeMillis();
+    }
     private static long wdLastOk = 0, wdWinStart = 0;
     private static int wdReloads = 0;
 
@@ -160,13 +167,13 @@ final class WebHolder {
         final WebView w = web;
         if (w == null) { return; }
         long now = System.currentTimeMillis();
-        if (!w.isShown()) { wdLastOk = now; return; }
-        if (now - wdLastOk > 25000) {
+        if (!w.isShown() || !fgOn) { wdLastOk = now; return; }
+        if (now - wdLastOk > 40000) {
             if (now - wdWinStart > 600000) { wdWinStart = now; wdReloads = 0; }
             wdLastOk = now;
             if (wdReloads < 3) {
                 wdReloads++;
-                why("watchdog reloaded the page (it was silent for 25 s)");
+                why("watchdog reloaded the page (it was silent for 40 s)");
                 try { w.reload(); } catch (Exception ignored) { }
             }
             return;
