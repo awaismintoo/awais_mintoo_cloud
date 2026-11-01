@@ -30,6 +30,18 @@ final class Bridge {
 
     private boolean ok(String tok) { return tok != null && tok.equals(WebHolder.TOKEN); }
 
+    /* ----- why the page was last restarted (read once, then cleared) ----- */
+    @JavascriptInterface
+    public String lastRestart(String tok) {
+        if (!ok(tok)) { return ""; }
+        try {
+            android.content.SharedPreferences sp = ctx.getSharedPreferences("mw_why", 0);
+            String v = sp.getString("w", "");
+            if (v != null && v.length() > 0) { sp.edit().remove("w").apply(); }
+            return v == null ? "" : v;
+        } catch (Throwable e) { return ""; }
+    }
+
     /* ----- experimental native chart: the page gives it data and a place on the screen ----- */
     @JavascriptInterface
     public void nchartPlace(String tok, int x, int y, int w, int h) { if (ok(tok)) { NativeChart.place(x, y, w, h); } }

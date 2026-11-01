@@ -29,6 +29,11 @@ final class WebHolder {
 
     private WebHolder() { }
 
+    /* remember why the page was restarted, so the Doctor can say the exact cause */
+    static void why(String r) {
+        try { if (app != null) { app.getSharedPreferences("mw_why", 0).edit().putString("w", System.currentTimeMillis() + "|" + r).apply(); } } catch (Throwable ignored) { }
+    }
+
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     static synchronized WebView get(Context any) {
         if (web != null) { return web; }
@@ -51,6 +56,7 @@ final class WebHolder {
             @SuppressLint("NewApi")
             @Override
             public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail detail) {
+                try { why(detail != null && detail.didCrash() ? "engine crashed" : "android closed the page engine (low memory)"); } catch (Throwable ignored) { }
                 try { if (view.getParent() instanceof ViewGroup) { ((ViewGroup) view.getParent()).removeView(view); } view.destroy(); } catch (Exception ignored) { }
                 web = null;
                 return true;
@@ -160,6 +166,7 @@ final class WebHolder {
             wdLastOk = now;
             if (wdReloads < 3) {
                 wdReloads++;
+                why("watchdog reloaded the page (it was silent for 25 s)");
                 try { w.reload(); } catch (Exception ignored) { }
             }
             return;

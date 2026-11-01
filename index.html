@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.272';
+var BUILD = '2026-10-31.274';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -22064,7 +22064,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             if (hb && Date.now() - hb.t < 120000 && hb.win && hb.win !== 'overview' && hb.win !== 'home') {
                 setTimeout(function () {
                     try {
-                        note('App restarted by itself (phone memory or watchdog) while on ' + hb.win + (hb.sym ? ' ' + hb.sym : '') + ': taking you back');
+                        var why = ''; try { var nn = window.MintooNative; if (nn && nn.lastRestart && window.__mwTok) { var w0 = String(nn.lastRestart(window.__mwTok) || ''); if (w0) { why = w0.split('|')[1] || w0; } } } catch (er) { } note('App restarted by itself while on ' + hb.win + (hb.sym ? ' ' + hb.sym : '') + ' (cause: ' + (why || 'no engine crash was recorded, so Android most likely closed the whole app for memory or battery, or it was swiped away') + '): taking you back');
                         var c = document.createElement('div');
                         if (hb.win === 'chart' && hb.sym) { c.setAttribute('data-act', 'chart:' + hb.sym); } else { c.setAttribute('data-act', 'win:' + hb.win); }
                         document.body.appendChild(c); c.click(); c.remove();
@@ -22709,10 +22709,12 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         function nat() { try { var n = window.MintooNative; return n && typeof n.nchartPlace === 'function' && window.__mwTok ? n : null; } catch (e) { return null; } }
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
         function load() {
-            if (NC.busy) { return; } NC.busy = 1; var sym = NC.sym, iv = NC.iv;
-            fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + encodeURIComponent(sym) + '&interval=' + iv + '&limit=500').then(function (r) { return r.json(); }).then(function (a) {
-                NC.busy = 0; if (!Array.isArray(a) || !a.length) { return; }
-                NC.data = a.map(function (x) { return [x[0], +x[1], +x[2], +x[3], +x[4], +x[5]]; }); NC.at = Date.now(); push();
+            if (NC.busy) { return; } NC.busy = 1; var sym = NC.sym, iv = NC.iv, small = !!NC.data;
+            fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + encodeURIComponent(sym) + '&interval=' + iv + '&limit=' + (small ? 3 : 500)).then(function (r) { if (r.status === 418 || r.status === 429) { NC.at = Date.now() + 120000; throw new Error('limit'); } return r.json(); }).then(function (a) {
+                NC.busy = 0; if (!Array.isArray(a) || !a.length || sym !== NC.sym || iv !== NC.iv) { return; }
+                var rows = a.map(function (x) { return [x[0], +x[1], +x[2], +x[3], +x[4], +x[5]]; });
+                if (small && NC.data) { rows.forEach(function (r) { var L = NC.data[NC.data.length - 1]; if (r[0] === L[0]) { NC.data[NC.data.length - 1] = r; } else if (r[0] > L[0]) { NC.data.push(r); } }); } else { NC.data = rows; }
+                NC.at = Date.now(); push();
             }).catch(function () { NC.busy = 0; });
         }
         function push() { var n = nat(); if (n && NC.data) { try { n.nchartData(window.__mwTok, JSON.stringify(NC.data), NC.sym + ' · ' + NC.iv); } catch (e) { } } }
@@ -22722,21 +22724,21 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             var n = nat(); if (!n) { return; }
             var box = document.getElementById('ncBox');
             if (!box || S.win !== 'nchart' || overlayOpen() || document.hidden) { hide(); return; }
-            var r = box.getBoundingClientRect(); var want = Math.max(240, Math.round(window.innerHeight - r.top - 96)); if (r.top > 0 && Math.abs(r.height - want) > 3) { box.style.height = want + 'px'; box.style.minHeight = '0'; r = box.getBoundingClientRect(); } if (r.top < 0 || r.bottom > window.innerHeight - 60 || r.width < 40) { hide(); return; }
+            var r = box.getBoundingClientRect(); if (r.top < 0 || r.bottom > window.innerHeight - 60 || r.width < 40) { hide(); return; }
             var d = window.devicePixelRatio || 1, k = Math.round(r.left * d) + ',' + Math.round(r.top * d) + ',' + Math.round(r.width * d) + ',' + Math.round(r.height * d);
             if (k !== NC.last || !NC.shown) { NC.last = k; NC.shown = true; var q = k.split(',').map(Number); try { n.nchartPlace(window.__mwTok, q[0], q[1], q[2], q[3]); } catch (e) { } if (NC.data) { push(); } }
         }
-        setInterval(sync, 250);
-        setInterval(function () { if (S.win === 'nchart' && nat() && Date.now() - NC.at > 5000) { load(); } }, 2000);
+        setInterval(function () { if (S.win === 'nchart' || NC.shown) { sync(); } }, 400);
+        setInterval(function () { if (S.win === 'nchart' && nat() && Date.now() - NC.at > 10000) { load(); } }, 2000);
         function vNc() {
             var n = nat(), h = '<div class="group pad"><b style="font-size:17px">⚡ Native chart (experimental)</b><div class="note" style="margin:6px 0 0;line-height:1.5">Drawn by Android itself, not by the web page. <b>Drag</b> to move, <b>pinch</b> to zoom, <b>hold</b> a finger on a candle for its details, <b>tap</b> to close the details, <b>double-tap</b> to reset. It cannot slide out of the frame. If anything looks wrong, use the normal Chart and tell Baba what happened.</div></div>';
             h += '<div class="group pad"><div style="display:flex;gap:6px"><input id="ncSym" class="tin" value="' + esc(NC.sym) + '" style="flex:1;min-width:0;text-transform:uppercase" autocomplete="off"><span class="btn tap" data-nc="go" style="width:auto;padding:10px 16px;display:inline-block">Load</span></div>' +
                 '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + IVS.map(function (v) { return '<span class="btn ' + (v === NC.iv ? '' : 'sec ') + 'tap" data-nc="iv:' + v + '" style="width:auto;padding:8px 14px;display:inline-block">' + v + '</span>'; }).join('') + '</div></div>';
-            h += '<div id="ncBox" style="height:56vh;min-height:260px;border-radius:14px;background:rgba(128,128,128,.12);display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;box-sizing:border-box">' + (n ? '<span class="note">Loading…</span>' : '<span class="note">The native chart is only in the experimental installer (GD). This normal build cannot show it.</span>') + '</div>';
+            h += '<div id="ncBox" style="height:calc(100vh - 530px);min-height:260px;max-height:70vh;border-radius:14px;background:rgba(128,128,128,.12);display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;box-sizing:border-box">' + (n ? '<span class="note">Loading…</span>' : '<span class="note">The native chart is only in the experimental installer (GD). This normal build cannot show it.</span>') + '</div>';
             setTimeout(function () { if (n) { if (!NC.data) { load(); } else { push(); } } }, 50);
             return h;
         }
-        WINS.push({ id: 'nchart', ic: '⚡', c: '#ff9f0a', n: 'Native chart (experimental)', t: 'Native chart', sub: 'Android-drawn chart: smooth drag, pinch zoom, hold for candle details' }); LIVE.nchart = 0; VIEWS.nchart = vNc;
+        WINS.push({ id: 'nchart', ic: '⚡', c: '#ff9f0a', n: 'Native chart', t: 'Native chart', sub: 'Android-drawn chart: smooth drag, pinch zoom, hold for candle details' }); LIVE.nchart = 0; VIEWS.nchart = vNc;
         try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Markets' || /Main/.test(g[0])) { if (g[1].indexOf('nchart') < 0 && g[1].indexOf('chart') >= 0) { g[1].splice(g[1].indexOf('chart') + 1, 0, 'nchart'); } } }); } catch (e) { }
         try { MW_HELP.nchart = 'An experimental chart drawn by Android. Drag, pinch, hold for details.'; } catch (e) { }
         document.addEventListener('click', function (e) {
@@ -22754,7 +22756,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         var VK = 'mintoosuite_wvis', V = {}, open = {};
         try { V = JSON.parse(localStorage.getItem(VK) || '{}') || {}; } catch (e) { V = {}; }
         function keep(id) { return CORE.indexOf(id) >= 0 || (V[id] || 0) >= 2 || (typeof S !== 'undefined' && S.win === id); }
-        var css = document.createElement('style'); css.textContent = '.mwmt{grid-column:1/-1;margin:2px 0 4px;padding:9px 14px;border-radius:14px;background:rgba(128,128,128,.16);font-size:13px;font-weight:800;cursor:pointer;user-select:none}.mwmore{display:none}.mwmore.on{display:contents}'; document.head.appendChild(css);
+        var css = document.createElement('style'); css.textContent = '.mwmt{grid-column:1/-1;align-self:start;height:auto!important;min-height:0!important;margin:2px 0 4px;padding:12px 14px;border-radius:14px;background:rgba(128,128,128,.22)!important;color:var(--tx,#111)!important;opacity:1!important;box-shadow:none!important;font-size:14px;font-weight:800;line-height:1.2;cursor:pointer;user-select:none}.mwmore{display:none}.mwmore.on{display:contents}'; document.head.appendChild(css);
         var _mt = mwTiles;
         mwTiles = function () {
             var h = _mt.apply(this, arguments), parts = h.split('<div class="mwgh">'), out = parts[0];
