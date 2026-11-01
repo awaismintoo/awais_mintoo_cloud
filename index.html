@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.277';
+var BUILD = '2026-10-31.278';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -3428,7 +3428,7 @@ function drawChart() {
     var padR = 62, padT = 6, axisH = 18, subH = C.sub === 'VOL' ? 70 : 84, ph = h - padT - axisH - subH - 8, W = w - padR;
     /* keep the picture where the user left it: when a new candle arrives and the user is looking at older candles, move with it */
     try { var akk = ch.sym + '|' + ch.tf, lt = K[K.length - 1].t; if (C.akk !== akk) { C.akk = akk; C.alt = lt; C.base = null; C.vz = 1; C.vp = 0; } else if (lt > C.alt) { var nw = 0, q9 = K.length - 1; while (q9 >= 0 && K[q9].t > C.alt) { nw++; q9--; } if (C.off > 0) { C.off += nw; } C.alt = lt; } } catch (e) { }
-    var n = Math.max(15, Math.min(C.n, K.length)), maxOff = Math.max(0, K.length - n); C.off = Math.max(0, Math.min(C.off, maxOff + Math.floor(n / 2))); if (C.off >= maxOff + Math.floor(n / 2) || C.off === 0 && !(C.fx > 0)) { C.fx = 0; }
+    var n = Math.max(15, Math.min(C.n, K.length)), maxOff = Math.max(0, K.length - n); C.off = Math.max(0, Math.min(C.off, maxOff)); if (C.off >= maxOff || C.off === 0 && !(C.fx > 0)) { C.fx = 0; }
     var end = K.length - Math.min(C.off, maxOff), start = Math.max(0, end - n), v = K.slice(start, end), cw = W / (n + 2), i;
     if (start < 30 && !C.more) { cxMore(); }
     var closes = K.map(function (x) { return x.c; }), ind = {};
@@ -22798,6 +22798,22 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             c.restore();
         } catch (e) { }
     };
+})();
+/* record every chart drag so the log shows what the finger did and where the view ended */
+(function () {
+    'use strict';
+    var x0 = 0, o0 = 0, on = false;
+    document.addEventListener('pointerdown', function (e) { if (e.target && e.target.id === 'cv' && e.isPrimary !== false) { on = true; x0 = e.clientX; o0 = (S.cx.off || 0); } }, true);
+    function end(e) {
+        if (!on) { return; } on = false;
+        try {
+            var dx = Math.round(e.clientX - x0); if (Math.abs(dx) < 30) { return; }
+            var K = S.chart.k || [], n = Math.max(15, Math.min(S.cx.n, K.length)), mo = Math.max(0, K.length - n), off = S.cx.off || 0, st = '';
+            if (off > mo || off < 0) { S.cx.off = Math.max(0, Math.min(mo, off)); S.cx.fx = 0; cxDraw(); st = ' (view was outside the data: snapped back)'; }
+            if (window.__mwRec) { window.__mwRec('chart', 'drag ' + dx + 'px moved the view ' + (off - o0) + ' candles; ' + K.length + ' candles loaded, showing ' + n + (off >= mo ? ', at the oldest candle' : off === 0 ? ', at the newest candle' : '') + st); }
+        } catch (er) { }
+    }
+    document.addEventListener('pointerup', end, true); document.addEventListener('pointercancel', end, true);
 })();
 
 function renderView(keep) {
