@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.248';
+var BUILD = '2026-10-31.249';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -2268,7 +2268,7 @@ function vBrokers() {
         } catch (e) {}
         setTimeout(function () { pbar('Updated'); setTimeout(function () { pbar(''); }, 700); }, 900);
     }
-    document.addEventListener('touchstart', function (e) { py = null; if (e.touches && e.touches.length === 1 && (window.pageYOffset || 0) <= 0 && !document.querySelector('.sheet.open')) { py = e.touches[0].clientY; px0 = e.touches[0].clientX; pd = 0; } }, { passive: true });
+    document.addEventListener('touchstart', function (e) { py = null; if (e.touches && e.touches.length === 1 && (window.pageYOffset || 0) <= 0 && !document.querySelector('.sheet.open') && !S.fsKey && !(e.target && e.target.closest && e.target.closest('#cv,#m7cw,#drWS'))) { py = e.touches[0].clientY; px0 = e.touches[0].clientX; pd = 0; } }, { passive: true });
     document.addEventListener('touchmove', function (e) { if (py === null || !e.touches.length) { return; } pd = e.touches[0].clientY - py; if ((window.pageYOffset || 0) > 0) { py = null; pbar(''); return; } if (pd > 40 && Math.abs(e.touches[0].clientX - px0) < pd) { pbar(pd > 110 ? 'Release to refresh' : 'Pull down to refresh'); } }, { passive: true });
     document.addEventListener('touchend', function () { var go = py !== null && pd > 110; py = null; if (go) { doRefresh(); } else { pbar(''); } }, { passive: true });
     try { buildNav(); } catch (e) {}
@@ -3427,7 +3427,7 @@ function drawChart() {
     if (!K.length) { g.fillStyle = MT; g.fillText(ch.err || 'Loading candles…', 12, 24); if (note) { note.textContent = ch.err || ''; } return; }
     var padR = 62, padT = 6, axisH = 18, subH = C.sub === 'VOL' ? 70 : 84, ph = h - padT - axisH - subH - 8, W = w - padR;
     /* keep the picture where the user left it: when a new candle arrives and the user is looking at older candles, move with it */
-    try { var akk = ch.sym + '|' + ch.tf, lt = K[K.length - 1].t; if (C.akk !== akk) { C.akk = akk; C.alt = lt; C.base = null; } else if (lt > C.alt) { var nw = 0, q9 = K.length - 1; while (q9 >= 0 && K[q9].t > C.alt) { nw++; q9--; } if (C.off > 0) { C.off += nw; } C.alt = lt; } } catch (e) { }
+    try { var akk = ch.sym + '|' + ch.tf, lt = K[K.length - 1].t; if (C.akk !== akk) { C.akk = akk; C.alt = lt; C.base = null; C.vz = 1; C.vp = 0; } else if (lt > C.alt) { var nw = 0, q9 = K.length - 1; while (q9 >= 0 && K[q9].t > C.alt) { nw++; q9--; } if (C.off > 0) { C.off += nw; } C.alt = lt; } } catch (e) { }
     var n = Math.max(15, Math.min(C.n, K.length)), maxOff = Math.max(0, K.length - n); C.off = Math.max(0, Math.min(C.off, maxOff + Math.floor(n / 2)));
     var end = K.length - Math.min(C.off, maxOff), start = Math.max(0, end - n), v = K.slice(start, end), cw = W / (n + 2), i;
     if (start < 30 && !C.more) { cxMore(); }
@@ -3442,7 +3442,8 @@ function drawChart() {
     v.forEach(function (x) { if (x.h > hi) { hi = x.h; } if (x.l < lo) { lo = x.l; } if (x.v > vmax) { vmax = x.v; } });
     function inc(arr) { if (!arr) { return; } for (var j = start; j < end; j++) { var q = arr[j]; if (q !== null && q !== undefined) { var val = typeof q === 'object' ? q.v : q; if (val > hi) { hi = val; } if (val < lo) { lo = val; } } } }
     inc(ind.ma7); inc(ind.ma25); inc(ind.e9); inc(ind.e21); if (ind.bo) { inc(ind.bo.up); inc(ind.bo.lo); } inc(ind.vw);
-    var pad = (hi - lo) * 0.06 || hi * 0.001; hi += pad; lo -= pad; var man9 = (C.vz && C.vz !== 1) || C.vp; if (man9) { if (!C.base) { C.base = { hi: hi, lo: lo }; } hi = C.base.hi; lo = C.base.lo; } else { C.base = null; } /* manual price scale = locked range, like TradingView: the picture no longer drifts while you look at it */
+    var pad = (hi - lo) * 0.06 || hi * 0.001; hi += pad; lo -= pad; if (C.base && (hi < C.base.lo || lo > C.base.hi || (hi - lo) > (C.base.hi - C.base.lo) * 6 || (hi - lo) * 6 < (C.base.hi - C.base.lo))) { C.base = null; C.vz = 1; C.vp = 0; } /* safety: a locked range that no longer matches the candles is dropped, the chart can never be left empty */
+    var man9 = (C.vz && C.vz !== 1) || C.vp; if (man9) { if (!C.base) { C.base = { hi: hi, lo: lo }; } hi = C.base.hi; lo = C.base.lo; } else { C.base = null; } /* manual price scale = locked range, like TradingView: the picture no longer drifts while you look at it */
     if ((C.vz && C.vz !== 1) || C.vp) { var mid0 = (hi + lo) / 2 + (C.vp || 0) * (hi - lo), half0 = (hi - lo) / 2 / (C.vz || 1); hi = mid0 + half0; lo = mid0 - half0; } var span = hi - lo, yr = function (p) { return padT + (hi - p) / span * ph; }, y = function (p) { var q = yr(p); return ((C.vz && C.vz !== 1) || C.vp) ? Math.max(padT - 1, Math.min(padT + ph + 1, q)) : q; }, xs = function (j) { return (j - start) * cw + cw * 1.0 + cw / 2; };
     g.lineWidth = 1;
     for (i = 0; i <= 4; i++) { var gy = padT + ph * i / 4, gp = hi - span * i / 4; g.strokeStyle = LN; g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke(); g.fillStyle = MT; g.textAlign = 'left'; g.fillText(fmtP(gp, ch.sym), W + 4, gy + 4); }
@@ -3498,7 +3499,13 @@ function drawChart() {
     if (info) {
         var ix = C.sel >= 0 && C.sel < K.length ? C.sel : K.length - 1, kk = K[ix], leg = '';
         if (ind.ma7) { leg += ' · MA7 ' + fmtP(ind.ma7[ix] || 0, ch.sym) + ' MA25 ' + fmtP(ind.ma25[ix] || 0, ch.sym); }
-        info.innerHTML = '<b>' + esc(ch.sym) + '</b> · ' + ch.tf + (cxSrc() === 's' ? ' · Spot' : cxSrc() === 'd' ? ' · Coin-M' : ' · Perp') + ' · O ' + fmtP(kk.o, ch.sym) + ' H ' + fmtP(kk.h, ch.sym) + ' L ' + fmtP(kk.l, ch.sym) + ' C ' + fmtP(kk.c, ch.sym) + ' <b class="' + (kk.c >= kk.o ? 'up' : 'dn') + '">' + pct((kk.c - kk.o) / kk.o * 100) + '</b>' + leg;
+        var nh9 = '<b>' + esc(ch.sym) + '</b> · ' + ch.tf + (cxSrc() === 's' ? ' · Spot' : cxSrc() === 'd' ? ' · Coin-M' : ' · Perp') + ' · O ' + fmtP(kk.o, ch.sym) + ' H ' + fmtP(kk.h, ch.sym) + ' L ' + fmtP(kk.l, ch.sym) + ' C ' + fmtP(kk.c, ch.sym) + ' <b class="' + (kk.c >= kk.o ? 'up' : 'dn') + '">' + pct((kk.c - kk.o) / kk.o * 100) + '</b>' + leg;
+        if (info.getAttribute('data-h9') !== nh9) { /* rewrite only when the text changed, and put the small add-ons (i button, link badge, market tag) straight back so they never blink */
+            var dec9 = [].filter.call(info.children, function (c) { return c.tagName !== 'B'; }), fb9 = info.firstElementChild, pre9 = [], post9 = [], seen9 = false;
+            [].forEach.call(info.children, function (c) { if (c.tagName === 'B' && !seen9) { seen9 = true; return; } if (c.tagName !== 'B') { (seen9 ? post9 : pre9).push(c); } });
+            info.innerHTML = nh9; info.setAttribute('data-h9', nh9); var nb9 = info.firstElementChild;
+            pre9.forEach(function (c) { info.insertBefore(c, nb9); }); var ref9 = nb9; post9.forEach(function (c) { info.insertBefore(c, ref9.nextSibling); ref9 = c; });
+        }
     }
     try { if (window.__cxOver) { window.__cxOver(g, { start: start, end: end, xs: xs, y: y, yr: yr, W: W, padT: padT, ph: ph, K: K, cw: cw, sym: ch.sym, tf: ch.tf, GR: GR, RD: RD, TX: TX, MT: MT }); } } catch (e) { }
     if (note) { note.textContent = 'Live from Binance (' + (cxSrc() === 's' ? 'Spot' : cxSrc() === 'd' ? 'Coin-M' : 'Futures') + '). The last candle moves in real time. Times use your chosen time zone.'; }
@@ -21778,20 +21785,20 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
 (function () {
     try {
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
-        st.textContent = '#fsHud{position:fixed;left:6px;z-index:9990;max-width:calc(100vw - 92px);padding:5px 8px;border-radius:10px;background:rgba(19,23,34,.74);color:#d1d4dc;font:600 11px -apple-system,Segoe UI,sans-serif;pointer-events:none;backdrop-filter:none}' +
-            '#fsHud .r{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-height:20px}#fsHud b{font-weight:800;color:#fff}#fsHud .up{color:#26a69a}#fsHud .dn{color:#ef5350}' +
-            '#fsHud .c{pointer-events:auto;padding:3px 7px;border-radius:7px;background:rgba(120,123,134,.28);color:#d1d4dc;font-weight:700;min-height:20px;line-height:14px}#fsHud .c.on{background:#2962ff;color:#fff}' +
+        st.textContent = '#fsHud{position:fixed;left:6px;z-index:9990;max-width:min(330px,calc(100vw - 100px));padding:4px 6px;border-radius:10px;background:rgba(19,23,34,.74);color:#d1d4dc;font:600 10.5px -apple-system,Segoe UI,sans-serif;pointer-events:none;backdrop-filter:none}' +
+            '#fsHud .r{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-height:18px}#fsHud .r2{white-space:nowrap;overflow:hidden}#fsHud b{font-weight:800;color:#fff}#fsHud .up{color:#26a69a}#fsHud .dn{color:#ef5350}' +
+            '#fsHud .c{pointer-events:auto;padding:2px 6px;border-radius:7px;background:rgba(120,123,134,.28);color:#d1d4dc;font-weight:700;min-height:18px;line-height:14px}#fsHud .c.on{background:#2962ff;color:#fff}' +
             '#fsHud.min .r2,#fsHud.min .r3{display:none}#fsHud.tool .c,body:has(#drNow) #fsHud .c{pointer-events:none;opacity:.55}';
         document.head.appendChild(st);
-        var hud = null, last = '', mini = false, TF = ['1m', '5m', '15m', '1h', '4h', '1d'], OV = ['MA', 'EMA', 'BOLL', 'SAR', 'SUPER', 'VWAP'];
+        var hud = null, last = '', mini = false, more = false, TF = ['1m', '5m', '15m', '1h', '4h', '1d'], OV = ['MA', 'EMA', 'BOLL', 'SAR', 'SUPER', 'VWAP'];
         function fsOn() { return S && S.fsKey === 'cv'; }
         function build() {
             var ch = S.chart, K = ch && ch.k; if (!K || !K.length) { return ''; }
             var C = S.cx, ix = C.sel >= 0 && C.sel < K.length ? C.sel : K.length - 1, k = K[ix], cls = k.c >= k.o ? 'up' : 'dn', chg = k.o ? (k.c - k.o) / k.o * 100 : 0, f = function (v) { try { return fmtP(v, ch.sym); } catch (e) { return String(v); } };
-            var r1 = '<div class="r"><b>' + esc(ch.sym) + '</b>' + TF.map(function (t) { return '<span class="c' + (ch.tf === t ? ' on' : '') + '" data-act="tf:' + t + '">' + t + '</span>'; }).join('') + '<span class="c" data-xk="fshud:min">' + (mini ? '▸' : '▾') + '</span></div>';
+            var r1 = '<div class="r"><b>' + esc(ch.sym) + '</b>' + TF.map(function (t) { return '<span class="c' + (ch.tf === t ? ' on' : '') + '" data-act="tf:' + t + '">' + t + '</span>'; }).join('') + '<span class="c" data-xk="fshud:more">' + (more ? '✕' : '⋯') + '</span></div>';
             var r2 = '<div class="r r2"><span class="' + cls + '">O ' + f(k.o) + ' H ' + f(k.h) + ' L ' + f(k.l) + ' C ' + f(k.c) + ' ' + (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%</span></div>';
             var r3 = '<div class="r r3">' + OV.map(function (o) { return '<span class="c' + (C.ov && C.ov[o] ? ' on' : '') + '" data-xk="fshud:' + o + '">' + o + '</span>'; }).join('') + '<span class="c" data-xk="fshud:auto">Auto scale</span></div>';
-            return r1 + r2 + r3;
+            return r1 + (mini ? '' : r2) + (more ? r3 : '');
         }
         function place() {
             var on = fsOn() && !(window.__drawOn && window.__drawOn()); /* hidden while a drawing tool is active, so taps always reach the chart */
@@ -21806,12 +21813,14 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         setInterval(place, 450);
         document.addEventListener('click', function () { try { if (hud && hud.style.display !== 'none' && window.__drawOn && window.__drawOn()) { hud.style.display = 'none'; } } catch (e) { } }, true);
         window.__kx && window.__kx.on('fshud', function (v) {
-            if (v === 'min') { mini = !mini; } else if (v === 'auto') { S.cx.vz = 1; S.cx.vp = 0; S.cx.base = null; try { cxDraw(); } catch (e) { } } else { S.cx.ov = S.cx.ov || {}; S.cx.ov[v] = S.cx.ov[v] ? 0 : 1; try { cxDraw(); } catch (e) { } }
+            if (v === 'more') { more = !more; } else if (v === 'min') { mini = !mini; } else if (v === 'auto') { S.cx.vz = 1; S.cx.vp = 0; S.cx.base = null; try { cxDraw(); } catch (e) { } } else { S.cx.ov = S.cx.ov || {}; S.cx.ov[v] = S.cx.ov[v] ? 0 : 1; try { cxDraw(); } catch (e) { } }
             last = ''; place();
         });
         try { PF_APP.push(['full screen chart|fullscreen chart|chart legend|auto scale|reset scale|lock price|price scale|zoom chart|drag price|time axis|فل اسکرین', 'Full-screen chart like TradingView', 'In full screen the top-left legend shows the coin, time-frame buttons, open/high/low/close with change %, indicator switches (MA, EMA, BOLL, SAR, SUPER, VWAP) and an Auto scale button. Tap the small arrow to hide the legend. Drag the price numbers on the right up or down to stretch the price scale: the chart then stays exactly where you left it (locked, like TradingView) until you tap Auto scale. Drag the chart sideways to move in time; pinch to zoom the candles. When you look at older candles, new candles no longer push the picture away. UT Bot and Baba signals now appear only after a candle has closed, so they never jump around.']); } catch (e) { }
     } catch (e) { try { console.error('p9fs', e); } catch (e2) { } }
 })();
+/* steady status line above the chart: always one line high, so "reconnecting" <-> "live" never moves the chart */
+(function () { try { var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = '#cplv{display:block;min-height:16px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#chartInfo{min-height:34px}'; document.head.appendChild(st); } catch (e) { } })();
 /* ===== p9heal: Guardian. Quietly watches the app and repairs it: screen flicker, error loops, stuck chart, dead price feed, stuck loading, Baba AI not answering. Everything it does is written to the Problem log. ===== */
 (function () {
     try {
