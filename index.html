@@ -157,6 +157,7 @@ a{color:var(--blu);text-decoration:none}.nws a{color:var(--tx);font-weight:700;l
   <h1 id="winName"></h1>
   <div class="sub" id="winSub"></div>
   <div id="view"></div>
+  <script>try{var w9=localStorage.getItem('mintoosuite_win')||'overview',h9=+localStorage.getItem('mintoosuite_homeh')||0;if(w9==='overview'&&h9>100&&h9<900){var d9=document.createElement('div');d9.id='mwph';d9.style.cssText='height:'+h9+'px;pointer-events:none';document.getElementById('view').parentNode.insertBefore(d9,document.getElementById('view'))}}catch(e){}</script>
 </div>
 
 <nav class="tabbar"><div class="tabs" id="tabs"></div></nav>
@@ -451,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.283';
+var BUILD = '2026-10-31.285';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -22808,7 +22809,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
                     tries++; if (tries > 60) { clearInterval(iv); return; }
                     if (!localStorage.getItem('mintoosuite_age18') || document.querySelector('.sheet.open,#mwAge,.mwov,[id*="tour"]')) { return; }
                     clearInterval(iv); localStorage.setItem('mintoosuite_first5_seen', '1');
-                    if (!localStorage.getItem('mintoosuite_first5')) { try { gotoWin('launch'); } catch (e) { } }
+                    if (!localStorage.getItem('mintoosuite_first5') && S.win === 'overview') { try { gotoWin('launch'); } catch (e) { } }
                 }, 4000);
             }
         } catch (e) { }
@@ -22933,6 +22934,33 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         }, true);
         window.__nl = { state: NL, rows: rows };
     } catch (e) { try { console.log('p9nl', e); } catch (er) { } }
+})();
+/* p9ph: keep the Home screen from jumping while its top cards load. A spacer of last time's height shrinks as the real cards arrive. */
+(function () {
+    try {
+        var K = 'mintoosuite_homeh', t0 = Date.now(), done = false, wrap = document.querySelector('.wrap');
+        function hh(id) { var e = document.getElementById(id); return e ? e.getBoundingClientRect().height : -1; }
+        function fin(save) {
+            if (done) { return; } done = true;
+            var ph = document.getElementById('mwph'); if (ph) { ph.remove(); }
+            if (save) { setTimeout(function () { try { var h = Math.round(hh('mwHome') + hh('mwmk') + hh('mwcc')); if (hh('mwHome') >= 0 && hh('mwmk') >= 0 && hh('mwcc') >= 0 && h > 100 && h < 900 && S.win === 'overview') { localStorage.setItem(K, String(h)); } } catch (e) { } }, 1500); }
+        }
+        function fit() {
+            if (done) { return; }
+            var ph = document.getElementById('mwph');
+            if (S.win !== 'overview' || Date.now() - t0 > 7000) { fin(false); return; }
+            var a = hh('mwHome'), b = hh('mwmk'), c = hh('mwcc');
+            if (!ph) { if (a >= 0 && b >= 0 && c >= 0) { fin(true); } else if (Date.now() - t0 > 2500) { fin(false); } return; }
+            try { var vw = document.getElementById('view'); if (ph && vw && ph.nextElementSibling !== vw) { vw.parentNode.insertBefore(ph, vw); } } catch (e) { }
+            var want = parseFloat(ph.getAttribute('data-h') || ph.style.height) || 0; ph.setAttribute('data-h', want);
+            var have = Math.max(0, a) + Math.max(0, b) + Math.max(0, c);
+            ph.style.height = Math.max(0, want - have) + 'px';
+            if (a >= 0 && b >= 0 && c >= 0) { ph.style.height = '0px'; fin(true); }
+        }
+        if (wrap) { new MutationObserver(fit).observe(wrap, { childList: true, subtree: false }); }
+        var iv = setInterval(function () { fit(); if (done) { clearInterval(iv); } }, 150);
+        fit();
+    } catch (e) { }
 })();
 
 function renderView(keep) {
