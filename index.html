@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.260';
+var BUILD = '2026-10-31.264';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -13038,6 +13038,38 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-bt]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); runAll(); renderView(true); }, true);
     window.__btest = { ST: ST, prep: prep, sim: sim, stats: stats, B: B };
 })();
+/* ===== p9exf: real-like costs and clear reasons for the paper bots of every exchange (Binance, MEXC, Bitget) ===== */
+(function () {
+    try {
+        var FUND = 0.0001; /* about 0.01% per 8 hours, like a typical perpetual funding rate (an estimate) */
+        var _bc = botClose;
+        botClose = function (i) {
+            var p = S.bot && S.bot.open && S.bot.open[i], n0 = S.bot ? S.bot.closed.length : 0, r = _bc.apply(this, arguments);
+            try {
+                var c = S.bot.closed[0];
+                if (p && c && S.bot.closed.length > n0 && c.sym === p.sym && !c.fee) {
+                    var no = +p.notional || 0, hrs = Math.max(0, ((c.ct || Date.now()) - (p.at || c.at)) / 3600000), fund = no * FUND * hrs / 8;
+                    c.notional = no; c.fee = no * BOT_FEE * 2; c.slip = no * BOT_SLIP; c.fund = fund; c.ex = S.bot.xid || 'binance';
+                    if (fund > 0) { c.pnl -= fund; S.bot.bal -= fund; if (p.risk) { c.r = c.pnl / p.risk; } try { botSave(); } catch (e) { } }
+                }
+            } catch (e) { }
+            return r;
+        };
+        var _row = mwClosedRow;
+        mwClosedRow = function (c) {
+            var h = _row(c), why = String(c.why || ''), chip, note;
+            if (/trailing/i.test(why)) { chip = ['🛑 TRAILING STOP HIT', '#d97706']; note = 'Price came back from its best point and touched the moving stop, so the trade closed to keep part of the gain.'; }
+            else if (/stopped by you/i.test(why)) { chip = ['✋ CLOSED BY YOU', '#475569']; note = 'You stopped this trade yourself.'; }
+            else if (/stop/i.test(why)) { chip = ['🛑 STOP-LOSS HIT', '#dc2626']; note = 'Price touched the stop-loss, so the bot closed the trade to limit the loss to the amount planned.'; }
+            else if (/target|take/i.test(why)) { chip = ['🎯 TAKE-PROFIT HIT', '#16a34a']; note = 'Price reached the target, so the trade closed with a profit.'; }
+            else if (/time/i.test(why)) { chip = ['⏱ TIME LIMIT', '#d97706']; note = 'Neither the stop nor the target was reached in time, so the bot closed it.'; }
+            else { chip = ['ℹ ' + String(why || 'Closed'), '#475569']; note = ''; }
+            var costs = c.fee != null ? '<br>Costs inside this result: fees ' + usd(-c.fee) + ' · funding ' + usd(-(c.fund || 0)) + ' · slippage about ' + usd(-(c.slip || 0)) : '';
+            var exn = c.ex && c.ex !== 'binance' ? ' · ' + c.ex.toUpperCase() : '';
+            return h.replace('<div class="mwd">', '<div class="mwd"><div style="display:inline-block;margin:0 0 4px;padding:3px 9px;border-radius:9px;font-weight:900;font-size:12px;color:#fff;background:' + chip[1] + '">' + chip[0] + exn + '</div>' + (note ? '<div style="margin:0 0 4px">' + note + '</div>' : '')).replace(/<\/div><\/div>$/, costs + '</div></div>');
+        };
+    } catch (e) { try { console.error('p9exf', e); } catch (e2) { } }
+})();
 /* ===== p9zsl: real-money lock, "trade this plan" ticket prefill (Binance + other exchanges), always-visible STOP pill, notification stop, P/L popups ===== */
 (function () {
     var LK = { un: false, msg: '' }, RK = 'mintoosuite_planrisk', risk = 1;
@@ -15663,7 +15695,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             ['Trade', ['hub', 'tpro', 'xtrade', 'trade', 'terminal', 'risk', 'hist', 'copy', 'signals']],
             ['Bots', ['bots', 'paper', 'rbot', 'proof', 'bsale']],
             ['Baba AI', ['baba']],
-            ['Pakistan & money', ['around', 'psx', 'offers', 'brokers', 'wallet']],
+            ['Pakistan & money', ['around', 'psx', 'offers', 'brokers']],
             ['Learn & play', ['academy', 'videos', 'quest', 'me', 'tips']],
             ['Account & tools', ['account', 'plans', 'alerts', 'timez', 'log', 'health', 'help', 'calib', 'perms', 'legal']]
         ];
@@ -19257,7 +19289,7 @@ try {
 /* ===== p9pt: Paper Trading (looks and works like a real order ticket, virtual money). Separate from Money Quest. ===== */
 (function () {
     try {
-        var KEY = 'mintoosuite_ptrade', FEE = 0.0004, A = null;
+        var KEY = 'mintoosuite_ptrade', FEE = 0.0005, SLIP = 0.0003, FUND = 0.0001, A = null; /* real-like costs: 0.05% taker fee each way, 0.03% slippage on market fills, about 0.01% funding per 8 hours */
         function fresh() { return { bal: 10000, start: 10000, pos: [], ord: [], hist: [], nid: 1 }; }
         try { A = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { A = null; } if (!A || !A.pos) { A = fresh(); }
         function save() { try { localStorage.setItem(KEY, JSON.stringify(A)); } catch (e) { } }
@@ -19273,13 +19305,23 @@ try {
         function equity() { return A.bal + A.pos.reduce(function (a, p) { return a + upnl(p); }, 0); }
         function avail() { return Math.max(0, A.bal - used()); }
         function liq(side, entry, lev) { return side === 'LONG' ? entry * (1 - 1 / lev + 0.005) : entry * (1 + 1 / lev - 0.005); }
-        function openPos(o, px) {
-            var q = o.notional / px, p = { id: A.nid++, sym: o.sym, side: o.side, lev: o.lev, entry: px, qty: q, margin: o.margin, sl: o.sl, tp: o.tp, liq: liq(o.side, px, o.lev), at: Date.now() };
+        function openPos(o, px, limitFill) {
+            if (!limitFill) { px = o.side === 'LONG' ? px * (1 + SLIP) : px * (1 - SLIP); } /* a market order never fills at the exact price you saw */
+            var q = o.notional / px, p = { id: A.nid++, sym: o.sym, side: o.side, lev: o.lev, entry: px, qty: q, margin: o.margin, sl: o.sl, tp: o.tp, liq: liq(o.side, px, o.lev), at: Date.now(), feeO: o.notional * FEE, slipO: limitFill ? 0 : q * px * SLIP };
             A.bal -= o.notional * FEE; A.pos.push(p); save(); return p;
         }
         function closePos(i, px, why) {
-            var p = A.pos[i]; if (!p) { return; } var pl = upnl(p, px) - p.qty * px * FEE; if (why === 'LIQ') { pl = -p.margin; }
-            A.bal += pl; A.pos.splice(i, 1); A.hist.unshift({ sym: p.sym, side: p.side, lev: p.lev, entry: p.entry, exit: px, pl: pl, why: why, at: Date.now(), t0: p.at }); A.hist = A.hist.slice(0, 60); save();
+            var p = A.pos[i]; if (!p) { return; }
+            var mk = (why === 'Stop-loss' || /^Closed/.test(why || '')), slipC = 0;
+            if (mk) { var px0 = px; px = p.side === 'LONG' ? px * (1 - SLIP) : px * (1 + SLIP); slipC = p.qty * Math.abs(px0 - px); } /* stops and market closes fill a little worse than the trigger price */
+            var hrs = Math.max(0, (Date.now() - p.at) / 3600000), fund = p.qty * p.entry * FUND * hrs / 8, feeC = p.qty * px * FEE, gross = upnl(p, px), pl = gross - feeC - fund;
+            if (why === 'LIQ') { pl = -p.margin; }
+            A.bal += pl; A.pos.splice(i, 1);
+            var rec = { id: p.id, sym: p.sym, side: p.side, lev: p.lev, entry: p.entry, exit: px, pl: pl, why: why, at: Date.now(), t0: p.at, gross: gross, fee: (p.feeO || p.qty * p.entry * FEE) + feeC, fund: fund, slip: (p.slipO || 0) + slipC, margin: p.margin, sl: p.sl, tp: p.tp };
+            A.hist.unshift(rec); A.hist = A.hist.slice(0, 60); save();
+            if (why === 'Stop-loss' || why === 'Take-profit' || why === 'LIQ') { /* closed by itself: say so clearly, never vanish silently */
+                try { var nm0 = String(p.sym || '').replace(/USDT$/, ''), lbl = why === 'LIQ' ? 'liquidated' : (why === 'Stop-loss' ? 'stopped out by your stop-loss' : 'closed by your take-profit'); window.__huPush('pt' + p.id + why, pl >= 0 ? '🎯' : '🛑', 'Paper trade ' + nm0 + ' ' + p.side + ': ' + lbl, (pl >= 0 ? '+' : '') + '$' + pl.toFixed(2) + ' (' + (p.margin ? (pl / p.margin * 100).toFixed(1) : '0') + '% of your $' + (+p.margin).toFixed(2) + ' margin) · fees $' + rec.fee.toFixed(2), 'win:ptrade', pl >= 0 ? 'good' : 'bad', 1000); } catch (e) { }
+            }
         }
         function check() {
             var ch = 0, i;
@@ -19291,7 +19333,7 @@ try {
             }
             for (i = A.ord.length - 1; i >= 0; i--) {
                 var o = A.ord[i], q = price(o.sym); if (!(q > 0)) { continue; }
-                if (o.side === 'LONG' ? q <= o.lp : q >= o.lp) { A.ord.splice(i, 1); openPos(o, o.lp); ch = 1; }
+                if (o.side === 'LONG' ? q <= o.lp : q >= o.lp) { A.ord.splice(i, 1); openPos(o, o.lp, true); ch = 1; }
             }
             return ch;
         }
@@ -19347,7 +19389,15 @@ try {
                 A.ord.forEach(function (o, i) { h += '<div class="ptp"><b>' + esc(bs(o.sym)) + ' ' + o.side + ' limit ' + fp(o.lp, o.sym) + '</b><div class="note" style="margin:3px 0 0">Margin ' + m2(o.margin) + ' · ' + o.lev + '×</div><div style="margin-top:6px"><span class="ptc" data-pt="cancel:' + i + '">Cancel</span></div></div>'; });
             } else {
                 if (!A.hist.length) { return '<div class="note" style="padding:10px">No closed trades yet.</div>'; }
-                A.hist.slice(0, 30).forEach(function (x) { h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + esc(bs(x.sym)) + ' ' + x.side + ' ' + x.lev + '×</b><b style="color:' + (x.pl >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(x.pl) + '</b></div><div class="note" style="margin:2px 0 0">' + fp(x.entry, x.sym) + ' → ' + fp(x.exit, x.sym) + ' · ' + esc(x.why) + '</div></div>'; });
+                A.hist.slice(0, 30).forEach(function (x) {
+                    var kind = x.why === 'Stop-loss' ? ['🛑 STOP-LOSS HIT', '#dc2626', 'Price touched your stop-loss, so the app closed the trade to protect the rest of your money.'] : x.why === 'Take-profit' ? ['🎯 TAKE-PROFIT HIT', '#16a34a', 'Price reached your target, so the trade closed with a profit.'] : x.why === 'LIQ' ? ['💥 LIQUIDATED', '#7c3aed', 'Price moved so far against you that the whole margin was lost.'] : ['✋ ' + esc(x.why || 'Closed'), '#475569', 'You closed this trade yourself.'];
+                    var held = x.t0 ? Math.max(1, Math.round((x.at - x.t0) / 60000)) : 0, cost = (x.fee || 0) + (x.fund || 0);
+                    h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + esc(bs(x.sym)) + ' ' + x.side + ' ' + x.lev + '×</b><b style="color:' + (x.pl >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(x.pl) + '</b></div>' +
+                        '<div style="display:inline-block;margin:5px 0 3px;padding:3px 9px;border-radius:9px;font-weight:900;font-size:12px;color:#fff;background:' + kind[1] + '">' + kind[0] + '</div>' +
+                        '<div class="note" style="margin:2px 0 0">' + kind[2] + '</div>' +
+                        '<div class="note" style="margin:3px 0 0">Entry ' + fp(x.entry, x.sym) + ' → Exit ' + fp(x.exit, x.sym) + (held ? ' · open ' + (held >= 60 ? Math.floor(held / 60) + 'h ' + (held % 60) + 'm' : held + ' min') : '') + '</div>' +
+                        (x.fee != null ? '<div class="note" style="margin:3px 0 0">Price result ' + m2(x.gross) + ' · fees ' + m2(-x.fee) + ' · funding ' + m2(-x.fund) + ' · slippage already inside the prices (about ' + m2(x.slip) + ')' + (x.margin ? ' · that is ' + (x.pl / x.margin * 100).toFixed(1) + '% of your margin' : '') + '</div>' : '') + '</div>';
+                });
             }
             return h;
         }
@@ -19358,7 +19408,7 @@ try {
         function vP() {
             var tabs = [['pos', 'Positions (' + A.pos.length + ')'], ['ord', 'Orders (' + A.ord.length + ')'], ['hist', 'History']];
             return head() + '<div class="group pad">' + ticket() + '</div><div class="ptsd" style="margin:8px 0 0">' + tabs.map(function (t) { return '<span class="' + (FS.tab === t[0] ? 'on' : '') + '" data-pt="tab:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div><div id="ptlist">' + list() + '</div>' +
-                '<div class="note" style="text-align:center;margin:10px 0"><span data-pt="reset:1" style="cursor:pointer;text-decoration:underline">' + (FS.confirm ? 'Tap again to reset to $10,000' : 'Reset paper account') + '</span></div><div class="note">Paper prices come from the live market. Fees 0.04% per side are charged like a real exchange. Real results will differ (slippage, spreads). Not financial advice.</div>';
+                '<div class="note" style="text-align:center;margin:10px 0"><span data-pt="reset:1" style="cursor:pointer;text-decoration:underline">' + (FS.confirm ? 'Tap again to reset to $10,000' : 'Reset paper account') + '</span></div><div class="note">Paper prices come from the live market. Fees 0.05% per side are charged like a real exchange. Real results will differ (slippage, spreads). Not financial advice.</div>';
         }
         try {
             WINS.push({ id: 'ptrade', ic: '🧾', c: '#16a34a', n: 'Paper Trading', t: 'Paper Trading', sub: 'Real-looking order ticket with virtual money' }); LIVE.ptrade = 0; VIEWS.ptrade = vP;
@@ -19973,6 +20023,7 @@ try {
             var h = '', n = 0; window.__lastItems = [];
             function add(title, o, ck) { n++; window.__lastItems.push({ title: title, o: o, ck: ck || '' }); h += '<div style="margin-top:6px"><b>' + title + '</b>' + (ck ? '<span data-sp="close:' + ck + '" style="float:right;padding:5px 10px;border-radius:10px;background:#ff3b30;color:#fff;font-weight:800;font-size:12px">⏹ Close</span>' : '') + plLine(o) + (window.__pbox ? window.__pbox(o) : '') + '<div style="display:flex;gap:6px"><span data-sp="live:' + (window.__liveReg ? window.__liveReg(o, ck) : 0) + '" style="padding:8px 10px;border-radius:10px;background:#0a84ff;color:#fff;font-weight:700;font-size:12.5px">📺 Live trade window</span><span data-sp="chart:' + base(o.sym) + '" style="padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.25);font-weight:700;font-size:12.5px">📈 Chart</span></div></div>'; }
             try { var A = window.__ptrade && window.__ptrade.A(); if (A && A.pos) { A.pos.forEach(function (p) { add('🧾 Paper ' + base(p.sym) + ' ' + p.side + ' ' + p.lev + '×', { sym: p.sym, side: p.side, entry: p.entry, qty: p.qty, notional: p.notional, margin: p.margin, lev: p.lev, sl: p.sl, tp: p.tp, liq: p.liq, at: p.at, kind: '🧾 Paper by hand' }, 'pp:' + p.id); }); } } catch (e) { }
+            try { var XG = window.__xgold && window.__xgold.A(); if (XG && XG.pos) { XG.pos.forEach(function (p) { add('🥇 Exness gold ' + (p.side === 'LONG' ? 'BUY' : 'SELL') + ' ' + p.lots + ' lot' + (p.bot ? ' 🤖' : ''), { sym: 'XAUUSDT', side: p.side, entry: p.entry, qty: p.oz, notional: p.oz * p.entry, margin: p.margin, lev: XG.cfg.lev, sl: p.sl, tp: p.tp, at: p.at, kind: '🥇 Exness gold practice' + (p.bot ? ' bot' : ' by hand') }, 'xg:' + p.id); }); } } catch (e) { }
             try { (S.bot.open || []).forEach(function (p) { add('🧪 Paper bot ' + base(p.sym) + ' ' + p.side, { sym: p.sym, side: p.side, entry: p.entry, notional: p.notional, margin: p.margin, lev: p.lev, sl: p.sl, tp: p.tp, at: p.at, kind: '🧪 Paper bot' }, 'bp:' + p.sym + ':' + p.at); }); } catch (e) { }
             try { (S.fb.open || []).forEach(function (p) { add('🤖 Baba Practice Bot ' + base(p.sym) + ' ' + (p.sg > 0 ? 'LONG' : 'SHORT'), { sym: p.sym, side: p.sg > 0 ? 'LONG' : 'SHORT', entry: p.entry, notional: p.size, sl: p.entry * (1 - p.sg * (p.sl || S.fb.sl) / 100), tp: p.tp ? p.entry * (1 + p.sg * p.tp / 100) : 0, at: p.t0, kind: '🤖 Baba Practice Bot (paper)' }, 'fb:' + p.t0); }); } catch (e) { }
             try { (S.rb.open || []).forEach(function (p) { add('💵 Baba Real Bot ' + base(p.sym) + ' ' + (p.sg > 0 ? 'LONG' : 'SHORT'), { sym: p.sym, side: p.sg > 0 ? 'LONG' : 'SHORT', entry: +p.entry, qty: +(p.amt || p.qtyS), margin: p.margin, lev: p.lev, sl: +p.sl, tp: +p.tp, at: p.t0, kind: '💵 Baba Real Bot (real)' }, 'rb:' + p.sym); }); } catch (e) { }
@@ -20480,6 +20531,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         function doClose(key) {
             var k = key.split(':'), kind = k[0], r = Promise.resolve(false);
             if (kind === 'pp') { var A = window.__ptrade.A(), i = A.pos.map(function (p) { return String(p.id); }).indexOf(k[1]); if (i >= 0) window.__ptrade.close(i); r = Promise.resolve(i >= 0); }
+            else if (kind === 'xg') { var XA = window.__xgold.A(), xi = XA.pos.map(function (p) { return String(p.id); }).indexOf(k[1]); if (xi >= 0) { window.__xgold.close(xi, 'Closed by you'); } r = Promise.resolve(xi >= 0); }
             else if (kind === 'fb') { var F = S.fb, j = F.open.map(function (p) { return String(p.t0); }).indexOf(k[1]); if (j >= 0) { fbClose(j, pxOf(F.open[j].sym) || F.open[j].entry, 'Closed by you'); fbSave(); } r = Promise.resolve(j >= 0); }
             else if (kind === 'rb') { var p3 = (S.rb.open || []).filter(function (p) { return p.sym === k[1]; })[0]; if (p3) { r = Promise.resolve(rbCloseOne(p3, 'closed by you')).then(function () { return true; }); } }
             else if (kind === 'bp') { var bi = -1; S.bot.open.forEach(function (p, ix) { if (p.sym === k[1] && String(p.at) === k[2]) bi = ix; }); if (bi >= 0) { var bp = S.bot.open[bi]; botClose(bi, pxOf(bp.sym) || bp.entry, 'manual'); } r = Promise.resolve(bi >= 0); }
@@ -20565,6 +20617,22 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             document.body.appendChild(el); load(); draw(); clearInterval(tm1); clearInterval(tm2); clearInterval(tm3);
             tm1 = setInterval(draw, 1000); tm2 = setInterval(load, 5000);
         };
+        function allBots() { var o = [], X = window.__XB; if (X) { Object.keys(X).forEach(function (q) { if (X[q]) { o.push(X[q]); } }); } if (S.bot && o.indexOf(S.bot) < 0) { o.push(S.bot); } return o; }
+        function showEnded() {
+            /* the trade finished while this window was open: explain it, do not just vanish */
+            try {
+                var ck = cur && cur.ck || '', k = ck.split(':'), r = null, o = cur && cur.o;
+                if (k[0] === 'pp' && window.__ptrade) { var H = window.__ptrade.A().hist || []; for (var i = 0; i < H.length; i++) { if (String(H[i].id) === k[1]) { r = { why: H[i].why, pl: H[i].pl, entry: H[i].entry, exit: H[i].exit, fee: H[i].fee, fund: H[i].fund, margin: H[i].margin }; break; } } }
+                else if (k[0] === 'xg' && window.__xgold) { var XH = window.__xgold.A().hist || []; for (var xi2 = 0; xi2 < XH.length; xi2++) { if (String(XH[xi2].id) === k[1]) { r = { why: XH[xi2].why, pl: XH[xi2].pl, entry: XH[xi2].entry, exit: XH[xi2].exit, fee: 0, fund: 0, margin: XH[xi2].margin }; break; } } }
+                else if (k[0] === 'bp') { allBots().forEach(function (b) { (b.closed || []).forEach(function (c) { if (!r && c.sym === k[1] && String(c.at) === k[2]) { r = { why: c.why, pl: c.pnl, entry: c.entry, exit: c.exit, fee: c.fee, fund: c.fund }; } }); }); }
+                if (!r || !el) { close(); return; }
+                clearInterval(tm1); clearInterval(tm2); cur = null;
+                var why = String(r.why || ''), sl = /stop/i.test(why), tp = /take|target|tp/i.test(why), liq = /liq/i.test(why), col = r.pl >= 0 ? '#0ecb81' : '#f6465d',
+                    head = liq ? '💥 Liquidated' : sl ? '🛑 Stop-loss was hit' : tp ? '🎯 Take-profit was hit' : '✋ Trade closed', exp = liq ? 'Price moved so far against you that the margin was lost.' : sl ? (r.pl < 0 ? 'Price touched your stop-loss, so the trade was closed to limit the loss to the amount you chose.' : 'Price touched your stop level after the trade was already in profit, so it closed and kept that gain.') : tp ? 'Price reached your target and the trade closed with a profit.' : esc(why);
+                el.innerHTML = '<div class="h"><span class="bk" data-lt="x">‹ Back</span><div style="flex:1"><b>' + String(o.sym).replace('USDT', '') + '<span style="opacity:.6;font-size:12px">/USDT</span></b></div></div><div style="padding:22px 18px"><div style="font-size:22px;font-weight:900;color:' + col + '">' + head + '</div><div style="margin:8px 0 14px;opacity:.85;font-size:14px;line-height:1.45">' + exp + '</div><div style="background:#161a1e;border-radius:14px;padding:14px;font-size:14px;line-height:1.7"><div>Result: <b style="color:' + col + '">' + (r.pl >= 0 ? '+' : '') + (+r.pl).toFixed(2) + ' USDT</b>' + (r.margin ? ' (' + (r.pl / r.margin * 100).toFixed(1) + '% of your margin)' : '') + '</div><div>Entry ' + fmt(r.entry) + ' → Exit ' + fmt(r.exit) + '</div>' + (r.fee != null ? '<div style="opacity:.8">Fees ' + (+r.fee).toFixed(2) + ' · funding ' + (+r.fund).toFixed(2) + ' USDT</div>' : '') + '</div><div class="bk" data-lt="x" style="margin-top:18px;display:inline-block;padding:12px 22px;border-radius:12px;background:#2b3139;font-weight:800">OK</div></div>';
+            } catch (e) { close(); }
+        }
+        function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
         function close() { clearInterval(tm1); clearInterval(tm2); if (el) { el.remove(); el = null; } cur = null; }
         window.__liveClose = close; window.__liveSym = function () { return cur ? cur.o.sym : ''; };
         document.addEventListener('click', function (e) {
@@ -20576,12 +20644,13 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             else if (k === 'tpro') { var sy2 = cur.o.sym; close(); try { window.__tw.run({ sym: sy2, side: 'LONG' }); } catch (er) { gotoWin('tpro'); } }
         }, true);
         /* if the trade disappears (closed), leave the live window after the close confirm */
-        setInterval(function () { try { if (cur && cur.ck) { var live = (window.__liveStill ? window.__liveStill(cur.ck) : true); if (live === false) { close(); } } } catch (e) { } }, 2000);
+        setInterval(function () { try { if (cur && cur.ck) { var live = (window.__liveStill ? window.__liveStill(cur.ck) : true); if (live === false) { showEnded(); } } } catch (e) { } }, 2000);
         window.__liveStill = function (key) {
             var k = key.split(':');
             if (k[0] === 'pp') return window.__ptrade.A().pos.some(function (p) { return String(p.id) === k[1]; });
+            if (k[0] === 'xg') return window.__xgold.A().pos.some(function (p) { return String(p.id) === k[1]; });
             if (k[0] === 'fb') return (S.fb.open || []).some(function (p) { return String(p.t0) === k[1]; });
-            if (k[0] === 'bp') return (S.bot.open || []).some(function (p) { return p.sym === k[1] && String(p.at) === k[2]; });
+            if (k[0] === 'bp') return allBots().some(function (b) { return (b.open || []).some(function (p) { return p.sym === k[1] && String(p.at) === k[2]; }); });
             if (k[0] === 'rb') return (S.rb.open || []).some(function (p) { return p.sym === k[1]; });
             if (k[0] === 'br') return ((S.tp && S.tp.pos) || []).some(function (p) { return p.symbol === k[1] && ((+p.positionAmt > 0) === (k[2] === 'L')); });
             return true;
@@ -20612,6 +20681,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         function stats() {
             var n = 0, pnl = 0, real = 0;
             try { var A = window.__ptrade.A(); n += A.pos.length; } catch (e) { }
+            try { n += window.__xgold.A().pos.length; } catch (e) { }
             try { n += (S.fb.open || []).length; } catch (e) { }
             try { n += (S.rb.open || []).length; } catch (e) { }
             try { ((S.tp && S.tp.pos) || []).forEach(function (p) { n++; real += +p.unRealizedProfit || +p.unrealizedProfit || 0; }); } catch (e) { }
@@ -21794,7 +21864,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
 (function () {
     try {
         PF_APP.push(['where is log|where is the log|where is my log|find log|problem log|app log|error log|log in app|logs window|log kahan|لاگ', 'Where is the Problem log', 'Menu (top right, the three-line button) then Problem log. It is also a tile in More, next to My Wallet. It shows every error, slow moment and screen jump saved on this phone, with Copy and Email buttons. If something flickers or freezes, copy the first lines and send them to me.']);
-        PF_APP.push(['where is wallet|where is my wallet|find wallet|open wallet|wallet icon|wallet button|my wallet|wallet kahan|والٹ', 'Where is the Wallet', 'My Wallet is not on the bottom bar. Tap More (bottom right) and tap the green 👛 My Wallet tile near the top (it is also a tab inside the Around you window, next to PSX, Offers and Brokers). Inside it you can see balances, receive coins, send, and see your 12-word backup. Write the 12 words on paper: they are the only way to recover it. There is no Vault or Gold Wallet; the wallet is self-custody and the keys stay on this phone.']);
+        PF_APP.push(['where is wallet|where is my wallet|find wallet|open wallet|wallet icon|wallet button|my wallet|wallet kahan|والٹ', 'Where is the Wallet', 'My Wallet is not on the bottom bar. Tap More (bottom right) and tap the green 👛 My Wallet tile near the top. Inside it you can see balances, receive coins, send, and see your 12-word backup. Write the 12 words on paper: they are the only way to recover it. There is no Vault or Gold Wallet; the wallet is self-custody and the keys stay on this phone.']);
         PF_APP.push(['where can i find|how do i open|how to open|which button|which tab|which window|kahan milega', 'Where things are', 'Bottom bar: Home, Zoom, Ideas, Markets, Trade, More. Ideas has tabs: Ideas, Scanner, New Plan, Trading Analyst. More has all the other windows in groups: Trading options (Paper Trading, bots), Detail pages (New Plan, Market mood, Coin details), Account and Lock in Profile (tap your round picture top right), Problem log in More. Menu (top right) has Appearance, Language, About this copy and Check for a new version. Tell me the name of what you look for and I will say exactly where it is.']);
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
         st.textContent = '.tile.wlx{background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(14,165,233,.14));box-shadow:inset 0 0 0 1.5px rgba(16,185,129,.55)}.tile.wlx .ic{background:linear-gradient(135deg,#10b981,#0ea5e9)!important;color:#fff;font-size:22px}.tile.wlx::after{content:"SELF-CUSTODY";display:block;font-size:8.5px;letter-spacing:.8px;font-weight:800;color:#059669;margin-top:2px}';
@@ -21961,6 +22031,203 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         setInterval(diagnose, 20000);
         window.__doctor = { run: diagnose, pins: function () { return pinned; } };
     } catch (e) { try { console.error('p9doc', e); } catch (e2) { } }
+})();
+/* ===== p9xg: Exness Gold Practice - paper trading + paper auto bot for XAUUSD with Exness Standard style costs (spread only, no commission), lots, margin, stop-out, market hours. Virtual money only. ===== */
+(function () {
+    try {
+        var KEY = 'mintoosuite_xgold', OZ = 100 /* ounces in 1 lot (reported, confirm in MT5) */, A = null;
+        function fresh() { return { bal: 100, start: 100, pos: [], hist: [], nid: 1, cfg: { lev: 100, spread: 0.30, so: 20 }, bot: { on: false, risk: 2, maxLoss: 10, cool: 0, log: [] } }; }
+        try { A = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { A = null; } if (!A || !A.pos || !A.cfg || !A.bot) { A = fresh(); }
+        function save() { try { localStorage.setItem(KEY, JSON.stringify(A)); } catch (e) { } }
+        var FS = { side: 'LONG', lots: 0.01, slD: '', tpD: '', msg: '', tab: 'pos', confirm: 0 };
+        var SIG = { k: null, at: 0, side: 'WAIT', age: 99, atr: 0, busy: false, err: '', veto: null };
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function m2(v) { return (v < 0 ? '-' : '') + '$' + Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+        function mid() { try { return +(window.__tplan && __tplan.priceOf('XAUUSDT')) || 0; } catch (e) { return 0; } }
+        /* Exness gold is closed from Friday 21:55 UTC to Sunday 22:00 UTC (also stated in the app's market clock) */
+        function closedAt(d) { var w = d.getUTCDay(), h = d.getUTCHours() + d.getUTCMinutes() / 60; return w === 6 || (w === 5 && h >= 21 + 55 / 60) || (w === 0 && h < 22); }
+        function closedNow() { return closedAt(new Date()); }
+        /* spread changes with the hour: wider in the quiet Asian hours and at the 22:00 UTC rollover, tighter in London / New York */
+        function spreadFactor(d) { var h = d.getUTCHours() + d.getUTCMinutes() / 60; if (h >= 21.9 || h < 1) { return 3; } if (h < 7) { return 1.4; } if (h >= 12.5 && h < 16.5) { return 0.9; } return 1; }
+        function spreadNow() { return Math.max(0.01, A.cfg.spread * spreadFactor(new Date())); }
+        function quote() { var m = mid(), sp = spreadNow(); return m > 0 ? { m: m, sp: sp, bid: m - sp / 2, ask: m + sp / 2 } : null; }
+        function floatPL(p, q) { var ex = p.side === 'LONG' ? q.bid : q.ask; return (p.side === 'LONG' ? ex - p.entry : p.entry - ex) * p.oz; }
+        function used() { return A.pos.reduce(function (a, p) { return a + p.margin; }, 0); }
+        function equity(q) { q = q || quote(); return A.bal + (q ? A.pos.reduce(function (a, p) { return a + floatPL(p, q); }, 0) : 0); }
+        function free(q) { return equity(q) - used(); }
+        function level(q) { var u = used(); return u > 0 ? equity(q) / u * 100 : 0; }
+        function lotsFor(riskUsd, slDist) { return Math.floor(riskUsd / (slDist * OZ) * 100) / 100; }
+        function huPush(p, rec, lbl) { try { window.__huPush('xg' + p.id + rec.why, rec.pl >= 0 ? '🎯' : '🛑', 'Exness gold practice ' + (p.side === 'LONG' ? 'BUY' : 'SELL') + ' ' + p.lots + ' lot: ' + lbl, (rec.pl >= 0 ? '+$' : '-$') + Math.abs(rec.pl).toFixed(2) + ' · spread cost about $' + rec.spreadCost.toFixed(2) + ' · ' + rec.why, 'win:xgold', rec.pl >= 0 ? 'good' : 'bad', 1000); } catch (e) { } }
+        function openPos(side, lots, slD, tpD, bot, q) {
+            q = q || quote(); if (!q) { return 'No live gold price yet. Wait a few seconds.'; }
+            if (closedNow()) { return 'Gold market is closed (weekend). Orders open again Sunday 22:00 UTC.'; }
+            lots = Math.round(lots * 100) / 100; if (!(lots >= 0.01)) { return 'Smallest size is 0.01 lot.'; }
+            var L = side === 'LONG', fill = L ? q.ask : q.bid, oz = lots * OZ, margin = oz * fill / A.cfg.lev;
+            if (margin > free(q)) { return 'Not enough free money. ' + lots + ' lot needs ' + m2(margin) + ' margin at 1:' + A.cfg.lev + ' and you have ' + m2(Math.max(0, free(q))) + ' free.'; }
+            slD = +slD || 0; tpD = +tpD || 0;
+            var p = { id: A.nid++, side: side, lots: lots, oz: oz, entry: fill, margin: margin, sl: slD > 0 ? (L ? fill - slD : fill + slD) : 0, tp: tpD > 0 ? (L ? fill + tpD : fill - tpD) : 0, at: Date.now(), sp0: q.sp, bot: !!bot };
+            A.pos.push(p); save(); return '';
+        }
+        function closePos(i, why, ex0) {
+            var p = A.pos[i], q = quote(); if (!p) { return; }
+            var L = p.side === 'LONG', ex = ex0 > 0 ? ex0 : (q ? (L ? q.bid : q.ask) : p.entry), slip = 0;
+            if (why === 'Stop-loss' || why === 'Stop-out') { slip = 0.05; ex = L ? ex - slip : ex + slip; } /* stops fill a little worse than the line */
+            var gross = (L ? ex - p.entry : p.entry - ex) * p.oz, spC = p.oz * ((p.sp0 || 0) + (q ? q.sp : A.cfg.spread)) / 2, pl = gross;
+            A.bal += pl; if (A.bal < 0) { A.bal = 0; } A.pos.splice(i, 1); /* like negative balance protection: you cannot owe more than you put in */
+            var rec = { id: p.id, side: p.side, lots: p.lots, entry: p.entry, exit: ex, pl: pl, why: why, at: Date.now(), t0: p.at, spreadCost: spC, slip: slip * p.oz, margin: p.margin, sl: p.sl, tp: p.tp, bot: p.bot };
+            A.hist.unshift(rec); A.hist = A.hist.slice(0, 60);
+            if (p.bot) { A.bot.cool = Date.now() + 15 * 60000; blog(p.side + ' closed: ' + why + ' ' + (pl >= 0 ? '+' : '') + '$' + pl.toFixed(2)); }
+            save();
+            if (why === 'Stop-loss' || why === 'Take-profit' || why === 'Stop-out') { huPush(p, rec, why === 'Stop-out' ? 'forced stop-out (margin too low)' : (why === 'Stop-loss' ? 'stopped out by your stop-loss' : 'closed by your take-profit')); }
+        }
+        function blog(t) { A.bot.log.unshift({ at: Date.now(), t: t }); A.bot.log = A.bot.log.slice(0, 25); save(); }
+        function check() {
+            var q = quote(), ch = 0, i; if (!q || closedNow()) { return 0; }
+            for (i = A.pos.length - 1; i >= 0; i--) {
+                var p = A.pos[i], L = p.side === 'LONG', ex = L ? q.bid : q.ask;
+                if (p.sl > 0 && (L ? ex <= p.sl : ex >= p.sl)) { closePos(i, 'Stop-loss', p.sl); ch = 1; }
+                else if (p.tp > 0 && (L ? ex >= p.tp : ex <= p.tp)) { closePos(i, 'Take-profit', p.tp); ch = 1; }
+            }
+            var guard = 0; while (A.pos.length && level(q) <= A.cfg.so && guard++ < 10) { /* margin level too low: the broker closes the biggest loser first */
+                var w = 0, wl = 1e18; A.pos.forEach(function (p, j) { var f = floatPL(p, q); if (f < wl) { wl = f; w = j; } }); closePos(w, 'Stop-out'); ch = 1;
+            }
+            return ch;
+        }
+        /* ---- Baba signal on gold (candles from the Binance gold perpetual, same Baba engine as everywhere) ---- */
+        function getJ(u, ms) { return new Promise(function (res, rej) { var done = 0, t = setTimeout(function () { if (!done) { done = 1; rej(new Error('timeout')); } }, ms || 8000); fetch(u).then(function (r) { return r.json(); }).then(function (j) { if (!done) { done = 1; clearTimeout(t); res(j); } }, function (e) { if (!done) { done = 1; clearTimeout(t); rej(e); } }); }); }
+        function atr(K, n) { var s = 0, c = 0, i; for (i = K.length - n; i < K.length; i++) { if (i < 1) { continue; } s += Math.max(K[i].h - K[i].l, Math.abs(K[i].h - K[i - 1].c), Math.abs(K[i].l - K[i - 1].c)); c++; } return c ? s / c : 0; }
+        function loadSig(force) {
+            if (SIG.busy || (!force && Date.now() - SIG.at < 45000)) { return; } SIG.busy = true;
+            var uF = 'https://fapi.binance.com/fapi/v1/klines?symbol=XAUUSDT&interval=15m&limit=300', uB = 'https://api.bybit.com/v5/market/kline?category=linear&symbol=XAUUSDT&interval=15&limit=300';
+            getJ(uF).then(function (a) { if (!Array.isArray(a) || a.length < 100) { throw new Error('few'); } return a; }).catch(function () { return getJ(uB).then(function (j) { var L = j && j.result && j.result.list; if (!Array.isArray(L) || L.length < 100) { throw new Error('few'); } return L.slice().reverse(); }); })
+                .catch(function () { var K = S.chart && S.chart.sym === 'XAUUSDT' && S.chart.k; if (K && K.length > 100) { return K.map(function (k) { return [k.t, k.o, k.h, k.l, k.c, k.v]; }); } throw new Error('none'); })
+                .then(function (a) {
+                    var K = a.map(function (k) { return { t: +k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5] }; }), n = K.length, R = window.__babaSig(K), i = n - 2, side = 'WAIT', age = 99, j, d = 0;
+                    for (j = i; j >= i - 3 && j > 0; j--) { if (R.buy[j]) { d = 1; age = i - j; break; } if (R.sell[j]) { d = -1; age = i - j; break; } }
+                    var cur = R.pos[i]; if (d !== 0 && cur === d) { side = d > 0 ? 'LONG' : 'SHORT'; } else { age = 99; }
+                    var veto = null; try { if (side !== 'WAIT' && window.__babaExp) { veto = window.__babaExp('XAUUSDT', side, K); } } catch (e) { }
+                    SIG = { k: K[n - 1].t, at: Date.now(), side: side, age: age, atr: atr(K.slice(0, n - 1), 14), busy: false, err: '', veto: veto, hold: cur || 0, tf: '15m' };
+                }).catch(function () { SIG.busy = false; SIG.at = Date.now() - 30000; SIG.err = 'Gold candles are not reachable right now. Retrying.'; });
+        }
+        function botTick() {
+            var B = A.bot; if (!B.on) { return; }
+            loadSig(); var q = quote(); if (!q || SIG.at === 0 || SIG.err && !SIG.atr) { return; }
+            if (closedNow()) { if (!B._cl) { B._cl = 1; blog('Gold market closed: bot is waiting for Sunday 22:00 UTC'); } return; } B._cl = 0;
+            if (A.start - equity(q) >= A.start * B.maxLoss / 100 && !A.pos.length) { B.on = false; blog('Bot stopped: loss limit ' + B.maxLoss + '% of the starting money reached'); save(); return; }
+            var mine = A.pos.filter(function (p) { return p.bot; })[0];
+            if (mine) { var d = mine.side === 'LONG' ? 1 : -1; if (SIG.hold && SIG.hold === -d && SIG.k) { closePos(A.pos.indexOf(mine), 'Baba signal flipped'); } return; }
+            if (Date.now() < B.cool || SIG.side === 'WAIT' || SIG.age > 2 || !(SIG.atr > 0)) { return; }
+            if (SIG.veto && SIG.veto.veto) { if (B._lv !== SIG.k) { B._lv = SIG.k; blog('Skipped ' + SIG.side + ': Baba experience only ' + SIG.veto.conv + '% sure'); } return; }
+            if (B._lk === SIG.k) { return; } B._lk = SIG.k;
+            var slD = Math.max(1.5, SIG.atr * 1.5), tpD = slD * 1.6, lots = lotsFor(A.start * B.risk / 100, slD), r;
+            if (lots < 0.01) { lots = 0.01; if (0.01 * OZ * slD > A.start * B.risk / 100 * 3) { blog('Skipped ' + SIG.side + ': smallest trade (0.01 lot) would risk ' + m2(0.01 * OZ * slD) + ', far above your ' + B.risk + '% limit. Needs a bigger balance.'); return; } }
+            lots = Math.min(lots, 1); r = openPos(SIG.side === 'LONG' ? 'LONG' : 'SHORT', lots, slD, tpD, true, q);
+            if (r) { blog('Could not open ' + SIG.side + ': ' + r); } else { blog('Opened ' + (SIG.side === 'LONG' ? 'BUY' : 'SELL') + ' ' + lots + ' lot · stop $' + slD.toFixed(2) + ' away · target $' + tpD.toFixed(2) + ' away (Baba signal ' + SIG.age + ' candle(s) old)'); }
+        }
+        /* ---- screens ---- */
+        function dur(ms) { var s = Math.max(0, Math.round(ms / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d ? d + 'd ' + h + 'h' : h ? h + 'h ' + m + 'm' : m + 'm'; }
+        function head() {
+            var q = quote(), e = equity(q), pl = e - A.start, lv = level(q), cl = closedNow();
+            return '<div class="ptb" style="background:#ff9500">🥇 EXNESS GOLD PRACTICE · virtual money, nothing real is risked</div><div class="group pad" id="xghd"><div style="display:flex;justify-content:space-between"><div><div class="note" style="margin:0">Equity</div><b style="font-size:20px">' + m2(e) + '</b></div><div style="text-align:right"><div class="note" style="margin:0">Total profit / loss</div><b style="font-size:16px;color:' + (pl >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(pl) + '</b></div></div>' +
+                '<div class="note" style="margin:8px 0 0">Free ' + m2(free(q)) + ' · Margin used ' + m2(used()) + (used() > 0 ? ' · Margin level ' + lv.toFixed(0) + '% (stop-out at ' + A.cfg.so + '%)' : '') + '</div>' +
+                '<div class="note" style="margin:6px 0 0" id="xgq">' + (cl ? '🔴 Gold market CLOSED (weekend). Opens Sunday 22:00 UTC. Nothing can open or trigger now.' : (q ? 'XAUUSD · Sell <b>' + q.bid.toFixed(2) + '</b> · Buy <b>' + q.ask.toFixed(2) + '</b> · spread now $' + q.sp.toFixed(2) + ' (' + Math.round(q.sp * 100) + ' pips)' : 'Waiting for live gold price…')) + '</div></div>';
+        }
+        function sigBox() {
+            var s = SIG, lab = s.side === 'LONG' ? '▲ BUY' : s.side === 'SHORT' ? '▼ SELL' : 'WAIT', col = s.side === 'LONG' ? '#16a34a' : s.side === 'SHORT' ? '#dc2626' : '#8e8e93';
+            return '<div class="group pad"><div style="display:flex;justify-content:space-between;align-items:center"><b>🧠 Baba gold signal (15 min)</b><span style="background:' + col + ';color:#fff;border-radius:12px;padding:3px 10px;font-weight:800;font-size:12.5px">' + lab + '</span></div>' +
+                '<div class="note" style="margin:6px 0 0" id="xgsig">' + (s.err ? esc(s.err) : (!s.at ? 'Reading gold candles…' : (s.side === 'WAIT' ? 'No fresh signal. Waiting is a valid trade.' : 'Signal is ' + s.age + ' candle(s) old' + (s.veto ? ' · Baba experience ' + s.veto.conv + '% sure' + (s.veto.veto ? ' (says skip)' : '') : '') + '. Typical stop about $' + (Math.max(1.5, s.atr * 1.5)).toFixed(2) + ' away.'))) + '</div>' +
+                (s.side !== 'WAIT' ? '<div style="margin-top:8px"><span class="ptc on" data-xg="use:1" style="cursor:pointer;display:inline-block;padding:7px 12px">Use this signal in the ticket</span></div>' : '') + '</div>';
+        }
+        function ticket() {
+            var q = quote(), L = FS.side === 'LONG', lots = +FS.lots || 0.01, fill = q ? (L ? q.ask : q.bid) : 0, sl = +FS.slD || 0, margin = fill * lots * OZ / A.cfg.lev, risk = sl * lots * OZ;
+            var chips = [0.01, 0.02, 0.05, 0.1].map(function (v) { return '<span class="ptc' + (+FS.lots === v ? ' on' : '') + '" data-xg="lots:' + v + '">' + v + '</span>'; }).join('');
+            return '<div class="ptt"><div class="ptsd"><span class="' + (L ? 'on g' : '') + '" data-xg="side:LONG">▲ Buy</span><span class="' + (!L ? 'on r' : '') + '" data-xg="side:SHORT">▼ Sell</span></div>' +
+                '<div class="note" style="margin:8px 0 0">Size in lots (0.01 lot = 1 ounce of gold; $1 gold move = $' + (lots * OZ).toFixed(0) + ' for ' + lots + ' lot)</div><div style="display:flex;gap:6px;margin:6px 0;align-items:center">' + chips + '<input class="tin" data-xgin="lots" inputmode="decimal" value="' + esc(FS.lots) + '" style="width:70px;min-width:0"></div>' +
+                '<div style="display:flex;gap:8px"><input class="tin" data-xgin="slD" inputmode="decimal" placeholder="Stop-loss $ away (e.g. 5)" value="' + esc(FS.slD) + '" style="flex:1;min-width:0"><input class="tin" data-xgin="tpD" inputmode="decimal" placeholder="Target $ away (e.g. 8)" value="' + esc(FS.tpD) + '" style="flex:1;min-width:0"></div>' +
+                '<div class="ptsm" id="xgsm">' + 'Margin about ' + m2(margin) + ' (1:' + A.cfg.lev + ') · ' + (risk > 0 ? '<b>You risk about ' + m2(risk) + '</b>' + (risk > A.bal ? ' <span style="color:#dc2626">more than your balance!</span>' : '') : '<span style="color:#d97706">No stop-loss set</span>') + '</div>' +
+                (FS.msg ? '<div class="note" style="margin:6px 0 0">' + FS.msg + '</div>' : '') +
+                '<div class="ptgo ' + (L ? 'g' : 'r') + '" data-xg="go:1">' + (L ? 'Buy ' : 'Sell ') + 'XAUUSD ' + lots + ' lot</div></div>';
+        }
+        function list() {
+            var q = quote(), h = '';
+            if (FS.tab === 'pos') {
+                if (!A.pos.length) { return '<div class="note" style="padding:10px">No open gold trades.</div>'; }
+                A.pos.forEach(function (p, i) { var f = q ? floatPL(p, q) : 0; h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + (p.side === 'LONG' ? '▲ BUY' : '▼ SELL') + ' ' + p.lots + ' lot' + (p.bot ? ' 🤖' : '') + '</b><b style="color:' + (f >= 0 ? '#16a34a' : '#dc2626') + '">' + (f >= 0 ? '+' : '') + m2(f) + '</b></div><div class="note" style="margin:3px 0 0">Entry ' + p.entry.toFixed(2) + ' · Stop ' + (p.sl > 0 ? p.sl.toFixed(2) : 'none') + ' · Target ' + (p.tp > 0 ? p.tp.toFixed(2) : 'none') + ' · Margin ' + m2(p.margin) + ' · open ' + dur(Date.now() - p.at) + '</div><div style="margin-top:6px"><span class="ptc" data-xg="close:' + i + '" style="cursor:pointer;padding:6px 12px">Close now</span> <span class="ptc" data-xg="be:' + i + '" style="cursor:pointer;padding:6px 12px">Stop to entry</span></div></div>'; });
+                return h;
+            }
+            if (FS.tab === 'bot') {
+                var B = A.bot;
+                h = '<div class="ptp"><b>🤖 Paper auto bot (Baba signals on gold)</b><div class="note" style="margin:4px 0 8px">Opens one practice trade at a time when the Baba 15-minute gold signal is fresh and Baba experience agrees. Stop = 1.5 × ATR, target = 1.6 × stop. Pays the same spread as hand trades. Works only while the app is open.</div>' +
+                    '<div style="display:flex;gap:8px;align-items:center;margin:6px 0"><span class="ptc' + (B.on ? ' on' : '') + '" data-xg="bot:' + (B.on ? 'off' : 'on') + '" style="cursor:pointer;padding:9px 14px;font-weight:800">' + (B.on ? '⏹ Stop bot (running)' : '▶ Start bot') + '</span></div>' +
+                    '<div class="note" style="margin:6px 0 0">Risk per trade (% of start money): ' + [1, 2, 3].map(function (v) { return '<span class="ptc' + (B.risk === v ? ' on' : '') + '" data-xg="brisk:' + v + '" style="cursor:pointer;padding:4px 10px">' + v + '%</span>'; }).join(' ') + '</div>' +
+                    '<div class="note" style="margin:6px 0 0">Stop the bot after losing (% of start money): ' + [5, 10, 20].map(function (v) { return '<span class="ptc' + (B.maxLoss === v ? ' on' : '') + '" data-xg="bmax:' + v + '" style="cursor:pointer;padding:4px 10px">' + v + '%</span>'; }).join(' ') + '</div></div>';
+                if (!B.log.length) { h += '<div class="note" style="padding:10px">Bot log is empty.</div>'; } else { B.log.forEach(function (x) { h += '<div class="note" style="margin:4px 0;padding:6px 8px;border-left:3px solid #ff9500">' + new Date(x.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + esc(x.t) + '</div>'; }); }
+                return h;
+            }
+            if (FS.tab === 'set') {
+                var C = A.cfg;
+                return '<div class="ptp"><b>Account assumptions</b><div class="note" style="margin:4px 0 8px">These come from public reports about the Exness Standard account, not from your account. Open MT5 on your phone, long-press XAUUSD, choose Specification, and copy the real numbers here.</div>' +
+                    '<div class="note" style="margin:6px 0 0">Leverage 1:' + [100, 200, 500].map(function (v) { return '<span class="ptc' + (C.lev === v ? ' on' : '') + '" data-xg="lev:' + v + '" style="cursor:pointer;padding:4px 10px">' + v + '</span>'; }).join(' ') + '</div>' +
+                    '<div class="note" style="margin:6px 0 0">Normal spread in dollars per ounce <input class="tin" data-xgin="spread" inputmode="decimal" value="' + C.spread + '" style="width:70px"> (reports: $0.20–0.35; the app widens it at night and 22:00 UTC)</div>' +
+                    '<div class="note" style="margin:6px 0 0">Stop-out level (%) <input class="tin" data-xgin="so" inputmode="decimal" value="' + C.so + '" style="width:70px"> (assumed, check yours)</div>' +
+                    '<div class="note" style="margin:8px 0 0">Not simulated: overnight swap, requotes, news gaps. Contract: 1 lot = ' + OZ + ' oz (reported). Prices come from the Binance gold perpetual, so your Exness price can differ by a dollar or more.</div></div>';
+            }
+            if (!A.hist.length) { return '<div class="note" style="padding:10px">No closed trades yet.</div>'; }
+            A.hist.slice(0, 30).forEach(function (x) {
+                var why = x.why, col = why === 'Stop-loss' || why === 'Stop-out' ? '#dc2626' : why === 'Take-profit' ? '#16a34a' : '#8e8e93';
+                h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + (x.side === 'LONG' ? '▲ BUY' : '▼ SELL') + ' ' + x.lots + ' lot' + (x.bot ? ' 🤖' : '') + '</b><b style="color:' + (x.pl >= 0 ? '#16a34a' : '#dc2626') + '">' + (x.pl >= 0 ? '+' : '') + m2(x.pl) + '</b></div>' +
+                    '<div style="margin:4px 0"><span style="background:' + col + ';color:#fff;border-radius:10px;padding:2px 9px;font-size:11.5px;font-weight:800">' + esc(why) + '</span></div>' +
+                    '<div class="note" style="margin:3px 0 0">In ' + x.entry.toFixed(2) + ' → out ' + x.exit.toFixed(2) + ' · held ' + dur(x.at - x.t0) + (x.sl > 0 ? ' · stop ' + x.sl.toFixed(2) : '') + (x.tp > 0 ? ' · target ' + x.tp.toFixed(2) : '') + '</div>' +
+                    '<div class="note" style="margin:3px 0 0">Costs: spread about ' + m2(x.spreadCost) + ' (already inside the result), commission $0.00' + (x.slip ? ', stop slippage ' + m2(x.slip) : '') + '</div></div>';
+            });
+            return h;
+        }
+        function vX() {
+            loadSig();
+            var tabs = [['pos', 'Trades (' + A.pos.length + ')'], ['bot', A.bot.on ? '🤖 Bot ON' : '🤖 Bot'], ['hist', 'History'], ['set', 'Settings']];
+            return head() + sigBox() + '<div class="group pad">' + ticket() + '</div><div class="ptsd" style="margin:8px 0 0">' + tabs.map(function (t) { return '<span class="' + (FS.tab === t[0] ? 'on' : '') + '" data-xg="tab:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div><div id="xglist">' + list() + '</div>' +
+                '<div class="warn" style="margin-top:10px">Practice only. Real Exness trading cannot be done from this app (Exness gives no trading connection to apps like this; you trade in the MT5 app). Practice results do not promise real results.</div>' +
+                '<div class="note" style="text-align:center;margin:10px 0"><span data-xg="reset:1" style="cursor:pointer;text-decoration:underline">' + (FS.confirm ? 'Tap again to reset to $100' : 'Reset practice account ($100)') + '</span></div>';
+        }
+        try {
+            WINS.push({ id: 'xgold', ic: '🥇', c: '#ff9500', n: 'Exness Gold Practice', t: 'Exness Gold Practice', sub: 'Paper trading + paper auto bot with Exness-style costs' }); LIVE.xgold = 0; VIEWS.xgold = vX;
+            var g = MW_GROUPS[1][1], k = g.indexOf('exness'); if (g.indexOf('xgold') < 0) { g.splice(k < 0 ? g.length : k + 1, 0, 'xgold'); }
+            if (typeof MW_HELP === 'object') { MW_HELP.xgold = 'Practice gold trading with virtual money. You pay the spread like on an Exness Standard account, there is no commission, trades use lots and margin, and a stop-out closes trades if margin runs low. The paper auto bot follows Baba gold signals. Real Exness trading cannot be placed from this app.'; }
+            if (typeof PF_WIN === 'object') { PF_WIN['Exness Gold Practice'] = 'xgold'; }
+            if (typeof PF_APP !== 'undefined') { PF_APP.push(['exness paper|exness practice|exness demo|gold paper|gold practice|gold bot|exness bot|exness auto|xauusd bot|paper gold', 'Exness Gold Practice', 'Windows > Exness Gold Practice: paper trading and a paper auto bot for gold with Exness-style spread, lots, margin and stop-out. Real-money Exness trading is not possible from this app (no connection allowed); you place real trades in MT5.', 'win:xgold']); }
+        } catch (e) { }
+        try { var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = '.ptc{display:inline-block;padding:7px 12px;border-radius:12px;border:1px solid rgba(128,128,128,.35);font-weight:700;font-size:13px}.ptc.on{background:#ff9500;color:#fff;border-color:#ff9500}'; document.head.appendChild(st); } catch (e) { }
+        function again() { try { renderView(true); } catch (e) { } }
+        document.addEventListener('click', function (e) {
+            var t = e.target.closest ? e.target.closest('[data-xg]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation();
+            var v = t.getAttribute('data-xg'), i = v.indexOf(':'), k = v.slice(0, i), a = v.slice(i + 1); FS.msg = ''; if (k !== 'reset') { FS.confirm = 0; }
+            if (k === 'side') { FS.side = a; } else if (k === 'tab') { FS.tab = a; } else if (k === 'lots') { FS.lots = +a; }
+            else if (k === 'go') { var lots = parseFloat(String(FS.lots).replace(',', '.')) || 0, sl = parseFloat(FS.slD) || 0; var r = openPos(FS.side, lots, FS.slD, FS.tpD, false); if (r) { FS.msg = r; } else { FS.msg = '✅ Practice ' + (FS.side === 'LONG' ? 'BUY' : 'SELL') + ' opened.'; FS.tab = 'pos'; } }
+            else if (k === 'close') { closePos(+a, 'Closed by you'); } else if (k === 'be') { var p = A.pos[+a]; if (p) { p.sl = p.entry; save(); } }
+            else if (k === 'use') { if (SIG.side !== 'WAIT') { FS.side = SIG.side; var d = Math.max(1.5, SIG.atr * 1.5); FS.slD = d.toFixed(2); FS.tpD = (d * 1.6).toFixed(2); } }
+            else if (k === 'bot') { A.bot.on = a === 'on'; A.bot._lk = null; blog(A.bot.on ? 'Bot started' : 'Bot stopped'); if (A.bot.on) { loadSig(true); } }
+            else if (k === 'brisk') { A.bot.risk = +a; save(); } else if (k === 'bmax') { A.bot.maxLoss = +a; save(); } else if (k === 'lev') { A.cfg.lev = +a; save(); }
+            else if (k === 'reset') { if (FS.confirm) { var keep = A.cfg; A = fresh(); A.cfg = keep; save(); FS.confirm = 0; FS.msg = 'New practice account: $100.'; } else { FS.confirm = 1; } }
+            again();
+        }, true);
+        document.addEventListener('input', function (e) {
+            var t = e.target; if (!t || !t.getAttribute) { return; } var k = t.getAttribute('data-xgin'); if (!k) { return; }
+            var v = parseFloat(String(t.value).replace(',', '.'));
+            if (k === 'lots' || k === 'slD' || k === 'tpD') { FS[k] = t.value; try { var q = quote(), lots = parseFloat(String(FS.lots).replace(',', '.')) || 0.01, sl = parseFloat(FS.slD) || 0, el = document.getElementById('xgsm'); if (el && q) { var fill = FS.side === 'LONG' ? q.ask : q.bid, mg = fill * lots * OZ / A.cfg.lev, rk = sl * lots * OZ; el.innerHTML = 'Margin about ' + m2(mg) + ' (1:' + A.cfg.lev + ') · ' + (rk > 0 ? '<b>You risk about ' + m2(rk) + '</b>' : '<span style="color:#d97706">No stop-loss set</span>'); } } catch (er) { } }
+            else if (isFinite(v) && v > 0) { if (k === 'spread') { A.cfg.spread = Math.min(5, v); save(); } else if (k === 'so') { A.cfg.so = Math.min(100, v); save(); } }
+        });
+        setInterval(function () {
+            try {
+                var ch = check(); botTick();
+                if (document.documentElement.getAttribute('data-win') !== 'xgold') { return; }
+                var ae = document.activeElement; if (ae && ae.getAttribute && ae.getAttribute('data-xgin')) { return; }
+                var hd = document.getElementById('xghd'); if (hd) { hd.outerHTML = head().replace(/^.*?(<div class="group pad" id="xghd")/, '$1'); }
+                var l = document.getElementById('xglist'); if (l && FS.tab !== 'set') { l.innerHTML = list(); }
+                var sg = document.getElementById('xgsig'); if (sg && !SIG.busy && SIG.at && sg.getAttribute('data-k') !== String(SIG.at)) { sg.setAttribute('data-k', SIG.at); again(); }
+            } catch (e) { }
+        }, 1000);
+        window.__xgold = { A: function () { return A; }, quote: quote, check: check, open: openPos, close: closePos, botTick: botTick, sig: function () { return SIG; }, setSig: function (s) { SIG = s; }, closedAt: closedAt, spreadFactor: spreadFactor };
+    } catch (e) { try { console.log('xg', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
