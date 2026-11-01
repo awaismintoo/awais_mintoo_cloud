@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.251';
+var BUILD = '2026-10-31.252';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -3443,14 +3443,15 @@ function drawChart() {
     function inc(arr) { if (!arr) { return; } for (var j = start; j < end; j++) { var q = arr[j]; if (q !== null && q !== undefined) { var val = typeof q === 'object' ? q.v : q; if (val > hi) { hi = val; } if (val < lo) { lo = val; } } } }
     inc(ind.ma7); inc(ind.ma25); inc(ind.e9); inc(ind.e21); if (ind.bo) { inc(ind.bo.up); inc(ind.bo.lo); } inc(ind.vw);
     var pad = (hi - lo) * 0.06 || hi * 0.001; hi += pad; lo -= pad; if (C.base && (hi < C.base.lo || lo > C.base.hi || (hi - lo) > (C.base.hi - C.base.lo) * 6 || (hi - lo) * 6 < (C.base.hi - C.base.lo))) { C.base = null; C.vz = 1; C.vp = 0; } /* safety: a locked range that no longer matches the candles is dropped, the chart can never be left empty */
-    var man9 = (C.vz && C.vz !== 1) || C.vp; if (man9) { if (!C.base) { C.base = { hi: hi, lo: lo }; } hi = C.base.hi; lo = C.base.lo; } else { C.base = null; } /* manual price scale = locked range, like TradingView: the picture no longer drifts while you look at it */
-    if ((C.vz && C.vz !== 1) || C.vp) { var mid0 = (hi + lo) / 2 + (C.vp || 0) * (hi - lo), half0 = (hi - lo) / 2 / (C.vz || 1); hi = mid0 + half0; lo = mid0 - half0; } var span = hi - lo, yr = function (p) { return padT + (hi - p) / span * ph; }, y = function (p) { var q = yr(p); return ((C.vz && C.vz !== 1) || C.vp) ? Math.max(padT - 1, Math.min(padT + ph + 1, q)) : q; }, xs = function (j) { return (j - start) * cw + cw * 1.0 + cw / 2; };
+    var dHi9 = hi, dLo9 = lo; var man9 = (C.vz && C.vz !== 1) || C.vp; if (man9) { if (!C.base) { C.base = { hi: hi, lo: lo }; } hi = C.base.hi; lo = C.base.lo; } else { C.base = null; } /* manual price scale = locked range, like TradingView: the picture no longer drifts while you look at it */
+    if ((C.vz && C.vz !== 1) || C.vp) { var mid0 = (hi + lo) / 2 + (C.vp || 0) * (hi - lo), half0 = (hi - lo) / 2 / (C.vz || 1); hi = mid0 + half0; lo = mid0 - half0; var ov9 = Math.min(hi, dHi9) - Math.max(lo, dLo9); if (!(ov9 > 0.5 * Math.min(hi - lo, dHi9 - dLo9))) { C.base = null; C.vz = 1; C.vp = 0; hi = dHi9; lo = dLo9; } /* scale and candles must never separate: if less than half of them would overlap, go back to automatic */ } C.pb = padT + ph; var span = hi - lo, yr = function (p) { return padT + (hi - p) / span * ph; }, y = function (p) { var q = yr(p); return Math.max(-1e6, Math.min(1e6, q)); }, xs = function (j) { return (j - start) * cw + cw * 1.0 + cw / 2; };
     g.lineWidth = 1;
     for (i = 0; i <= 4; i++) { var gy = padT + ph * i / 4, gp = hi - span * i / 4; g.strokeStyle = LN; g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke(); g.fillStyle = MT; g.textAlign = 'left'; g.fillText(fmtP(gp, ch.sym), W + 4, gy + 4); }
     // time axis in the chosen time zone
     var every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(W / (CX_MS[ch.tf] >= 86400 ? 70 : 115))))); g.fillStyle = MT; g.textAlign = 'center';
     for (i = start; i < end; i += every) { var tt = K[i].t, lab = CX_MS[ch.tf] >= 86400 ? m7fmt(tt, 'd') : m7fmt(tt, 'dt'); g.fillText(lab, Math.min(W - 24, Math.max(24, xs(i))), padT + ph + 14); }
     g.textAlign = 'left';
+    g.save(); g.beginPath(); g.rect(0, padT, w, ph); g.clip(); /* anything outside the price pane is cut, never squashed onto an edge */
     // Bollinger fill
     if (ind.bo) { g.fillStyle = 'rgba(240,185,11,.07)'; g.beginPath(); var f1 = true, j; for (j = start; j < end; j++) { if (ind.bo.up[j] === null) { continue; } if (f1) { g.moveTo(xs(j), y(ind.bo.up[j])); f1 = false; } else { g.lineTo(xs(j), y(ind.bo.up[j])); } } for (j = end - 1; j >= start; j--) { if (ind.bo.lo[j] === null) { continue; } g.lineTo(xs(j), y(ind.bo.lo[j])); } g.closePath(); g.fill(); }
     // candles with a soft 3D look
@@ -3470,10 +3471,11 @@ function drawChart() {
     if (ind.vw) { line(ind.vw, '#ffffff'.replace('#fff', TX === '#fff' ? '#fff' : '#555'), 1.2); }
     if (ind.sar) { for (var s2 = start; s2 < end; s2++) { var q2 = ind.sar[s2]; if (q2) { g.fillStyle = q2.up ? GR : RD; g.beginPath(); g.arc(xs(s2), y(q2.v), 1.8, 0, 6.3); g.fill(); } } }
     if (ind.sup) { for (var u2 = start + 1; u2 < end; u2++) { var a = ind.sup[u2], b = ind.sup[u2 - 1]; if (a && b && a.up === b.up) { g.strokeStyle = a.up ? GR : RD; g.lineWidth = 2; g.beginPath(); g.moveTo(xs(u2 - 1), y(b.v)); g.lineTo(xs(u2), y(a.v)); g.stroke(); } } }
+    g.restore();
     // high / low tags
     var hiC = v.reduce(function (m, x, j) { return x.h > v[m].h ? j : m; }, 0), loC = v.reduce(function (m, x, j) { return x.l < v[m].l ? j : m; }, 0); g.fillStyle = TX;
-    g.textAlign = xs(start + hiC) > W / 2 ? 'right' : 'left'; g.fillText(fmtP(v[hiC].h, ch.sym), xs(start + hiC) + (g.textAlign === 'right' ? -4 : 4), y(v[hiC].h) - 3);
-    g.textAlign = xs(start + loC) > W / 2 ? 'right' : 'left'; g.fillText(fmtP(v[loC].l, ch.sym), xs(start + loC) + (g.textAlign === 'right' ? -4 : 4), y(v[loC].l) + 11); g.textAlign = 'left';
+    g.textAlign = xs(start + hiC) > W / 2 ? 'right' : 'left'; g.fillText(fmtP(v[hiC].h, ch.sym), xs(start + hiC) + (g.textAlign === 'right' ? -4 : 4), Math.max(padT + 10, Math.min(padT + ph - 4, y(v[hiC].h) - 3)));
+    g.textAlign = xs(start + loC) > W / 2 ? 'right' : 'left'; g.fillText(fmtP(v[loC].l, ch.sym), xs(start + loC) + (g.textAlign === 'right' ? -4 : 4), Math.max(padT + 10, Math.min(padT + ph - 4, y(v[loC].l) + 11))); g.textAlign = 'left';
     // sub pane
     var sy0 = padT + ph + axisH + 8, sh0 = subH - 18;
     g.strokeStyle = LN; g.beginPath(); g.moveTo(0, sy0 - 4); g.lineTo(W, sy0 - 4); g.stroke(); g.fillStyle = MT;
@@ -3507,7 +3509,7 @@ function drawChart() {
             pre9.forEach(function (c) { info.insertBefore(c, nb9); }); var ref9 = nb9; post9.forEach(function (c) { info.insertBefore(c, ref9.nextSibling); ref9 = c; });
         }
     }
-    try { if (window.__cxOver) { window.__cxOver(g, { start: start, end: end, xs: xs, y: y, yr: yr, W: W, padT: padT, ph: ph, K: K, cw: cw, sym: ch.sym, tf: ch.tf, GR: GR, RD: RD, TX: TX, MT: MT }); } } catch (e) { }
+    try { if (window.__cxOver) { g.save(); g.beginPath(); g.rect(0, padT, w, ph); g.clip(); try { window.__cxOver(g, { start: start, end: end, xs: xs, y: y, yr: yr, W: W, padT: padT, ph: ph, K: K, cw: cw, sym: ch.sym, tf: ch.tf, GR: GR, RD: RD, TX: TX, MT: MT }); } finally { g.restore(); } } } catch (e) { }
     if (note) { note.textContent = 'Live from Binance (' + (cxSrc() === 's' ? 'Spot' : cxSrc() === 'd' ? 'Coin-M' : 'Futures') + '). The last candle moves in real time. Times use your chosen time zone.'; }
 }
 function cxInfo(k, i, closes, ind) {
@@ -3521,22 +3523,23 @@ function cxInfo(k, i, closes, ind) {
 }
 // ----- touch: drag, pinch, tap -----
 (function () {
-    var pts = {}, startD = 0, startN = 0, moved = 0, sx = 0, soff = 0, tap = null;
+    var pts = {}, startD = 0, startN = 0, moved = 0, sx = 0, soff = 0, tap = null, tz = null;
     function cvEl(e) { return e.target && e.target.id === 'cv'; }
     document.addEventListener('pointerdown', function (e) {
         if (!cvEl(e)) { return; } pts[e.pointerId] = { x: e.clientX, y: e.clientY }; try { e.target.setPointerCapture(e.pointerId); } catch (er) {}
         var ids = Object.keys(pts); moved = 0;
-        if (ids.length === 1) { sx = e.clientX; soff = S.cx.off; tap = { x: e.clientX, y: e.clientY, t: Date.now() }; }
-        if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]]; startD = Math.abs(a.x - b.x) || 1; startN = S.cx.n; tap = null; }
+        if (ids.length === 1) { sx = e.clientX; soff = S.cx.off; tap = { x: e.clientX, y: e.clientY, t: Date.now() }; var rc9 = e.target.getBoundingClientRect(), yy9 = e.clientY - rc9.top; if (S.cx.pb && yy9 > S.cx.pb && yy9 < S.cx.pb + 26) { tz = { x: e.clientX, n: S.cx.n }; tap = null; } else { tz = null; } }
+        if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]]; startD = Math.hypot(a.x - b.x, a.y - b.y) || 1; startN = S.cx.n; tap = null; tz = null; }
     });
     document.addEventListener('pointermove', function (e) {
         if (!pts[e.pointerId]) { return; } pts[e.pointerId] = { x: e.clientX, y: e.clientY }; var ids = Object.keys(pts), w = (e.target.clientWidth || 300);
-        if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]], d = Math.abs(a.x - b.x) || 1; S.cx.n = Math.max(15, Math.min(400, Math.round(startN * startD / d))); cxDraw(); return; }
+        if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y) || 1; S.cx.n = Math.max(15, Math.min(400, Math.round(startN * startD / d))); cxDraw(); return; }
+        if (tz && ids.length === 1) { S.cx.n = Math.max(15, Math.min(400, Math.round(tz.n * Math.exp(-(e.clientX - tz.x) / 160)))); cxDraw(); return; } /* drag the time numbers sideways to zoom time, like TradingView */
         var dx = e.clientX - sx; if (Math.abs(dx) > 5) { moved = 1; tap = null; } var per = (w - 62) / (S.cx.n + 2);
         if (moved) { S.cx.off = Math.max(0, soff + Math.round(dx / per)); cxDraw(); }
     });
     function up(e) {
-        if (!pts[e.pointerId]) { return; } delete pts[e.pointerId];
+        if (!pts[e.pointerId]) { return; } delete pts[e.pointerId]; tz = null;
         if (tap && Date.now() - tap.t < 450 && cvEl(e)) {
             var r = e.target.getBoundingClientRect(), x = e.clientX - r.left, K = S.chart.k, C = S.cx, W = r.width - 62, n = Math.max(15, Math.min(C.n, K.length)), maxOff = Math.max(0, K.length - n), end = K.length - Math.min(C.off, maxOff), start = Math.max(0, end - n), cw = W / (n + 2), j = Math.round((x - cw * 1.5) / cw) + start;
             if (x < W && j >= start && j < end) { C.sel = (C.sel === j) ? -1 : j; } else { C.sel = -1; } cxDraw();
@@ -15336,11 +15339,12 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             document.addEventListener('pointerdown', function (e) {
                 var c = cvOf(e); if (!c) { return; }
                 var r = c.getBoundingClientRect(), x = e.clientX - r.left;
-                if (x > r.width - 62) {
+                if (pn && (Date.now() - pn.t > 2500 || pn.id === e.pointerId)) { pn = null; }
+                if (x > r.width - 62 && !pn) {
                     e.stopImmediatePropagation(); e.preventDefault();
                     var now = Date.now(); if (now - lastTap < 350) { S.cx.vz = 1; S.cx.vp = 0; cxDraw(); lastTap = 0; return; } lastTap = now;
                     ax = { id: e.pointerId, y: e.clientY, z: S.cx.vz || 1 }; try { c.setPointerCapture(e.pointerId); } catch (er) { }
-                } else if (!(window.__drawOn && window.__drawOn())) { pn = { id: e.pointerId, y: e.clientY, p: S.cx.vp || 0 }; }
+                } else if (pn) { pn = null; /* second finger: pinch, not price pan */ } else if (!(window.__drawOn && window.__drawOn()) && !(S.cx.pb && (e.clientY - r.top) > S.cx.pb)) { pn = { id: e.pointerId, y: e.clientY, p: S.cx.vp || 0, t: Date.now() }; }
             }, true);
             document.addEventListener('pointermove', function (e) {
                 if (ax && e.pointerId === ax.id) { var dy = e.clientY - ax.y; S.cx.vz = Math.max(0.3, Math.min(10, ax.z * Math.exp(-dy / 140))); if (Math.abs(S.cx.vz - 1) < 0.04) { S.cx.vz = 1; } cxDraw(); return; }
