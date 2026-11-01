@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.278';
+var BUILD = '2026-10-31.283';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -19150,7 +19150,7 @@ try {
             clearTimeout(banner.tm); banner.tm = setTimeout(function () { var x = document.getElementById('mwpump'); if (x === d) { d.remove(); } showing = 0; next(); }, 25000);
         }
         function next() { if (showing || !Q.length) { return; } showing = 1; banner(Q.shift()); }
-        function native(a) { try { var n = window.MintooNative; if (n && n.notify && window.__mwTok) { n.notify(window.__mwTok, a.title, a.body); } else if ('Notification' in window && Notification.permission === 'granted') { new Notification(a.title, { body: a.body }); } } catch (e) { } }
+        function native(a) { try { var n = window.MintooNative; if (n && n.nalSeen && window.__mwTok && n.nalSeen(window.__mwTok, a.title)) { return; } if (n && n.nalCfg && window.__mwTok) { n.nalCfg(window.__mwTok, !!cfg.on, !!cfg.hi); } if (n && n.notify && window.__mwTok) { n.notify(window.__mwTok, a.title, a.body); } else if ('Notification' in window && Notification.permission === 'granted') { new Notification(a.title, { body: a.body }); } } catch (e) { } }
         var AU = null, ALT = 0;
         function siren(on) { try { clearInterval(ALT); if (AU) { try { AU.close(); } catch (e) { } AU = null; } if (!on) { return; } var C = window.AudioContext || window.webkitAudioContext; if (!C) { return; } AU = new C(); var beep = function () { try { var o = AU.createOscillator(), g = AU.createGain(); o.type = 'square'; o.frequency.value = 880; g.gain.value = 0.25; o.connect(g); g.connect(AU.destination); o.start(); o.frequency.setValueAtTime(660, AU.currentTime + 0.25); o.stop(AU.currentTime + 0.5); } catch (e) { } try { if (navigator.vibrate) { navigator.vibrate([300, 150, 300]); } } catch (e) { } }; beep(); ALT = setInterval(beep, 1200); } catch (e) { } }
         function tpPlan(p) { var f = function (m) { return fmt(p * m); }; return '<div style="margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.28);font-size:13px;font-weight:500;line-height:1.5"><b>Manual take-profit plan (you place these on your exchange):</b><br>• Sell 1/3 now or near ' + fmt(p) + '<br>• Sell 1/3 at ' + f(1.3) + ' (+30%)<br>• Keep the last 1/3 with a trailing stop 15% below the highest price it reaches<br>• Stop-loss for the whole position: ' + f(0.85) + ' (-15%)<br>Never put in more than you can lose. Fast pumps can reverse in seconds.</div>'; }
@@ -22752,10 +22752,72 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         window.__nc = { state: NC, sync: sync };
     } catch (e) { try { console.log('p9nc', e); } catch (er) { } }
 })();
+/* ===== p9lc: Start here (first 5 minutes), privacy and delete-my-data, honest proof, tester pack ===== */
+(function () {
+    try {
+        var K = 'mintoosuite_first5';
+        function ld() { try { return JSON.parse(localStorage.getItem(K) || '{}') || {}; } catch (e) { return {}; } }
+        function sv(o) { try { localStorage.setItem(K, JSON.stringify(o)); } catch (e) { } }
+        var STEPS = [
+            ['a', '1', 'Look at the market', 'Open the chart and drag it left and right. Tap one candle to see its numbers.', 'chart', 'Open chart'],
+            ['b', '2', 'Find an idea', 'Best picks shows the few strongest setups, each with entry, stop, target and the reason. They are possibilities, not promises.', 'findtrade', 'Find a trade'],
+            ['c', '3', 'Practise with virtual money', 'Place one practice trade. No real money. Costs are counted like a real trade.', 'paper', 'Open Practice'],
+            ['d', '4', 'Learn the one thing that saves money', 'Read the Academy lesson on stop-loss and costs. It takes two minutes.', 'academy', 'Open Academy'],
+            ['e', '5', 'Know your safety tools', 'See what is stored, lock the app, or erase everything in one tap. Parents can lock real-money screens.', 'safety', 'Open Safety']
+        ];
+        function healthCard() {
+            var rows = [], n = null, tok = window.__mwTok, R = [];
+            try { n = window.MintooNative; } catch (e) { }
+            try { rows.push(['App version', typeof BUILD !== 'undefined' ? BUILD : '?']); } catch (e) { }
+            rows.push(['Internet', navigator.onLine === false ? '❌ offline' : '✅ connected']);
+            try { rows.push(['Notifications', 'Notification' in window ? (Notification.permission === 'granted' ? '✅ allowed' : '⚠️ ' + Notification.permission + ' (allow them in Android settings)') : 'n/a']); } catch (e) { }
+            rows.push(['Android part', n && tok ? '✅ running' : 'not available (browser)']);
+            try { if (n && n.nalInfo && tok) { var i = String(n.nalInfo(tok)); rows.push(['Background alerts', /on=true/.test(i) ? '✅ on' + (/err=\S/.test(i) ? ' (last problem: ' + i.split('err=')[1].slice(0, 60) + ')' : '') : 'off']); } } catch (e) { }
+            try { R = (window.__docReport ? window.__docReport() : []).filter(function (x) { return x.lvl === 'high' || x.lvl === 'med'; }).slice(0, 3); } catch (e) { }
+            R.forEach(function (x) { rows.push([x.title, x.n + ' times, last ' + x.last]); });
+            if (!R.length) { rows.push(['Problems logged', '✅ none serious']); }
+            return '<div class="group pad"><b>🩺 App health right now</b><div class="note" style="margin:4px 0 6px">A quick honest check of this phone. Nothing is sent anywhere.</div>' + rows.map(function (r) { return '<div class="row"><span>' + r[0] + '</span><b style="text-align:right">' + r[1] + '</b></div>'; }).join('') + '<div style="margin-top:8px"><button class="btn sec" data-act="win:log">Open full log</button></div></div>';
+        }
+        function vLaunch() {
+            var d = ld(), done = STEPS.filter(function (s) { return d[s[0]]; }).length, h = '';
+            h += '<div class="group pad"><b style="font-size:17px">🚀 Start here: your first 5 minutes</b><div class="note" style="margin:6px 0 0;line-height:1.5">Five small steps, about a minute each. Tap Done when you finish one. You can stop any time. ' + done + ' of 5 done.</div></div>';
+            STEPS.forEach(function (s) {
+                h += '<div class="group pad"><div class="row"><span><b>' + (d[s[0]] ? '✅ ' : '') + s[1] + '. ' + s[2] + '</b><br><small class="mut">' + s[3] + '</small></span></div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" data-act="win:' + s[4] + '">' + s[5] + '</button><button class="btn sec" data-lc="tick:' + s[0] + '">' + (d[s[0]] ? 'Undo' : 'Done') + '</button></div></div>';
+            });
+            h += healthCard();
+            h += '<div class="group pad"><b>🔒 Your data and privacy</b><div class="note" style="line-height:1.5">There is no account server of ours. Settings, notes, watch-lists and progress stay on this phone. Exchange keys are kept only on this phone. Nothing is sold or shared.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sec" data-act="win:legal">Read privacy policy</button><button class="btn sec" data-act="win:safety">Delete my data</button></div><div class="note" style="margin-top:6px">Delete my data: open Safety and use the erase button. It removes everything this app saved on the phone, including keys. Uninstalling the app also removes it.</div></div>';
+            h += '<div class="group pad"><b>📊 What is proven and what is not</b><div class="note" style="line-height:1.5">Everything here was tested on past data and practice trading only. No result is a promise of profit, and most traders lose money. The bot score and track record show past replays with costs counted. Real brokers (such as Exness) charge their own spread and fees: check them in MT5 and enter them in Exness Gold Practice so practice matches reality.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sec" data-act="win:bot">Bot score</button><button class="btn sec" data-act="win:xgold">Exness Gold Practice</button></div></div>';
+            h += '<div class="group pad"><b>🧪 Testing this app? Thank you</b><div class="note" style="line-height:1.5">What to do: use the 5 steps above, then use the app normally for a week. Tell me: what confused you, what broke, what you wished it did. Weekly I read all notes, fix the top problems and send a new version.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" data-lc="fb">Send feedback by email</button><button class="btn sec" data-lc="copy">Copy tester info</button></div><div class="note" id="lcmsg" style="margin-top:6px"></div></div>';
+            return h;
+        }
+        function info() { var b = ''; try { b = BUILD; } catch (e) { } return 'App build: ' + b + '\nPhone: ' + (navigator.userAgent || '').slice(0, 120) + '\nSteps done: ' + STEPS.filter(function (s) { return ld()[s[0]]; }).length + '/5'; }
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-lc]') : null; if (!el) { return; }
+            var a = el.getAttribute('data-lc'), m;
+            if (a.indexOf('tick:') === 0) { var k = a.slice(5), d = ld(); d[k] = d[k] ? 0 : 1; sv(d); try { renderView(true); } catch (er) { } }
+            else if (a === 'fb') { window.location.href = 'mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite tester feedback') + '&body=' + encodeURIComponent('What confused me:\n\nWhat broke:\n\nWhat I wish it did:\n\n---\n' + info() + '\n(Please do not write passwords or keys.)'); }
+            else if (a === 'copy') { m = document.getElementById('lcmsg'); try { navigator.clipboard.writeText(info()).then(function () { if (m) { m.textContent = 'Copied.'; } }, function () { if (m) { m.textContent = info().replace(/\n/g, ' | '); } }); } catch (er) { if (m) { m.textContent = info().replace(/\n/g, ' | '); } } }
+        });
+        WINS.push({ id: 'launch', ic: '🚀', c: '#34c759', n: 'Start here (first 5 minutes)', t: 'Start here', sub: 'Five short steps, privacy and delete-my-data, what is proven, tester feedback' }); LIVE.launch = 0; VIEWS.launch = vLaunch;
+        try { MW_GROUPS[0][1].unshift('launch'); } catch (e) { }
+        try { MW_HELP.launch = 'Five short steps for new users, where to delete your data, what the results do and do not prove, and how testers send feedback.'; PF_APP.push(['start here|first time|new user|how to start|begin|tester|feedback|delete my data|erase my data', 'Start here', 'Windows > Start here walks you through the first 5 minutes, shows how to delete your data, and has the tester feedback button.', 'win:launch']); } catch (e) { }
+        /* show the guide once to a brand-new user, after the age gate and tour are gone */
+        try {
+            if (!localStorage.getItem('mintoosuite_first5_seen')) {
+                var tries = 0, iv = setInterval(function () {
+                    tries++; if (tries > 60) { clearInterval(iv); return; }
+                    if (!localStorage.getItem('mintoosuite_age18') || document.querySelector('.sheet.open,#mwAge,.mwov,[id*="tour"]')) { return; }
+                    clearInterval(iv); localStorage.setItem('mintoosuite_first5_seen', '1');
+                    if (!localStorage.getItem('mintoosuite_first5')) { try { gotoWin('launch'); } catch (e) { } }
+                }, 4000);
+            }
+        } catch (e) { }
+    } catch (e) { try { console.log('p9lc', e); } catch (er) { } }
+})();
 /* ===== p9tid: tidy Windows menu. Everyday screens stay visible; the rest sit under an arrow per group. Screens you open twice or more stay visible. ===== */
 (function () {
     try {
-        var CORE = ['overview', 'findtrade', 'best', 'analyst', 'chart', 'market', 'news', 'paper', 'xgold', 'academy', 'videos', 'baba', 'helpc', 'parent', 'moveit', 'lockui', 'safety', 'nchart', 'wallet', 'ptrade', 'tmode'];
+        var CORE = ['overview', 'launch', 'findtrade', 'best', 'analyst', 'chart', 'market', 'news', 'paper', 'xgold', 'academy', 'videos', 'baba', 'helpc', 'parent', 'moveit', 'lockui', 'safety', 'nchart', 'nlist', 'wallet', 'ptrade', 'tmode'];
         var VK = 'mintoosuite_wvis', V = {}, open = {};
         try { V = JSON.parse(localStorage.getItem(VK) || '{}') || {}; } catch (e) { V = {}; }
         function keep(id) { return CORE.indexOf(id) >= 0 || (V[id] || 0) >= 2 || (typeof S !== 'undefined' && S.win === id); }
@@ -22814,6 +22876,63 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         } catch (er) { }
     }
     document.addEventListener('pointerup', end, true); document.addEventListener('pointercancel', end, true);
+})();
+/* p9nal: tell the native background alert part the user's alert settings (on/off, sensitive) every minute */
+(function () {
+    try {
+        function push() {
+            try {
+                var n = window.MintooNative; if (!n || !n.nalCfg || !window.__mwTok) { return; }
+                var c = JSON.parse(localStorage.getItem('mintoosuite_pumpcfg') || '{}');
+                n.nalCfg(window.__mwTok, c.on !== false, !!c.hi);
+            } catch (e) { }
+        }
+        setTimeout(push, 6000); setInterval(push, 60000);
+    } catch (e) { }
+})();
+/* ===== p9nl: Native prices (experimental). Coin list drawn by Android; this page supplies rows and position. ===== */
+(function () {
+    try {
+        var NL = { shown: false, last: '', q: '', sort: 'q' };
+        function nat() { try { var n = window.MintooNative; return n && typeof n.nlistPlace === 'function' && window.__mwTok ? n : null; } catch (e) { return null; } }
+        function fp(p) { return p >= 100 ? p.toFixed(2) : p >= 1 ? p.toFixed(4) : p >= 0.01 ? p.toFixed(5) : p.toFixed(7); }
+        function rows() {
+            var a = [], k, t, q = NL.q;
+            for (k in S.tick) { t = S.tick[k]; if (!t || !(t.p > 0) || !/USDT$/.test(k)) { continue; } if (q && k.indexOf(q) < 0) { continue; } a.push([k, t]); }
+            a.sort(function (x, y) { return NL.sort === 'c' ? (y[1].chg || 0) - (x[1].chg || 0) : (y[1].q || 0) - (x[1].q || 0); });
+            return a.slice(0, 150).map(function (r) { var c = r[1].chg || 0; return [r[0].replace(/USDT$/, ''), fp(r[1].p), (c >= 0 ? '+' : '') + c.toFixed(2) + '%', r[0]]; });
+        }
+        function push() { var n = nat(); if (n) { try { n.nlistData(window.__mwTok, JSON.stringify(rows())); } catch (e) { } } }
+        function overlayOpen() { try { return !!document.querySelector('[id^="sheet"].open,#mwpin,#wtour,#pfp.on,#huPop,.mwpop,#mwpump,#mwalarm'); } catch (e) { return false; } }
+        function hide() { var n = nat(); if (n && NL.shown) { try { n.nlistHide(window.__mwTok); } catch (e) { } } NL.shown = false; NL.last = ''; }
+        function sync() {
+            var n = nat(); if (!n) { return; }
+            var box = document.getElementById('nlBox');
+            if (!box || S.win !== 'nlist' || overlayOpen() || document.hidden) { hide(); return; }
+            var r = box.getBoundingClientRect(); if (r.top < 0 || r.bottom > window.innerHeight - 60 || r.width < 40) { hide(); return; }
+            var d = window.devicePixelRatio || 1, k = Math.round(r.left * d) + ',' + Math.round(r.top * d) + ',' + Math.round(r.width * d) + ',' + Math.round(r.height * d);
+            if (k !== NL.last || !NL.shown) { NL.last = k; NL.shown = true; var q = k.split(',').map(Number); try { n.nlistPlace(window.__mwTok, q[0], q[1], q[2], q[3]); } catch (e) { } push(); }
+        }
+        setInterval(function () { if (S.win === 'nlist' || NL.shown) { sync(); } }, 400);
+        setInterval(function () { if (S.win === 'nlist' && NL.shown) { push(); } }, 3000);
+        function vNl() {
+            var n = nat(), h = '<div class="group pad"><b style="font-size:17px">⚡ Native prices (experimental)</b><div class="note" style="margin:6px 0 0;line-height:1.5">A coin list drawn by Android itself: smooth scrolling and light on memory. Tap a coin to open its chart. ' + (n ? '' : '<b>This needs the Android app; in a browser it is not available.</b>') + '</div></div>';
+            h += '<div class="group pad"><div style="display:flex;gap:6px"><input id="nlQ" class="tin" placeholder="Search coin, e.g. BTC" value="' + String(NL.q).replace(/[^A-Z0-9]/g, '') + '" style="flex:1;min-width:0;text-transform:uppercase" autocomplete="off"><span class="btn tap" data-nl="go" style="width:auto;padding:0 14px">Go</span></div>' +
+                '<div style="display:flex;gap:6px;margin-top:8px"><span class="btn ' + (NL.sort === 'q' ? '' : 'sec ') + 'tap" data-nl="s:q" style="width:auto;padding:6px 12px">Most traded</span><span class="btn ' + (NL.sort === 'c' ? '' : 'sec ') + 'tap" data-nl="s:c" style="width:auto;padding:6px 12px">Top movers</span></div></div>';
+            h += '<div id="nlBox" style="height:calc(100vh - 470px);min-height:260px;max-height:70vh;border-radius:14px;background:rgba(128,128,128,.12);display:flex;align-items:center;justify-content:center;text-align:center;padding:10px" class="note">' + (n ? 'Loading list…' : 'Not available here') + '</div>';
+            return h;
+        }
+        WINS.push({ id: 'nlist', ic: '📈', c: '#30d158', n: 'Native prices', t: 'Native prices', sub: 'Android-drawn coin list: smooth, light, tap for the chart' }); LIVE.nlist = 1; VIEWS.nlist = vNl;
+        try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Markets' || /Main/.test(g[0])) { if (g[1].indexOf('nlist') < 0 && g[1].indexOf('nchart') >= 0) { g[1].splice(g[1].indexOf('nchart') + 1, 0, 'nlist'); } } }); } catch (e) { }
+        try { MW_HELP.nlist = 'A coin price list drawn by Android. Search, sort by traded amount or biggest movers, tap a coin to open its chart.'; } catch (e) { }
+        window.__nlTap = function (sym) { try { hide(); S.chart.sym = sym; S.cx.src = 'f'; S.cx.srcFor = sym; var e = document.createElement('div'); e.setAttribute('data-act', 'win:chart'); document.body.appendChild(e); e.click(); setTimeout(function () { e.remove(); }, 50); try { loadChart(); } catch (x) { } } catch (e) { } };
+        document.addEventListener('click', function (e) {
+            var t = e.target.closest ? e.target.closest('[data-nl]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); var a = t.getAttribute('data-nl');
+            if (a === 'go') { var i = document.getElementById('nlQ'); NL.q = String((i && i.value) || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); NL.last = ''; push(); try { renderView(true); } catch (er) { } }
+            else if (a.indexOf('s:') === 0) { NL.sort = a.slice(2); NL.last = ''; try { renderView(true); } catch (er) { } }
+        }, true);
+        window.__nl = { state: NL, rows: rows };
+    } catch (e) { try { console.log('p9nl', e); } catch (er) { } }
 })();
 
 function renderView(keep) {

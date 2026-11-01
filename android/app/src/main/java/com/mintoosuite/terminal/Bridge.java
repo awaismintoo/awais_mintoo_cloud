@@ -459,6 +459,7 @@ final class Bridge {
         if (title != null && title.length() > 80) { title = title.substring(0, 80); }
         if (body != null && body.length() > 300) { body = body.substring(0, 300); }
         if (Build.VERSION.SDK_INT >= 33 && ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { return; }
+        try { NativeAlerts.jsNotified(ctx, title); } catch (Exception ignored) { }
         MainActivity.alertChannel(ctx);
         Intent open = new Intent(ctx, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent pi = PendingIntent.getActivity(ctx, 0, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
@@ -519,4 +520,24 @@ final class Bridge {
             ctx.startActivity(c);
         } catch (Exception ignored) { }
     }
+
+    /* native background alerts: settings from the web part, and "did the native part already alert this coin?" */
+    @JavascriptInterface
+    public void nalCfg(String tok, boolean on, boolean hi) { if (ok(tok)) { NativeAlerts.setCfg(ctx, on, hi); } }
+
+    @JavascriptInterface
+    public boolean nalSeen(String tok, String title) { return ok(tok) && NativeAlerts.seenRecently(ctx, title, "nat"); }
+
+    @JavascriptInterface
+    public String nalInfo(String tok) { if (!ok(tok)) { return ""; } android.content.SharedPreferences s = NativeAlerts.sp(ctx); return "on=" + s.getBoolean("on", true) + " err=" + s.getString("err", ""); }
+
+    /* native coin list (experimental) */
+    @JavascriptInterface
+    public void nlistPlace(String tok, int x, int y, int w, int h) { if (ok(tok)) { NativeList.place(x, y, w, h); } }
+
+    @JavascriptInterface
+    public void nlistData(String tok, String json) { if (ok(tok)) { NativeList.data(json); } }
+
+    @JavascriptInterface
+    public void nlistHide(String tok) { if (ok(tok)) { NativeList.hide(); } }
 }

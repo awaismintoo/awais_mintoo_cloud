@@ -143,6 +143,7 @@ public class BotService extends Service {
             WebHolder.js("window.__mwSvcCmd&&window.__mwSvcCmd('" + (now ? "pause" : "resume") + "');");
         }
         show();
+        try { NativeAlerts.start(this); } catch (Exception ignored) { }
         beat.removeCallbacks(beatRun); beat.post(beatRun);
         wake(sp(this).getBoolean("wake", false));
         return START_STICKY;
@@ -159,6 +160,7 @@ public class BotService extends Service {
         beat.removeCallbacks(beatRun);
         wake(false);
         if (!isOn(this)) {
+            try { NativeAlerts.stop(); } catch (Exception ignored) { }
             WebHolder.js("window.__mwSvcCmd&&window.__mwSvcCmd('svcoff');");
             if (MainActivity.cur == null) { WebHolder.destroy(); }
         }
