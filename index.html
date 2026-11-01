@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.275';
+var BUILD = '2026-10-31.277';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -19126,7 +19126,7 @@ try {
 (function () {
     try {
         var X = window.__kx, KX = X.KX, KN = 'mintoosuite_known_syms', CFG = 'mintoosuite_pumpcfg';
-        var K = { s: {}, f: {}, b: {}, init: 0, binit: 0 }, LOG = [], LK = 'mintoosuite_pumplog'; try { LOG = JSON.parse(localStorage.getItem(LK) || '[]') || []; } catch (e) { LOG = []; }
+        var K = { s: {}, f: {}, b: {}, init: 0, binit: 0 }, LOG = [], LK = 'mintoosuite_pumplog'; try { LOG = JSON.parse(localStorage.getItem(LK) || '[]') || []; } catch (e) { LOG = []; } try { LOG = LOG.filter(function (x) { return x.kind !== 'pump' || x.mega || /minutes/.test(x.body || ''); }); } catch (e) { }
         var H = {}, FIRED = {}, ST = { at: 0, ok: 0, err: '', n: 0, last: null };
         var cfg = { on: true, hi: false }; try { cfg = Object.assign(cfg, JSON.parse(localStorage.getItem(CFG) || '{}')); } catch (e) { }
         try { K = Object.assign(K, JSON.parse(localStorage.getItem(KN) || '{}')); } catch (e) { }
@@ -19189,9 +19189,9 @@ try {
             var t5 = cfg.hi ? 6 : 10, t15 = cfg.hi ? 12 : 20, d5 = rise(r, 5 * 60000, now), d15 = rise(r, 15 * 60000, now), tier = 0, why = '', td = 0;
             if (d5 !== null && d5 >= t5 * 2) { tier = 2; why = '+' + d5.toFixed(0) + '% in 5 minutes'; } else if (d5 !== null && d5 >= t5) { tier = 1; why = '+' + d5.toFixed(0) + '% in 5 minutes'; }
             else if (d15 !== null && d15 >= t15 * 2) { tier = 2; why = '+' + d15.toFixed(0) + '% in 15 minutes'; } else if (d15 !== null && d15 >= t15) { tier = 1; why = '+' + d15.toFixed(0) + '% in 15 minutes'; }
-            else if (r.length <= 2 && chg24 >= 60) { tier = 1; td = 1; why = '+' + chg24.toFixed(0) + '% since the day began (it may already have peaked, check the chart)'; }
+            /* no alert from a daily total alone: that is old news. Alerts need a rise measured by the app in the last 5 or 15 minutes */
             var mx = Math.max(d5 || 0, d15 || 0); if (mx > 30 && r.length > 2 && !(chg24 >= mx * 0.5)) { return; }
-            var mega = (d5 !== null && d5 >= 25) || (d15 !== null && d15 >= 50) || (r.length <= 2 && chg24 >= 300); if (mega && vol >= 15000 && gate('MEGA:' + sym, 1)) { fire({ kind: 'pump', mega: true, sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: name + ' is exploding on ' + venue, body: (d5 !== null && d5 >= 25 ? '+' + d5.toFixed(0) + '% in 5 minutes' : d15 !== null && d15 >= 50 ? '+' + d15.toFixed(0) + '% in 15 minutes' : '+' + chg24.toFixed(0) + '% today') + ' · now ' + fmt(p), warn: WARN }); return; }
+            var mega = (d5 !== null && d5 >= 25) || (d15 !== null && d15 >= 50); if (mega && vol >= 15000 && gate('MEGA:' + sym, 1)) { fire({ kind: 'pump', mega: true, sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: name + ' is exploding on ' + venue, body: (d5 !== null && d5 >= 25 ? '+' + d5.toFixed(0) + '% in 5 minutes' : d15 !== null && d15 >= 50 ? '+' + d15.toFixed(0) + '% in 15 minutes' : '+' + chg24.toFixed(0) + '% today') + ' · now ' + fmt(p), warn: WARN }); return; }
             if (tier && vol >= (cfg.hi ? 15000 : 40000) && gate(sym, tier, td)) { fire({ kind: 'pump', sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: '🚀 ' + name + ' is pumping on ' + venue, body: why + ' · now ' + fmt(p) + (chg24 ? ' · ' + (chg24 >= 0 ? '+' : '') + chg24.toFixed(0) + '% today' : ''), warn: WARN }); }
         }
         function scanF() {
@@ -22781,6 +22781,23 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         }, true);
         window.__tid = { core: CORE };
     } catch (e) { try { console.log('p9tid', e); } catch (er) { } }
+})();
+/* p9edge: chart edge badges so the user can see where the data really ends */
+(function () {
+    'use strict';
+    var _o = window.__cxOver;
+    window.__cxOver = function (c, m) {
+        if (_o) { _o(c, m); }
+        try {
+            var K = m.K; if (!K || !K.length) { return; }
+            var oldest = m.start <= 0, latest = m.end >= K.length;
+            if (!oldest && latest) { return; }
+            c.save(); c.font = '700 10px -apple-system,Segoe UI,sans-serif'; c.textBaseline = 'top';
+            var t = oldest ? '◀ oldest candle we have' : '';
+            if (t) { var w = c.measureText(t).width + 12; c.fillStyle = 'rgba(10,132,255,.88)'; c.fillRect(4, m.padT + 4, w, 17); c.fillStyle = '#fff'; c.textAlign = 'left'; c.fillText(t, 10, m.padT + 8); }
+            c.restore();
+        } catch (e) { }
+    };
 })();
 
 function renderView(keep) {
