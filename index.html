@@ -451,7 +451,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.252';
+var BUILD = '2026-10-31.258';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -3357,7 +3357,7 @@ function cxURL(sym, tf, extra) {
 }
 function cxMap(rows) { return rows.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5], q: +r[7] || (+r[5] * +r[4]) }; }); }
 function loadChart() {
-    var c = S.chart, sym = c.sym, tf = c.tf; c.err = ''; c.k = []; S.cx.sel = -1; S.cx.off = 0; closeChartWS();
+    var c = S.chart, sym = c.sym, tf = c.tf; c.err = ''; c.k = []; S.cx.sel = -1; S.cx.off = 0; S.cx.fx = 0; closeChartWS();
     fetch(cxURL(sym, tf), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (rows) {
         if (sym !== c.sym || tf !== c.tf) { return; }
         if (!Array.isArray(rows)) { throw new Error((rows && rows.msg) || 'no data'); }
@@ -3428,7 +3428,7 @@ function drawChart() {
     var padR = 62, padT = 6, axisH = 18, subH = C.sub === 'VOL' ? 70 : 84, ph = h - padT - axisH - subH - 8, W = w - padR;
     /* keep the picture where the user left it: when a new candle arrives and the user is looking at older candles, move with it */
     try { var akk = ch.sym + '|' + ch.tf, lt = K[K.length - 1].t; if (C.akk !== akk) { C.akk = akk; C.alt = lt; C.base = null; C.vz = 1; C.vp = 0; } else if (lt > C.alt) { var nw = 0, q9 = K.length - 1; while (q9 >= 0 && K[q9].t > C.alt) { nw++; q9--; } if (C.off > 0) { C.off += nw; } C.alt = lt; } } catch (e) { }
-    var n = Math.max(15, Math.min(C.n, K.length)), maxOff = Math.max(0, K.length - n); C.off = Math.max(0, Math.min(C.off, maxOff + Math.floor(n / 2)));
+    var n = Math.max(15, Math.min(C.n, K.length)), maxOff = Math.max(0, K.length - n); C.off = Math.max(0, Math.min(C.off, maxOff + Math.floor(n / 2))); if (C.off >= maxOff + Math.floor(n / 2) || C.off === 0 && !(C.fx > 0)) { C.fx = 0; }
     var end = K.length - Math.min(C.off, maxOff), start = Math.max(0, end - n), v = K.slice(start, end), cw = W / (n + 2), i;
     if (start < 30 && !C.more) { cxMore(); }
     var closes = K.map(function (x) { return x.c; }), ind = {};
@@ -3444,14 +3444,14 @@ function drawChart() {
     inc(ind.ma7); inc(ind.ma25); inc(ind.e9); inc(ind.e21); if (ind.bo) { inc(ind.bo.up); inc(ind.bo.lo); } inc(ind.vw);
     var pad = (hi - lo) * 0.06 || hi * 0.001; hi += pad; lo -= pad; if (C.base && (hi < C.base.lo || lo > C.base.hi || (hi - lo) > (C.base.hi - C.base.lo) * 6 || (hi - lo) * 6 < (C.base.hi - C.base.lo))) { C.base = null; C.vz = 1; C.vp = 0; } /* safety: a locked range that no longer matches the candles is dropped, the chart can never be left empty */
     var dHi9 = hi, dLo9 = lo; var man9 = (C.vz && C.vz !== 1) || C.vp; if (man9) { if (!C.base) { C.base = { hi: hi, lo: lo }; } hi = C.base.hi; lo = C.base.lo; } else { C.base = null; } /* manual price scale = locked range, like TradingView: the picture no longer drifts while you look at it */
-    if ((C.vz && C.vz !== 1) || C.vp) { var mid0 = (hi + lo) / 2 + (C.vp || 0) * (hi - lo), half0 = (hi - lo) / 2 / (C.vz || 1); hi = mid0 + half0; lo = mid0 - half0; var ov9 = Math.min(hi, dHi9) - Math.max(lo, dLo9); if (!(ov9 > 0.5 * Math.min(hi - lo, dHi9 - dLo9))) { C.base = null; C.vz = 1; C.vp = 0; hi = dHi9; lo = dLo9; } /* scale and candles must never separate: if less than half of them would overlap, go back to automatic */ } C.pb = padT + ph; var span = hi - lo, yr = function (p) { return padT + (hi - p) / span * ph; }, y = function (p) { var q = yr(p); return Math.max(-1e6, Math.min(1e6, q)); }, xs = function (j) { return (j - start) * cw + cw * 1.0 + cw / 2; };
+    if ((C.vz && C.vz !== 1) || C.vp) { var mid0 = (hi + lo) / 2 + (C.vp || 0) * (hi - lo), half0 = (hi - lo) / 2 / (C.vz || 1); hi = mid0 + half0; lo = mid0 - half0; var minOv = 0.65 * Math.min(hi - lo, dHi9 - dLo9), sh9 = 0; if (hi < dLo9 + minOv) { sh9 = dLo9 + minOv - hi; } else if (lo > dHi9 - minOv) { sh9 = dHi9 - minOv - lo; } if (sh9) { hi += sh9; lo += sh9; var bh9 = C.base.hi - C.base.lo; if (bh9 > 0) { C.vp = ((hi + lo) / 2 - (C.base.hi + C.base.lo) / 2) / bh9; } } /* hard limit like Binance and TradingView: the candles can never be dragged out of the frame */ } C.pb = padT + ph; C.ph = ph; var span = hi - lo, yr = function (p) { return padT + (hi - p) / span * ph; }, y = function (p) { var q = yr(p); return Math.max(-1e6, Math.min(1e6, q)); }, xs = function (j) { return (j - start) * cw + cw * 1.0 + cw / 2 + (C.fx || 0); };
     g.lineWidth = 1;
     for (i = 0; i <= 4; i++) { var gy = padT + ph * i / 4, gp = hi - span * i / 4; g.strokeStyle = LN; g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke(); g.fillStyle = MT; g.textAlign = 'left'; g.fillText(fmtP(gp, ch.sym), W + 4, gy + 4); }
     // time axis in the chosen time zone
     var every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(W / (CX_MS[ch.tf] >= 86400 ? 70 : 115))))); g.fillStyle = MT; g.textAlign = 'center';
     for (i = start; i < end; i += every) { var tt = K[i].t, lab = CX_MS[ch.tf] >= 86400 ? m7fmt(tt, 'd') : m7fmt(tt, 'dt'); g.fillText(lab, Math.min(W - 24, Math.max(24, xs(i))), padT + ph + 14); }
     g.textAlign = 'left';
-    g.save(); g.beginPath(); g.rect(0, padT, w, ph); g.clip(); /* anything outside the price pane is cut, never squashed onto an edge */
+    g.save(); g.beginPath(); g.rect(0, padT, W, ph); g.clip(); /* anything outside the price pane is cut, never squashed onto an edge */
     // Bollinger fill
     if (ind.bo) { g.fillStyle = 'rgba(240,185,11,.07)'; g.beginPath(); var f1 = true, j; for (j = start; j < end; j++) { if (ind.bo.up[j] === null) { continue; } if (f1) { g.moveTo(xs(j), y(ind.bo.up[j])); f1 = false; } else { g.lineTo(xs(j), y(ind.bo.up[j])); } } for (j = end - 1; j >= start; j--) { if (ind.bo.lo[j] === null) { continue; } g.lineTo(xs(j), y(ind.bo.lo[j])); } g.closePath(); g.fill(); }
     // candles with a soft 3D look
@@ -3528,7 +3528,7 @@ function cxInfo(k, i, closes, ind) {
     document.addEventListener('pointerdown', function (e) {
         if (!cvEl(e)) { return; } pts[e.pointerId] = { x: e.clientX, y: e.clientY }; try { e.target.setPointerCapture(e.pointerId); } catch (er) {}
         var ids = Object.keys(pts); moved = 0;
-        if (ids.length === 1) { sx = e.clientX; soff = S.cx.off; tap = { x: e.clientX, y: e.clientY, t: Date.now() }; var rc9 = e.target.getBoundingClientRect(), yy9 = e.clientY - rc9.top; if (S.cx.pb && yy9 > S.cx.pb && yy9 < S.cx.pb + 26) { tz = { x: e.clientX, n: S.cx.n }; tap = null; } else { tz = null; } }
+        if (ids.length === 1) { sx = e.clientX; var pr9 = ((e.target.clientWidth || 300) - 62) / (S.cx.n + 2); soff = S.cx.off + (S.cx.fx || 0) / pr9; tap = { x: e.clientX, y: e.clientY, t: Date.now() }; var rc9 = e.target.getBoundingClientRect(), yy9 = e.clientY - rc9.top; if (S.cx.pb && yy9 > S.cx.pb && yy9 < S.cx.pb + 26) { tz = { x: e.clientX, n: S.cx.n }; tap = null; } else { tz = null; } }
         if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]]; startD = Math.hypot(a.x - b.x, a.y - b.y) || 1; startN = S.cx.n; tap = null; tz = null; }
     });
     document.addEventListener('pointermove', function (e) {
@@ -3536,7 +3536,7 @@ function cxInfo(k, i, closes, ind) {
         if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y) || 1; S.cx.n = Math.max(15, Math.min(400, Math.round(startN * startD / d))); cxDraw(); return; }
         if (tz && ids.length === 1) { S.cx.n = Math.max(15, Math.min(400, Math.round(tz.n * Math.exp(-(e.clientX - tz.x) / 160)))); cxDraw(); return; } /* drag the time numbers sideways to zoom time, like TradingView */
         var dx = e.clientX - sx; if (Math.abs(dx) > 5) { moved = 1; tap = null; } var per = (w - 62) / (S.cx.n + 2);
-        if (moved) { S.cx.off = Math.max(0, soff + Math.round(dx / per)); cxDraw(); }
+        if (moved) { var of9 = Math.max(0, soff + dx / per), oi9 = Math.floor(of9); S.cx.off = oi9; S.cx.fx = of9 > 0 ? (of9 - oi9) * per : 0; cxDraw(); } /* smooth: the chart follows the finger pixel by pixel */
     });
     function up(e) {
         if (!pts[e.pointerId]) { return; } delete pts[e.pointerId]; tz = null;
@@ -3553,7 +3553,7 @@ document.addEventListener('click', function (e) {
     var a = el.getAttribute('data-m7'), i = a.indexOf(':'), v = a.slice(0, i), x = a.slice(i + 1), C = S.cx;
     if (v === 'ov') { C.ov[x] = C.ov[x] ? 0 : 1; cxSave(); renderView(true); }
     else if (v === 'sub2') { C.sub = x; cxSave(); renderView(true); }
-    else if (v === 'zoom') { if (x === 'in') { C.n = Math.max(15, Math.round(C.n * 0.7)); } else if (x === 'out') { C.n = Math.min(400, Math.round(C.n * 1.4)); } else { C.off = 0; C.sel = -1; } drawChart(); }
+    else if (v === 'zoom') { if (x === 'in') { C.n = Math.max(15, Math.round(C.n * 0.7)); } else if (x === 'out') { C.n = Math.min(400, Math.round(C.n * 1.4)); } else { C.off = 0; C.fx = 0; C.sel = -1; } drawChart(); }
     else if (v === 'chsel') { var p = x.split(':'); S.chart.sym = x.slice(p[0].length + 1); C.src = p[0]; C.srcFor = S.chart.sym; lss('mintoosuite_chart', S.chart.sym); S.cx.q = ''; renderView(true); loadChart(); }
     else if (v === 'analyze') { S.an = S.an || {}; S.an.sym = x; gotoWin('analyst'); }
 });
@@ -15335,7 +15335,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         (function () {
             var ax = null, pn = null, lastTap = 0;
             function cvOf(e) { return e.target && e.target.id === 'cv' ? e.target : null; }
-            function ph() { var c = document.getElementById('cv'); return c ? Math.max(100, c.clientHeight - 110) : 300; }
+            function ph() { if (S.cx.ph > 40) { return S.cx.ph; } var c = document.getElementById('cv'); return c ? Math.max(100, c.clientHeight - 110) : 300; }
             document.addEventListener('pointerdown', function (e) {
                 var c = cvOf(e); if (!c) { return; }
                 var r = c.getBoundingClientRect(), x = e.clientX - r.left;
@@ -15348,7 +15348,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             }, true);
             document.addEventListener('pointermove', function (e) {
                 if (ax && e.pointerId === ax.id) { var dy = e.clientY - ax.y; S.cx.vz = Math.max(0.3, Math.min(10, ax.z * Math.exp(-dy / 140))); if (Math.abs(S.cx.vz - 1) < 0.04) { S.cx.vz = 1; } cxDraw(); return; }
-                if (pn && e.pointerId === pn.id) { var d2 = e.clientY - pn.y; if (!pn.on && Math.abs(d2) < 6) { return; } pn.on = 1; S.cx.vp = Math.max(-3, Math.min(3, pn.p + d2 / ph() / (S.cx.vz || 1))); cxDraw(); }
+                if (pn && e.pointerId === pn.id) { var d2 = e.clientY - pn.y; if (!pn.on) { if (Math.abs(d2) < 3) { return; } pn.on = 1; } /* the chart follows the finger one-to-one */ S.cx.vp = Math.max(-3, Math.min(3, pn.p + d2 / ph() / (S.cx.vz || 1))); cxDraw(); }
             });
             function up(e) { if (ax && e.pointerId === ax.id) { ax = null; } if (pn && e.pointerId === pn.id) { pn = null; } }
             document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
@@ -20509,14 +20509,21 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         document.head.appendChild(css);
         function px() { var o = cur.o; var t = S.tick && S.tick[o.sym]; return t && t.p > 0 ? t.p : (cds.length ? cds[cds.length - 1].c : 0); }
         function fmt(v) { v = +v; if (!isFinite(v)) return '-'; return v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(5); }
+        function ltGet(u, ms) { var ac = typeof AbortController !== 'undefined' ? new AbortController() : null, to = ac ? setTimeout(function () { ac.abort(); }, ms || 9000) : null; return fetch(u, { cache: 'no-store', signal: ac ? ac.signal : undefined }).then(function (r) { if (to) { clearTimeout(to); } if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); }, function (e) { if (to) { clearTimeout(to); } throw e; }); }
+        var BYI = { '1m': '1', '5m': '5', '15m': '15', '1h': '60', '4h': '240', '1d': 'D' };
         function load() {
-            if (!cur) return; var sym = cur.o.sym, spot = !!cur.o.spot;
-            var u = (spot ? 'https://api.binance.com/api/v3' : 'https://fapi.binance.com/fapi/v1') + '/klines?symbol=' + sym + '&interval=' + tf + '&limit=100';
-            fetchJSON(u).then(function (a) { if (!Array.isArray(a) || a.length < 5) throw 0; return a; }, function () { return fetchJSON('https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=' + tf + '&limit=100'); }).then(function (a) {
-                if (!cur || cur.o.sym !== sym || !Array.isArray(a)) return;
+            if (!cur) return; var sym = cur.o.sym, spot = !!cur.o.spot, myTf = tf;
+            var uF = 'https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=' + tf + '&limit=100', uS = 'https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=' + tf + '&limit=100', uB = 'https://api.bybit.com/v5/market/kline?category=linear&symbol=' + sym + '&interval=' + (BYI[tf] || '5') + '&limit=100';
+            function okA(a) { if (!Array.isArray(a) || a.length < 5) { throw new Error('few'); } return a; }
+            function byb(j) { var L = j && j.result && j.result.list; if (!Array.isArray(L) || L.length < 5) { throw new Error('few'); } return L.slice().reverse().map(function (k) { return [k[0], k[1], k[2], k[3], k[4], k[5]]; }); }
+            var chain = (spot ? ltGet(uS).then(okA) : ltGet(uF).then(okA)).catch(function () { return ltGet(spot ? uF : uS).then(okA); }).catch(function () { return ltGet(uB).then(byb); }).catch(function () {
+                /* last resort: the candles the app already holds for this coin */
+                var K = S.chart && S.chart.sym === sym && S.chart.k; if (K && K.length > 5) { return K.slice(-100).map(function (k) { return [k.t, k.o, k.h, k.l, k.c, k.v]; }); } throw new Error('none'); });
+            chain.then(function (a) {
+                if (!cur || cur.o.sym !== sym || myTf !== tf || !Array.isArray(a)) return;
                 cds = a.map(function (k) { return { t: +k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5] }; }); draw();
-            }, function () { });
-            fetchJSON((spot ? 'https://api.binance.com/api/v3' : 'https://fapi.binance.com/fapi/v1') + '/depth?symbol=' + sym + '&limit=8').then(function (d) { if (d && d.bids) { book = d; drawBook(); } }, function () { });
+            }, function () { try { var cv = el && el.querySelector('canvas'); if (cv && !cds.length) { var g = cv.getContext('2d'); cv.width = cv.clientWidth; cv.height = cv.clientHeight; g.fillStyle = '#848e9c'; g.font = '13px system-ui'; g.fillText('Chart data is not reachable right now. Retrying...', 16, 40); } } catch (e) { } });
+            ltGet((spot ? 'https://api.binance.com/api/v3' : 'https://fapi.binance.com/fapi/v1') + '/depth?symbol=' + sym + '&limit=8', 6000).then(function (d) { if (d && d.bids) { book = d; drawBook(); } }, function () { });
         }
         function drawBook() {
             var b = el && el.querySelector('.ob'); if (!b || !book) return;
@@ -21118,7 +21125,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         window.__babaPos = function (K) { try { return babaSig(K).pos; } catch (e) { return K.map(function () { return 0; }); } };
         window.__babaSig = babaSig;
         var _o = window.__cxOver;
-        var SC0 = { k: '', r: null };
+        var SC0 = { k: '', r: null }, SCF = { k: '', r: null };
         function sigC(K, m) { var k = m.sym + '|' + m.tf + '|' + K.length + '|' + K[K.length - 1].t + '|' + K[K.length - 1].c; if (SC0.k !== k) { SC0 = { k: k, r: babaSig(K) }; } return SC0.r; }
         window.__cxOver = function (c, m) {
             if (_o) { _o(c, m); }
@@ -21144,6 +21151,16 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
                     c.fillStyle = '#fff'; c.fillText((up ? '🧓 BUY' : '🧓 SELL') + (tent ? '?' : '') + (i >= n - 3 && window.__lastExp && ((window.__lastExp.side === 'LONG') === up) ? ' ' + window.__lastExp.conv + '%' : ''), x, y0 + 3.5);
                     c.strokeStyle = c.fillStyle = up ? '#0ea5e9' : '#a855f7'; c.globalAlpha = tent ? .35 : .6; c.lineWidth = 1; c.setLineDash([2, 3]); c.beginPath(); c.moveTo(x, up ? y0 - 9 : y0 + 9); c.lineTo(x, up ? Y(K[i].l) + 2 : Y(K[i].h) - 2); c.stroke(); c.setLineDash([]);
                 }
+                /* the recommendation is made on the live candle, so show the live signal too (see-through, with ?), exactly at the point where Baba recommends */
+                try {
+                    var KF = m.K, nf = KF.length, kf = m.sym + '|' + m.tf + '|' + nf + '|' + KF[nf - 1].c; if (SCF.k !== kf) { SCF = { k: kf, r: babaSig(KF) }; }
+                    var RF = SCF.r, li = nf - 1;
+                    if (RF && (RF.buy[li] || RF.sell[li]) && li >= m.start && li < m.end) {
+                        var upf = !!RF.buy[li], xf = m.xs(li), yf = upf ? Y(KF[li].l) + 34 : Y(KF[li].h) - 34;
+                        c.globalAlpha = 0.5; c.fillStyle = upf ? '#0ea5e9' : '#a855f7'; c.fillRect(xf - 32, yf - 9, 64, 18); c.globalAlpha = 1; c.strokeStyle = c.fillStyle; c.setLineDash([3, 2]); c.strokeRect(xf - 32, yf - 9, 64, 18); c.setLineDash([]);
+                        c.fillStyle = '#fff'; c.fillText((upf ? '🧓 BUY' : '🧓 SELL') + ' now?', xf, yf + 3.5);
+                    }
+                } catch (e) { }
                 c.restore();
             } catch (e) { }
         };
@@ -21810,7 +21827,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             return r1 + (mini ? '' : r2) + (more ? r3 : '');
         }
         function place() {
-            var on = fsOn() && !(window.__drawOn && window.__drawOn()); /* hidden while a drawing tool is active, so taps always reach the chart */
+            var vw0 = document.getElementById('view'), on = fsOn() && !(window.__drawOn && window.__drawOn()) && !(vw0 && vw0.scrollTop > 60); /* hidden while a drawing tool is active, so taps always reach the chart */
             if (!on) { if (hud) { hud.style.display = 'none'; } return; }
             if (!hud) { hud = document.createElement('div'); hud.id = 'fsHud'; hud.setAttribute('data-noswipe', '1'); document.body.appendChild(hud); }
             var html = build(); if (!html) { html = last; } if (html !== last) { hud.innerHTML = html; last = html; }
@@ -21838,15 +21855,15 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         st.textContent = '#fsBar{position:fixed;left:0;right:0;bottom:0;z-index:9991;display:none;gap:6px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:rgba(19,23,34,.94);box-sizing:border-box}#fsBar span{flex:1 1 0;text-align:center;padding:9px 4px;border-radius:10px;background:rgba(120,123,134,.28);color:#d1d4dc;font:700 12px -apple-system,Segoe UI,sans-serif;cursor:pointer;white-space:nowrap}#fsBar span.on{background:#2962ff;color:#fff}' +
             'html[data-fs="cv"] #fsBar{display:flex}html:has(#drNow) #fsBar{display:none!important}' +
             'html[data-fs="cv"] #view.fsx{padding-bottom:54px!important;min-height:0!important;max-height:100vh!important;height:100vh!important;box-sizing:border-box}html[data-fs="cv"] #view.fsx *{min-height:0}html[data-fs="cv"] #view.fsx #cv{min-height:240px;height:calc(100vh - 165px)!important}html[data-fs="cv"] .bn,html[data-fs="cv"] #banner,html[data-fs="cv"] #mwtoast,html[data-fs="cv"] #qtoast,html[data-fs="cv"] #swtoast,html[data-fs="cv"] #huPop,html[data-fs="cv"] #mwcoach,html[data-drfs] #huPop{display:none!important}' +
-            'html[data-fsp] #view.fsx .mwhascv>.m7ind.fsrow{display:flex!important;flex-wrap:nowrap;overflow-x:auto;margin:3px 0}html[data-fsp][data-fs] #view.fsx #cv{height:calc(100vh - 330px)!important}html[data-fsp] #view.fsx .mwhascv>.m7ind.fsrow>*{flex:0 0 auto}';
+            'html[data-fs="cv"] #view.fsx .mwhascv>.m7ind:not(:has(#cv)),html[data-fs="cv"] #view.fsx .mwhascv>.note:not(:has(#cv)){display:flex!important;flex-wrap:wrap;margin:6px 4px}html[data-fs="cv"] #view.fsx .mwhascv>.note:not(:has(#cv)){display:block!important;font-size:12px}html[data-fs="cv"] #view.fsx{overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}html[data-fs="cv"] #view.fsx #cv{height:calc(100vh - 150px)!important}#fsBar span.up{background:#2962ff;color:#fff}';
         document.head.appendChild(st);
         var bar = document.createElement('div'); bar.id = 'fsBar'; bar.setAttribute('data-noswipe', '1'); bar.setAttribute('data-mwkeep', '1');
-        bar.innerHTML = '<span data-xk="fsbar:ind">📊 Indicators</span><span data-xk="fsbar:auto">⇕ Auto scale</span><span data-xk="fsbar:out">⛶ Exit</span>';
+        bar.innerHTML = '<span data-xk="fsbar:ind">☰ Options ▾</span><span data-xk="fsbar:auto">⇕ Auto scale</span><span data-xk="fsbar:out">⛶ Exit</span>';
         document.body.appendChild(bar);
-        function tag() { try { if (!(S && S.fsKey === 'cv')) { document.documentElement.removeAttribute('data-fsp'); return; } var rows = document.querySelectorAll('#view.fsx .mwhascv>.m7ind'); for (var i = 0; i < rows.length; i++) { var t = (rows[i].textContent || '').replace(/\s+/g, ' ').trim(), want = /^MA\s*EMA/i.test(t) || /^VOL\s*MACD/i.test(t) || /^UT\s*Bot/i.test(t); if (want !== rows[i].classList.contains('fsrow')) { rows[i].classList.toggle('fsrow', want); } } var on = document.documentElement.hasAttribute('data-fsp'); if (bar.firstChild.classList.contains('on') !== on) { bar.firstChild.classList.toggle('on', on); } } catch (e) { } }
+        function tag() { try { if (!(S && S.fsKey === 'cv')) { document.documentElement.removeAttribute('data-fsp'); return; } var rows = document.querySelectorAll('#view.fsx .mwhascv>.m7ind'); for (var i = 0; i < rows.length; i++) { var t = (rows[i].textContent || '').replace(/\s+/g, ' ').trim(), want = /^MA\s*EMA/i.test(t) || /^VOL\s*MACD/i.test(t) || /^UT\s*Bot/i.test(t); if (want !== rows[i].classList.contains('fsrow')) { rows[i].classList.toggle('fsrow', want); } } var vw2 = document.getElementById('view'), dn = !!(vw2 && vw2.scrollTop > 60), lb = dn ? '▲ Chart' : '☰ Options ▾'; if (bar.firstChild.textContent !== lb) { bar.firstChild.textContent = lb; bar.firstChild.classList.toggle('on', dn); } } catch (e) { } }
         setInterval(tag, 500);
         window.__kx && window.__kx.on('fsbar', function (v) {
-            if (v === 'ind') { var h = document.documentElement; if (h.hasAttribute('data-fsp')) { h.removeAttribute('data-fsp'); } else { h.setAttribute('data-fsp', '1'); } tag(); try { window.dispatchEvent(new Event('resize')); setTimeout(function () { try { drawChart(); } catch (e) { } }, 60); } catch (e) { } }
+            if (v === 'ind') { var vw = document.getElementById('view'), r1 = document.querySelector('#view.fsx .mwhascv>.m7ind'); if (vw) { if (vw.scrollTop > 60) { vw.scrollTo({ top: 0, behavior: 'smooth' }); } else if (r1) { vw.scrollTo({ top: Math.max(0, r1.offsetTop - 48), behavior: 'smooth' }); } } }
             else if (v === 'auto') { S.cx.vz = 1; S.cx.vp = 0; S.cx.base = null; try { cxDraw(); } catch (e) { } }
             else if (v === 'out') { var b = document.getElementById('fsbtn'); if (b) { b.click(); } }
         });
@@ -21898,6 +21915,44 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         }, 60000);
         window.__guardianReport = function () { return { checks: G.checks, fixes: G.fixes.slice(), guard: window.__guard }; };
     } catch (e) { try { console.log('heal', e); } catch (er) { } }
+})();
+/* ===== p9doc: Doctor. Reads the Problem log every 20 seconds, finds repeating trouble and repairs it, then writes what it did back into the log. ===== */
+(function () {
+    try {
+        var seen = 0, pinned = {}, pinCount = 0, lastRedraw = 0, redrawn = 0, cxAt = 0, lt0 = 0, ds = document.createElement('style'); ds.setAttribute('data-mwkeep', '1'); document.head.appendChild(ds);
+        var _o = window.__cxOver; window.__cxOver = function () { cxAt = Date.now(); return _o ? _o.apply(this, arguments) : undefined; };
+        function note(t) { try { if (window.__mwRec) { window.__mwRec('doctor', t); } } catch (e) { } }
+        function lines() { try { return JSON.parse(localStorage.getItem('mintoosuite_errlog') || '[]') || []; } catch (e) { return []; } }
+        function when(l) { var d = Date.parse((l.split(' [')[0] || '').replace(/,/, '')); return isFinite(d) ? d : 0; }
+        function pin(sel, px) {
+            if (pinned[sel] || pinCount >= 6 || /^(#view|body|html|#app)$/.test(sel) || !/^[#.][\w-]+(\.[\w-]+)?$/.test(sel)) { return false; }
+            pinned[sel] = px; pinCount++; ds.textContent += sel + '{min-height:' + px + 'px}'; note('Pinned ' + sel + ' to at least ' + px + 'px (it kept changing height)'); return true;
+        }
+        function diagnose() {
+            try {
+                if (document.hidden) { return; }
+                var L = lines(), now = Date.now(), recent = L.filter(function (l) { return now - when(l) < 120000; }), jumps = {}, errs = {}, i;
+                /* 1. screen jumps: the same box growing again and again gets a minimum height */
+                recent.forEach(function (l) { var m = /\[jump\] [\d:]+ \S+ ([#.][\w-]+(?:\.[\w-]+)?) (\d+)\s*\S\s*(\d+)/.exec(l); if (m) { var k = m[1]; (jumps[k] = jumps[k] || []).push(Math.max(+m[2], +m[3])); } });
+                Object.keys(jumps).forEach(function (k) { if (jumps[k].length >= 3) { pin(k, Math.max.apply(null, jumps[k])); } });
+                /* 2. the same real error again and again: redraw the screen once, then say so */
+                recent.forEach(function (l) { var m = /\[error\] (.{0,60})/.exec(l); if (m && !/ResizeObserver/i.test(m[1])) { errs[m[1]] = (errs[m[1]] || 0) + 1; } });
+                Object.keys(errs).forEach(function (k) { if (errs[k] >= 5 && now - lastRedraw > 120000) { lastRedraw = now; redrawn++; note('Error repeated ' + errs[k] + ' times (' + k.slice(0, 40) + '): screen redrawn'); try { renderView(true); } catch (e) { } } });
+                /* 3. chart on screen but not drawing (frozen canvas) */
+                var cv = document.getElementById('cv');
+                if (cv && S.win === 'chart' && S.chart && S.chart.k && S.chart.k.length > 20 && cv.offsetParent) {
+                    if (cxAt && now - cxAt > 20000 && !S.cx.sel) { note('Chart had not repainted for ' + Math.round((now - cxAt) / 1000) + ' s: repainted'); try { cxDraw(); } catch (e) { } cxAt = now; }
+                    if (cv.clientWidth > 0 && cv.width < 4) { note('Chart canvas was empty: repainted'); try { cxDraw(); } catch (e) { } }
+                }
+                /* 4. live trade window open but still without candles */
+                var lt = document.getElementById('mwLT');
+                if (lt) { var pl = lt.querySelector('.pl'); if (pl && !pl.textContent.trim()) { if (!lt0) { lt0 = now; } else if (now - lt0 > 15000) { lt0 = now; var on = lt.querySelector('.tfs span.on'); if (on) { note('Live trade window had no candles: asked again'); on.click(); } } } else { lt0 = 0; } } else { lt0 = 0; }
+                seen = L.length;
+            } catch (e) { }
+        }
+        setInterval(diagnose, 20000);
+        window.__doctor = { run: diagnose, pins: function () { return pinned; } };
+    } catch (e) { try { console.error('p9doc', e); } catch (e2) { } }
 })();
 
 function renderView(keep) {
