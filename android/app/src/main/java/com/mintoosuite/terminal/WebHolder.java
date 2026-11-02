@@ -141,6 +141,7 @@ final class WebHolder {
     /* native freeze watchdog: asks the page a trivial question every 6 s; if the page has not answered for 25 s while it is on screen, reload it (at most 3 times in 10 minutes) */
     private static boolean wdOn = false;
     private static volatile boolean fgOn = true;
+    static boolean isFg() { return fgOn; }
 
     /* the watchdog only counts silence while the app is on the screen (not while you are in another app or the recorder) */
     static void fg(boolean on) {

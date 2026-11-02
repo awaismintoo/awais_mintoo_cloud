@@ -99,6 +99,7 @@ public class BotService extends Service {
         super.onCreate();
         ensureChannel(this);
         MainActivity.alertChannel(this);
+        try { show(); } catch (Exception ignored) { }
         try { WebHolder.get(this); } catch (Exception ignored) { }
     }
 

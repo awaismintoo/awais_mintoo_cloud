@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.285';
+var BUILD = '2026-10-31.293';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -2554,8 +2554,9 @@ function mwCheckAlerts() {
     var t, changed = false, c;
     S.pal.forEach(function (a) { if (a.done) { return; } t = S.tick[a.sym]; if (t && (a.dir === 'above' ? t.p >= a.price : t.p <= a.price)) { a.done = true; a.at = nowMs(); changed = true; try { sendPush('Price alert: ' + base(a.sym), base(a.sym) + ' is ' + (a.dir === 'above' ? 'above ' : 'below ') + fmtP(a.price, a.sym) + ' (now ' + fmtP(t.p, a.sym) + ')'); } catch (e) {} addLog('ALERT', base(a.sym) + ' ' + a.dir + ' ' + fmtP(a.price, a.sym)); } });
     if (changed) { mwSaveAl(); if (S.win === 'alerts') { renderView(true); } }
-    if (S.aflags.early) { (S.mv.list || []).forEach(function (m) { if (m.tag === 'EARLY') { mwFire('early' + m.sym + m.side, '🚀 Early mover: ' + base(m.sym) + ' ' + m.side, pct(m.r15) + ' in 15 min on volume ×' + m.vr.toFixed(1)); } }); }
-    if (S.aflags.pump) { (S.mv.list || []).forEach(function (m) { if (Math.abs(m.r60) >= 15) { mwFire('pump' + m.sym, (m.r60 > 0 ? '📈 Pump: ' : '📉 Dump: ') + base(m.sym), pct(m.r60) + ' in the last hour'); } }); }
+    var mvStale = nowMs() - ((S.mv && S.mv.at) || nowMs()) > 180000; /* stale scan: say nothing about movers */
+    if (S.aflags.early && !mvStale) { (S.mv.list || []).forEach(function (m) { if (m.tag === 'EARLY') { mwFire('early' + m.sym + m.side, '🚀 Early mover: ' + base(m.sym) + ' ' + m.side, pct(m.r15) + ' in 15 min on volume ×' + m.vr.toFixed(1)); } }); }
+    if (S.aflags.pump && !mvStale) { (S.mv.list || []).forEach(function (m) { if (Math.abs(m.r60) >= 15) { mwFire('pump' + m.sym, (m.r60 > 0 ? '📈 Pump: ' : '📉 Dump: ') + base(m.sym), pct(m.r60) + ' in the last hour'); } }); }
     if (S.aflags.risk) { c = mwRiskCalc(); if (c.heatPct >= 4) { mwFire('risk', '🎛 Risk meter high', 'Risk is ' + c.heatPct.toFixed(1) + '% of the paper account'); } }
     if (S.aflags.news) { (S.news || []).slice(0, 25).forEach(function (n) { if (n.title && !mwNewsSeen[n.title] && /war|attack|missile|sanction|ceasefire|rate cut|rate hike|fed |gold|dollar/i.test(n.title) && (!n.t || nowMs() - n.t < 6 * 3600000)) { mwNewsSeen[n.title] = 1; if (mwNewsSeen.__ready) { mwFire('news' + n.title.slice(0, 30), '📰 ' + (n.src || 'News'), n.title); } } }); mwNewsSeen.__ready = 1; }
 }
@@ -8649,7 +8650,8 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
 (function () {
     var HK = 'mintoosuite_hu', H = { on: true, tips: true, hist: [], mute: {}, unseen: 0 };
     try { var o = JSON.parse(localStorage.getItem(HK) || 'null'); if (o) { H.on = o.on !== false; H.tips = o.tips !== false; H.hist = o.hist || []; H.mute = o.mute || {}; H.unseen = o.unseen || 0; } } catch (e) { }
-    function save() { try { localStorage.setItem(HK, JSON.stringify({ on: H.on, tips: H.tips, hist: H.hist.slice(0, 40), mute: H.mute, unseen: H.unseen })); } catch (e) { } }
+    function prune() { try { var n = now(), k; for (k in H.mute) { if (n - H.mute[k] > 86400000) { delete H.mute[k]; } } H.hist = H.hist.filter(function (e) { return !e.t || n - e.t < 7 * 86400000; }); } catch (e) { } } /* very old reminders and mute marks are cleared: one day for marks, one week for the history list */
+    function save() { try { prune(); localStorage.setItem(HK, JSON.stringify({ on: H.on, tips: H.tips, hist: H.hist.slice(0, 40), mute: H.mute, unseen: H.unseen })); } catch (e) { } }
     var Q = [], shownAt = 0, cur = null, tmr = 0, t0 = Date.now();
     var COL = { bad: '#ff453a', warn: '#ff9f0a', good: '#30d158', info: '#0a84ff' };
     function now() { return Date.now(); }
@@ -9337,7 +9339,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         for (i = b.open.length - 1; i >= 0; i--) {
             var p = b.open[i], v = px(x, base(p.sym), 45000); if (!v) { continue; }
             var hitSL = p.sg > 0 ? v <= p.sl : v >= p.sl, hitTP = p.sg > 0 ? v >= p.tp : v <= p.tp;
-            if (hitSL) { botClose(i, p.sl * (1 - p.sg * BOT_SLIP), p.trail ? 'trailing stop' : 'stop'); }
+            if (hitSL) { var fs = p.sl * (1 - p.sg * BOT_SLIP); botClose(i, p.sg > 0 ? Math.min(fs, v) : Math.max(fs, v), p.trail ? 'trailing stop' : 'stop'); } /* after a gap the real fill is the price you got */
             else if (hitTP) { botClose(i, p.tp, 'target'); }
             else if (now - p.at > 3 * 3600000 + 600000) { botClose(i, v, 'time limit'); }
             else if (botTrail(p, v)) { botSave(); }
@@ -9347,6 +9349,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var rows = candidates(x).filter(function (m) { return !b.open.some(function (p) { return p.sym === m.sym; }) && !(b.lastTrade[m.sym] && now - b.lastTrade[m.sym] < 60 * 60000); }).slice(0, 2);
         rows.forEach(function (m) {
             if (b.open.length >= b.maxOpen) { return; } var v = px(x, base(m.sym), 20000); if (!v) { return; }
+            try { var lt = window.__late && window.__late(m.sym, m.side); if (lt) { return; } } catch (e) { } /* never enter an idea that has already turned over */
             var sg = m.side === 'LONG' ? 1 : -1, entry = v * (1 + sg * BOT_SLIP), sl = entry * (1 - sg * m.slP / 100), tp = entry * (1 + sg * m.tpP / 100), slPct = Math.abs(entry - sl) / entry;
             if (!(slPct > 0.002 && slPct < 0.15)) { return; }
             var cost = slPct + 2 * BOT_FEE + BOT_SLIP, notional = eq * b.risk / cost, lev = Math.max(1, Math.min(b.lev, Math.floor(100 / (slPct * 100 * 1.6 + 0.5)))), margin = notional / lev;
@@ -12890,6 +12893,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             Object.keys(S.tick || {}).forEach(function (s) {
                 var t = S.tick[s]; if (!/USDT$/.test(s) || STABLE.test(s) || !t || !(t.p > 0)) { return; }
                 if (!(t.chg >= 12 && t.chg <= 400) || !(t.q >= 20e6) || !(t.h > t.l)) { return; }
+                if (nowMs() - (+t.at || 0) > 60000) { return; } try { if (window.__late && window.__late(s, 'LONG')) { return; } } catch (e) { } /* not a rocket any more once the run has broken (professional ATR test) */
                 var rng = t.h - t.l, nearHigh = (t.p - t.l) / rng;
                 /* entry now if still strong, plan from the day range: stop under the 40% retrace, 1.7x reward */
                 var sl = Math.max(t.l, t.p - Math.max(rng * 0.4, t.p * 0.03)), risk = (t.p - sl) / t.p; if (!(risk > 0.012)) { risk = 0.012; sl = t.p * (1 - risk); }
@@ -12950,6 +12954,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         getActions = function () {
             var l = g(); if (!Array.isArray(l)) { return l; }
             if (rest()) { return []; } if (C.maxd > 0 && todayN() >= C.maxd) { return []; }
+            try { l = l.filter(function (a) { return !(window.__late && window.__late(a.sym, a.side)); }); } catch (e) { } /* never enter an idea that has already turned over */
             if (C.chase) { l = l.filter(function (a) { var t = S.tick && S.tick[a.sym], c = t ? +t.chg : 0; return !(a.side === 'LONG' && c > 12) && !(a.side === 'SHORT' && c < -12); }); }
             return l;
         };
@@ -13115,6 +13120,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         if (spot && !long) { return '<div class="tcd"><div class="th" style="background:' + g + '"><span><b>▼ SELL signal on ' + esc(b) + '</b><br><small>This market is spot only, so you cannot go short here.</small></span></div></div>'; }
         var h = '<div class="tcd"><div class="th" style="background:' + g + '"><span><small>' + (long ? '🟢 GREEN LIGHT' : '🔴 RED LIGHT') + (title ? ' · ' + esc(title) : '') + '</small><br><b>' + (long ? '▲ LONG ' : '▼ SHORT ') + esc(b) + '</b></span><span class="pc">' + (P.pct ? Math.round(P.pct) + '%' : '✓') + '</span></div><div class="tb">';
         h += '<div class="lv3"><div><span>ENTRY</span><b>' + dec(P.sym, P.entry) + '</b></div><div><span>STOP LOSS</span><b style="color:#ff3b30">' + dec(P.sym, P.sl) + '</b></div><div><span>TAKE PROFIT</span><b style="color:#34c759">' + dec(P.sym, P.tp) + '</b></div></div>';
+        try { var tkc = S.tick && S.tick[P.sym], cur = tkc && +tkc.p > 0 ? +tkc.p : 0, drc = cur && P.entry > 0 ? (cur / P.entry - 1) * 100 : 0; h += '<div class="note" style="margin:4px 0;font-size:12px">Price when the idea was made: <b>' + dec(P.sym, P.entry) + '</b>' + (cur ? ' &middot; price now: <b>' + dec(P.sym, cur) + '</b> (' + (drc >= 0 ? '+' : '') + drc.toFixed(1) + '%) as of ' + hm(nowMs()) : '') + '. If the price has moved, the app asks before it opens the trade.</div>'; } catch (e) { }
         h += '<div class="kv"><span>Leverage</span><b>' + (spot ? 'none (spot)' : P.lev + '×') + '</b></div><div class="kv"><span>' + (spot ? 'Spend' : 'Margin') + '</span><b>$' + f(spot ? Math.min(10, P.notional) : P.margin) + '</b></div>' + (spot ? '<div class="note" style="margin:2px 0">Spot orders on this exchange have no stop in the app, so watch the stop level yourself. Start small.</div>' : '') + '<div class="kv"><span>If stop hits / target hits</span><b><span style="color:#ff3b30">−$' + f(risk) + '</span> / <span style="color:#34c759">+$' + f(risk * P.tpp / P.sp) + '</span></b></div>';
         h += '<div class="note rk">Risk per trade:' + [1, 2, 5].map(function (r) { return '<span data-plr="' + r + '" style="background:' + (risk === r ? '#0a84ff;color:#fff' : 'rgba(128,128,128,.16)') + '">$' + r + '</span>'; }).join('') + '</div>';
         h += (window.__nudge ? window.__nudge(P) : '');
@@ -13934,6 +13940,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 if (ap < 0.25) { fail.push('too quiet (' + f(ap) + '%/h): fees would eat the profit'); } else if (ap > 4.5) { fail.push('too wild (' + f(ap) + '%/h)'); } else { ok.push('volatility ' + f(ap) + '%/h'); }
                 var c15 = k15.slice(-21, -1), av = c15.reduce(function (a, x) { return a + x.v; }, 0) / (c15.length || 1), lv = k15[k15.length - 1].v; if (av && lv < av * 0.7) { fail.push('weak volume on the signal candle'); } else { ok.push('volume ok'); }
                 var r = iRSI(k15.map(function (x) { return x.c; }), 14), rv = r[r.length - 1]; if (rv != null && ((sg > 0 && rv > 74) || (sg < 0 && rv < 26))) { fail.push('already stretched (RSI ' + Math.round(rv) + ')'); }
+                try { var lt9 = window.__late && window.__late(s, sg > 0 ? 'LONG' : 'SHORT'); if (lt9) { fail.push('idea is obsolete: ' + lt9); } } catch (e) { }
                 var e20 = ema(k15, 20); if (e20 && Math.abs(px / e20 - 1) * 100 > 1.6 * Math.max(ap, 0.4)) { fail.push('price far from its average: chasing'); }
             }
             if (g.htf) { var tr = trendOf(k1h); if (tr !== 0 && tr !== sg) { fail.push('1-hour trend is ' + (tr > 0 ? 'UP' : 'DOWN') + ' against this trade'); } else { ok.push(tr === 0 ? '1h sideways' : '1h trend agrees'); } }
@@ -19127,7 +19134,7 @@ try {
 (function () {
     try {
         var X = window.__kx, KX = X.KX, KN = 'mintoosuite_known_syms', CFG = 'mintoosuite_pumpcfg';
-        var K = { s: {}, f: {}, b: {}, init: 0, binit: 0 }, LOG = [], LK = 'mintoosuite_pumplog'; try { LOG = JSON.parse(localStorage.getItem(LK) || '[]') || []; } catch (e) { LOG = []; } try { LOG = LOG.filter(function (x) { return x.kind !== 'pump' || x.mega || /minutes/.test(x.body || ''); }); } catch (e) { }
+        var K = { s: {}, f: {}, b: {}, init: 0, binit: 0 }, LOG = [], LK = 'mintoosuite_pumplog'; try { LOG = JSON.parse(localStorage.getItem(LK) || '[]') || []; } catch (e) { LOG = []; } try { LOG = LOG.filter(function (x) { return x && x.t && Date.now() - x.t < 86400000; }); } catch (e) { } /* alerts older than a day are cleared */ try { LOG = LOG.filter(function (x) { return x.kind !== 'pump' || x.mega || /minutes/.test(x.body || ''); }); } catch (e) { }
         var H = {}, FIRED = {}, ST = { at: 0, ok: 0, err: '', n: 0, last: null };
         var cfg = { on: true, hi: false }; try { cfg = Object.assign(cfg, JSON.parse(localStorage.getItem(CFG) || '{}')); } catch (e) { }
         try { K = Object.assign(K, JSON.parse(localStorage.getItem(KN) || '{}')); } catch (e) { }
@@ -19150,7 +19157,8 @@ try {
             try { if (navigator.vibrate) { navigator.vibrate([250, 120, 250, 120, 500]); } } catch (e) { }
             clearTimeout(banner.tm); banner.tm = setTimeout(function () { var x = document.getElementById('mwpump'); if (x === d) { d.remove(); } showing = 0; next(); }, 25000);
         }
-        function next() { if (showing || !Q.length) { return; } showing = 1; banner(Q.shift()); }
+        function stillValid(x) { try { var s = x && x.bn ? String(x.bn) : ''; if (s && window.__late && window.__late(s, 'LONG')) { return false; } } catch (e) { } return true; } /* shown if it still applies; dropped only when the run has broken (ATR test), never because it is just old */
+        function next() { if (showing || !Q.length) { return; } var x = Q.shift(); if (!stillValid(x)) { next(); return; } showing = 1; banner(x); } /* a queued alert is shown if it still applies; dropped only when the coin has already fallen back below the alert price */
         function native(a) { try { var n = window.MintooNative; if (n && n.nalSeen && window.__mwTok && n.nalSeen(window.__mwTok, a.title)) { return; } if (n && n.nalCfg && window.__mwTok) { n.nalCfg(window.__mwTok, !!cfg.on, !!cfg.hi); } if (n && n.notify && window.__mwTok) { n.notify(window.__mwTok, a.title, a.body); } else if ('Notification' in window && Notification.permission === 'granted') { new Notification(a.title, { body: a.body }); } } catch (e) { } }
         var AU = null, ALT = 0;
         function siren(on) { try { clearInterval(ALT); if (AU) { try { AU.close(); } catch (e) { } AU = null; } if (!on) { return; } var C = window.AudioContext || window.webkitAudioContext; if (!C) { return; } AU = new C(); var beep = function () { try { var o = AU.createOscillator(), g = AU.createGain(); o.type = 'square'; o.frequency.value = 880; g.gain.value = 0.25; o.connect(g); g.connect(AU.destination); o.start(); o.frequency.setValueAtTime(660, AU.currentTime + 0.25); o.stop(AU.currentTime + 0.5); } catch (e) { } try { if (navigator.vibrate) { navigator.vibrate([300, 150, 300]); } } catch (e) { } }; beep(); ALT = setInterval(beep, 1200); } catch (e) { } }
@@ -19159,9 +19167,10 @@ try {
             var old = document.getElementById('mwalarm'); if (old) { old.remove(); } var d = document.createElement('div'); d.id = 'mwalarm'; d.setAttribute('data-mwkeep', '1'); d.setAttribute('role', 'alertdialog');
             d.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:rgba(150,0,0,.96);color:#fff;padding:max(18px,env(safe-area-inset-top)) 18px 18px;overflow:auto;font:600 15px/1.4 -apple-system,Segoe UI,sans-serif;animation:mwflash 1s infinite alternate';
             d.innerHTML = '<div style="font-size:30px;font-weight:900;margin-top:20px">🚨 COME FOR TRADE NOW</div><div style="font-size:21px;font-weight:800;margin-top:10px">' + e3(a.title) + '</div><div style="font-size:17px;margin-top:6px">' + e3(a.body) + '</div>' + (a.p ? tpPlan(a.p) : '') + '<div style="margin-top:10px;font-size:12.5px;font-weight:500;opacity:.95">' + e3(a.warn) + '</div><div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><span data-pump="aopen" style="padding:12px 20px;border-radius:14px;background:#fff;color:#b00000;font-weight:900;font-size:16px">Open chart</span><span data-pump="aquiet" style="padding:12px 20px;border-radius:14px;background:rgba(255,255,255,.25);font-weight:800;font-size:16px">Stop alarm</span></div>';
-            d._a = a; document.body.appendChild(d); siren(1);
+            d._a = a; document.body.appendChild(d); siren(1); setTimeout(function () { try { if (document.getElementById('mwalarm') === d) { siren(0); } } catch (e) { } }, 180000); /* the siren stops by itself after 3 minutes; the card stays until you close it */
         }
         function fire(a) {
+            a.t0 = Date.now();
             try { LOG.unshift({ t: Date.now(), kind: a.kind, mega: !!a.mega, sym: a.sym, title: a.title, body: a.body, spec: a.spec || '', bn: a.bn || '', p: a.p || 0 }); LOG = LOG.slice(0, 60); localStorage.setItem(LK, JSON.stringify(LOG)); } catch (e) { }
             if (a.mega) { alarm(a); native(a); try { if (window.__huPush) { window.__huPush('pump:' + a.sym + 'mega', '🚨', a.title, a.body, '', 'bad', 600000); } } catch (e) { } ST.last = { t: Date.now(), title: a.title, body: a.body }; return; }
             Q.push(a); if (Q.length > 4) { Q.shift(); } next(); native(a);
@@ -19178,7 +19187,7 @@ try {
         }, true);
         /* ---------- detection ---------- */
         function openA(a) { if (a.spec && window.__mxOpen) { window.__mxOpen(a.spec); return; } var s = document.createElement('div'); s.setAttribute('data-act', a.bn ? 'chart:' + a.bn : 'win:radar'); document.body.appendChild(s); s.click(); s.remove(); }
-        function ring(sym, p, t) { var r = H[sym] || (H[sym] = []); r.push([t, p]); while (r.length && t - r[0][0] > 20 * 60000) { r.shift(); } return r; }
+        function ring(sym, p, t) { var r = H[sym] || (H[sym] = []); if (r.length && t - r[r.length - 1][0] > 90000) { r.length = 0; } r.push([t, p]); while (r.length && t - r[0][0] > 20 * 60000) { r.shift(); } return r; }
         function rise(r, ms, now) { var base = null, i; for (i = 0; i < r.length; i++) { if (now - r[i][0] <= ms) { base = r[i]; break; } } if (!base || now - base[0] < ms * 0.35) { return null; } return (r[r.length - 1][1] / base[1] - 1) * 100; }
         var PFK = 'mintoosuite_pumpfired', PF = {}; try { PF = JSON.parse(localStorage.getItem(PFK) || '{}') || {}; } catch (e) { PF = {}; }
         function pfSave() { try { var n = Date.now(); Object.keys(PF).forEach(function (k) { if (n - PF[k].t > 24 * 3600000) { delete PF[k]; } }); localStorage.setItem(PFK, JSON.stringify(PF)); } catch (e) { } }
@@ -19191,6 +19200,7 @@ try {
             if (d5 !== null && d5 >= t5 * 2) { tier = 2; why = '+' + d5.toFixed(0) + '% in 5 minutes'; } else if (d5 !== null && d5 >= t5) { tier = 1; why = '+' + d5.toFixed(0) + '% in 5 minutes'; }
             else if (d15 !== null && d15 >= t15 * 2) { tier = 2; why = '+' + d15.toFixed(0) + '% in 15 minutes'; } else if (d15 !== null && d15 >= t15) { tier = 1; why = '+' + d15.toFixed(0) + '% in 15 minutes'; }
             /* no alert from a daily total alone: that is old news. Alerts need a rise measured by the app in the last 5 or 15 minutes */
+            try { var bs0 = venue === 'Binance' ? String(sym).replace(/^BN:/, '') : ''; if (bs0 && window.__late && window.__late(bs0, 'LONG')) { return; } } catch (e) { } /* the same professional ATR test as the trade bar: a run that already broke is old news */
             var mx = Math.max(d5 || 0, d15 || 0); if (mx > 30 && r.length > 2 && !(chg24 >= mx * 0.5)) { return; }
             var mega = (d5 !== null && d5 >= 25) || (d15 !== null && d15 >= 50); if (mega && vol >= 15000 && gate('MEGA:' + sym, 1)) { fire({ kind: 'pump', mega: true, sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: name + ' is exploding on ' + venue, body: (d5 !== null && d5 >= 25 ? '+' + d5.toFixed(0) + '% in 5 minutes' : d15 !== null && d15 >= 50 ? '+' + d15.toFixed(0) + '% in 15 minutes' : '+' + chg24.toFixed(0) + '% today') + ' · now ' + fmt(p), warn: WARN }); return; }
             if (tier && vol >= (cfg.hi ? 15000 : 40000) && gate(sym, tier, td)) { fire({ kind: 'pump', sym: sym, up: true, spec: spec, bn: venue === 'Binance' ? sym.replace(/^BN:/, '') : '', p: p, title: '🚀 ' + name + ' is pumping on ' + venue, body: why + ' · now ' + fmt(p) + (chg24 ? ' · ' + (chg24 >= 0 ? '+' : '') + chg24.toFixed(0) + '% today' : ''), warn: WARN }); }
@@ -19342,7 +19352,7 @@ try {
             for (i = A.pos.length - 1; i >= 0; i--) {
                 var p = A.pos[i], px = price(p.sym); if (!(px > 0)) { continue; } var L = p.side === 'LONG';
                 if (L ? px <= p.liq : px >= p.liq) { closePos(i, p.liq, 'LIQ'); ch = 1; }
-                else if (p.sl > 0 && (L ? px <= p.sl : px >= p.sl)) { closePos(i, p.sl, 'Stop-loss'); ch = 1; }
+                else if (p.sl > 0 && (L ? px <= p.sl : px >= p.sl)) { closePos(i, L ? Math.min(p.sl, px) : Math.max(p.sl, px), 'Stop-loss'); ch = 1; } /* after a price gap the real fill is the price you got, not the stop line */
                 else if (p.tp > 0 && (L ? px >= p.tp : px <= p.tp)) { closePos(i, p.tp, 'Take-profit'); ch = 1; }
             }
             for (i = A.ord.length - 1; i >= 0; i--) {
@@ -19358,6 +19368,8 @@ try {
             var sl = +FS.sl || 0, tp = +FS.tp || 0, L = FS.side === 'LONG', lp = +FS.lp || 0, ent = FS.type === 'LIMIT' ? lp : px;
             if (FS.type === 'LIMIT' && !(lp > 0)) { FS.msg = 'Type a limit price.'; return; }
             if (sl > 0 && (L ? sl >= ent : sl <= ent)) { FS.msg = 'Stop-loss must be ' + (L ? 'below' : 'above') + ' the entry price.'; return; }
+            try { var lq = liq(FS.side, ent, FS.lev); if (sl > 0 && (L ? sl <= lq : sl >= lq)) { FS.msg = 'Your stop-loss is beyond the liquidation price (' + fp(lq, sym) + '), so it could never act. Use a closer stop or lower leverage.'; return; } } catch (e) { }
+            try { var tkk = S.tick && S.tick[sym]; if (tkk && Date.now() - (+tkk.at || 0) > 30000) { FS.msg = 'The price for ' + bs(sym) + ' is old. Wait a moment and try again.'; return; } } catch (e) { }
             if (tp > 0 && (L ? tp <= ent : tp >= ent)) { FS.msg = 'Take-profit must be ' + (L ? 'above' : 'below') + ' the entry price.'; return; }
             var o = { sym: sym, side: FS.side, lev: FS.lev, margin: margin, notional: margin * FS.lev, sl: sl, tp: tp, lp: lp };
             if (FS.type === 'LIMIT') { A.ord.push(o); save(); FS.msg = '✅ Limit order placed.'; FS.tab = 'ord'; } else { var p = openPos(o, px); FS.msg = '✅ Paper ' + FS.side + ' opened at ' + fp(px, sym) + '.'; FS.tab = 'pos'; }
@@ -19515,8 +19527,24 @@ try {
         function go(id) { try { gotoWin(id); } catch (e) { } }
         var BYPASS = 0;
         function ask(t, b, y, col, cb) { if (window.__ask) { window.__ask(t, b, y, col, cb); } else if (window.confirm(t + ' ' + String(b).replace(/<[^>]+>/g, ' '))) { cb(); } }
+        var LASTRUN = {};
         function run(c) {
             var m = mode(), M = MODES[m];
+            try {
+                if (c && c.sym && (c.side === 'LONG' || c.side === 'SHORT') && !c._ok && m !== 'pb' && m !== 'rb') {
+                    var nw = Date.now(), kk = c.sym + c.side;
+                    if (LASTRUN[kk] && nw - LASTRUN[kk] < 1500) { return; } /* double tap */
+                    LASTRUN[kk] = nw;
+                    var lt = window.__late(c.sym, c.side), tk = S.tick && S.tick[c.sym];
+                    if (tk && nw - (+tk.at || 0) > 30000) { try { toast('Price is old (no fresh price for ' + String(c.sym).replace(/USDT$/, '') + '). Wait a moment and try again.'); } catch (e) { } return; }
+                    if (lt) {
+                        var c2 = JSON.parse(JSON.stringify(c)); c2._ok = 1;
+                        ask('\u26a0\ufe0f Idea may be obsolete', '<b>' + String(c.sym).replace(/USDT$/, '') + '</b>: ' + lt + '. The market has turned since this idea was made, so it may be old news. Open anyway?', 'Open anyway', '#ff3b30', function () { run(c2); });
+                        return;
+                    }
+                }
+            } catch (e) { }
+
             var NOTE = '<div class="nt">Margin mode: <b>Isolated</b> (a loss can never go beyond the margin you set). For Cross margin, limit or stop orders, trailing and the rest, open the full ticket from More › Trade Pro.</div>';
             if (m === 'pm') {
                 var dsl = c.slp > 0 ? Math.round(c.slp * 10) / 10 : 2, dtp = c.sl > 0 && c.tp > 0 && c.slp > 0 ? Math.round(c.slp * (c.rr || 1.5) * 10) / 10 : 3;
@@ -19549,7 +19577,17 @@ try {
                 var f = String(p.getAttribute('data-plan') || '').split('|'); if (f.length < 7) { return; }
                 e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
                 var en = +f[3], sl = +f[4], tp = +f[5];
-                run({ sym: f[1], side: f[2] === 'SHORT' ? 'SHORT' : 'LONG', sl: sl, tp: tp, slp: en > 0 ? Math.abs(en - sl) / en * 100 : 0, rr: Math.abs(en - sl) > 0 ? Math.abs(tp - en) / Math.abs(en - sl) : 2, el: p });
+                var sdp = f[2] === 'SHORT' ? 'SHORT' : 'LONG', cur = 0; try { cur = +(S.tick[f[1]] && S.tick[f[1]].p) || 0; } catch (er) { }
+                var slpp = en > 0 ? Math.abs(en - sl) / en * 100 : 0, rrp = Math.abs(en - sl) > 0 ? Math.abs(tp - en) / Math.abs(en - sl) : 2;
+                if (cur > 0 && en > 0) {
+                    var dr = Math.abs(cur / en - 1) * 100, lim = slpp * 0.25; /* tolerance = a quarter of the idea's own stop distance (1R): a convention, not a tuned value */
+                    if (dr > lim) {
+                        var tpd = Math.abs(tp - en) / en, nsl = sdp === 'LONG' ? cur * (1 - slpp / 100) : cur * (1 + slpp / 100), ntp = sdp === 'LONG' ? cur * (1 + tpd) : cur * (1 - tpd);
+                        ask('\u23f1 This idea is old', '<b>' + String(f[1]).replace(/USDT$/, '') + '</b>: the idea was made at <b>' + en + '</b> but the price is now <b>' + cur + '</b> (' + dr.toFixed(1) + '% different). Its stop and target are out of date. Open a trade with the same stop and target distances from the price now?', 'Use today\u2019s price', '#ff9500', function () { run({ sym: f[1], side: sdp, sl: nsl, tp: ntp, slp: slpp, rr: rrp }); });
+                        return;
+                    }
+                }
+                run({ sym: f[1], side: sdp, sl: sl, tp: tp, slp: slpp, rr: rrp, el: p });
             }
         }, true);
     } catch (e) { try { console.log('tw', e); } catch (er) { } }
@@ -19568,6 +19606,43 @@ try {
             try { if (w === 'tpro') { s = S.tp.sym; } else if (w === 'chart') { s = S.chart && S.chart.sym; } else if (w === 'analyst') { s = S.an && S.an.sym; } else if (w === 'story') { s = window.__stSym; } else if (w === 'mexcd') { s = window.__MXD && window.__MXD.s; } } catch (e) { }
             s = String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); return s && !/USDT$/.test(s) ? s + 'USDT' : s;
         }
+        /* shared "too late" test used by the bar, plan taps, one-tap trades and the bots. Returns a plain-words reason, or '' when fine. */
+        var LH = {};
+        /* "obsolete" test = Chandelier-style ATR break on 15-minute candles (published practice: highest high minus 3 x ATR; the 14 / 3 values are conventions, not tuned).
+           It scales with each coin's own volatility, so a big runner is not cut off by normal noise. Needs a real impulse leg (>= 4 ATR) to give a verdict. */
+        function bars(sy) {
+            var n = Date.now(), c = LH[sy];
+            if (!c || n - c.t > 60000) {
+                if (!c || !c.busy) {
+                    var e0 = LH[sy] = { t: c ? c.t : 0, long: c ? c.long : '', short: c ? c.short : '', busy: 1 };
+                    try {
+                        m7kl(sy, '15m', 45).then(function (k) {
+                            e0.busy = 0; e0.t = Date.now(); e0.long = ''; e0.short = '';
+                            if (!k || k.length < 7) { return; }
+                            var done = k.slice(0, -1), N = done.length; /* closed candles only */
+                            if (N < 6) { return; }
+                            var per = Math.min(14, N - 1), tr = [], q, a = 0;
+                            for (q = 1; q < N; q++) { tr.push(Math.max(done[q].h - done[q].l, Math.abs(done[q].h - done[q - 1].c), Math.abs(done[q].l - done[q - 1].c))); }
+                            if (N >= 15) { a = tr.slice(0, 14).reduce(function (x, y) { return x + y; }, 0) / 14; for (q = 14; q < tr.length; q++) { a = (a * 13 + tr[q]) / 14; } } else { a = tr.reduce(function (x, y) { return x + y; }, 0) / tr.length; }
+                            if (!(a > 0)) { return; }
+                            var w = done.slice(-22), hh = 0, ll = Infinity; w.forEach(function (x) { if (x.h > hh) { hh = x.h; } if (x.l < ll) { ll = x.l; } });
+                            var last = done[N - 1].c, up = (hh - ll) / a, pc = function (x) { return Math.abs(x).toFixed(0) + '%'; };
+                            if (up >= 4 && last < hh - 3 * a) { e0.long = 'the run broke: last 15-min close ' + pc((last / hh - 1) * 100) + ' under the recent high, more than 3x its normal swing'; }
+                            if (up >= 4 && last > ll + 3 * a) { e0.short = 'the fall broke: last 15-min close ' + pc((last / ll - 1) * 100) + ' over the recent low, more than 3x its normal swing'; }
+                        }, function () { e0.busy = 0; e0.t = Date.now() - 40000; });
+                    } catch (e) { e0.busy = 0; }
+                }
+                c = LH[sy];
+            }
+            return c;
+        }
+        try { window.__ingest = ingest; } catch (e) { }
+        window.__late = function (sy, side) {
+            try { var tk = S.tick && S.tick[sy]; if (!tk || !(+tk.p > 0)) { return ''; } var b = bars(sy) || {}; return (side === 'LONG' ? b.long : b.short) || ''; } catch (e) { }
+            return '';
+        };
+        /* strong moves are allowed, but the person is told plainly */
+        window.__hot = function (sy) { try { var tk = S.tick && S.tick[sy], c = tk ? +tk.chg : 0; if (isFinite(c) && Math.abs(c) >= 25) { return 'already ' + (c > 0 ? 'up ' : 'down ') + Math.abs(c).toFixed(0) + '% today: strong moves can continue, but a reversal can be fast. Use a small size and a stop-loss.'; } } catch (e) { } return ''; };
         var RC = {};
         function rec(sy) {
             var n = Date.now(), c = RC[sy]; if (c && n - c.t < 4000) { return c; }
@@ -19575,6 +19650,9 @@ try {
             try { var eL = idEdge(idFactors({ sym: sy, side: 'LONG' })), eS = idEdge(idFactors({ sym: sy, side: 'SHORT' })), mx = Math.max(eL, eS); if (mx >= 0.1 && Math.abs(eL - eS) >= 0.08) { r.side = eL > eS ? 'LONG' : 'SHORT'; } } catch (e) { }
             /* second opinion from Baba's experience engine, so the bar and the chart never disagree silently */
             try { if (r.side !== 'WAIT' && window.__babaExp && S.chart && S.chart.sym === sy && S.chart.k && S.chart.k.length > 80) { var xp = window.__babaExp(sy, r.side, S.chart.k); if (xp) { r.conv = xp.conv; r.veto = !!xp.veto; r.why = xp.hard && xp.hard[0] || ''; } } } catch (e) { }
+            /* never recommend chasing: a coin that already ran (or crashed) a long way is "too late", not an entry */
+            try { if (r.side !== 'WAIT') { var lt = window.__late(sy, r.side); if (lt) { r.late = lt; r.side = 'WAIT'; } } } catch (e) { }
+            try { if (r.side !== 'WAIT' && r.veto) { r.late = 'Baba says WAIT' + (r.why ? ': ' + String(r.why).slice(0, 40) : ''); r.side = 'WAIT'; } } catch (e) { }
             RC[sy] = r; return r;
         }
         window.__recSide = function (sy) { return rec(sy).side; };
@@ -19582,14 +19660,15 @@ try {
         function tick() {
             var w = document.documentElement.getAttribute('data-win'), show = !!WIN[w] && !!sym() && !document.getElementById('twback');
             bar.style.display = show ? 'flex' : 'none'; bar.className = w === 'chart' ? 'ch' : '';
-            if (show) { var r = rec(sym()); bar.children[3].textContent = r.side === 'WAIT' ? '⭐ Recommended: WAIT (no clear edge)' : '⭐ Recommended: ' + (r.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + (r.veto ? ' · Baba says WAIT' + (r.why ? ' (' + String(r.why).slice(0, 24) + ')' : '') : (r.conv ? ' · ' + r.conv + '% sure' : '') + ' · tap to trade'); bar.children[3].style.background = (r.side === 'WAIT' || r.veto) ? '#f59e0b' : r.side === 'LONG' ? '#86efac' : '#fca5a5'; }
+            if (show) { var r = rec(sym()); bar.children[3].textContent = r.side === 'WAIT' ? '⭐ Recommended: WAIT (' + (r.late || 'no clear edge') + ')' : '⭐ Recommended: ' + (r.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + (r.veto ? ' · Baba says WAIT' + (r.why ? ' (' + String(r.why).slice(0, 24) + ')' : '') : (r.conv ? ' · ' + r.conv + '% sure' : '') + ' · tap to trade'); bar.children[3].style.background = (r.side === 'WAIT' || r.veto) ? '#f59e0b' : r.side === 'LONG' ? '#86efac' : '#fca5a5'; }
+            if (show) { try { var hh = rec(sym()); if (hh.side !== 'WAIT' && window.__hot(sym())) { bar.children[3].textContent += ' \u00b7 \u26a0 strong move: small size'; } } catch (e) { } }
             if (show) { var sd = side(); bar.children[0].classList.toggle('on', w === 'tpro' && sd === 'LONG'); bar.children[1].classList.toggle('on', w === 'tpro' && sd === 'SHORT'); }
         }
         setInterval(tick, 500);
         function fire(sd) {
             var w = document.documentElement.getAttribute('data-win'), sy = sym(); if (!sy) { return; }
             if (sd === 'LK') { try { window.__lkOpen(sy); } catch (e) { } return; }
-            if (sd === 'REC') { sd = rec(sy).side; if (sd === 'WAIT') { try { toast('Recommended: WAIT. The app sees no clear edge right now.'); } catch (e) { } return; } }
+            if (sd === 'REC') { sd = rec(sy).side; if (sd === 'WAIT') { try { toast('Recommended: WAIT. ' + (rec(sy).late || 'The app sees no clear edge right now.')); } catch (e) { } return; } }
             if (sd === 'NOW') { sd = side(); }
             var TW = window.__tw || {}, m = TW.mode ? TW.mode() : 'rm';
             if (w === 'tpro' && m === 'rm') {

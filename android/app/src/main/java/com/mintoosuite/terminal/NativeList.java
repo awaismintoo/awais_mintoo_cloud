@@ -71,6 +71,7 @@ final class NativeList extends FrameLayout {
         a.runOnUiThread(new Runnable() {
             public void run() {
                 try {
+                    if (inst != null && (inst.getContext() != a || (inst.getParent() != null && inst.getParent() != a.rootView()))) { try { if (inst.getParent() != null) { ((android.view.ViewGroup) inst.getParent()).removeView(inst); } } catch (Throwable ignored) { } inst = null; lx = ly = lw = lh = -1; }
                     ensure(a);
                     FrameLayout r = a.rootView();
                     if (r == null) { return; }

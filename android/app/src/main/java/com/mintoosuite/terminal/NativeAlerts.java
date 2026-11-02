@@ -27,8 +27,8 @@ import org.json.JSONObject;
    It never alerts for a coin the web part already alerted in the last 10 minutes, and the web part skips coins this part alerted. */
 final class NativeAlerts {
     private static HandlerThread th;
-    private static Handler h;
-    private static boolean running;
+    private static volatile Handler h;
+    private static volatile boolean running;
     private static long pauseUntil;
     private static final HashMap<String, ArrayDeque<double[]>> RING = new HashMap<>();
     private static final HashMap<String, Long> LASTV = new HashMap<>();
@@ -53,19 +53,20 @@ final class NativeAlerts {
 
     static boolean seenRecently(Context c, String title, String who) {
         String k = key(title); if (k.isEmpty()) { return false; }
-        return System.currentTimeMillis() - sp(c).getLong(who + "_" + k, 0) < 10 * 60000L;
+        return System.currentTimeMillis() - sp(c).getLong(who + "_" + k, 0) < 60 * 60000L;
     }
 
     static synchronized void start(final Context c0) {
         if (running) { return; }
         running = true;
         final Context c = c0.getApplicationContext();
-        th = new HandlerThread("mw-nal"); th.start(); h = new Handler(th.getLooper());
-        h.postDelayed(new Runnable() {
+        th = new HandlerThread("mw-nal"); th.start(); final Handler hh = new Handler(th.getLooper()); h = hh;
+        hh.postDelayed(new Runnable() {
             @Override public void run() {
-                long wait = 30000L;
-                try { if (sp(c).getBoolean("on", true) && System.currentTimeMillis() >= pauseUntil) { tick(c); } } catch (Throwable e) { sp(c).edit().putString("err", String.valueOf(e)).apply(); }
-                if (running && h != null) { h.postDelayed(this, wait); }
+                try {
+                    if (sp(c).getBoolean("on", true) && System.currentTimeMillis() >= pauseUntil && !WebHolder.isFg()) { tick(c); sp(c).edit().remove("err").apply(); }
+                } catch (Throwable e) { String m = String.valueOf(e); if (!m.equals(sp(c).getString("err", ""))) { sp(c).edit().putString("err", m).apply(); } }
+                try { if (running && hh == h) { hh.postDelayed(this, 30000L); } } catch (Throwable ignored) { }
             }
         }, 8000L);
     }
@@ -80,7 +81,8 @@ final class NativeAlerts {
         HttpURLConnection cn = (HttpURLConnection) new URL(u).openConnection();
         cn.setConnectTimeout(8000); cn.setReadTimeout(10000); cn.setRequestProperty("User-Agent", "MintooSuite");
         int code = cn.getResponseCode();
-        if (code == 418 || code == 429 || code == 403) { pauseUntil = System.currentTimeMillis() + 5 * 60000L; throw new Exception("HTTP " + code); }
+        if (code == 418 || code == 429 || code == 403) { long ra = 300000L; try { ra = Math.max(ra, 1000L * Long.parseLong(cn.getHeaderField("Retry-After"))); } catch (Exception ignored) { } pauseUntil = System.currentTimeMillis() + ra; throw new Exception("HTTP " + code); }
+        if (code == 451) { pauseUntil = System.currentTimeMillis() + 30 * 60000L; throw new Exception("HTTP 451"); }
         if (code != 200) { throw new Exception("HTTP " + code); }
         BufferedReader r = new BufferedReader(new InputStreamReader(cn.getInputStream())); StringBuilder sb = new StringBuilder(); String ln;
         while ((ln = r.readLine()) != null) { sb.append(ln); }
@@ -112,29 +114,33 @@ final class NativeAlerts {
             int tier = 0; String why = "";
             if (d5 >= t5 * 2) { tier = 2; why = "+" + Math.round(d5) + "% in 5 minutes"; } else if (d5 >= t5) { tier = 1; why = "+" + Math.round(d5) + "% in 5 minutes"; }
             else if (d15 >= t15 * 2) { tier = 2; why = "+" + Math.round(d15) + "% in 15 minutes"; } else if (d15 >= t15) { tier = 1; why = "+" + Math.round(d15) + "% in 15 minutes"; }
-            if (tier == 0 || cand >= 3) { continue; }
+            if (tier == 0 || cand >= 3 || System.currentTimeMillis() < pauseUntil) { continue; }
+            Long lv = LASTV.get(s); if (lv != null && now - lv < 10 * 60000L) { continue; }
             String base = s.substring(0, s.length() - 4);
-            if (System.currentTimeMillis() - sp(c).getLong("js_" + base, 0) < 10 * 60000L) { continue; }
+            if (System.currentTimeMillis() - sp(c).getLong("js_" + base, 0) < 60 * 60000L) { continue; }
             int fired = sp(c).getInt("t_" + base, 0); long ft = sp(c).getLong("f_" + base, 0);
             if (tier <= fired && now - ft < 60 * 60000L) { continue; }
             /* volume check only for the few candidates (1 light request each) */
             double vol = 0; try { vol = new JSONObject(get("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=" + s)).optDouble("quoteVolume", 0); } catch (Exception e) { continue; }
             cand++;
-            if (vol < (hi ? 15000 : 40000)) { continue; }
+            if (vol < (hi ? 15000 : 40000)) { LASTV.put(s, now); continue; }
+            if (System.currentTimeMillis() - sp(c).getLong("js_" + base, 0) < 60 * 60000L) { continue; }
+            if (!post(c, base, "🚀 " + base + " is pumping on Binance", why + " (measured by the app, now " + trim(p) + "). Very risky: do not chase the jump. Use a stop-loss and only money you can lose.")) { continue; }
             sp(c).edit().putInt("t_" + base, tier).putLong("f_" + base, now).putLong("nat_" + base, now).apply();
-            post(c, base, "🚀 " + base + " is pumping on Binance", why + " (measured by the app, now " + trim(p) + "). Very risky: do not chase the jump. Use a stop-loss and only money you can lose.");
         }
     }
 
     static String trim(double p) { return p >= 1 ? String.format(java.util.Locale.US, "%.4f", p) : String.format(java.util.Locale.US, "%.6f", p); }
 
-    private static void post(Context c, String base, String title, String body) {
-        if (Build.VERSION.SDK_INT >= 33 && c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { return; }
+    private static boolean post(Context c, String base, String title, String body) {
+        if (Build.VERSION.SDK_INT >= 33 && c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { return false; }
         MainActivity.alertChannel(c);
         Intent open = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent pi = PendingIntent.getActivity(c, 3, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder b = new NotificationCompat.Builder(c, MainActivity.CHANNEL).setSmallIcon(R.drawable.ic_stat).setContentTitle(title).setContentText(body)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(body)).setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setContentIntent(pi);
-        ((NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE)).notify(500 + Math.abs(base.hashCode() % 400), b.build());
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(body)).setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setShowWhen(true).setWhen(System.currentTimeMillis()).setTimeoutAfter(60L * 60L * 1000L).setContentIntent(pi);
+        ((NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE)).notify("nal_" + base, 500, b.build());
+        try { Overlay.show(c, title, body); } catch (Exception ignored) { }
+        return true;
     }
 }
