@@ -95,7 +95,7 @@ final class WebHolder {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                view.evaluateJavascript("window.__mwTok='" + TOKEN + "';", null);
+                if (url != null && url.startsWith("https://" + HOST + "/")) { view.evaluateJavascript("window.__mwTok='" + TOKEN + "';", null); }
             }
         });
         w.setWebChromeClient(new WebChromeClient() {
