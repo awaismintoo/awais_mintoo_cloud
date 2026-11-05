@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.305';
+var BUILD = '2026-10-31.311';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -7048,9 +7048,24 @@ function nxPlan() {
     if (!(px > 0)) { return Promise.reject(new Error('No live price for ' + sym + ' yet. Open it once in Markets, or use a limit order.')); }
     var value = fut ? amt * lev : amt;
     if (!(N.x === 'bitget' && fut && N.demo) && value > nxCap()) { return Promise.reject(new Error('Safety cap: this order is worth about ' + value.toFixed(2) + ' USDT, above your cap of ' + nxCap() + ' USDT. Raise the cap below if you really want it.')); }
-    return nxPre().then(function () { return nxRules(); }).then(function (R) {
+    return nxPre().then(function () {
+        var dm = N.x === 'bitget' && fut && N.demo;
+        if (N.x === 'bitget' && fut && !dm && N.bgv !== 'v3') {
+            if (N.pm !== 'one' && N.pm !== 'hedge') { throw new Error('Could not detect your Bitget position mode (one-way or hedge). Check your internet and press Review again. Nothing was sent.'); }
+            if (N.reduce && N.pm !== 'one') { throw new Error('Reduce-only is not supported here in hedge mode (Bitget needs a different close order). Use the Close button in the Open positions list instead. Nothing was sent.'); }
+        }
+        if (N.x === 'bitget' && fut && !dm && !lim) {
+            return nxReq('GET', 'https://api.bitget.com/api/v2/mix/market/ticker?symbol=' + sym + '&productType=USDT-FUTURES', {}).then(function (r) {
+                var d = r.j && r.j.data && r.j.data[0], bp = d ? +(d.lastPr || d.markPrice) : 0;
+                if (!(bp > 0)) { throw new Error('Could not get a fresh Bitget price for ' + sym + '. Nothing was sent.'); }
+                if (px > 0 && Math.abs(bp / px - 1) > 0.02) { throw new Error('The app price (' + px + ') and the Bitget price (' + bp + ') differ by more than 2%. Wait a few seconds and try again. Nothing was sent.'); }
+                px = bp;
+            });
+        }
+    }).then(function () { return nxRules(); }).then(function (R) {
         var oxc = (N.x === 'okx' && fut) ? (R.ct || 1) : 1, qty = (N.qtyOv > 0 && !fut && !buy) ? nxFloor(N.qtyOv, R.step) : oxc !== 1 ? String(+(+nxFloor(value / px / oxc, R.step) * oxc).toFixed(10)) : nxFloor(value / px, R.step), q = +qty, ts = Date.now(), demo = N.x === 'bitget' && fut && N.demo, pt = demo ? 'SUSDT-FUTURES' : 'USDT-FUTURES', mc = demo ? 'SUSDT' : 'USDT', bsym = demo ? 'S' + sym.replace('USDT', '') + 'SUSDT' : sym;
         var tickFix = function (v) { return R.tick ? nxFloor(+v, R.tick) : String(v); }, price = lim ? tickFix(px) : '', sl = (fut && N.sl) ? tickFix(+N.sl) : '', tp = (fut && N.tp) ? tickFix(+N.tp) : '';
+        if (fut && (sl || tp)) { var sl0 = +sl, tp0 = +tp; if (buy ? ((sl && sl0 >= px) || (tp && tp0 <= px)) : ((sl && sl0 <= px) || (tp && tp0 >= px))) { throw new Error('Stop-loss and take-profit are on the wrong side of the price for a ' + (buy ? 'LONG' : 'SHORT') + ' (long: stop below, target above; short: the opposite). Nothing was sent.'); } }
         if (!(q > 0) && !(!fut && !lim && buy)) { throw new Error('Amount too small for this coin (smallest step ' + R.step + ').'); }
         if (R.min && q < R.min * oxc && !(!fut && !lim && buy)) { throw new Error('Below the exchange minimum size ' + R.min + ' (you have ' + qty + '). Raise the amount.'); }
         var tif = lim ? N.tif : 'gtc', red = fut && N.reduce, v3 = N.x === 'bitget' && !demo && N.bgv === 'v3', mk = function (s, o) { o.summary = s; return o; }, steps = [], line = (!fut && !lim && buy) ? ('BUY ' + sym.replace('USDT', '') + ' for ' + amt + ' USDT at market') : ((fut ? (buy ? 'LONG ' : 'SHORT ') : (buy ? 'BUY ' : 'SELL ')) + qty + ' ' + sym.replace('USDT', '') + (lim ? ' @ ' + price : ' at market') + ' (~' + value.toFixed(2) + ' USDT' + (fut ? ', ' + lev + 'x ' + N.mode : '') + ')') + (sl ? ' SL ' + sl : '') + (tp ? ' TP ' + tp : '');
@@ -7067,8 +7082,8 @@ function nxPlan() {
             var post = function (path, o) { var b = JSON.stringify(o); return H('POST', path, b).then(function (h) { return nxReq('POST', 'https://api.bitget.com' + path, h, b); }); };
             var chk = function (r) { if (r.j && r.j.code === '00000') { return { ok: true, msg: 'OK ' + (r.j.data && (r.j.data.orderId || '') || '') }; } return { ok: false, msg: (r.j && (r.j.msg + ' (' + r.j.code + ')')) || ('HTTP ' + r.status + ' ' + r.t.slice(0, 120)) }; };
             if (fut) {
-                steps.push(function () { return post('/api/v2/mix/account/set-margin-mode', { symbol: bsym, productType: pt, marginCoin: mc, marginMode: N.mode === 'isolated' ? 'isolated' : 'crossed' }).then(chk).then(function (r) { r.msg = 'Margin mode: ' + r.msg; r.soft = 1; return r; }); });
-                steps.push(function () { return post('/api/v2/mix/account/set-leverage', { symbol: bsym, productType: pt, marginCoin: mc, leverage: String(lev) }).then(chk).then(function (r) { r.msg = 'Leverage: ' + r.msg; r.soft = 1; return r; }); });
+                steps.push(function () { return post('/api/v2/mix/account/set-margin-mode', { symbol: bsym, productType: pt, marginCoin: mc, marginMode: N.mode === 'isolated' ? 'isolated' : 'crossed' }).then(chk).then(function (r) { r.msg = 'Margin mode: ' + r.msg; r.soft = demo ? 1 : 0; return r; }); });
+                steps.push(function () { return post('/api/v2/mix/account/set-leverage', (function () { var lv = { symbol: bsym, productType: pt, marginCoin: mc, leverage: String(lev) }; if (N.pm === 'hedge' && N.mode === 'isolated') { lv.holdSide = long ? 'long' : 'short'; } return lv; })()).then(chk).then(function (r) { r.msg = 'Leverage: ' + r.msg; r.soft = demo ? 1 : 0; return r; }); });
                 var bo = { symbol: bsym, productType: pt, marginMode: N.mode === 'isolated' ? 'isolated' : 'crossed', marginCoin: mc, size: qty, side: buy ? 'buy' : 'sell', orderType: lim ? 'limit' : 'market', clientOid: 'mw' + ts }; if (lim) { bo.price = price; bo.force = tif === 'post' ? 'post_only' : tif; } if (N.pm !== 'one') { bo.tradeSide = 'open'; } if (red) { bo.reduceOnly = 'YES'; } if (tp) { bo.presetStopSurplusPrice = tp; } if (sl) { bo.presetStopLossPrice = sl; }
                 steps.push(function () { return post('/api/v2/mix/order/place-order', bo).then(chk).then(function (r) { r.msg = 'Order: ' + r.msg; return r; }); });
             } else {
@@ -7102,8 +7117,8 @@ function nxGo() {
     N.busy = 1; N.log = ['Preparing…']; renderView(true);
     nxPlanAny().then(function (P) {
         var demo = N.x === 'bitget' && N.mk === 'fut' && N.demo;
-        if (!window.confirm((demo ? 'DEMO order (fake money) on Bitget:\n\n' : 'REAL ORDER on ' + XC[N.x].n + ' (real money):\n\n') + P.summary + '\n\nSend it?')) { N.log = ['Cancelled. Nothing was sent.']; N.busy = 0; renderView(true); return; }
-        var out = [], i = 0; var next = function () { if (i >= P.steps.length) { N.busy = 0; N.ack = 0; N.log = out; nxUnack(); renderView(true); setTimeout(function () { if (typeof nxLoad === 'function') { nxLoad(); } }, 1500); return; } P.steps[i++]().then(function (r) { out.push((r.ok ? '✅ ' : (r.soft ? '⚠️ ' : '❌ ')) + r.msg); if (!r.ok && !r.soft) { N.busy = 0; N.ack = 0; N.log = out; nxUnack(); renderView(true); return; } next(); }).catch(function (er) { out.push('❌ ' + er.message); N.busy = 0; N.ack = 0; N.log = out; nxUnack(); renderView(true); }); }; next();
+        if (!window.confirm((demo ? 'DEMO order (fake money) on Bitget:\n\n' : 'REAL ORDER on ' + XC[N.x].n + ' (real money):\n\n') + P.summary + (N.mk === 'fut' ? '\n\nBefore ordering, the app sets ' + (N.mode === 'isolated' ? 'ISOLATED' : 'CROSS') + ' margin and ' + N.lev + 'x leverage for this coin (this also applies to a position you already hold in it). Position mode: ' + (N.pm === 'one' ? 'one-way' : N.pm === 'hedge' ? 'hedge' : 'not detected') + (N.reduce ? '. Reduce-only: ON' : '') + (N.sl ? '' : '\nNo stop-loss is set.') + (function () { var o = (N.pos || []).filter(function (p) { return String(p.sym).toUpperCase() === nxSym() && p.side !== (N.side === 'buy' ? 'LONG' : 'SHORT'); })[0]; return o ? '\nWARNING: you already hold a ' + o.side + ' on ' + o.sym + '. In one-way mode this order reduces or flips it.' : ''; })() : '') + '\n\nSend it?')) { N.log = ['Cancelled. Nothing was sent.']; N.busy = 0; renderView(true); return; }
+        var out = [], i = 0; var next = function () { if (i >= P.steps.length) { N.busy = 0; N.ack = 0; N.log = out; nxUnack(); renderView(true); setTimeout(function () { if (typeof nxLoad === 'function') { nxLoad(); } }, 1500); return; } P.steps[i++]().then(function (r) { out.push((r.ok ? '✅ ' : (r.soft ? '⚠️ ' : '❌ ')) + r.msg); if (!r.ok && !r.soft) { N.busy = 0; N.ack = 0; N.log = out; nxUnack(); renderView(true); return; } next(); }).catch(function (er) { out.push('❌ ' + er.message + (i >= P.steps.length ? ' — the order may still have gone through. Check Open positions BEFORE trying again.' : '')); N.busy = 0; N.ack = 0; N.log = out; nxUnack(); renderView(true); }); }; next();
     }).catch(function (er) { N.busy = 0; N.log = [er.message]; renderView(true); });
 }
 function nxBtn(act, tx, on, col) { return '<span class="pfbtn" data-m21="' + act + '" style="display:inline-block;margin:3px 5px 3px 0;padding:8px 13px;border-radius:12px;cursor:pointer;font-weight:700;' + (on ? 'background:' + (col || '#0a84ff') + ';color:#fff' : 'background:var(--fill,#eee);border:1px solid var(--line,#ddd)') + '">' + tx + '</span>'; }
@@ -7253,11 +7268,12 @@ function nxAct(kind, i) {
     var q = kind === 'pos' ? 'Close the ' + it.side + ' position on ' + it.sym + ' (' + it.size + ') at market?' : 'Cancel the ' + it.side + ' ' + it.type + ' order on ' + it.sym + ' (' + it.qty + ' @ ' + it.price + ')?';
     if (!window.confirm((nxIsDemo() ? 'DEMO: ' : 'REAL MONEY: ') + q)) { return; }
     N.log = ['Sending…']; renderView(true);
-    it.act().then(function (r) { var j = r.j || {}, ok = j.code === '00000' || j.code === '0' || j.retCode === 0 || j.orderId || (Array.isArray(j.data) && j.data[0] && (!j.data[0].sCode || j.data[0].sCode === '0') && j.code === '0') || (r.ok && !j.code && !j.retCode && !j.msg); N.log = [(ok ? '✅ Done: ' : '❌ ') + (ok ? (kind === 'pos' ? 'close order sent' : 'order cancelled') : (j.msg || j.retMsg || (j.data && j.data[0] && j.data[0].sMsg) || r.t.slice(0, 140)))]; setTimeout(nxLoad, 1200); renderView(true); }).catch(function (e) { N.log = ['❌ ' + e.message]; renderView(true); });
+    it.act().then(function (r) { var j = r.j || {}, ok = j.code === '00000' || j.code === '0' || j.retCode === 0 || j.orderId || (Array.isArray(j.data) && j.data[0] && (!j.data[0].sCode || j.data[0].sCode === '0') && j.code === '0') || (r.ok && !j.code && !j.retCode && !j.msg); if (j.data && j.data.failureList && j.data.failureList.length) { ok = false; j.msg = 'Bitget could not close it: ' + JSON.stringify(j.data.failureList).slice(0, 140); } N.log = [(ok ? '✅ Done: ' : '❌ ') + (ok ? (kind === 'pos' ? 'close order sent' : 'order cancelled') : (j.msg || j.retMsg || (j.data && j.data[0] && j.data[0].sMsg) || r.t.slice(0, 140)))]; setTimeout(nxLoad, 1200); renderView(true); }).catch(function (e) { N.log = ['❌ ' + e.message]; renderView(true); });
 }
+function nxOkR(r) { var j = r.j || {}; if (j.data && j.data.failureList && j.data.failureList.length) { return false; } return j.code === '00000' || j.code === '0' || j.retCode === 0 || !!j.orderId || (r.ok && j.code === undefined && j.retCode === undefined && !j.msg); }
 function nxCancelAll() {
     var N = S.nx; if (!N.ord.length) { N.log = ['No open orders to cancel.']; renderView(true); return; } if (!window.confirm('Cancel ALL ' + N.ord.length + ' open orders listed below?')) { return; }
-    N.log = ['Cancelling…']; renderView(true); var out = [], i = 0, nx = function () { if (i >= N.ord.length) { N.log = out; renderView(true); setTimeout(nxLoad, 1200); return; } N.ord[i++].act().then(function (r) { out.push(r.ok ? '✅ cancelled' : '❌ ' + r.t.slice(0, 80)); nx(); }).catch(function (e) { out.push('❌ ' + e.message); nx(); }); }; nx();
+    N.log = ['Cancelling…']; renderView(true); var out = [], i = 0, nx = function () { if (i >= N.ord.length) { N.log = out; renderView(true); setTimeout(nxLoad, 1200); return; } N.ord[i++].act().then(function (r) { out.push(nxOkR(r) ? '✅ cancelled' : '❌ ' + ((r.j && (r.j.msg || r.j.retMsg)) || r.t.slice(0, 80))); nx(); }).catch(function (e) { out.push('❌ ' + e.message); nx(); }); }; nx();
 }
 function nxPanel() {
     var N = S.nx, h = '', c = nxKey(); if (!(c.key && c.sec)) { return ''; }
@@ -7430,7 +7446,7 @@ function nxPanic() {
     var N = S.nx, items = N.pos.map(function (p) { return { t: 'close ' + p.side + ' ' + p.sym, f: p.act }; }).concat(N.ord.map(function (o) { return { t: 'cancel ' + o.side + ' ' + o.sym, f: o.act }; }));
     if (!items.length) { N.log = ['Nothing to close or cancel.']; renderView(true); return; }
     if (!window.confirm((nxIsDemo() ? 'DEMO: ' : 'REAL MONEY: ') + 'PANIC on ' + XC[nxIsDemo() ? 'bitgetdemo' : N.x].n + '\n\nClose ' + N.pos.length + ' position(s) and cancel ' + N.ord.length + ' order(s)?')) { return; }
-    N.log = ['Working…']; renderView(true); var out = [], i = 0, nx = function () { if (i >= items.length) { N.log = out; renderView(true); setTimeout(nxLoad, 1500); return; } var it = items[i++]; it.f().then(function (r) { var j = r.j || {}; out.push((r.ok && (j.code === undefined || j.code === '00000' || j.code === '0') && (j.retCode === undefined || j.retCode === 0) ? '✅ ' : '❌ ') + it.t); nx(); }).catch(function (e) { out.push('❌ ' + it.t + ': ' + e.message); nx(); }); }; nx();
+    N.log = ['Working…']; renderView(true); var out = [], i = 0, nx = function () { if (i >= items.length) { N.log = out; renderView(true); setTimeout(nxLoad, 1500); return; } var it = items[i++]; it.f().then(function (r) { var j = r.j || {}; out.push((r.ok && (j.code === undefined || j.code === '00000' || j.code === '0') && (j.retCode === undefined || j.retCode === 0) && !(j.data && j.data.failureList && j.data.failureList.length) ? '✅ ' : '❌ ') + it.t); nx(); }).catch(function (e) { out.push('❌ ' + it.t + ': ' + e.message); nx(); }); }; nx();
 }
 /* ----- view additions ----- */
 (function () {
@@ -9930,7 +9946,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var em = (document.getElementById('auxEm') || {}).value || (auAcct() && auAcct().email) || '';
             el.innerHTML = shell('<h2 style="font-size:20px;margin:0 0 6px">Forgot your password?</h2>' + (cloud() ? '<div style="font-size:14px;opacity:.9;margin-bottom:12px">Enter the email of your online account. We send a reset link to that email. Open it, choose a new password, then log in here.</div><input id="auxEm" type="email" placeholder="Email" value="' + esc(em) + '" autocomplete="email" style="' + FLD + '">' + note(X.msg) + '<button data-au="fsend" ' + (X.busy ? 'disabled' : '') + ' style="' + BTN + 'background:#ffd60a;color:#222">' + (X.busy ? 'Please wait…' : 'Send reset email') + '</button>' : '<div style="font-size:14px;opacity:.9;margin-bottom:12px">Your account is stored <b>only on this phone</b>, so there is no email to send. You have two choices:<br>1) Try the password again (check Caps Lock and spaces).<br>2) Reset the login on this phone. Your wallet, bot data and settings are <b>not</b> touched; you just create a new login.<br>To get email reset and use the same account on any phone, turn on the online account.</div>' + note(X.msg) + '<button data-au="fcloud" style="' + BTN + 'background:#fff;color:#2a2a8a">☁ Turn on online account</button><button data-au="fwipe" style="' + BTN + 'background:' + (X.rc ? '#ff453a' : 'rgba(255,255,255,.2)') + ';color:#fff">' + (X.rc ? 'Tap again to confirm reset' : 'Reset login on this phone') + '</button>') + '<button data-au="fback" style="' + BTN + 'background:transparent;color:#fff;text-decoration:underline">← Back to log in</button>');
         } else if (X.view === 'cfg') {
-            var k = (AU.fb && AU.fb.apiKey) || '', p = (AU.fb && AU.fb.projectId) || '';
+            var k = (AU.fb && AU.fb.apiKey) || (window.__fbdef || {}).apiKey || '', p = (AU.fb && AU.fb.projectId) || (window.__fbdef || {}).projectId || '';
             el.innerHTML = shell('<h2 style="font-size:20px;margin:0 0 6px">☁ Online account</h2><div style="font-size:13px;opacity:.92;margin-bottom:10px;line-height:1.5">Your login is then kept online in your own free Firebase project (Google). You can sign in on any phone and reset a forgotten password by email. Steps (once, 5 minutes):<br>1) On a browser open <b>console.firebase.google.com</b> and sign in with Google.<br>2) <b>Add project</b> (any name, turn Analytics off).<br>3) <b>Build › Authentication › Get started › Email/Password › Enable › Save</b>.<br>4) Gear icon › <b>Project settings › General › Your apps › Web (&lt;/&gt;)</b>, register an app, copy <b>apiKey</b> and <b>projectId</b>.<br>5) Paste them below and tap Save, then Create account.</div><input id="auxKey" placeholder="apiKey (starts with AIza…)" value="' + esc(k) + '" autocomplete="off" style="' + FLD + '"><input id="auxPid" placeholder="projectId" value="' + esc(p) + '" autocomplete="off" style="' + FLD + '">' + note(X.msg) + '<button data-au="fsave" style="' + BTN + 'background:#ffd60a;color:#222">Save online account settings</button>' + (cloud() ? '<button data-au="foff" style="' + BTN + 'background:rgba(255,255,255,.2);color:#fff">Turn off (use this phone only)</button>' : '') + '<button data-au="fback" style="' + BTN + 'background:transparent;color:#fff;text-decoration:underline">← Back</button><div style="font-size:12px;opacity:.8">The apiKey of a Firebase web app is not a secret, it only names your project. Your passwords are kept by Google, never by this app.</div>');
         }
     }
@@ -13199,10 +13215,11 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         if (!(cur && cur.apiKey)) {
             var s = null; try { s = JSON.parse(ls(KEY, 'null')); } catch (e) { s = null; }
             if (s && s.apiKey && s.projectId) { AU.fb = s; }
-            else if (okDef && ls(OFF, '0') !== '1') { AU.fb = { apiKey: DK, projectId: DP }; _lss(KEY, JSON.stringify(AU.fb)); }
+            else if (okDef && ls(OFF, '0') !== '1') { var la = null; try { la = auAcct(); } catch (e) { } if (!(la && la.salt && !la.cloud)) { AU.fb = { apiKey: DK, projectId: DP }; _lss(KEY, JSON.stringify(AU.fb)); } }
         } else {
             try { _lss(KEY, JSON.stringify({ apiKey: cur.apiKey, projectId: cur.projectId })); } catch (e) { }
         }
+        if (okDef) { window.__fbdef = { apiKey: DK, projectId: DP }; }
         window.__fbcfg = function () { return AU.fb ? { has: !!AU.fb.apiKey, pid: AU.fb.projectId || '' } : { has: false }; };
     } catch (e) { }
 })();
@@ -16472,7 +16489,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             if (/invalid login credentials|invalid password|wrong password|email not found|no user record|invalid credential/.test(s)) { return 'The email or password is not right. Check capital letters, or tap "Forgot password".'; }
             if (/email exists|already in use/.test(s)) { return 'This email already has an account. Tap "Log in" instead.'; }
             if (/too many attempts|try again later/.test(s)) { return 'Too many tries. Wait a few minutes, or reset your password.'; }
-            if (/weak password/.test(s)) { return 'Choose a stronger password (at least 8 characters, with letters and numbers).'; }
+            if (/weak password/.test(s)) { return 'Choose a stronger password (8+ characters with a capital letter, a number and a symbol).'; }
             if (/user disabled/.test(s)) { return 'This account has been switched off. Contact support from the Help window.'; }
             if (/invalid email|missing email/.test(s)) { return 'That email address does not look right.'; }
             if (/api key|operation not allowed|configuration/.test(s)) { return 'The online account is not set up correctly in this copy of the app. You can still use the app with a phone-only account.'; }
@@ -22869,7 +22886,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
                 h += '<div class="group pad"><div class="row"><span><b>' + (d[s[0]] ? '✅ ' : '') + s[1] + '. ' + s[2] + '</b><br><small class="mut">' + s[3] + '</small></span></div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" data-act="win:' + s[4] + '">' + s[5] + '</button><button class="btn sec" data-lc="tick:' + s[0] + '">' + (d[s[0]] ? 'Undo' : 'Done') + '</button></div></div>';
             });
             h += healthCard();
-            h += '<div class="group pad"><b>🔒 Your data and privacy</b><div class="note" style="line-height:1.5">There is no account server of ours. Settings, notes, watch-lists and progress stay on this phone. Exchange keys are kept only on this phone. We do not sell your data. If ads are shown, Google AdMob may collect device identifiers and ad interactions, and optional usage statistics (Firebase) may be sent; those are governed by Google and cannot be erased from this phone.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sec" data-act="win:legal">Read privacy policy</button><button class="btn sec" data-act="win:safety">Delete my data</button></div><div class="note" style="margin-top:6px">Delete my data: open Safety and use the erase button. It removes everything this app saved on the phone, including keys (not data already held by Google ads or statistics services). Uninstalling the app also removes it.</div></div>';
+            h += '<div class="group pad"><b>🔒 Your data and privacy</b><div class="note" style="line-height:1.5">There is no account server of ours. Settings, notes, watch-lists and progress stay on this phone. Exchange keys are kept only on this phone. We do not sell your data. If you choose Backup &amp; restore, your backup is locked on the phone with your own password before it is saved or uploaded; if you use cloud backup, only that locked text is stored, and we cannot read it. You can delete it from the cloud by saving over it or asking support. If ads are shown, Google AdMob may collect device identifiers and ad interactions, and optional usage statistics (Firebase) may be sent; those are governed by Google and cannot be erased from this phone.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sec" data-act="win:legal">Read privacy policy</button><button class="btn sec" data-act="win:safety">Delete my data</button></div><div class="note" style="margin-top:6px">Delete my data: open Safety and use the erase button. It removes everything this app saved on the phone, including keys (not data already held by Google ads or statistics services). Uninstalling the app also removes it.</div></div>';
             h += '<div class="group pad"><b>📊 What is proven and what is not</b><div class="note" style="line-height:1.5">Everything here was tested on past data and practice trading only. No result is a promise of profit, and most traders lose money. The bot score and track record show past replays with costs counted. Real brokers (such as Exness) charge their own spread and fees: check them in MT5 and enter them in Exness Gold Practice so practice matches reality.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sec" data-act="win:bot">Bot score</button><button class="btn sec" data-act="win:xgold">Exness Gold Practice</button></div></div>';
             h += '<div class="group pad"><b>🧪 Testing this app? Thank you</b><div class="note" style="line-height:1.5">What to do: use the 5 steps above, then use the app normally for a week. Tell me: what confused you, what broke, what you wished it did. Weekly I read all notes, fix the top problems and send a new version.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" data-lc="fb">Send feedback by email</button><button class="btn sec" data-lc="copy">Copy tester info</button></div><div class="note" id="lcmsg" style="margin-top:6px"></div></div>';
             return h;
@@ -22901,7 +22918,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
 /* ===== p9tid: tidy Windows menu. Everyday screens stay visible; the rest sit under an arrow per group. Screens you open twice or more stay visible. ===== */
 (function () {
     try {
-        var CORE = ['overview', 'launch', 'findtrade', 'best', 'analyst', 'chart', 'market', 'news', 'paper', 'xgold', 'academy', 'videos', 'baba', 'helpc', 'parent', 'moveit', 'lockui', 'safety', 'nchart', 'nlist', 'ruletest', 'wallet', 'ptrade', 'tmode', 'split', 'exness', 'gold', 'movers', 'tpro', 'botpro', 'rbot', 'bot', 'siglab', 'sigfeed', 'nhist'];
+        var CORE = ['overview', 'launch', 'findtrade', 'best', 'analyst', 'chart', 'market', 'news', 'paper', 'xgold', 'academy', 'videos', 'baba', 'helpc', 'parent', 'moveit', 'lockui', 'safety', 'nchart', 'nlist', 'ruletest', 'wallet', 'ptrade', 'tmode', 'split', 'exness', 'gold', 'movers', 'tpro', 'botpro', 'rbot', 'bot', 'siglab', 'sigfeed', 'nhist', 'backup', 'devices', 'recovery'];
         var VK = 'mintoosuite_wvis', V = {}, open = {};
         try { V = JSON.parse(localStorage.getItem(VK) || '{}') || {}; } catch (e) { V = {}; }
         function keep(id) { return CORE.indexOf(id) >= 0 || (V[id] || 0) >= 2 || (typeof S !== 'undefined' && S.win === id); }
@@ -23400,8 +23417,8 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         var _pre = nxPre; nxPre = function () {
             var N = S.nx;
             return _pre().then(function () {
-                if (N.x !== 'bitget' || N.mk !== 'fut' || nxIsDemo() || N.bgv === 'v3' || N.pmAt && Date.now() - N.pmAt < 600000) { return; }
-                N.pmAt = Date.now();
+                if (N.x !== 'bitget' || N.mk !== 'fut' || nxIsDemo() || N.bgv === 'v3') { return; }
+                delete N.pm;
                 return nxSigned('GET', '/api/v2/mix/account/account', 'symbol=' + nxSym() + '&productType=USDT-FUTURES&marginCoin=USDT', null).then(function (r) {
                     var m = r.j && r.j.data && r.j.data.posMode; if (m) { N.pm = /one/i.test(m) ? 'one' : 'hedge'; }
                 }).catch(function () { });
@@ -23410,14 +23427,552 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         var _v = VIEWS.xtrade; VIEWS.xtrade = function () {
             var N = S.nx, o = _v(), t = '';
             if (N.x === 'bitget' && N.mk === 'fut' && !nxIsDemo()) {
-                t = '<div class="note" style="line-height:1.5"><b>Bitget first real trade checklist</b><br>1. The "Demo" switch needs a separate Bitget DEMO key. With your normal key, tap the button until it says <b>Live</b>.<br>2. Position mode: <b>' + (N.pm === 'one' ? 'one-way (detected)' : N.pm === 'hedge' ? 'hedge (detected)' : 'detected when you press Review') + '</b>.<br>3. Use a small amount first (the safety cap protects you), tick the box, press Review & send, and check the Result box and the Bitget app.<br>4. Always set a stop-loss. Bitget places it with the order.</div>';
+                t = '<div class="note" style="line-height:1.5"><b>Bitget first real trade checklist</b><br>1. You are on <b>Live</b> (real money). The Demo switch needs a separate Bitget DEMO key, not your normal key.<br>2. Position mode: <b>' + (N.pm === 'one' ? 'one-way (detected)' : N.pm === 'hedge' ? 'hedge (detected)' : 'not detected yet (the app tries when you press Review; unified accounts may not report it)') + '</b>.<br>3. Start with a very small amount (the safety cap limits an order to ' + nxCap() + ' USDT of position value), tick the box, press Review & send, then check the Result box and the Bitget app.<br>4. Enter a stop-loss price in the box below; if you leave it empty, the order has no stop.<br>5. Your key can place trades, so keep Withdraw OFF. If you can, bind it to an IP address in Bitget (phone IPs change, so many users skip this; that is riskier).</div>';
             } else if (N.x === 'bitget' && N.mk === 'spot') {
-                t = '<div class="note" style="line-height:1.5"><b>Bitget spot:</b> spot has no stop-loss on the exchange here. If you want one, use Limit orders in the Bitget app. Buying uses USDT; to sell, choose Sell and the amount of USDT value.</div>';
+                t = '<div class="note" style="line-height:1.5"><b>Bitget spot:</b> this screen has no stop-loss for spot. Buy spends the USDT amount you type; Sell sells coins worth about that many USDT. For a stop on spot, set it in the Bitget app.</div>';
             }
             return t ? o.replace(/(<div class="group pad"><div class="m7q">)/, t + '$1') : o;
         };
         PF_APP.push(['bitget real trade|bitget live|bitget one way|bitget hedge|bitget spot trade|bitget futures trade|bitget key permissions', 'Bitget real trading', 'Menu > Trade on Bitget, MEXC, Bybit, OKX > Bitget. Save your key first in Profile > Connections (key, secret, passphrase). Tap Live (Demo needs a separate Bitget demo key). The app detects one-way or hedge mode, sets leverage and margin mode, then sends the order with stop-loss and take-profit. The Open positions list below has Close and Cancel. Start tiny. Real money works on Binance futures AND on Bitget, MEXC, Bybit and OKX with a trade-enabled key.']);
     } catch (e) { }
+})();
+/* ===== p9bx: Backup & restore (encrypted file / share / cloud) - reviewed twice (security + QA) ===== */
+(function () {
+    try {
+        var PFX = 'mintoosuite_', SKIP = /^mintoosuite_(sess|dev|acct|agree|terms|age|bk_|dv_|rec$|rec_|fb$|x_bkpw|x_bkrt|x_bkuid|x_dvrt)/, ITER = 600000, MAXV = 800000, MAXN = 600, MAXT = 3000000, SHARE_MAX = 60000, B = {};
+        var SEC = /^mintoosuite_(tk|ts|keys?|secret|x_.+)$|key|secret|pass|token|pwd|cred/i, DENY = /baseurl|apibase|url$|host|endpoint|proxy|webhook/i, KEYRE = /^mintoosuite_[A-Za-z0-9_.\-]{1,80}$/;
+        var RULES = "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{db}/documents {\n    match /mwbackups/{docId} {\n      allow read, write: if request.auth != null\n        && (docId == request.auth.uid || docId == request.auth.uid + '_prev');\n    }\n    match /mwdevices/{uid} {\n      allow read: if request.auth != null && request.auth.uid == uid;\n      allow write: if request.auth != null && request.auth.uid == uid\n        && request.resource.data.devices.size() <= 1;\n    }\n  }\n}";
+        function nat() { try { var n = mwNat(); return n || null; } catch (e) { return null; } }
+        function okKey(k) { return typeof k === 'string' && KEYRE.test(k) && !SKIP.test(k); }
+        function collect(withSec) {
+            var o = {}, skipped = [], i, k, v, n = 0, tot = 0, secN = 0;
+            for (i = 0; i < localStorage.length; i++) {
+                k = localStorage.key(i); if (!okKey(k)) { continue; } var isSec = SEC.test(k); if (isSec && !withSec) { continue; }
+                try { v = localStorage.getItem(k); } catch (e) { v = null; } if (v == null) { continue; }
+                if (v === 'enc:1') { skipped.push(k + ' (locked in phone storage)'); continue; }
+                if (v.length > MAXV) { skipped.push(k + ' (too large)'); continue; }
+                if (n >= MAXN || tot + v.length > MAXT) { skipped.push(k + ' (backup size limit)'); continue; }
+                o[k] = v; n++; tot += v.length; if (isSec) { secN++; }
+            }
+            return { o: o, n: n, skipped: skipped, secN: secN };
+        }
+        function b64(buf) { var a = new Uint8Array(buf), s = '', i; for (i = 0; i < a.length; i += 8192) { s += String.fromCharCode.apply(null, a.subarray(i, i + 8192)); } return btoa(s); }
+        function unb64(t) { var s = atob(t), a = new Uint8Array(s.length), i; for (i = 0; i < s.length; i++) { a[i] = s.charCodeAt(i); } return a; }
+        function pipe(data, kind, mode) { var cs = new (mode === 'c' ? CompressionStream : DecompressionStream)(kind), w = cs.writable.getWriter(); w.write(data).catch(function () { }); w.close().catch(function () { }); return new Response(cs.readable).arrayBuffer(); }
+        function key(pw, salt, it) { var enc = new TextEncoder(); return crypto.subtle.importKey('raw', enc.encode(pw.normalize('NFKC')), 'PBKDF2', false, ['deriveKey']).then(function (m) { return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: it, hash: 'SHA-256' }, m, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']); }); }
+        function aad(it, gz) { return new TextEncoder().encode('MWBAK2.' + it + '.' + gz); }
+        function seal(pw, text) {
+            var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), raw = new TextEncoder().encode(text), gz = (typeof CompressionStream === 'function' && typeof DecompressionStream === 'function') ? 1 : 0;
+            return (gz ? pipe(raw, 'gzip', 'c') : Promise.resolve(raw)).then(function (d) { return key(pw, salt, ITER).then(function (k) { return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv, additionalData: aad(ITER, gz) }, k, d); }); }).then(function (ct) { return 'MWBAK2.' + ITER + '.' + b64(salt) + '.' + b64(iv) + '.' + gz + '.' + b64(ct); });
+        }
+        function open(pw, str) {
+            var p = String(str || '').replace(/\s+/g, '').split('.'), it = +p[1];
+            if (p[0] !== 'MWBAK2' || p.length !== 6 || !(it >= 300000 && it <= 3000000) || (p[4] !== '0' && p[4] !== '1')) { return Promise.reject(new Error('This is not a MintooSuite backup (it must start with MWBAK2). If it was cut short by a messenger, use the file instead.')); }
+            if (p[4] === '1' && typeof DecompressionStream !== 'function') { return Promise.reject(new Error('This phone\'s browser engine is too old to open this backup. Update "Android System WebView" in Google Play, then try again.')); }
+            if (p[5].length > 6000000) { return Promise.reject(new Error('This backup is too large.')); }
+            return key(pw, unb64(p[2]), it).then(function (k) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(p[3]), additionalData: aad(it, p[4]) }, k, unb64(p[5])); }).catch(function () { throw new Error('Wrong backup password, or the backup text is damaged or cut short.'); })
+                .then(function (d) { return p[4] === '1' ? pipe(d, 'gzip', 'd') : d; }).then(function (d) { if (d.byteLength > 20000000) { throw new Error('This backup is too large.'); } return JSON.parse(new TextDecoder().decode(d)); });
+        }
+        function acctInfo() { var a = null; try { a = auAcct(); } catch (e) { } return a; }
+        /* password policy: offline guessing is the only real attack on a locked backup */
+        var COMMON = /password|passw0rd|qwerty|letmein|welcome|iloveyou|mintoo|bitget|binance|bybit|admin|bismillah|pakistan|islamabad/i, COMMON2 = /kite|abcd|1234|0000|1111|summer|winter|spring|autumn|trading|bitcoin|crypto|2024|2025|2026/i;
+        function pwOk(pw) {
+            var cls = (/[a-z]/.test(pw) ? 1 : 0) + (/[A-Z]/.test(pw) ? 1 : 0) + (/[0-9]/.test(pw) ? 1 : 0) + (/[^A-Za-z0-9]/.test(pw) ? 1 : 0), em = '', a = acctInfo(), uniq = {}; if (a && a.email) { em = String(a.email).split('@')[0].toLowerCase(); }
+            pw.split('').forEach(function (c) { uniq[c] = 1; });
+            if (pw.length < 14) { return 'The backup password must be at least 14 characters.'; }
+            if (Object.keys(uniq).length < 8 || COMMON.test(pw) || (pw.length < 20 && COMMON2.test(pw)) || (pw.length < 20 && COMMON2.test(pw)) || (em.length >= 4 && pw.toLowerCase().indexOf(em) >= 0)) { return 'That password is too easy to guess (no names, your email, the app or exchange names, or simple patterns like 1234).'; }
+            if (cls < 3 && pw.length < 20) { return 'Make it longer or mixed: 20+ characters, or 14+ with lower-case, UPPER-case, numbers and symbols. Best: pick 4 random words of your own and add a number.'; }
+            return '';
+        }
+        function el(id) { return document.getElementById(id); }
+        function val(id) { var e = el(id); return e ? e.value : ''; }
+        function msg(t, ok) { var m = el('bkmsg'); if (m) { m.textContent = t; m.style.color = ok === false ? '#d70015' : (ok ? '#1d8a3b' : ''); } }
+        function wipe(id) { var e = el(id); if (e) { e.value = ''; } }
+        function stamp() { var d = new Date(), p = function (x) { return ('0' + x).slice(-2); }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()); }
+        function pwCheck() { var a = val('bkpw'), b = val('bkpw2'); if (a !== b) { throw new Error('The two backup passwords do not match.'); } var w = pwOk(a); if (w) { throw new Error(w); } return a; }
+        function tf(url, o) { var ac = typeof AbortController === 'function' ? new AbortController() : null, t = ac ? setTimeout(function () { ac.abort(); }, 25000) : 0; o = o || {}; if (ac) { o.signal = ac.signal; } return fetch(url, o).then(function (r) { clearTimeout(t); return r; }, function (e) { clearTimeout(t); throw new Error(navigator.onLine === false ? 'No internet connection. Try again when you are online.' : 'Could not reach the cloud (slow or no internet). Try again.'); }); }
+        function make(pw, sec) {
+            if (!window.crypto || !crypto.subtle) { return Promise.reject(new Error('Secure encryption is not available here.')); }
+            var c = collect(sec);
+            return seal(pw, JSON.stringify({ v: 1, app: 'MintooSuite', t: Date.now(), sec: sec, k: c.o })).then(function (s) { var r = { s: s, n: c.n, skipped: c.skipped, sec: sec, secN: c.secN }; return open(pw, s).then(function () { return r; }, function () { throw new Error('Safety check failed: the backup could not be opened again, so nothing was saved. Try again.'); }); });
+        }
+        function lastInfo() { try { return JSON.parse(localStorage.getItem('mintoosuite_bk_last') || 'null'); } catch (e) { return null; } }
+        function done(r, how) { try { localStorage.setItem('mintoosuite_bk_last', JSON.stringify({ t: Date.now(), how: how, n: r.n })); } catch (e) { } }
+        function toFile(r, pre) {
+            var name = (pre || 'MintooSuite_backup_') + stamp() + '.txt', n = nat();
+            try { if (n && n.saveDoc && n.saveDoc(window.__mwTok, name, 'text/plain', r.s)) { return { name: name, saved: 1 }; } } catch (e) { }
+            if (n) { return { name: name, saved: 0 }; }
+            try { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([r.s], { type: 'text/plain' })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 500); return { name: name, saved: 2 }; } catch (e) { }
+            return { name: name, saved: 0 };
+        }
+        function fbOk() { try { return !!(AU && AU.fb && AU.fb.apiKey && AU.fb.projectId); } catch (e) { return false; } }
+        function cloudUrl(id, mask) { return 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(AU.fb.projectId) + '/databases/(default)/documents/mwbackups/' + encodeURIComponent(id) + (mask ? '?updateMask.fieldPaths=data&updateMask.fieldPaths=t&updateMask.fieldPaths=n&updateMask.fieldPaths=exp' : ''); }
+        function fsErr(r) { if (r.status === 403) { return 'The cloud refused the backup (403). The app owner must switch on Firestore and publish the backup rule (see "App owner only" below). Meanwhile use the file option.'; } if (r.status === 404) { return 'The cloud database is not set up yet (404). Use the file option for now.'; } if (r.status === 401) { return 'Account sign-in expired. Enter your account password again.'; } return 'Cloud error (HTTP ' + r.status + '). Try again later.'; }
+        function cloudAuth() {
+            var a = acctInfo(), pw = val('bkacc'); if (!fbOk()) { return Promise.reject(new Error('Cloud backup is not connected in this build. Use the file option.')); }
+            if (!a || !a.email) { return Promise.reject(new Error('Log in to your MintooSuite account first.')); } if (!pw) { return Promise.reject(new Error('Type your MintooSuite account password (the one you log in with).')); }
+            return tf('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + encodeURIComponent(AU.fb.apiKey), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: a.email, password: pw, returnSecureToken: true }) }).then(function (r) { return r.json(); }).then(function (j) {
+                if (j.error || !j.idToken) { var m = String(j.error && j.error.message || ''); throw new Error(/INVALID|PASSWORD|CREDENTIAL/i.test(m) ? 'Wrong account password.' : /TOO_MANY/i.test(m) ? 'Too many attempts. Wait a few minutes.' : 'Account sign-in failed. Check your internet and try again.'); } return j; });
+        }
+        /* two cloud slots: latest and previous (a bad backup can never overwrite the only good copy) */
+        function cloudPut(idTok, uid, r) {
+            var H = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idTok }, body = function (s, n, t) { return JSON.stringify({ fields: { data: { stringValue: s }, t: { integerValue: String(t) }, n: { integerValue: String(n) }, exp: { timestampValue: new Date(Date.now() + 400 * 86400000).toISOString() } } }); };
+            return tf(cloudUrl(uid, 0), { headers: H }).then(function (g) { return g.ok ? g.json() : null; }).then(function (old) {
+                var f = old && old.fields, p = f && f.data && f.data.stringValue ? tf(cloudUrl(uid + '_prev', 1), { method: 'PATCH', headers: H, body: body(f.data.stringValue, +((f.n || {}).integerValue || 0), +((f.t || {}).integerValue || 0)) }) : Promise.resolve();
+                return p;
+            }).then(function () { return tf(cloudUrl(uid, 1), { method: 'PATCH', headers: H, body: body(r.s, r.n, Date.now()) }); }).then(function (x) { if (!x.ok) { throw new Error(fsErr(x)); } });
+        }
+        function applyBackup(o) {
+            var ks = Object.keys(o.k), tot = 0, n = 0, bad = [], sec = o.sec === true; ks.forEach(function (k) { tot += String(o.k[k]).length; });
+            if (tot > MAXT || ks.length > MAXN) { throw new Error('This backup is unusually large; refusing to restore it.'); }
+            ks.forEach(function (k) {
+                var v = o.k[k]; if (!Object.prototype.hasOwnProperty.call(o.k, k) || !okKey(k) || typeof v !== 'string' || v.length > MAXV || v === 'enc:1' || DENY.test(k) || (SEC.test(k) && !sec)) { bad.push(k); return; }
+                if (/^mintoosuite_pb/.test(k)) { try { var j = JSON.parse(v); delete j.base; v = JSON.stringify(j); } catch (e) { bad.push(k); return; } }
+                try { localStorage.setItem(k, v); n++; } catch (e) { bad.push(k); }
+            });
+            return { n: n, bad: bad };
+        }
+        function getCfg() { var c = {}; try { c = JSON.parse(localStorage.getItem('mintoosuite_bk_cfg') || '{}') || {}; } catch (e) { } c.freq = +c.freq || 0; return c; }
+        function setCfg(c) { try { localStorage.setItem('mintoosuite_bk_cfg', JSON.stringify(c)); } catch (e) { } }
+        function lastErr() { try { return localStorage.getItem('mintoosuite_bk_err') || ''; } catch (e) { return ''; } }
+        function setErr(t) { try { if (t) { localStorage.setItem('mintoosuite_bk_err', t); } else { localStorage.removeItem('mintoosuite_bk_err'); } } catch (e) { } }
+        function secGet(k) { var n = nat(); try { return n && n.secGet ? (n.secGet(window.__mwTok, k) || '') : ''; } catch (e) { return ''; } }
+        function getPw() { return secGet('mintoosuite_x_bkpw'); }
+        function say(t) { try { if (typeof window.toast === 'function') { window.toast(t); } } catch (e) { } }
+        function stLine() { var c = getCfg(), l = lastInfo(); return (c.freq && getPw() ? 'Automatic backup is ON (' + (c.freq === 1 ? 'daily' : 'every ' + c.freq + ' days') + (c.cloud ? ', file + cloud' : ', file only') + '). ' : 'Automatic backup is off. ') + (l ? 'Last backup: ' + new Date(l.t).toLocaleString() + '.' : 'No backup yet.') + (lastErr() ? ' Problem: ' + lastErr() : ''); }
+        function refreshSt() { var e = el('bkst'); if (e) { e.textContent = stLine(); } }
+        function autoOff(keepCfg) { try { ['mintoosuite_x_bkpw', 'mintoosuite_x_bkrt', 'mintoosuite_bk_err', 'mintoosuite_x_bkuid'].forEach(function (k) { localStorage.removeItem(k); }); if (!keepCfg) { localStorage.removeItem('mintoosuite_bk_cfg'); } } catch (e) { } }
+        function autoRun(force) {
+            var c = getCfg(), pw = getPw(), last = lastInfo(), now = Date.now(); if (!c.freq || !pw || B.auto) { return Promise.resolve(); }
+            var failT = +localStorage.getItem('mintoosuite_bk_fail') || 0; if (!force && now - failT < 6 * 3600000) { return Promise.resolve(); }
+            if (!force && last && now - last.t < c.freq * 86400000 - 3600000) { return Promise.resolve(); }
+            B.auto = 1; var res, cloudNote = '';
+            return make(pw, !!c.sec).then(function (r) {
+                res = r; var f = toFile(r); if (f.saved !== 1) { throw new Error('could not save the file on this phone'); } done(r, 'auto'); setErr('');
+                var rt = secGet('mintoosuite_x_bkrt'), a = acctInfo(); if (!c.cloud) { return; }
+                if (!rt || !fbOk() || !a || (c.uid && a.uid !== c.uid)) { cloudNote = 'cloud copy skipped (sign in again and turn automatic backup on)'; return; } if (r.s.length > 900000) { cloudNote = 'too big for cloud'; return; }
+                return tf('https://securetoken.googleapis.com/v1/token?key=' + encodeURIComponent(AU.fb.apiKey), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(rt) }).then(function (x) { return x.json(); }).then(function (j) { if (!j || !j.id_token) { cloudNote = 'cloud sign-in expired: open Backup & restore and turn automatic backup on again'; return; } return cloudPut(j.id_token, j.user_id, r); });
+            }).then(function () { if (cloudNote) { setErr(cloudNote); } try { localStorage.removeItem('mintoosuite_bk_fail'); } catch (e) { } say('✅ Backup saved' + (cloudNote ? ' (file only)' : '')); }).catch(function (er) { setErr(String(er.message || er)); try { localStorage.setItem('mintoosuite_bk_fail', String(Date.now())); } catch (e) { } if (!cloudNote) { say('Backup problem: ' + String(er.message || er).slice(0, 80)); } }).then(function () { B.auto = 0; refreshSt(); });
+        }
+        function banner(html, go) {
+            if (el('bkbanner')) { return; } var d = document.createElement('div'); d.id = 'bkbanner';
+            d.style.cssText = 'position:fixed;left:10px;right:10px;bottom:76px;z-index:99998;background:var(--card,#fff);color:var(--tx,#111);border:1px solid rgba(255,159,10,.6);border-radius:14px;padding:12px;box-shadow:0 6px 24px rgba(0,0,0,.28);font-size:13.5px;line-height:1.45';
+            d.innerHTML = html + '<div style="margin-top:8px"><span data-bkb="go" style="display:inline-block;padding:8px 14px;border-radius:10px;background:#1d8a3b;color:#fff;font-weight:700;margin-right:8px">' + go + '</span><span data-bkb="no" style="display:inline-block;padding:8px 14px;border-radius:10px;background:#8e8e93;color:#fff;font-weight:700">Later</span></div>';
+            document.body.appendChild(d); setTimeout(function () { if (d.parentNode) { d.remove(); } }, 25000);
+        }
+        /* reminder: a small banner (never a blocking popup) after 7 days without a backup */
+        function nag() {
+            try {
+                if (!localStorage.getItem('mintoosuite_bk_first')) {
+                    var cnt = collect(true).n; localStorage.setItem('mintoosuite_bk_first', String(Date.now()));
+                    if (cnt < 15 && !el('m7gate') && !document.hidden && !el('rcbanner') && !/^(xtrade|trade|tpro|rbot|botpro|chart|backup)$/.test(S.win)) { banner('<b>♻️ New phone or reinstalled?</b><br>If you have a MintooSuite backup (file or cloud), you can bring your settings, history and keys back in one minute.', 'Restore my backup'); }
+                    return;
+                }
+                if (document.hidden || el('m7gate') || el('bkbanner') || el('rcbanner') || el('rcbanner') || Date.now() - (window.__bkT0 || B.t0 || 0) < 120000) { return; }
+                var c = getCfg(); if (c.freq && getPw()) { return; }
+                if (/^(xtrade|trade|tpro|rbot|botpro|chart|backup)$/.test(S.win)) { return; }
+                try { if (typeof window.__openTrades === 'function' && window.__openTrades().length) { return; } } catch (e) { }
+                var a = document.activeElement; if (a && /INPUT|TEXTAREA/.test(a.tagName)) { return; }
+                var now = Date.now(), nagT = +localStorage.getItem('mintoosuite_bk_nag') || 0, last = lastInfo(), ref = last ? last.t : +localStorage.getItem('mintoosuite_bk_first');
+                if (now - ref < 7 * 86400000 || now - nagT < 86400000) { return; }
+                localStorage.setItem('mintoosuite_bk_nag', String(now));
+                var days = Math.floor((now - ref) / 86400000); banner('<b>💾 Back up your data?</b><br>' + (last ? 'Your last backup was ' + days + ' days ago.' : 'You have not made a backup yet.') + ' If you lose or reset the phone, your settings, history and keys are gone. (Normal app updates never delete your data.)', 'Back up now');
+            } catch (e) { }
+        }
+        B.t0 = Date.now();
+        setTimeout(function () { autoRun(); nag(); }, 25000);
+        setInterval(function () { autoRun(); nag(); }, 30 * 60000);
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) { setTimeout(function () { autoRun(); nag(); }, 4000); } });
+
+        /* ---- progress bar (percentage + time left) for backup and restore ---- */
+        var PG = { on: 0, act: '', v: 0, cap: 0, t0: 0, lab: '', fail: 0, tick: null };
+        function mkB() { return PG.act === 'csave' ? 60 : (PG.act === 'auto' || PG.act === 'autonow') ? 70 : 85; }
+        function pgDraw() {
+            var f = el('bkpf'); if (!f) { return; } var v = Math.max(0, Math.min(100, PG.v)), e = (Date.now() - PG.t0) / 1000, rem = e * (100 - v) / Math.max(v, 1), eta = '';
+            f.style.width = v.toFixed(1) + '%'; var pp = el('bkpp'); if (pp) { pp.textContent = Math.floor(v) + '%'; } var pl = el('bkpl'); if (pl) { pl.textContent = PG.lab; }
+            if (PG.fail) { eta = 'Stopped. See the message below.'; f.style.background = '#ff453a'; } else if (v >= 100) { eta = 'Finished in ' + Math.max(1, Math.round(e)) + ' s'; f.style.background = '#30d158'; } else if (v >= 8 && e >= 1.2) { eta = rem < 1.5 ? 'Almost done…' : 'About ' + Math.ceil(rem) + ' s left'; } else { eta = 'Estimating time…'; }
+            var pe = el('bkpe'); if (pe) { pe.textContent = eta; } var bar = el('bkprog'); if (bar) { bar.setAttribute('aria-valuenow', String(Math.floor(v))); }
+        }
+        PG.abs = function (from, to, lab) { if (!PG.on) { return; } PG.v = Math.max(PG.v, from); PG.cap = Math.max(PG.cap, to - 1); if (lab) { PG.lab = lab; } pgDraw(); };
+        PG.set = function (v, lab) { if (!PG.on) { return; } PG.v = Math.max(PG.v, v); PG.cap = Math.max(PG.cap, v); if (lab) { PG.lab = lab; } pgDraw(); };
+        PG.begin = function (act) {
+            PG.on = 1; PG.act = act; PG.v = 0; PG.cap = 4; PG.fail = 0; PG.t0 = Date.now(); PG.lab = 'Starting…';
+            var b = el('bkprog'); if (b) { b.style.display = 'block'; var f = el('bkpf'); if (f) { f.style.background = 'linear-gradient(90deg,#30d158,#0a84ff)'; } }
+            clearInterval(PG.tick); PG.tick = setInterval(function () { if (PG.on && !PG.fail && PG.v < PG.cap) { PG.v += (PG.cap - PG.v) * 0.07 + 0.02; } pgDraw(); }, 120); pgDraw();
+        };
+        PG.end = function (ok) { if (!PG.on) { return; } if (ok) { PG.v = 100; PG.cap = 100; PG.lab = 'Done ✔'; } else { PG.fail = 1; PG.lab = 'Stopped'; } pgDraw(); clearInterval(PG.tick); PG.tick = null; PG.on = 0; };
+        var _seal = seal; seal = function (pw, t) {
+            var rs = PG.act === 'restore', B = mkB();
+            if (rs) { PG.abs(45, 75, 'Saving a safety copy of this phone\'s data…'); } else { PG.abs(B * 0.12, B * 0.62, 'Locking with AES-256 (the slow, secure step)…'); }
+            return _seal(pw, t).then(function (x) { PG.set(rs ? 75 : B * 0.62); return x; });
+        };
+        var _open = open; open = function (pw, str) {
+            var rs = PG.act === 'restore', B = mkB(), first = rs && !PG.opened;
+            if (first) { PG.opened = 1; PG.abs(3, 45, 'Unlocking and decrypting your backup…'); } else if (!rs) { PG.abs(B * 0.62, B * 0.97, 'Checking the backup opens again…'); }
+            return _open(pw, str).then(function (x) { if (first) { PG.set(45); } else if (!rs) { PG.set(B * 0.97); } return x; });
+        };
+        var _make = make; make = function (pw, sec) {
+            PG.abs(2, mkB() * 0.12, 'Collecting your data…'); PG.opened = 0;
+            return _make(pw, sec).then(function (r) { PG.set(mkB(), PG.act === 'file' || PG.act === 'share' ? 'Saving…' : 'Uploading to your cloud…'); PG.abs(mkB(), 97); return r; });
+        };
+        var _cauth = cloudAuth; cloudAuth = function () { if (PG.act === 'csave') { PG.abs(60, 70, 'Signing in to your account…'); } else { PG.abs(2, 25, 'Signing in to your account…'); } return _cauth.apply(this, arguments).then(function (x) { PG.set(PG.act === 'csave' ? 70 : 25); return x; }); };
+        var _cput = cloudPut; cloudPut = function () { PG.abs(70, 97, 'Uploading to your cloud…'); return _cput.apply(this, arguments).then(function (x) { PG.set(97); return x; }); };
+        var _apply = applyBackup; applyBackup = function (o) { PG.set(80, 'Restoring your data…'); var r = _apply(o); PG.set(99, 'Restarting…'); return r; };
+        function vBk() {
+            var l = lastInfo(), old = !l || (Date.now() - l.t > 7 * 86400000), nv = !!(nat() && nat().secSet), cfg = getCfg(), inp = 'class="inp" autocomplete="off" style="width:100%;margin:3px 0"';
+            var btn = function (act, tx, c) { return '<span class="pfbtn" data-bk="' + act + '" style="display:inline-block;margin:4px 6px 4px 0;padding:9px 14px;border-radius:12px;cursor:pointer;font-weight:700;background:' + (c || '#0a84ff') + ';color:#fff">' + tx + '</span>'; };
+            var h = '<div class="note" style="line-height:1.5;' + (old ? 'background:rgba(255,159,10,.15)' : '') + '">' + (l ? '<b>Last backup:</b> ' + new Date(l.t).toLocaleString() + ' (' + l.n + ' items, ' + esc(l.how) + ')' + (old ? ' — older than 7 days, back up again.' : '') : '⚠️ <b>You have no backup yet.</b> If you uninstall the app or lose the phone, everything is gone.') + '</div>';
+            h += '<div class="group pad"><b>💾 Back up</b><div class="note" style="margin:4px 0;line-height:1.5">Your settings, trade history, practice trades, alerts and saved ideas are put into one text and <b>locked with a password you choose</b> (AES-256, locked on this phone before it goes anywhere). Without that password nobody can open it, not even the app\'s developer. <b>If you forget the password, the backup can never be opened. Write it on paper.</b> The password needs 14+ characters: 4 random words of your own plus a number is best.</div>' +
+                '<input ' + inp + ' id="bkpw" type="password" placeholder="Backup password (14+ characters)"><input ' + inp + ' id="bkpw2" type="password" placeholder="Type the backup password again">' +
+                '<label style="display:flex;gap:8px;margin:4px 0;font-size:13px"><input type="checkbox" id="bkshow"> <span>Show passwords while I type</span></label>' +
+                '<label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:13px"><input type="checkbox" id="bksec"> <span>Also include my <b>API keys, secrets and passphrases</b> (Binance, Bitget, MEXC, AI key). They stay locked by the password. Leave this off if you prefer to create new keys on the new phone.</span></label>' +
+                btn('file', '📁 Save file' + (nv ? ' to Downloads' : ''), '#0a84ff') + btn('share', '📤 Share (WhatsApp, email…)', '#30b0c7') + '</div>';
+            h += '<div class="group pad"><b>☁️ Cloud backup (with your MintooSuite account)</b>' + (fbOk() && acctInfo() ? '<div class="note" style="margin:4px 0;line-height:1.5">Saves the <i>locked</i> backup under your account <b>' + esc(acctInfo().email) + '</b> (the last two copies are kept). The cloud only holds the locked text. Fill the two backup password boxes above, then your account password (the one you log in with, not the backup password):</div><input ' + inp + ' id="bkacc" type="password" placeholder="Your MintooSuite account password">' + btn('csave', '☁️ Save to cloud', '#5e5ce6') + btn('cget', '⬇️ Get latest', '#8e8e93') + btn('cprev', '⬇️ Get previous copy', '#8e8e93') +
+                '<details style="margin-top:6px"><summary style="font-size:13px">App owner only: one-time Firebase setup</summary><div class="note" style="line-height:1.5">1. Firebase console > Build > <b>Firestore Database</b> > Create database.<br>2. Open <b>Rules</b>, add this block inside your existing rules (keep the other rules), then Publish:<br><pre style="white-space:pre-wrap;font-size:11px;user-select:all">' + esc(RULES) + '</pre></div></details>' : '<div class="note" style="margin:4px 0;line-height:1.5">Cloud backup needs a logged-in MintooSuite account and a cloud-enabled build (Google-only logins have no account password, so use the file option). <b>The file option always works, for everyone, with no account.</b></div>') + '</div>';
+            h += '<div class="group pad"><b>⏰ Automatic backup' + (nv ? '' : ' (Android app only for now)') + '</b>' + (nv ? '<div class="note" style="margin:4px 0;line-height:1.5">The app backs up by itself on the schedule you choose <b>whenever you open it</b> (it cannot run while the phone is off or the app was not opened). The file is saved in Downloads/MintooSuite on this phone: tick Cloud so a copy also exists off the phone. Your backup password is kept in the phone\'s protected storage (Android Keystore).</div><div id="bkst" class="note" style="margin:2px 0">' + esc(stLine()) + '</div>' +
+                '<div>' + [[1, 'Daily'], [7, 'Weekly'], [30, 'Monthly']].map(function (f) { return btn('freq:' + f[0], f[1], (B.pf || cfg.freq) === f[0] ? '#1d8a3b' : '#8e8e93'); }).join('') + '</div>' +
+                '<label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:13px"><input type="checkbox" id="bkacl" ' + (cfg.cloud ? 'checked' : '') + '> <span>Also upload to the cloud (needs your account password once, above)</span></label>' +
+                '<div class="note" style="margin:2px 0">Fill the backup password boxes (and the account password if Cloud is ticked), choose how often, then press:</div>' + btn('auto', '✅ Turn on automatic backup', '#1d8a3b') + (cfg.freq && getPw() ? btn('autooff', '⛔ Turn off & forget password', '#e5383b') + btn('autonow', '▶ Back up now', '#0a84ff') : '') : '<div class="note">Automatic backup needs the installed Android app. Use the buttons above.</div>') + '</div>';
+            h += '<div class="group pad"><b>♻️ Restore (new phone, or after reinstalling)</b><div class="note" style="margin:4px 0;line-height:1.5"><b>Easiest on a new phone:</b> copy your backup file to the phone, install the app, open this screen, choose the file below, type the backup password, press Restore. No account needed. For the cloud copy you must be logged in to the same MintooSuite account. Restoring <b>overwrites</b> the same settings on this phone; the app first saves a safety copy of what is on the phone now (locked with the same password), then restarts.</div>' +
+                '<input type="file" id="bkfile" accept=".txt,text/plain" style="margin:4px 0;max-width:100%"><textarea id="bkin" class="inp" placeholder="…or paste the backup text here (starts with MWBAK2.)" style="width:100%;height:70px;margin:3px 0;font-size:11px"></textarea>' +
+                '<input ' + inp + ' id="bkrp" type="password" placeholder="Backup password">' + btn('restore', '♻️ Restore now', '#e5383b') + '</div>';
+            h += '<div id="bkprog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="display:none;margin:10px 0 6px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span id="bkpl"></span><b id="bkpp">0%</b></div><div style="height:12px;border-radius:6px;background:rgba(120,120,128,.28);overflow:hidden"><div id="bkpf" style="height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,#30d158,#0a84ff)"></div></div><div id="bkpe" style="font-size:12px;opacity:.75;margin-top:4px"></div></div>';
+            h += '<div id="bkmsg" class="note" style="line-height:1.5;word-break:break-word"></div>';
+            h += '<div class="note" style="line-height:1.5">Not backed up: your login session, age/terms confirmations, the Firebase connection, and any item that is too large (the message after each backup names them). After restoring you may need to switch phone-specific things on again (notifications, battery settings, fingerprint). Only back up API keys on a phone you control; you can always delete a key at the exchange to cut access.</div>';
+            return h;
+        }
+        document.addEventListener('change', function (e) {
+            var f = e.target; if (!f) { return; }
+            if (f.id === 'bkshow') { ['bkpw', 'bkpw2', 'bkrp'].forEach(function (i) { var x = el(i); if (x) { x.type = f.checked ? 'text' : 'password'; } }); return; }
+            if (f.id !== 'bkfile' || !f.files || !f.files[0]) { return; }
+            if (f.files[0].size > 8000000) { msg('That file is too large to be a MintooSuite backup.', false); return; }
+            var r = new FileReader(); r.onload = function () { var t = el('bkin'); if (t) { t.value = String(r.result || '').trim(); } msg('File loaded. Enter the backup password and press Restore now.', true); }; r.onerror = function () { msg('Could not read that file.', false); }; r.readAsText(f.files[0]);
+        }, true);
+        document.addEventListener('click', function (e) {
+            var bn = e.target.closest ? e.target.closest('[data-bkb]') : null;
+            if (bn) { var bb = el('bkbanner'); if (bb) { bb.remove(); } if (bn.getAttribute('data-bkb') === 'go') { try { gotoWin('backup'); } catch (er) { } } return; }
+            var t = e.target.closest ? e.target.closest('[data-bk]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation();
+            var a = t.getAttribute('data-bk'); if (B.busy) { return; }
+            var run = function (p) { B.busy = 1; var okRun = true; PG.begin(a); Promise.resolve().then(p).catch(function (er) { okRun = false; msg(er.message || String(er), false); }).then(function () { B.busy = 0; PG.end(okRun && !/^(Cancelled|Problem)/.test((el('bkmsg') || {}).textContent || '') && el('bkmsg') && el('bkmsg').style.color !== 'rgb(215, 0, 21)'); }); };
+            var sec = function () { return !!(el('bksec') && el('bksec').checked); };
+            var tail = function (r) { return skipTxt(r) + (r.sec ? ' API keys included: ' + r.secN + '.' : ' No API keys included.'); };
+            function skipTxt(r) { return r.skipped.length ? ' Not included (' + r.skipped.length + '): ' + r.skipped.slice(0, 4).join(', ') + (r.skipped.length > 4 ? '…' : '') + '.' : ''; }
+            if (a === 'file') { run(function () { var pw = pwCheck(); msg('Locking and checking your backup…', true); return make(pw, sec()).then(function (r) { var f = toFile(r); if (f.saved === 1) { done(r, 'file'); wipe('bkpw'); wipe('bkpw2'); msg('✅ Saved ' + f.name + ' in Downloads/MintooSuite (' + r.n + ' items).' + tail(r) + ' Copy it somewhere safe (Google Drive, email to yourself); a file on this phone alone is lost with the phone.', true); } else if (f.saved === 2) { msg('The browser started a download of ' + f.name + '. Check your downloads folder. (Not confirmed.)' + tail(r), true); } else { throw new Error('Could not save the file. Use Share instead.'); } }); }); }
+            else if (a === 'share') { run(function () { var pw = pwCheck(); msg('Locking and checking your backup…', true); return make(pw, sec()).then(function (r) { if (r.s.length > SHARE_MAX) { throw new Error('This backup is too long to send as a message (' + Math.round(r.s.length / 1000) + ' KB; messengers cut long text). Use "Save file" and send the file instead.'); } var n = nat(), fin = function (how) { done(r, 'share'); wipe('bkpw'); wipe('bkpw2'); msg(how + ' (' + r.n + ' items).' + tail(r) + ' Keep it and the password.', true); }; if (n && n.shareText) { n.shareText(window.__mwTok, 'MintooSuite backup', r.s); fin('✅ Share sheet opened'); } else if (navigator.share) { return navigator.share({ title: 'MintooSuite backup', text: r.s }).then(function () { fin('✅ Shared'); }); } else if (navigator.clipboard && navigator.clipboard.writeText) { return navigator.clipboard.writeText(r.s).then(function () { fin('✅ Backup text copied to the clipboard. Paste it into a message or note to yourself'); }); } else { throw new Error('Sharing is not available here. Use Save file.'); } }); }); }
+            else if (a === 'csave') { run(function () { var pw = pwCheck(); msg('Locking, checking and uploading…', true); var r0; return make(pw, sec()).then(function (r) { r0 = r; if (r.s.length > 900000) { throw new Error('The backup is too big for one cloud document (' + Math.round(r.s.length / 1000) + ' KB). Use the file option.'); } return cloudAuth(); }).then(function (j) { wipe('bkacc'); return cloudPut(j.idToken, j.localId, r0); }).then(function () { done(r0, 'cloud'); wipe('bkpw'); wipe('bkpw2'); msg('✅ Saved to your cloud (' + r0.n + ' items). The previous cloud copy was kept as "previous".' + tail(r0), true); }); }); }
+            else if (a === 'cget' || a === 'cprev') { run(function () { msg('Getting your cloud backup…', true); return cloudAuth().then(function (j) { wipe('bkacc'); return tf(cloudUrl(a === 'cprev' ? j.localId + '_prev' : j.localId, 0), { headers: { Authorization: 'Bearer ' + j.idToken } }); }).then(function (r) { if (r.status === 404) { throw new Error('No ' + (a === 'cprev' ? 'previous ' : '') + 'backup found in your cloud.'); } if (!r.ok) { throw new Error(fsErr(r)); } return r.json(); }).then(function (d) { var s = d && d.fields && d.fields.data && d.fields.data.stringValue; if (!s) { throw new Error('No backup found in your cloud.'); } var ta = el('bkin'); if (ta) { ta.value = s; } msg('✅ Cloud backup loaded (saved ' + new Date(+((d.fields.t || {}).integerValue || 0)).toLocaleString() + ', ' + ((d.fields.n || {}).integerValue || '?') + ' items). Enter the backup password below and press Restore now.', true); }); }); }
+            else if (a.indexOf('freq:') === 0) { B.pf = +a.slice(5); document.querySelectorAll('[data-bk^="freq:"]').forEach(function (e) { e.style.background = e.getAttribute('data-bk') === a ? '#1d8a3b' : '#8e8e93'; }); msg('Chosen: every ' + B.pf + ' day(s). Now press "Turn on automatic backup".', true); }
+            else if (a === 'auto') { run(function () {
+                var n = nat(); if (!(n && n.secSet && n.secGet)) { throw new Error('Automatic backup works only in the installed Android app.'); } var c = getCfg(); c.freq = B.pf || c.freq; if (!c.freq) { throw new Error('Choose Daily, Weekly or Monthly first.'); }
+                var pw = pwCheck(), want = !!(el('bkacl') && el('bkacl').checked), rt = ''; c.sec = sec(); c.cloud = want; msg('Turning on…', true);
+                var p = want ? cloudAuth().then(function (j) { rt = j.refreshToken || ''; c.uid = j.localId; wipe('bkacc'); }) : Promise.resolve();
+                return p.then(function () {
+                    try { localStorage.setItem('mintoosuite_x_bkpw', pw); } catch (e) { } if (secGet('mintoosuite_x_bkpw') !== pw) { autoOff(true); throw new Error('The phone could not store the password in protected storage, so automatic backup stays off.'); }
+                    if (want && rt) { try { localStorage.setItem('mintoosuite_x_bkrt', rt); } catch (e) { } if (secGet('mintoosuite_x_bkrt') !== rt) { autoOff(true); throw new Error('The phone could not store the cloud sign-in safely, so automatic backup stays off.'); } }
+                    setCfg(c); wipe('bkpw'); wipe('bkpw2'); setErr(''); return autoRun(true);
+                }).then(function () { var t2 = lastErr() ? 'Turned on, but: ' + lastErr() : '✅ Automatic backup is ON (' + (c.freq === 1 ? 'daily' : 'every ' + c.freq + ' days') + '). First backup done.', ok2 = !lastErr(); if (S.win === 'backup') { renderView(true); } setTimeout(function () { msg(t2, ok2); }, 60); }); }); }
+            else if (a === 'autooff') { if (window.confirm('Turn off automatic backup and remove the stored backup password from this phone? Existing backups stay and still need that password.')) { autoOff(false); renderView(true); setTimeout(function () { msg('Automatic backup is off. Password removed from this phone.', true); }, 50); } }
+            else if (a === 'autonow') { run(function () { msg('Backing up…', true); return autoRun(true).then(function () { msg(lastErr() ? 'Problem: ' + lastErr() : '✅ Backup saved.', !lastErr()); }); }); }
+            else if (a === 'restore') { run(function () {
+                var txt = val('bkin').trim(), pw = val('bkrp'); if (!txt) { throw new Error('Pick the backup file, paste the text, or use Get latest first.'); } if (!pw) { throw new Error('Enter the backup password.'); } msg('Unlocking…', true);
+                return open(pw, txt).then(function (o) {
+                    if (!o || !o.k || o.app !== 'MintooSuite' || typeof o.k !== 'object') { throw new Error('This file is not a valid MintooSuite backup.'); }
+                    var c = Object.keys(o.k).length, mine = collect(true), warn = mine.n > 5 ? '\n\nThis phone already has ' + mine.n + ' saved items. They will be overwritten where the backup has the same item. A safety copy (without API keys) is saved first.' : '';
+                    if (!window.confirm('Restore ' + c + ' items from the backup made ' + new Date(o.t).toLocaleString() + (o.sec === true ? ' (includes API keys)' : ' (no API keys)') + '?' + warn + '\n\nThe app restarts afterwards.')) { msg('Cancelled. Nothing changed.', true); return; }
+                    if (typeof window.__openTrades === 'function' && window.__openTrades().length) { throw new Error('You have open trades. Close them (or wait) before restoring, because the app restarts.'); }
+                    return seal(pw, JSON.stringify({ v: 1, app: 'MintooSuite', t: Date.now(), sec: false, k: collect(false).o })).then(function (snap) { var f = toFile({ s: snap }, 'MintooSuite_before_restore_'), ok = f.saved > 0; if (!ok && mine.n > 5) { throw new Error('Could not save a safety copy of the data on this phone, so nothing was restored. (Use "Save file" first if you want to keep it.)'); } return ok; }).then(function (saved) {
+                        var r = applyBackup(o); wipe('bkrp'); msg('✅ Restored ' + r.n + ' items' + (r.bad.length ? ' (' + r.bad.length + ' skipped for safety or size: ' + r.bad.slice(0, 3).join(', ') + (r.bad.length > 3 ? '…' : '') + ')' : '') + (saved ? '. Safety copy of your previous data saved in Downloads/MintooSuite' : '') + '. Restarting…', true); setTimeout(function () { try { location.reload(); } catch (e) { } }, 900);
+                    });
+                }); }); }
+        }, true);
+        WINS.push({ id: 'backup', ic: '💾', c: '#30d158', n: 'Backup & restore', t: 'Backup & restore', sub: 'Lock your data with a password; file, share or cloud; restore on a new phone' }); LIVE.backup = 0; VIEWS.backup = vBk;
+        MW_HELP.backup = 'Backs up your settings, history and (optionally) API keys, locked with a password you choose. Save a file, share it, or use cloud. Restore on a new phone from the same screen.';
+        try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Tools & settings' && g[1].indexOf('backup') < 0) { g[1].unshift('backup'); } }); } catch (e) { }
+        window.__backup = { open: open, seal: seal };
+        PF_APP.push(['update the app|updating|after update|new version|lose data after update|will i lose|data safe on update|installer update', 'Do updates delete my data?', 'No. Installing a new MintooSuite APK over the old one keeps all your data, because it is the same app signed with the same key. Data is lost only if you uninstall the app, use Android Clear data, or Android refuses the update because of a signature conflict (then do NOT uninstall: ask for help). Turn on Automatic backup in Menu > Backup & restore for extra safety.']);
+        PF_APP.push(['backup|restore|new phone|new mobile|change phone|uninstall|reinstall|lose my data|lost phone|move my data|transfer data|cloud backup|save my api keys', 'Backup & restore', 'Menu > Backup & restore. Choose a backup password (14+ characters, strong, write it on paper), then Save file, Share, or Save to cloud (your MintooSuite account). Tick the API-keys box only if you want keys included; they stay locked by the password. Automatic backup (Android app) backs up daily, weekly or monthly whenever you open the app, like WhatsApp. On a new phone: install, open Backup & restore, pick the file (or log in and Get latest), enter the password, Restore now. Uninstalling without a backup deletes everything. Android only for now; iOS and Windows versions do not exist yet.']);
+    } catch (e) { try { console.error('p9bx', e); } catch (e2) { } }
+})();
+/* ===== p9bd: ONE active phone per account (device registry in your Firebase project) ===== */
+(function () {
+    try {
+        var MAXD = 1, STALE = 60 * 86400000, GRACE = 14 * 86400000, D = { tok: null, list: [], at: 0, busy: 0, err: '' };
+        function fbOk() { try { return !!(AU && AU.fb && AU.fb.apiKey && AU.fb.projectId); } catch (e) { return false; } }
+        function acct() { try { return auAcct(); } catch (e) { return null; } }
+        function myId() { var d = ''; try { d = localStorage.getItem('mintoosuite_dev') || ''; if (!d) { d = auRand(18); localStorage.setItem('mintoosuite_dev', d); } } catch (e) { } return d; }
+        function myName() { var m = /Android [\d.]+; ([^;)]+)/.exec(navigator.userAgent || ''), n = m ? m[1].trim() : ''; return (n.length > 2 ? n : 'Phone').slice(0, 30) + ' (' + myId().replace(/[^A-Za-z0-9]/g, '').slice(0, 4) + ')'; }
+        function F(u, o) { var ac = typeof AbortController === 'function' ? new AbortController() : null, t = ac ? setTimeout(function () { ac.abort(); }, 20000) : 0; o = o || {}; if (ac) { o.signal = ac.signal; } return fetch(u, o).then(function (r) { clearTimeout(t); return r; }, function (e) { clearTimeout(t); throw new Error('network'); }); }
+        function url(uid, mask) { return 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(AU.fb.projectId) + '/databases/(default)/documents/mwdevices/' + encodeURIComponent(uid) + (mask ? '?updateMask.fieldPaths=devices' : ''); }
+        function readList(tok, uid) {
+            return F(url(uid, 0), { headers: { Authorization: 'Bearer ' + tok } }).then(function (r) {
+                if (r.status === 404) { return { list: [] }; } if (!r.ok) { var e = new Error('http' + r.status); e.code = r.status; throw e; }
+                return r.json().then(function (j) { var v = (j.fields && j.fields.devices && j.fields.devices.arrayValue && j.fields.devices.arrayValue.values) || [], l = v.map(function (x) { var f = (x.mapValue && x.mapValue.fields) || {}; return { id: (f.id || {}).stringValue || '', name: (f.name || {}).stringValue || 'Phone', t: +((f.t || {}).integerValue || 0), seen: +((f.seen || {}).integerValue || 0) }; }).filter(function (x) { return x.id; }); return { list: l }; });
+            });
+        }
+        function writeList(tok, uid, list) {
+            var vals = list.map(function (x) { return { mapValue: { fields: { id: { stringValue: x.id }, name: { stringValue: x.name }, t: { integerValue: String(x.t) }, seen: { integerValue: String(x.seen) } } } }; });
+            return F(url(uid, 1), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok }, body: JSON.stringify({ fields: { devices: { arrayValue: { values: vals } } } }) }).then(function (r) { if (!r.ok) { var e = new Error('http' + r.status); e.code = r.status; throw e; } });
+        }
+        function register(tok, uid) {
+            return readList(tok, uid).then(function (R) {
+                var now = Date.now(), id = myId(), list = R.list.filter(function (x) { return x.id === id || now - x.seen < STALE; }), me = list.filter(function (x) { return x.id === id; })[0];
+                if (me) { me.seen = now; me.name = myName(); return writeList(tok, uid, list).then(function () { return { ok: 1, list: list }; }); }
+                if (list.length < MAXD) { list.push({ id: id, name: myName(), t: now, seen: now }); return writeList(tok, uid, list).then(function () { return { ok: 1, list: list }; }); }
+                return { ok: 0, list: list };
+            });
+        }
+        function tokFromRt() {
+            var rt = ''; try { rt = localStorage.getItem('mintoosuite_x_dvrt') || ''; } catch (e) { } if (!rt || !fbOk()) { return Promise.reject(new Error('norefresh')); }
+            return F('https://securetoken.googleapis.com/v1/token?key=' + encodeURIComponent(AU.fb.apiKey), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(rt) }).then(function (r) { return r.json(); }).then(function (j) { if (!j || !j.id_token) { var em = String(j && j.error && j.error.message || ''); throw new Error(/INVALID_REFRESH_TOKEN|TOKEN_EXPIRED|USER_DISABLED|USER_NOT_FOUND/.test(em) ? 'expired' : 'network'); } try { if (j.refresh_token) { localStorage.setItem('mintoosuite_x_dvrt', j.refresh_token); } } catch (e) { } return { id: j.id_token, uid: j.user_id }; });
+        }
+        function busyTrading() { try { return typeof window.__openTrades === 'function' && window.__openTrades().length > 0; } catch (e) { return false; } }
+        function lock(text) { if (busyTrading()) { D.defer = text; return; } D.defer = ''; try { ['bkbanner', 'rcbanner'].forEach(function (i) { var b = document.getElementById(i); if (b) { b.remove(); } }); localStorage.setItem('mintoosuite_sess', 'null'); AU.mode = 'in'; AU.err = text; AU.busy = false; auGate(); } catch (e) { } }
+        function ago(t) { var d = Math.floor((Date.now() - t) / 86400000); return d <= 0 ? 'today' : d + ' day' + (d > 1 ? 's' : '') + ' ago'; }
+        function blocked(t, done) {
+            var old = document.getElementById('dvblock'); if (old) { old.remove(); } var d = document.createElement('div'); d.id = 'dvblock';
+            d.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:18px';
+            var h = '<div style="background:var(--card,#fff);color:var(--tx,#111);border-radius:16px;padding:16px;max-width:420px;width:100%;line-height:1.5;font-size:14px"><b style="font-size:17px">📱 This account is active on another phone</b><div style="margin:6px 0">For your security one account works on <b>one phone at a time</b>. To use <b>this</b> phone (' + esc(myName()) + '), the other phone must be logged out. It is logged out within a few hours of going online.</div>';
+            t.list.forEach(function (x) { h += '<div style="border:1px solid rgba(128,128,128,.4);border-radius:12px;padding:8px 10px;margin:6px 0"><b>' + esc(x.name) + '</b><div style="font-size:12.5px;opacity:.8">added ' + ago(x.t) + ' · last seen ' + ago(x.seen) + '</div><span data-dvb="rep:' + esc(x.id) + '" style="display:inline-block;margin-top:6px;padding:8px 12px;border-radius:10px;background:#e5383b;color:#fff;font-weight:700">Log out that phone, use this one</span></div>'; });
+            h += '<span data-dvb="no" style="display:inline-block;margin-top:6px;padding:8px 14px;border-radius:10px;background:#8e8e93;color:#fff;font-weight:700">Cancel (do not log in here)</span></div>';
+            d.innerHTML = h; document.body.appendChild(d);
+            d.addEventListener('click', function (e) {
+                var b = e.target.closest ? e.target.closest('[data-dvb]') : null; if (!b) { return; } var a = b.getAttribute('data-dvb'); d.remove();
+                if (a === 'no') { lock('Login cancelled: this account is already active on another phone.'); return; }
+                var rid = a.slice(4), list = t.list.filter(function (x) { return x.id !== rid; }); list.push({ id: myId(), name: myName(), t: Date.now(), seen: Date.now() });
+                writeList(t.tok, t.uid, list).then(function () { done(); }).catch(function () { lock('Could not update your phone list. Check your internet and log in again.'); });
+            });
+        }
+        /* capture the Firebase sign-in so the registry can be updated with the real token */
+        var _fb = auFb; auFb = function (path, body) { return _fb(path, body).then(function (j) { if (/signInWithPassword|signUp/.test(path) && j && j.idToken) { D.tok = { id: j.idToken, rt: j.refreshToken, uid: j.localId }; } return j; }); };
+        var _done = auDone; auDone = function (email, name) {
+            var t = D.tok; D.tok = null; if (!fbOk() || !t) { return _done(email, name); }
+            register(t.id, t.uid).then(function (r) {
+                try { if (t.rt) { localStorage.setItem('mintoosuite_x_dvrt', t.rt); } } catch (e) { }
+                if (r.ok) { try { localStorage.setItem('mintoosuite_dv_ok', String(Date.now())); localStorage.removeItem('mintoosuite_dv_err'); } catch (e) { } return _done(email, name); }
+                AU.busy = false; blocked({ list: r.list, tok: t.id, uid: t.uid }, function () { try { localStorage.setItem('mintoosuite_dv_ok', String(Date.now())); } catch (e) { } _done(email, name); });
+            }).catch(function (er) {
+                /* the registry could not be reached or is not set up: do not lock honest users out, but remember it */
+                try { if (t.rt) { localStorage.setItem('mintoosuite_x_dvrt', t.rt); } localStorage.setItem('mintoosuite_dv_err', String(er && er.code || er && er.message || 'error')); } catch (e) { } _done(email, name);
+            });
+        };
+        /* heartbeat: still registered? */
+        function heartbeat() {
+            if (D.defer && !busyTrading()) { lock(D.defer); return; }
+            if (!fbOk() || !acct() || !acct().cloud) { return; } var rt = ''; try { rt = localStorage.getItem('mintoosuite_x_dvrt') || ''; } catch (e) { } if (!rt) { return; }
+            try { if (!auSess()) { return; } } catch (e) { return; }
+            tokFromRt().then(function (t) { return readList(t.id, t.uid).then(function (R) {
+                var id = myId(), me = R.list.filter(function (x) { return x.id === id; })[0];
+                if (!me) { if (R.list.length >= MAXD) { lock('This phone was removed from your account (the account is now active on another phone). Log in again to use this phone instead.'); return; } R.list.push({ id: id, name: myName(), t: Date.now(), seen: Date.now() }); return writeList(t.id, t.uid, R.list); }
+                try { localStorage.setItem('mintoosuite_dv_ok', String(Date.now())); } catch (e) { } if (Date.now() - (me.seen || 0) < 20 * 3600000) { return; } me.seen = Date.now(); return writeList(t.id, t.uid, R.list);
+            }); }).catch(function (er) {
+                var last = 0; try { last = +localStorage.getItem('mintoosuite_dv_ok') || 0; } catch (e) { }
+                if (String(er && er.message) === 'expired') { lock('Your login on this phone has expired. Log in again.'); return; }
+                if (last && Date.now() - last > GRACE) { lock('This phone has not been able to verify your account for over 14 days. Connect to the internet and log in again.'); }
+            });
+        }
+        document.addEventListener('click', function (e) {
+            var b = e.target.closest ? e.target.closest('[data-m7="aulogout"]') : null; if (!b) { return; }
+            var id = myId(); tokFromRt().then(function (t) { return readList(t.id, t.uid).then(function (R) { return writeList(t.id, t.uid, R.list.filter(function (x) { return x.id !== id; })); }); }).catch(function () { }).then(function () { try { ['mintoosuite_x_dvrt', 'mintoosuite_x_bkrt', 'mintoosuite_dv_ok'].forEach(function (k) { localStorage.removeItem(k); }); } catch (er) { } });
+        }, true);
+        window.__dv = { register: register, hb: heartbeat, read: readList, login: function (e, n) { return auFb('signInWithPassword', { email: e, password: 'x', returnSecureToken: true }).then(function () { auDone(e, n); }); }, sess: function () { return !!auSess(); } };
+        setTimeout(heartbeat, 35000); setInterval(heartbeat, 6 * 3600000);
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) { var l = +localStorage.getItem('mintoosuite_dv_ok') || 0; if (Date.now() - l > 3600000) { setTimeout(heartbeat, 3000); } } });
+        /* My phones screen */
+        function load() { return tokFromRt().then(function (t) { D.t = t; return readList(t.id, t.uid); }).then(function (R) { D.list = R.list; D.err = ''; }).catch(function (e) { D.err = String(e && e.message) === 'norefresh' ? 'norefresh' : (e && e.code === 403 ? 'rules' : 'net'); }).then(function () { D.at = Date.now(); D.busy = 0; if (S.win === 'devices') { try { renderView(true); } catch (e) { } } }); }
+        function vDev() {
+            var h = '<div class="note" style="line-height:1.5">One MintooSuite account is active on <b>one phone at a time</b>. Logging in on a new phone logs the old one out (after you enter your password). A logged-out phone is locked within a few hours of going online (an offline phone keeps working until it reconnects, at most 14 days).</div>';
+            if (!fbOk() || !acct() || !acct().cloud) { return h + '<div class="note">The one-phone limit needs a cloud account (sign in with the cloud account, Menu > Account). This phone uses a local account, so the limit is not active here.</div>'; }
+            if (!D.busy && Date.now() - D.at > 20000) { D.busy = 1; load(); }
+            var id = myId();
+            if (D.err === 'norefresh') { h += '<div class="note">To manage phones here, sign out and log in once with your password (this phone then registers itself).</div>'; }
+            else if (D.err === 'rules') { h += '<div class="note" style="color:#d70015">The phone list is not switched on in your Firebase project yet (the app owner must publish the rule shown in Backup &amp; restore > App owner only). Until then the limit is not enforced.</div>'; }
+            else if (D.err) { h += '<div class="note">Could not load the list (no internet?). Try again later.</div>'; }
+            if (!D.list.length && !D.err) { h += '<div class="note">' + (D.busy ? 'Loading…' : 'No phone registered yet. It registers when you log in.') + '</div>'; }
+            D.list.forEach(function (x) { var me = x.id === id; h += '<div class="group pad" style="margin:6px 0"><b>' + (me ? '📱 This phone: ' : '📱 ') + esc(x.name) + '</b><div class="mut" style="font-size:12.5px">added ' + ago(x.t) + ' · last seen ' + ago(x.seen) + '</div><span class="pfbtn" data-dv="rm:' + esc(x.id) + '" style="display:inline-block;margin-top:6px;padding:8px 14px;border-radius:12px;background:#e5383b;color:#fff;font-weight:700;cursor:pointer">' + (me ? 'Free this phone\'s slot and log out' : 'Remove this phone') + '</span></div>'; });
+            return h + '<div class="note" style="line-height:1.5">Honest limit: this is enforced through your Firebase account rules, which stops normal account sharing. A determined attacker with a modified app could try to get around it; a stronger lock needs a small server (planned for the store version). A phone you lose can be removed here from your other phone, or when you log in on a new phone. A phone not seen for 60 days frees its slot automatically.</div>';
+        }
+        document.addEventListener('click', function (e) {
+            var b = e.target.closest ? e.target.closest('[data-dv]') : null; if (!b) { return; } e.preventDefault(); e.stopPropagation(); var a = b.getAttribute('data-dv'); if (a.indexOf('rm:') !== 0 || D.busy) { return; } var rid = a.slice(3), me = rid === myId();
+            if (!window.confirm(me ? 'Free this phone\'s slot and log out here?' : 'Remove this phone from your account? It is logged out the next time it connects.')) { return; }
+            D.busy = 1; tokFromRt().then(function (t) { return readList(t.id, t.uid).then(function (R) { return writeList(t.id, t.uid, R.list.filter(function (x) { return x.id !== rid; })); }); }).then(function () { D.busy = 0; D.at = 0; if (me) { lock('This phone was removed from your account.'); } else { load(); } }).catch(function () { D.busy = 0; try { window.toast && window.toast('Could not remove it. Check your internet.'); } catch (er) { } });
+        }, true);
+        WINS.push({ id: 'devices', ic: '📱', c: '#5e5ce6', n: 'My phone (one-phone limit)', t: 'My phone', sub: 'Which phone is active on your account (one at a time)' }); LIVE.devices = 0; VIEWS.devices = vDev;
+        MW_HELP.devices = 'Shows which phone is active on your account. One account works on one phone at a time.';
+        try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Tools & settings' && g[1].indexOf('devices') < 0) { g[1].unshift('devices'); } }); } catch (e) { }
+        PF_APP.push(['one phone|two phones|2 phones|second phone|another phone|more than one phone|share account|another mobile|devices|my phone|lost phone account|log out other phone', 'One phone per account', 'One MintooSuite account is active on one phone at a time. If you log in on a new phone, the app asks you to log the old phone out; that phone is locked the next time it connects. See Menu > My phone. It needs the cloud account and is a soft limit enforced through the account rules (a stronger lock needs a small server).']);
+    } catch (e) { try { console.error('p9bd', e); } catch (e2) { } }
+})();
+/* ===== p9br: account recovery (security question + phone + recovery email; email reset link for cloud accounts) ===== */
+(function () {
+    try {
+        var RK = 'mintoosuite_rec', QS = ['What was the name of your first school?', 'What was the name of your first pet?', 'What was the first car you drove or rode in?', 'Which city did your parents meet in?', 'Write my own question (best: only you know the answer)'], R = {};
+        function fbOk() { try { return !!(AU && AU.fb && AU.fb.apiKey); } catch (e) { return false; } }
+        function rec() { try { var x = JSON.parse(localStorage.getItem(RK) || 'null'), a = auAcct(); if (x && x.acct && a && a.email && x.acct !== a.email) { return null; } return x; } catch (e) { return null; } }
+        function nAns(t) { return String(t || '').normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim(); }
+        function nPh(t) { var d = String(t || '').replace(/\D/g, ''); return d.length >= 9 ? d.slice(-9) : ''; }
+        function nEm(t) { return String(t || '').trim().toLowerCase(); }
+        function mask(t, k) { t = String(t || ''); if (k === 'e') { var p = t.split('@'); return (p[0].slice(0, 2) + '•••') + '@' + (p[1] || ''); } return t.length > 4 ? '••••••' + t.slice(-3) : '•••'; }
+        function el(id) { return document.getElementById(id); }
+        function v(id) { var e = el(id); return e ? e.value : ''; }
+        function setMsg(id, t, ok) { var m = el(id); if (m) { m.textContent = t; m.style.color = ok ? '#1d8a3b' : '#d70015'; } }
+        function hashes(a, ph, em, salt) { return Promise.all([auHash(nAns(a), salt), auHash(nPh(ph), salt), auHash(nEm(em), salt)]); }
+        function lockLeft() { var t = +localStorage.getItem('mintoosuite_rec_lock') || 0; return t > Date.now() ? Math.ceil((t - Date.now()) / 60000) : 0; }
+        function fail() { var n = (+localStorage.getItem('mintoosuite_rec_try') || 0) + 1; localStorage.setItem('mintoosuite_rec_try', String(n)); if (n >= 5) { var k = (+localStorage.getItem('mintoosuite_rec_locks') || 0) + 1; localStorage.setItem('mintoosuite_rec_locks', String(k)); localStorage.setItem('mintoosuite_rec_lock', String(Date.now() + Math.min(24 * 60, 30 * Math.pow(2, k - 1)) * 60000)); localStorage.setItem('mintoosuite_rec_try', '0'); } }
+        /* ANY ONE factor (chosen by the user): 'a' answer, 'p' phone, 'e' recovery email */
+        function verify(m, val) {
+            var r0 = rec(); if (!r0) { return Promise.reject(new Error('No recovery details were saved on this phone.')); } var L = lockLeft(); if (L) { return Promise.reject(new Error('Too many wrong tries. Wait ' + L + ' minutes.')); } if (R.vbusy) { return Promise.reject(new Error('Please wait.')); }
+            var want = m === 'a' ? r0.ah : m === 'p' ? r0.ph : r0.eh, nv = m === 'a' ? nAns(val) : m === 'p' ? nPh(val) : nEm(val);
+            if (!want) { return Promise.reject(new Error('That method was not saved on this phone. Choose another.')); }
+            if (m === 'a' ? nv.length < 3 : m === 'p' ? nv.length < 9 : nv.indexOf('@') < 1) { return Promise.reject(new Error('Fill in the box first.')); }
+            R.vbusy = 1; var n0 = (+localStorage.getItem('mintoosuite_rec_try') || 0) + 1; localStorage.setItem('mintoosuite_rec_try', String(n0 - 1)); fail();
+            return auHash(nv, r0.salt).then(function (h) { R.vbusy = 0; if (h === want) { localStorage.setItem('mintoosuite_rec_try', '0'); localStorage.setItem('mintoosuite_rec_locks', '0'); localStorage.removeItem('mintoosuite_rec_lock'); return true; } throw new Error('That does not match.'); }, function (e) { R.vbusy = 0; throw e; });
+        }
+        function dlg(html) { var d = el('recdlg'); if (!d) { d = document.createElement('div'); d.id = 'recdlg'; d.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483100;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto'; document.body.appendChild(d); } d.innerHTML = '<div style="background:var(--card,#fff);color:var(--tx,#111);border-radius:16px;padding:16px;max-width:420px;width:100%;line-height:1.5;font-size:14px;max-height:92vh;overflow:auto">' + html + '</div>'; }
+        var btn = function (a, t, c) { return '<span data-rc="' + a + '" style="display:inline-block;margin:4px 6px 4px 0;padding:9px 14px;border-radius:10px;background:' + (c || '#0a84ff') + ';color:#fff;font-weight:700;cursor:pointer">' + t + '</span>'; }, inp = function (id, ph, t) { return '<input id="' + id + '" type="' + (t || 'text') + '" placeholder="' + ph + '" autocomplete="off" style="width:100%;box-sizing:border-box;margin:3px 0;padding:10px;border-radius:10px;border:1px solid rgba(128,128,128,.5);background:transparent;color:inherit">'; };
+        function menu() { dlg('<b style="font-size:17px">🔑 Account help</b><div style="margin:6px 0">What do you need?</div>' + (fbOk() ? btn('mail', '✉️ Email me a password reset link') + '<br>' : '') + btn('loc', '🔓 I forgot my password (account on this phone)', '#5e5ce6') + '<br>' + btn('who', '❓ I forgot my login email', '#8e8e93') + '<br>' + btn('x', 'Close', '#8e8e93') + '<div class="note" style="font-size:12.5px;opacity:.8;margin-top:6px">Reset links are sent by e-mail. The app only compares what you type with what you saved here; it cannot send SMS codes yet.</div>'); }
+        function noRec() { return '<div style="color:#d70015;margin:6px 0">No recovery details are saved on this phone. After you log in, open Menu > Account recovery and add them.</div>'; }
+        function mailForm() { dlg('<b style="font-size:17px">✉️ Reset link</b><div style="margin:6px 0">Type the e-mail you registered with. If an account exists, a link to choose a new password is sent there (check Spam too).</div>' + inp('rcem', 'Your login email', 'email') + btn('send', 'Send link') + btn('menu', 'Back', '#8e8e93') + '<div id="rcm" style="margin-top:6px"></div>'); var a = null; try { a = auAcct(); } catch (e) { } if (a && a.email) { el('rcem').value = a.email; } }
+        function locForm(who, m) {
+            var r0 = rec(), meth = [['a', '🔐 My security question', r0 && r0.ah], ['p', '📞 My phone number', r0 && r0.ph], ['e', '✉️ My recovery email', r0 && r0.eh]].filter(function (x) { return x[2]; });
+            if (!r0 || !meth.length) { dlg('<b style="font-size:17px">' + (who ? '❓ Find my login email' : '🔓 Reset password') + '</b>' + noRec() + btn('menu', 'Back', '#8e8e93')); return; }
+            if (!m) { dlg('<b style="font-size:17px">' + (who ? '❓ Find my login email' : '🔓 Reset password') + '</b><div style="margin:6px 0">Choose <b>one</b> way to prove it is you:</div>' + meth.map(function (x) { return btn((who ? 'wm:' : 'lm:') + x[0], x[1], '#5e5ce6') + '<br>'; }).join('') + btn('menu', 'Back', '#8e8e93')); return; }
+            var lab = m === 'a' ? 'Your answer to: ' + esc(r0.q) : m === 'p' ? 'Your registered phone number' : 'Your recovery email';
+            dlg('<b style="font-size:17px">' + (who ? '❓ Find my login email' : '🔓 Reset password') + '</b><div style="margin:6px 0">' + lab + '</div>' + inp('rcv', m === 'a' ? 'Your answer' : m === 'p' ? 'e.g. 0312xxxxxxx' : 'name@mail.com', m === 'a' ? 'password' : m === 'p' ? 'tel' : 'email') + (who ? '' : inp('rcn1', 'New password (8+ characters)', 'password') + inp('rcn2', 'New password again', 'password')) + btn((who ? 'who2:' : 'loc2:') + m, who ? 'Show my login email' : 'Set new password', '#e5383b') + btn(who ? 'who' : 'loc', 'Back', '#8e8e93') + '<div id="rcm" style="margin-top:6px"></div>');
+        }
+        document.addEventListener('click', function (e) {
+            var b = e.target.closest ? e.target.closest('[data-rc]') : null; if (!b) { return; } e.preventDefault(); e.stopPropagation(); var a = b.getAttribute('data-rc');
+            if (a === 'x') { var d = el('recdlg'); if (d) { d.remove(); } } else if (a === 'menu') { menu(); } else if (a === 'mail') { mailForm(); } else if (a === 'loc') { locForm(0); } else if (a === 'who') { locForm(1); } else if (a.indexOf('lm:') === 0) { locForm(0, a.slice(3)); } else if (a.indexOf('wm:') === 0) { locForm(1, a.slice(3)); }
+            else if (a === 'send') { var em = nEm(v('rcem')); if (em.indexOf('@') < 1) { setMsg('rcm', 'Enter a valid email.', 0); return; } if (Date.now() - (R.sent || 0) < 60000) { setMsg('rcm', 'Wait a minute before asking again.', 0); return; } setMsg('rcm', 'Sending…', 1);
+                fetch('https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=' + encodeURIComponent(AU.fb.apiKey), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requestType: 'PASSWORD_RESET', email: em }) }).then(function (r) { return r.json().then(function (j) { var m = String(j && j.error && j.error.message || ''); if (r.ok || /EMAIL_NOT_FOUND/.test(m)) { R.sent = Date.now(); setMsg('rcm', 'If an account exists for that email, a reset link has been sent. Open it (check Spam too), choose a new password, then log in here.', 1); } else { R.sent = 0; setMsg('rcm', /OPERATION_NOT_ALLOWED/.test(m) ? 'Password reset e-mail is not switched on in the cloud project yet (app owner: Firebase > Authentication > Email/Password).' : 'The reset e-mail could not be sent now. Try again later.', 0); } }); }).catch(function () { R.sent = 0; setMsg('rcm', 'No internet. Try again later.', 0); }); }
+            else if (a.indexOf('loc2:') === 0) { var m2 = a.slice(5), n1 = v('rcn1'), n2 = v('rcn2'); if (!(window.__pw ? window.__pw.ok(n1) : n1.length >= 8) || n1 !== n2) { setMsg('rcm', 'The new password needs 8+ characters with a capital letter, a number and a symbol, and both boxes must match.', 0); return; } setMsg('rcm', 'Checking…', 1);
+                verify(m2, v('rcv')).then(function () { var ac = auAcct(); if (!ac || !ac.salt) { throw new Error(ac && ac.cloud ? 'This is a cloud account: use the e-mail reset link.' : 'No account found on this phone.'); } var s2 = auRand(16); return auHash(n1, s2).then(function (h) { ac.salt = s2; ac.hash = h; localStorage.setItem('mintoosuite_acct', JSON.stringify(ac)); localStorage.setItem('mintoosuite_authtry', '0'); setMsg('rcm', '✅ Password changed. Log in with the new password.', 1); setTimeout(function () { var d = el('recdlg'); if (d) { d.remove(); } }, 2200); }); }).catch(function (er) { setMsg('rcm', er.message, 0); }); }
+            else if (a.indexOf('who2:') === 0) { setMsg('rcm', 'Checking…', 1); verify(a.slice(5), v('rcv')).then(function () { var ac = auAcct(); setMsg('rcm', ac && ac.email ? '✅ Your login email is: ' + ac.email : 'No account found on this phone.', !!(ac && ac.email)); }).catch(function (er) { setMsg('rcm', er.message, 0); }); }
+            else if (a === 'save') { var q = v('rcq') === '__own' ? v('rcqo').trim() : v('rcq'), r0 = rec(), ans = v('rcans'), ph = v('rcph'), em = v('rcem2'), hasA = nAns(ans).length > 0, hasP = !!ph.trim(), hasE = !!em.trim();
+                if (!hasA && !hasP && !hasE) { setMsg('rcsm', 'Fill in at least one: security answer, phone number or recovery email.', 0); return; }
+                if (hasA && (q.length < 8 || nAns(ans).length < 4 || ans !== v('rcans2'))) { setMsg('rcsm', 'Security question: choose or write a question and give an answer of 4+ characters, typed twice the same.', 0); return; }
+                if (hasP && nPh(ph).length < 9) { setMsg('rcsm', 'Enter a valid phone number (with area/country code).', 0); return; } if (hasE && nEm(em).indexOf('@') < 1) { setMsg('rcsm', 'Enter a valid recovery email.', 0); return; }
+                var done = function () { var s3 = auRand(16), ac = null; try { ac = auAcct(); } catch (er) { } setMsg('rcsm', 'Saving…', 1); Promise.all([hasA ? auHash(nAns(ans), s3) : '', hasP ? auHash(nPh(ph), s3) : '', hasE ? auHash(nEm(em), s3) : '']).then(function (h) { localStorage.setItem(RK, JSON.stringify({ q: hasA ? q : '', salt: s3, ah: h[0], ph: h[1], eh: h[2], pm: hasP ? mask(ph, 'p') : '', em: hasE ? mask(nEm(em), 'e') : '', acct: ac && ac.email || '', at: Date.now() })); try { renderView(true); } catch (er) { } setTimeout(function () { setMsg('rcsm', '✅ Recovery details saved.', 1); }, 80); }); };
+                if (r0) { var om = r0.ah ? 'a' : r0.ph ? 'p' : 'e'; if (lockLeft()) { setMsg('rcsm', 'Too many wrong tries. Wait ' + lockLeft() + ' minutes.', 0); return; } verify(om, v('rcold')).then(done, function (er) { setMsg('rcsm', 'To change recovery details, type your CURRENT ' + (om === 'a' ? 'security answer' : om === 'p' ? 'phone number' : 'recovery email') + ' in the last box. ' + er.message, 0); }); } else { done(); } }
+        }, true);
+        /* the Account window screen */
+        function vRec() {
+            var r0 = rec(), h = '<div class="note" style="line-height:1.5">Add <b>at least one</b> way to get back into your account if you forget the password or the login email: a security question, a phone number or a recovery email (more is better). At recovery time you choose <b>any one</b> of the saved ways. They are <b>stored only as locked fingerprints (hashes) on this phone</b>; they cannot be read back. The security question helps only for accounts stored on this phone; cloud accounts also get an e-mail reset link.</div>';
+            h += '<div class="group pad">' + (r0 ? '<b style="color:#1d8a3b">✅ Recovery details are saved</b><div class="mut" style="font-size:12.5px">Saved: ' + (r0.ah ? 'security question (' + esc(r0.q) + ') ' : '') + (r0.ph ? '· phone ' + esc(r0.pm) + ' ' : '') + (r0.eh ? '· email ' + esc(r0.em) : '') + '</div><div class="note">To change them, fill the form again.</div>' : '<b style="color:#d70015">⚠️ No recovery details yet</b>');
+            h += '<select id="rcq" style="width:100%;margin:6px 0;padding:10px;border-radius:10px">' + QS.map(function (q, i) { return '<option value="' + (i === QS.length - 1 ? '__own' : esc(q)) + '">' + esc(q) + '</option>'; }).join('') + '</select><input id="rcqo" class="inp" placeholder="Your own question (if chosen above)" style="width:100%;margin:3px 0" autocomplete="off">' +
+                '<input id="rcans" class="inp" type="password" placeholder="Answer (optional)" style="width:100%;margin:3px 0" autocomplete="off"><input id="rcans2" class="inp" type="password" placeholder="Answer again" style="width:100%;margin:3px 0" autocomplete="off"><input id="rcph" class="inp" type="tel" placeholder="Registered phone number (optional)" style="width:100%;margin:3px 0" autocomplete="off"><input id="rcem2" class="inp" type="email" placeholder="Recovery email (optional)" style="width:100%;margin:3px 0" autocomplete="off">' +
+                (r0 ? '<input id="rcold" class="inp" type="password" placeholder="CURRENT answer / phone / email (needed only to change saved details)" style="width:100%;margin:3px 0" autocomplete="off">' : '') + '<span class="pfbtn" data-rc="save" style="display:inline-block;margin:6px 0;padding:10px 16px;border-radius:12px;background:#1d8a3b;color:#fff;font-weight:700;cursor:pointer">💾 Save recovery details</span><div id="rcsm" class="note"></div></div>';
+            return h + '<div class="note" style="line-height:1.5">Honest advice: a phone number or e-mail is easy for people who know you to guess, so if someone could pick up your phone, ALSO save a security question with a private answer. Never share the answer. There is a 5-try limit with a lock that gets longer after repeated failures. Phone verification by SMS code needs a paid phone-verification service and is planned for the store version.</div>';
+        }
+        WINS.push({ id: 'recovery', ic: '🔑', c: '#ff9f0a', n: 'Account recovery', t: 'Account recovery', sub: 'Phone, recovery email and security question to get back into your account' }); LIVE.recovery = 0; VIEWS.recovery = vRec;
+        MW_HELP.recovery = 'Save a phone number, recovery email and security question so you can recover a forgotten password or login email.';
+        try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Tools & settings' && g[1].indexOf('recovery') < 0) { g[1].unshift('recovery'); } }); } catch (e) { }
+        /* "Forgot password?" on the login screen */
+        var _g = auGate; auGate = function () { try { if (/email exists/i.test(AU.err || '')) { AU.err = 'This email already has an account. Tap "Log in" instead of Sign up.'; } ['bkbanner', 'rcbanner'].forEach(function (i) { var b = el(i); if (b) { b.remove(); } }); } catch (e) { } var r0 = _g.apply(this, arguments); try { var g = el('m7gate'); if (g && !el('rclink')) { var a = document.createElement('div'); a.id = 'rclink'; a.setAttribute('data-rc', 'menu'); a.style.cssText = 'display:block;text-align:center;font-size:15px;text-decoration:underline;color:#fff;padding:12px;margin-top:10px;min-height:24px;cursor:pointer'; a.textContent = 'Forgot password or email?'; var bs = g.querySelectorAll('button'), lb = bs.length ? bs[bs.length - 1] : null; if (lb && lb.parentNode) { lb.parentNode.insertBefore(a, lb.nextSibling); } else { g.appendChild(a); } var t = el('auTitle'); if (t) { t.onclick = function () { AU.taps = (AU.taps || 0) + 1; if (AU.taps >= 7) { AU.taps = 0; menu(); } }; } } } catch (e) { } return r0; };
+        /* local sign-up never silently replaces an existing local account */
+        var _sub = auSubmit; auSubmit = function () { try { var ac = auAcct(); if (AU.mode === 'up' && ac && ac.salt && !fbOk()) { AU.err = 'An account already exists on this phone. Tap Log in, or use "Forgot password or email?" below.'; return auGate(); } } catch (e) { } return _sub.apply(this, arguments); };
+        try { if (el('m7gate')) { auGate(); } } catch (e) { }
+        /* ask existing users once they are logged in */
+        function ask() {
+            try { if (rec() || document.hidden || el('m7gate') || el('bkbanner') || el('rcbanner')) { return; } var n = +localStorage.getItem('mintoosuite_rec_asked') || 0, t = +localStorage.getItem('mintoosuite_rec_askt') || 0; if (n >= 5 || Date.now() - t < 2 * 86400000) { return; } if (!auSess()) { return; } if (/^(xtrade|trade|tpro|rbot|botpro|chart|recovery)$/.test(S.win)) { return; }
+                try { if (typeof window.__openTrades === 'function' && window.__openTrades().length) { return; } } catch (e) { }
+                localStorage.setItem('mintoosuite_rec_asked', String(n + 1)); localStorage.setItem('mintoosuite_rec_askt', String(Date.now()));
+                var d = document.createElement('div'); d.id = 'rcbanner'; d.style.cssText = 'position:fixed;left:10px;right:10px;bottom:76px;z-index:99998;background:var(--card,#fff);color:var(--tx,#111);border:1px solid rgba(10,132,255,.6);border-radius:14px;padding:12px;box-shadow:0 6px 24px rgba(0,0,0,.28);font-size:13.5px;line-height:1.45';
+                d.innerHTML = '<b>🔑 Add account recovery details?</b><br>A phone number, recovery email and a security question let you get back in if you forget your password or login email.<div style="margin-top:8px"><span data-rcb="go" style="display:inline-block;padding:8px 14px;border-radius:10px;background:#0a84ff;color:#fff;font-weight:700;margin-right:8px">Add now</span><span data-rcb="no" style="display:inline-block;padding:8px 14px;border-radius:10px;background:#8e8e93;color:#fff;font-weight:700">Later</span></div>';
+                document.body.appendChild(d); setTimeout(function () { if (d.parentNode) { d.remove(); } }, 25000); } catch (e) { }
+        }
+        document.addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-rcb]') : null; if (!b) { return; } var d = el('rcbanner'); if (d) { d.remove(); } if (b.getAttribute('data-rcb') === 'go') { try { gotoWin('recovery'); } catch (er) { } } }, true);
+        setTimeout(ask, 90000); setInterval(ask, 20 * 60000);
+        window.__rec = { ask: ask, verify: verify, hash: auHash, rand: auRand, acct: auAcct, sess: function () { return !!auSess(); }, gate: auGate, start: auStart };
+        PF_APP.push(['forgot password|forgot username|forgot email|reset password|recover account|security question|account recovery|cannot log in|cant login|lost password', 'Account recovery', 'On the login screen tap "Forgot password or email?". Cloud accounts: an e-mail reset link is sent. Accounts stored on this phone: answer your security question and confirm your registered phone number and recovery email to set a new password or show your login email. Save these details in Menu > Account recovery (the app asks existing users to add them). 5 wrong tries lock recovery for 30 minutes. SMS codes are not available yet.']);
+    } catch (e) { try { console.error('p9br', e); } catch (e2) { } }
+})();
+
+/* ===== p9bpw: app password rule (8+ chars, capital letter, number, symbol) + update popup for existing users ===== */
+(function () {
+    try {
+        var P = { pw: '', mode: '', t: 0, busy: 0 };
+        function el(i) { return document.getElementById(i); }
+        function chk(pw) { pw = String(pw || ''); return { len: pw.length >= 8, up: /[A-Z]/.test(pw), dig: /\d/.test(pw), sym: /[^A-Za-z0-9\s]/.test(pw) }; }
+        function ok(pw) { var c = chk(pw); return c.len && c.up && c.dig && c.sym; }
+        function list(pw, dark) {
+            var c = chk(pw), rows = [['len', 'At least 8 characters'], ['up', 'One capital letter (A-Z)'], ['dig', 'One number (0-9)'], ['sym', 'One symbol (for example ! @ # $ % &)']];
+            return rows.map(function (r) { var g = c[r[0]]; return '<div style="font-size:13px;line-height:1.7;color:' + (g ? '#34c759' : (dark ? 'rgba(255,255,255,.85)' : '#8e8e93')) + '">' + (g ? '✔ ' : '○ ') + r[1] + '</div>'; }).join('');
+        }
+        function msgOf(pw) { var c = chk(pw), m = []; if (!c.len) { m.push('8+ characters'); } if (!c.up) { m.push('a capital letter'); } if (!c.dig) { m.push('a number'); } if (!c.sym) { m.push('a symbol'); } return 'Password needs ' + m.join(', ') + '.'; }
+        window.__pw = { ok: ok, chk: chk, msg: msgOf };
+        /* sign-up: enforce the rule; log-in: remember what was typed for a few seconds so an old weak password can be upgraded */
+        var _s = auSubmit; auSubmit = function () {
+            var pw = (el('auPw') || {}).value || '';
+            if (AU.mode === 'up' && !ok(pw)) { AU.err = msgOf(pw); return auGate(); }
+            P.pw = pw; P.mode = AU.mode; P.t = Date.now();
+            return _s.apply(this, arguments);
+        };
+        var _g = auGate; auGate = function () {
+            if (AU.err) { P.pw = ''; }
+            var r = _g.apply(this, arguments);
+            try {
+                if (AU.mode === 'up') {
+                    var a = el('auPw'), b = el('auPw2');
+                    if (a) { a.placeholder = 'Password (8+, capital, number, symbol)'; }
+                    if (b && !el('pwlist')) { var d = document.createElement('div'); d.id = 'pwlist'; d.style.cssText = 'margin:-2px 0 10px 2px'; d.innerHTML = list((a || {}).value || '', 1); b.parentNode.insertBefore(d, b.nextSibling); }
+                }
+            } catch (e) { }
+            return r;
+        };
+        function popup() {
+            if (el('pwdlg') || !P.pw || ok(P.pw)) { return; }
+            var d = document.createElement('div'); d.id = 'pwdlg';
+            d.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483200;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:18px';
+            var fld = 'width:100%;box-sizing:border-box;border:1px solid #c7c7cc;border-radius:10px;padding:12px;font-size:16px;margin:6px 0;background:#fff;color:#111';
+            d.innerHTML = '<div style="background:#fff;color:#111;border-radius:16px;padding:16px;max-width:420px;width:100%;max-height:92vh;overflow:auto;line-height:1.5;font-size:14px"><b style="font-size:18px">🔐 Please update your password</b><div style="margin:6px 0 8px">We made passwords stronger to protect your wallet and API keys. Your current password does not meet the new rules. Choose a new one:</div><div id="pwlist2" style="background:#f2f2f7;border-radius:10px;padding:8px 12px;margin-bottom:6px">' + list('') + '</div><input id="pwn1" type="password" autocomplete="new-password" placeholder="New password" style="' + fld + '"><input id="pwn2" type="password" autocomplete="new-password" placeholder="Repeat new password" style="' + fld + '"><div id="pwmsg" style="min-height:20px;font-size:13px;color:#d70015;margin:2px 0 6px"></div><button data-pw="save" style="width:100%;border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:800;background:#0a84ff;color:#fff">Save new password</button><button data-pw="later" style="width:100%;border:0;background:none;color:#8e8e93;padding:12px;font-size:14px;margin-top:4px">Not now (I will be asked again next time)</button></div>';
+            document.body.appendChild(d);
+        }
+        function close() { var d = el('pwdlg'); if (d) { d.remove(); } P.pw = ''; P.busy = 0; }
+        function setMsg(t, good) { var m = el('pwmsg'); if (m) { m.style.color = good ? '#1a7f37' : '#d70015'; m.textContent = t; } }
+        function save() {
+            if (P.busy) { return; }
+            var n1 = (el('pwn1') || {}).value || '', n2 = (el('pwn2') || {}).value || '', old = P.pw;
+            if (!ok(n1)) { return setMsg(msgOf(n1)); }
+            if (n1 !== n2) { return setMsg('The two new passwords do not match.'); }
+            if (n1 === old) { return setMsg('The new password must be different from the old one.'); }
+            P.busy = 1; setMsg('Saving…', 1);
+            var a = auAcct(), fail = function (e) { P.busy = 0; setMsg('Could not update: ' + String(e && e.message || e).replace(/_/g, ' ').toLowerCase()); }, fin = function () { setMsg('Password updated ✔', 1); setTimeout(close, 900); };
+            if (a && a.cloud && AU.fb && AU.fb.apiKey) {
+                auFb('signInWithPassword', { email: a.email, password: old, returnSecureToken: true }).then(function (j) {
+                    if (j.error) { throw new Error(j.error.message); }
+                    return auFb('update', { idToken: j.idToken, password: n1, returnSecureToken: true });
+                }).then(function (j) {
+                    if (j.error) { throw new Error(j.error.message); }
+                    /* Firebase signs out old tokens when the password changes: store the new one so this phone stays registered and cloud backup keeps working */
+                    try { if (j.refreshToken) { localStorage.setItem('mintoosuite_x_dvrt', j.refreshToken); if (localStorage.getItem('mintoosuite_x_bkrt')) { localStorage.setItem('mintoosuite_x_bkrt', j.refreshToken); } } } catch (e) { }
+                    fin();
+                }).catch(fail);
+            } else if (a && a.salt) {
+                var s = auRand(16); auHash(n1, s).then(function (h) { a.salt = s; a.hash = h; lss('mintoosuite_acct', JSON.stringify(a)); lss('mintoosuite_authtry', '0'); fin(); }).catch(fail);
+            } else { fail(new Error('no account found')); }
+        }
+        document.addEventListener('click', function (e) {
+            var b = e.target.closest ? e.target.closest('[data-pw]') : null; if (!b) { return; }
+            var a = b.getAttribute('data-pw'); if (a === 'save') { save(); } else if (a === 'later') { close(); }
+        }, true);
+        document.addEventListener('input', function (e) {
+            var t = e.target; if (!t) { return; }
+            if (t.id === 'pwn1') { var l = el('pwlist2'); if (l) { l.innerHTML = list(t.value); } }
+            if (t.id === 'auPw' && AU.mode === 'up') { var l2 = el('pwlist'); if (l2) { l2.innerHTML = list(t.value, 1); } }
+        });
+        /* after a successful log-in (gate gone), ask users whose password is below the new rule */
+        var _d = auDone; auDone = function () {
+            var r = _d.apply(this, arguments);
+            try {
+                if (P.mode === 'in' && P.pw && !ok(P.pw) && Date.now() - P.t < 120000) {
+                    var n = 0, iv = setInterval(function () { n++; if (!el('m7gate')) { clearInterval(iv); popup(); } else if (n > 60) { clearInterval(iv); } }, 500);
+                } else { P.pw = ''; }
+            } catch (e) { }
+            return r;
+        };
+        window.__pwT = { popup: popup, state: P };
+        try { PF_APP.push(['password rules|password rule|strong password|capital letter|update password|change password|weak password|password symbol', 'Password rules', 'MintooSuite passwords need 8+ characters with one capital letter, one number and one symbol. If your old password is weaker, a popup asks you to update it right after you log in (tap "Not now" to postpone; it asks again next login). The same rule applies when you sign up or reset a forgotten password. Backup passwords are separate and need 14+ characters.']); } catch (e) { }
+    } catch (e) { console.error('p9bpw', e); }
 })();
 /* ===== GV: Baba AI finds any screen by name ("open exness gold", "where is split screen", "history") and offers a button; also used as a fallback when no answer scores well ===== */
 (function () {
