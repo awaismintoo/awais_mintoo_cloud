@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.304';
+var BUILD = '2026-10-31.305';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -6596,7 +6596,7 @@ document.addEventListener('click', function (e) {
     else if (v === 'xtest') { var cc = xcGet(x); if (!cc.key || !cc.sec) { msg('Save the key first.', false); return; } msg('Testing…', true); xcTest(x, cc).then(function (t) { msg('Connected. ' + t + '.', true); }).catch(function (er) { msg(er.message, false); }); }
     else if (v === 'xrm') { if (window.confirm('Remove the saved ' + XC[x].n + ' key from this phone?')) { try { localStorage.removeItem('mintoosuite_x_' + x); } catch (er) {} renderView(true); } }
 }, true);
-PF_APP.push(['mexc api|bybit api|okx api|bitget api|connect mexc|connect bybit|connect okx|connect bitget|exness api|why exness|exness not possible', 'Other exchanges (API)', 'Profile > Connections now lets you save a read-only key for MEXC, Bybit, OKX and Bitget and test your balance. Order placing for them is not switched on because it cannot be tested safely without real servers. Exness has no individual API (MetaTrader), so apps cannot trade it directly.']);
+PF_APP.push(['mexc api|bybit api|okx api|connect mexc|connect bybit|connect okx|exness api|why exness|exness not possible', 'Other exchanges (API)', 'Profile > Connections saves a key for MEXC, Bybit, OKX and Bitget and tests your balance. With a Trade-enabled key (withdrawals OFF) you can also place orders in the window Trade on Bitget, MEXC, Bybit, OKX. Exness has no individual API (MetaTrader), so apps cannot trade it directly.']);
 /* ===== p9r: "Trade this coin" panel under every chart (Binance in-app; other platforms: status + one-tap open) ===== */
 function trdPanel(sym) {
     var b = base(sym), c = trCfg(), has = !!(c.key && c.sec), live = c.net === 'live', t = S.tick[sym], isGold = sym === 'XAUUSDT';
@@ -7069,7 +7069,7 @@ function nxPlan() {
             if (fut) {
                 steps.push(function () { return post('/api/v2/mix/account/set-margin-mode', { symbol: bsym, productType: pt, marginCoin: mc, marginMode: N.mode === 'isolated' ? 'isolated' : 'crossed' }).then(chk).then(function (r) { r.msg = 'Margin mode: ' + r.msg; r.soft = 1; return r; }); });
                 steps.push(function () { return post('/api/v2/mix/account/set-leverage', { symbol: bsym, productType: pt, marginCoin: mc, leverage: String(lev) }).then(chk).then(function (r) { r.msg = 'Leverage: ' + r.msg; r.soft = 1; return r; }); });
-                var bo = { symbol: bsym, productType: pt, marginMode: N.mode === 'isolated' ? 'isolated' : 'crossed', marginCoin: mc, size: qty, side: buy ? 'buy' : 'sell', tradeSide: 'open', orderType: lim ? 'limit' : 'market', clientOid: 'mw' + ts }; if (lim) { bo.price = price; bo.force = tif === 'post' ? 'post_only' : tif; } if (red) { bo.reduceOnly = 'YES'; } if (tp) { bo.presetStopSurplusPrice = tp; } if (sl) { bo.presetStopLossPrice = sl; }
+                var bo = { symbol: bsym, productType: pt, marginMode: N.mode === 'isolated' ? 'isolated' : 'crossed', marginCoin: mc, size: qty, side: buy ? 'buy' : 'sell', orderType: lim ? 'limit' : 'market', clientOid: 'mw' + ts }; if (lim) { bo.price = price; bo.force = tif === 'post' ? 'post_only' : tif; } if (N.pm !== 'one') { bo.tradeSide = 'open'; } if (red) { bo.reduceOnly = 'YES'; } if (tp) { bo.presetStopSurplusPrice = tp; } if (sl) { bo.presetStopLossPrice = sl; }
                 steps.push(function () { return post('/api/v2/mix/order/place-order', bo).then(chk).then(function (r) { r.msg = 'Order: ' + r.msg; return r; }); });
             } else {
                 var so = { symbol: sym, side: buy ? 'buy' : 'sell', orderType: lim ? 'limit' : 'market', force: 'gtc', size: (!lim && buy) ? String(amt) : qty, clientOid: 'mw' + ts }; if (lim) { so.price = price; so.force = tif === 'post' ? 'post_only' : tif; }
@@ -9476,7 +9476,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         try { var gdg = S.fb && S.fb.skips && S.fb.skips.slice(0, 3).map(function (x) { return base(x.sym) + ' skipped: ' + x.why; }); if (gdg && gdg.length) { o.push('Smart Guard recent skips: ' + gdg.join(' | ')); } } catch (e) { }
         return o.join('; ');
     }
-    function system() { var m = ''; try { m = ' Screens you can send the user to (Menu): ' + WINS.map(function (w) { return w.n; }).join('; ') + '. Newer features: Signal feed (fresh UT Bot and Baba-confirmed signals, Binance, MEXC, Bitget), Trade history (trade box, History tab), Notification history, Test the rule, Start here, Ideas search bar, live profit/loss bar on the chart. Real-money trading works only on Binance futures; MEXC and Bitget are practice only. Keep answers about the app short and name the exact window.'; } catch (e) { } return system0() + m; }
+    function system() { var m = ''; try { m = ' Screens you can send the user to (Menu): ' + WINS.map(function (w) { return w.n; }).join('; ') + '. Newer features: Signal feed (fresh UT Bot and Baba-confirmed signals, Binance, MEXC, Bitget), Trade history (trade box, History tab), Notification history, Test the rule, Start here, Ideas search bar, live profit/loss bar on the chart. Real-money trading works on Binance futures and also on Bitget, MEXC, Bybit and OKX through the window Trade on Bitget, MEXC, Bybit, OKX (needs a trade-enabled key, withdrawals off); the one-click Binance trade form and the auto Real Bot are Binance only. Keep answers about the app short and name the exact window.'; } catch (e) { } return system0() + m; }
     function system0() { return (PB.lang && PB.lang !== 'en-US' ? 'IMPORTANT: always reply in ' + vlName() + ' (use its normal script), unless the user writes in another language. ' : '') + 'You are Baba AI, a wise, warm elder (a Pakistani baba) who is the built-in tutor inside the MintooSuite trading app, and can also help with education from school to university, coding and general questions. The user is a beginner. Answer in simple plain English. If the user writes in Urdu script, answer in clear Urdu script (Pakistani Urdu, right-to-left, simple everyday words, keep coin names, numbers and technical terms like RSI or stop loss in English letters). If the user writes Roman Urdu, answer in Roman Urdu, short and step by step, with a small example when useful. You can answer any question, also outside trading. Never promise profit or certainty about price direction; for trade questions give educational reasoning and risks and say it is not financial advice. For questions about the app, name the window to open. When asked how to do something on Binance, MEXC, Bitget, OKX or Bybit (create an API key, set permissions, restrict IPs, move funds to the futures wallet, set leverage, place or close an order) or how to connect them in this app (Menu > Profile > Connections, Trade Pro, Baba Real Bot), give short numbered steps, say that screens can differ slightly, always tell the user to keep withdrawals OFF, use trusted IPs, start in test mode or with a tiny amount, and never to share secret keys with anyone including you. You know the app well: Baba Practice Bot (paper, Smart Guard), Baba Real Bot Chief (locked until typed UNLOCK), Trade Pro, Trade Ideas, Gold Desk, Exness Desk, Grid Bot (paper), Problem log, Look & mode. If asked why a bot lost, use the bot facts in the live data and explain plainly. If you are not sure, say so. Live data now: ' + (liveCtx() || 'not available') + '. Time: ' + new Date().toISOString().slice(0, 16) + ' UTC.'; }
     function history(n) { var out = []; try { var arr = (PB.ctx === 'pf' ? PF.msgs : PCH.msgs) || []; arr.slice(-n * 2 - 2, -2).forEach(function (m) { var t = plain(m.html).slice(0, 700); if (t && !/pfdots/.test(m.html)) { out.push({ role: m.who === 'me' ? 'user' : 'assistant', content: t }); } }); } catch (e) { } return out; }
     /* ----- AI engines ----- */
@@ -23386,6 +23386,38 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Trade & signals' && g[1].indexOf('nhist') < 0) { g[1].unshift('nhist'); } }); } catch (e) { }
         try { PF_APP.push(['notification history|alert history|past alerts|old notifications|delete notifications', 'Notification history', 'Menu > Notification history lists past pump alerts and UT Bot signals, newest first, with auto-delete after 1, 2, 3, 5 or 7 days and a delete-all button.', 'win:nhist']); PF_APP.push(['frozen|hang|freeze|stuck trade|close trade not working|already closed', 'If a real trade seems stuck', 'Every Binance request now stops waiting after 15 seconds and tells you so. If a close says there is no open position, it was already closed on Binance and the list refreshes. After a timeout, check your open positions in Binance before trying again, as the order may have gone through.', 'win:launch']); } catch (e) { }
     } catch (e) { try { console.log('p9bn', e); } catch (er) { } }
+})();
+/* ===== p9bg: Bitget real trading polish: one-way/hedge detection, honest texts, first-trade checklist ===== */
+(function () {
+    try {
+        XC.bitget.note = 'Bitget > API Management: Read-write with Futures order, Futures Holdings and Spot trading. Withdraw OFF, Transfer OFF. The passphrase is the one you chose when creating the key. Leave "Bind IP" empty (your phone IP changes).';
+        XC.mexc.note = 'MEXC > API Management: Read ON. Turn Trade ON only if you want to place orders from this app. Withdrawals always OFF.';
+        var _o = cnOther; cnOther = function () {
+            var h = _o();
+            return h.replace(/<div class="note">These four are connected[\s\S]*?<\/div>$/, '<div class="note">Bitget, MEXC, Bybit and OKX keys can <b>check your balance</b> here and <b>place orders</b> from the window "Trade on Bitget, MEXC, Bybit, OKX" (only if the key has Trade permission). Keys stay on this phone. Always create keys with withdrawals OFF. Start with a very small order.</div>');
+        };
+        /* position mode: one-way vs hedge (Bitget classic account) */
+        var _pre = nxPre; nxPre = function () {
+            var N = S.nx;
+            return _pre().then(function () {
+                if (N.x !== 'bitget' || N.mk !== 'fut' || nxIsDemo() || N.bgv === 'v3' || N.pmAt && Date.now() - N.pmAt < 600000) { return; }
+                N.pmAt = Date.now();
+                return nxSigned('GET', '/api/v2/mix/account/account', 'symbol=' + nxSym() + '&productType=USDT-FUTURES&marginCoin=USDT', null).then(function (r) {
+                    var m = r.j && r.j.data && r.j.data.posMode; if (m) { N.pm = /one/i.test(m) ? 'one' : 'hedge'; }
+                }).catch(function () { });
+            });
+        };
+        var _v = VIEWS.xtrade; VIEWS.xtrade = function () {
+            var N = S.nx, o = _v(), t = '';
+            if (N.x === 'bitget' && N.mk === 'fut' && !nxIsDemo()) {
+                t = '<div class="note" style="line-height:1.5"><b>Bitget first real trade checklist</b><br>1. The "Demo" switch needs a separate Bitget DEMO key. With your normal key, tap the button until it says <b>Live</b>.<br>2. Position mode: <b>' + (N.pm === 'one' ? 'one-way (detected)' : N.pm === 'hedge' ? 'hedge (detected)' : 'detected when you press Review') + '</b>.<br>3. Use a small amount first (the safety cap protects you), tick the box, press Review & send, and check the Result box and the Bitget app.<br>4. Always set a stop-loss. Bitget places it with the order.</div>';
+            } else if (N.x === 'bitget' && N.mk === 'spot') {
+                t = '<div class="note" style="line-height:1.5"><b>Bitget spot:</b> spot has no stop-loss on the exchange here. If you want one, use Limit orders in the Bitget app. Buying uses USDT; to sell, choose Sell and the amount of USDT value.</div>';
+            }
+            return t ? o.replace(/(<div class="group pad"><div class="m7q">)/, t + '$1') : o;
+        };
+        PF_APP.push(['bitget real trade|bitget live|bitget one way|bitget hedge|bitget spot trade|bitget futures trade|bitget key permissions', 'Bitget real trading', 'Menu > Trade on Bitget, MEXC, Bybit, OKX > Bitget. Save your key first in Profile > Connections (key, secret, passphrase). Tap Live (Demo needs a separate Bitget demo key). The app detects one-way or hedge mode, sets leverage and margin mode, then sends the order with stop-loss and take-profit. The Open positions list below has Close and Cancel. Start tiny. Real money works on Binance futures AND on Bitget, MEXC, Bybit and OKX with a trade-enabled key.']);
+    } catch (e) { }
 })();
 /* ===== GV: Baba AI finds any screen by name ("open exness gold", "where is split screen", "history") and offers a button; also used as a fallback when no answer scores well ===== */
 (function () {
