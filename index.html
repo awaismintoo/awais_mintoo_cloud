@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-06.347';
+var BUILD = '2026-11-06.350';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -11475,7 +11475,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var txt = Math.round(b.up * 100) + '% of coins are green. Bitcoin ' + pc(btc) + (g != null ? ', gold ' + pc(g) : '') + '.';
             return { v: v, lab: lab, txt: txt, up: b.up, ok: 1, btc: btc, g: g };
         }
-        function ideas() { if (window.__dnMock) { return window.__dnMock; } try { return (typeof idRows === 'function' ? idRows() : []) || []; } catch (e) { return []; } }
+        function ideas() { if (window.__dnMock) { return window.__dnMock; } try { var rr = (typeof idRows === 'function' ? idRows() : []) || []; /* DO NOW = only deals valid right now (same check as Ideas > DO NOW) */ if (window.__lvValid) { rr = rr.filter(function (m) { try { return window.__lvValid(m).ok; } catch (e) { return false; } }); } return rr; } catch (e) { return []; } }
         function uniq(list) { var seen = {}, out = []; list.forEach(function (m) { var b = bs(m.sym); if (seen[b]) { return; } seen[b] = 1; out.push(m); }); return out; }
         function chips(sym) {
             var b = bs(sym), o = [];
@@ -11490,7 +11490,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             try { if (window.__ocTile) { var oc = window.__ocTile(); if (oc) { return oc; } } } catch (e) { }
             var rows = uniq(ideas().filter(function (m) { return m && m.R && !m.R.blocked; })), strong = rows.filter(function (m) { return m.R.best || m.R.p >= 0.6; });
             var pick = (strong.length ? strong : rows.slice(0, 1)).slice(0, 1), h = '';
-            if (!pick.length) { return '<div class="kpc mwdn none" data-act="win:ideas" data-sg0="none"><div class="dh"><span>⚡ DO NOW</span><span>scanning</span></div><div class="dt"><b>Looking for the best setup…</b></div><div class="ds">The scanner needs about a minute after the app opens. Nothing to do yet.</div></div>'; }
+            if (!pick.length) { return '<div class="kpc mwdn none" data-act="win:ideas" data-sg0="none"><div class="dh"><span>⚡ DO NOW</span><span>scanning</span></div><div class="dt"><b>No valid deal right now</b></div><div class="ds">DO NOW shows only deals that pass every check at this moment, with a timer. Nothing passes right now, so waiting is the right call. It refreshes by itself.</div></div>'; }
             pick.forEach(function (m, i) { h += tileOne(m, i, strong.length > 0, pick.length); });
             return h;
         }
@@ -18467,8 +18467,8 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
     try {
         var X = window.__kx, KX = X.KX;
         var vB = VIEWS.best, vP = VIEWS.plan, vI = VIEWS.ideas;
-        var TABS = [['best', '⭐ Best (top picks)'], ['all', '📋 All (full list)'], ['plan', '🧭 Plan (gold & big coins)']];
-        function cur() { var t = KX.idT; return t === 'all' || t === 'plan' ? t : 'best'; }
+        var TABS = [['live', '⚡ DO NOW (valid)'], ['best', '⭐ Best (top picks)'], ['all', '📋 All (full list)'], ['plan', '🧭 Plan (gold & big coins)']];
+        function cur() { var t = KX.idT; return t === 'all' || t === 'plan' || t === 'live' ? t : 'best'; }
         function call(f) { try { return f.apply(null, []); } catch (e) { return '<div class="note">This part could not load: ' + X.e2(e && e.message) + '</div>'; } }
         /* ---------- Best tab: real best picks, with a tab per exchange so lists never mix ---------- */
         var BST = { keys: null, at: 0 }, LT2 = Date.now();
@@ -18522,9 +18522,54 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             }
             return h + '<div class="note">Stock-linked contracts are skipped while the US market is closed. Not financial advice.</div>';
         }
+
+        /* ---------- Live now tab: only deals that pass EVERY check right now, with a countdown. When a check fails or time runs out the card disappears. ---------- */
+        var LV = { k: {}, q: {}, run: 0 };
+        function lvK(sym) {
+            var c = LV.k[sym], now = Date.now(); if (c && now - c.at < 180000) { return c.K; }
+            if (!LV.q[sym] && LV.run < 2 && !c) {
+                LV.q[sym] = 1; LV.run++;
+                var us = ['https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=15m&limit=200', 'https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=15m&limit=200', 'https://api.mexc.com/api/v3/klines?symbol=' + sym + '&interval=15m&limit=200'], i = 0;
+                (function nx() { if (i >= us.length) { return Promise.reject(0); } return fetchText(us[i++], 9000).then(function (t) { var a = JSON.parse(t); if (!Array.isArray(a) || a.length < 80) { throw 0; } return a.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }; }); }).catch(nx); })()
+                    .then(function (K) { LV.k[sym] = { K: K, at: Date.now() }; }, function () { LV.k[sym] = { K: null, at: Date.now() - 120000 }; }).then(function () { delete LV.q[sym]; LV.run--; });
+            }
+            return c ? c.K : undefined;
+        }
+        function lvValid(m) {
+            var now = Date.now();
+            if (m.to && m.to < now) { return { ok: false }; }
+            if (!(m.R && m.R.expR > 0)) { return { ok: false }; }
+            var r = window.__recFull ? window.__recFull(m.sym) : null; if (!r || r.side !== m.side) { return { ok: false }; }
+            var K = lvK(m.sym); if (K === undefined) { return { ok: false, pend: true }; }
+            try { if (K && window.__babaExp) { var xp = window.__babaExp(m.sym, m.side, K); if (xp && xp.veto) { return { ok: false }; } if (xp) { return { ok: true, conv: xp.conv }; } } } catch (e) { }
+            return { ok: K ? true : false, conv: 0, pend: !K };
+        }
+        window.__lvValid = lvValid;
+        function fmtLeft(ms) { if (ms <= 0) { return '0:00'; } var t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s2 = t % 60; return (h ? h + 'h ' : '') + (h ? ('0' + m).slice(-2) : m) + ':' + ('0' + s2).slice(-2); }
+        function pkt(ts) { try { return new Date(ts).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hour12: false }) + ' PKT'; } catch (e) { return ''; } }
+        function vLive() {
+            try { bpRefresh(false); } catch (e) { }
+            var ex = bxc(), rows = [], pend = 0, now = Date.now(), out = [];
+            try { rows = idRows().slice(0, 40); } catch (e) { }
+            rows.forEach(function (m) {
+                if (!(ex === 'all' ? XL.slice(1).some(function (e) { return onEx(e[0], m.sym, { m: m }); }) : onEx(ex, m.sym, { m: m }))) { return; }
+                var v = lvValid(m); if (v.pend) { pend++; } if (v.ok) { out.push({ m: m, v: v }); }
+            });
+            var h = X.seg('bxch', XL, ex) + '<div class="warn" style="margin:0 0 8px">⚡ <b>DO NOW</b>: only deals that pass <b>every</b> check <u>right now</u> (strict list, Baba chart check, no chasing, world and dollar checks). Each has a countdown. When a check fails or the time ends, the deal disappears. Nothing is loosened. <b>Not financial advice. Use a stop-loss.</b></div>';
+            h += '<div class="note" style="margin:0 0 6px">Exchanges with live scanning here: Binance, MEXC, Bitget. OKX, Bybit and others have order tickets but no live list yet, so they are not shown.' + (pend ? ' Checking ' + pend + ' more coin' + (pend > 1 ? 's' : '') + '…' : '') + '</div>';
+            if (!out.length) { return h + '<div class="group pad mut">No deal passes every check right now. That is normal: waiting is a valid choice. This list refreshes by itself.</div>'; }
+            out.forEach(function (x) {
+                var m = x.m, left = m.to ? m.to - now : 0;
+                h += '<div class="note" style="margin:8px 0 2px;display:flex;justify-content:space-between;gap:8px"><span>🏦 <b>' + XL.slice(1).filter(function (e) { return onEx(e[0], m.sym, { m: m }); }).map(function (e) { return e[1]; }).join(' · ') + '</b></span><span>⏱ <b data-lvt="' + (m.to || 0) + '">' + (m.to ? fmtLeft(left) : 'no limit') + '</b>' + (m.to ? ' · until ' + pkt(m.to) : '') + (x.v.conv ? ' · Baba ' + x.v.conv + '%' : '') + '</span></div>' + idRow(m);
+            });
+            return h;
+        }
+        setInterval(function () {
+            try { var els = document.querySelectorAll('[data-lvt]'), now = Date.now(); for (var i = 0; i < els.length; i++) { var to = +els[i].getAttribute('data-lvt'); if (!to) { continue; } var t = fmtLeft(to - now); if (els[i].textContent !== t) { els[i].textContent = t; } if (to - now <= 0) { var row = els[i].parentNode && els[i].parentNode.parentNode; if (row && row.nextElementSibling) { row.nextElementSibling.style.display = 'none'; } if (row) { row.style.display = 'none'; } } } } catch (e) { }
+        }, 1000);
         VIEWS.ideas = function () {
             var t = cur(), h = X.seg('idT', TABS, t);
-            return h + call(t === 'best' ? (function () { try { return vBestX(); } catch (e) { return vB(); } }) : t === 'plan' ? vP : vI);
+            return h + call(t === 'live' ? vLive : t === 'best' ? (function () { try { return vBestX(); } catch (e) { return vB(); } }) : t === 'plan' ? vP : vI);
         };
         LIVE.ideas = 1;
         try { WINS.push({ id: 'bpx', ic: '⭐', c: '#ff9f0a', n: 'Best picks', t: 'Best picks', sub: 'Top setups, with separate Futures and Spot tabs for Binance, MEXC and Bitget' }); LIVE.bpx = 1; VIEWS.bpx = function () { try { return vBestX(); } catch (e) { return vB(); } }; } catch (e) { }
@@ -19942,6 +19987,8 @@ try {
             try { if (r.side !== 'WAIT') { var lt = window.__late(sy, r.side); if (lt) { r.late = lt; r.side = 'WAIT'; } } } catch (e) { }
             try { var cr = window.__cardRec; if (r.side !== 'WAIT' && cr && cr.sym === sy && Date.now() - cr.t < 10000 && (cr.wait || cr.side !== (r.side === 'LONG' ? 1 : -1))) { r.late = 'Baba chart card: ' + (cr.wait || ('chart signal is ' + (cr.side > 0 ? 'LONG' : 'SHORT'))); r.side = 'WAIT'; } } catch (e) { }
             try { if (r.side !== 'WAIT' && r.veto) { r.late = 'Baba says WAIT' + (r.why ? ': ' + String(r.why).slice(0, 40) : ''); r.side = 'WAIT'; } } catch (e) { }
+            /* never show LONG/SHORT before the chart candles are in: the early answer used to flip to WAIT 2-3 s later */
+            try { if (r.side !== 'WAIT' && S.chart && S.chart.sym === sy && !(S.chart.k && S.chart.k.length > 80)) { r.side = 'WAIT'; r.late = 'checking the chart…'; r.t = n - 3500; } } catch (e) { }
             RC[sy] = r; return r;
         }
         window.__recSide = function (sy) { return rec(sy).side; };
@@ -25358,6 +25405,39 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['tap call|call details|diamond details|what is call|call symbol|past call details', 'Tap a call on the chart', 'On a chart, tap any diamond marked CALL (blue = long, purple = short; ring colour = result: green won, red lost, orange expired, white still open). A box opens with the side, time (PKT), entry price, target, stop-loss, valid-until time, result after fees and any notes. Tap ✕ to close. It is a record of the app\\u2019s own past call, not advice. Turn the diamonds off with 👁 Hide all marks or App calls.']); MW_HELP.chart = (MW_HELP.chart || '') + ' Tap a CALL diamond to see that call\\u2019s details.'; } catch (e) { } })();
 ;(function () { try { PF_APP.push(['link|hyperlink|give me link|open link|website|official site', 'Links from Baba AI', 'Under every Baba AI answer you now get tap-able links: ➡ buttons that open the right screen inside the app (chart, bots, Money Quest, Exness Desk, Signal Lab…), 🔗 official websites when you mention Binance, MEXC, Bitget, Exness, TradingView, CoinGecko, PSX or the State Bank of Pakistan, plus Google and Investopedia searches. Always check that the address is the real one before logging in anywhere. Baba never asks for passwords or keys.']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['bitget test connection|could not reach bitget|cors|bitget key not working|test connection failed', 'Test connection (Bitget, MEXC, Bybit, OKX)', 'Profile > Connections: save API key, secret and (Bitget/OKX) the passphrase, then Test connection. In the installed Android app the check now goes through the phone\\u2019s own connection, not the browser, so the old "browser could not reach" (CORS) message should be gone. If it still fails: check internet, that the passphrase is the one you set, that Read permission is on, that Withdraw is OFF and that Bind IP is empty or includes your current IP. Never share keys in chats.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['live now|valid deals|live deals|recommended deals|live tab|only valid|timer deals|countdown', 'Ideas > Live now', 'Ideas > 🟢 Live now shows only the deals that pass every check at this moment (strict ideas list, Baba chart check, no chasing, dollar/world checks), for Binance, MEXC and Bitget (switch with the exchange chips). Each card has a countdown and a PKT end time. When a check fails or time ends, the card disappears by itself. No rule was loosened. An empty list means wait. Not advice; always use a stop-loss.']); MW_HELP.ideas = (MW_HELP.ideas || '') + ' Tab 🟢 Live now = only currently valid deals with countdown.'; } catch (e) { } })();
+;(function () { try { PF_APP.push(['do now|do now tiles|valid deals home|home do now|why no do now', 'DO NOW (Home and Ideas)', 'DO NOW on Home and the Ideas > ⚡ DO NOW tab now use one single check: a deal appears only while it passes every check at this moment (strict ideas list, positive expected value, Baba chart check, no chasing, world and dollar checks). Each card shows a timer and an end time in PKT and disappears when a check fails or time ends. If nothing shows, nothing is valid and waiting is correct. No rule was loosened; nothing can guarantee a win, so use a stop-loss.']); } catch (e) { } })();
+/* ===== p9dn (build 350): DO NOW on Home = only deals that are valid right now, with a timer. Uses the same check as Ideas > DO NOW. Nothing loosened: this only hides what fails. ===== */
+(function () {
+    try {
+        function rowsFor(a) { var out = []; try { (idRows() || []).forEach(function (m) { if (m.sym === a.sym && String(m.side).toUpperCase() === String(a.side).toUpperCase()) { out.push(m); } }); } catch (e) { } return out; }
+        function okRow(a) { var rs = rowsFor(a), i, v; if (!window.__lvValid) { return null; } for (i = 0; i < rs.length; i++) { try { v = window.__lvValid(rs[i]); if (v && v.ok) { return rs[i]; } } catch (e) { } } return null; }
+        var _g = getActions;
+        getActions = function () {
+            var a = _g.apply(this, arguments);
+            if (!window.__dnGate || !window.__lvValid) { return a; }
+            return a.filter(function (x) { return x.tier !== 'NOW' || okRow(x); });
+        };
+        var _bh = boardHTML;
+        boardHTML = function () { window.__dnGate = 1; try { return _bh.apply(this, arguments); } finally { window.__dnGate = 0; } };
+        function fl(ms) { if (ms <= 0) { return '0:00'; } var t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60; return (h ? h + 'h ' : '') + (h ? ('0' + m).slice(-2) : m) + ':' + ('0' + s).slice(-2); }
+        function pk(ts) { try { return new Date(ts).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hour12: false }) + ' PKT'; } catch (e) { return ''; } }
+        var _bc = boardCard;
+        boardCard = function (a, rank, big) {
+            var h = _bc.apply(this, arguments);
+            try {
+                if (a && a.tier === 'NOW') {
+                    var m = okRow(a), to = m && m.to ? m.to : 0;
+                    h = h.replace(/<\/div>\s*$/, '<div class="note" style="margin:6px 0 0;font-weight:700">⏱ Valid for <b data-dnt="' + to + '">' + (to ? fl(to - Date.now()) : 'no time limit') + '</b>' + (to ? ' · until ' + pk(to) : '') + ' · it disappears when a check fails</div></div>');
+                }
+            } catch (e) { }
+            return h;
+        };
+        setInterval(function () {
+            try { var els = document.querySelectorAll('[data-dnt]'), now = Date.now(); for (var i = 0; i < els.length; i++) { var to = +els[i].getAttribute('data-dnt'); if (!to) { continue; } var t = fl(to - now); if (els[i].textContent !== t) { els[i].textContent = t; } if (to - now <= 0) { var g = els[i].closest('.group'); if (g) { g.style.display = 'none'; } } } } catch (e) { }
+        }, 1000);
+    } catch (e) { try { console.log('p9dn', e); } catch (er) { } }
+})();
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
