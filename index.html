@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-06.341';
+var BUILD = '2026-11-06.342';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -15958,7 +15958,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         if (rest.length) { ng.push(['Detail pages', rest]); }
         MW_GROUPS.length = 0; ng.forEach(function (g) { MW_GROUPS.push(g); });
         // menu shows only the main window of each family (the others are tabs inside it)
-        var HID2 = []; FAM.forEach(function (f) { f[1].slice(1).forEach(function (id) { HID2.push(id); }); }); var SHOWN = { exness: 1, exdesk: 1, gold: 1, split: 1, rates: 1, compare: 1 }; HID2 = HID2.filter(function (id) { return !SHOWN[id]; });
+        var HID2 = []; FAM.forEach(function (f) { f[1].slice(1).forEach(function (id) { HID2.push(id); }); }); var SHOWN = { exness: 1, exdesk: 1, gold: 1, split: 1, rates: 1, compare: 1, quest: 1 }; HID2 = HID2.filter(function (id) { return !SHOWN[id]; });
         var _mt2 = mwTiles;
         mwTiles = function () { var h = _mt2.apply(this, arguments); HID2.forEach(function (id) { h = h.replace(new RegExp('<div class="tile[^"]*" data-act="win:' + id + '"><div class="ic"[^>]*>[^<]*</div>[^<]*</div>', 'g'), ''); }); return h; };
         function nm(id) { var w = null; try { w = winDef(id); } catch (e) { } var t = String((w && (w.t || w.n)) || id).replace(/[^\w &\/.\-+%]+/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 16 ? t.slice(0, 15) + '…' : t; }
@@ -23200,7 +23200,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
 /* ===== p9tid: tidy Windows menu. Everyday screens stay visible; the rest sit under an arrow per group. Screens you open twice or more stay visible. ===== */
 (function () {
     try {
-        var CORE = ['overview', 'launch', 'findtrade', 'best', 'analyst', 'chart', 'market', 'news', 'paper', 'xgold', 'academy', 'videos', 'baba', 'helpc', 'parent', 'moveit', 'lockui', 'safety', 'nchart', 'nlist', 'ruletest', 'wallet', 'ptrade', 'tmode', 'split', 'exness', 'gold', 'movers', 'tpro', 'botpro', 'rbot', 'bot', 'siglab', 'sigfeed', 'nhist', 'backup', 'devices', 'recovery', 'exdesk', 'rates', 'compare', 'strade', 'hub', 'bots', 'look', 'langs', 'tsize'];
+        var CORE = ['quest', 'around', 'psx', 'offers', 'overview', 'launch', 'findtrade', 'best', 'analyst', 'chart', 'market', 'news', 'paper', 'xgold', 'academy', 'videos', 'baba', 'helpc', 'parent', 'moveit', 'lockui', 'safety', 'nchart', 'nlist', 'ruletest', 'wallet', 'ptrade', 'tmode', 'split', 'exness', 'gold', 'movers', 'tpro', 'botpro', 'rbot', 'bot', 'siglab', 'sigfeed', 'nhist', 'backup', 'devices', 'recovery', 'exdesk', 'rates', 'compare', 'strade', 'hub', 'bots', 'look', 'langs', 'tsize'];
         var VK = 'mintoosuite_wvis', V = {}, open = {};
         try { V = JSON.parse(localStorage.getItem(VK) || '{}') || {}; } catch (e) { V = {}; }
         function keep(id) { return CORE.indexOf(id) >= 0 || (V[id] || 0) >= 2 || (typeof S !== 'undefined' && S.win === id); }
@@ -24350,7 +24350,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             ['Gold and Exness', ['exness', 'exdesk', 'xgold', 'gold', 'split', 'rates']],
             ['Exchanges', ['exchanges', 'compare', 'mexc', 'mexcd', 'bitget']],
             ['Money and safety', ['wallet', 'moveit', 'hold', 'safety', 'ruletest', 'backup', 'devices', 'recovery', 'parent']],
-            ['Learn and help', ['baba', 'academy', 'videos', 'quest', 'me', 'words', 'helpc', 'tips', 'story', 'agent']],
+            ['Learn and help', ['quest', 'baba', 'academy', 'videos', 'me', 'words', 'helpc', 'tips', 'story', 'agent']],
             ['Pakistan', ['around', 'psx', 'offers', 'brokers']],
             ['Settings', ['langs', 'tsize', 'alerts', 'plans', 'log']]
         ];
@@ -24366,7 +24366,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         window.__orgMore = apply;
     } catch (e) { try { console.error('p9org', e); } catch (e2) { } }
 })();
-;(function () { try { PF_APP.push(['where is exness|exness gold|exness desk|more menu groups|organised|organized|where is split|more groups', 'More menu groups', 'More is now grouped: Trade and bots, Markets and ideas, Gold and Exness (Exness Gold, Exness Desk, Exness Gold Practice, Gold, Split, Rates), Exchanges, Money and safety (Wallet, Backup, Safety, Devices, Recovery), Learn and help, Pakistan, Look and settings. Use the search box on Markets and type a name to jump to any More button.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['where is exness|exness gold|exness desk|more menu groups|organised|organized|where is split|more groups', 'More menu groups', 'More is now grouped: Trade and bots, Markets and ideas, Gold and Exness (Exness Gold, Exness Desk, Exness Gold Practice, Gold, Split, Rates), Exchanges, Money and safety (Wallet, Backup, Safety, Devices, Recovery), Learn and help (Money Quest games first), Pakistan, Look and settings. Use the search box on Markets and type a name to jump to any More button.']); } catch (e) { } })();
 /* ===== p9thm: Themes first. Tapping a theme shows what it will change (colours, shape, font, bottom bar, icons, layout, press, spacing) and only applies after "Apply this look". "Surprise me" picks a random look the same way. ===== */
 (function () {
     try {
