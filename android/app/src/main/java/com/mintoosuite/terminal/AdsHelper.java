@@ -81,7 +81,8 @@ final class AdsHelper {
                     Class<?> sizeC = cls("com.google.android.gms.ads.AdSize");
                     View v = (View) avC.getConstructor(Context.class).newInstance(a);
                     int rid = a.getResources().getIdentifier("admob_banner_id", "string", a.getPackageName());
-                    String id = rid != 0 ? a.getString(rid) : "ca-app-pub-3940256099547665/6300978111";
+                    if (rid == 0) { return; }
+                    String id = a.getString(rid);
                     avC.getMethod("setAdUnitId", String.class).invoke(v, id);
                     avC.getMethod("setAdSize", sizeC).invoke(v, sizeC.getField("BANNER").get(null));
                     v.setVisibility(View.GONE);
@@ -94,7 +95,14 @@ final class AdsHelper {
         });
     }
 
+    public static volatile boolean minor = true;
+    public static void setMinor(boolean m) {
+        minor = m;
+        try { if (!m && banner != null) { MAIN.post(new Runnable() { @Override public void run() { load(); } }); } else if (m && banner != null) { MAIN.post(new Runnable() { @Override public void run() { try { banner.setVisibility(View.GONE); } catch (Throwable ignored) { } } }); } } catch (Throwable ignored) { }
+    }
+
     private static void load() {
+        if (minor) { return; }
         try {
             Class<?> avC = cls("com.google.android.gms.ads.AdView");
             Class<?> reqB = cls("com.google.android.gms.ads.AdRequest$Builder");
@@ -130,7 +138,7 @@ final class AdsHelper {
     private static void apply() {
         try {
             if (banner == null) { return; }
-            boolean vis = want && ready;
+            boolean vis = want && ready && !minor;
             banner.setVisibility(vis ? View.VISIBLE : View.GONE);
             WebHolder.js("window.__mwAdH&&window.__mwAdH(" + (vis ? 50 : 0) + ");");
         } catch (Throwable ignored) { }

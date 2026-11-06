@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.319';
+var BUILD = '2026-11-06.326';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -1455,9 +1455,11 @@ var MW = (function () {
     async function seal(phrase, pw) { var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), c = await sub.encrypt({ name: 'AES-GCM', iv: iv }, await aesKey(pw, salt, 'encrypt'), te.encode(phrase)); return JSON.stringify({ v: 1, s: b64(salt), i: b64(iv), c: b64(new Uint8Array(c)) }); }
     async function unseal(blob, pw) { var o = JSON.parse(blob), p = await sub.decrypt({ name: 'AES-GCM', iv: unb64(o.i) }, await aesKey(pw, unb64(o.s), 'decrypt'), unb64(o.c)); return new TextDecoder().decode(p); }
     function store(k, v) { try { if (v === null) { localStorage.removeItem(k); } else { localStorage.setItem(k, v); } } catch (e) { throw new Error('This phone would not let the app save the wallet.'); } }
+    function mirror() { try { var v = localStorage.getItem('mw_vault'), u = localStorage.getItem('mw_pub'); if (v) { localStorage.setItem('mintoosuite_wvault', v); localStorage.setItem('mintoosuite_wpub', u || ''); } else { localStorage.removeItem('mintoosuite_wvault'); localStorage.removeItem('mintoosuite_wpub'); } } catch (e) {} }
+    function fromBackup() { try { if (!localStorage.getItem('mw_vault') && localStorage.getItem('mintoosuite_wvault') && localStorage.getItem('mintoosuite_wpub')) { localStorage.setItem('mw_vault', localStorage.getItem('mintoosuite_wvault')); localStorage.setItem('mw_pub', localStorage.getItem('mintoosuite_wpub')); } } catch (e) {} }
     function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function pubs() { try { return JSON.parse(load('mw_pub') || 'null'); } catch (e) { return null; } }
-    async function save(phrase, pw) { var a = await evmAddr(phrase), b = await btcAddr(phrase); store('mw_vault', await seal(phrase, pw)); store('mw_pub', JSON.stringify({ evm: a, btc: b })); }
+    async function save(phrase, pw) { var a = await evmAddr(phrase), b = await btcAddr(phrase); store('mw_vault', await seal(phrase, pw)); store('mw_pub', JSON.stringify({ evm: a, btc: b })); mirror(); }
     /* balances (read only, public data) */
     function fmt(v, d) { var s = v.toString(); while (s.length <= d) { s = '0' + s; } var i = s.slice(0, s.length - d), fr = s.slice(s.length - d, s.length - d + 6).replace(/0+$/, ''); return i + (fr ? '.' + fr : ''); }
     async function jget(url, opt) { var c = new AbortController(), t = setTimeout(function () { c.abort(); }, 10000); try { opt = opt || {}; opt.signal = c.signal; var r = await fetch(url, opt); if (!r.ok) { throw new Error('http'); } return await r.json(); } finally { clearTimeout(t); } }
@@ -1669,12 +1671,14 @@ var MW = (function () {
         return { hash: hash, practice: r.net === 'prac', raw: sg.raw, sum: r };
     }
     /* screens */
+    function who() { try { var a = JSON.parse(localStorage.getItem('mintoosuite_acct') || 'null'); return a ? '<div class="note" style="margin:0 0 8px">Signed in as <b>' + esc(a.name || a.email) + '</b> (' + esc(a.email) + '). Tip: use the SAME password as your MintooSuite sign-in, so you remember only one. Forgot or want to change the app password? Use More, then Account. Your wallet needs a hidden key that the app makes for you; it is locked by this password. Writing it on paper is optional.</div>' : ''; } catch (e) { return ''; } }
     function inp(k, type, ph) { return '<input data-wf="' + k + '" type="' + type + '" placeholder="' + ph + '" autocomplete="off" autocapitalize="none" spellcheck="false" value="' + esc(f[k] || '') + '" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0;border-radius:10px;border:1px solid #8e8e9355;font-size:16px;background:transparent;color:inherit">'; }
     function sel(k, opts) { var o = '<select data-wf="' + k + '" style="width:100%;padding:12px;margin:6px 0;border-radius:10px;border:1px solid #8e8e9355;font-size:16px;background:transparent;color:inherit">'; opts.forEach(function (x) { o += '<option value="' + x[0] + '"' + ((f[k] || opts[0][0]) === x[0] ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }); return o + '</select>'; }
     function chunk(a) { return a.slice(0, 8) + ' ' + a.slice(8).replace(/(.{4})/g, '$1 ').trim(); }
     function btn(a, t, sec) { return '<button class="btn' + (sec ? ' sec' : '') + '" data-w="' + a + '"' + (st.busy ? ' disabled' : '') + ' style="width:100%;margin:6px 0">' + t + '</button>'; }
     function addrRow(n, a) { return '<div class="row" style="display:block"><span>' + n + '</span><div style="word-break:break-all;font-family:monospace;font-size:13px;margin:4px 0 8px">' + esc(a) + '</div><button class="btn sec" data-w="copy:' + esc(a) + '" style="width:100%">Copy address</button></div>'; }
     function html() {
+        fromBackup(); if (load('mw_vault') && !load('mintoosuite_wvault')) { mirror(); }
         var p = pubs(), h = '<div class="group pad">', m = st.mode, i;
         if (st.msg) { h += '<div class="note" style="margin:0 0 10px;font-weight:600">' + esc(st.msg) + '</div>'; }
         if (m === 'home' && !p) {
@@ -1682,9 +1686,9 @@ var MW = (function () {
         } else if (m === 'home') {
             h += '<b>My wallet</b><div class="note" style="margin:4px 0 8px">Receive on the networks shown. Your EVM address works on BNB Smart Chain (BEP-20), Ethereum, Polygon, Arbitrum and Base, for coins and tokens. Practice first, then try a very small amount.</div>' + addrRow('Ethereum, BNB Smart Chain and other EVM networks', p.evm) + addrRow('Bitcoin (native SegWit)', p.btc) + '<b>Balances</b>';
             if (st.bal) { Object.keys(st.bal).forEach(function (k) { h += '<div class="row"><span>' + esc(k) + '</span><b>' + (st.bal[k] === null ? 'unavailable' : esc(st.bal[k])) + '</b></div>'; }); } else { h += '<div class="note">Not loaded yet.</div>'; }
-            h += btn('send', 'Send coins') + btn('bal', st.busy ? 'Working…' : 'Refresh balances', 1) + btn('reveal', 'Show my 12 words', 1) + (bioAvail() ? (bioHas() ? btn('biooff', '👆 Fingerprint is ON: turn it off', 1) : btn('bioon', '👆 Enable fingerprint unlock', 1)) : '') + btn('remove', 'Remove wallet from this phone', 1);
+            h += btn('send', 'Send coins') + btn('bal', st.busy ? 'Working…' : 'Refresh balances', 1) + btn('reveal', 'Show my 12 words', 1) + btn('chpw', 'Change wallet password', 1) + btn('forgot', 'Forgot wallet password?', 1) + (bioAvail() ? (bioHas() ? btn('biooff', '👆 Fingerprint is ON: turn it off', 1) : btn('bioon', '👆 Enable fingerprint unlock', 1)) : '') + btn('remove', 'Remove wallet from this phone', 1);
         } else if (m === 'create') {
-            h += '<b>Choose a wallet password</b><div class="note">It locks the wallet on this phone. At least 8 characters.</div>' + inp('pw', 'password', 'Password') + inp('pw2', 'password', 'Repeat password') + btn('gen', st.busy ? 'Working…' : 'Continue') + btn('cancel', 'Cancel', 1);
+            h += who() + '<b>Choose a wallet password</b><div class="note">It locks the wallet on this phone. At least 8 characters.</div>' + inp('pw', 'password', 'Password') + inp('pw2', 'password', 'Repeat password') + btn('gensimple', st.busy ? 'Working…' : 'Create with just my password (no words to write)') + '<div class="note">Simple way: nothing to write down. Your wallet is locked by this password on this phone. If you lose the phone AND forget the password, the coins cannot be recovered by anyone. You can still choose to see the 12 words later (More, Show my 12 words) if you ever want a paper backup.</div>' + btn('gen', st.busy ? 'Working…' : 'Safer way: also write 12 words on paper', 1) + btn('cancel', 'Cancel', 1);
         } else if (m === 'show') {
             h += '<b>Write these 12 words on paper, in order</b><div style="font-size:18px;line-height:2;margin:10px 0">';
             f.ph.split(' ').forEach(function (w, j) { h += '<span style="display:inline-block;min-width:46%"><span style="opacity:.5">' + (j + 1) + '.</span> <b>' + esc(w) + '</b></span>'; });
@@ -1696,7 +1700,7 @@ var MW = (function () {
         } else if (m === 'bioenroll') {
             h += '<b>Enable fingerprint</b><div class="note">Enter your wallet password once. It is then locked inside the phone\'s secure chip and released only by your fingerprint. If you add or remove a fingerprint on the phone, you must set this up again.</div>' + inp('pw', 'password', 'Wallet password') + btn('doenroll', st.busy ? 'Waiting…' : 'Continue') + btn('cancel', 'Cancel', 1);
         } else if (m === 'reveal') {
-            h += '<b>Enter your wallet password</b>' + inp('pw', 'password', 'Password') + btn('doreveal', st.busy ? 'Working…' : 'Show my 12 words') + btn('cancel', 'Cancel', 1);
+            h += who() + '<b>Enter your wallet password</b>' + inp('pw', 'password', 'Password') + btn('doreveal', st.busy ? 'Working…' : 'Show my 12 words') + btn('cancel', 'Cancel', 1);
         } else if (m === 'shown') {
             h += '<b>Your 12 words</b><div style="font-size:18px;line-height:2;margin:10px 0">'; f.ph.split(' ').forEach(function (w, j) { h += '<span style="display:inline-block;min-width:46%"><span style="opacity:.5">' + (j + 1) + '.</span> <b>' + esc(w) + '</b></span>'; }); h += '</div>' + btn('cancel', 'Hide them', 1);
         } else if (m === 'send') {
@@ -1707,6 +1711,10 @@ var MW = (function () {
             h += '<b>Please check everything</b>' + (NETS[r.net].real ? '<div class="note" style="color:#ff453a;font-weight:700">REAL MONEY. Sent coins cannot be taken back.</div>' : '<div class="note" style="font-weight:700">' + esc(NETS[r.net].n) + '</div>') + '<div class="row"><span>Send</span><b>' + fmt(r.amt, r.dec) + ' ' + esc(r.sym) + '</b></div><div class="row" style="display:block"><span>To</span><div style="word-break:break-all;font-family:monospace;font-size:14px;margin:4px 0">' + esc(chunk(r.to)) + '</div></div><div class="row"><span>Network fee</span><b>' + fmt(r.fee, r.fdec) + ' ' + esc(r.fsym) + '</b></div>' + (r.asset === 'BTC' ? '<div class="note">Fee rate ' + r.rate + ' sat/vB. Change (if any) returns to your own Bitcoin address.</div>' : '') + (r.custom ? '<div class="note" style="color:#ff9f0a;font-weight:700">Other token: the contract says it is "' + esc(r.sym) + '". Contract: ' + esc(r.caddr) + '</div>' + inp('symc', 'text', 'Type the token name (' + esc(r.sym) + ') to confirm') : '') + '<div class="note" style="margin:8px 0">Type the last 6 characters of the address to prove you checked it, then your wallet password.</div>' + inp('last6', 'text', 'Last 6 characters of the address') + (bioHas() ? btn('biouse', '👆 Use fingerprint instead of password') : '') + (cacheMins() ? '<div class="note">Password remembered for about ' + cacheMins() + ' more minute(s), only while the app stays open.</div>' + btn('forget', 'Forget my password now', 1) : inp('pw', 'password', 'Wallet password') + sel('rem', [['0', 'Do not remember my password'], ['5', 'Remember it for 5 minutes'], ['15', 'Remember it for 15 minutes'], ['30', 'Remember it for 30 minutes']])) + btn('dosend', st.busy ? 'Signing…' : (r.net === 'prac' ? 'Practice send' : 'Send now')) + btn('send', 'Back', 1) + btn('cancel', 'Cancel', 1);
         } else if (m === 'sdone') {
             h += '<b>' + (f.res.practice ? 'Practice complete' : 'Sent') + '</b><div class="note" style="margin:6px 0">' + (f.res.practice ? 'Nothing was sent and no real or test coins moved. This is exactly what a real send would sign.' : 'Your transaction was submitted. It usually confirms within a minute. Refresh balances to see it.') + '</div><div class="row" style="display:block"><span>Transaction ID</span><div style="word-break:break-all;font-family:monospace;font-size:12px;margin:4px 0 8px">' + esc(f.res.hash) + '</div><button class="btn sec" data-w="copy:' + esc(f.res.hash) + '" style="width:100%">Copy transaction ID</button></div>' + btn('cancel', 'Done');
+        } else if (m === 'chpw') {
+            h += who() + '<b>Change wallet password</b><div class="note">Your coins and 12 words do not change. If fingerprint unlock is on, turn it off and on again afterwards.</div>' + inp('pw', 'password', 'Current wallet password') + inp('npw', 'password', 'New password (8+ characters)') + inp('npw2', 'password', 'Repeat new password') + btn('dochpw', st.busy ? 'Working…' : 'Change password') + btn('cancel', 'Cancel', 1);
+        } else if (m === 'forgot') {
+            h += '<b>Forgot the wallet password?</b><div class="note">Resetting your MintooSuite password by email does not open the wallet, and we cannot do it for you: the wallet is locked on your phone and nobody else, including us, holds a key. Type the old password you used when the wallet was made (it is usually the same as your app password). If you really cannot remember it, the only way back is the optional 12-word paper backup: choose Import below. You can see your addresses and balances without any password; the password is only needed to send coins or show the words.</div>' + btn('import', 'Import with my 12 words') + btn('cancel', 'Back', 1);
         } else if (m === 'remove') {
             h += '<b>Remove the wallet from this phone?</b><div class="note">Without your 12 words written on paper, the money in it is lost forever. Type DELETE to confirm.</div>' + inp('del', 'text', 'DELETE') + btn('doremove', 'Remove wallet') + btn('cancel', 'Cancel', 1);
         }
@@ -1733,7 +1741,11 @@ var MW = (function () {
         else if (a === 'finish') { run(async function () { var w = f.ph.split(' '); if ((f.w1 || '').trim().toLowerCase() !== w[f.q[0]] || (f.w2 || '').trim().toLowerCase() !== w[f.q[1]]) { throw new Error('Those words do not match. Check your paper (or go back and write them again).'); } await save(f.ph, f.pw); clear(); st.mode = 'home'; st.msg = 'Wallet created. Keep your paper safe.'; st.bal = null; }); }
         else if (a === 'doimport') { run(async function () { var e = await checkPhrase(f.ph || ''); if (e) { throw new Error(e); } if ((f.pw || '').length < 8) { throw new Error('The password needs at least 8 characters.'); } await save(f.ph.trim().toLowerCase().split(/\s+/).join(' '), f.pw); clear(); st.mode = 'home'; st.msg = 'Wallet imported.'; st.bal = null; }); }
         else if (a === 'doreveal') { run(async function () { var ph = await getPhrase(f.pw, true); f = { ph: ph }; st.mode = 'shown'; setTimeout(function () { if (st.mode === 'shown') { clear(); st.mode = 'home'; draw(); } }, 60000); }); }
-        else if (a === 'doremove') { if ((f.del || '').trim() !== 'DELETE') { st.msg = 'Type DELETE exactly to confirm.'; draw(); return; } store('mw_vault', null); store('mw_pub', null); clear(); st.mode = 'home'; st.bal = null; st.msg = 'Wallet removed from this phone.'; draw(); }
+        else if (a === 'forgot') { clear(); st.mode = 'forgot'; st.msg = ''; draw(); }
+        else if (a === 'chpw') { clear(); st.mode = 'chpw'; st.msg = ''; draw(); }
+        else if (a === 'dochpw') { run(async function () { var old = load('mw_vault'), ph, nb, chk; if ((f.npw || '').length < 8) { throw new Error('The new password needs at least 8 characters.'); } if (f.npw !== f.npw2) { throw new Error('The two new passwords do not match.'); } ph = await getPhrase(f.pw, true); nb = await seal(ph, f.npw); chk = await unseal(nb, f.npw); if (chk !== ph) { throw new Error('Safety stop: the check failed. Nothing was changed.'); } ph = null; chk = null; store('mw_vault_prev', old); store('mw_vault', nb); mirror(); try { nat().bioClear(window.__mwTok); } catch (e) {} cache = null; clear(); st.mode = 'home'; st.msg = 'Wallet password changed and checked. Fingerprint unlock (if you used it) was turned off; turn it on again.'; }); }
+        else if (a === 'gensimple') { run(async function () { var ac = null, h2; if ((f.pw || '').length < 8) { throw new Error('The password needs at least 8 characters.'); } if (f.pw !== f.pw2) { throw new Error('The two passwords do not match.'); } try { ac = JSON.parse(localStorage.getItem('mintoosuite_acct') || 'null'); } catch (e) {} if (ac && ac.salt && ac.hash) { h2 = await auHash(f.pw, ac.salt); if (h2 !== ac.hash) { throw new Error('For one login, type the same password you use to sign in to MintooSuite.'); } } var ph = await genPhrase(); await save(ph, f.pw); ph = null; clear(); st.mode = 'home'; st.msg = 'Wallet created. It opens with your MintooSuite password.'; st.bal = null; }); }
+        else if (a === 'doremove') { if ((f.del || '').trim() !== 'DELETE') { st.msg = 'Type DELETE exactly to confirm.'; draw(); return; } store('mw_vault', null); store('mw_pub', null); mirror(); clear(); st.mode = 'home'; st.bal = null; st.msg = 'Wallet removed from this phone.'; draw(); }
         else if (a === 'send') { f = { net: f.net || 'prac', asset: f.asset || 'N', to: f.to || '', amt: f.amt || '', caddr: f.caddr || '' }; st.mode = 'send'; st.msg = ''; draw(); }
         else if (a === 'sreview') { run(async function () { f.rev = await prepare(); f.last6 = ''; f.pw = ''; st.mode = 'sreview'; }); }
         else if (a === 'dosend') { run(async function () { var res = await doSend(); clear(); f.res = res; st.mode = 'sdone'; st.bal = null; }); }
@@ -1745,7 +1757,7 @@ var MW = (function () {
         document.addEventListener('input', onIn); document.addEventListener('change', onIn);
         document.addEventListener('visibilitychange', function () { if (document.hidden) { cache = null; } if (document.hidden && (st.mode === 'shown' || st.mode === 'sreview')) { var keep = st.mode === 'sreview'; if (!keep) { clear(); st.mode = 'home'; } else { f.pw = ''; } draw(); } });
     }
-    return { bal: function () { return st.bal; }, refresh: function () { if (pubs() && !st.busy) { st.bal = null; act('bal'); } }, html: html, onOpen: function () { if (pubs() && !st.bal && !st.busy) { act('bal'); } }, _t: { TOK: TOK, NETS: NETS, tokenMeta: tokenMeta, strDec: strDec, okAddr: okAddr, bip143: bip143, btcBuild: btcBuild, btcDest: btcDest, der: der, le: le, unhex: unhex, dsha: dsha, pub: pub, signTx: signTx, sign: sign, rlpL: rlpL, okAddr: okAddr, parseAmt: parseAmt, csum: csum, keccak: keccak, ripemd: ripemd, evmAddr: evmAddr, btcAddr: btcAddr, derive: derive, checkPhrase: checkPhrase, genPhrase: genPhrase, seal: seal, unseal: unseal, pbkdf: pbkdf, hex: hex, fmt: fmt } };
+    return { bal: function () { return st.bal; }, refresh: function () { if (pubs() && !st.busy) { st.bal = null; act('bal'); } }, html: html, onOpen: function () { fromBackup(); if (pubs() && !st.bal && !st.busy) { act('bal'); } }, _t: { TOK: TOK, NETS: NETS, tokenMeta: tokenMeta, strDec: strDec, okAddr: okAddr, bip143: bip143, btcBuild: btcBuild, btcDest: btcDest, der: der, le: le, unhex: unhex, dsha: dsha, pub: pub, signTx: signTx, sign: sign, rlpL: rlpL, okAddr: okAddr, parseAmt: parseAmt, csum: csum, keccak: keccak, ripemd: ripemd, evmAddr: evmAddr, btcAddr: btcAddr, derive: derive, checkPhrase: checkPhrase, genPhrase: genPhrase, seal: seal, unseal: unseal, pbkdf: pbkdf, hex: hex, fmt: fmt } };
 })();
 
 var MW_WORDS = "abandon ability able about b0000 b0001 b0002 b0003 b0004 b0005 b0006 b0007 b0008 b0009 b0010 b0011 b0012 b0013 b0014 b0015 b0016 b0017 b0018 b0019 b0020 b0021 b0022 b0023 b0024 b0025 b0026 b0027 b0028 b0029 b0030 b0031 b0032 b0033 b0034 b0035 b0036 b0037 b0038 b0039 b0040 b0041 b0042 b0043 b0044 b0045 b0046 b0047 b0048 b0049 b0050 b0051 b0052 b0053 b0054 b0055 b0056 b0057 b0058 b0059 b0060 b0061 b0062 b0063 b0064 b0065 b0066 b0067 b0068 b0069 b0070 b0071 b0072 b0073 b0074 b0075 b0076 b0077 b0078 b0079 b0080 b0081 b0082 b0083 b0084 b0085 b0086 b0087 b0088 b0089 b0090 b0091 b0092 b0093 b0094 b0095 b0096 b0097 b0098 b0099 b0100 b0101 b0102 b0103 b0104 b0105 b0106 b0107 b0108 b0109 b0110 b0111 b0112 b0113 b0114 b0115 b0116 b0117 b0118 b0119 b0120 b0121 b0122 b0123 b0124 b0125 b0126 b0127 b0128 b0129 b0130 b0131 b0132 b0133 b0134 b0135 b0136 b0137 b0138 b0139 b0140 b0141 b0142 b0143 b0144 b0145 b0146 b0147 b0148 b0149 b0150 b0151 b0152 b0153 b0154 b0155 b0156 b0157 b0158 b0159 b0160 b0161 b0162 b0163 b0164 b0165 b0166 b0167 b0168 b0169 b0170 b0171 b0172 b0173 b0174 b0175 b0176 b0177 b0178 b0179 b0180 b0181 b0182 b0183 b0184 b0185 b0186 b0187 b0188 b0189 b0190 b0191 b0192 b0193 b0194 b0195 b0196 b0197 b0198 b0199 b0200 b0201 b0202 b0203 b0204 b0205 b0206 b0207 b0208 b0209 b0210 b0211 b0212 b0213 b0214 b0215 b0216 b0217 b0218 b0219 b0220 b0221 b0222 b0223 b0224 b0225 b0226 b0227 b0228 b0229 b0230 b0231 b0232 b0233 b0234 b0235 b0236 b0237 b0238 b0239 b0240 b0241 b0242 b0243 b0244 b0245 b0246 b0247 b0248 b0249 b0250 b0251 b0252 b0253 b0254 b0255 b0256 b0257 b0258 b0259 b0260 b0261 b0262 b0263 b0264 b0265 b0266 b0267 b0268 b0269 b0270 b0271 b0272 b0273 b0274 b0275 b0276 b0277 b0278 b0279 b0280 b0281 b0282 b0283 b0284 b0285 b0286 b0287 b0288 b0289 b0290 b0291 b0292 b0293 b0294 b0295 b0296 b0297 b0298 b0299 b0300 b0301 b0302 b0303 b0304 b0305 b0306 b0307 b0308 b0309 b0310 b0311 b0312 b0313 b0314 b0315 b0316 b0317 b0318 b0319 b0320 b0321 b0322 b0323 b0324 b0325 b0326 b0327 b0328 b0329 b0330 b0331 b0332 b0333 b0334 b0335 b0336 b0337 b0338 b0339 b0340 b0341 b0342 b0343 b0344 b0345 b0346 b0347 b0348 b0349 b0350 b0351 b0352 b0353 b0354 b0355 b0356 b0357 b0358 b0359 b0360 b0361 b0362 b0363 b0364 b0365 b0366 b0367 b0368 b0369 b0370 b0371 b0372 b0373 b0374 b0375 b0376 b0377 b0378 b0379 b0380 b0381 b0382 b0383 b0384 b0385 b0386 b0387 b0388 b0389 b0390 b0391 b0392 b0393 b0394 b0395 b0396 b0397 b0398 b0399 b0400 b0401 b0402 b0403 b0404 b0405 b0406 b0407 b0408 b0409 b0410 b0411 b0412 b0413 b0414 b0415 b0416 b0417 b0418 b0419 b0420 b0421 b0422 b0423 b0424 b0425 b0426 b0427 b0428 b0429 b0430 b0431 b0432 b0433 b0434 b0435 b0436 b0437 b0438 b0439 b0440 b0441 b0442 b0443 b0444 b0445 b0446 b0447 b0448 b0449 b0450 b0451 b0452 b0453 b0454 b0455 b0456 b0457 b0458 b0459 b0460 b0461 b0462 b0463 b0464 b0465 b0466 b0467 b0468 b0469 b0470 b0471 b0472 b0473 b0474 b0475 b0476 b0477 b0478 b0479 b0480 b0481 b0482 b0483 b0484 b0485 b0486 b0487 b0488 b0489 b0490 b0491 b0492 b0493 b0494 b0495 b0496 b0497 b0498 b0499 b0500 b0501 b0502 b0503 b0504 b0505 b0506 b0507 b0508 b0509 b0510 b0511 b0512 b0513 b0514 b0515 b0516 b0517 b0518 b0519 b0520 b0521 b0522 b0523 b0524 b0525 b0526 b0527 b0528 b0529 b0530 b0531 b0532 b0533 b0534 b0535 b0536 b0537 b0538 b0539 b0540 b0541 b0542 b0543 b0544 b0545 b0546 b0547 b0548 b0549 b0550 b0551 b0552 b0553 b0554 b0555 b0556 b0557 b0558 b0559 b0560 b0561 b0562 b0563 b0564 b0565 b0566 b0567 b0568 b0569 b0570 b0571 b0572 b0573 b0574 b0575 b0576 b0577 b0578 b0579 b0580 b0581 b0582 b0583 b0584 b0585 b0586 b0587 b0588 b0589 b0590 b0591 b0592 b0593 b0594 b0595 b0596 b0597 b0598 b0599 b0600 b0601 b0602 b0603 b0604 b0605 b0606 b0607 b0608 b0609 b0610 b0611 b0612 b0613 b0614 b0615 b0616 b0617 b0618 b0619 b0620 b0621 b0622 b0623 b0624 b0625 b0626 b0627 b0628 b0629 b0630 b0631 b0632 b0633 b0634 b0635 b0636 b0637 b0638 b0639 b0640 b0641 b0642 b0643 b0644 b0645 b0646 b0647 b0648 b0649 b0650 b0651 b0652 b0653 b0654 b0655 b0656 b0657 b0658 b0659 b0660 b0661 b0662 b0663 b0664 b0665 b0666 b0667 b0668 b0669 b0670 b0671 b0672 b0673 b0674 b0675 b0676 b0677 b0678 b0679 b0680 b0681 b0682 b0683 b0684 b0685 b0686 b0687 b0688 b0689 b0690 b0691 b0692 b0693 b0694 b0695 b0696 b0697 b0698 b0699 b0700 b0701 b0702 b0703 b0704 b0705 b0706 b0707 b0708 b0709 b0710 b0711 b0712 b0713 b0714 b0715 b0716 b0717 b0718 b0719 b0720 b0721 b0722 b0723 b0724 b0725 b0726 b0727 b0728 b0729 b0730 b0731 b0732 b0733 b0734 b0735 b0736 b0737 b0738 b0739 b0740 b0741 b0742 b0743 b0744 b0745 b0746 b0747 b0748 b0749 b0750 b0751 b0752 b0753 b0754 b0755 b0756 b0757 b0758 b0759 b0760 b0761 b0762 b0763 b0764 b0765 b0766 b0767 b0768 b0769 b0770 b0771 b0772 b0773 b0774 b0775 b0776 b0777 b0778 b0779 b0780 b0781 b0782 b0783 b0784 b0785 b0786 b0787 b0788 b0789 b0790 b0791 b0792 b0793 b0794 b0795 b0796 b0797 b0798 b0799 b0800 b0801 b0802 b0803 b0804 b0805 b0806 b0807 b0808 b0809 b0810 b0811 b0812 b0813 b0814 b0815 b0816 b0817 b0818 b0819 b0820 b0821 b0822 b0823 b0824 b0825 b0826 b0827 b0828 b0829 b0830 b0831 b0832 b0833 b0834 b0835 b0836 b0837 b0838 b0839 b0840 b0841 b0842 b0843 b0844 b0845 b0846 b0847 b0848 b0849 b0850 b0851 b0852 b0853 b0854 b0855 b0856 b0857 b0858 b0859 b0860 b0861 b0862 b0863 b0864 b0865 b0866 b0867 b0868 b0869 b0870 b0871 b0872 b0873 b0874 b0875 b0876 b0877 b0878 b0879 b0880 b0881 b0882 b0883 b0884 b0885 b0886 b0887 b0888 b0889 b0890 b0891 b0892 b0893 b0894 b0895 b0896 b0897 b0898 b0899 b0900 b0901 b0902 b0903 b0904 b0905 b0906 b0907 b0908 b0909 b0910 b0911 b0912 b0913 b0914 b0915 b0916 b0917 b0918 b0919 b0920 b0921 b0922 b0923 b0924 b0925 b0926 b0927 b0928 b0929 b0930 b0931 b0932 b0933 b0934 b0935 b0936 b0937 b0938 b0939 b0940 b0941 b0942 b0943 b0944 b0945 b0946 b0947 b0948 b0949 b0950 b0951 b0952 b0953 b0954 b0955 b0956 b0957 b0958 b0959 b0960 b0961 b0962 b0963 b0964 b0965 b0966 b0967 b0968 b0969 b0970 b0971 b0972 b0973 b0974 b0975 b0976 b0977 b0978 b0979 b0980 b0981 b0982 b0983 b0984 b0985 b0986 b0987 b0988 b0989 b0990 b0991 b0992 b0993 b0994 b0995 b0996 b0997 b0998 b0999 b1000 b1001 b1002 b1003 b1004 b1005 b1006 b1007 b1008 b1009 b1010 b1011 b1012 b1013 b1014 b1015 b1016 b1017 b1018 b1019 b1020 b1021 b1022 b1023 b1024 b1025 b1026 b1027 b1028 b1029 b1030 b1031 b1032 b1033 b1034 b1035 b1036 b1037 b1038 b1039 b1040 b1041 b1042 b1043 b1044 b1045 b1046 b1047 b1048 b1049 b1050 b1051 b1052 b1053 b1054 b1055 b1056 b1057 b1058 b1059 b1060 b1061 b1062 b1063 b1064 b1065 b1066 b1067 b1068 b1069 b1070 b1071 b1072 b1073 b1074 b1075 b1076 b1077 b1078 b1079 b1080 b1081 b1082 b1083 b1084 b1085 b1086 b1087 b1088 b1089 b1090 b1091 b1092 b1093 b1094 b1095 b1096 b1097 b1098 b1099 b1100 b1101 b1102 b1103 b1104 b1105 b1106 b1107 b1108 b1109 b1110 b1111 b1112 b1113 b1114 b1115 b1116 b1117 b1118 b1119 b1120 b1121 b1122 b1123 b1124 b1125 b1126 b1127 b1128 b1129 b1130 b1131 b1132 b1133 b1134 b1135 b1136 b1137 b1138 b1139 b1140 b1141 b1142 b1143 b1144 b1145 b1146 b1147 b1148 b1149 b1150 b1151 b1152 b1153 b1154 b1155 b1156 b1157 b1158 b1159 b1160 b1161 b1162 b1163 b1164 b1165 b1166 b1167 b1168 b1169 b1170 b1171 b1172 b1173 b1174 b1175 b1176 b1177 b1178 b1179 b1180 b1181 b1182 b1183 b1184 b1185 b1186 b1187 b1188 b1189 b1190 b1191 b1192 b1193 b1194 b1195 b1196 b1197 b1198 b1199 b1200 b1201 b1202 b1203 b1204 b1205 b1206 b1207 b1208 b1209 b1210 b1211 b1212 b1213 b1214 b1215 b1216 b1217 b1218 b1219 b1220 b1221 b1222 b1223 b1224 b1225 b1226 b1227 b1228 b1229 b1230 b1231 b1232 b1233 b1234 b1235 b1236 b1237 b1238 b1239 b1240 b1241 b1242 b1243 b1244 b1245 b1246 b1247 b1248 b1249 b1250 b1251 b1252 b1253 b1254 b1255 b1256 b1257 b1258 b1259 b1260 b1261 b1262 b1263 b1264 b1265 b1266 b1267 b1268 b1269 b1270 b1271 b1272 b1273 b1274 b1275 b1276 b1277 b1278 b1279 b1280 b1281 b1282 b1283 b1284 b1285 b1286 b1287 b1288 b1289 b1290 b1291 b1292 b1293 b1294 b1295 b1296 b1297 b1298 b1299 b1300 b1301 b1302 b1303 b1304 b1305 b1306 b1307 b1308 b1309 b1310 b1311 b1312 b1313 b1314 b1315 b1316 b1317 b1318 b1319 b1320 b1321 b1322 b1323 b1324 b1325 b1326 b1327 b1328 b1329 b1330 b1331 b1332 b1333 b1334 b1335 b1336 b1337 b1338 b1339 b1340 b1341 b1342 b1343 b1344 b1345 b1346 b1347 b1348 b1349 b1350 b1351 b1352 b1353 b1354 b1355 b1356 b1357 b1358 b1359 b1360 b1361 b1362 b1363 b1364 b1365 b1366 b1367 b1368 b1369 b1370 b1371 b1372 b1373 b1374 b1375 b1376 b1377 b1378 b1379 b1380 b1381 b1382 b1383 b1384 b1385 b1386 b1387 b1388 b1389 b1390 b1391 b1392 b1393 b1394 b1395 b1396 b1397 b1398 b1399 b1400 b1401 b1402 b1403 b1404 b1405 b1406 b1407 b1408 b1409 b1410 b1411 b1412 b1413 b1414 b1415 b1416 b1417 b1418 b1419 b1420 b1421 b1422 b1423 b1424 b1425 b1426 b1427 b1428 b1429 b1430 b1431 b1432 b1433 b1434 b1435 b1436 b1437 b1438 b1439 b1440 b1441 b1442 b1443 b1444 b1445 b1446 b1447 b1448 b1449 b1450 b1451 b1452 b1453 b1454 b1455 b1456 b1457 b1458 b1459 b1460 b1461 b1462 b1463 b1464 b1465 b1466 b1467 b1468 b1469 b1470 b1471 b1472 b1473 b1474 b1475 b1476 b1477 b1478 b1479 b1480 b1481 b1482 b1483 b1484 b1485 b1486 b1487 b1488 b1489 b1490 b1491 b1492 b1493 b1494 b1495 b1496 b1497 b1498 b1499 b1500 b1501 b1502 b1503 b1504 b1505 b1506 b1507 b1508 b1509 b1510 b1511 b1512 b1513 b1514 b1515 b1516 b1517 b1518 b1519 b1520 b1521 b1522 b1523 b1524 b1525 b1526 b1527 b1528 b1529 b1530 b1531 b1532 b1533 b1534 b1535 b1536 b1537 b1538 b1539 b1540 b1541 b1542 b1543 b1544 b1545 b1546 b1547 b1548 b1549 b1550 b1551 b1552 b1553 b1554 b1555 b1556 b1557 b1558 b1559 b1560 b1561 b1562 b1563 b1564 b1565 b1566 b1567 b1568 b1569 b1570 b1571 b1572 b1573 b1574 b1575 b1576 b1577 b1578 b1579 b1580 b1581 b1582 b1583 b1584 b1585 b1586 b1587 b1588 b1589 b1590 b1591 b1592 b1593 b1594 b1595 b1596 b1597 b1598 b1599 b1600 b1601 b1602 b1603 b1604 b1605 b1606 b1607 b1608 b1609 b1610 b1611 b1612 b1613 b1614 b1615 b1616 b1617 b1618 b1619 b1620 b1621 b1622 b1623 b1624 b1625 b1626 b1627 b1628 b1629 b1630 b1631 b1632 b1633 b1634 b1635 b1636 b1637 b1638 b1639 b1640 b1641 b1642 b1643 b1644 b1645 b1646 b1647 b1648 b1649 b1650 b1651 b1652 b1653 b1654 b1655 b1656 b1657 b1658 b1659 b1660 b1661 b1662 b1663 b1664 b1665 b1666 b1667 b1668 b1669 b1670 b1671 b1672 b1673 b1674 b1675 b1676 b1677 b1678 b1679 b1680 b1681 b1682 b1683 b1684 b1685 b1686 b1687 b1688 b1689 b1690 b1691 b1692 b1693 b1694 b1695 b1696 b1697 b1698 b1699 b1700 b1701 b1702 b1703 b1704 b1705 b1706 b1707 b1708 b1709 b1710 b1711 b1712 b1713 b1714 b1715 b1716 b1717 b1718 b1719 b1720 b1721 b1722 b1723 b1724 b1725 b1726 b1727 b1728 b1729 b1730 b1731 b1732 b1733 b1734 b1735 b1736 b1737 b1738 b1739 b1740 b1741 b1742 b1743 b1744 b1745 b1746 b1747 b1748 b1749 b1750 b1751 b1752 b1753 b1754 b1755 b1756 b1757 b1758 b1759 b1760 b1761 b1762 b1763 b1764 b1765 b1766 b1767 b1768 b1769 b1770 b1771 b1772 b1773 b1774 b1775 b1776 b1777 b1778 b1779 b1780 b1781 b1782 b1783 b1784 b1785 b1786 b1787 b1788 b1789 b1790 b1791 b1792 b1793 b1794 b1795 b1796 b1797 b1798 b1799 b1800 b1801 b1802 b1803 b1804 b1805 b1806 b1807 b1808 b1809 b1810 b1811 b1812 b1813 b1814 b1815 b1816 b1817 b1818 b1819 b1820 b1821 b1822 b1823 b1824 b1825 b1826 b1827 b1828 b1829 b1830 b1831 b1832 b1833 b1834 b1835 b1836 b1837 b1838 b1839 b1840 b1841 b1842 b1843 b1844 b1845 b1846 b1847 b1848 b1849 b1850 b1851 b1852 b1853 b1854 b1855 b1856 b1857 b1858 b1859 b1860 b1861 b1862 b1863 b1864 b1865 b1866 b1867 b1868 b1869 b1870 b1871 b1872 b1873 b1874 b1875 b1876 b1877 b1878 b1879 b1880 b1881 b1882 b1883 b1884 b1885 b1886 b1887 b1888 b1889 b1890 b1891 b1892 b1893 b1894 b1895 b1896 b1897 b1898 b1899 b1900 b1901 b1902 b1903 b1904 b1905 b1906 b1907 b1908 b1909 b1910 b1911 b1912 b1913 b1914 b1915 b1916 b1917 b1918 b1919 b1920 b1921 b1922 b1923 b1924 b1925 b1926 b1927 b1928 b1929 b1930 b1931 b1932 b1933 b1934 b1935 b1936 b1937 b1938 b1939 b1940 b1941 b1942 b1943 b1944 b1945 b1946 b1947 b1948 b1949 b1950 b1951 b1952 b1953 b1954 b1955 b1956 b1957 b1958 b1959 b1960 b1961 b1962 b1963 b1964 b1965 b1966 b1967 b1968 b1969 b1970 b1971 b1972 b1973 b1974 b1975 b1976 b1977 b1978 b1979 b1980 b1981 b1982 b1983 b1984 b1985 b1986 b1987 b1988 b1989 b1990 b1991 b1992 b1993 b1994 b1995 b1996 b1997 b1998 b1999 b2000 b2001 b2002 b2003 b2004 b2005 b2006 b2007 b2008 b2009 b2010 b2011 b2012 b2013 b2014 b2015 b2016 b2017 b2018 b2019 b2020 b2021 b2022 b2023 b2024 b2025 b2026 b2027 b2028 b2029 b2030 b2031 b2032 b2033 b2034 b2035 b2036 b2037 b2038 b2039 b2040 b2041 b2042 zoo".split(" ");
@@ -4504,7 +4516,7 @@ function rbActivate() {
     R.armed = true; R.armedNet = trCfg().net; R.running = false; R.paused = false; R.note = ''; R.ack1 = false; R.ack2 = false; R.ph = ''; rbLog('Baba Real Bot ACTIVATED (' + rbMode() + ' mode). Not started yet.'); rbSave(); mwSvcPush(); rbDraw();
 }
 function rbDeactivate() { var R = S.rb; R.armed = false; R.running = false; R.paused = false; R.wasRunning = false; rbLog('Baba Real Bot DEACTIVATED. Open trades keep their exchange stop-loss and take-profit.'); rbSave(); mwSvcPush(); rbDraw(); }
-function rbStart() { var R = S.rb; if (!R.armed) { return; } R.running = true; R.paused = false; R.wasRunning = true; R.note = ''; R.lockUntil = R.lockUntil > nowMs() ? R.lockUntil : 0; rbLog('Bot STARTED'); rbSave(); mwSvcPush(); rbDraw(); setTimeout(rbLoop, 400); }
+function rbStart() { var R = S.rb; if (!R.armed) { return; } if (R.danger) { if (!window.confirm('The last problem may have left a position without protection. Open Binance and check your positions and orders first. Start the bot anyway?')) { return; } R.danger = 0; } R.running = true; R.paused = false; R.wasRunning = true; R.note = ''; R.lockUntil = R.lockUntil > nowMs() ? R.lockUntil : 0; rbLog('Bot STARTED'); rbSave(); mwSvcPush(); rbDraw(); setTimeout(rbLoop, 400); }
 function rbPause(p) { var R = S.rb; if (!R.armed || !R.running) { return; } R.paused = !!p; rbLog(p ? 'Bot PAUSED: no new trades, open trades keep running' : 'Bot RESUMED'); rbSave(); mwSvcPush(); rbDraw(); }
 function rbStop() { var R = S.rb; R.running = false; R.paused = false; R.wasRunning = false; rbLog('Bot STOPPED: no new trades. Open trades keep their exchange stop-loss and take-profit.'); rbSave(); mwSvcPush(); rbDraw(); }
 function rbCancelFor(sym) { return trCall('DELETE', '/fapi/v1/algoOpenOrders', { symbol: sym }).catch(function () {}).then(function () { return trCall('DELETE', '/fapi/v1/allOpenOrders', { symbol: sym }).catch(function () {}); }); }
@@ -4527,7 +4539,7 @@ function rbFinish(p, pnl) {
     R.closed.unshift(rec); R.closed = R.closed.slice(0, 200); rbRoll(); R.dayPnl += pnl; R.streak = pnl < 0 ? R.streak + 1 : 0;
     rbLog('Closed ' + base(p.sym) + ' ' + (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + ' USDT');
     sendPush('Baba Real Bot: ' + base(p.sym) + ' closed', (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + ' USDT · today ' + (R.dayPnl >= 0 ? '+' : '') + R.dayPnl.toFixed(2) + ' USDT');
-    if (R.dayPnl <= -R.dayLoss) { R.lockUntil = nowMs() + 86400000; R.note = 'Daily loss limit reached (' + R.dayLoss + ' USDT). New trades are blocked for today.'; rbLog(R.note); sendPush('Baba Real Bot LOCKED', R.note); }
+    if (R.dayPnl <= -R.dayLoss || (R.eq > 0 && R.dayPnl <= -0.03 * R.eq)) { R.lockUntil = nowMs() + 86400000; R.note = 'Daily loss limit reached (' + R.dayLoss + ' USDT). New trades are blocked for today.'; rbLog(R.note); sendPush('Baba Real Bot LOCKED', R.note); }
     else if (R.streak >= R.maxStreak) { R.lockUntil = nowMs() + 2 * 3600000; R.note = R.maxStreak + ' losses in a row: new trades are blocked for 2 hours.'; rbLog(R.note); sendPush('Baba Real Bot paused', R.note); }
     rbSave(); mwSvcPush(); rbDraw();
 }
@@ -4539,8 +4551,8 @@ function rbReconcile(force) {
         var gone = [], now = nowMs();
         R.open.slice().forEach(function (p) {
             var x = m[p.sym];
-            if (x) { p.amt = String(Math.abs(+x.positionAmt)); p.mark = +x.markPrice; p.liq = +x.liquidationPrice; p.up = +x.unRealizedProfit; p.seen = now; }
-            else if (p.closing || now - p.t0 > 20000) { gone.push(p); }
+            if (x) { p.miss = 0; p.amt = String(Math.abs(+x.positionAmt)); p.mark = +x.markPrice; p.liq = +x.liquidationPrice; p.up = +x.unRealizedProfit; p.seen = now; }
+            else if (p.closing || now - p.t0 > 20000) { p.miss = (p.miss || 0) + 1; if (p.miss >= 2) { gone.push(p); } }
         });
         return gone.reduce(function (chain, p) {
             return chain.then(function () {
@@ -4555,7 +4567,11 @@ function rbReconcile(force) {
 // ---- opening a trade ----
 function rbEnter(sym, sg, px0) {
     var R = S.rb, side = sg > 0 ? 'LONG' : 'SHORT', open = rbSide(sg), close = rbSide(-sg), t = S.tick[sym];
-    if (R.busy || !t) { return Promise.resolve(); } if (R.armedNet && R.armedNet !== trCfg().net) { return Promise.resolve(); } R.busy = true;
+    if (R.busy || !t) { return Promise.resolve(); } if (R.armedNet && R.armedNet !== trCfg().net) { return Promise.resolve(); }
+    /* review fix: re-check the bot state right before sending (STOP, lock, caps can change while checks were running) and keep stop distance x leverage inside the liquidation-safe limit */
+    if (!(R.armed && R.running) || R.paused || R.lockUntil > nowMs() || R.open.length >= R.maxOpen || R.dayN >= R.maxDay) { return Promise.resolve(); }
+    if (!(R.slp > 0) || R.slp * R.lev > 33 || R.margin > 50 || R.lev > 10 || R.slp > 5) { rbLog('Skipped ' + base(sym) + ': settings outside the safe limits (stop distance x leverage must stay under 33%).'); return Promise.resolve(); }
+    R.busy = true; var sent = false, recd = null;
     var px = t.p, sl = px * (1 - sg * R.slp / 100), tp = px * (1 + sg * R.tpp / 100), p = trPlan(sym, side, sl, tp, R.margin, R.lev), fq;
     if (p.err) { R.busy = false; rbLog('Skipped ' + base(sym) + ': ' + p.err); R.cd[sym] = nowMs() + 30 * 60000; return Promise.resolve(); }
     function fail(m) { throw new Error(m); }
@@ -4563,20 +4579,30 @@ function rbEnter(sym, sg, px0) {
         if ((ps || []).some(function (x) { return +x.positionAmt !== 0; })) { R.cd[sym] = nowMs() + 60 * 60000; fail('already has a position on the account (not opened by the bot)'); }
         return R.hedgeOk ? null : trCall('GET', '/fapi/v1/positionSide/dual', {}).then(function (r) { if (r.dualSidePosition) { fail('your account is in Hedge mode; switch to One-way mode'); } R.hedgeOk = 1; });
     }).then(function () { return trFirst('GET', ['/fapi/v3/balance', '/fapi/v2/balance'], {}); }).then(function (b) {
-        var u = (b || []).filter(function (x) { return x.asset === 'USDT'; })[0]; if (!u || +u.availableBalance < R.margin * 1.05) { fail('not enough free USDT (' + (u ? (+u.availableBalance).toFixed(2) : '0') + ')'); }
+        var u = (b || []).filter(function (x) { return x.asset === 'USDT'; })[0]; if (!u || +u.availableBalance < R.margin * 1.05) { fail('not enough free USDT (' + (u ? (+u.availableBalance).toFixed(2) : '0') + ')'); } var eqW = +(u.crossWalletBalance || u.balance || u.availableBalance) || 0; R.eq = eqW; var riskU = R.margin * R.lev * (R.slp + 0.2) / 100; R.pendRisk = riskU; var openRisk = (R.open || []).reduce(function (s, q) { return s + (+q.risk || 0); }, 0); if (eqW > 0 && openRisk + riskU > 0.03 * eqW + 1e-9) { R.cd[sym] = nowMs() + 10 * 60000; fail('total risk of all open bot trades would be above 3% of your account. Waiting for a trade to close.'); } var tk0 = S.tick && S.tick[sym], pn = tk0 && +tk0.p; if (pn > 0 && px > 0 && Math.abs(pn / px - 1) > 0.003) { fail('price moved more than 0.3% while preparing the order, skipped'); } if (eqW > 0 && riskU > 0.02 * eqW + 1e-9) { R.cd[sym] = nowMs() + 10 * 60000; fail('risk per trade ' + riskU.toFixed(2) + ' USDT is more than 2% of your account (' + eqW.toFixed(2) + ' USDT). Lower the margin, leverage or stop distance.'); } if (eqW > 0 && R.dayPnl <= -0.03 * eqW) { R.lockUntil = nowMs() + 86400000; R.note = 'Daily loss reached 3% of the account. New trades are blocked for today.'; rbLog(R.note); fail('daily loss limit (3% of account) reached'); }
         return trCall('POST', '/fapi/v1/marginType', { symbol: sym, marginType: 'ISOLATED' }).catch(function (e) { if (/-4046/.test(e.message)) { return; } throw e; });
     }).then(function () { return trCall('POST', '/fapi/v1/leverage', { symbol: sym, leverage: p.lev }); }).then(function () {
-        return trCall('POST', '/fapi/v1/order', { symbol: sym, side: open, type: 'MARKET', quantity: p.qtyS, newOrderRespType: 'RESULT', newClientOrderId: 'mb' + Date.now() });
+        sent = true; return trCall('POST', '/fapi/v1/order', { symbol: sym, side: open, type: 'MARKET', quantity: p.qtyS, newOrderRespType: 'RESULT', newClientOrderId: 'mb' + Date.now() });
     }).then(function (o) {
         var ex = +o.executedQty; if (!(ex > 0)) { fail('DANGER: order sent but the fill is not confirmed. Check Binance now.'); }
         fq = ex.toFixed(p.dq); var entry = +o.avgPrice || p.price;
-        var rec = { sym: sym, sg: sg, entry: entry, qtyS: fq, amt: fq, sl: p.slS, tp: p.tpS, t0: nowMs(), lev: p.lev, margin: R.margin }; R.open.push(rec); rbRoll(); R.dayN++; rbSave();
+        var rec = { risk: R.pendRisk || 0, sym: sym, sg: sg, entry: entry, qtyS: fq, amt: fq, sl: p.slS, tp: p.tpS, t0: nowMs(), lev: p.lev, margin: R.margin }; R.open.push(rec); recd = rec; rbRoll(); R.dayN++; rbSave();
         return trCall('POST', '/fapi/v1/algoOrder', { algoType: 'CONDITIONAL', symbol: sym, side: close, type: 'STOP_MARKET', quantity: fq, triggerPrice: p.slS, reduceOnly: 'true', workingType: 'MARK_PRICE' }).catch(function (e) {
             rbLog('Stop-loss failed (' + e.message + '). Closing the position for safety…');
             return trCall('POST', '/fapi/v1/order', { symbol: sym, side: close, type: 'MARKET', quantity: fq, reduceOnly: 'true' }).then(function () { rec.closing = true; rec.why = 'stop-loss could not be placed'; fail('the position was closed again because the stop-loss could not be placed'); }, function (e2) { R.paused = true; sendPush('REAL BOT DANGER', sym + ' has no stop-loss and could not be closed. Open Binance now!'); fail('DANGER: ' + sym + ' filled, stop-loss failed and the emergency close failed (' + e2.message + '). Open Binance NOW. The bot is paused.'); });
         }).then(function () { return trCall('POST', '/fapi/v1/algoOrder', { algoType: 'CONDITIONAL', symbol: sym, side: close, type: 'TAKE_PROFIT_MARKET', quantity: fq, triggerPrice: p.tpS, reduceOnly: 'true', workingType: 'MARK_PRICE' }).catch(function (e) { rbLog('Take-profit failed (' + e.message + '). The stop-loss is active.'); }); })
             .then(function () { rbLog('Opened ' + base(sym) + ' ' + side + ' ' + fq + ' @ ' + entry + ' · SL ' + p.slS + ' · TP ' + p.tpS); sendPush('Baba Real Bot: ' + base(sym) + ' ' + side + ' opened', R.margin + ' USDT × ' + p.lev + ' · stop ' + p.slS + ' · target ' + p.tpS); });
-    }).catch(function (e) { rbLog('Not opened ' + base(sym) + ': ' + e.message); if (/DANGER/.test(e.message)) { R.note = e.message; } }).then(function () { R.busy = false; rbSave(); mwSvcPush(); rbDraw(); });
+    }).catch(function (e) {
+        rbLog('Not opened ' + base(sym) + ': ' + e.message); if (/DANGER/.test(e.message)) { R.note = e.message; R.danger = 1; }
+        /* review fix: if the order may have reached Binance but we never recorded it, look for a naked position and close it, then pause the bot */
+        if (sent && !recd) {
+            return trCall('GET', '/fapi/v2/positionRisk', { symbol: sym }).then(function (ps) {
+                var pos = (ps || []).filter(function (x) { return +x.positionAmt !== 0; })[0]; if (!pos) { return; }
+                var q = Math.abs(+pos.positionAmt), sd = +pos.positionAmt > 0 ? 'SELL' : 'BUY'; R.danger = 1; R.paused = true; R.note = 'DANGER: an order may have opened a position without a stop-loss. The bot tried to close it and is paused. Check Binance now.'; rbLog(R.note);
+                return trCall('POST', '/fapi/v1/order', { symbol: sym, side: sd, type: 'MARKET', quantity: q, reduceOnly: 'true' }).then(function () { rbLog('Safety close sent for ' + base(sym) + '. Check Binance.'); }, function (e3) { rbLog('Safety close FAILED: ' + e3.message + '. Close the position on Binance now.'); });
+            }).catch(function (e2) { R.danger = 1; R.paused = true; R.note = 'DANGER: could not confirm whether an order was filled. The bot is paused. Check Binance now.'; rbLog(R.note); });
+        }
+    }).then(function () { R.busy = false; rbSave(); mwSvcPush(); rbDraw(); });
 }
 // ---- the loop ----
 function rbScan() {
@@ -4596,9 +4622,9 @@ function rbScan() {
 var rbLastRec = 0;
 function rbLoop() {
     var R = S.rb; try { rbRoll(); if (!R.armed) { return; } if (R.armedNet && R.armedNet !== trCfg().net) { R.armed = false; R.running = false; R.note = 'Switched between TEST and LIVE, so the bot was switched off for your safety. Activate it again on purpose.'; try { rbLog('Bot disarmed: TEST/LIVE changed'); rbSave(); rbDraw(); } catch (e) { } return; } var now = nowMs();
-        if (R.open.length && now - rbLastRec > 40000) { rbLastRec = now; rbReconcile(); }
+        var recNow = false; if (R.open.length && now - rbLastRec > 40000) { rbLastRec = now; recNow = true; rbReconcile(); }
         R.open.slice().forEach(function (p) { if (!p.closing && R.maxHrs && now - p.t0 > R.maxHrs * 3600000) { p.closing = true; rbCloseOne(p, 'time limit ' + R.maxHrs + ' h').catch(function (e) { p.closing = false; rbLog('Time-limit close failed: ' + e.message); }); } });
-        if (R.running && !R.paused && R.lockUntil <= now) { rbScan(); }
+        if (R.running && !R.paused && R.lockUntil <= now && !recNow) { rbScan(); }
     } catch (e) {}
 }
 setInterval(rbLoop, 20000);
@@ -4634,7 +4660,7 @@ function rbCard() {
         '<div class="note" style="margin:6px 0 4px">Margin per trade (USDT)</div>' + rbChips('margin', RB_CAP.margin) + '<div class="note" style="margin:6px 0 4px">Leverage</div>' + rbChips('lev', RB_CAP.lev, function (x) { return x + '×'; }) +
         '<div class="note" style="margin:6px 0 4px">Max open trades</div>' + rbChips('maxOpen', RB_CAP.maxOpen) + '<div class="note" style="margin:6px 0 4px">Stop-loss distance</div>' + rbChips('slp', RB_CAP.slp, function (x) { return x + '%'; }) + '<div class="note" style="margin:6px 0 4px">Take-profit distance</div>' + rbChips('tpp', RB_CAP.tpp, function (x) { return x + '%'; }) +
         '<div class="note" style="margin:6px 0 4px">Daily loss limit (USDT): the bot locks for the day</div>' + rbChips('dayLoss', RB_CAP.dayLoss) + '<div class="note" style="margin:6px 0 4px">Max trades per day</div>' + rbChips('maxDay', RB_CAP.maxDay) + '<div class="note" style="margin:6px 0 4px">Pause after this many losses in a row</div>' + rbChips('maxStreak', RB_CAP.maxStreak) + '<div class="note" style="margin:6px 0 4px">Close a trade after (hours)</div>' + rbChips('maxHrs', RB_CAP.maxHrs) +
-        '<div class="note" style="margin:6px 0 0">Money at risk per trade ≈ margin × leverage × stop % = ' + (R.margin * R.lev * R.slp / 100).toFixed(2) + ' USDT (before fees and slippage). Settings apply to the next trade.</div></div>';
+        '<div class="note" style="margin:6px 0 0">Money at risk per trade ≈ margin × leverage × stop % = ' + (R.margin * R.lev * R.slp / 100).toFixed(2) + ' USDT (before fees and slippage). Safety rule: the bot refuses a trade if this is more than 2% of your account, and locks for the day if the day loss reaches 3% of your account. Settings apply to the next trade.</div></div>';
     h += sh('Open trades', R.open.length) + (R.open.length ? '<div class="group">' + R.open.map(function (p, i) { var pc = rbOpenPnlPct(p), up = p.up != null ? p.up : p.margin * pc / 100; return '<div class="row" style="display:block"><div style="display:flex;justify-content:space-between"><b>' + esc(base(p.sym)) + ' ' + (p.sg > 0 ? 'LONG' : 'SHORT') + ' ' + p.lev + '×' + (p.closing ? ' · closing…' : '') + '</b><b class="' + (up >= 0 ? 'up' : 'dn') + '">' + (up >= 0 ? '+' : '') + up.toFixed(2) + ' USDT</b></div><div class="note" style="margin:2px 0 6px">entry ' + p.entry + ' · SL ' + p.sl + ' · TP ' + p.tp + ' · ' + Math.round((nowMs() - p.t0) / 60000) + ' min</div>' + (window.__pbox ? window.__pbox({ sym: p.sym, side: p.sg > 0 ? 'LONG' : 'SHORT', entry: +p.entry, qty: +(p.amt || p.qtyS), margin: p.margin, lev: p.lev, sl: +p.sl, tp: +p.tp, at: p.t0, kind: '🤖 Baba Real Bot (real money)' }) : '') + '<button class="btn sec" style="padding:8px" data-m8="rb:exit:' + i + '">' + (cfm('rbexit' + i) ? 'Tap again to close at market' : 'Force exit this trade') + '</button></div>'; }).join('') + '</div>' : '<div class="group pad mut">None right now.</div>');
     var C = R.closed, n = C.length, w = C.filter(function (x) { return x.pnl > 0; }).length, tot = C.reduce(function (a, x) { return a + x.pnl; }, 0);
     h += sh('Real results', n) + '<div class="group"><div class="row"><span>Closed trades</span><b>' + n + '</b></div><div class="row"><span>Win rate</span><b>' + (n ? Math.round(w / n * 100) : 0) + '%</b></div><div class="row"><span>Total result (after fees)</span><b class="' + (tot >= 0 ? 'up' : 'dn') + '">' + (tot >= 0 ? '+' : '') + tot.toFixed(2) + ' USDT</b></div></div>';
@@ -5397,7 +5423,7 @@ function bpCard(p) {
     var why = ['Time frames agreeing: ' + p.ag + ' of ' + (p.hz === 'fh' ? 4 : 3) + ' (15m/1h/4h/1d) ' + (d > 0 ? 'point up' : 'point down'), 'Indicator strength ' + Math.abs(p.ov).toFixed(1) + ' out of about 3 (needs 1.0)', 'All-factors check supports it: ' + (p.e.al >= 0 ? '+' : '') + p.e.al.toFixed(2) + ' from ' + p.e.n + ' checks (order book, volume, funding, open interest, news)', 'Not stretched: RSI ' + p.rsi.toFixed(0) + ', no veto flags'];
     return '<div class="group pad tap" id="' + id + '" data-ix="best" data-act="chart:' + p.sym + '"><div class="ph">' + who(p.sym) + '<div class="side">' + badge(p.side) + meterC(p.pct, p.ag, p.hz === 'fh' ? 4 : 3) + '</div></div>' +
         '<div class="pm"><div><div class="px">' + px(p.sym, p.price) + '</div>' + chgTxt(p.sym, true) + '</div>' + sparkOf(p.sym) + '</div>' + lv(p.side, p.price, p.sl, p.tp, p.sym) + plBox(p.side, p.price, p.sl, p.tp, p.sym) +
-        '<div class="foot"><b class="vwin">VALID ' + hm(p.from) + ' → ' + hm(p.to) + '</b> • estimated chance of reaching the target before the stop about ' + p.pct + '% (not a chance of profit, not a promise)</div>' +
+        '<div class="foot"><b class="vwin">VALID ' + hm(p.from) + ' → ' + hm(p.to) + '</b> • model score about ' + p.pct + '% (an estimate, not a promise)</div>' +
         (p.e.flags.length ? '<div class="warn">' + esc(p.e.flags[0]) + '</div>' : '') + '<details onclick="event.stopPropagation()"><summary style="font-size:13px;font-weight:700;margin-top:8px;padding:6px 0">Why this pick (tap)</summary><ul style="margin:4px 0 0 18px;padding:0;font-size:12.5px;line-height:1.5">' + why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>' + fxLine(p.e) + '<div style="font-size:12.5px;margin-top:6px"><b>Every factor checked</b></div>' + fxTable(p.e) + '</details>' + ixBackHTML() + '</div>';
 }
 function vBest() {
@@ -5569,7 +5595,7 @@ var PF_APP = [
 ['why not recommended|not in recommendation|xpin|idol|not in scanner|missing coin|not included|why is it missing|coin missing', 'Why is a rising coin not in the recommendations?', 'A coin that has already jumped 25% to 40% is "stretched": RSI is very high, price is far above its averages, and buying now means chasing the top. The Scanner and Master Plan rightly skip it. Coins that are climbing hard are listed in "Top risers" and in Early Movers, and Best Picks only shows coins where every check agrees and the move is not overstretched.'],
 ['best picks|best pick|reliable|sure profit|guaranteed|closed eye', 'Best Picks', 'Best Picks is the strictest list: 3 to 4 time frames must agree, the order book, volume, funding, open interest and news must support it, and it must not be stretched. Often it is empty, which means wait. It is a suggestion only: nobody can guarantee profit, so always use the stop and a small size.'],
 ['at a glance|glance|contents|content list', 'At a glance', 'Windows > At a glance lists every recommendation (Master Plan, Scanner, Top risers, Early Movers, New Day, Best Picks) with timing, profit on $50/$100/$200 and a bold chance %. Tap a line to jump to the details; each detail has a back link. On Scanner, Master Plan and others there is also a ☰ button in the corner.'],
-['chance|confidence|probability|indicators agree', 'What does the % chance mean?', 'It shows how many of the checks agree and how strong the setup is, adjusted by the all-factors check. It is not a promise of profit. Even a 75% setup loses one time in four.'],
+['score|chance|confidence|probability|indicators agree', 'What does the % score mean?', 'It shows how many of the checks agree and how strong the setup is, adjusted by the all-factors check. It is not a promise of profit. Even a 75% setup loses one time in four.'],
 ['all factors|all-factors|factors check|factor check', 'All-factors check', 'Before recommending, the app also looks at the order book, 24h and recent volume, funding rate, open interest, long/short ratio, Bitcoin trend, market breadth and crypto, Binance and world news. If these argue against a trade, it is downgraded or hidden.'],
 ['top riser|top risers|risers', 'Top risers', 'Coins that are already up 4% or more with real volume. Each shows a status (RISING, HOT, FADING, WEAK) with entry, stop and target. HOT means stretched: wait for a pullback.'],
 ['auto bot|autobot|paper bot lost|bot loss|bot losing|bot not trading|bot is losing', 'Auto Bot', 'The paper bot trades virtual money. It now also follows Best Picks and strong Master Plan signals, skips stock-linked contracts when the US market is closed, and only enters when the all-factors check agrees. A few trades prove nothing: judge it after 50 or more closed trades. You can reset the paper account in the Auto Bot window.'],
@@ -5602,6 +5628,7 @@ var PF_AV = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-
 function pfWinName(id) { var w = (WINS || []).filter(function (x) { return x.id === id; })[0]; return w ? w.n : id; }
 var PF_TIPS = { overview: 'Tap me anytime: I can explain any screen.', scanner: 'Top risers are at the top. Tap the ☰ for a quick contents list.', plan: 'Tap a card to see its chart. I can explain the chance % if you ask.', best: 'Best Picks is often empty. That means wait, and it is normal.', bot: 'Judge the bot only after 50 closed trades.', analyst: 'Type any coin here, even a new one.', timez: 'Tap the Change(%) time zone line to match Binance.', chart: 'Tap a candle to see its details. Ask me what any indicator means.' };
 function pfCSS() {
+    if (document.getElementById('pfcss')) { return; }
     var st = document.createElement('style'); st.id = 'pfcss';
     st.textContent = '#pfm{position:fixed;z-index:8500;width:38px;height:38px;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}' +
         '#pfm .pfav{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c9f3e3,#7ad7b5 70%);box-shadow:0 3px 8px rgba(0,0,0,.35),inset 0 0 0 2px #fff;overflow:hidden;animation:pfbob 3.2s ease-in-out infinite}' +
@@ -6988,13 +7015,13 @@ PF_APP.push(['trade pro|full ticket|leverage|isolated|cross margin|limit order|s
 document.addEventListener('click', function (e) { var el = e.target.closest ? e.target.closest('[data-m17^="pro:"]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation(); S.tp.sym = el.getAttribute('data-m17').slice(4); S.tp.slP = ''; S.tp.tpP = ''; S.tp.at = 0; S.tp.maxLev = 125; gotoWin('tpro'); }, true);
 /* p9y: Legal, privacy, licences, store-readiness (static text, no data leaves the phone) */
 var LG_SEC = [
- ['Who we are', 'MintooSuite Terminal is an independent trading-tools app made by Muhammad Awais. It is NOT a bank, broker, exchange, or wallet provider. It does not hold your money. It is not affiliated with, endorsed by, or sponsored by Binance, MEXC, Bitget, Bybit, OKX, Exness, XM, Quotex, Olymp Trade, the Pakistan Stock Exchange or any other company named in the app. All names and logos belong to their owners and are used only to say which service a feature works with.'],
+ ['Who we are', 'MintooSuite Terminal is an independent trading-tools app made by Muhammad Awais. It is NOT a bank, broker, exchange, or wallet provider. It does not hold your money. It is not affiliated with, endorsed by, or sponsored by Binance, MEXC, Bitget, Bybit, OKX, Exness, the Pakistan Stock Exchange or any other company named in the app. All names and logos belong to their owners and are used only to say which service a feature works with.'],
  ['Risk warning', 'Trading crypto, futures, leverage, forex, gold and shares can lose all of your money, and with leverage even more than you put in. Signals, bots, the Baba AI and the Academy are education and information, not financial advice, and no profit or win-rate is promised. Only use money you can afford to lose. Start in TEST mode.'],
- ['Privacy policy', 'The app has no account system and no server of ours. Your settings, watch-lists, notes and progress are stored only on your phone. Your exchange API keys are saved only on your phone, encrypted with the Android Keystore, and are sent only to the exchange you chose, to sign your own requests. We do not collect, sell or share personal data. The app asks the internet for public prices and news from public sources (for example exchange price feeds and news sites), and those sites can see your phone\'s network address as any website would. Notification, biometric lock and background-service permissions are used only for the features you switch on. You can delete everything with Menu > Reset, by clearing the app storage in Android settings, or by uninstalling.'],
+ ['Privacy policy', 'What the app stores on your phone: your settings, watch-lists, notes, progress and practice trades. Your exchange API keys are saved only on your phone, encrypted with the Android Keystore, and are sent only to the exchange you chose, to sign your own requests. What leaves your phone: (1) public price and news requests, which any website can see by your network address; (2) if you create a MintooSuite account: your email address and password are handled by Google Firebase Authentication; (3) if you switch on cloud backup or the device list: an encrypted backup (we cannot read it) and a list of your device names are stored in Google Firestore under your account; (4) ads: the free version shows Google AdMob banners to users who confirmed they are 18 or older, after the consent form where required, and AdMob may use a device/advertising identifier; (5) optional usage statistics (Firebase Analytics) are off unless you switch them on; (6) if you ask the Baba AI to use an AI provider with your own key, your question and market context go to that provider. We do not sell your data. Notification, biometric lock and background-service permissions are used only for the features you switch on. Delete everything: Profile > Delete my account and data (type your account password there to also delete the cloud account, cloud backups and device list), or open the web deletion page linked on the store page. Contact: awaisrajpoot2@yahoo.com or WhatsApp 03122602811.'],
  ['Terms of use', 'The app is provided as is, without warranty. You are responsible for your exchange account, your API keys (keep withdrawal permission OFF), the orders you send and the laws and taxes that apply to you. Prices can be delayed or wrong; orders can fail or fill differently from what you expect. To the extent the law allows, the maker is not liable for trading losses.'],
  ['Open-source and third-party', 'The app runs inside the Android WebView and uses public data feeds. Any open-source libraries bundled in the app keep their own licences (such as MIT or Apache-2.0), and their notices are kept with the source. Chart and price data belong to their providers and are shown under their public terms.'],
  ['Regulatory note', 'Rules differ by country. In Pakistan, virtual-asset activity falls under the Virtual Assets Act 2026 and PVARA. This app only helps you use your own account at a service that is licensed for you. Being listed or described in the app does not mean a service is licensed in your country. Check this before you trade.'],
- ['Contact', 'For questions or removal requests, contact the maker through the support link on the app store page or the GitHub project page.']
+ ['Contact', 'For questions or removal requests, email awaisrajpoot2@yahoo.com or WhatsApp 03122602811 (Islamabad, Pakistan).']
 ];
 function vLegal() {
   var h = '<div class="warn" style="margin-top:0">Plain-language summary. This is not legal advice.</div>';
@@ -7184,7 +7211,7 @@ var AG_VER = '1', AG_KEY = 'mintoosuite_agree';
 var AG_SEC = [
  ['1. Who may use this app', 'You must be at least 18 years old (or the age of majority where you live) and legally allowed to trade the products you use. You may not use the app if you are subject to sanctions or live in a place where such trading or the use of this kind of software is prohibited. You are responsible for knowing whether you are allowed.'],
  ['2. What this app is and is not', 'MintooSuite Terminal is an independent software tool for viewing market data, learning, planning and sending orders to YOUR OWN accounts at third-party services using YOUR OWN API keys. It is not a bank, broker, exchange, investment adviser, payment service or custodian of your money. It does not give personalised investment, legal or tax advice. Signals, plans, bots, the Baba AI and the Academy are general information only.'],
- ['3. Not affiliated', 'MintooSuite is not affiliated with, sponsored by, endorsed by or approved by Binance, MEXC, Bitget, Bybit, OKX, Exness, XM, Quotex, Olymp Trade, the Pakistan Stock Exchange, Google, Apple, Microsoft or any other company, exchange or regulator named or shown in the app. All trademarks and names belong to their owners and are used only to identify the service a feature works with. Using those services is governed by their own terms.'],
+ ['3. Not affiliated', 'MintooSuite is not affiliated with, sponsored by, endorsed by or approved by Binance, MEXC, Bitget, Bybit, OKX, Exness, the Pakistan Stock Exchange, Google, Apple, Microsoft or any other company, exchange or regulator named or shown in the app. All trademarks and names belong to their owners and are used only to identify the service a feature works with. Using those services is governed by their own terms.'],
  ['4. Risk disclosure', 'Trading cryptocurrencies, futures, margin, leverage, options, forex, CFDs, commodities and shares is high risk. You can lose all the money you put in and, with leverage or margin, more than you deposited. Prices can move fast and gap; positions can be liquidated automatically. Past or back-tested results do not predict the future. No bot, signal or plan can guarantee a profit or a win rate. Technical failures (internet, exchange outages, delayed prices, API limits, software errors, phone problems) can cause missed, duplicated or wrong orders. Only trade money you can afford to lose and start with the test or demo mode and tiny sizes.'],
  ['5. Your API keys and orders', 'Keys are kept only on your phone (encrypted with the Android Keystore where available) and are sent only to the exchange you chose, to sign your own requests. Create keys with withdrawals OFF and, if you can, restrict them to your IP. Anyone with your phone or your key may act on your account. You alone are responsible for every order sent from your keys, for the exchange account terms, fees, margin calls, taxes and reporting. Check the confirmation screen before sending any order.'],
  ['6. Self-custody wallet', 'The built-in wallet is self-custody: your recovery words are the only way to restore it. We cannot recover them, reverse a transaction or refund a wrong address or network. Losing them or sharing them means losing the funds.'],
@@ -7983,7 +8010,7 @@ function avPanel() {
         for (i = 0; i < els.length; i++) { el = els[i]; s = el.getAttribute('data-chip'); if (S.tick[s]) { cq = chgOf(s); v = pct(cq.v); k = 'badge ' + (cq.v >= 0 ? 'long' : 'short'); if (el.textContent !== v) { el.textContent = v; } if (el.className !== k) { el.className = k; } } }
     };
 })();
-/* ===== p9zl: Trade Ideas = one ranked list (Best on top) that merges New Plan, Scanner, Baba pick, Best Picks and At a glance; chance score from many factors ===== */
+/* ===== p9zl: Trade Ideas = one ranked list (Best on top) that merges New Plan, Scanner, Baba pick, Best Picks and At a glance; score from many factors ===== */
 var IDS = { f: 'all', hz: 'all', best: 0, open: '', at: 0, rows: [] };
 var ID_POS = /(surge|soar|rally|record high|all-time high|approv|inflow|lists |listing|partnership|upgrade|adopt|bullish|breakout|buy rating|launch)/i;
 var ID_NEG = /(hack|exploit|stolen|delist|lawsuit|sues|\bban\b|banned|crash|plunge|bearish|outflow|investigation|fraud|halt|outage|liquidat|sell-?off|dump|warning)/i;
@@ -8061,7 +8088,7 @@ function vIdeas() {
     h += sh(nb ? '⭐ Best now (' + nb + ')' : 'Ideas (no ⭐ Best right now)', rows.length) + '<div class="group">' + rows.map(idRow).join('') + '</div>';
     return h + '<div class="note">Icons: 📊 indicators · 🧮 all-factors · 📈 projection · 💧 volume · 🌊 volatility · 🧭 trend · ₿ Bitcoin · 📰 news · 🤝 sources · 🕘 history · 🕒 timing. Green supports, red is against, grey neutral. Not financial advice.</div>';
 }
-WINS.push({ id: 'ideas', ic: '⭐', c: '#ff9f0a', n: 'Trade Ideas', t: 'Ideas', sub: 'All ideas in one list, best chance on top' }); LIVE.ideas = 1; VIEWS.ideas = vIdeas;
+WINS.push({ id: 'ideas', ic: '⭐', c: '#ff9f0a', n: 'Trade Ideas', t: 'Ideas', sub: 'All ideas in one list, best score on top' }); LIVE.ideas = 1; VIEWS.ideas = vIdeas;
 MW_HELP.ideas = 'One ranked list that replaces New Plan, Scanner, Baba pick, Best Picks and At a glance. ⭐ BEST ideas pass every check. Tap a line to see why, the projection line, and open the chart. The chance is an estimate from many factors, not a promise.';
 (function () {
     var st = document.createElement('style'); st.id = 'p9zlcss';
@@ -8088,7 +8115,7 @@ function idUpLine(sym) {
     try {
         if (!/USDT$/.test(sym || '')) { return ''; } try { idFcRaw(sym); } catch (e0) { } var F = idFactors({ sym: sym, side: 'LONG' }), e = idEdge(F), p = idClamp(0.5 + e * 0.12, 0.3, 0.7), n = 0; F.forEach(function (f) { if (f.v > 0.15) { n++; } });
         if (F.length < 2) { return ''; }
-        return '<div class="note" style="margin-top:6px">Overall chance of a <b>higher</b> price in the next ~12 h: <b>' + Math.round(p * 100) + '%</b> (lower: ' + Math.round((1 - p) * 100) + '%). Built from ' + F.length + ' factors (' + n + ' lean up): ' + F.map(function (f) { return f.ic; }).join(' ') + '. An estimate, not a promise.</div>';
+        return '<div class="note" style="margin-top:6px">Overall model score for a <b>higher</b> price in the next ~12 h: <b>' + Math.round(p * 100) + '%</b> (lower: ' + Math.round((1 - p) * 100) + '%). Built from ' + F.length + ' factors (' + n + ' lean up): ' + F.map(function (f) { return f.ic; }).join(' ') + '. An estimate, not a promise.</div>';
     } catch (er) { return ''; }
 }
 var idFcRaw = fcMini;
@@ -8229,7 +8256,7 @@ MW_HELP.helpc = 'Search the built-in help, chat with Baba AI, replay the tour, o
 function vBadges() {
     var got = 0, h = '', rows = BADGES.map(function (b) { var v = Math.min(b[5], b[4]()), ok = v >= b[5]; if (ok) { got++; } return '<div class="bdg' + (ok ? ' on' : '') + '"><div class="bi">' + b[1] + '</div><b>' + esc(b[2]) + '</b><div class="note" style="margin:2px 0 4px">' + esc(b[3]) + '</div><div class="bpb"><i style="width:' + Math.round(v / b[5] * 100) + '%"></i></div><div class="note" style="margin:2px 0 0">' + v + ' / ' + b[5] + '</div></div>'; }).join('');
     h = '<div class="group pad"><b style="font-size:17px">🏅 Achievements</b><div class="note">' + got + ' of ' + BADGES.length + ' unlocked. Badges reward learning and safe habits, never trading volume or profit.</div><div class="note">🔥 Current streak: <b>' + stStreak() + '</b> day(s) · Days used: <b>' + (STS.d || []).length + '</b></div></div><div class="bdgs">' + rows + '</div>';
-    h += '<div class="group pad"><b>Your activity (private)</b><div class="note">Counted only on this phone. Nothing is sent anywhere, and there are no analytics trackers.</div>' + [['Windows visited', stWins()], ['Charts opened', STS.c || 0], ['Questions asked', STS.ch || 0], ['Lessons finished', (function () { try { return Object.keys(ACP.done || {}).length; } catch (e) { return 0; } })()]].map(function (r) { return '<div class="row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join('') + '<div style="margin-top:8px"><span class="btn sec tap" data-hc="resetstats">Reset my activity</span></div></div>';
+    h += '<div class="group pad"><b>Your activity (private)</b><div class="note">Counted only on this phone. These counts are not sent anywhere.</div>' + [['Windows visited', stWins()], ['Charts opened', STS.c || 0], ['Questions asked', STS.ch || 0], ['Lessons finished', (function () { try { return Object.keys(ACP.done || {}).length; } catch (e) { return 0; } })()]].map(function (r) { return '<div class="row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join('') + '<div style="margin-top:8px"><span class="btn sec tap" data-hc="resetstats">Reset my activity</span></div></div>';
     return h;
 }
 WINS.push({ id: 'badges', ic: '🏅', c: '#ff9f0a', n: 'Achievements', t: 'Badges', sub: 'Badges, streak and your private activity' }); LIVE.badges = 0; VIEWS.badges = vBadges;
@@ -8613,7 +8640,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         h += sec('ℹ️', 'About this app', 'MintooSuite Terminal brings crypto, gold, currencies, world markets and news into one clean app. It shows live prices, ranks the day\'s trade ideas with the reasons, teaches you trading step by step, and lets you practise safely with a paper-money bot before you risk real money.<br><br>It was built by one independent developer in Islamabad, Pakistan, for traders who want clear information instead of noise.');
         h += sec('⭐', 'Key features', ul([
             '<b>Live markets:</b> Binance futures and spot prices, 700+ coins, gainers and losers, a time-zone-aware Change %, news and Markets tabs.',
-            '<b>Trade Ideas:</b> one ranked list. Best first, with a chance estimate (25% to 75%) built from indicators, volume, volatility, trend, history, news and timing, and the reasons shown for each idea.',
+            '<b>Trade Ideas:</b> one ranked list. Best first, with a score estimate (25% to 75%) built from indicators, volume, volatility, trend, history, news and timing, and the reasons shown for each idea.',
             '<b>Charts:</b> candles with indicators, a projection line, full screen, and your live profit/loss and a Close button on the chart page.',
             '<b>Exness Desk:</b> 25 markets (gold, silver, currencies, oil, indices, crypto) with entry, stop-loss, take-profit and lot size from your risk.',
             '<b>Auto Bots:</b> a paper-money bot for safe practice, and an optional real-money bot on your own Binance keys (test mode by default, safety limits, kill switch).',
@@ -8634,7 +8661,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         h += sec('👤', 'Who it is for', 'Beginners who want to learn with guidance, and active traders who want live data, a clear ranking and fast tickets in one place. Nothing here replaces your own judgement.');
         h += sec('🛡️', 'Safety and honesty', ul([
             'Trading, especially with leverage, can lose all of your money. <b>No tool, bot or score can promise profit.</b>',
-            'Chance scores are estimates, not guarantees. A high score still loses often.',
+            'Scores are estimates, not real odds, not guarantees. A high score still loses often.',
             'Real-money features use your own exchange keys, small default limits and test mode first. Test with small amounts.',
             'This app provides information and tools only. It is not financial advice and is not a broker or exchange.'
         ]));
@@ -8734,7 +8761,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         return r + '</div>' + h;
     }; try { VIEWS.mexc = VIEWS.mexc; } catch (e) { }
     /* ----- per-screen tips (each at most once a day) ----- */
-    var TIPS = { ideas: ['Ideas are estimates', 'A high chance score still loses often. Use a stop-loss and risk 1%.', 'info'], market: ['Markets are live', 'Prices can jump quickly. Check the time zone for Change %.', 'info'], chart: ['Before you trade', 'Set a stop-loss first. Never risk more than you can lose.', 'warn'], tpro: ['Order ticket', 'Check TEST or LIVE at the top. LIVE uses real money.', 'warn'], xtrade: ['Order ticket', 'Start small. Confirm the exchange, market and size before sending.', 'warn'], rbot: ['Real-money bot', 'It trades your own exchange account. Keep TEST mode until you trust it.', 'bad'], botpro: ['Baba Practice Bot', 'Backtests do not guarantee results. Use small size.', 'warn'], bot: ['Paper bot', 'This is practice money. Results here do not guarantee real results.', 'info'], wallet: ['Wallet safety', 'Never share your 12 words. Send a small test amount first.', 'bad'], me: ['Your profile', 'Keep your keys private. Use read/trade keys, never withdrawal keys.', 'warn'], news: ['News', 'Headlines can move prices fast. Verify before acting.', 'info'], analyst: ['Analyst', 'A plan is a suggestion, not advice. Check the risk before you trade.', 'info'], exdesk: ['Exness Desk', 'Gold and forex move fast on news. Mind the spread and lot size.', 'warn'], mexc: ['MEXC', 'Small coins can be very risky and thin. Check volume and spread.', 'warn'], academy: ['Learning', 'Take your time. Finish a lesson, then try on paper first.', 'info'], pchat: ['Baba AI', 'Ask anything. Answers are educational, not financial advice.', 'info'] };
+    var TIPS = { ideas: ['Ideas are estimates', 'A high score still loses often. Use a stop-loss and risk 1%.', 'info'], market: ['Markets are live', 'Prices can jump quickly. Check the time zone for Change %.', 'info'], chart: ['Before you trade', 'Set a stop-loss first. Never risk more than you can lose.', 'warn'], tpro: ['Order ticket', 'Check TEST or LIVE at the top. LIVE uses real money.', 'warn'], xtrade: ['Order ticket', 'Start small. Confirm the exchange, market and size before sending.', 'warn'], rbot: ['Real-money bot', 'It trades your own exchange account. Keep TEST mode until you trust it.', 'bad'], botpro: ['Baba Practice Bot', 'Backtests do not guarantee results. Use small size.', 'warn'], bot: ['Paper bot', 'This is practice money. Results here do not guarantee real results.', 'info'], wallet: ['Wallet safety', 'Never share your 12 words. Send a small test amount first.', 'bad'], me: ['Your profile', 'Keep your keys private. Use read/trade keys, never withdrawal keys.', 'warn'], news: ['News', 'Headlines can move prices fast. Verify before acting.', 'info'], analyst: ['Analyst', 'A plan is a suggestion, not advice. Check the risk before you trade.', 'info'], exdesk: ['Exness Desk', 'Gold and forex move fast on news. Mind the spread and lot size.', 'warn'], mexc: ['MEXC', 'Small coins can be very risky and thin. Check volume and spread.', 'warn'], academy: ['Learning', 'Take your time. Finish a lesson, then try on paper first.', 'info'], pchat: ['Baba AI', 'Ask anything. Answers are educational, not financial advice.', 'info'] };
     var _gw = gotoWin; gotoWin = function (id, isBack) { var r = _gw.call(this, id, isBack); try { var t = TIPS[id]; if (t) { setTimeout(function () { push('tip:' + id, t[2] === 'bad' ? '⚠️' : t[2] === 'warn' ? '⚠️' : '💡', t[0], t[1], '', t[2], 86400000, true); }, 900); } } catch (e) { } return r; };
     /* ----- Heads-up window ----- */
     function ago(t) { var m = Math.round((now() - t) / 60000); return m < 1 ? 'now' : m < 60 ? m + ' min' : Math.round(m / 60) + ' h'; }
@@ -9461,7 +9488,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         ['market session|trading session|weekend|24/7|forex session|market hours|when to trade', 'Market sessions and timing', 'Crypto trades 24/7, but weekends and late night hours are thinner and jumpier. Forex has Asia, London and New York sessions; London/New York overlap is the busiest. US stock-linked contracts are thin when the US market is closed.'],
         ['which exchange is best|best exchange|binance vs mexc|binance or bitget|mexc vs bitget', 'Which exchange?', 'There is no single best one. Binance has the deepest liquidity and strongest reputation; MEXC and Bitget list many more small coins (more risk) and have futures and copy-trading. Check fees, withdrawal options, rules in your country and whether the coin you want is truly live there. Use the exchange chips in this app to see each one separately.'],
         ['guaranteed|guarantee|get rich|sure profit|double my money|100% win|never lose|risk free|risk-free', 'Can I get guaranteed profit?', 'No honest tool can promise profit. Even good strategies lose often; success comes from small risk per trade, patience and many trades. Be careful with anyone promising fixed or guaranteed returns: that is the most common scam.'],
-        ['trade ideas|best badge|what does best mean|ranking|chance score|how are ideas ranked', 'How Trade Ideas ranks', 'Trade Ideas merges every plan into one list. Each idea gets an estimated chance that the target is hit before the stop, based on the odds the target/stop distances give, then moved up or down by indicators, volume, volatility, trend, Bitcoin, news and the history of the paper bot. ⭐ BEST ideas pass all checks. It is an estimate, not a promise.'],
+        ['trade ideas|best badge|what does best mean|ranking|score|chance score|how are ideas ranked', 'How Trade Ideas ranks', 'Trade Ideas merges every plan into one list. Each idea gets an estimated chance that the target is hit before the stop, based on the odds the target/stop distances give, then moved up or down by indicators, volume, volatility, trend, Bitcoin, news and the history of the paper bot. ⭐ BEST ideas pass all checks. It is an estimate, not a promise.'],
         ['exchange chips|exchange selector|choose exchange|binance mexc bitget|separate exchange', 'Exchange selector', 'The chips All / Binance / MEXC / Bitget near the top of Ideas, Markets, Home and Auto Bot let you look at one exchange at a time. A coin is shown under an exchange only if it is really trading there (live volume) and has the same price as the same name elsewhere. A name with a very different price is a different coin and is flagged.'],
         ['paper bot sections|bot sections|separate bot|bot accounts|paper accounts', 'Auto Bot sections', 'Each exchange has its own virtual $1000 paper account with its own trades and start/stop switch. Binance follows the top Binance picks; MEXC and Bitget take only top-ranked ideas for perpetual coins really listed on that exchange, priced from that exchange. It is all virtual money.'],
         ['same name different coin|same ticker|ticker clash|wrong coin|duplicate ticker|pnt|pntg', 'Same name, different coin', 'Tickers are not unique. Two different projects can use the same letters on different exchanges (and exchanges also list tokenised stocks with stock tickers, like PNTG for the Pennant Group). Check price and the contract address. If one exchange\'s price is very different from another\'s, they are different coins.'],
@@ -10157,7 +10184,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = css; document.head.appendChild(st);
 
         /* ---------- the lock screen ---------- */
-        var ov = null, entry = '', wrong = 0, lockedUntil = 0, patDots = [], patSeq = [], clockT = 0, mode = 'check', setup = null;
+        var ov = null, entry = '', wrong = 0, lockedUntil = (function () { try { return +localStorage.getItem('mintoosuite_lkun') || 0; } catch (e) { return 0; } })(), patDots = [], patSeq = [], clockT = 0, mode = 'check', setup = null;
         var TIPS = ['Plan the trade first. Decide your stop-loss before you press buy.', 'Small steady wins beat one big gamble.', 'Never risk more than 1-2% of your money on one trade.', 'No tool can promise profit. Protect your capital first.', 'Keep your exchange API keys without withdrawal permission.', 'If you feel rushed or angry, close the app and breathe.'];
         function pad2(n) { return (n < 10 ? '0' : '') + n; }
         function tickClock() { if (!ov) { return; } var d = new Date(), c = ov.querySelector('.clk'), t = ov.querySelector('.dt'); if (c) { c.textContent = pad2(d.getHours()) + ':' + pad2(d.getMinutes()); } if (t) { t.textContent = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }); } }
@@ -10205,9 +10232,9 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function verify(txt) {
             var c = cfg(); if (!c) { close(); return; }
             if (Date.now() < lockedUntil) { message('Too many tries. Wait ' + Math.ceil((lockedUntil - Date.now()) / 1000) + ' s', true); shake(); return; }
-            if (hash(txt, c.s) === c.h) { wrong = 0; try { localStorage.setItem('mintoosuite_lkwrong', '0'); } catch (er) { } close(); return; }
+            if (hash(txt, c.s) === c.h) { wrong = 0; lockedUntil = 0; try { localStorage.setItem('mintoosuite_lkwrong', '0'); localStorage.setItem('mintoosuite_lkun', '0'); } catch (er) { } close(); return; }
             wrong++; shake(); try { var tw = (+localStorage.getItem('mintoosuite_lkwrong') || 0) + 1; localStorage.setItem('mintoosuite_lkwrong', String(tw)); window.__mwWipeCheck && window.__mwWipeCheck(tw); } catch (er) { }
-            if (wrong >= 5) { lockedUntil = Date.now() + 30000; wrong = 0; message('Too many wrong tries. Wait 30 seconds.', true); }
+            if (wrong >= 5) { var tot5 = 0; try { tot5 = +localStorage.getItem('mintoosuite_lkwrong') || 0; } catch (er) { } var ms5 = Math.min(3600000, 30000 * Math.pow(2, Math.max(0, Math.floor(tot5 / 5) - 1))); lockedUntil = Date.now() + ms5; try { localStorage.setItem('mintoosuite_lkun', String(lockedUntil)); } catch (er) { } wrong = 0; message('Too many wrong tries. Wait ' + (ms5 >= 60000 ? Math.round(ms5 / 60000) + ' minutes' : '30 seconds') + '.', true); }
             else { message('Wrong ' + (c.t === 'pat' ? 'pattern' : 'PIN') + '. ' + (5 - wrong) + ' tries left.', true); }
             entry = ''; patSeq = []; var d = ov && ov.querySelector('#lkd'); if (d) { d.innerHTML = dotsHtml(4); } clearPattern();
         }
@@ -10551,7 +10578,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             } catch (e) { }
         }
         document.addEventListener('click', function (e) {
-            var el = e.target.closest ? e.target.closest('[data-tr]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var el = e.target.closest ? e.target.closest('#mwtrial [data-tr]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
             var v = el.getAttribute('data-tr'), o = document.getElementById('mwtrial');
             if (v === 'plans') { if (o) { o.remove(); } try { S.win = 'plans'; renderView(false); } catch (er) { } }
             else { if (o) { o.remove(); } sv(SK, String(Date.now() + 3 * 3600000 * (v === 'later' ? 1 : 1))); if (v === 'snooze') { try { renderView(true); } catch (er) { } } }
@@ -10618,7 +10645,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var STEPS = [
             { t: 'Welcome to MintooSuite', b: 'This 1-minute tour shows where everything is. You can skip it any time and open it again from Menu.', el: null },
             { t: 'Home', b: 'Home shows the best ideas first. Tap a card to see the entry, stop-loss and target in plain words.', el: function () { return document.querySelector('.tab[data-act="win:overview"]'); }, dir: 'up' },
-            { t: 'Ideas', b: 'Ideas ranks every coin from best to weakest and shows a chance score. Start here when you want to trade.', el: function () { return document.querySelector('.tab[data-act="win:ideas"]'); }, dir: 'up' },
+            { t: 'Ideas', b: 'Ideas ranks every coin from best to weakest and shows a score. Start here when you want to trade.', el: function () { return document.querySelector('.tab[data-act="win:ideas"]'); }, dir: 'up' },
             { t: 'Markets', b: 'Live prices for Binance, MEXC and Bitget. Tap any coin for its chart.', el: function () { return document.querySelector('.tab[data-act="win:market"]'); }, dir: 'up' },
             { t: 'Bots (practice money)', b: 'Baba Practice Bot trades with practice money only. Watch it for a while before you ever think of real money. It never trades real money on its own.', el: function () { return document.querySelector('.tab[data-act="win:botpro"]'); }, dir: 'up' },
             { t: 'More', b: 'All other windows live here: learning lessons, wallet, news, settings.', el: function () { return document.querySelector('.tab[data-act="openwin"]'); }, dir: 'up' },
@@ -10922,7 +10949,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         function restoreBackup(code, pass) {
             var p = String(code).trim().split('.'); if (p[0] !== 'MWB1' || p.length !== 4) { return Promise.reject(new Error('This is not a MintooSuite backup code.')); }
-            return key(pass, unb64(p[1])).then(function (kk) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(p[2]) }, kk, unb64(p[3])); }).then(function (pt) { var j = JSON.parse(new TextDecoder().decode(pt)); var n = 0; Object.keys(j.d || {}).forEach(function (k) { if (/^mintoosuite_/.test(k) && !SECRET.test(k)) { sv(k, j.d[k]); n++; } }); return n; }, function () { throw new Error('Wrong password or damaged code.'); });
+            return key(pass, unb64(p[1])).then(function (kk) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(p[2]) }, kk, unb64(p[3])); }).then(function (pt) { var j = JSON.parse(new TextDecoder().decode(pt)); var n = 0; Object.keys(j.d || {}).forEach(function (k) { if (/^mintoosuite_[A-Za-z0-9_.\-]{1,80}$/.test(k) && !SECRET.test(k) && !/^mintoosuite_(sess|dev|acct|agree|terms|age|lkui|lkun|lkwrong|wipeafter|lic|x_bk|x_dv|nxcap|fb|ibase)/.test(k) && !/baseurl|apibase|url$|host|endpoint|proxy|webhook|key|secret|pass|token|pwd|cred/i.test(k) && typeof j.d[k] === 'string' && j.d[k].length < 800000 && j.d[k] !== 'enc:1') { sv(k, j.d[k]); n++; } }); return n; }, function () { throw new Error('Wrong password or damaged code.'); });
         }
         /* ---------- Safety window ---------- */
         function vSafety() {
@@ -13417,8 +13444,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             // 2. own record (Doctor style)
             var cl = (R.closed || []).slice(0, 60), sameCoin = cl.filter(function (t) { return t.sym === sym && now - t.t1 < 6 * 3600000; }).slice(0, 3);
             add('Coin cool-down', !(sameCoin.length >= 2 && sameCoin.every(function (t) { return t.pnl <= 0; })), sameCoin.length >= 2 ? 'two or more recent losses on ' + base(sym) + ', resting 6 hours' : '');
-            try { var bv = window.__brief && window.__brief.veto(sym, sg > 0 ? 'LONG' : 'SHORT'); if (bv) { add('World, news and dollar check', !bv.vetoBest, bv.notes.join('; ')); } } catch (ev) { }
-            try { if (window.__babaExp && window.__kx.KX.bxp !== 'off') { var bx = window.__babaExp(sym, sg > 0 ? 'LONG' : 'SHORT', null); add('Baba experience', !bx.veto, bx.veto ? bx.conv + '% sure: ' + (bx.hard[0] || bx.text[0] || 'not enough support') : bx.conv + '% sure'); } } catch (ev2) { }
+            try { var bv = window.__brief && window.__brief.veto(sym, sg > 0 ? 'LONG' : 'SHORT'); if (bv) { add('World, news and dollar check', !bv.vetoBest, bv.notes.join('; ')); } } catch (ev) { add('World, news and dollar check', false, 'this check failed, so the bot waits'); }
+            try { if (window.__babaExp && window.__kx.KX.bxp !== 'off') { var bx = window.__babaExp(sym, sg > 0 ? 'LONG' : 'SHORT', null); add('Baba experience', !bx.veto, bx.veto ? bx.conv + '% sure: ' + (bx.hard[0] || bx.text[0] || 'not enough support') : bx.conv + '% sure'); } } catch (ev2) { add('Baba experience', false, 'this check failed, so the bot waits'); }
             var wr = cl.length ? cl.filter(function (t) { return t.pnl > 0; }).length / cl.length * 100 : 100;
             add('Real record', !(cl.length >= 10 && wr < 35 && pf(cl) < 0.9), cl.length >= 10 ? 'win rate ' + f(wr, 0) + '%, profit factor ' + f(pf(cl)) : 'not enough real trades yet');
             var side = cl.filter(function (t) { return t.sg === sg; }); var swr = side.length ? side.filter(function (t) { return t.pnl > 0; }).length / side.length * 100 : 100;
@@ -14182,7 +14209,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             ['Safety', 'Beware anyone promising guaranteed profit, signals with 100% accuracy, or doubling your money. They are scams.'],
             ['Safety', 'Test withdrawals and transfers with a tiny amount first, on the correct network.'],
             ['Safety', 'Change the password of any account you ever pasted into a chat or typed into the wrong place, and delete old API keys.'],
-            ['App', 'Open Trade Ideas first: it ranks the best opportunities with the reasons and the chance estimate in one list.'],
+            ['App', 'Open Trade Ideas first: it ranks the best opportunities with the reasons and the score estimate in one list.'],
             ['App', 'Use the Trade card under a chart: it fills entry, stop and target for you. You still confirm every real order.'],
             ['App', 'Baba Practice Bot\'s Smart Guard shows why it skipped a trade. Skips are good: they are the losses you did not take.'],
             ['App', 'The real bot is locked until you type UNLOCK, and the STOP button stops all bots. Keep it visible.'],
@@ -18056,6 +18083,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             solar: { r: 'pill', i: 'bold', k:'badge',l:'big' }, midnight: { t: 'float', i: 'glow', k:'duo',l:'list' }
         };
         var TAGS = { glass: ['ai', 'holo', 'tokyo', 'midnight'], light: ['pearl'], sharp: ['crimson', 'cyber', 'graphite', 'lava', 'matrix', 'tokyo', 'carbon'], ai: ['ai', 'holo', 'matrix', 'space', 'tokyo', 'plasma', 'quantum', 'midnight'] };
+        window.__thm = { TD: TD, BASE: BASE, mini: function (k) { return mini(k); } };
         function themeKey() { return g(ON) === '1' && PAL[g(PK)] ? g(PK) : ''; }
         function eff() {
             var k = themeKey(), d = {}, o; for (o in BASE) { d[o] = BASE[o]; } if (k && TD[k]) { for (o in TD[k]) { d[o] = TD[k][o]; } }
@@ -18955,7 +18983,7 @@ try {
             var h = _me.apply(this, arguments);
             var dic = '<div class="group pad"><b>📖 Dictionary and spelling</b><div class="note" style="margin:4px 0 8px">English ⇄ Urdu dictionary and spelling help, works offline.</div><span class="pfbtn" data-act="win:dict" style="cursor:pointer">Open dictionary</span></div>';
             var box = dic + '<div class="group pad" id="mwdel"><b>Delete my account and data</b><div class="note" style="margin:4px 0 8px">Erases everything this app saved on this phone: your sign-in, exchange keys, bots, practice account, alerts and settings. It cannot be undone. Your exchange accounts and money stay untouched in their own apps; remove API keys there too if you want.</div>' +
-                (armed ? '<div class="note" style="margin:0 0 8px;color:#ff453a"><b>Tap again to confirm. This erases everything now.</b></div><span class="pfbtn" data-mwdel="go" style="background:#ff453a;color:#fff;font-weight:800;cursor:pointer">🗑 Yes, delete everything</span> <span class="pfbtn" data-mwdel="no" style="cursor:pointer">Cancel</span>' : '<span class="pfbtn" data-mwdel="ask" style="background:#ff453a;color:#fff;font-weight:700;cursor:pointer">🗑 Delete my account and data</span>') + '</div>';
+                (armed ? '<div class="note" style="margin:0 0 8px;color:#ff453a"><b>Tap again to confirm. This erases everything now.</b></div><div class="note" style="margin:0 0 6px">To ALSO delete your sign-in account and cloud copies (backups and device list) from our cloud, type your MintooSuite account password. Leave it empty to erase this phone only.</div><input id="mwdelpw" type="password" autocomplete="current-password" placeholder="Account password (optional)" style="width:100%;box-sizing:border-box;padding:10px;margin:0 0 8px;border-radius:10px;border:1px solid rgba(128,128,128,.5)"><span class="pfbtn" data-mwdel="go" style="background:#ff453a;color:#fff;font-weight:800;cursor:pointer">🗑 Yes, delete everything</span> <span class="pfbtn" data-mwdel="no" style="cursor:pointer">Cancel</span>' : '<span class="pfbtn" data-mwdel="ask" style="background:#ff453a;color:#fff;font-weight:700;cursor:pointer">🗑 Delete my account and data</span>') + '</div>';
             var k = '<div class="note">Everything on this page comes from your own phone';
             return h.indexOf(k) >= 0 ? h.replace(k, box + k) : h + box;
         };
@@ -18972,7 +19000,20 @@ try {
             var a = el.getAttribute('data-mwdel');
             if (a === 'ask') { armed = 1; clearTimeout(tm); tm = setTimeout(function () { armed = 0; try { renderView(true); } catch (er) { } }, 12000); try { renderView(true); } catch (er) { } }
             else if (a === 'no') { armed = 0; try { renderView(true); } catch (er) { } }
-            else if (a === 'go') { wipe(); }
+            else if (a === 'go') {
+                var pwEl = document.getElementById('mwdelpw'), pw = pwEl ? pwEl.value : '', acct = null; try { acct = JSON.parse(localStorage.getItem('mintoosuite_acct') || 'null'); } catch (er) { }
+                if (!pw || !acct || !acct.email || typeof AU === 'undefined' || !AU.fb || !AU.fb.apiKey) { wipe(); return; }
+                el.textContent = 'Deleting your cloud account…';
+                var J = { 'Content-Type': 'application/json' }, base = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(AU.fb.projectId) + '/databases/(default)/documents/';
+                fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + encodeURIComponent(AU.fb.apiKey), { method: 'POST', headers: J, body: JSON.stringify({ email: acct.email, password: pw, returnSecureToken: true }) }).then(function (r) { return r.json(); }).then(function (j) {
+                    if (!j || !j.idToken) { throw new Error('Wrong account password, or no internet. Nothing was deleted.'); }
+                    var H = { 'Authorization': 'Bearer ' + j.idToken }, uid = j.localId;
+                    var docs = ['mwbackups/' + uid, 'mwbackups/' + uid + '_prev', 'mwdevices/' + uid];
+                    return Promise.all(docs.map(function (d) { return fetch(base + d, { method: 'DELETE', headers: H }).catch(function () { }); })).then(function () {
+                        return fetch('https://identitytoolkit.googleapis.com/v1/accounts:delete?key=' + encodeURIComponent(AU.fb.apiKey), { method: 'POST', headers: J, body: JSON.stringify({ idToken: j.idToken }) });
+                    }).then(function (r) { if (!r.ok) { throw new Error('Cloud copies were deleted, but the sign-in account could not be removed. Use the web deletion page or ask support.'); } });
+                }).then(function () { wipe(); }, function (er) { armed = 0; try { renderView(true); } catch (e2) { } try { window.alert(String(er.message || er)); } catch (e3) { } });
+            }
         }, true);
         window.__del = { v: 1 };
     } catch (e) { try { console.error('p9del', e); } catch (e2) { } }
@@ -19453,7 +19494,7 @@ try {
             var h = '';
             if (FS.tab === 'pos') {
                 if (!A.pos.length) { return '<div class="note" style="padding:10px">No open positions. Use the ticket above to open one.</div>'; }
-                A.pos.forEach(function (p, i) { var px = price(p.sym) || p.entry, u = upnl(p, px), pc = u / p.margin * 100; h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + esc(bs(p.sym)) + ' <span style="color:' + (p.side === 'LONG' ? '#16a34a' : '#dc2626') + '">' + (p.side === 'LONG' ? 'Long' : 'Short') + ' ' + p.lev + '×</span></b><b style="color:' + (u >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(u) + ' (' + (pc >= 0 ? '+' : '') + pc.toFixed(1) + '%)</b></div><div class="note" style="margin:3px 0 0">Entry ' + fp(p.entry, p.sym) + ' · Now ' + fp(px, p.sym) + ' · Margin ' + m2(p.margin) + (p.sl ? ' · SL ' + fp(p.sl, p.sym) : '') + (p.tp ? ' · TP ' + fp(p.tp, p.sym) : '') + ' · Liq ' + fp(p.liq, p.sym) + '</div>' + proj(p, px) + '<div style="display:flex;gap:6px;margin-top:6px"><span class="ptc" data-pt="close:' + i + '">Close all</span><span class="ptc" data-pt="half:' + i + '">Close half</span>' + (p.sl !== p.entry ? '<span class="ptc" data-pt="be:' + i + '">Stop to break-even</span>' : '') + '</div></div>'; });
+                A.pos.forEach(function (p, i) { var px = price(p.sym) || p.entry, u = upnl(p, px), pc = u / p.margin * 100; h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + esc(bs(p.sym)) + ' <span style="color:' + (p.side === 'LONG' ? '#16a34a' : '#dc2626') + '">' + (p.side === 'LONG' ? 'Long' : 'Short') + ' ' + p.lev + '×</span></b><b style="color:' + (u >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(u) + ' (' + (pc >= 0 ? '+' : '') + pc.toFixed(1) + '%)</b></div><div class="note" style="margin:3px 0 0">Entry ' + fp(p.entry, p.sym) + ' · Now ' + fp(px, p.sym) + ' · Margin ' + m2(p.margin) + (p.sl ? ' · SL ' + fp(p.sl, p.sym) : '') + (p.tp ? ' · TP ' + fp(p.tp, p.sym) : '') + ' · Liq ' + fp(p.liq, p.sym) + '</div>' + proj(p, px) + (window.__glBtn ? window.__glBtn({ sym: p.sym, side: p.side, entry: p.entry, sl: p.sl, tp: p.tp, lev: p.lev, margin: p.margin, notional: p.notional, kind: '🧾 Paper by hand' }) : '') + '<div style="display:flex;gap:6px;margin-top:6px"><span class="ptc" data-pt="close:' + i + '">Close all</span><span class="ptc" data-pt="half:' + i + '">Close half</span>' + (p.sl !== p.entry ? '<span class="ptc" data-pt="be:' + i + '">Stop to break-even</span>' : '') + '</div></div>'; });
             } else if (FS.tab === 'ord') {
                 if (!A.ord.length) { return '<div class="note" style="padding:10px">No waiting orders.</div>'; }
                 A.ord.forEach(function (o, i) { h += '<div class="ptp"><b>' + esc(bs(o.sym)) + ' ' + o.side + ' limit ' + fp(o.lp, o.sym) + '</b><div class="note" style="margin:3px 0 0">Margin ' + m2(o.margin) + ' · ' + o.lev + '×</div><div style="margin-top:6px"><span class="ptc" data-pt="cancel:' + i + '">Cancel</span></div></div>'; });
@@ -19560,7 +19601,7 @@ try {
             d.innerHTML = '<span style="font-size:26px">' + M.ic + '</span><div class="tb"><b>' + (M.real ? 'REAL MONEY' : 'PAPER (pretend money)') + '</b>' + M.n + '. Change it in More › Trading options.</div><span class="tch" data-tw="chg">Change</span><span class="tc" data-tw="x" aria-label="Close">✕</span>';
             document.body.appendChild(d); badge(); clearTimeout(pop.t); pop.t = setTimeout(closePop, 6000);
         }
-        (function () { var z = document.createElement('style'); z.textContent = '#twpop{top:64px!important;padding:6px 10px!important;border-radius:14px!important;font-size:12px!important;gap:8px!important}#twpop>span:first-child{font-size:18px!important}#twpop .tb{font-size:11px!important;line-height:1.3!important}#twpop .tb b{display:inline!important;margin-right:4px}'; z.textContent += '#mwtitlebar{padding-left:128px!important;padding-right:92px!important;justify-content:flex-start!important}#mwtitlebar h1{max-width:100%;overflow:hidden;text-overflow:ellipsis}'; document.head.appendChild(z); })();
+        (function () { var z = document.createElement('style'); z.textContent = '#twpop{top:64px!important;padding:6px 10px!important;border-radius:14px!important;font-size:12px!important;gap:8px!important}#twpop>span:first-child{font-size:18px!important}#twpop .tb{font-size:11px!important;line-height:1.3!important}#twpop .tb b{display:inline!important;margin-right:4px}'; z.textContent += '#mwtitlebar h1{max-width:100%;overflow:hidden;text-overflow:ellipsis}'; document.head.appendChild(z); })();
         var BW = { tpro: 1, ptrade: 1, quest: 1, paper: 1, rbot: 1, xtrade: 1, bots: 1, hub: 1 };
         function badge() {
             var b = document.getElementById('twbadge'); if (!b) { b = document.createElement('div'); b.id = 'twbadge'; document.body.appendChild(b); }
@@ -19600,7 +19641,7 @@ try {
                 window.__askForm('🧪 Start the paper bot?', 'The paper bot trades virtual money only, using live prices. STOP stops it any time.' + NOTE, window.__fields.pb, 'Yes, start paper bot', '#007aff', function (v) { try { var F = S.fb; F.stake = v.stake; F.sl = v.sl; F.maxOpen = v.maxOpen; if (!F.on) { F.on = true; F.last = 0; F.lockUntil = 0; F.note = ''; fbScan(); } fbSave(); toast('🟢 Paper bot is running (virtual money)'); renderView(true); } catch (er) { go('paper'); } }, 'pb');
             }
             else if (m === 'rb') {
-                window.__askForm('💵 Start the REAL-MONEY bot?', 'The Baba Real Bot will place <b>real orders</b> on your Binance account by itself, each with a stop-loss and take-profit. You can lose money. STOP stops it any time.' + NOTE, window.__fields.rb, 'Yes, start real bot', '#ff3b30', function (v) { try { if (!rbKeys()) { toast('Add your Binance key first (Profile › Connections)'); go('rbot'); return; } var R = S.rb; R.margin = v.margin; R.lev = v.lev; R.slp = v.slp; R.tpp = v.tpp; R.maxOpen = v.maxOpen; R.dayLoss = v.dayLoss; if (window.__lkUnlock) { window.__lkUnlock(); } if (!R.armed) { rbActivate(true); } rbStart(); rbSave(); toast(R.running ? '🟢 Real bot is running' : (R.note || 'Real bot could not start; open Baba Real Bot')); renderView(true); } catch (er) { go('rbot'); } }, 'rb');
+                window.__askForm('💵 Start the REAL-MONEY bot?', 'The Baba Real Bot will place <b>real orders</b> on your Binance account by itself, each with a stop-loss and take-profit. You can lose money. STOP stops it any time.' + NOTE, window.__fields.rb, 'Yes, start real bot', '#ff3b30', function (v) { try { if (!rbKeys()) { toast('Add your Binance key first (Profile › Connections)'); go('rbot'); return; } var R = S.rb; var cl2 = function (x, a) { x = +x; return isFinite(x) ? Math.max(a[0], Math.min(a[a.length - 1], x)) : a[0]; }; R.margin = cl2(v.margin, RB_CAP.margin); R.lev = cl2(v.lev, RB_CAP.lev); R.slp = cl2(v.slp, RB_CAP.slp); R.tpp = cl2(v.tpp, RB_CAP.tpp); R.maxOpen = cl2(v.maxOpen, RB_CAP.maxOpen); R.dayLoss = cl2(v.dayLoss, RB_CAP.dayLoss); if (window.__lkUnlock) { window.__lkUnlock(); } if (!R.armed) { rbActivate(true); } rbStart(); rbSave(); toast(R.running ? '🟢 Real bot is running' : (R.note || 'Real bot could not start; open Baba Real Bot')); renderView(true); } catch (er) { go('rbot'); } }, 'rb');
             }
             else if (c.el) { BYPASS = 1; try { c.el.click(); } catch (er) { } BYPASS = 0; } else { try { S.tp.sym = c.sym; S.tp.side = c.side; } catch (er) { } go('tpro'); setTimeout(function () { if (document.documentElement.getAttribute('data-win') !== 'tpro') { try { S.tp.sym = c.sym; S.tp.side = c.side; } catch (er) { } go('tpro'); } }, 700); setTimeout(function () { if (document.documentElement.getAttribute('data-win') !== 'tpro') { try { S.hist = []; S.win = 'tpro'; renderView(true); } catch (er) { } } }, 1500); }
             pop();
@@ -19716,10 +19757,10 @@ try {
             var v = [], cr = window.__cardRec, bi = document.getElementById('bsInfo'), bt = bi ? bi.textContent : '', xp = window.__lastExp, pr = document.getElementById('p9Rec');
             if (cr && cr.sym === sy && Date.now() - cr.t < 12000) { v.push({ n: 'UT Bot', s: cr.wait ? 'WAIT' : (cr.side > 0 ? 'LONG' : 'SHORT'), h: pr ? pr.innerHTML : '' }); }
             if (bt) { v.push({ n: 'Baba signals', s: /BUY side/.test(bt) ? 'LONG' : /SELL side/.test(bt) ? 'SHORT' : 'WAIT', h: bi.innerHTML }); }
-            if (xp) { v.push({ n: 'Baba experience', s: xp.veto ? 'WAIT' : xp.side, h: bi ? bi.innerHTML : '' }); }
+            if (xp && xp._s === sy && Date.now() - (xp._t || 0) < 15000) { var flat = bt && !/BUY side|SELL side/.test(bt); v.push({ n: 'Baba experience', s: (xp.veto || flat) ? 'WAIT' : xp.side, h: bi ? bi.innerHTML : '' }); }
             try { var mv = window.__mtfVote && window.__mtfVote(sy); if (mv) { v.push({ n: 'Time-frame scan', s: mv.s, h: mv.h }); } } catch (e) { }
             try { var dc = window.__docCaution && window.__docCaution(sy, r.side === 'WAIT' ? 'LONG' : r.side); if (dc) { v.push({ n: 'Bot Doctor', s: dc.caution ? 'WAIT' : 'OK', doc: 1, h: '<b>Bot Doctor</b> (checks the bots\' own loss record, it does not pick a direction).<br>' + (dc.caution ? '⚠ Caution: ' + dc.why.join('; ') + '.' : '✔ No warning. ' + (dc.n ? 'Based on ' + dc.n + ' closed bot trades.' : 'No bot trades yet, so nothing to warn about.')) }); } } catch (e) { }
-            v.push({ n: 'Market factors', s: r.side, h: '<b>Market factors</b> (trend, momentum, volume, order book, funding, Bitcoin, news) say <b>' + r.side + '</b>.' + (r.late ? '<br>Reason: ' + String(r.late).replace(/</g, '&lt;') : '') + (r.conv != null ? '<br>Baba score ' + r.conv + '/100' : '') });
+            v.push({ n: 'Market factors', s: r.side, self: 1, h: '<b>Market factors</b> (trend, momentum, volume, order book, funding, Bitcoin, news) say <b>' + r.side + '</b>.' + (r.late ? '<br>Reason: ' + String(r.late).replace(/</g, '&lt;') : '') + (r.conv != null ? '<br>Baba score ' + r.conv + '/100' : '') });
             return v;
         }
         document.addEventListener('click', function (e) {
@@ -19732,11 +19773,11 @@ try {
         setInterval(function () {
             try {
                 var sy = S.chart && S.chart.sym, anchor = document.getElementById('p9Rec') || document.getElementById('p9Info'); if (!sy || !anchor || document.documentElement.getAttribute('data-win') !== 'chart') { var o = document.getElementById('p9Verdict'); if (o) { o.remove(); } return; }
-                chiefCss(); var r = rec(sy), V = votes(sy, r), cnt = { LONG: 0, SHORT: 0, WAIT: 0 }; V.forEach(function (x) { if (x.s !== 'OK') { cnt[x.s] = (cnt[x.s] || 0) + 1; } }); var docW = V.filter(function (x) { return x.doc && x.s === 'WAIT'; })[0];
-                var want = r.side !== 'WAIT' ? r.side : '', tot = V.filter(function (x) { return x.s !== 'OK'; }).length, agree = want ? cnt[want] : cnt.WAIT;
-                if (want && cnt[want] * 2 <= tot) { want = ''; agree = cnt.WAIT; } var docNote = ''; if (want && docW) { want = ''; agree = cnt.WAIT; docNote = 'Bot Doctor warns: ' + docW.h.replace(/<[^>]+>/g, '').replace(/^.*Caution: /, ''); }
-                var col = want ? (want === 'LONG' ? '#16a34a' : '#dc2626') : '#d97706', txt = want ? (agree === tot ? 'Strong agreement' : 'Most advisers agree') : 'No clear edge, wait';
-                window.__chiefV = V; var el = document.getElementById('p9Verdict'); if (!el) { el = document.createElement('div'); el.id = 'p9Verdict'; el.className = 'note'; anchor.parentNode.insertBefore(el, anchor); }
+                chiefCss(); var r = rec(sy), V = votes(sy, r), cnt = { LONG: 0, SHORT: 0, WAIT: 0 }; V.forEach(function (x) { if (x.s !== 'OK' && !x.self) { cnt[x.s] = (cnt[x.s] || 0) + 1; } }); var docW = V.filter(function (x) { return x.doc && x.s === 'WAIT'; })[0];
+                var want = r.side !== 'WAIT' ? r.side : '', tot = V.filter(function (x) { return x.s !== 'OK' && !x.self; }).length, agree = want ? cnt[want] : cnt.WAIT;
+                var opp = want === 'LONG' ? 'SHORT' : 'LONG', clash = ''; if (want && (cnt[want] * 2 <= tot || cnt[opp] > 0 || cnt[want] < 2)) { clash = cnt[opp] > 0 ? 'Advisers disagree: ' + V.filter(function (x) { return x.s === opp; }).map(function (x) { return x.n; }).join(', ') + ' say ' + opp + '.' : 'Not enough advisers agree yet.'; want = ''; agree = cnt.WAIT; } var docNote = clash || ''; if (want && docW) { want = ''; agree = cnt.WAIT; docNote = 'Bot Doctor warns: ' + docW.h.replace(/<[^>]+>/g, '').replace(/^.*Caution: /, ''); }
+                var col = want ? (want === 'LONG' ? '#16a34a' : '#dc2626') : '#d97706', txt = want ? (agree === tot ? 'All advisers lean the same way' : 'Most advisers agree') : 'No clear edge, wait';
+                window.__chiefV = V; window.__chiefFinal = { sym: sy, want: want, t: Date.now() }; var el = document.getElementById('p9Verdict'); if (!el) { el = document.createElement('div'); el.id = 'p9Verdict'; el.className = 'note'; anchor.parentNode.insertBefore(el, anchor); }
                 var key = [sy, want, V.map(function (x) { return x.s; }).join() + (docW ? 'D' : ''), r.late || '', r.conv].join('|'); if (el.getAttribute('data-k') === key) { return; } el.setAttribute('data-k', key);
                 el.style.cssText = 'margin:8px 0;padding:12px 14px;border-radius:16px;border:2px solid ' + col + ';font-size:13px;line-height:1.5';
                 el.innerHTML = '<div style="font-size:12px;opacity:.7">🧓 BABA CHIEF · final recommendation</div><div style="font-size:22px;font-weight:800;color:' + col + '">' + (want ? (want === 'LONG' ? '▲ LONG' : '▼ SHORT') : '⏸ WAIT') + '</div><div style="font-weight:700">' + txt + ' · ' + agree + ' of ' + tot + ' advisers' + (want ? ' agree' : ' say wait') + '</div>' +
@@ -19749,6 +19790,7 @@ try {
             var w = document.documentElement.getAttribute('data-win'), show = !!WIN[w] && !!sym() && !document.getElementById('twback');
             bar.style.display = show ? 'flex' : 'none'; bar.className = w === 'chart' ? 'ch' : '';
             if (show) { var r = rec(sym()); bar.children[3].textContent = r.side === 'WAIT' ? '⭐ Recommended: WAIT (' + (r.late || 'no clear edge') + ')' : '⭐ Recommended: ' + (r.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + (r.veto ? ' · Baba says WAIT' + (r.why ? ' (' + String(r.why).slice(0, 24) + ')' : '') : (r.conv ? ' · Baba score ' + r.conv + '/100' : '') + ' · tap to open the trade form'); bar.children[3].style.background = (r.side === 'WAIT' || r.veto) ? '#f59e0b' : r.side === 'LONG' ? '#86efac' : '#fca5a5'; }
+            if (show) { try { var cf = window.__chiefFinal, s0 = sym(), rr = rec(s0); if (cf && cf.sym === s0 && Date.now() - cf.t < 6000 && cf.want !== (rr.side === 'WAIT' ? '' : rr.side)) { bar.children[3].textContent = cf.want ? '⭐ Recommended: ' + (cf.want === 'LONG' ? '▲ LONG' : '▼ SHORT') + ' · Baba Chief · tap to open the trade form' : '⭐ Recommended: WAIT (Baba Chief: advisers do not agree)'; bar.children[3].style.background = cf.want ? (cf.want === 'LONG' ? '#86efac' : '#fca5a5') : '#f59e0b'; } } catch (e) { } }
             if (show) { try { var hh = rec(sym()); if (hh.side !== 'WAIT' && window.__hot(sym())) { bar.children[3].textContent += ' \u00b7 \u26a0 strong move: small size'; } } catch (e) { } }
             if (show) { var sd = side(); bar.children[0].classList.toggle('on', w === 'tpro' && sd === 'LONG'); bar.children[1].classList.toggle('on', w === 'tpro' && sd === 'SHORT'); }
         }
@@ -19756,7 +19798,7 @@ try {
         function fire(sd) {
             var w = document.documentElement.getAttribute('data-win'), sy = sym(); if (!sy) { return; }
             if (sd === 'LK') { try { window.__lkOpen(sy); } catch (e) { } return; }
-            if (sd === 'REC') { sd = rec(sy).side; if (sd === 'WAIT') { try { toast('Recommended: WAIT. ' + (rec(sy).late || 'The app sees no clear edge right now.')); } catch (e) { } return; } }
+            if (sd === 'REC') { var cf2 = window.__chiefFinal; sd = (cf2 && cf2.sym === sy && Date.now() - cf2.t < 6000) ? (cf2.want || 'WAIT') : rec(sy).side; if (sd === 'WAIT') { try { toast('Recommended: WAIT. ' + (rec(sy).late || 'The app sees no clear edge right now.')); } catch (e) { } return; } }
             if (sd === 'NOW') { sd = side(); }
             var TW = window.__tw || {}, m = TW.mode ? TW.mode() : 'rm';
             if (w === 'tpro' && m === 'rm') {
@@ -20003,11 +20045,11 @@ try {
             } catch (e) { return ''; }
         }
         window.__pbox = function (o) {
-            try { var h = inner(o); if (!h) { return ''; } return '<div class="pbx" data-pbo="' + JSON.stringify(o).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">' + h + '</div>'; } catch (e) { return ''; }
+            try { var h = inner(o); if (!h) { return ''; } h += (window.__glBtn ? window.__glBtn(o) : ''); return '<div class="pbx" data-pbo="' + JSON.stringify(o).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">' + h + '</div>'; } catch (e) { return ''; }
         };
         /* every box ticks once a second with the live price, on every screen */
         setInterval(function () {
-            try { var L = document.querySelectorAll('.pbx'); for (var i = 0; i < L.length; i++) { var o = JSON.parse(L[i].getAttribute('data-pbo')); if (S.tick && S.tick[o.sym]) { delete o.mark; } var h = inner(o); if (h && L[i].innerHTML !== h) { L[i].innerHTML = h; } } } catch (e) { }
+            try { var L = document.querySelectorAll('.pbx'); for (var i = 0; i < L.length; i++) { var o = JSON.parse(L[i].getAttribute('data-pbo')); if (S.tick && S.tick[o.sym]) { delete o.mark; } var h = inner(o); if (h) { h += (window.__glBtn ? window.__glBtn(o) : ''); } if (h && L[i].innerHTML !== h) { L[i].innerHTML = h; } } } catch (e) { }
         }, 1000);
         /* paper-bot trade window (S.bot.open) */
         var _vt = vTdet;
@@ -20184,11 +20226,11 @@ try {
     try {
         var K = 'mintoosuite_split', WK = 'mintoosuite_splitwl';
         var D = { open: 0, tab: 'pos', size: 'mid', zoom: 1, wl: ['BTC', 'ETH', 'SOL'] };
-        try { var s0 = JSON.parse(localStorage.getItem(K) || 'null'); if (s0) { D.open = s0.open ? 1 : 0; D.tab = s0.tab || 'pos'; D.size = s0.size || 'mid'; D.zoom = +s0.zoom || 1; } var w0 = JSON.parse(localStorage.getItem(WK) || 'null'); if (w0 && w0.length) { D.wl = w0.slice(0, 12); } } catch (e) { }
+        try { var s0 = JSON.parse(localStorage.getItem(K) || 'null'); if (s0) { D.open = s0.open ? 1 : 0; D.tab = s0.tab || 'pos'; D.size = s0.size || 'mid'; D.zoom = +s0.zoom || 1; if (D.zoom > 1.3 || D.zoom < 0.85) { D.zoom = 1; } } var w0 = JSON.parse(localStorage.getItem(WK) || 'null'); if (w0 && w0.length) { D.wl = w0.slice(0, 12); } } catch (e) { }
         function save() { try { localStorage.setItem(K, JSON.stringify({ open: D.open, tab: D.tab, size: D.size, zoom: D.zoom })); localStorage.setItem(WK, JSON.stringify(D.wl)); } catch (e) { } }
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
         st.textContent = '#mwsp{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));z-index:6400;display:none;flex-direction:column;background:var(--card,#fff);color:var(--tx,inherit);border-radius:18px 18px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.35);border-top:1px solid rgba(127,127,127,.35);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}#mwsp .hd{display:flex;align-items:center;gap:4px;padding:6px 8px;flex:none}#mwsp .hd span{padding:8px 10px;border-radius:10px;font-weight:800;font-size:13px;background:rgba(127,127,127,.18);cursor:pointer;white-space:nowrap}#mwsp .hd span.on{background:#0a84ff;color:#fff}#mwsp .bd{overflow-y:auto;flex:1;padding:4px 10px 10px;overscroll-behavior:contain}#mwspb{position:fixed;left:4px;bottom:calc(150px + var(--mwdk,0px));z-index:6300;width:40px;height:40px;border-radius:20px;background:#0a84ff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;opacity:.85;box-shadow:0 2px 8px rgba(0,0,0,.3)}#mwsp .rw{display:flex;align-items:center;gap:6px;padding:7px 0;border-top:1px solid rgba(127,127,127,.25)}#mwsp .rw .bt{padding:9px 10px;border-radius:10px;font-weight:800;color:#fff;font-size:13px}';
-        st.textContent += '#mwsp .hd{gap:3px!important;padding:6px 6px!important;flex-wrap:nowrap!important;overflow:hidden}#mwsp .hd span{padding:9px 7px!important;font-size:12px!important;flex:0 0 auto;min-height:36px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center}#mwsp .hd span[data-sp^="tab:"]{flex:1 1 0!important;min-width:0;overflow:hidden;text-overflow:ellipsis;padding:9px 3px!important;font-size:11.5px!important}#mwsp .hd span[data-sp="x"]{background:#ff3b30!important;color:#fff;min-width:38px}#mwsp .hd span[style*="flex:1"]{display:none!important}#mwsp .hd span:active{transform:scale(.94);filter:brightness(.85)}#mwspb{bottom:calc(150px + env(safe-area-inset-bottom))!important;transition:none!important}#mwspb:active{transform:scale(.9)}';
+        st.textContent += '#mwsp .hd{gap:3px!important;padding:6px 6px!important;flex-wrap:nowrap!important;overflow:hidden}#mwsp .hd span{padding:9px 7px!important;font-size:12px!important;flex:0 0 auto;min-height:36px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center}#mwsp .hd span[data-sp^="tab:"]{flex:1 1 0!important;min-width:0;overflow:hidden;text-overflow:ellipsis;padding:9px 3px!important;font-size:11.5px!important}#mwsp .hd span[data-sp="x"]{background:#ff3b30!important;color:#fff;min-width:38px}#mwsp .hd span[style*="flex:1"]{display:none!important}#mwsp .hd span:active{transform:scale(.94);filter:brightness(.85)}#mwspb{bottom:calc(150px + env(safe-area-inset-bottom))!important;transition:none!important}#mwspb:active{transform:scale(.9)}#mwsp .bd{overflow-x:hidden!important}.stflt span{min-height:40px;display:inline-flex;align-items:center}@media(max-width:400px){#mwsp .hd span{font-size:11.5px!important;padding:9px 5px!important}}#mwsp{bottom:calc(69px + env(safe-area-inset-bottom))!important}#mwsp .hd span[data-sp="min"],#mwsp .hd span[data-sp="max"]{min-width:34px}#view>.tzchip.tzs{min-width:0;flex-wrap:wrap;white-space:normal!important}';
         document.head.appendChild(st);
         var dock = document.createElement('div'); dock.id = 'mwsp'; dock.setAttribute('data-noswipe', '1'); document.body.appendChild(dock);
         ['touchstart', 'touchmove', 'mousedown'].forEach(function (ev) { dock.addEventListener(ev, function () { dock.__t = Date.now(); }, { passive: true, capture: true }); });
@@ -20277,7 +20319,7 @@ try {
             e.preventDefault(); e.stopPropagation(); var k = t.getAttribute('data-sp');
             if (k === 'toggle') { D.open = D.open ? 0 : 1; if (D.open && D.size === 'min') { D.size = 'mid'; } }
             else if (k === 'x') { D.open = 0; } else if (k === 'min') { D.size = D.size === 'min' ? 'mid' : 'min'; } else if (k === 'max') { D.size = D.size === 'max' ? 'mid' : 'max'; }
-            else if (k === 'z+') { D.zoom = Math.min(1.8, +(D.zoom + 0.15).toFixed(2)); } else if (k === 'z-') { D.zoom = Math.max(0.7, +(D.zoom - 0.15).toFixed(2)); }
+            else if (k === 'z+') { D.zoom = Math.min(1.3, +(D.zoom + 0.1).toFixed(2)); } else if (k === 'z-') { D.zoom = Math.max(0.85, +(D.zoom - 0.1).toFixed(2)); }
             else if (k.indexOf('tab:') === 0) { D.tab = k.slice(4); }
             else if (k === 'add') { var i = dock.querySelector('[data-spin]'), c = base(i && i.value); if (c && D.wl.indexOf(c) < 0) { D.wl.unshift(c); } }
             else if (k.indexOf('del:') === 0) { D.wl = D.wl.filter(function (c) { return c !== k.slice(4); }); }
@@ -20983,7 +21025,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         Z = load();
         function save() { try { localStorage.setItem(KEY, JSON.stringify(Z)); } catch (e) { } }
         function tmode() { try { return localStorage.getItem('mintoosuite_tmode') || 'rm'; } catch (e) { return 'rm'; } }
-        function paper() { var m = tmode(); if (m !== 'pm' && m !== 'pb') { return false; } try { if (S.rb && S.rb.running) { return false; } } catch (e) { } return true; }
+        function paper() { var m = tmode(); if (m !== 'pm' && m !== 'pb') { return false; } try { if (S.rb && (S.rb.running || S.rb.armed || (S.rb.open && S.rb.open.length))) { return false; } } catch (e) { } return true; }
         window.__simOn = paper; window.__sim = { get: function () { return Z; }, save: save, reset: function (b) { Z = { bal: +b > 0 ? +b : 1000, pos: {}, ord: [], algo: [], lev: {}, mt: {}, id: 1000, hist: [], at: Date.now() }; save(); } };
         function px(sym) { if (window.__simPx && window.__simPx[sym]) { return +window.__simPx[sym]; } var t = S.tick && S.tick[sym]; return t && t.p > 0 ? +t.p : 0; }
         function err(code, msg) { var e = new Error('Binance: ' + msg + ' (' + code + ')'); e.code = code; return e; }
@@ -21093,7 +21135,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         }
         setInterval(tick, 1000);
         window.__trCall = function () { return trCall.apply(null, arguments); };
-        var _trCall = trCall, _trCfg = trCfg;
+        var _trCall = trCall, _trCfg = trCfg; window.__trRealCfg = function () { return _trCfg(); }; window.__trRealCall = function () { return _trCall.apply(null, arguments); };
         trCfg = function () { var c = _trCfg(); if (paper()) { return { key: 'SIM', sec: 'SIM', net: 'sim', margin: c.margin }; } return c; };
         trCall = function (method, path, params) {
             if (!paper()) { return _trCall(method, path, params); }
@@ -21413,7 +21455,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
                     var txt = '<b>Baba now: <span style="color:' + (p > 0 ? '#16a34a' : p < 0 ? '#dc2626' : '#6b7280') + '">' + (p > 0 ? 'BUY side' : p < 0 ? 'SELL side' : 'steps aside (no clear edge)') + '</span></b>' + (lastAt >= 0 ? ' · last signal ' + (n - 1 - lastAt) + ' candle(s) ago: ' + R.why[lastAt].slice(0, 3).join(', ') : '') + '. ' +
                         (sb.n >= 4 ? 'Same candles, after fees: <b>Baba</b> ' + sb.n + ' trades, ' + Math.round(sb.win * 100) + '% winners, ' + (sb.avg >= 0 ? '+' : '') + sb.avg.toFixed(2) + '% each' + (su.n >= 4 ? ' · <b>UT Bot</b> ' + su.n + ' trades, ' + Math.round(su.win * 100) + '% winners, ' + (su.avg >= 0 ? '+' : '') + su.avg.toFixed(2) + '% each' + (sb.avg > su.avg ? ' → Baba is ahead on this coin.' : ' → UT Bot is ahead on this coin right now.') : '.') : 'Too few Baba signals on these candles to judge yet.') + ' Past test only, not a promise.';
                     var xp = null; try { var sd = p !== 0 ? p : (lastAt >= 0 ? (R.buy[lastAt] ? 1 : -1) : 0); if (sd && window.__babaExp) { xp = window.__babaExp(m.sym, sd > 0 ? 'LONG' : 'SHORT', K); } } catch (e) { }
-                    window.__lastExp = xp;
+                    window.__lastExp = xp; if (xp) { xp._s = m.sym; xp._t = Date.now(); }
                     if (xp) { txt += '<div style="margin-top:4px"><b>🧓 Experience: ' + (xp.veto ? 'leans ' + xp.side + ' but not confirmed' : 'score ' + xp.conv + '/100 for ' + xp.side) + '</b> ' + (xp.veto ? '<span style="color:#dc2626;font-weight:800">· Baba says WAIT' + (xp.hard.length ? ' (' + xp.hard[0] + ')' : '') + '</span>' : '<span style="color:#16a34a;font-weight:800">· OK to consider</span>') + '<br>' + xp.text.map(function (t) { return '• ' + t; }).join('<br>') + '</div>'; }
                     el.innerHTML = on ? txt : '';
                 }
@@ -21455,8 +21497,8 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
     try {
         var X = window.__kx, KX = X.KX;
         function cl(x, a, b) { return Math.max(a, Math.min(b, x)); }
-        function nthDow(y, m, dow, n) { var d = new Date(Date.UTC(y, m, 1)), c = 0; while (true) { if (d.getUTCDay() === dow) { c++; if (c === n) { return d.getUTCDate(); } } d.setUTCDate(d.getUTCDate() + 1); } }
-        function lastDow(y, m, dow) { var d = new Date(Date.UTC(y, m + 1, 0)); while (d.getUTCDay() !== dow) { d.setUTCDate(d.getUTCDate() - 1); } return d.getUTCDate(); }
+        function nthDow(y, m, dow, n) { if (!(y > 1900 && y < 3000)) { return 0; } var d = new Date(Date.UTC(y, m, 1)), c = 0, g = 0; while (g++ < 40) { if (d.getUTCDay() === dow) { c++; if (c === n) { return d.getUTCDate(); } } d.setUTCDate(d.getUTCDate() + 1); } return 0; }
+        function lastDow(y, m, dow) { if (!(y > 1900 && y < 3000)) { return 0; } var d = new Date(Date.UTC(y, m + 1, 0)), g = 0; while (d.getUTCDay() !== dow && g++ < 10) { d.setUTCDate(d.getUTCDate() - 1); } return d.getUTCDate(); }
         function holiday(d) {
             var y = d.getUTCFullYear(), m = d.getUTCMonth(), dt = d.getUTCDate(), L = [[0, 1, 'New Year'], [0, nthDow(y, 0, 1, 3), 'Martin Luther King Day (US)'], [1, nthDow(y, 1, 1, 3), "Presidents' Day (US)"], [4, lastDow(y, 4, 1), 'Memorial Day (US)'], [5, 19, 'Juneteenth (US)'], [6, 4, 'Independence Day (US)'], [8, nthDow(y, 8, 1, 1), 'Labor Day (US)'], [10, nthDow(y, 10, 4, 4), 'Thanksgiving (US)'], [11, 25, 'Christmas'], [11, 24, 'Christmas Eve'], [11, 31, "New Year's Eve"]], i;
             for (i = 0; i < L.length; i++) { if (L[i][0] === m && L[i][1] === dt) { return L[i][2]; } }
@@ -23522,7 +23564,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
 /* ===== p9bx: Backup & restore (encrypted file / share / cloud) - reviewed twice (security + QA) ===== */
 (function () {
     try {
-        var PFX = 'mintoosuite_', SKIP = /^mintoosuite_(sess|dev|acct|agree|terms|age|bk_|dv_|rec$|rec_|fb$|x_bkpw|x_bkrt|x_bkuid|x_dvrt)/, ITER = 600000, MAXV = 800000, MAXN = 600, MAXT = 3000000, SHARE_MAX = 60000, B = {};
+        var PFX = 'mintoosuite_', SKIP = /^mintoosuite_(sess|dev|acct|agree|terms|age|bk_|dv_|rec$|rec_|fb$|fbc|fboff|ibase|rb$|lkui|lkun|lkwrong|nxcap|wipeafter|lic|x_bkpw|x_bkrt|x_bkuid|x_dvrt)/, ITER = 600000, MAXV = 800000, MAXN = 600, MAXT = 3000000, SHARE_MAX = 60000, B = {};
         var SEC = /^mintoosuite_(tk|ts|keys?|secret|x_.+)$|key|secret|pass|token|pwd|cred/i, DENY = /baseurl|apibase|url$|host|endpoint|proxy|webhook/i, KEYRE = /^mintoosuite_[A-Za-z0-9_.\-]{1,80}$/;
         var RULES = "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{db}/documents {\n    match /mwbackups/{docId} {\n      allow read, write: if request.auth != null\n        && (docId == request.auth.uid || docId == request.auth.uid + '_prev');\n    }\n    match /mwdevices/{uid} {\n      allow read: if request.auth != null && request.auth.uid == uid;\n      allow write: if request.auth != null && request.auth.uid == uid\n        && request.resource.data.devices.size() <= 1;\n    }\n  }\n}";
         function nat() { try { var n = mwNat(); return n || null; } catch (e) { return null; } }
@@ -24145,6 +24187,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 (function () {
     try {
         var PLAN = [
+            ['🎨 Themes and quick start', ['look', 'wallet', 'analyst']],
             ['Trade and bots', ['tpro', 'xtrade', 'hub', 'trade', 'strade', 'tmode', 'bots', 'rbot', 'botpro', 'paper', 'bot', 'ptrade', 'risk', 'hist']],
             ['Markets and ideas', ['market', 'find', 'chart', 'nchart', 'nlist', 'best', 'bpx', 'ideas', 'scanner', 'analyst', 'findtrade', 'movers', 'news', 'newc', 'siglab', 'sigfeed', 'nhist', 'overview', 'launch']],
             ['Gold and Exness', ['exness', 'exdesk', 'xgold', 'gold', 'split', 'rates']],
@@ -24152,7 +24195,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             ['Money and safety', ['wallet', 'moveit', 'hold', 'safety', 'ruletest', 'backup', 'devices', 'recovery', 'parent']],
             ['Learn and help', ['baba', 'academy', 'videos', 'quest', 'me', 'words', 'helpc', 'tips', 'story', 'agent']],
             ['Pakistan', ['around', 'psx', 'offers', 'brokers']],
-            ['Look and settings', ['look', 'langs', 'tsize', 'alerts', 'plans', 'log']]
+            ['Settings', ['langs', 'tsize', 'alerts', 'plans', 'log']]
         ];
         function apply() {
             var have = {}, order = []; MW_GROUPS.forEach(function (g) { g[1].forEach(function (id) { if (!have[id]) { have[id] = 1; order.push(id); } }); });
@@ -24167,6 +24210,316 @@ window.__pfAns = function (q) { return pfAnswer(q); };
     } catch (e) { try { console.error('p9org', e); } catch (e2) { } }
 })();
 ;(function () { try { PF_APP.push(['where is exness|exness gold|exness desk|more menu groups|organised|organized|where is split|more groups', 'More menu groups', 'More is now grouped: Trade and bots, Markets and ideas, Gold and Exness (Exness Gold, Exness Desk, Exness Gold Practice, Gold, Split, Rates), Exchanges, Money and safety (Wallet, Backup, Safety, Devices, Recovery), Learn and help, Pakistan, Look and settings. Use the search box on Markets and type a name to jump to any More button.']); } catch (e) { } })();
+/* ===== p9thm: Themes first. Tapping a theme shows what it will change (colours, shape, font, bottom bar, icons, layout, press, spacing) and only applies after "Apply this look". "Surprise me" picks a random look the same way. ===== */
+(function () {
+    try {
+        var W = window.__thm, P = window.__pal; if (!W || !P) { return; }
+        var PAL = P.PAL, DESC = P.DESC, go = 0;
+        function e2(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        var WORDS = {
+            r: ['Corners', { sharp: 'Square, crisp corners. Technical and serious.', round: 'Softly rounded corners. Friendly and balanced.', pill: 'Fully rounded, pill-shaped buttons and cards. Soft and modern.' }],
+            f: ['Letters', { sys: 'Clean everyday font. Easiest to read.', mono: 'Code-style font, like a terminal.', serif: 'Elegant serif font, like a newspaper or a bank.', cond: 'Narrow letters. Fits more on the screen.' }],
+            t: ['Bottom bar', { flat: 'Flat bar fixed to the bottom edge.', float: 'Floating bar that hovers above the edge, with space around it.' }],
+            i: ['Icon weight', { thin: 'Thin, light icons.', norm: 'Normal icons.', bold: 'Thick, strong icons.', glow: 'Icons with a soft glow.' }],
+            k: ['Icon style', { line: 'Outline icons.', duo: 'Two-tone icons.', badge: 'Icons inside small badges.', ring: 'Icons inside thin rings.', orb: 'Icons on round glowing orbs.' }],
+            l: ['Menu layout', { grid: 'Normal grid of buttons.', big: 'Big 2-column buttons. Easier to tap.', list: 'One simple list, one button per line.', dense: '4 small columns. Shows the most buttons at once.' }],
+            p: ['When you tap', { none: 'Plain, no effect.', pop: 'A small pop when you press.', glow: 'A soft glow when you press.' }],
+            d: ['Spacing', { compact: 'Tight spacing. More on screen.', cozy: 'Comfortable spacing.', roomy: 'Wide spacing. Calm and airy.' }]
+        };
+        function eff(k) { var d = {}, o; for (o in W.BASE) { d[o] = W.BASE[o]; } if (k && W.TD[k]) { for (o in W.TD[k]) { d[o] = W.TD[k][o]; } } return d; }
+        function close() { var o = document.getElementById('mwthm'); if (o) { o.remove(); } }
+        function show(k) {
+            close();
+            var p = k === 'off' ? null : PAL[k], d = eff(k === 'off' ? '' : k), ds = (DESC[k] || ['Plain light or dark: the original look of the app.', 'Anyone who wants no change']);
+            var sw = p ? [p.bg, p.c1, p.c2, p.a || p.ac || p.p1].filter(Boolean).map(function (c) { return '<i style="display:inline-block;width:26px;height:26px;border-radius:50%;background:' + e2(c) + ';border:1px solid rgba(128,128,128,.4);margin-right:6px"></i>'; }).join('') : '';
+            var rows = Object.keys(WORDS).map(function (o) { var w = WORDS[o]; return '<div style="padding:6px 0;border-top:1px solid rgba(128,128,128,.2)"><b>' + w[0] + ':</b> ' + e2(w[1][d[o]] || '') + '</div>'; }).join('');
+            var o = document.createElement('div'); o.id = 'mwthm'; o.setAttribute('data-mwkeep', '1');
+            o.style.cssText = 'position:fixed;left:0;right:0;top:0;bottom:0;z-index:2147483000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center';
+            o.innerHTML = '<div style="width:100%;max-width:520px;max-height:85vh;overflow:auto;background:#1c1c22;color:#f2f2f7;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-sizing:border-box;font-size:14px;line-height:1.45">'
+                + '<div style="display:flex;gap:12px;align-items:center"><div style="width:96px;flex:none">' + W.mini(k === 'off' ? '' : k) + '</div><div style="min-width:0"><div style="font-size:12px;opacity:.7">What this look will do</div><div style="font-size:20px;font-weight:800">' + (p ? e2(p.e + ' ' + p.n) : '☀️ Classic') + '</div></div></div>'
+                + '<div style="margin:10px 0 4px">' + e2(ds[0] || '') + '</div>' + (ds[1] ? '<div style="opacity:.75;margin-bottom:6px">Best for: ' + e2(ds[1]) + '</div>' : '')
+                + (sw ? '<div style="margin:8px 0">Colours: ' + sw + '</div>' : '')
+                + '<div style="margin-top:6px"><b>It changes the whole app:</b></div>' + rows
+                + '<div style="opacity:.75;margin:10px 0">Nothing is deleted and no feature is hidden. You can Undo right after, or change any part later in Menu &gt; Look.</div>'
+                + '<div style="display:flex;gap:10px;position:sticky;bottom:-16px;background:#1c1c22;padding:10px 0 4px;margin-top:4px"><button data-thm="no" style="flex:1;min-height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.3);background:transparent;color:inherit;font-size:15px">Not now</button><button data-thm="yes:' + e2(k) + '" style="flex:1.4;min-height:46px;border-radius:12px;border:0;background:#2563eb;color:#fff;font-weight:800;font-size:15px">Apply this look</button></div></div>';
+            document.body.appendChild(o);
+        }
+        window.addEventListener('click', function (e) {
+            var t = e.target; if (!t || !t.closest) { return; }
+            var b = t.closest('[data-thm]');
+            if (b) { e.preventDefault(); e.stopPropagation(); var v = b.getAttribute('data-thm'); if (v === 'no') { close(); } else if (v === 'rand') { var ks = Object.keys(PAL).filter(function (x) { return PAL[x].bg; }); show(ks[Math.floor(Math.random() * ks.length)]); } else if (v.indexOf('yes:') === 0) { var k = v.slice(4); close(); var f = document.createElement('div'); f.setAttribute('data-sa', k); f.style.display = 'none'; document.body.appendChild(f); go = 1; try { f.click(); } finally { go = 0; f.remove(); } } return; }
+            if (go) { return; }
+            var c = t.closest('.stgal [data-sa]'); if (c) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); show(c.getAttribute('data-sa')); }
+        }, true);
+        /* top of the Themes screen: intro + Surprise me */
+        function addTop() { try { var v = document.getElementById('view'); if (!v || document.getElementById('mwthmtop') || !v.querySelector('.stgal')) { return; } var g = v.querySelector('.stgal').closest('.group'); if (!g) { return; } var d = document.createElement('div'); d.id = 'mwthmtop'; d.className = 'note'; d.style.cssText = 'margin:6px 0'; d.innerHTML = 'Tap any look to read exactly what it changes first. It is applied only when you press <b>Apply this look</b>. <span data-thm="rand" style="display:inline-block;margin-top:6px;padding:8px 12px;border-radius:12px;background:#7c3aed;color:#fff;font-weight:800">🎲 Surprise me</span>'; g.insertBefore(d, g.children[1] || null); } catch (er) { } }
+        setInterval(addTop, 700);
+        try { PF_APP.push(['theme|themes|look|design|change app look|surprise|different taste', 'Themes (Look)', 'Menu > Look has themes that change the whole app: colours, corner shape, letters, bottom bar, icons, menu layout, tap effect and spacing. Tap a look to read exactly what it changes, then press Apply this look. 🎲 Surprise me shows a random look first. Undo is offered after applying. Nothing is deleted.']); } catch (er) { }
+    } catch (e) { try { console.error('p9thm', e); } catch (e2) { } }
+})();
+/* ===== p9gl: "Go live" on every paper trade. One tap opens the real-money ticket pre-filled from the paper trade; size is cut to the 2% rule; a stop-loss is always used; the real order is sent only after you type TRADE (live) in the existing ticket. ===== */
+(function () {
+    try {
+        var RISK = 0.02, MAXLEV = 10, FEE = 0.002;
+        function e2(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function toast(m, ms) { try { var o = document.getElementById('glt'); if (o) { o.remove(); } o = document.createElement('div'); o.id = 'glt'; o.setAttribute('data-mwkeep', '1'); o.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(150px + env(safe-area-inset-bottom));z-index:2147483100;background:#1c1c22;color:#fff;border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.4;box-shadow:0 8px 26px rgba(0,0,0,.45)'; o.textContent = m; document.body.appendChild(o); setTimeout(function () { try { o.remove(); } catch (e) { } }, ms || 6000); } catch (e) { } }
+        window.__glBtn = function (o) {
+            try {
+                if (!o || !/USDT$/.test(String(o.sym || '')) || !(o.side === 'LONG' || o.side === 'SHORT')) { return ''; }
+                var k = String(o.kind || ''); if (!/paper|practice|by hand/i.test(k) || /exness|spot|real|🪙/i.test(k)) { return ''; }
+                var d = { sym: o.sym, side: o.side, entry: o.entry, sl: o.sl, tp: o.tp, lev: o.lev, margin: o.margin, notional: o.notional };
+                return '<span data-gl="' + JSON.stringify(d).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '" style="display:block;text-align:center;margin:6px 0 2px;padding:12px;min-height:44px;box-sizing:border-box;border-radius:12px;background:#dc2626;color:#fff;font-weight:800;font-size:14px">⚡ Go live: copy this trade to real money</span>';
+            } catch (e) { return ''; }
+        };
+        function stop() { window.__glLive = 0; window.__glStart = 0; }
+        function liveNow() { return window.__glLive === 1 || !!(TR && TR.gl && TR.busy); }
+        try {
+            var _tc = trCall, _cf = trCfg;
+            trCall = function (m, p, pa) { if (liveNow() && window.__trRealCall) { return window.__trRealCall(m, p, pa); } return _tc.apply(this, arguments); };
+            trCfg = function () { if ((liveNow() || (TR && TR.gl && document.getElementById('trMod'))) && window.__trRealCfg) { return window.__trRealCfg(); } return _cf.apply(this, arguments); };
+        } catch (e) { }
+        function startBinance(o) {
+            var P; try { P = window.__parent && window.__parent.state(); } catch (e) { P = null; }
+            if (P && P.child && P.active) { toast('Practice-only child mode is on. A parent must unlock real screens first.'); return; }
+            var cfg; try { cfg = window.__trRealCfg ? window.__trRealCfg() : trCfg(); } catch (e) { cfg = {}; }
+            if (!cfg || !cfg.key || !cfg.sec) { toast('Add your Binance API key and secret first (Trade window). Keep Withdraw switched OFF.', 7000); try { gotoWin('trade'); } catch (e) { } return; }
+            if (S.rb && S.rb.lockUntil > Date.now()) { toast('Real trading is locked for now (daily loss limit reached). Try after the lock ends.', 7000); return; }
+            if (TR && TR.busy) { toast('A real order is already being sent. Wait for it to finish.'); return; }
+            var sym = String(o.sym), sg = o.side === 'LONG' ? 1 : -1;
+            window.__glLive = 1; window.__glStart = Date.now(); toast('Checking your real account…', 4000);
+            trFirst('GET', ['/fapi/v3/balance', '/fapi/v2/balance'], {}).then(function (b) {
+                var u = (b || []).filter(function (x) { return x.asset === 'USDT'; })[0]; if (!u) { throw new Error('No USDT futures balance found on your account.'); }
+                var eq = +(u.crossWalletBalance || u.balance) || 0, av = +u.availableBalance || 0, t = S.tick && S.tick[sym], px = t && +t.p;
+                if (!(eq > 0)) { throw new Error('Your futures wallet is empty.'); }
+                if (!(px > 0)) { throw new Error('No live price for ' + sym + ' yet. Wait a few seconds and try again.'); }
+                if (t.at && Date.now() - (+t.at) > 15000) { throw new Error('The live price is delayed. Wait a few seconds and try again.'); }
+                var lev = Math.min(MAXLEV, Math.max(1, Math.round(+o.lev || 3))), sl = +o.sl, tp = +o.tp, df = '';
+                if (!(sl > 0)) { sl = px * (1 - sg * 0.02); df += 'The paper trade had no stop-loss, so a 2% stop was added. '; }
+                if (!(tp > 0)) { tp = px * (1 + sg * 0.03); df += 'No target, so a 3% target was added. '; }
+                var dist = Math.abs(px - sl) / px;
+                if (sg > 0 ? !(sl < px && px < tp) : !(tp < px && px < sl)) { throw new Error('The price has already moved past the paper stop or target, so entering now is not valid. Wait for a fresh setup.'); }
+                if (dist * lev > 0.33) { throw new Error('Stop distance x leverage is too large (above 33%). Lower the leverage on the paper trade first.'); }
+                var maxM = RISK * eq / (lev * (dist + FEE)), want = +o.margin > 0 ? +o.margin : (+o.notional > 0 ? +o.notional / lev : 10);
+                var m = Math.floor(Math.min(want, maxM, av * 0.95) * 100) / 100;
+                if (!(m >= 1)) { throw new Error('Your real account is too small to follow the 2% rule with this stop (needs about $' + (1 * lev * (dist + FEE) / RISK).toFixed(0) + ' or more). Nothing was sent.'); }
+                TR.args = { sym: sym, side: o.side, sl: sl, tp: tp, until: 0 }; TR.m = m; TR.L = lev; TR.busy = false;
+                TR.gl = { eq: eq, px0: px, t0: Date.now(), want: want, m: m, df: df, stale: 0, done: 0 };
+                stop(); trShow();
+            }).catch(function (e) { stop(); toast('❌ ' + e.message, 8000); });
+        }
+
+        var EXS = [['binance', '🟨', 'Binance Futures', 'fut'], ['bitget', '🟩', 'Bitget USDT Futures', 'fut'], ['bybit', '🟧', 'Bybit Perpetual', 'fut'], ['okx', '⬛', 'OKX Perpetual', 'fut'], ['mexc', '🟦', 'MEXC Spot (buy only)', 'spot']];
+        function hasKey(x, mk) {
+            try {
+                if (x === 'binance') { var c0 = window.__trRealCfg ? window.__trRealCfg() : trCfg(); return !!(c0 && c0.key && c0.sec); }
+                var N = S.nx, sx = N.x, sm = N.mk, sd = N.demo; try { N.x = x; N.mk = mk; N.demo = 0; var c = nxKey(); return !!(c && c.key && c.sec && (!XC[x].pass || c.pass)); } finally { N.x = sx; N.mk = sm; N.demo = sd; }
+            } catch (e) { return false; }
+        }
+        function closeCh() { var o = document.getElementById('mwglx'); if (o) { o.remove(); } }
+        function chooser(o) {
+            closeCh();
+            var short = o.side === 'SHORT';
+            var rows = EXS.map(function (x) {
+                var key = hasKey(x[0], x[3]), off = x[3] === 'spot' && short;
+                return '<div data-glx="' + (off ? 'no' : x[0]) + '" style="display:flex;align-items:center;gap:10px;padding:12px;margin:6px 0;border-radius:12px;background:rgba(127,127,127,.18);min-height:48px;' + (off ? 'opacity:.45' : '') + '"><span style="font-size:22px">' + x[1] + '</span><span style="flex:1"><b>' + x[2] + '</b><br><small style="opacity:.75">' + (off ? 'Spot cannot short' : key ? 'Key saved ✔' : 'No key saved yet: opens Connections') + '</small></span><span>›</span></div>';
+            }).join('');
+            var d = document.createElement('div'); d.id = 'mwglx'; d.setAttribute('data-mwkeep', '1'); d.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center';
+            window.__glO = o;
+            d.innerHTML = '<div style="width:100%;max-width:520px;max-height:85vh;overflow:auto;background:#1c1c22;color:#f2f2f7;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-sizing:border-box;font-size:14px;line-height:1.45"><div style="font-size:18px;font-weight:800">⚡ Go live: where do you want to trade it?</div><div style="opacity:.8;margin:6px 0">' + e2(String(o.sym).replace(/USDT$/, '')) + ' ' + (short ? '▼ SHORT' : '▲ LONG') + ' copied from your paper trade. Pick your exchange. Nothing is sent yet: Binance asks you to type TRADE; the other exchanges open their order ticket filled in, where you tick the box and press the order button. The size is cut so about 2% of your balance is at risk if the stop is hit.</div>' + rows + '<div data-glx="no" style="text-align:center;padding:12px;margin-top:6px;border:1px solid rgba(255,255,255,.3);border-radius:12px;min-height:44px">Not now</div></div>';
+            document.body.appendChild(d);
+        }
+        function startOther(o, x, mk) {
+            var N = S.nx, sym = String(o.sym), sg = o.side === 'LONG' ? 1 : -1, fut = mk === 'fut';
+            if (!hasKey(x, mk)) { toast('Save your ' + XC[x].n + ' key first (Profile > Connections). Keep Withdraw switched OFF.', 7000); try { N.x = x; N.mk = mk; gotoWin('xtrade'); } catch (e) { } return; }
+            var px = S.tick && S.tick[sym] && +S.tick[sym].p, t = S.tick && S.tick[sym];
+            if (!(px > 0)) { toast('No live price for ' + sym + ' yet. Wait a few seconds and try again.', 6000); return; }
+            if (t.at && Date.now() - (+t.at) > 15000) { toast('The live price is delayed. Wait a few seconds and try again.', 6000); return; }
+            var lev = fut ? Math.min(MAXLEV, Math.max(1, Math.round(+o.lev || 3))) : 1, sl = +o.sl, tp = +o.tp, df = '';
+            if (!(sl > 0)) { sl = px * (1 - sg * 0.02); df += 'The paper trade had no stop-loss, so a 2% stop was added. '; }
+            if (!(tp > 0)) { tp = px * (1 + sg * 0.03); df += 'No target, so a 3% target was added. '; }
+            if (sg > 0 ? !(sl < px && px < tp) : !(tp < px && px < sl)) { toast('The price has already moved past the paper stop or target, so entering now is not valid. Wait for a fresh setup.', 8000); return; }
+            var dist = Math.abs(px - sl) / px; if (dist * lev > 0.33) { toast('Stop distance x leverage is too large (above 33%). Lower the leverage on the paper trade first.', 8000); return; }
+            var sx = N.x, sm = N.mk, sd = N.demo; N.x = x; N.mk = mk; N.demo = 0; toast('Checking your ' + XC[x].n + ' balance…', 4000);
+            var pend = { x: x, mk: mk };
+            nxBal().then(function (b) {
+                var av = b && b.usdt; if (!(av > 0)) { throw new Error('Could not read your ' + XC[x].n + ' USDT balance. Nothing was prepared.'); }
+                var want = +o.margin > 0 ? +o.margin : (+o.notional > 0 ? +o.notional / lev : 10), maxM = RISK * av / (lev * (dist + FEE)), m = Math.floor(Math.min(want, maxM, av * 0.95) * 100) / 100;
+                if (!(m >= 1)) { throw new Error('Your ' + XC[x].n + ' balance (' + av.toFixed(2) + ' USDT) is too small to follow the 2% rule with this stop. Nothing was prepared.'); }
+                var cap = nxCap(), val = fut ? m * lev : m, capNote = '';
+                if (val > cap) { capNote = ' Your safety cap of ' + cap + ' USDT per order will block this size; raise it on the ticket if you really want it.'; }
+                N.x = x; N.mk = mk; N.demo = 0; N.sym = sym; N.side = sg > 0 ? 'buy' : 'sell'; N.type = 'market'; N.amt = String(m); N.lev = lev; N.mode = 'isolated'; if (x === 'bitget' && sd) { df += 'Bitget demo mode was switched off for this ticket (real money). '; } N.sl = fut ? String(+sl.toPrecision(7)) : ''; N.tp = fut ? String(+tp.toPrecision(7)) : ''; N.price = ''; N.ack = 0; N.reduce = 0; N.log = [];
+                try { if (typeof nxUnack === 'function') { nxUnack(); } } catch (e) { }
+                N.gl = { sym: sym, px0: px, t0: Date.now() };
+                gotoWin('xtrade');
+                toast('⚡ ' + XC[x].n + ' ticket filled in from your paper trade: ' + (fut ? lev + '× ' : 'spot ') + 'amount ' + m + ' USDT, stop ' + N.sl + (N.tp ? ', target ' + N.tp : '') + '. ' + df + (fut ? '' : 'Spot has no automatic stop here: if the price falls to ' + sl.toPrecision(6) + ', close it yourself. ') + 'Tick "I understand this uses real money", then press the order button.' + capNote, 14000);
+            }).catch(function (e) { N.x = sx; N.mk = sm; N.demo = sd; toast('❌ ' + e.message, 8000); });
+        }
+        try {
+            var _ng = nxGo;
+            nxGo = function () {
+                var g = S.nx && S.nx.gl;
+                if (g) {
+                    var t = S.tick && S.tick[g.sym], px = t && +t.p, bad = '', cur = String(S.nx.sym || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (cur && !/USDT$/.test(cur)) { cur += 'USDT'; }
+                    if (cur !== g.sym) { S.nx.gl = null; g = null; }
+                    else if (!(px > 0)) { bad = 'No live price.'; } else if (Math.abs(px / g.px0 - 1) > 0.003) { bad = 'The price moved more than 0.3% since the ticket was filled in.'; } else if (Date.now() - g.t0 > 120000) { bad = 'The ticket was filled in more than 2 minutes ago.'; } else if (t.at && Date.now() - (+t.at) > 15000) { bad = 'The live price is delayed.'; }
+                    if (g && bad) { S.nx.log = ['⚠️ ' + bad + ' Nothing was sent. Go back to the paper trade and tap ⚡ Go live again.']; S.nx.gl = null; try { renderView(true); } catch (e) { } return; }
+                    S.nx.gl = null;
+                }
+                return _ng.apply(this, arguments);
+            };
+        } catch (e) { }
+        function start(o) {
+            var P; try { P = window.__parent && window.__parent.state(); } catch (e) { P = null; }
+            if (P && P.child && P.active) { toast('Practice-only child mode is on. A parent must unlock real screens first.'); return; }
+            chooser(o);
+        }
+        document.addEventListener('click', function (e) {
+            var b = e.target && e.target.closest ? e.target.closest('[data-glx]') : null; if (!b) { return; }
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            var v = b.getAttribute('data-glx'), o = window.__glO; closeCh(); if (v === 'no' || !o) { return; }
+            var ex = EXS.filter(function (x) { return x[0] === v; })[0]; if (!ex) { return; }
+            if (v === 'binance') { startBinance(o); } else { startOther(o, v, ex[3]); }
+        }, true);
+        document.addEventListener('click', function (e) {
+            var b = e.target && e.target.closest ? e.target.closest('[data-gl]') : null; if (!b) { return; }
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            var o; try { o = JSON.parse(b.getAttribute('data-gl')); } catch (er) { return; } start(o);
+        }, true);
+        /* the ticket: banner + live strip */
+        try {
+            var _tm = trModal;
+            trModal = function () {
+                var h = _tm.apply(this, arguments), g = TR && TR.gl; if (!g) { return h; }
+                var note = '<div style="margin:0 0 8px;padding:9px 10px;border-radius:10px;background:rgba(220,38,38,.12);font-size:13px;line-height:1.45"><b>⚡ Paper → real.</b> ' + e2(g.df) + 'Size is set by the safety rule: no more than 2% of your account (' + g.eq.toFixed(2) + ' USDT) is at risk if the stop is hit' + (g.m + 0.005 < g.want ? ' (the paper trade used a bigger size of $' + g.want.toFixed(2) + ' margin)' : '') + '. Your paper trade stays open in the paper account; close it there if you do not want to follow both.<div id="glLive" style="margin-top:4px;font-weight:700"></div></div>';
+                return h.indexOf('<div id="trRes"') >= 0 ? h.replace('<div id="trRes"', note + '<div id="trRes"') : h + note;
+            };
+            var _to = trOpen; trOpen = function () { TR.gl = null; return _to.apply(this, arguments); };
+            var _go = trGo;
+            trGo = function () {
+                var g = TR && TR.gl;
+                if (g) {
+                    var res = document.getElementById('trRes'), m = +(document.getElementById('trM') || {}).value, L = Math.round(+(document.getElementById('trL') || {}).value), a = TR.args, t = S.tick && S.tick[a.sym], px = t && +t.p;
+                    function no(s) { if (res) { res.textContent = s; } }
+                    if (g.stale) { no(g.stale === 2 ? 'The live price is delayed. Close this and tap Go live again.' : 'The price moved more than 0.3% since you opened this. Close it and tap Go live again.'); return; }
+                    if (!(px > 0)) { no('No live price. Try again in a moment.'); return; }
+                    if (L > MAXLEV || L < 1) { no('Leverage for this copy is limited to ' + MAXLEV + '×.'); return; }
+                    var dist = Math.abs(px - a.sl) / px, risk = m * L * (dist + FEE);
+                    if (!(m > 0) || risk > RISK * g.eq + 1e-9) { no('Too big: this risks ' + risk.toFixed(2) + ' USDT, more than 2% of your account. Lower the margin to about ' + (RISK * g.eq / (L * (dist + FEE))).toFixed(2) + ' or less.'); return; }
+                    if (S.rb && S.rb.lockUntil > Date.now()) { no('Real trading is locked for now (daily loss limit).'); return; }
+                    if (g.done) { no('This ticket already sent an order. Close it and tap Go live again if you want another.'); return; }
+                    var dr0 = Math.abs(px / g.px0 - 1), t0 = S.tick && S.tick[a.sym]; if (dr0 > 0.003) { no('The price moved more than 0.3% since you opened this. Close it and tap Go live again.'); return; } if (t0 && t0.at && Date.now() - (+t0.at) > 15000) { no('The live price is delayed. Close this and tap Go live again.'); return; }
+                    g.done = 1;
+                }
+                return _go.apply(this, arguments);
+            };
+        } catch (e) { }
+        var gone = 0;
+        setInterval(function () { try { if (window.__glLive === 1 && window.__glStart && Date.now() - window.__glStart > 20000) { stop(); } } catch (e) { } }, 2000);
+        setInterval(function () {
+            try {
+                var g = TR && TR.gl, md = document.getElementById('trMod');
+                if (g && md) {
+                    gone = 0;
+                    var a = TR.args, t = S.tick && S.tick[a.sym], px = t && +t.p, el = document.getElementById('glLive');
+                    if (px > 0 && el) {
+                        var dr = (px / g.px0 - 1) * 100, age = t.at ? Date.now() - (+t.at) : 0;
+                        if (!TR.busy) { if (Math.abs(dr) > 0.3) { g.stale = 1; } else if (age > 15000) { g.stale = 2; } else { g.stale = 0; } }
+                        el.style.color = g.stale ? '#dc2626' : '';
+                        el.textContent = 'Live price ' + px + ' (' + (dr >= 0 ? '+' : '') + dr.toFixed(2) + '% since you tapped)' + (g.stale === 1 ? ' · moved too much: close and tap Go live again' : g.stale === 2 ? ' · price feed delayed' : ' · fresh');
+                    }
+                } else if (!md && !(TR && TR.busy)) { if (g && ++gone >= 2) { TR.gl = null; gone = 0; } }
+            } catch (e) { }
+        }, 500);
+        try { PF_APP.push(['go live|paper to real|convert paper|copy to real|real money from paper|paper trade into real', 'Go live (paper → real)', 'Every paper trade (Trade Pro paper, Paper by hand, Practice Bot) shows a red ⚡ Go live button. One tap opens the real-money ticket already filled in from the paper trade. For safety the size is reduced so no more than 2% of your account is at risk, leverage is capped at 10×, a stop-loss is always set (a 2% stop is added if the paper trade had none), and the order is only sent after you type TRADE. If the price moves more than 0.3% before you confirm, it asks you to start again. If the stop-loss cannot be placed, the app closes the position again. Your paper trade stays open. Add your Binance key first (Withdraw permission OFF).']); } catch (e) { }
+        try {
+            PF_APP.push(['2% rule|risk per trade|daily loss|3% rule|safety rule|how much can i lose|position size|bot risk', 'Safety rules for real money', 'The Real Bot and Go live follow the same rules: no more than 2% of your futures balance is at risk per trade (margin × leverage × (stop distance + 0.2% for fees)), leverage is capped at 10×, every trade has a stop-loss, and the bot locks for the day if the day loss reaches 3% of your balance (or your own daily limit, whichever is smaller). The bot skips an entry if the price moved more than 0.3% while it prepared the order, and it closes a position again if the stop-loss cannot be placed. Stop and Kill always go to the real exchange while the bot is armed or holds positions. These rules lower risk; they cannot make a trade safe or guarantee profit.']);
+            PF_APP.push(['score|chance|percent|probability|what does the percent mean', 'What the % score means', 'The % on ideas is a model score built from indicators, volume, volatility and trend. It is an estimate, not a real probability and not a promise. A high score still loses often. Always use a stop-loss.']);
+            PF_APP.push(['what is new|whats new|new features|latest update|version', 'What is new in this version', 'Themes first in More (read what a look changes, then Apply; Surprise me). ⚡ Go live on every paper trade: Binance, Bitget, Bybit, OKX, MEXC. Baba Chief gives one combined verdict and the bottom bar follows it. Safer Real Bot (2% / 3% rules, price-move check, emergency close). Backup screen redesigned. Scores are labelled as estimates.']);
+            setTimeout(function () { try {
+                var X = { rbot: ' Safety rules: at most 2% of your balance at risk per trade, 3% daily loss lock, leverage up to 10×, stop-loss always, price-move check, emergency close if the stop fails.', tpro: ' Paper positions show ⚡ Go live to copy a paper trade to real money (asks which exchange, size cut to the 2% rule).', xtrade: ' ⚡ Go live from any paper trade fills this ticket in for Bitget, Bybit, OKX or MEXC (you still tick the box and press the order button). Size follows the 2% rule.', paper: ' Every paper trade has a red ⚡ Go live button to copy it to real money (Binance, Bitget, Bybit, OKX, MEXC).', ptrade: ' Open positions have a red ⚡ Go live button to copy the trade to real money.' };
+                Object.keys(X).forEach(function (k) { if (typeof MW_HELP[k] === 'string' && MW_HELP[k].indexOf('Go live') < 0 && MW_HELP[k].indexOf('Safety rules: at most') < 0) { MW_HELP[k] += X[k]; } });
+            } catch (e) { } }, 3000);
+        } catch (e) { }
+    } catch (e) { try { console.error('p9gl', e); } catch (e2) { } }
+})();
+/* ===== p9rs: risk shield for MANUAL real-money tickets. Trade Pro and the other-exchange ticket now need a stop-loss and refuse a trade that risks more than 2% of the balance (fees included). Real Bot and Go live already follow the same rule. ===== */
+(function () {
+    try {
+        var RISK = 0.02, FEE = 0.002;
+        try {
+            var _tg = tpGo;
+            tpGo = function () {
+                var T = S.tp, c = trCfg();
+                if (c.net !== 'live' || T.reduce || T.busy || (T.conf && String(T.conf).trim().toUpperCase() === 'TRADE')) { return _tg.apply(this, arguments); }
+                var C = tpCalc(); if (C.err) { return _tg.apply(this, arguments); }
+                function stopMsg(m) { T.log = ['⚠️ ' + m + ' Nothing was sent.']; try { renderView(true); } catch (e) { } }
+                if (S.rb && S.rb.lockUntil > Date.now()) { stopMsg('Real trading is locked for now (daily loss limit reached).'); return; }
+                if (!C.sl) { stopMsg('Real-money orders need a stop-loss. Switch Stop-loss on and set a price.'); return; }
+                T.log = ['Checking your balance for the 2% rule…']; try { renderView(true); } catch (e) { }
+                trFirst('GET', ['/fapi/v3/balance', '/fapi/v2/balance'], {}).then(function (b) {
+                    var u = (b || []).filter(function (x) { return x.asset === 'USDT'; })[0], eq = u ? +(u.crossWalletBalance || u.balance) : 0;
+                    if (!(eq > 0)) { throw new Error('Could not read your USDT futures balance.'); }
+                    if (C.lossAtSl > RISK * eq + 1e-9) { throw new Error('This trade risks about ' + C.lossAtSl.toFixed(2) + ' USDT if the stop is hit (fees included), more than 2% of your account (' + eq.toFixed(2) + ' USDT). Lower the amount or move the stop closer.'); }
+                    T.log = []; _tg.call(null);
+                }).catch(function (e) { stopMsg(e.message); });
+            };
+        } catch (e) { }
+        try {
+            var _nx = nxGo;
+            nxGo = function () {
+                var N = S.nx;
+                if (N.busy || !N.ack || N.mk !== 'fut' || N.reduce || (N.x === 'bitget' && N.demo)) { return _nx.apply(this, arguments); }
+                function stopMsg(m) { N.busy = 0; N.log = ['⚠️ ' + m + ' Nothing was sent.']; try { renderView(true); } catch (e) { } }
+                var sym = nxSym(), px = nxRef(sym), sl = +N.sl, lev = Math.max(1, +N.lev || 1), amt = +N.amt;
+                if (S.rb && S.rb.lockUntil > Date.now()) { stopMsg('Real trading is locked for now (daily loss limit reached).'); return; }
+                if (!(sl > 0)) { stopMsg('Real-money futures orders need a stop-loss price.'); return; }
+                if (!(px > 0) || !(amt > 0)) { return _nx.apply(this, arguments); }
+                N.busy = 1; N.log = ['Checking your balance for the 2% rule…']; try { renderView(true); } catch (e) { }
+                nxBal().then(function (b) {
+                    var av = b && b.usdt; if (!(av > 0)) { throw new Error('Could not read your balance.'); }
+                    var risk = amt * lev * (Math.abs(px - sl) / px + FEE);
+                    if (risk > RISK * av + 1e-9) { throw new Error('This trade risks about ' + risk.toFixed(2) + ' USDT if the stop is hit (fees included), more than 2% of your available balance (' + av.toFixed(2) + ' USDT). Lower the amount or leverage, or move the stop closer.'); }
+                    N.busy = 0; N.log = []; _nx.call(null);
+                }).catch(function (e) { stopMsg(e.message); });
+            };
+        } catch (e) { }
+        try { PF_APP.push(['stop loss required|needs a stop|refuses trade|more than 2%|nothing was sent', 'Why a real order is refused', 'For real money the app now requires a stop-loss on Trade Pro and on the Bitget/Bybit/OKX ticket, and refuses a trade that would lose more than 2% of your balance if the stop is hit (fees included). Fix: lower the amount or leverage, or move the stop closer to the price. Paper trades are not limited.']); } catch (e) { }
+    } catch (e) { try { console.error('p9rs', e); } catch (e2) { } }
+})();
+/* ===== p9sec: security hardening. (1) If the phone's secure storage is there but fails, an exchange/AI key is NOT saved in plain text any more. (2) Browser rules that block plug-ins, base-tag tricks and form posts to other sites. ===== */
+(function () {
+    try {
+        var SENS = /^mintoosuite_(tk|ts|x_[a-z]+)$/;
+        function toast(m) { try { var o = document.getElementById('secT'); if (o) { o.remove(); } o = document.createElement('div'); o.id = 'secT'; o.setAttribute('data-mwkeep', '1'); o.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(150px + env(safe-area-inset-bottom));z-index:2147483100;background:#7f1d1d;color:#fff;border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.4'; o.textContent = m; document.body.appendChild(o); setTimeout(function () { try { o.remove(); } catch (e) { } }, 9000); } catch (e) { } }
+        var _s = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (k, v) {
+            var r = _s.apply(this, arguments);
+            try {
+                if (this === window.localStorage && SENS.test(k) && String(v) !== 'enc:1' && String(v) !== '') {
+                    var n = null; try { n = mwNat(); } catch (e) { }
+                    if (n && n.secSet && window.localStorage[k] === String(v)) { Storage.prototype.removeItem.call(this, k); toast('Your phone could not save this key securely, so it was NOT saved. Restart the app and try again. Nothing was stored in plain text.'); }
+                }
+            } catch (e) { }
+            return r;
+        };
+        /* ads only for confirmed adults: tell the Android layer whether the user is a minor (no age answer yet counts as minor) */
+        function syncMinor() { try { var n = mwNat(), adult = false, raw = localStorage.getItem('mintoosuite_age18'); if (raw) { try { var j = JSON.parse(raw); adult = !!(j && (j.adult === 1 || j.adult === true)); } catch (e) { adult = raw === '1' || raw === 'true'; } } try { var P = window.__parent && window.__parent.state(); if (P && P.child) { adult = false; } } catch (e) { } if (n && n.setMinor) { n.setMinor(window.__mwTok, !adult); } } catch (e) { } }
+        setTimeout(syncMinor, 3000); setInterval(syncMinor, 8000);
+        try { var m = document.createElement('meta'); m.httpEquiv = 'Content-Security-Policy'; m.content = "object-src 'none'; base-uri 'self'; form-action 'self'"; document.head.appendChild(m); } catch (e) { }
+    } catch (e) { try { console.error('p9sec', e); } catch (e2) { } }
+})();
+/* ===== p9ui: layout fixes from the reviews: page title gets its own row (no overlap with the avatar and MENU), floating helper sits under the header, messages start under the header, Free-Pro card is compact, back button is a proper tap size ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '#mwtitlebar{margin-top:2px!important;padding:0 12px 6px!important;justify-content:center!important}'
+            + '#pfm.top{top:calc(env(safe-area-inset-top,0px) + 96px)!important}'
+            + '#twpop{top:calc(env(safe-area-inset-top,0px) + 98px)!important}'
+            + '#btnBack.nbtn{min-width:40px;min-height:40px}'
+            + '#mwtrial{padding:9px 12px!important}#mwtrial>div:nth-child(2){display:none!important}#mwtrial>div:first-child{font-size:14px!important}';
+        document.head.appendChild(st);
+    } catch (e) { try { console.error('p9ui', e); } catch (e2) { } }
+})();
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;

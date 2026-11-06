@@ -64,6 +64,8 @@ final class Bridge {
     /* ----- ads: the page tells us whether a banner may be shown on the current screen ----- */
     @JavascriptInterface
     public void adsShow(String tok, boolean show) { if (ok(tok)) { AdsHelper.show(show); } }
+    @JavascriptInterface
+    public void setMinor(String tok, boolean m) { if (ok(tok)) { AdsHelper.setMinor(m); } }
 
     /* ----- optional usage statistics (off until the user agrees) ----- */
     @JavascriptInterface
@@ -405,6 +407,9 @@ final class Bridge {
                 try {
                     java.net.URL u = new java.net.URL(url);
                     if (!"https".equals(u.getProtocol())) { throw new Exception("https only"); }
+                    for (java.net.InetAddress ia : java.net.InetAddress.getAllByName(u.getHost())) {
+                        if (ia.isLoopbackAddress() || ia.isSiteLocalAddress() || ia.isLinkLocalAddress() || ia.isAnyLocalAddress() || ia.isMulticastAddress()) { throw new Exception("blocked address"); }
+                    }
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
                     c.setInstanceFollowRedirects(false);
                     c.setConnectTimeout(8000);
@@ -415,7 +420,7 @@ final class Bridge {
                     java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
                     byte[] buf = new byte[8192];
                     int n, total = 0;
-                    while (in != null && (n = in.read(buf)) > 0 && total < 9000000) { bo.write(buf, 0, n); total += n; }
+                    while (in != null && (n = in.read(buf)) > 0 && total < 6000000) { bo.write(buf, 0, n); total += n; }
                     out = bo.toString("UTF-8");
                     good = code >= 200 && code < 300;
                 } catch (Exception e) { out = String.valueOf(e.getMessage()); }
