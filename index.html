@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-06.340';
+var BUILD = '2026-11-06.341';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -6165,7 +6165,7 @@ PF_TIPS.me = 'Swipe the cards sideways. Tap ✏️ Edit to choose your own short
             if (!a) { o.appendChild(b.cloneNode(true)); continue; }
             if (!same(a, b)) { o.replaceChild(b.cloneNode(true), a); continue; }
             if (a.nodeType !== 1) { if (a.nodeValue !== b.nodeValue) { a.nodeValue = b.nodeValue; } continue; }
-            if (a.getAttribute('data-svg')) { continue; }
+            if (a.getAttribute('data-svg')) { if (b.getAttribute('data-svg') && a.className === b.className) { continue; } o.replaceChild(b.cloneNode(true), a); continue; }
             if (a === document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(a.nodeName)) { continue; }
             if (a.nodeName === 'CANVAS' || a.nodeName === 'IFRAME') { if (a.outerHTML !== b.outerHTML) { o.replaceChild(b.cloneNode(true), a); } continue; }
             attrs(a, b);
@@ -15448,7 +15448,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function rows() {
             return LIST.map(function (r) {
                 var d = D[r[0]], up = d && d.pct >= 0, col = up ? '#0a84ff' : '#ff3b30';
-                return '<div style="display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid var(--line,#e5e5ea)">' +
+                var BM = { XAU: (typeof GOLD !== 'undefined' ? GOLD : 'XAUUSDT'), BTC: 'BTCUSDT', XAG: 'XAGUSDT', OIL: 'CLUSDT', EUR: 'EURUSDT' }, bs = BM[r[0]], act = bs && S.tick[bs] ? 'data-act="chart:' + bs + '"' : 'data-xk="cmpA:' + r[0] + '"';
+                return '<div class="tap" ' + act + ' style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid var(--line,#e5e5ea)">' +
                     '<div style="font-size:26px;width:34px;text-align:center">' + r[3] + '</div>' +
                     '<div style="flex:1.1;min-width:0"><b>' + r[1].replace(/^(.)/, '$1\u200b') + '</b><div class="note" style="margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + r[2] + '</div></div>' +
                     '<div style="flex:1.2;text-align:center">' + (d && d.pts ? spark(d.pts, d.prev, 110, 34, col) : '<span class="note">' + (d && d.err ? 'no data' : 'loading…') + '</span>') + '</div>' +
@@ -24801,28 +24802,27 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             } catch (e) { return ''; }
         }
         function bt(ic, t, w, c1, c2) { return '<div data-act="win:' + w + '" style="flex:1 1 0;text-align:center;min-width:64px;padding:0!important;margin:0!important;display:block!important"><div style="width:54px;min-width:54px;height:54px;flex:none;margin:0 auto 5px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:25px;background:linear-gradient(145deg,' + c1 + ',' + c2 + ');box-shadow:0 5px 14px ' + c2 + '66">' + ic + '</div><div style="font-size:12.5px;font-weight:700;white-space:nowrap">' + t + '</div></div>'; }
-        var HTOK = 0;
-        function installHero() {
-            var _vo = VIEWS.overview, my = ++HTOK;
-            if (typeof _vo !== 'function') { return; }
-            VIEWS.overview = function () {
-                var h = _vo.apply(this, arguments), n = who();
-                if (my !== HTOK) { return h; }
-                return '<div id="mwhero" style="border-radius:22px;padding:18px 16px 16px;margin:2px 0 16px;color:#fff;background:linear-gradient(135deg,#0b1f4a 0%,#3a2fb0 55%,#6a3df0 100%);box-shadow:0 10px 28px rgba(58,47,176,.35)">' +
+        function heroHtml() {
+            var n = who();
+            return '<div id="mwhero" style="border-radius:22px;padding:18px 16px 16px;margin:2px 0 16px;color:#fff;background:linear-gradient(135deg,#0b1f4a 0%,#3a2fb0 55%,#6a3df0 100%);box-shadow:0 10px 28px rgba(58,47,176,.35)">' +
                     '<div style="font-size:13px;opacity:.85">' + esc2(greet()) + (n ? ', ' + esc2(n) : '') + ' 👋</div>' +
                     '<div style="font-size:21px;font-weight:800;line-height:1.25;margin-top:3px">Trade smarter.<br>Protect your capital first.</div>' + btc() +
-                    '<div style="display:flex;gap:6px;margin-top:16px;background:rgba(255,255,255,.1);border-radius:18px;padding:12px 6px">' + bt('💡', 'Ideas', 'find', '#ffd60a', '#ff9f0a') + bt('🧪', 'Practice', 'trade', '#5ac8fa', '#0a84ff') + bt('👛', 'Wallet', 'wallet', '#30d158', '#0a8a35') + bt('🔔', 'Alerts', 'alerts', '#ff6b6b', '#d70015') + '</div></div>' + h;
-            };
+                    '<div style="display:flex;gap:6px;margin-top:16px;background:rgba(255,255,255,.1);border-radius:18px;padding:12px 6px">' + bt('💡', 'Ideas', 'find', '#ffd60a', '#ff9f0a') + bt('🧪', 'Practice', 'trade', '#5ac8fa', '#0a84ff') + bt('👛', 'Wallet', 'wallet', '#30d158', '#0a8a35') + bt('🔔', 'Alerts', 'alerts', '#ff6b6b', '#d70015') + '</div></div>';
         }
-        installHero(); setTimeout(installHero, 4000);
-        setInterval(function () {
+        /* the hero is one persistent element placed above the Home tiles (not part of the redrawn view), so coming back to Home never duplicates or jumps */
+        function placeHero() {
             try {
-                var all = document.querySelectorAll('#mwhero'), home = document.getElementById('mwHome'), wrap = home && home.parentElement, fresh = null, i;
-                if (S.win !== 'overview') { for (i = 0; i < all.length; i++) { if (all[i].parentElement !== document.getElementById('view')) { all[i].remove(); } } return; }
-                for (i = 0; i < all.length; i++) { if (all[i].parentElement && all[i].parentElement.id === 'view') { fresh = all[i]; } }
-                if (fresh && wrap) { for (i = 0; i < all.length; i++) { if (all[i] !== fresh) { all[i].remove(); } } wrap.insertBefore(fresh, home); }
+                var all = document.querySelectorAll('#mwhero'), home = document.getElementById('mwHome'), wrap = home && home.parentElement, i;
+                if (S.win !== 'overview' || !home || !wrap) { for (i = 0; i < all.length; i++) { all[i].remove(); } return; }
+                var el = all[0]; for (i = 1; i < all.length; i++) { all[i].remove(); }
+                var h = heroHtml();
+                if (!el) { var t = document.createElement('div'); t.innerHTML = h; el = t.firstChild; el.setAttribute('data-mwkeep', '1'); wrap.insertBefore(el, home); el.__h = h; return; }
+                if (el.parentNode !== wrap || el.nextSibling !== home) { wrap.insertBefore(el, home); }
+                if (el.__h !== h) { var t2 = document.createElement('div'); t2.innerHTML = h; el.innerHTML = t2.firstChild.innerHTML; el.__h = h; }
             } catch (e) { }
-        }, 700);
+        }
+        setInterval(placeHero, 700);
+        try { var _rvh = renderView; renderView = function () { var r = _rvh.apply(this, arguments); placeHero(); return r; }; } catch (e) { }
         /* Profile: screenshot permission */
         ['prof', 'account'].forEach(function (id) {
             var _vp = VIEWS[id];
@@ -24982,14 +24982,14 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         window.addEventListener('pointermove', function (e) { mv(e.clientX, e.clientY); }, true);
         window.addEventListener('touchmove', function (e) { var t = e.touches && e.touches[0]; if (t) { mv(t.clientX, t.clientY); } }, { capture: true, passive: true });
         document.addEventListener('scroll', function (e) { if (d && Date.now() - d.t < 3000) { d.s = 1; scrolledAt = Date.now(); try { scrollEl = e.target; } catch (x) { } } }, true);
-        window.addEventListener('pointercancel', function () { if (d) { until = Date.now() + 450; } }, true);
-        window.addEventListener('pointerup', function (e) { if (!d) { return; } mv(e.clientX, e.clientY); if (d.m > 10 || d.s) { until = Date.now() + 450; } }, true);
+        window.addEventListener('pointercancel', function () { if (d && d.m > 6) { until = Date.now() + 350; } }, true);
+        window.addEventListener('pointerup', function (e) { if (!d) { return; } mv(e.clientX, e.clientY); if (d.m > 12) { until = Date.now() + 350; } }, true);
         window.addEventListener('click', function (e) {
             try {
                 if (!d && Date.now() > until) { return; }
                 var inRow = d && d.el && d.el.closest && d.el.closest('.fmstrip,.segc,.mecar,.row5,.pkt,.tabs,[data-noswipe],[style*="overflow-x:auto"],[style*="overflow-x: auto"]');
-                var recent = Date.now() < until || (d && Date.now() - d.t < 1200 && (d.m > 10 || d.s));
-                if (recent && (inRow || d.m > 10 || d.s)) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
+                var recent = Date.now() < until || (d && Date.now() - d.t < 1200 && d.m > 12);
+                if (recent && (inRow || (d && d.m > 12))) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
             } catch (er) { }
         }, true);
     } catch (e) { try { console.log('p9scr', e); } catch (er) { } }
@@ -25242,6 +25242,64 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         }
         try { PF_APP.push(['fighting|fight game|bull vs bear|brawl|boxing game', 'Bull vs Bear Brawl', 'Money Quest > Arcade > Bull vs Bear Brawl: an arcade fighter. ◀ ▶ move, 👊 punch, 🛡 hold to block (takes 75% less damage). Each bear you beat makes the next one tougher; best streak is saved. It runs at your screen refresh rate and stops fully when you exit.']); MW_HELP.quest = (MW_HELP.quest || '') + ' Bull vs Bear Brawl is a fighting game in the Arcade.'; } catch (e) { }
     } catch (e) { try { console.log('p9fight', e); } catch (er) { } }
+})();
+/* ===== p9uni: four "other universe" looks in Look & mode: Xenon Hive, Quasar Core, Void Console, Plasma Rift. Colours, glow, mono type and HUD marks only; no layout changes, nothing is hidden or renamed ===== */
+(function () {
+    try {
+        var UK = 'mintoosuite_uni', LK = 'mintoosuite_look';
+        var U = {
+            xenon: { n: 'Xenon Hive', d: 'Alien bio-luminescence: toxic green on black', bg: '#02080a', card: '#06151a', line: 'rgba(60,255,170,.32)', tx: '#d9fff0', mut: '#6fbfa0', a: '#2dffa8', b: '#00c2ff', up: '#39ff9c', dn: '#ff3d71', mono: 1, glow: '60,255,170', sky: 'radial-gradient(900px 500px at 90% -10%,rgba(0,255,170,.16),transparent 60%),radial-gradient(700px 500px at -10% 20%,rgba(0,170,255,.12),transparent 60%),#02080a' },
+            quasar: { n: 'Quasar Core', d: 'Deep-space violet and molten gold', bg: '#06030f', card: '#120a26', line: 'rgba(255,200,90,.30)', tx: '#fff4e0', mut: '#b9a7d8', a: '#ffc15a', b: '#a45bff', up: '#ffd36b', dn: '#ff5d9a', mono: 0, glow: '255,190,90', sky: 'radial-gradient(1000px 600px at 80% -15%,rgba(255,170,60,.18),transparent 60%),radial-gradient(900px 600px at -10% 30%,rgba(140,60,255,.22),transparent 60%),#06030f' },
+            void: { n: 'Void Console', d: 'Black terminal, cyan wire-frame, monospace', bg: '#000000', card: '#05090d', line: 'rgba(0,229,255,.38)', tx: '#bff7ff', mut: '#4fa3b3', a: '#00e5ff', b: '#00e5ff', up: '#00ffd0', dn: '#ff2e63', mono: 1, glow: '0,229,255', sky: '#000' },
+            plasma: { n: 'Plasma Rift', d: 'Magenta and electric blue energy field', bg: '#0a0213', card: '#170626', line: 'rgba(255,60,200,.34)', tx: '#ffe8fb', mut: '#c79bd9', a: '#ff3cc8', b: '#3c7dff', up: '#37f6ff', dn: '#ff4d6d', mono: 0, glow: '255,60,200', sky: 'radial-gradient(900px 560px at 85% -10%,rgba(255,60,200,.22),transparent 60%),radial-gradient(900px 560px at -10% 25%,rgba(60,125,255,.22),transparent 60%),#0a0213' }
+        };
+        function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function sv(k, v) { try { if (v === null) { localStorage.removeItem(k); } else { localStorage.setItem(k, v); } } catch (e) { } }
+        function css(k) {
+            var u = U[k], h = 'html.mwu-' + k, mono = u.mono ? 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace' : 'inherit';
+            return h + '{--bg:' + u.bg + ';--card:' + u.card + ';--line:' + u.line + ';--tx:' + u.tx + ';--mut:' + u.mut + ';--fill:rgba(' + u.glow + ',.10);--blu:' + u.a + ';--grn:' + u.up + ';--red:' + u.dn + ';--glass:' + u.bg + 'f2}' +
+                h + ' body{background:' + u.sky + '!important;color:' + u.tx + ';font-family:' + mono + '}' +
+                h + ' .group,' + h + ' .m7card,' + h + ' .tile,' + h + ' .xkcard{background:linear-gradient(160deg,' + u.card + 'f5,' + u.bg + 'f5)!important;border:1px solid ' + u.line + ';border-radius:6px!important;box-shadow:0 0 0 1px rgba(' + u.glow + ',.10),0 0 22px rgba(' + u.glow + ',.10) inset}' +
+                h + ' .btn:not(.sec){background:linear-gradient(135deg,' + u.a + ',' + u.b + ')!important;color:#02080a!important;border:0;border-radius:4px!important;font-weight:800;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 0 18px rgba(' + u.glow + ',.45)}' +
+                h + ' .btn.sec{background:rgba(' + u.glow + ',.10)!important;color:' + u.tx + '!important;border:1px solid ' + u.line + ';border-radius:4px!important}' +
+                h + ' .tabs,' + h + ' .nav{background:' + u.bg + 'f7!important;border-color:' + u.line + '!important}' +
+                h + ' .tab.on{color:' + u.a + '!important;text-shadow:0 0 14px rgba(' + u.glow + ',.95)}' + h + ' .tab.on svg{filter:drop-shadow(0 0 6px rgba(' + u.glow + ',.95))}' +
+                h + ' .segc .on,' + h + ' .m7row span.on,' + h + ' .fmstrip button[style*="#0a84ff"]{background:linear-gradient(135deg,' + u.a + ',' + u.b + ')!important;color:#02080a!important;box-shadow:0 0 14px rgba(' + u.glow + ',.55)}' +
+                h + ' .sh{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.18em;color:' + u.a + '!important}' + h + ' .sh:before{content:"◢ "}' +
+                h + ' .up,' + h + ' .chg.up{color:' + u.up + '!important;text-shadow:0 0 10px rgba(' + u.glow + ',.5)}' + h + ' .dn,' + h + ' .chg.dn{color:' + u.dn + '!important}' +
+                h + ' input,' + h + ' textarea,' + h + ' select{background:rgba(' + u.glow + ',.08)!important;color:' + u.tx + '!important;border:1px solid ' + u.line + '!important;border-radius:4px!important;font-family:' + mono + '}' +
+                h + ' .px,' + h + ' [data-px]{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}' + h + ' .px{text-shadow:0 0 16px rgba(' + u.glow + ',.45)}' +
+                h + ' #mwhero{background:linear-gradient(135deg,' + u.bg + ',' + u.card + ' 55%,rgba(' + u.glow + ',.25))!important;border:1px solid ' + u.line + ';border-radius:6px!important;box-shadow:0 0 30px rgba(' + u.glow + ',.25)!important}' +
+                h + ' body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:2;background:repeating-linear-gradient(0deg,rgba(' + u.glow + ',.035) 0 1px,transparent 1px 3px);mix-blend-mode:screen}' +
+                h + ' .mecar>div,' + h + ' .kpc{border-radius:6px!important}';
+        }
+        var st = document.createElement('style'); st.id = 'mwunicss'; st.setAttribute('data-mwkeep', '1'); st.textContent = Object.keys(U).map(css).join('') +
+            '.mwuni{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.mwuni .u{padding:14px 10px;border-radius:10px;border:2px solid transparent;cursor:pointer;color:#fff;min-height:86px}.mwuni .u.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.5)}.mwuni b{display:block;font-size:15px}.mwuni small{opacity:.85;font-size:11.5px}';
+        document.head.appendChild(st);
+        function paint() {
+            try {
+                var h = document.documentElement, k = g(UK), i;
+                Object.keys(U).forEach(function (x) { h.classList.toggle('mwu-' + x, x === k); });
+                if (k && U[k]) { h.classList.add('mwneon'); h.setAttribute('data-theme', 'dark'); }
+            } catch (e) { }
+        }
+        var _at = applyTheme; applyTheme = function () { var r = _at.apply(this, arguments); paint(); return r; };
+        paint();
+        var _vl = VIEWS.look;
+        VIEWS.look = function () {
+            var h = typeof _vl === 'function' ? _vl.apply(this, arguments) : '', k = g(UK);
+            var c = '<div class="group pad"><b>🌌 Other universes</b><div class="note" style="margin:4px 0 0">Four alien-tech looks. Only colours, glow and type change; every button stays where it was. The mono-type ones read like a flight console, so use Classic or Neon whenever you want the plain look.</div><div class="mwuni">' +
+                Object.keys(U).map(function (x) { return '<div class="u ' + (k === x ? 'on' : '') + '" data-uni="' + x + '" style="background:linear-gradient(135deg,' + U[x].bg + ',' + U[x].a + '66)"><b style="color:' + U[x].a + '">' + U[x].n + '</b><small>' + U[x].d + '</small></div>'; }).join('') + '</div>' + (k ? '<button class="btn sec" data-uni="off" style="margin-top:10px">Leave this universe</button>' : '') + '</div>';
+            return c + h;
+        };
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-uni]') : null;
+            if (el) { e.preventDefault(); e.stopPropagation(); var v = el.getAttribute('data-uni'); if (v === 'off') { sv(UK, null); sv(LK, 'classic'); try { document.documentElement.classList.remove('mwneon'); } catch (x) { } } else if (U[v]) { sv(UK, v); sv(LK, 'neon'); } paint(); try { applyTheme(); } catch (x) { } try { renderView(true); } catch (x) { } return; }
+            var o = e.target.closest ? e.target.closest('[data-lk],[data-act^="theme:"]') : null;
+            if (o && g(UK)) { var d = o.getAttribute('data-lk') || ''; if (!/^look:neon/.test(d)) { sv(UK, null); paint(); } }
+        }, true);
+        try { PF_APP.push(['universe|alien theme|xenon|quasar|void console|plasma rift|sci-fi theme', 'Universe looks', 'Menu > Look & mode > Other universes: Xenon Hive (toxic green), Quasar Core (violet and gold), Void Console (black and cyan terminal), Plasma Rift (magenta and blue). They only change colours and type. Tap Leave this universe, or choose Classic or Neon, to go back.']); MW_HELP.look = (MW_HELP.look || '') + ' Look & mode also has four Other universes looks.'; } catch (e) { }
+    } catch (e) { try { console.log('p9uni', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
