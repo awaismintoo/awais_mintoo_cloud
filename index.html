@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-06.342';
+var BUILD = '2026-11-06.346';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -9709,12 +9709,14 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     }
     /* ----- sending (both the chat window and the floating panel) ----- */
     function thumbs(atts) { return (atts || []).map(function (a) { return a.kind === 'image' ? '<br><img src="' + a.dataUrl + '" style="max-width:100%;max-height:140px;border-radius:10px;margin-top:4px">' : '<br><span class="pfbtn" style="pointer-events:none">' + (a.kind === 'audio' ? '🎧' : a.kind === 'video' ? '🎬' : '📄') + ' ' + esc(a.name) + '</span>'; }).join(''); }
-    var LINKMAP = [[/vwap|obv|fibonacci|stochastic|bollinger|atr|ema|macd|rsi|candle|indicator|support|resistance|trend|channel|swing|diverg/i, 'chart', 'Open a chart'], [/grid|dca|bot baba|baba real bot|baba practice bot|real bot|practice bot|smart guard|ut bot|bot\b/i, 'bots', 'Bots'], [/strategy agent|strategy/i, 'agent', 'Strategy Agent'], [/exness|gold desk|gold|forex/i, 'exdesk', 'Exness Desk'], [/money quest|challenge/i, 'quest', 'Money Quest'], [/signal lab|backtest|win rate|prove/i, 'siglab', 'Signal Lab'], [/ai signal|signal/i, 'signals', 'AI Signals'], [/best pick|idea|top pick|what to buy|which coin/i, 'ideas', 'Ideas'], [/news|headline/i, 'news', 'News'], [/market|price|gainer|loser|mover/i, 'market', 'Markets'], [/practice|paper|virtual/i, 'paper', 'Paper Bot'], [/learn|lesson|beginner|what is|how does/i, 'academy', 'Academy'], [/risk|stop.?loss|leverage|lose/i, 'safety', 'Safety'], [/look|theme|colou?r/i, 'look', 'Look & mode'], [/mexc/i, 'mexcd', 'MEXC coins'], [/bitget/i, 'bitget', 'Bitget']];
+    var LINKMAP = [[/vwap|obv|fibonacci|stochastic|bollinger|atr|ema|macd|rsi|candle|indicator|support|resistance|trend|channel|swing|diverg/i, 'chart', 'Open a chart'], [/grid|dca|bot baba|baba real bot|baba practice bot|real bot|practice bot|smart guard|ut bot|bot\b/i, 'bots', 'Bots'], [/strategy agent|strategy/i, 'agent', 'Strategy Agent'], [/exness|gold desk|gold|forex/i, 'exdesk', 'Exness Desk'], [/money quest|challenge|game|arcade|racer|racing|brawl|fight/i, 'quest', 'Money Quest'], [/signal lab|backtest|win rate|prove/i, 'siglab', 'Signal Lab'], [/ai signal|signal/i, 'signals', 'AI Signals'], [/best pick|idea|top pick|what to buy|which coin/i, 'ideas', 'Ideas'], [/news|headline/i, 'news', 'News'], [/market|price|gainer|loser|mover/i, 'market', 'Markets'], [/practice|paper|virtual/i, 'paper', 'Paper Bot'], [/learn|lesson|beginner|what is|how does/i, 'academy', 'Academy'], [/risk|stop.?loss|leverage|lose/i, 'safety', 'Safety'], [/look|theme|colou?r/i, 'look', 'Look & mode'], [/mexc/i, 'mexcd', 'MEXC coins'], [/bitget/i, 'bitget', 'Bitget']];
+    var EXTMAP = [[/binance/i, 'Binance', 'https://www.binance.com/'], [/mexc/i, 'MEXC', 'https://www.mexc.com/'], [/bitget/i, 'Bitget', 'https://www.bitget.com/'], [/exness/i, 'Exness', 'https://www.exness.com/'], [/tradingview|chart pattern|indicator/i, 'TradingView', 'https://www.tradingview.com/'], [/coingecko|market cap|coin info|tokenomics/i, 'CoinGecko', 'https://www.coingecko.com/'], [/coinmarketcap/i, 'CoinMarketCap', 'https://coinmarketcap.com/'], [/psx|pakistan stock|kse/i, 'Pakistan Stock Exchange', 'https://www.psx.com.pk/'], [/state bank|sbp|rupee|pkr|exchange rate/i, 'State Bank of Pakistan', 'https://www.sbp.org.pk/'], [/investopedia|what is|how does/i, 'Investopedia', 'https://www.investopedia.com/']];
     function linkRow(q, r) {
         try {
             var t = (r.title || '') + ' ' + q + ' ' + plain(r.html || '').slice(0, 160), seen = {}, h = '', n = 0, ids = {}; (window.WINS || []).forEach(function (w) { ids[w.id] = 1; }); ids.chart = 1;
-            if (/data-act="win:/.test(r.html || '')) { return ''; }
-            LINKMAP.forEach(function (m) { if (n < 3 && m[0].test(t) && !seen[m[1]] && ids[m[1]]) { seen[m[1]] = 1; n++; h += '<span class="pfbtn" data-act="win:' + m[1] + '">➡ ' + m[2] + '</span>'; } });
+            var hasWin = /data-act="win:/.test(r.html || '');
+            if (!hasWin) { LINKMAP.forEach(function (m) { if (n < 4 && m[0].test(t) && !seen[m[1]] && ids[m[1]]) { seen[m[1]] = 1; n++; h += '<span class="pfbtn" data-act="win:' + m[1] + '">➡ ' + m[2] + '</span>'; } }); }
+            var xs = 0; EXTMAP.forEach(function (m) { if (xs < 3 && m[0].test(t)) { xs++; h += '<a class="pfbtn" href="' + m[2] + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">🔗 ' + m[1] + ' (official site)</a>'; } });
             var c = String(q).match(/\b(btc|eth|sol|bnb|xrp|doge|ada|ton|avax|link|dot|trx|ltc|pepe|shib|sui|apt|arb|near)\b/i); if (c) { h += '<a class="pfbtn" href="https://www.tradingview.com/symbols/' + c[1].toUpperCase() + 'USDT/" target="_blank" rel="noopener noreferrer" style="text-decoration:none">📺 ' + c[1].toUpperCase() + ' on TradingView</a>'; }
             if (!r.local && !r.pending) { var qq = encodeURIComponent(String(q).slice(0, 120)); h += '<a class="pfbtn" href="https://www.google.com/search?q=' + qq + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">🔎 Google</a><a class="pfbtn" href="https://www.investopedia.com/search?q=' + qq + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none">📘 Investopedia</a>'; }
             var rep = '<a class="pfbtn" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('Report a Baba AI answer') + '&body=' + encodeURIComponent('Question: ' + String(q).slice(0, 300) + '\n\nWhat was wrong with the answer:\n') + '" style="text-decoration:none;opacity:.75;font-size:12px">🚩 Report this answer</a>';
@@ -16768,12 +16770,13 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             if (KX.jr !== 'on') { if (el) { el.remove(); } return; }
             var K = m.K, calls = journal().filter(function (j) { return j.sym === m.sym && j.t0 >= K[0].t; }), Y = m.yr || m.y, T = { n: 0, w: 0, l: 0, x: 0, o: 0, a: 0 }, u = window.__lastUT && window.__lastUT.u;
             c.save(); c.beginPath(); c.rect(0, m.padT, m.W, m.ph); c.clip(); c.font = '700 9px -apple-system,Segoe UI,sans-serif'; c.textAlign = 'center';
+            window.__callHits = [];
             calls.forEach(function (j) {
                 var i = idxAt(K, j.t0); if (i < 0) { return; }
                 T.n++; if (j.st === 'win') { T.w++; } else if (j.st === 'loss') { T.l++; } else if (j.st === 'exp') { T.x++; } else { T.o++; }
                 if (u && u.pos && u.pos[i] === (j.side === 'LONG' ? 1 : -1)) { T.a++; }
                 if (i < m.start || i >= m.end) { return; }
-                var x = m.xs(i), y = Y(j.px0), r = 7, ring = j.st === 'win' ? '#16a34a' : j.st === 'loss' ? '#dc2626' : j.st === 'exp' ? '#f59e0b' : '#ffffff';
+                var x = m.xs(i), y = Y(j.px0), r = 7, hit = window.__callHits.push({ x: x, y: y, j: j }), ring = j.st === 'win' ? '#16a34a' : j.st === 'loss' ? '#dc2626' : j.st === 'exp' ? '#f59e0b' : '#ffffff';
                 c.beginPath(); c.moveTo(x, y - r); c.lineTo(x + r, y); c.lineTo(x, y + r); c.lineTo(x - r, y); c.closePath();
                 c.fillStyle = j.side === 'LONG' ? '#0a84ff' : '#a855f7'; c.fill(); c.lineWidth = 2.4; c.strokeStyle = ring; c.stroke();
                 c.fillStyle = j.side === 'LONG' ? '#0a84ff' : '#a855f7'; c.fillText(j.side === 'LONG' ? 'CALL ▲' : 'CALL ▼', x, j.side === 'LONG' ? y + r + 10 : y - r - 4);
@@ -16785,7 +16788,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
         /* ---------- drawing tools ---------- */
         var DK = 'mintoosuite_draw', DR = {}; try { DR = JSON.parse(localStorage.getItem(DK) || '{}') || {}; } catch (e) { DR = {}; }
-        var DS = { tool: '', pend: null }; window.__drawOn = function () { return !!DS.tool; };
+        var DS = { tool: '', pend: null }; window.__drHidden = function () { return !!DS.hide; }; window.__drawOn = function () { return !!DS.tool; };
         function dsave() { try { localStorage.setItem(DK, JSON.stringify(DR)); } catch (e) { } }
         function mine() { var s = sym0(); return DR[s] || (DR[s] = []); }
         var DCOL = '#f59e0b', TOOLS = [['h', '― Line'], ['v', '| Vertical'], ['t', '⟋ Trend'], ['ray', '↗ Ray'], ['ext', '↔ Extended'], ['arr', '➚ Arrow'], ['rect', '▭ Box'], ['ch', '▤ Channel'], ['f', 'Fib'], ['fx', 'Fib ext'], ['meas', '📏 Measure'], ['long', '▲ Long'], ['short', '▼ Short'], ['txt', 'T Text'], ['brush', '✎ Brush'], ['del', '🗑 Delete one']], NPT = { h: 1, v: 1, txt: 1, t: 2, ray: 2, ext: 2, arr: 2, rect: 2, f: 2, fx: 2, meas: 2, long: 2, short: 2, ch: 3 }, BR = null;
@@ -17088,9 +17091,18 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         function bar() { var el = document.getElementById('ctBar'); if (el) { el.innerHTML = barHtml(); } }
         function barHtml() {
             var h = '<span class="' + (KX.jr === 'on' ? 'on' : '') + '" data-xk="jr:' + (KX.jr === 'on' ? 'off' : 'on') + '">App calls</span>';
+            var allOff = KX.jr !== 'on' && KX.bs === 'off' && KX.ut === 'off' && KX.sr === 'off' && !!DS.hide;
+            h = '<span class="' + (allOff ? '' : 'on') + '" data-xk="mk:' + (allOff ? 'show' : 'hide') + '">👁 ' + (allOff ? 'Show all marks' : 'Hide all marks') + '</span>' + h;
             h += '<span data-xk="drfull:1">⛶ Draw tools (full screen)</span>';
             return h;
         }
+        X.on('mk', function (v) {
+            var hide = v === 'hide';
+            if (hide) { KX.jr = 'off'; KX.bs = 'off'; KX.ut = 'off'; KX.sr = 'off'; } else { KX.jr = 'on'; KX.bs = 'on'; KX.ut = 'on'; KX.sr = 'on'; }
+            if (!!DS.hide !== hide) { DS.hide = hide ? 1 : 0; }
+            X.save(); redraw(); bar(); try { var t = document.getElementById('jrInfo'); if (t && hide) { t.remove(); } if (typeof renderView === 'function') { renderView(); } } catch (e) { }
+            say(hide ? 'All marks hidden: calls, Baba signals, UT Bot, support/resistance and drawings. Tap again to show.' : 'All marks shown');
+        });
         X.on('jr', function (v) { KX.jr = v; X.save(); redraw(); bar(); if (v !== 'on') { var t = document.getElementById('jrInfo'); if (t) { t.remove(); } } });
         X.on('drcat', function (v) { DS.cat = v; bar(); });
         X.on('drc', function (v) { DCOL = '#' + v; bar(); });
@@ -17135,6 +17147,32 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         window.__cxOver = function (c, m) { LM = m; if (_co) { _co(c, m); } try { drawCalls(c, m); } catch (e) { } try { drawDraw(c, m); } catch (e) { } };
         window.__ct = { DR: DR, DS: DS, coins: coins };
     } catch (err) { try { console.log('cfo', err); } catch (e) { } }
+})();
+
+;(function () {
+    try {
+        var X = window.__kx, e2 = X.e2;
+        function pk(t) { try { return new Date(t).toLocaleString('en-GB', { timeZone: 'Asia/Karachi', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) + ' PKT'; } catch (e) { return new Date(t).toLocaleString(); } }
+        function fpx(v, sym) { try { return fp(v, sym); } catch (e) { return String(+v.toPrecision(6)); } }
+        function pop(j) {
+            var o = document.getElementById('callPop'); if (!o) { o = document.createElement('div'); o.id = 'callPop'; o.setAttribute('data-noswipe', '1'); document.body.appendChild(o); }
+            var long = j.side === 'LONG', st = j.st === 'win' ? ['✅ Hit target', '#16a34a'] : j.st === 'loss' ? ['❌ Hit stop-loss', '#dc2626'] : j.st === 'exp' ? ['⌛ Expired without reaching target or stop', '#d97706'] : ['⏳ Still open', '#2563eb'];
+            var h = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px">' + (long ? '🟢 LONG (buy side)' : '🔴 SHORT (sell side)') + ' call on ' + e2(j.sym) + (j.best ? ' ⭐' : '') + '</b><span id="callPopX" style="padding:4px 10px;font-weight:800;cursor:pointer">✕</span></div>' +
+                '<div style="color:' + st[1] + ';font-weight:800;margin:4px 0">' + st[0] + (typeof j.r === 'number' ? ' · result ' + (j.r >= 0 ? '+' : '') + j.r.toFixed(2) + '% after fees (price move, not leveraged)' : '') + '</div>' +
+                '<div style="line-height:1.55;font-size:13px">Called: <b>' + pk(j.t0) + '</b><br>Entry price: <b>' + fpx(j.px0, j.sym) + '</b><br>Target: <b>' + fpx(j.tp, j.sym) + '</b> (' + (long ? '+' : '-') + (+j.tpP || 0).toFixed(2) + '%)<br>Stop-loss: <b>' + fpx(j.sl, j.sym) + '</b> (' + (long ? '-' : '+') + (+j.slP || 0).toFixed(2) + '%)<br>Valid until: <b>' + pk(j.to) + '</b>' + (j.t1 ? '<br>Closed: <b>' + pk(j.t1) + '</b>' : '') + '</div>' +
+                (j.why && j.why.length ? '<div style="margin-top:6px;font-size:12.5px"><b>Notes:</b> ' + j.why.map(e2).join('; ') + '</div>' : '') +
+                '<div class="note" style="margin:8px 0 0;font-size:11.5px">This is one of the app\u2019s own past calls, saved in its call journal. It is a record, not advice, and past calls do not guarantee future results.</div>';
+            o.style.cssText = 'position:fixed;left:10px;right:10px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:99999;background:var(--bg,#fff);color:var(--tx,#111);border:1px solid var(--line,#d1d1d6);border-radius:16px;padding:12px 14px;box-shadow:0 8px 30px rgba(0,0,0,.28);max-height:55vh;overflow:auto;display:block';
+            o.innerHTML = h;
+        }
+        document.addEventListener('click', function (e) {
+            if (e.target && e.target.id === 'callPopX') { var o = document.getElementById('callPop'); if (o) { o.style.display = 'none'; } return; }
+            var cv = e.target && e.target.id === 'cv' ? e.target : null; if (!cv || window.__drawOn && window.__drawOn() || !window.__callHits || !window.__callHits.length) { return; }
+            var r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, best = null, bd = 22;
+            window.__callHits.forEach(function (h) { var d = Math.hypot(h.x - x, h.y - y); if (d < bd) { bd = d; best = h; } });
+            if (best) { e.stopImmediatePropagation(); e.preventDefault(); pop(best.j); }
+        }, true);
+    } catch (e) { try { console.log('callpop', e); } catch (er) { } }
 })();
 /* ===== CG: p9zszzp: signal upgrades (early warning, forming candle, 30-day record, fast alerts), Baba Real Bot (real) upgrade, grid + DCA practice, fingerprint log-in, offline language packs ===== */
 (function () {
@@ -25301,6 +25339,23 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         try { PF_APP.push(['universe|alien theme|xenon|quasar|void console|plasma rift|sci-fi theme', 'Universe looks', 'Menu > Look & mode > Other universes: Xenon Hive (toxic green), Quasar Core (violet and gold), Void Console (black and cyan terminal), Plasma Rift (magenta and blue). They only change colours and type. Tap Leave this universe, or choose Classic or Neon, to go back.']); MW_HELP.look = (MW_HELP.look || '') + ' Look & mode also has four Other universes looks.'; } catch (e) { }
     } catch (e) { try { console.log('p9uni', e); } catch (er) { } }
 })();
+/* ===== p9fin342: Baba AI + in-app help refreshed for build 342 ===== */
+(function () {
+    try {
+        function add(r, t, x) { try { PF_APP.push([r, t, x]); } catch (e) { } }
+        add('biggest movers|movers today|prepare not ready|home movers', 'Biggest movers (Home)', 'Home > Biggest movers today shows the coins moving most right now. Tap a coin to open its chart, details, bots view and Baba recommendation. A big move can reverse quickly; it is information, not advice.');
+        add('convert|rates picker|currency converter|select currency', 'Rates converter', 'Rates > tap the From or To box and pick any currency from the list; type to search. Rates are indicative market rates, not what a bank or Easypaisa/JazzCash will give you.');
+        add('hours|rates local|local market hours|shop hours', 'Local market: Hours & rates', 'Local market & offers > Hours & rates tab: opening hours and indicative local rates. Check with the shop before travelling; prices change.');
+        add('money quest|where are games|where is money quest|games|arcade', 'Where are the games', 'More > Learn and help > Money Quest (also the Home Money Quest tile). Arcade has Candle Reader, Risk Sizer, Scam Spotter, Rule Rush, Candle Racer (racing) and Bull vs Bear Brawl (fighting). All virtual: XP and levels only, no real money.');
+        add('swipe|scroll chips|accidentally selected|tap vs swipe', 'Swiping vs tapping', 'Swiping a row of chips or tiles sideways no longer selects anything. Only a clean tap selects. If a tap does nothing, an explanation pops up instead of staying silent.');
+        add('exness desk live|tap row chart|open chart from list', 'Tapping a row', 'Tapping a coin or market row (Home movers, favourites, Exness Desk live markets) opens its chart with details, bots and the recommendation. Rows in other lists are being added step by step.');
+        add('bots now|which bots|bot list|all bots|bot update', 'Bots: current list', 'Baba Practice Bot uses virtual money. Baba Real Bot trades real money only after you unlock it and follows the safety rules: small risk per trade, daily loss lock, stop-loss always, no withdrawals. Bots never guarantee profit. Check Proof and Bots tabs for honest results.');
+        MW_HELP.overview = (MW_HELP.overview || '') + ' Money Quest games are in More > Learn and help.';
+    } catch (e) { try { console.log('p9fin342', e); } catch (er) { } }
+})();
+;(function () { try { PF_APP.push(['hide marks|show marks|hide calls|past calls|purple|diamond|hide lines|clean chart|remove signals', 'Hide or show chart marks', 'On any chart tap 👁 Hide all marks (slim row under the chart) to clear everything at once: your past app calls (diamonds: blue = long, purple = short, ring colour = result), Baba signals, UT Bot arrows, support/resistance and your drawn lines. Tap Show all marks to bring them back. Each one also has its own switch: App calls, 🧓 Baba signals, UT Bot, Support/Resistance and Hide in Draw tools. Nothing is deleted.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['tap call|call details|diamond details|what is call|call symbol|past call details', 'Tap a call on the chart', 'On a chart, tap any diamond marked CALL (blue = long, purple = short; ring colour = result: green won, red lost, orange expired, white still open). A box opens with the side, time (PKT), entry price, target, stop-loss, valid-until time, result after fees and any notes. Tap ✕ to close. It is a record of the app\\u2019s own past call, not advice. Turn the diamonds off with 👁 Hide all marks or App calls.']); MW_HELP.chart = (MW_HELP.chart || '') + ' Tap a CALL diamond to see that call\\u2019s details.'; } catch (e) { } })();
+;(function () { try { PF_APP.push(['link|hyperlink|give me link|open link|website|official site', 'Links from Baba AI', 'Under every Baba AI answer you now get tap-able links: ➡ buttons that open the right screen inside the app (chart, bots, Money Quest, Exness Desk, Signal Lab…), 🔗 official websites when you mention Binance, MEXC, Bitget, Exness, TradingView, CoinGecko, PSX or the State Bank of Pakistan, plus Google and Investopedia searches. Always check that the address is the real one before logging in anywhere. Baba never asks for passwords or keys.']); } catch (e) { } })();
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
