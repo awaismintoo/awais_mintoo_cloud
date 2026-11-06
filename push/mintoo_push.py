@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Muhammad Awais. All rights reserved. Baba Signal engine and MintooSuite are original works of Muhammad Awais.
 """MintooSuite closed-app alerts: runs on GitHub (free) every 15 minutes, looks at the biggest USDT futures coins,
 and sends ONE short push to every phone that switched on 'Alerts when the app is closed'.
-Rule ("Baba pick"): the UT Bot trailing stop (key 2, ATR 10) flips on the last CLOSED 15m candle AND price is on the
+Rule ("UT Bot"): the UT Bot trailing stop (key 2, ATR 10) flips on the last CLOSED 15m candle AND price is on the
 right side of the EMA 50. This is a statistical idea, not a promise of profit. No personal data is used or stored."""
 import json, os, sys, time, urllib.request
 
@@ -92,6 +93,73 @@ def check(kl, now_ms):
     return None
 
 
+def _atr(h, l, c, n=14):
+    out, a = [], 0.0
+    for i in range(len(c)):
+        tr = (h[i] - l[i]) if i == 0 else max(h[i] - l[i], abs(h[i] - c[i - 1]), abs(l[i] - c[i - 1]))
+        a = (a * i + tr) / (i + 1) if i < n else (a * (n - 1) + tr) / n
+        out.append(a)
+    return out
+
+
+def _rsi(c, n=14):
+    out, g, lo = [50.0], 0.0, 0.0
+    for i in range(1, len(c)):
+        d = c[i] - c[i - 1]
+        if i <= n:
+            g += max(0, d); lo += max(0, -d)
+            if i == n:
+                g /= n; lo /= n
+            out.append(50.0); continue
+        g = (g * (n - 1) + max(0, d)) / n; lo = (lo * (n - 1) + max(0, -d)) / n
+        out.append(100.0 if lo == 0 else 100 - 100 / (1 + g / lo))
+    return out
+
+
+def _adx(h, l, c, n=14):
+    out, tr, pd, md, adx = [0.0], 0.0, 0.0, 0.0, 0.0
+    for i in range(1, len(c)):
+        up, dn = h[i] - h[i - 1], l[i - 1] - l[i]
+        t = max(h[i] - l[i], abs(h[i] - c[i - 1]), abs(l[i] - c[i - 1]))
+        tr = tr - tr / n + t; pd = pd - pd / n + (up if up > dn and up > 0 else 0); md = md - md / n + (dn if dn > up and dn > 0 else 0)
+        pdi = 100 * pd / tr if tr else 0; mdi = 100 * md / tr if tr else 0
+        dx = 100 * abs(pdi - mdi) / (pdi + mdi) if pdi + mdi else 0
+        adx = dx if i < n else (adx * (n - 1) + dx) / n
+        out.append(adx)
+    return out
+
+
+def baba_signal(kl, now_ms, lb=12, vmul=1.3):
+    """Baba Signal (own engine, same rules as the app): a fresh breakout of the last `lb` candles on a strong candle with a volume
+    surge, passing 6 checks (trend, strength, RSI, volume, momentum, candle). Returns 'BUY' / 'SELL' / None for the last closed candle."""
+    if len(kl) < 80:
+        return None
+    last = kl[-2] if now_ms < int(kl[-1][6]) else kl[-1]
+    kl = kl[:kl.index(last) + 1]
+    if now_ms - int(last[6]) > MAX_AGE_MIN * 60000:
+        return None
+    o = [float(k[1]) for k in kl]; h = [float(k[2]) for k in kl]; l = [float(k[3]) for k in kl]; c = [float(k[4]) for k in kl]; v = [float(k[5]) for k in kl]
+    i = len(c) - 1
+    at = _atr(h, l, c)[i]; rs = _rsi(c); ax = _adx(h, l, c); e21 = ema(c, 21); e55 = ema(c, 55)
+    e12 = ema(c, 12); e26 = ema(c, 26); mac = [a - b for a, b in zip(e12, e26)]; sg = ema(mac, 9); hist = [a - b for a, b in zip(mac, sg)]
+    vm = sum(v[i - 19:i + 1]) / 20.0
+    hh = max(h[i - lb:i]); ll = min(l[i - lb:i]); body = abs(c[i] - o[i])
+    longs = c[i] > hh and c[i] > o[i]; shorts = c[i] < ll and c[i] < o[i]
+    if not (longs or shorts) or body < 0.5 * at or v[i] < vmul * vm:
+        return None
+    ok = [
+        (c[i] > e55[i] and e21[i] > e21[i - 3]) if longs else (c[i] < e55[i] and e21[i] < e21[i - 3]),
+        ax[i] >= 18 or (ax[i] >= 14 and ax[i] > ax[i - 2]),
+        (48 <= rs[i] <= 72) if longs else (28 <= rs[i] <= 52),
+        (hist[i] > 0 or hist[i] > hist[i - 1]) if longs else (hist[i] < 0 or hist[i] < hist[i - 1]),
+        True,
+        body <= 2.5 * at and abs(c[i] - e21[i]) <= 2.2 * at,
+    ]
+    if all(ok):
+        return 'BUY' if longs else 'SELL'
+    return None
+
+
 def pick_coins():
     return [c + 'USDT' for c in TOP[:COINS]]
 
@@ -162,18 +230,26 @@ def main():
     sa = json.loads(raw) if raw else {}
     now = int(time.time() * 1000)
     hits = []
+    bhits = []
     for s in pick_coins():
         try:
             kl = klines(s)
             r = check(kl, now)
             if r:
                 hits.append((s, r, float(kl[-2][4])))
+            b = baba_signal(kl, now)
+            if b:
+                bhits.append((s, b, float(kl[-2][4])))
         except Exception as e:
             print('skip', s, e)
     print('hits', hits)
+    print('baba hits', bhits)
+    for s, r, p in bhits[:2]:
+        name = s[:-4]
+        send(sa, 'Baba Signal: %s %s' % (name, 'LONG' if r == 'BUY' else 'SHORT'), 'Early breakout on %s near %g with strong volume. A statistical idea, not a promise: use a stop. Open the app to check it before acting.' % (name, p), dry)
     for s, r, p in hits[:3]:
         name = s[:-4]
-        send(sa, 'Baba pick: %s %s' % (name, r), '15m signal on %s near %g. A statistical idea, not a promise: keep your stop. Open the app to see the plan.' % (name, p), dry)
+        send(sa, 'UT Bot: %s %s' % (name, 'LONG' if r == 'BUY' else 'SHORT'), '15m UT Bot flip on %s near %g. A statistical idea, not a promise: keep your stop. Open the app to see the plan.' % (name, p), dry)
     return 0
 
 

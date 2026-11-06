@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-06.361';
+var BUILD = '2026-11-07.363';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -18512,28 +18512,26 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             try { bp = bpList('fh').concat(bpList('day')); checked = Object.keys(S.bp.c).length; } catch (e) { }
             var rk = {}; real.forEach(function (m) { rk[m.sym + '|' + m.side] = 1; });
             var all = steady(real.map(function (m) { return { t: 'r', k: 'r|' + m.key, m: m, sym: m.sym }; }).concat(bp.filter(function (p) { return !rk[p.sym + '|' + p.side]; }).map(function (p) { return { t: 'c', k: 'c|' + p.sym + '|' + p.hz + '|' + p.side, p: p, sym: p.sym }; })), function (x) { return x.k; });
-            var h = X.seg('bmk', [['f', '📈 Futures (long and short)'], ['s', '🪙 Spot (buy only)']], bmk()) + X.seg('bxch', XL, ex) + '<div class="note" style="margin:0 0 8px">⭐ Coins worth watching. A coin moves to <b>DO NOW</b> only when it passes the live check and has a timer.</div>';
-            h += '<div class="note" style="margin:0 0 6px">' + checked + ' big coins checked on 4 time frames. The order stays fixed while you look at the list; new coins join at the bottom.</div>';
+            var h = X.seg('bmk', [['f', '📈 Futures (long and short)'], ['s', '🪙 Spot (buy only)']], bmk()) + X.seg('bxch', XL, ex);
+            h += '<div class="note" style="margin:0 0 6px">' + checked + ' coins checked on 4 time frames · the order stays fixed, new coins join at the bottom</div>';
             function card(x) { try { return x.t === 'r' ? idRow(x.m) : bpCard(x.p); } catch (e) { return ''; } }
             var cardFn = card;
             function block(title, arr) {
                 var r = arr.filter(function (x) { return x.t === 'r'; }), c = arr.filter(function (x) { return x.t === 'c'; }), o = sh(title + ' (' + r.length + ' real · ' + c.length + ' close)');
                 if (!arr.length) { return o + '<div class="group pad mut">Nothing passes the checks on this exchange right now. That is normal: wait.</div>'; }
-                if (r.length) { o += '<div class="note" style="margin:0 0 4px">✅ Real best: passed the strict check and the 20-day test</div><div class="group">' + r.map(function (x) { return cardFn(x); }).join('') + '</div>'; } else { o += '<div class="group pad mut">No pick has passed both checks here right now.</div>'; }
-                if (c.length) { o += '<div class="note" style="margin:6px 0 4px">👀 Close calls: strict live check passed, 20-day test not confirmed. Smaller size, extra care.</div>' + c.map(function (x) { return cardFn(x); }).join(''); }
+                if (r.length) { o += '<div class="group">' + r.map(function (x) { return cardFn(x); }).join('') + '</div>'; } else { o += '<div class="group pad mut">No pick has passed both checks here right now.</div>'; }
+                if (c.length) { o += '<div class="note" style="margin:6px 0 4px">👀 Close calls: smaller size, extra care</div>' + c.map(function (x) { return cardFn(x); }).join(''); }
                 return o;
             }
             if (ex === 'all') {
                 var used = {}, exs = XL.slice(1), arrAll = all.filter(function (x) { return exs.some(function (e) { return onEx(e[0], x.sym, x); }); });
                 arrAll.forEach(function (x) { used[x.k] = 1; });
-                cardFn = function (x) { var on = exs.filter(function (e) { return onEx(e[0], x.sym, x); }).map(function (e) { return e[1]; }); return '<div class="note" style="margin:6px 0 2px;font-size:12px">🏦 Available on: <b>' + on.join(' · ') + '</b> (one card per coin; prices and stops are from the main chart price)</div>' + card(x); };
                 h += block('All exchanges, one card per coin', arrAll); cardFn = card;
                 var oth = bmk() === 's' ? [] : all.filter(function (x) { return !used[x.k]; }); if (oth.length) { h += block('Other markets (gold, indices, others)', oth); }
-                h += '<div class="note">A coin that trades on several exchanges now appears once, with its exchanges listed. Pick one exchange above to see only that exchange.</div>';
             } else {
                 h += block((XL.filter(function (e) { return e[0] === ex; })[0] || [0, ex])[1], all.filter(function (x) { return onEx(ex, x.sym, x); }));
             }
-            return h + '<div class="note">Stock-linked contracts are skipped while the US market is closed. Not financial advice.</div>';
+            return h + '<div class="note">Stock-linked contracts are skipped while the US market is closed.</div>';
         }
 
         /* ---------- Live now tab: only deals that pass EVERY check right now, with a countdown. When a check fails or time runs out the card disappears. ---------- */
@@ -21682,28 +21680,41 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             }
             return o;
         }
-        var CACHE = { k: '', r: null };
-        function babaSig(K) {
-            var n = K.length, sig = n + ':' + (n ? K[n - 1].t + ':' + K[n - 1].c : '');
+        var CACHE = { k: '', r: null }, BP = { lb: 12, vm: 1.3, sk: 1.5 };
+        try { var _bp = JSON.parse(localStorage.getItem('mintoosuite_babaparams') || 'null'); if (_bp && _bp.lb && _bp.vm && _bp.sk) { BP = { lb: +_bp.lb, vm: +_bp.vm, sk: +_bp.sk }; } } catch (e) { }
+        window.__babaParams = function (p) { if (p) { BP = { lb: +p.lb, vm: +p.vm, sk: +p.sk }; CACHE = { k: '', r: null }; try { localStorage.setItem('mintoosuite_babaparams', JSON.stringify(BP)); } catch (e) { } } return BP; };
+        window.__babaReset = function () { BP = { lb: 12, vm: 1.3, sk: 1.5 }; CACHE = { k: '', r: null }; try { localStorage.removeItem('mintoosuite_babaparams'); } catch (e) { } };
+        function babaSig(K, PP) {
+            var P = PP || BP, n = K.length, sig = P.lb + '|' + P.vm + '|' + P.sk + '|' + n + ':' + (n ? K[n - 1].t + ':' + K[n - 1].c : '');
             if (CACHE.k === sig && CACHE.r) { return CACHE.r; }
             var cl = K.map(function (x) { return x.c; }), vo = K.map(function (x) { return x.v; }), ut = U.utbot(K, 1, 10), at = atrArr(K, 14), e21 = ema(cl, 21), e55 = ema(cl, 55), rs = rsiArr(cl, 14), ax = adxArr(K, 14), e12 = ema(cl, 12), e26 = ema(cl, 26), mac = e12.map(function (v, i) { return v - e26[i]; }), sg = ema(mac, 9), hist = mac.map(function (v, i) { return v - sg[i]; });
             var vm = [], i, s = 0; for (i = 0; i < n; i++) { s += vo[i]; if (i >= 20) { s -= vo[i - 20]; } vm.push(s / Math.min(20, i + 1)); }
-            var pos = [], buy = [], sell = [], why = [], cur = 0, lastFlip = -99, flipDir = 0, flipDone = true, score = [];
+            var pos = [], buy = [], sell = [], why = [], early = [], cur = 0, lastFlip = -99, flipDir = 0, flipDone = true, score = [], eMode = 0, eBar = -99, eStop = 0;
             for (i = 0; i < n; i++) {
-                var b = false, d = false, sc = 0, rsn = [];
+                var b = false, d = false, sc = 0, rsn = [], er = 0;
                 if (i >= 60) {
                     if (ut.buy[i]) { lastFlip = i; flipDir = 1; flipDone = false; } else if (ut.sell[i]) { lastFlip = i; flipDir = -1; flipDone = false; }
-                    if (cur === 1 && ut.pos[i] === -1) { cur = 0; } else if (cur === -1 && ut.pos[i] === 1) { cur = 0; }
+                    if (eMode) { if ((cur === 1 && (cl[i] < eStop || (i - eBar > 6 && ut.pos[i] === -1))) || (cur === -1 && (cl[i] > eStop || (i - eBar > 6 && ut.pos[i] === 1)))) { cur = 0; eMode = 0; } } else if (cur === 1 && ut.pos[i] === -1) { cur = 0; } else if (cur === -1 && ut.pos[i] === 1) { cur = 0; }
+                    /* Baba's OWN early trigger: a fresh 12-candle breakout on a real candle with a volume surge, before UT Bot has flipped. Same six checks (trend = price above the 55 average and the 21 average rising). */
+                    if (cur === 0 && !b && !d && i >= P.lb + 2) {
+                        var hh = -1e99, ll = 1e99, q2; for (q2 = i - P.lb; q2 < i; q2++) { if (K[q2].h > hh) { hh = K[q2].h; } if (K[q2].l < ll) { ll = K[q2].l; } }
+                        var cE = cl[i], AE = at[i], bodyE = Math.abs(K[i].c - K[i].o), LE = cE > hh && K[i].c > K[i].o, SE = cE < ll && K[i].c < K[i].o;
+                        if ((LE || SE) && bodyE >= 0.5 * AE && vo[i] >= P.vm * vm[i]) {
+                            var oE = { trend: LE ? (cE > e55[i] && e21[i] > e21[i - 3]) : (cE < e55[i] && e21[i] < e21[i - 3]), adx: ax[i] >= 18 || (ax[i] >= 14 && ax[i] > ax[i - 2]), rsi: LE ? (rs[i] >= 48 && rs[i] <= 72) : (rs[i] >= 28 && rs[i] <= 52), mom: LE ? (hist[i] > 0 || hist[i] > hist[i - 1]) : (hist[i] < 0 || hist[i] < hist[i - 1]), vol: true, chase: bodyE <= 2.5 * AE && Math.abs(cE - e21[i]) <= 2.2 * AE };
+                            var nE = 0, kE; for (kE in oE) { if (oE[kE]) { nE++; } }
+                            if (nE === 6) { er = 1; sc = 100; eMode = 1; eBar = i; eStop = LE ? cE - P.sk * AE : cE + P.sk * AE; flipDone = true; if (LE) { b = true; cur = 1; } else { d = true; cur = -1; } rsn = ['Baba early break: new ' + P.lb + '-candle ' + (LE ? 'high' : 'low') + ' on a strong candle', 'volume ' + Math.round(vo[i] / (vm[i] || 1) * 100) + '% of normal', 'trend strength ADX ' + Math.round(ax[i]), 'RSI ' + Math.round(rs[i]) + ' has room', 'MACD momentum agrees', 'stop ' + (LE ? 'below ' : 'above ') + P.sk + ' ATR']; }
+                        }
+                    }
                     if (!flipDone && i - lastFlip <= 3 && ut.pos[i] === flipDir) {
                         var L = flipDir === 1, A = at[i], c = cl[i], body = Math.abs(K[i].c - K[i].o);
                         var ok = { trend: L ? (e21[i] > e55[i] && c > e55[i]) : (e21[i] < e55[i] && c < e55[i]), adx: ax[i] >= 18 || (ax[i] >= 14 && ax[i] > ax[i - 2]), rsi: L ? (rs[i] >= 48 && rs[i] <= 72) : (rs[i] >= 28 && rs[i] <= 52), mom: L ? (hist[i] > 0 || hist[i] > hist[i - 1]) : (hist[i] < 0 || hist[i] < hist[i - 1]), vol: vo[i] >= 0.7 * vm[i], chase: body <= 2.5 * A && Math.abs(c - e21[i]) <= 2.2 * A };
                         var nok = 0, k; for (k in ok) { if (ok[k]) { nok++; } }
-                        if (nok === 6) { sc = 100; flipDone = true; if (L) { b = true; cur = 1; } else { d = true; cur = -1; } rsn = [L ? 'uptrend (21 above 55)' : 'downtrend (21 below 55)', 'trend strength ADX ' + Math.round(ax[i]), 'RSI ' + Math.round(rs[i]) + ' has room', 'MACD momentum agrees', 'volume ' + Math.round(vo[i] / (vm[i] || 1) * 100) + '% of normal', 'not chasing (close to the average)']; }
+                        if (nok === 6 && cur === flipDir) { flipDone = true; } else if (nok === 6) { sc = 100; flipDone = true; eMode = 0; if (L) { b = true; cur = 1; } else { d = true; cur = -1; } rsn = [L ? 'uptrend (21 above 55)' : 'downtrend (21 below 55)', 'trend strength ADX ' + Math.round(ax[i]), 'RSI ' + Math.round(rs[i]) + ' has room', 'MACD momentum agrees', 'volume ' + Math.round(vo[i] / (vm[i] || 1) * 100) + '% of normal', 'not chasing (close to the average)']; }
                     }
                 }
-                buy.push(b); sell.push(d); pos.push(cur); why.push(rsn);
+                buy.push(b); sell.push(d); pos.push(cur); why.push(rsn); early.push(er);
             }
-            var r = { pos: pos, buy: buy, sell: sell, why: why, ut: ut, adx: ax, e21: e21, e55: e55, rs: rs }; CACHE = { k: sig, r: r }; return r;
+            var r = { pos: pos, buy: buy, sell: sell, why: why, early: early, ut: ut, adx: ax, e21: e21, e55: e55, rs: rs }; CACHE = { k: sig, r: r }; return r;
         }
         window.__babaFilters = function (K, dir) {
             try {
@@ -21715,6 +21726,23 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         };
         window.__babaPos = function (K) { try { return babaSig(K).pos; } catch (e) { return K.map(function () { return 0; }); } };
         window.__babaSig = babaSig;
+        /* Baba v2: the same engine plus three extra checks, run beside v1 so the scoreboard shows whether the extra checks help or only slow it down:
+           1) the 1-hour direction agrees (EMA 8 vs 21 of every 4th candle), 2) Bitcoin is not strongly against the side (24 h change), 3) the market is not wild (ATR under 3.5% of price) */
+        function babaSig2(K, PP) {
+            var R = babaSig(K, PP), n = K.length, hc = [], hi = [], i, k;
+            for (i = n - 1; i >= 0; i -= 4) { hc.unshift(K[i].c); hi.unshift(i); }
+            var e8 = ema(hc, 8), e21 = ema(hc, 21), dirAt = new Array(n), p = 0, at = atrArr(K, 14), btc = 0;
+            try { btc = (S.tick && S.tick.BTCUSDT) ? +S.tick.BTCUSDT.chg || 0 : 0; } catch (e) { }
+            for (i = 0; i < n; i++) { while (p + 1 < hi.length && hi[p + 1] <= i) { p++; } dirAt[i] = hi[p] <= i && p >= 21 ? (e8[p] > e21[p] ? 1 : e8[p] < e21[p] ? -1 : 0) : 0; }
+            var buy = [], sell = [], pos = [], cur = 0;
+            for (i = 0; i < n; i++) {
+                var b = false, d = false, calm = at[i] / K[i].c < 0.035;
+                if (R.buy[i] && dirAt[i] === 1 && btc > -2 && calm) { b = true; cur = 1; } else if (R.sell[i] && dirAt[i] === -1 && btc < 2 && calm) { d = true; cur = -1; } else if (cur !== 0 && R.pos[i] !== cur) { cur = 0; }
+                buy.push(b); sell.push(d); pos.push(cur);
+            }
+            return { pos: pos, buy: buy, sell: sell, early: R.early, why: R.why, ut: R.ut };
+        }
+        window.__babaSig2 = babaSig2;
         var _o = window.__cxOver;
         var SC0 = { k: '', r: null }, SCF = { k: '', r: null };
         function sigC(K, m) { var k = m.sym + '|' + m.tf + '|' + K.length + '|' + K[K.length - 1].t + '|' + K[K.length - 1].c; if (SC0.k !== k) { SC0 = { k: k, r: babaSig(K) }; } return SC0.r; }
@@ -21736,20 +21764,22 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
                 if (!on) { return; }
                 c.save(); c.beginPath(); c.rect(0, m.padT, m.W, m.ph); c.clip(); c.textAlign = 'center'; c.font = '800 10px -apple-system,Segoe UI,sans-serif';
                 for (i = m.start; i < m.end; i++) {
-                    if (!R.buy[i] && !R.sell[i]) { continue; } x = m.xs(i); var tent = i === n - 1, up = R.buy[i], y0 = up ? Y(K[i].l) + 34 : Y(K[i].h) - 34, w = 64;
+                    if (!R.buy[i] && !R.sell[i]) { continue; } x = m.xs(i); var tent = i === n - 1, up = R.buy[i], y0 = up ? Y(K[i].l) + 40 : Y(K[i].h) - 40, tx = (R.early && R.early[i] ? '⚡' : '') + (up ? 'BUY' : 'SELL') + (tent ? '?' : '') + (i >= n - 3 && window.__lastExp && ((window.__lastExp.side === 'LONG') === up) ? ' ' + window.__lastExp.conv : '');
+                    c.font = '800 9px -apple-system,Segoe UI,sans-serif'; var w = Math.round(c.measureText(tx).width) + 9, hh = 6.5, rr = 6.5;
                     c.globalAlpha = tent ? 0.55 : 1; c.fillStyle = up ? '#0ea5e9' : '#a855f7';
-                    c.beginPath(); c.moveTo(x - w / 2 + 6, y0 - 9); c.lineTo(x + w / 2 - 6, y0 - 9); c.quadraticCurveTo(x + w / 2, y0 - 9, x + w / 2, y0 - 3); c.lineTo(x + w / 2, y0 + 3); c.quadraticCurveTo(x + w / 2, y0 + 9, x + w / 2 - 6, y0 + 9); c.lineTo(x - w / 2 + 6, y0 + 9); c.quadraticCurveTo(x - w / 2, y0 + 9, x - w / 2, y0 + 3); c.lineTo(x - w / 2, y0 - 3); c.quadraticCurveTo(x - w / 2, y0 - 9, x - w / 2 + 6, y0 - 9); c.fill();
-                    c.fillStyle = '#fff'; c.fillText((up ? '🧓 BUY' : '🧓 SELL') + (tent ? '?' : '') + (i >= n - 3 && window.__lastExp && ((window.__lastExp.side === 'LONG') === up) ? ' ' + window.__lastExp.conv + '%' : ''), x, y0 + 3.5);
-                    c.strokeStyle = c.fillStyle = up ? '#0ea5e9' : '#a855f7'; c.globalAlpha = tent ? .35 : .6; c.lineWidth = 1; c.setLineDash([2, 3]); c.beginPath(); c.moveTo(x, up ? y0 - 9 : y0 + 9); c.lineTo(x, up ? Y(K[i].l) + 2 : Y(K[i].h) - 2); c.stroke(); c.setLineDash([]);
+                    c.beginPath(); c.moveTo(x - w / 2 + rr, y0 - hh); c.lineTo(x + w / 2 - rr, y0 - hh); c.arc(x + w / 2 - rr, y0, rr, -Math.PI / 2, Math.PI / 2); c.lineTo(x - w / 2 + rr, y0 + hh); c.arc(x - w / 2 + rr, y0, rr, Math.PI / 2, 3 * Math.PI / 2); c.closePath(); c.fill();
+                    c.fillStyle = '#fff'; c.fillText(tx, x, y0 + 3.2);
+                    c.strokeStyle = c.fillStyle = up ? '#0ea5e9' : '#a855f7'; c.globalAlpha = tent ? .35 : .6; c.lineWidth = 1; c.beginPath(); c.moveTo(x, up ? y0 - hh : y0 + hh); c.lineTo(x, up ? Y(K[i].l) + 2 : Y(K[i].h) - 2); c.stroke();
                 }
                 /* the recommendation is made on the live candle, so show the live signal too (see-through, with ?), exactly at the point where Baba recommends */
                 try {
                     var KF = m.K, nf = KF.length, kf = m.sym + '|' + m.tf + '|' + nf + '|' + KF[nf - 1].c; if (SCF.k !== kf) { SCF = { k: kf, r: babaSig(KF) }; }
                     var RF = SCF.r, li = nf - 1;
                     if (RF && (RF.buy[li] || RF.sell[li]) && li >= m.start && li < m.end) {
-                        var upf = !!RF.buy[li], xf = m.xs(li), yf = upf ? Y(KF[li].l) + 34 : Y(KF[li].h) - 34;
-                        c.globalAlpha = 0.5; c.fillStyle = upf ? '#0ea5e9' : '#a855f7'; c.fillRect(xf - 32, yf - 9, 64, 18); c.globalAlpha = 1; c.strokeStyle = c.fillStyle; c.setLineDash([3, 2]); c.strokeRect(xf - 32, yf - 9, 64, 18); c.setLineDash([]);
-                        c.fillStyle = '#fff'; c.fillText((upf ? '🧓 BUY' : '🧓 SELL') + ' now?', xf, yf + 3.5);
+                        var upf = !!RF.buy[li], xf = m.xs(li), yf = upf ? Y(KF[li].l) + 40 : Y(KF[li].h) - 40, tf2 = (RF.early && RF.early[li] ? '⚡' : '') + (upf ? 'BUY' : 'SELL') + ' now?';
+                        c.font = '800 9px -apple-system,Segoe UI,sans-serif'; var wf = Math.round(c.measureText(tf2).width) + 9;
+                        c.globalAlpha = 0.5; c.fillStyle = upf ? '#0ea5e9' : '#a855f7'; c.beginPath(); c.moveTo(xf - wf / 2 + 6.5, yf - 6.5); c.lineTo(xf + wf / 2 - 6.5, yf - 6.5); c.arc(xf + wf / 2 - 6.5, yf, 6.5, -Math.PI / 2, Math.PI / 2); c.lineTo(xf - wf / 2 + 6.5, yf + 6.5); c.arc(xf - wf / 2 + 6.5, yf, 6.5, Math.PI / 2, 3 * Math.PI / 2); c.closePath(); c.fill(); c.globalAlpha = 1;
+                        c.fillStyle = '#fff'; c.fillText(tf2, xf, yf + 3.2);
                     }
                 } catch (e) { }
                 c.restore();
@@ -21851,7 +21881,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         };
         function tabs(cur) {
             var T = [['ideas', '⭐ Ideas'], ['morning', '🧭 New Plan (daily 05:15)'], ['analyst', '🎯 Trading Analyst']].concat(cur === 'scanner' ? [['scanner', '🔍 Scanner']] : []);
-            return '<div class="m7row" data-noswipe="1" style="margin:0 0 8px">' + T.map(function (t) { return '<span class="' + (t[0] === cur ? 'on' : '') + '" data-act="win:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div><div class="note" style="margin:0 0 8px;font-size:11px">New Plan = the fixed daily plan (locked at 05:15 PKT) with a 9-day replay of what hit target or stop. Trading Analyst gives a plan for any coin you choose. The Scanner is part of Ideas > All ideas.</div>';
+            return '<div class="m7row" data-noswipe="1" style="margin:0 0 8px">' + T.map(function (t) { return '<span class="' + (t[0] === cur ? 'on' : '') + '" data-act="win:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div>';
         }
         ['scanner', 'morning'].forEach(function (id) { try { var _w = VIEWS[id]; if (_w) { VIEWS[id] = function () { return tabs(id) + _w.apply(this, arguments); }; } } catch (e) { } });
         var _vi = VIEWS.ideas;
@@ -23686,41 +23716,89 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
                 var it = L[i], sy = it.sym;
                 (it.c ? window.XCH.kl(it.c, '15m', 120) : m7kl(sy, '15m', 120)).then(function (k) {
                     var K = (k || []).slice(0, -1); if (K.length < 40) { return; }
-                    var u = window.__ut.utbot(K, 1, 10), n = u.pos.length, p = u.pos[n - 1], j = n - 1, age = 0; if (!p) { return; }
-                    while (j > 0 && u.pos[j - 1] === p) { j--; age++; }
-                    if (j === 0 || age > 3) { return; } /* only flips in the last 4 finished candles */
-                    var side = p > 0 ? 'BUY' : 'SELL', id = sy + (it.x || '') + side + K[j].t, baba = 0;
-                    try { var bs = window.__babaSig(K); for (var q = Math.max(0, n - 4); q < n; q++) { if (side === 'BUY' ? bs.buy[q] : bs.sell[q]) { baba = 1; } } } catch (e) { }
-                    var old = F.filter(function (x) { return x.id === id; })[0];
-                    if (old) { if (baba && !old.baba) { old.baba = 1; try { toast('Baba confirmed ' + side + ' on ' + base(sy)); } catch (e) { } } return; }
-                    F.unshift({ id: id, sym: sy, side: side, t: K[j].t + 900000, seen: Date.now(), baba: baba, x: it.x || 'binance', fut: it.fut, p0: K[n - 1].c, tf: K[j].c });
-                    if (age <= 1) { try { toast((baba ? 'Baba + UT Bot ' : 'UT Bot ') + side + ' on ' + base(sy)); } catch (e) { } }
+                    var u = window.__ut.utbot(K, 1, 10), n = u.pos.length, p = u.pos[n - 1], j = n - 1, age = 0, xx = it.x || 'binance', note = 0, bs = null;
+                    function put(bot, side, idx, early) {
+                        var id = sy + (it.x || '') + bot + side + K[idx].t, old = F.filter(function (z) { return z.id === id; })[0];
+                        if (old) { return; }
+                        F.unshift({ id: id, bot: bot, early: early ? 1 : 0, sym: sy, side: side, t: K[idx].t + 900000, seen: Date.now(), x: xx, fut: it.fut, p0: K[n - 1].c, tf: K[idx].c });
+                        if (n - 1 - idx <= 1 && note < 2) { note++; try { toast((bot === 'baba' ? 'Baba ' + (early ? 'early ' : '') : 'UT Bot ') + side + ' on ' + base(sy)); } catch (e) { } }
+                    }
+                    if (p) { while (j > 0 && u.pos[j - 1] === p) { j--; age++; } if (j > 0 && age <= 3) { put('ut', p > 0 ? 'BUY' : 'SELL', j, 0); } } /* UT Bot: flips in the last 4 finished candles */
+                    try { bs = window.__babaSig(K); for (var q = n - 1; q >= Math.max(0, n - 4); q--) { if (bs.buy[q] || bs.sell[q]) { put('baba', bs.buy[q] ? 'BUY' : 'SELL', q, bs.early && bs.early[q]); break; } } } catch (e) { }
+                    try { var b2 = window.__babaSig2(K); for (var q2 = n - 1; q2 >= Math.max(0, n - 4); q2--) { if (b2.buy[q2] || b2.sell[q2]) { put('baba2', b2.buy[q2] ? 'BUY' : 'SELL', q2, 0); break; } } } catch (e) { } /* Baba: its own signal (early or confirmed), also when UT Bot has not flipped */
                 }).catch(function (e) { if (/418|429/.test(String(e && e.message || e))) { R.msg = 'Binance asked to slow down; paused until the next scan.'; i = L.length; } }).then(function () { R.n = i + 1; setTimeout(function () { step(i + 1); }, 160); });
             })(0);
         }
         function px(x) { var t = S.tick && S.tick[x.sym]; return x.x === 'binance' && t ? +t.p : 0; }
         function score() {
-            var o = { both: [0, 0, 0], ut: [0, 0, 0] };
-            F.forEach(function (x) { if (x.res == null && x.x === 'binance' && Date.now() - x.t > 2 * 3600000 && x.tf) { var p = px(x); if (p > 0) { x.res = (x.side === 'BUY' ? p / x.tf - 1 : 1 - p / x.tf) * 100 - 0.1; } } if (x.res != null) { var k = x.baba ? o.both : o.ut; k[0]++; if (x.res > 0) { k[1]++; } k[2] += x.res; } });
+            var o = { ut: [0, 0, 0], baba: [0, 0, 0], early: [0, 0, 0], v2: [0, 0, 0] };
+            F.forEach(function (x) {
+                if (x.res == null && x.x === 'binance' && Date.now() - x.t > 2 * 3600000 && x.tf) { var p = px(x); if (p > 0) { x.res = (x.side === 'BUY' ? p / x.tf - 1 : 1 - p / x.tf) * 100 - 0.1; } }
+                if (x.res != null) { var ks = []; if (x.bot === 'baba2') { ks.push(o.v2); } else if (x.bot === 'baba' || x.baba) { ks.push(o.baba); if (x.early) { ks.push(o.early); } } if (x.bot !== 'baba' && x.bot !== 'baba2') { ks.push(o.ut); } ks.forEach(function (k) { k[0]++; if (x.res > 0) { k[1]++; } k[2] += x.res; }); }
+            });
             return o;
         }
+        /* Tune on my phone: replays Baba on real 15-minute candles of the busiest coins, tries 27 settings, and only suggests one that is profitable in BOTH halves of the history after fees. */
+        var TU = { busy: 0, msg: '', res: null };
+        function fwdStats(K, R) { var o = { a: [0, 0, 0], b: [0, 0, 0] }, n = K.length, mid = Math.floor(n / 2), i; for (i = 80; i < n - 8; i++) { if (R.buy[i] || R.sell[i]) { var r = (R.buy[i] ? 1 : -1) * (K[i + 8].c / K[i].c - 1) * 100 - 0.1, g = i < mid ? o.a : o.b; g[0]++; if (r > 0) { g[1]++; } g[2] += r; } } return o; }
+        function tune() {
+            if (TU.busy || typeof m7kl !== 'function') { return; } TU.busy = 1; TU.res = null; TU.msg = 'Downloading candles…'; try { renderView(true); } catch (e) { }
+            var L = top().filter(function (x) { return !x.c; }).slice(0, 14), data = [];
+            (function step(i) {
+                if (i >= L.length) {
+                    TU.msg = 'Testing 27 settings…'; try { renderView(true); } catch (e) { }
+                    setTimeout(function () {
+                        var best = null, def = null, res = [];
+                        [8, 12, 20].forEach(function (lb) { [1.0, 1.3, 1.6].forEach(function (vm) { [1.0, 1.5, 2.0].forEach(function (sk) {
+                            var A = [0, 0, 0], B = [0, 0, 0], P = { lb: lb, vm: vm, sk: sk };
+                            data.forEach(function (K) { try { var st = fwdStats(K, window.__babaSig(K, P)); for (var q = 0; q < 3; q++) { A[q] += st.a[q]; B[q] += st.b[q]; } } catch (e) { } });
+                            var r = { P: P, na: A[0], nb: B[0], wa: A[0] ? A[1] / A[0] : 0, wb: B[0] ? B[1] / B[0] : 0, aa: A[0] ? A[2] / A[0] : -9, ab: B[0] ? B[2] / B[0] : -9 };
+                            res.push(r); if (lb === 12 && vm === 1.3 && sk === 1.5) { def = r; }
+                            if (r.na >= 15 && r.nb >= 15 && r.aa > 0 && r.ab > 0 && (!best || Math.min(r.aa, r.ab) > Math.min(best.aa, best.ab))) { best = r; }
+                        }); }); });
+                        TU.res = { best: best, def: def, coins: data.length }; TU.busy = 0; TU.msg = ''; try { renderView(true); } catch (e) { }
+                    }, 60);
+                    return;
+                }
+                TU.msg = 'Downloading candles… ' + (i + 1) + '/' + L.length; try { renderView(true); } catch (e) { }
+                m7kl(L[i].sym, '15m', 1000).then(function (k) { var K = (k || []).slice(0, -1); if (K.length > 300) { data.push(K); } }).catch(function () { }).then(function () { setTimeout(function () { step(i + 1); }, 200); });
+            })(0);
+        }
+        function pc(x) { return Math.round(x * 100) + '%'; }
+        function tunePanel() {
+            var BP = window.__babaParams ? window.__babaParams() : { lb: 12, vm: 1.3, sk: 1.5 }, r = TU.res, h = '<div class="group pad"><b>🎛 Tune Baba on my phone</b><div class="note" style="margin:4px 0 8px">Replays Baba on about 10 days of real 15-minute candles of the busiest coins and tries 27 settings. It suggests a setting only if it is profitable in <b>both halves</b> of the history, after 0.1% fees, with at least 15 signals in each half. Now using: breakout ' + BP.lb + ' candles · volume ×' + BP.vm + ' · stop ' + BP.sk + ' ATR.</div>';
+            if (TU.busy) { return h + '<div class="note">⏳ ' + TU.msg + '</div></div>'; }
+            h += '<span class="btn sec tap" data-act="tuneb:run" style="width:auto">▶ Run the test</span> <span class="btn sec tap" data-act="tuneb:reset" style="width:auto">↺ Back to default</span>';
+            if (r) {
+                h += '<div class="note" style="margin-top:8px">' + r.coins + ' coins tested. ';
+                if (r.def) { h += 'Default: ' + r.def.na + '+' + r.def.nb + ' signals, win ' + pc(r.def.wa) + ' / ' + pc(r.def.wb) + ', avg ' + r.def.aa.toFixed(2) + '% / ' + r.def.ab.toFixed(2) + '% (first half / second half). '; }
+                if (r.best) { h += '<br><b>Best that passes both halves:</b> breakout ' + r.best.P.lb + ' · volume ×' + r.best.P.vm + ' · stop ' + r.best.P.sk + ' ATR → ' + r.best.na + '+' + r.best.nb + ' signals, win ' + pc(r.best.wa) + ' / ' + pc(r.best.wb) + ', avg ' + r.best.aa.toFixed(2) + '% / ' + r.best.ab.toFixed(2) + '%.</div><span class="btn tap" data-act="tuneb:apply" style="width:auto">Use this setting</span>'; } else { h += '<br><b>No setting is profitable in both halves.</b> Keep the default. That is an honest result: do not force it.</div>'; }
+            }
+            return h + '</div>';
+        }
+        document.addEventListener('click', function (e) {
+            var t = e.target && e.target.closest ? e.target.closest('[data-act^="tuneb:"]') : null; if (!t) { return; }
+            e.preventDefault(); e.stopPropagation(); var k = t.getAttribute('data-act').slice(6);
+            if (k === 'run') { tune(); } else if (k === 'reset') { try { window.__babaReset(); toast('Baba back to default settings'); renderView(true); } catch (x) { } } else if (k === 'apply' && TU.res && TU.res.best) { try { window.__babaParams(TU.res.best.P); toast('Baba now uses the tuned setting'); renderView(true); } catch (x) { } }
+        }, true);
         function vSig() {
-            var by = {}, h = '<div class="note" style="line-height:1.5">Every 2 minutes the app checks the 50 most traded Binance futures coins and up to 80 active or fast-moving MEXC/Bitget coins for a fresh <b>UT Bot</b> BUY or SELL (marked 🧓 when Baba confirms it) on the last finished 15-minute candles and lists them here, grouped per coin. It only shows <b>new</b> flips (the last 4 candles), so you see a signal early, not hours later. A signal is not a promise: UT Bot wins and loses, check the stale-idea rule and the Recommended bar before trading.</div>';
+            var by = {}, sc = score(), h = '<div class="note" style="line-height:1.5">Every 2 minutes the app checks the 50 most traded Binance futures coins and up to 80 active or fast-moving MEXC/Bitget coins on the last finished 15-minute candles. Bots run side by side and each posts its own signals: <b>UT Bot</b> (its trailing stop flips), <b>🧓 Baba</b> (its own early breakout trigger plus 6 checks: trend, strength, RSI, volume, momentum, candle) and <b>Baba v2</b> (the same plus 1-hour direction, Bitcoin and calm-market checks, to test if extra checks help). Only <b>new</b> signals (last 4 candles) are shown. A signal is not a promise: both bots win and lose.</div>';
             h += '<div class="note">' + (R.busy ? 'Scanning… ' + R.n + '/' + R.tot : R.at ? 'Last scan ' + ago(R.at) : 'Scan starts when this screen is open.') + (R.msg ? ' · ' + R.msg : '') + '</div>';
-            var sc = score();
-            h += '<div class="note" style="line-height:1.5"><b>Which signal is better? The app measures it.</b> Baba’s signal is a UT Bot flip that also passes 6 checks (trend, strength, RSI, volume, momentum, candle), so it can only appear <i>after</i> UT Bot and less often; UT-only signals come first but are less filtered. Results 2 h after each signal (Binance coins, after 0.1% fees): ' + [['Baba + UT Bot', sc.both], ['UT Bot only', sc.ut]].map(function (r) { return '<b>' + r[0] + '</b>: ' + (r[1][0] ? r[1][0] + ' judged, ' + Math.round(r[1][1] / r[1][0] * 100) + '% up, avg ' + (r[1][2] / r[1][0] >= 0 ? '+' : '') + (r[1][2] / r[1][0]).toFixed(2) + '%' : 'not enough yet'); }).join(' · ') + '. Small samples mean little; do not decide before about 30 each.</div>';
+            function cell(t, r, c) { return '<div style="flex:1;min-width:0;text-align:center;padding:8px 4px;border-radius:12px;background:rgba(128,128,128,.12)"><div style="font-size:11.5px;font-weight:800;color:' + c + '">' + t + '</div>' + (r[0] ? '<div style="font-size:19px;font-weight:900">' + Math.round(r[1] / r[0] * 100) + '%</div><div style="font-size:11px;opacity:.75">' + r[0] + ' judged · avg ' + (r[2] / r[0] >= 0 ? '+' : '') + (r[2] / r[0]).toFixed(2) + '%</div>' : '<div style="font-size:12px;opacity:.7;margin-top:6px">not enough yet</div>') + '</div>'; }
+            h += '<div class="group pad"><b>🏁 Who is better? The app keeps score</b><div style="display:flex;gap:6px;margin-top:8px">' + cell('UT Bot', sc.ut, '#0a84ff') + cell('🧓 Baba', sc.baba, '#e8a317') + cell('Baba early', sc.early, '#1a9e50') + cell('Baba v2', sc.v2, '#a05bff') + '</div><div class="note" style="margin:8px 0 0">Share of signals in profit 2 hours later (Binance coins, after 0.1% fees). Needs 30 or more judged signals per bot before the comparison means anything. No guarantee for the future.</div></div>';
             F.forEach(function (x) { (by[x.sym + (x.x || '')] = by[x.sym + (x.x || '')] || []).push(x); });
-            var syms = Object.keys(by).sort(function (a, b) { var pa = by[a].some(function (x) { return x.baba; }) ? 1 : 0, pb = by[b].some(function (x) { return x.baba; }) ? 1 : 0; return pb - pa || by[b][0].t - by[a][0].t; });
-            if (!syms.length) { h += '<div class="note">No fresh UT Bot signals yet. They appear here as they happen.</div>'; }
+            var syms = Object.keys(by).sort(function (a, b) { var pa = by[a].some(function (x) { return x.bot === 'baba' || x.baba; }) ? 1 : 0, pb = by[b].some(function (x) { return x.bot === 'baba' || x.baba; }) ? 1 : 0; return pb - pa || by[b][0].t - by[a][0].t; });
+            if (!syms.length) { h += '<div class="note">No fresh signals yet. They appear here as they happen.</div>'; }
             syms.forEach(function (s) {
                 var l = by[s], s0 = l[0].sym, t = S.tick && S.tick[s0], ex0 = l[0].x || 'binance';
                 h += '<div class="group pad" style="margin:6px 0"><div style="display:flex;align-items:center;gap:8px"><b style="flex:1;font-size:16px">' + base(s) + '</b>' + (t ? '<span style="font-size:12px;opacity:.8">' + (+t.chg >= 0 ? '+' : '') + (+t.chg).toFixed(1) + '% today</span>' : '') + (ex0 === 'binance' ? '<span class="btn sec" data-act="chart:' + s0 + '" style="width:auto;padding:6px 10px">📈 Chart</span>' : '<span class="btn sec" data-fsx="' + base(s0) + '@' + ex0 + (l[0].fut === false ? 's' : '') + '" style="width:auto;padding:6px 10px">📈 Open</span>') + '</div>' +
-                    l.slice(0, 5).map(function (x) { return '<div style="margin-top:4px"><span style="color:' + (x.side === 'BUY' ? '#16a34a' : '#dc2626') + ';font-weight:800">UT Bot ' + x.side + '</span> · candle closed ' + ago(x.t) + '</div>'; }).join('') + '</div>';
+                    l.slice(0, 5).map(function (x) { return '<div style="margin-top:4px"><span style="color:' + (x.side === 'BUY' ? '#16a34a' : '#dc2626') + ';font-weight:800">' + (x.bot === 'baba2' ? '🧓 Baba v2 ' : x.bot === 'baba' ? '🧓 Baba ' + (x.early ? 'early ' : '') : 'UT Bot ') + x.side + '</span> · candle closed ' + ago(x.t) + '</div>'; }).join('') + '</div>';
             });
+            h += tunePanel();
             return h + '<div class="note"><span data-act="win:safety" style="text-decoration:underline">Safety checks</span> · signals older than 24 hours are removed automatically.</div>';
         }
-        WINS.push({ id: 'sigfeed', ic: '📡', c: '#0a84ff', n: 'Signal feed (UT Bot)', t: 'Signal feed', sub: 'Fresh UT Bot BUY/SELL flips, grouped per coin' }); LIVE.sigfeed = 0; VIEWS.sigfeed = vSig;
-        try { MW_HELP.sigfeed = 'Lists fresh UT Bot BUY/SELL signals on the 50 most traded Binance futures coins, grouped per coin, newest first.'; } catch (e) { }
+        WINS.push({ id: 'sigfeed', ic: '📡', c: '#0a84ff', n: 'Signal feed (UT Bot + Baba)', t: 'Signal feed', sub: 'UT Bot and Baba signals side by side, with a scoreboard' }); LIVE.sigfeed = 0; VIEWS.sigfeed = vSig;
+        try { MW_HELP.sigfeed = 'Two bots, one feed: UT Bot signals and Baba signals (Baba has its own early breakout trigger plus 6 checks). Grouped per coin, newest first, with a scoreboard that judges each signal 2 hours later after fees.'; } catch (e) { }
         try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Trade & signals' && g[1].indexOf('sigfeed') < 0) { g[1].unshift('sigfeed'); } }); } catch (e) { }
         setInterval(function () { try { if (S.win === 'sigfeed' && Date.now() - R.at > 120000) { scan(); } } catch (e) { } }, 5000);
         document.addEventListener('click', function (e) { var t = e.target && e.target.closest ? e.target.closest('[data-fsx]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); try { window.__mxOpen(t.getAttribute('data-fsx')); } catch (er) { } }, true);
@@ -23781,7 +23859,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         function sv() { try { var c = Math.max(+ls(CK, '0') || 0, Date.now() - (+ls(RK, '3') || 3) * 86400000); N = N.filter(function (x) { return x.t > c; }).slice(0, 400); localStorage.setItem(NK, JSON.stringify(N)); } catch (e) { } }
         function merge() {
             try { (window.__pump.LOG() || []).forEach(function (x) { var id = 'p' + x.t + x.sym; if (!N.some(function (n) { return n.id === id; })) { N.push({ id: id, t: x.t, ic: x.mega ? '🚨' : '🚀', title: x.title, body: x.body, bn: x.bn, spec: x.spec }); } }); } catch (e) { }
-            try { (window.__sigfeed.list() || []).forEach(function (x) { var id = x.id; if (!N.some(function (n) { return n.id === id; })) { N.push({ id: id, t: x.seen || x.t, ic: '📡', title: 'UT Bot ' + x.side + ' ' + String(x.sym).replace(/USDT$/, ''), body: '', bn: x.sym }); } }); } catch (e) { }
+            try { (window.__sigfeed.list() || []).forEach(function (x) { var id = x.id; if (!N.some(function (n) { return n.id === id; })) { N.push({ id: id, t: x.seen || x.t, ic: '📡', title: (x.bot === 'baba' ? 'Baba ' + (x.early ? 'early ' : '') : 'UT Bot ') + x.side + ' ' + String(x.sym).replace(/USDT$/, ''), body: '', bn: x.sym }); } }); } catch (e) { }
             N.sort(function (a, b) { return b.t - a.t; }); sv();
         }
         setInterval(merge, 60000); setTimeout(merge, 5000);
@@ -25443,6 +25521,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['exchange row|exchange buttons|binance mexc bitget buttons|home exchange tiles|exchange names', 'Exchange buttons on Home', 'The row under the hero card (All, Binance, MEXC, Bitget, Bybit · OKX, Exness, Gold, PSX) shows each name in its own colour and style, with the live coin or pair count. Tap one to filter markets to that exchange. They are plain text names, not official logos. Bybit · OKX open order tickets; Exness and Gold open their desks; PSX opens Pakistan stocks.']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['my day|best picks tile|home tiles|best picks|movers tile|todays profit|today profit', 'Home: My day tile and tile names', 'The old "Best picks" tile on Home is now 📒 My day: it shows today\'s profit or loss from your Baba Practice Bot and Baba Real Bot trades, how many are done and how many are still open. Tap it to open Proof. The watch-list of coins to keep an eye on is still inside Ideas (⭐ Watch-list); coins to act on are under DO NOW. Names on the Gold, Bitcoin, Ethereum tiles and the bottom tiles use the same bold clean style as the hero buttons. The exchange row keeps the coloured names (no round icons).']); PF_APP.push(['split charts search|split search|search pane|search not working split|choose market pane', 'Split Charts: search a market', 'In Split Charts tap the 🔎 button at the top of any pane. A search box opens: type gold, btc, usd/pkr, oil, sp500 and tap a result. It no longer closes by itself after a tap. Tap outside the box or ✕ to close it.']); MW_HELP.overview = (MW_HELP.overview || '') + ' Home tile My day replaces Best picks.'; } catch (e) { } })();
 ;(function () { try { PF_APP.push(['more menu|more list|where is markets|where is watch list|where is find a trade|where is home', 'More menu is shorter now', 'Home, Markets, Find a trade and Watch-list no longer have tiles in More, because they are one tap away elsewhere: Home and Markets are in the bottom bar, Find a trade is covered by the Bots and Ideas pages, and Watch-list is a tab inside Ideas (⭐ Watch-list). The bottom bar now shows Trade from the first moment instead of briefly showing Auto Bot.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['baba signal|early signal|signal feed|utbot vs baba|who is better|baba early|scoreboard', 'Baba signal engine and Signal feed', 'Baba now has its OWN trigger: a fresh 12-candle breakout on a strong candle with a volume surge, checked by the same 6 filters (trend, strength, RSI, volume, momentum, candle), with a stop 1.5 ATR away. It can fire before UT Bot flips. The Signal feed shows both bots side by side (UT Bot, 🧓 Baba, 🧓 Baba early) and a scoreboard judges every signal 2 hours later after 0.1% fees. Judge them only after 30+ signals each. No bot can promise near-100% accuracy; the scoreboard is how you see the truth.']); PF_APP.push(['baba idea|baba pick notification|master pick|10m+15m agree', 'Baba idea (old Baba pick alert)', 'The notification that used to say "Baba pick" (10m and 15m agree) is the Master idea, so it is now named "Baba idea". Baba signals come from the Signal feed and chart marks. Ideas page is shorter: repeated notes and the "Available on" line under every card were removed.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['baba v2|tune baba|tune on my phone|baba settings|best setting|server alert baba|baba signal alert|copyright|who owns|baba callout|baba label', 'Baba Signal: v2, tuning, alerts, callouts, copyright', 'Signal feed now has four scoreboard cells: UT Bot, Baba, Baba early and Baba v2 (adds 1-hour direction, Bitcoin and calm-market checks, to test whether extra checks help). "Tune Baba on my phone" replays Baba on about 10 days of real candles with 27 settings and suggests one only if it is profitable in both halves after fees; if none is, keep the default. When the app is closed you get "Baba Signal: COIN LONG/SHORT" (early breakout) and "UT Bot: COIN LONG/SHORT" alerts from the free GitHub alert job (needs the push setup). Chart callouts for Baba are now small rounded tags (⚡ = early, number = conviction). Copyright: MintooSuite, Baba AI, Baba Signal and the Baba bots are original works of Muhammad Awais; the notice is in About, Legal and the Signal feed. For legal protection also register the copyright and trademark in Pakistan.']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -25530,6 +25610,22 @@ window.__pfAns = function (q) { return pfAnswer(q); };
                 return top + h;
             };
         }
+    } catch (e) { }
+})();
+
+/* The old "Baba pick" alert (10m+15m agree) is the Master idea; give it its true name so it is not mixed up with Baba signals */
+(function () {
+    try {
+        var _ap = alertPush;
+        alertPush = function (sym, title, body) { try { if (typeof title === 'string') { title = title.replace(/^Baba pick:/, 'Baba idea:'); } } catch (e) { } return _ap.call(this, sym, title, body); };
+    } catch (e) { }
+})();
+
+/* Copyright line: shown in About, Legal and the Signal feed */
+(function () {
+    try {
+        var CR = '<div class="note" style="margin:10px 0 0;font-size:11.5px;text-align:center">© 2026 Muhammad Awais. All rights reserved. Baba Signal, Baba AI, Baba Practice Bot, Baba Real Bot and MintooSuite are original works of Muhammad Awais.</div>';
+        ['sigfeed', 'aboutapp', 'legal'].forEach(function (id) { try { var _v = VIEWS[id]; if (_v) { VIEWS[id] = function () { return _v.apply(this, arguments) + CR; }; } } catch (e) { } });
     } catch (e) { }
 })();
 /* ===== p9dn (build 350): DO NOW on Home = only deals that are valid right now, with a timer. Uses the same check as Ideas > DO NOW. Nothing loosened: this only hides what fails. ===== */
