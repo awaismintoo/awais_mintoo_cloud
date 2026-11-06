@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.368';
+var BUILD = '2026-11-07.369';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -16020,10 +16020,11 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         mwTiles = function () { var h = _mt2.apply(this, arguments); HID2.forEach(function (id) { h = h.replace(new RegExp('<div class="tile[^"]*" data-act="win:' + id + '"><div class="ic"[^>]*>[^<]*</div>[^<]*</div>', 'g'), ''); }); return h; };
         function nm(id) { var w = null; try { w = winDef(id); } catch (e) { } var t = String((w && (w.t || w.n)) || id).replace(/[^\w &\/.\-+%]+/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 16 ? t.slice(0, 15) + '…' : t; }
         function strip(id) {
-            var f = famOf[id]; if (!f || f[1].length < 2) { return ''; }
-            return '<div class="segc fmstrip" data-noswipe="1" style="display:flex;gap:6px;overflow-x:auto;white-space:nowrap;margin:0 0 10px;padding:2px 0 6px;-webkit-overflow-scrolling:touch">' + f[1].map(function (k) {
+            if (window.__mwHT && window.__mwHT !== id) { window.__mwHT = ''; }
+            var f = famOf[id]; if (window.__mwHT && window.__mwHT === id && famOf.overview) { f = famOf.overview; } if (!f || f[1].length < 2) { return ''; }
+            var rnd = f[0] === 'Home'; return '<div class="segc fmstrip' + (rnd ? ' mwr' : '') + '" data-noswipe="1" style="display:flex;gap:6px;overflow-x:auto;white-space:nowrap;margin:0 0 10px;padding:2px 0 6px;-webkit-overflow-scrolling:touch">' + (rnd ? (function () { var l = f[1].filter(function (k) { return k !== 'siglab' && k !== 'safety'; }), i = l.indexOf('brief'); [].splice.apply(l, [i < 0 ? l.length : i + 1, 0].concat(['siglab', 'safety'].filter(function (k) { return typeof VIEWS[k] === 'function'; }))); return l; })() : f[1]).map(function (k) {
                 var on = k === id;
-                return '<button type="button" data-act="win:' + k + '" data-noswipe="1" style="flex:none;padding:7px 12px;border-radius:16px;border:1px solid ' + (on ? '#0a84ff' : 'var(--line,#d1d1d6)') + ';background:' + (on ? '#0a84ff' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit') + ';font:700 13px system-ui,sans-serif">' + nm(k) + (window.__lvb ? window.__lvb(k) : '') + '</button>';
+                return '<button type="button" data-act="win:' + k + '" data-noswipe="1" style="flex:none;padding:7px 12px;border-radius:16px;border:1px solid ' + (on ? '#0a84ff' : 'var(--line,#d1d1d6)') + ';background:' + (on ? '#0a84ff' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit') + ';font:700 13px system-ui,sans-serif">' + (rnd && window.__mwRI ? window.__mwRI(k) : '') + nm(k) + (window.__lvb ? window.__lvb(k) : '') + '</button>';
             }).join('') + '</div>';
         }
         FAM.forEach(function (f) {
@@ -16032,6 +16033,11 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 var w = function () { var h = fn.apply(this, arguments); return typeof h === 'string' ? strip(id) + h : h; }; w.__fm = 1; VIEWS[id] = w;
             });
         });
+        /* Signal Lab and Safety chips on the Home row: keep showing the Home row on those two windows when you came from it */
+        try {
+            var _sf = VIEWS.safety; if (typeof _sf === 'function' && !_sf.__fm) { var _sw = function () { var h = _sf.apply(this, arguments); return typeof h === 'string' ? strip('safety') + h : h; }; _sw.__fm = 1; VIEWS.safety = _sw; }
+            document.addEventListener('click', function (e) { try { var b = e.target && e.target.closest ? e.target.closest('.fmstrip.mwr button[data-act]') : null; if (b) { var a = b.getAttribute('data-act'); window.__mwHT = (a === 'win:siglab' ? 'siglab' : (a === 'win:safety' ? 'safety' : '')); } } catch (er) { } }, true);
+        } catch (e0) { }
         // keep the active chip in view
         setInterval(function () { try { var a = document.querySelector('.fmstrip button[style*="#0a84ff;color"]'); var s = document.querySelector('.fmstrip'); if (a && s && !s.__c) { s.__c = 1; s.scrollLeft = Math.max(0, a.offsetLeft - 60); } } catch (e) { } }, 500);
         window.__fam = { FAM: FAM, famOf: famOf };
@@ -25631,7 +25637,9 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['always on alerts|alert server|server alerts|missed signal|double alert|request limiter|too many requests|battery|low battery|created by|who made|permissions camera microphone location|key not saved|key guard', 'Build 365: safer keys, one request limiter, battery, always-on alerts, permissions', '(1) Keys: exchange and AI keys are now really blocked from being saved in plain text. If the phone cannot lock a key in its secure storage, the key is NOT saved and you see a red message; restart the app and add it again. (2) One shared limiter now watches every Binance data request from every screen together (about 1,100 units a minute), queues the extras instead of failing, and pauses if Binance says slow down; orders you place are never delayed. (3) Battery: when the phone is at 20% or less and not charging, the background signal scan runs half as often; the live stream already stops when the app is in the background. (4) Always-on alerts: an optional small server (package MintooSuite_alert_server) checks at every 15-minute candle close, sends one alert per signal and remembers it, so none are missed or doubled; it needs a rented server and your Firebase key file on the server, never in the app. Server alerts are an early heads-up using the same rules as the free job, not a copy of every in-app signal. (5) Camera, microphone and location are optional and only asked when you tap the feature. (6) The app and its Baba bots are created by Muhammad Awais; contact details are in More > About.']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['google play payment|pay with google play|subscribe|cancel subscription|refund|crash note|app stopped|send crash|trial restart|clock set back|revoked licence|wake lock|battery drain', 'Plans: Google Play payment, crash notes, safer trial and licences', '(1) Pay with Google Play: Plans shows the monthly and yearly Pro prices from Google Play; tap one to pay. Cancel any time in Google Play > Subscriptions; the app re-checks Google Play whenever it opens, so a cancelled or refunded plan stops (offline it is honoured for at most 3 days). (2) The 7-day trial counts from the day the app was first installed, so clearing app data does not restart it. (3) If your phone clock is set back by more than a day and a half, Pro pauses until the date and time are correct. (4) A licence code can be switched off by the developer if it was misused. (5) Crash notes: if the app stops unexpectedly, a short technical note (no keys, balances or personal data) is kept on your phone; open Menu > Legal > App problems to read it, send it on WhatsApp or delete it. If you switch on "Send crash reports to the developer", the same note is sent automatically (off until you agree). (6) Battery: the running-bot wake lock is now renewed every 30 minutes instead of being held for hours, so a stuck bot cannot drain the battery.']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['shortcut buttons|round buttons|action strip|search signals|jump to exchange|jump to tune|licence code button|how this works|signal feed layout|plans layout', 'Build 367: round shortcut buttons on Signal feed and Plans', 'Signal feed now has three round shortcut buttons under a folded "How this works" note: Search (puts the cursor in the search box), Exchange (jumps to the exchange filter) and Tune Baba (jumps to the tuning panel). Plans has up to three: Licence code, How to get Pro and Google Play (the last only when this build has Google Play payment). They only jump to controls that were already on the screen; nothing was removed or changed, and the note text is the same, just folded after your first visit (tap it to open). Signal feed filter chips are a little taller so they are easier to tap. Chart, Wallet, Menu and Profile were left as they are on purpose, because reviewers found they already have these controls and a strip would only repeat them.']); } catch (e) { } })();
-;(function () { try { PF_APP.push(['round buttons home|trading analyst button|risk news rates buttons|round icon buttons|alerts button moved', 'Build 368: round buttons for Trading Analyst, Risk, News, Rates and Signals', 'On Home, Markets and Ideas the five quick buttons (Trading Analyst, Risk, News, Rates, Signals) are now round coloured buttons with the name underneath, in the same style as the Trade smarter tile. They open exactly the same windows as before. Signals is new in this row: it opens the Signal feed (UT Bot and Baba signals with the scoreboard). The Alerts button was taken out of this row because Alerts is already on the Trade smarter tile (and in More), so it no longer appears twice.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['round buttons home|trading analyst button|risk news rates buttons|round icon buttons|alerts button moved', 'Build 368: round buttons for Trading Analyst, Risk, News, Rates and Signals', 'On Home, Markets and Ideas the five quick buttons (Trading Analyst, Risk, News, Rates, Signals) are now round coloured buttons with the name underneath, in the same style as the Trade smarter tile. They open exactly the same windows as before, and the always-on green "live" dots on the corners were removed because they did not show a real status. Signals is new in this row: it opens the Signal feed (UT Bot and Baba signals with the scoreboard). The Alerts button was taken out of this row because Alerts is already on the Trade smarter tile (and in More), so it no longer appears twice.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['home tabs|home row buttons|movers button|round tabs ideas briefing|signal lab button|safety button', 'Build 369: round tabs on Home, with Signal Lab and Safety added', 'The row of tabs at the top of Home, Ideas, New coin alerts, Briefing and Live now has round coloured buttons with the name underneath; the tab you are on has a blue ring. The Movers and Trading Analyst tabs were taken out of this row because they are already on Home (the Movers card and the Trading Analyst button). You can still open them from there; when you are on one of those two windows its own tab stays visible. Two hard-to-find windows now have their own tab in their place: Signal Lab (tests how accurate UT Bot, Supertrend, RSI and Baba Practice Bot were on past candles) and Safety (PIN or pattern lock, auto-erase, panic erase, encrypted backup). They are the same windows as before, nothing was duplicated.']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -25962,11 +25970,40 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             + C + ' svg{box-sizing:border-box!important;width:50px!important;height:50px!important;padding:13px!important;border-radius:50%!important;stroke:#fff!important;fill:none!important;fill-opacity:1!important;background-color:currentColor!important;background-image:linear-gradient(150deg,rgba(255,255,255,.30),rgba(0,0,0,.16))!important;box-shadow:0 3px 8px rgba(0,0,0,.18)!important;flex:0 0 auto}'
             + C + ' span{display:block;max-width:100%;font-size:11px!important;font-weight:700!important;line-height:1.1;min-height:24px;overflow-wrap:anywhere;padding:0 1px}'
             + C + '[data-act="win:analyst"]{color:#4f46e5!important}' + C + '[data-act="win:rates"]{color:#0e7490!important}' + C + '[data-act="win:sigfeed"]{color:#0060df!important}'
-            + C + '[data-act]::after{top:0!important;right:calc(50% - 25px)!important}'
+            + C + '::after{display:none!important;content:none!important}'
             + C + ':active svg{transform:scale(.93)}'
             + '@media (forced-colors:active){' + C + ' svg{border:2px solid CanvasText!important}}';
         document.head.appendChild(st);
     } catch (e) { try { console.error('p9round', e); } catch (e2) { } }
+})();
+
+/* ===== build 369: Home-family tab row (Home, Ideas, New coin alerts, Briefing, Signal Lab, Safety, Live): round icon look; Movers and Trading Analyst chips hidden here (both stay reachable: Movers card and Trading Analyst button on Home); the chip of the window you are on always stays visible ===== */
+(function () {
+    try {
+        var P = {
+            overview: ['#0060df', '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>'],
+            ideas: ['#b45309', '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>'],
+            radar: ['#e11d48', '<circle cx="12" cy="12" r="1.8"/><path d="M12 12L18.5 5.5M7.5 16.5a6.4 6.4 0 019-9M4.3 19.7a11 11 0 0115.4-15.4"/>'],
+            brief: ['#4f46e5', '<rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9h8M8 13h8"/>'],
+            live: ['#15803d', '<path d="M3 12h4l2-6 4 12 2-6h6"/>'],
+            siglab: ['#1d4ed8', '<path d="M3 18l5-6 4 3 8-10"/><path d="M3 21h18"/>'],
+            safety: ['#b3261e', '<path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>']
+        };
+        window.__mwRI = function (k) { var p = P[k] || ['#64748b', '<circle cx="12" cy="12" r="5"/>']; return '<i class="mwri" aria-hidden="true" style="background-color:' + p[0] + '"><svg viewBox="0 0 24 24">' + p[1] + '</svg></i>'; };
+        var F = 'html .fmstrip.mwr', B = F + ' button', st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent =
+            F + ' [data-act="win:movers"]:not([style*="#0a84ff"]),' + F + ' [data-act="win:analyst"]:not([style*="#0a84ff"]){display:none!important}'
+            + F + '{gap:4px!important;align-items:flex-start}'
+            + B + '{position:relative;flex:0 0 62px!important;width:62px!important;min-height:68px;padding:2px 0 0!important;border:0!important;background:none!important;box-shadow:none!important;border-radius:0!important;color:var(--ink,inherit)!important;display:flex!important;flex-direction:column;align-items:center;gap:4px;font:700 11px/1.1 system-ui,sans-serif!important;white-space:normal!important;text-align:center;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent}'
+            + B + '[style*="#0a84ff"]{background:none!important;box-shadow:none!important;color:var(--ink,inherit)!important;font-weight:800!important}'
+            + B + ' .mwri{box-sizing:border-box;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background-image:linear-gradient(150deg,rgba(255,255,255,.30),rgba(0,0,0,.16));box-shadow:0 2px 6px rgba(0,0,0,.18)}'
+            + B + ' .mwri svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}'
+            + B + '[style*="#0a84ff"] .mwri{box-shadow:0 0 0 2px var(--bg,#fff),0 0 0 4px #0a84ff}'
+            + B + ':active .mwri{transform:scale(.93)}'
+            + F + ' .lvb{top:0!important;right:calc(50% - 26px)!important}'
+            + '@media (forced-colors:active){' + B + ' .mwri{border:2px solid CanvasText}}';
+        document.head.appendChild(st);
+    } catch (e) { try { console.error('p9round2', e); } catch (e2) { } }
 })();
 
 function renderView(keep) {
