@@ -52,6 +52,28 @@ final class Bridge {
     @JavascriptInterface
     public void nchartHide(String tok) { if (ok(tok)) { NativeChart.hide(); } }
 
+    /* ----- home-screen widget text: the page saves one short line; the widget shows it ----- */
+    @JavascriptInterface
+    public void widgetSet(String tok, String text) {
+        if (!ok(tok) || text == null) { return; }
+        try {
+            String t = text.length() > 160 ? text.substring(0, 160) : text;
+            ctx.getSharedPreferences("mw_widget", Context.MODE_PRIVATE).edit().putString("text", t).apply();
+            MwWidget.refresh(ctx);
+        } catch (Throwable e) { }
+    }
+
+    /* ----- screenshot and screen-recording block: the page turns it on for wallet and other money screens ----- */
+    @JavascriptInterface
+    public void setSecure(String tok, boolean on) {
+        if (!ok(tok)) { return; }
+        final MainActivity a = MainActivity.cur; if (a == null) { return; }
+        final boolean s = on;
+        a.runOnUiThread(new Runnable() { public void run() { try { if (s) { a.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE); } else { a.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE); } } catch (Exception e) { } } });
+    }
+
+    private static boolean okName(String n) { return n != null && n.matches("mintoosuite_[A-Za-z0-9_.\\-]{1,80}"); }
+
     /* ----- chart rotation: the page asks to lock landscape / portrait, or go back to automatic ----- */
     @JavascriptInterface
     public void orient(String tok, String mode) {
@@ -313,7 +335,7 @@ final class Bridge {
 
     @JavascriptInterface
     public boolean secSet(String tok, String name, String val) {
-        if (!ok(tok) || name == null || val == null) { return false; }
+        if (!ok(tok) || !okName(name) || val == null) { return false; }
         try {
             javax.crypto.Cipher c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
             c.init(javax.crypto.Cipher.ENCRYPT_MODE, ksKey());
@@ -325,7 +347,7 @@ final class Bridge {
 
     @JavascriptInterface
     public String secGet(String tok, String name) {
-        if (!ok(tok) || name == null) { return ""; }
+        if (!ok(tok) || !okName(name)) { return ""; }
         try {
             String v = ctx.getSharedPreferences("mw_sec", Context.MODE_PRIVATE).getString(name, null);
             if (v == null) { return ""; }
@@ -340,7 +362,7 @@ final class Bridge {
 
     @JavascriptInterface
     public void secDel(String tok, String name) {
-        if (!ok(tok) || name == null) { return; }
+        if (!ok(tok) || !okName(name)) { return; }
         try { ctx.getSharedPreferences("mw_sec", Context.MODE_PRIVATE).edit().remove(name).commit(); } catch (Throwable e) { }
     }
 
