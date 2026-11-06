@@ -96,6 +96,41 @@ final class Bridge {
     @JavascriptInterface
     public void anaEvent(String tok, String name, String item) { if (ok(tok)) { AnalyticsHelper.event(ctx, name, item); } }
 
+    /* ----- crash notes (kept on the phone; sent to the developer only if the user agrees) ----- */
+    @JavascriptInterface
+    public String crashLast(String tok) { return ok(tok) ? CrashHelper.last(ctx) : ""; }
+
+    @JavascriptInterface
+    public void crashClear(String tok) { if (ok(tok)) { CrashHelper.clear(ctx); } }
+
+    @JavascriptInterface
+    public void crashSend(String tok, boolean yes) { if (ok(tok)) { CrashHelper.collect(yes); } }
+
+    @JavascriptInterface
+    public boolean crashCloud(String tok) { return ok(tok) && CrashHelper.available(); }
+
+    /* ----- when this app was first installed on this phone (a trial cannot be restarted by clearing app data) ----- */
+    @JavascriptInterface
+    public long installAt(String tok) {
+        if (!ok(tok)) { return 0L; }
+        try { return ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0).firstInstallTime; } catch (Throwable e) { return 0L; }
+    }
+
+    /* ----- Google Play Billing ----- */
+    @JavascriptInterface
+    public String billState(String tok) { if (!ok(tok)) { return "{}"; } BillingHelper.start(ctx); return BillingHelper.state(ctx); }
+
+    @JavascriptInterface
+    public void billRefresh(String tok) { if (ok(tok)) { BillingHelper.start(ctx); BillingHelper.refresh(ctx); } }
+
+    @JavascriptInterface
+    public void billBuy(String tok, final int idx) {
+        if (!ok(tok)) { return; }
+        final MainActivity a = MainActivity.cur;
+        if (a == null) { return; }
+        a.runOnUiThread(new Runnable() { @Override public void run() { BillingHelper.buy(a, idx); } });
+    }
+
     /* ----- Professor microphone (speech to text) ----- */
     @JavascriptInterface
     public void speechStart(String tok, String lang) { if (ok(tok)) { Media.listen(lang); } }

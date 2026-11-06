@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        try { CrashHelper.install(this); } catch (Throwable ignored) { }
+        try { BillingHelper.start(getApplicationContext()); } catch (Throwable ignored) { }
         cur = this;
         night = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);

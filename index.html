@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.363';
+var BUILD = '2026-11-07.367';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -13649,13 +13649,39 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function myEmail() { try { var a = auAcct(); return a && a.email ? String(a.email).toLowerCase() : ''; } catch (e) { return ''; } }
         function b64u(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) { s += '='; } return s; }
         function fromB64u(s) { var b = atob(b64u(s)), a = new Uint8Array(b.length), i; for (i = 0; i < b.length; i++) { a[i] = b.charCodeAt(i); } return a; }
+        /* ----- hardening (build 365): clock rollback guard, revoked codes, Google Play entitlement, trial tied to the install date ----- */
+        function nat2() { try { return window.MintooNative && window.__mwTok ? window.MintooNative : null; } catch (e) { return null; } }
+        function lsg(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+        function clockBad() { var mx = +(lsg('mintoosuite_x_maxt') || lsg('mintoosuite_maxt') || 0); return !!mx && Date.now() < mx - 36 * 3600000; }
+        function tickT() { var n = Date.now(), mx = +(lsg('mintoosuite_x_maxt') || lsg('mintoosuite_maxt') || 0); if (n > mx && !clockBad()) { lss('mintoosuite_maxt', String(n)); lss('mintoosuite_x_maxt', String(n)); } }
+        setInterval(tickT, 60000); tickT();
+        function revoked(L) { try { var r = JSON.parse(lsg('mintoosuite_revoked') || '[]'); return r.indexOf(String(L.e || '').toLowerCase()) >= 0 || (L.n && r.indexOf(String(L.n).toLowerCase()) >= 0); } catch (e) { return false; } }
+        function pullRevoked() { try { var at = +(lsg('mintoosuite_revoked_at') || 0); if (Date.now() - at < 6 * 3600000) { return; } fetch('revoked.json?t=' + Math.floor(Date.now() / 3600000), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j && j.revoked && j.revoked.map) { lss('mintoosuite_revoked', JSON.stringify(j.revoked.map(function (x) { return String(x).toLowerCase(); }))); lss('mintoosuite_revoked_at', String(Date.now())); } }).catch(function () { }); } catch (e) { } }
+        setTimeout(pullRevoked, 8000); setInterval(pullRevoked, 3600000);
+        var PB = { active: false, checkedAt: 0, lib: false, ready: false, msg: '', offers: [], vok: null };
+        try { var pj = JSON.parse(lsg('mintoosuite_playst') || 'null'); if (pj) { PB.active = !!pj.active; PB.checkedAt = +pj.checkedAt || 0; } } catch (e) { }
+        function verifyServer(tok) {
+            var u = lsg('mintoosuite_verifyurl'); if (!u || !tok) { PB.vok = true; return; }
+            try { if (lsg('mintoosuite_vtok') === tok && lsg('mintoosuite_vres') === '1') { PB.vok = true; return; } fetch(u, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: tok, product: 'mintoo_pro', pkg: 'com.mintoosuite.terminal' }) }).then(function (r) { return r.json(); }).then(function (j) { PB.vok = !!(j && j.active); lss('mintoosuite_vtok', tok); lss('mintoosuite_vres', PB.vok ? '1' : '0'); }).catch(function () { }); } catch (e) { }
+        }
+        function pollPlay() {
+            var n = nat2(); if (!n || !n.billState) { return; }
+            try { var s = JSON.parse(n.billState(window.__mwTok) || '{}'); PB.lib = !!s.lib; PB.ready = !!s.ready; PB.msg = s.msg || ''; PB.offers = s.offers || [];
+                if (s.checkedAt) { PB.active = !!s.active; PB.checkedAt = +s.checkedAt; lss('mintoosuite_playst', JSON.stringify({ active: PB.active, checkedAt: PB.checkedAt })); if (s.active) { verifyServer(s.token); } } } catch (e) { }
+        }
+        setInterval(pollPlay, 5000); setTimeout(pollPlay, 1500);
+        function playOn() { return PB.active && PB.vok !== false && Date.now() - PB.checkedAt < 3 * DAY; }
         function plan() {
             var o = rd(), now = Date.now(), L = o.lic;
+            if (clockBad()) { return { p: 'free', src: 'free', x: 0, trialUsed: !!o.trial, clock: 1 }; }
+            if (playOn()) { return { p: 'pro', src: 'play', x: 0 }; }
+            if (L && revoked(L)) { L = null; }
             if (L && (!L.x || L.x > now) && (L.e === '*' || !myEmail() || L.e === myEmail())) { return { p: (L.p === 'elite' ? 'pro' : L.p), src: 'code', x: L.x || 0 }; }
             if (o.trial && o.trial + TRIAL_DAYS * DAY > now) { return { p: 'pro', src: 'trial', x: o.trial + TRIAL_DAYS * DAY, e3: o.trial + 3 * DAY }; }
             return { p: 'free', src: 'free', x: 0, trialUsed: !!o.trial };
         }
-        function startTrial() { var o = rd(); if (!o.trial && agreed()) { o.trial = Date.now(); wr(o); } }
+        function startTrial() { var o = rd(); if (!o.trial && agreed()) { var ia = 0; try { var n = nat2(); ia = n && n.installAt ? +n.installAt(window.__mwTok) : 0; } catch (e) { } o.trial = (ia > 0 && ia < Date.now()) ? ia : Date.now(); wr(o); } }
         setInterval(startTrial, 3000); startTrial();
         function allowed(id) { var n = NEED[id]; if (!n) { return true; } return RANK[plan().p] >= RANK[n]; }
         window.__plan = plan;
@@ -13692,6 +13718,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function status() {
             var p = plan(), h = '<div class="group pad" style="border-left:5px solid ' + (p.p === 'elite' ? '#ffd60a' : p.p === 'pro' ? '#0a84ff' : '#8e8e93') + '"><div class="ph"><b style="font-size:19px">Your plan: ' + NAME[p.p] + '</b></div>';
             if (p.src === 'trial') { h += '<div class="note" style="margin:4px 0 0">Free Pro trial: <b>' + Math.max(1, Math.ceil((p.x - Date.now()) / DAY)) + ' day(s) left</b>. After that the app returns to Free unless you enter a licence code.</div>'; }
+            else if (p.src === 'play') { h += '<div class="note" style="margin:4px 0 0">Active through <b>Google Play</b>. Manage or cancel it in Google Play > Subscriptions.</div>'; }
+            else if (p.clock) { h += '<div class="note" style="margin:4px 0 0">⚠️ Your phone clock looks set back. Correct the date and time and Pro comes back.</div>'; }
             else if (p.src === 'code') { h += '<div class="note" style="margin:4px 0 0">Active by licence code ' + (p.x ? 'until <b>' + new Date(p.x).toLocaleDateString() + '</b>' : '(no end date)') + '.</div>'; }
             else { h += '<div class="note" style="margin:4px 0 0">' + (p.trialUsed ? 'Your 7-day Pro trial has ended. ' : '') + 'Pro windows are locked. Pick a plan below, pay, and paste the licence code you receive.</div>'; }
             return h + '</div>';
@@ -13701,18 +13729,31 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         function reqBox() {
             var em = myEmail() || '(your email)', mk = function (pn) { return 'Hello, I would like the ' + pn + ' plan for MintooSuite Terminal. My account email: ' + em; };
-            return '<div class="group pad"><b>How to get Pro</b><div class="note" style="margin:4px 0 8px">1) Send a request (button below). 2) Pay as agreed (for example Easypaisa, JazzCash or bank). 3) You receive a licence code made for your account email. 4) Paste it above. Paying inside the app comes later with Google Play.</div>' +
+            return '<div class="group pad"><b>How to get Pro</b><div class="note" style="margin:4px 0 8px">1) Send a request (button below). 2) Pay as agreed (for example Easypaisa, JazzCash or bank). 3) You receive a licence code made for your account email. 4) Paste it above. You can also pay inside the app with Google Play (see above).</div>' +
                 ['Pro'].map(function (pn) { return '<a class="btn sec" style="display:block;text-align:center;text-decoration:none;margin-top:6px" target="_blank" rel="noopener" href="https://wa.me/923122602811?text=' + encodeURIComponent(mk(pn)) + '">Request ' + pn + ' on WhatsApp</a>'; }).join('') +
                 '<a class="btn sec" style="display:block;text-align:center;text-decoration:none;margin-top:6px" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite plan request') + '&body=' + encodeURIComponent(mk('Pro')) + '">Request by email</a></div>';
+        }
+        function per(p) { return p === 'P1M' ? 'per month' : p === 'P1Y' ? 'per year' : p === 'P3M' ? 'per 3 months' : p === 'P6M' ? 'per 6 months' : p === 'P1W' ? 'per week' : ''; }
+        function playBox() {
+            if (!nat2() || !nat2().billState) { return ''; }
+            var h = '<div class="group pad"><b>Pay with Google Play</b>';
+            if (!PB.lib) { return h + '<div class="note" style="margin:4px 0 0">Google Play payment is not part of this app build.</div></div>'; }
+            if (PB.active && playOn()) { return h + '<div class="note" style="margin:4px 0 0">✅ Your Google Play subscription is active.</div><button class="btn sec" data-pl="prefresh">Check again</button></div>'; }
+            if (!PB.offers.length) { return h + '<div class="note" style="margin:4px 0 0">' + esc(PB.msg || 'Loading the plans from Google Play…') + '</div><button class="btn sec" data-pl="prefresh">Try again</button></div>'; }
+            h += '<div class="note" style="margin:4px 0 8px">Cancel any time in Google Play. Cancelled or refunded plans stop automatically.</div>';
+            PB.offers.forEach(function (o) { h += '<button class="btn" style="margin-top:6px" data-pl="pbuy' + o.i + '">Pro ' + esc(o.price) + ' ' + esc(per(o.period)) + '</button>'; });
+            return h + (PB.msg ? '<div class="note" style="margin:6px 0 0">' + esc(PB.msg) + '</div>' : '') + '</div>';
         }
         VIEWS.plans = function () {
             var h = _vp ? _vp.apply(this, arguments) : '';
             h = h.replace(/<div class="note" style="margin:0 0 8px">Premium preview\.[^]*?<\/div>/, '');
-            return status() + codeBox() + h.replace(/(<div class="group pad" style="border-top:4px solid)/, reqBox() + '$1');
+            return status() + playBox() + codeBox() + h.replace(/(<div class="group pad" style="border-top:4px solid)/, reqBox() + '$1');
         };
         document.addEventListener('click', function (e) {
             var el = e.target.closest ? e.target.closest('[data-pl]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
             var a = el.getAttribute('data-pl');
+            if (a === 'prefresh') { try { nat2().billRefresh(window.__mwTok); } catch (er) { } setTimeout(function () { pollPlay(); renderView(true); }, 2500); return; }
+            if (a.indexOf('pbuy') === 0) { try { nat2().billBuy(window.__mwTok, parseInt(a.slice(4), 10)); } catch (er) { } return; }
             if (a === 'act') {
                 var t = document.getElementById('licCode'), m = document.getElementById('licMsg'); if (!t) { return; }
                 if (m) { m.textContent = 'Checking…'; }
@@ -16746,7 +16787,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             } catch (e) { }
         }
         /* ---- 4. copyright notices ---- */
-        var NOTE = '© ' + YEAR + ' Muhammad Awais, Islamabad, Pakistan. MintooSuite, Baba Practice Bot and Baba AI, their design, text and code are protected by copyright. All rights reserved. You may use the app under its licence, but copying it, selling it, or taking it apart without written permission is not allowed.';
+        var NOTE = '© ' + YEAR + ' Muhammad Awais, Islamabad, Pakistan (awaisrajpoot2@yahoo.com, WhatsApp +92 312 2602811). Created by Muhammad Awais. MintooSuite, Baba Practice Bot and Baba AI, their design, text and code are protected by copyright. All rights reserved. You may use the app under its licence, but copying it, selling it, or taking it apart without written permission is not allowed.';
         try { var mt = document.createElement('meta'); mt.name = 'copyright'; mt.content = '(c) ' + YEAR + ' Muhammad Awais. All rights reserved.'; document.head.appendChild(mt); } catch (e) { }
         try { console.log('%c' + NOTE, 'color:#888'); } catch (e) { }
         function foot() { return '<div class="note" style="margin:12px 4px;font-size:11px;opacity:.8" dir="auto">' + e2(NOTE) + '<br>Third-party parts keep their own licences: the open Urdu font (SIL Open Font Licence), Firebase and Android libraries.</div>'; }
@@ -21729,11 +21770,10 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         /* Baba v2: the same engine plus three extra checks, run beside v1 so the scoreboard shows whether the extra checks help or only slow it down:
            1) the 1-hour direction agrees (EMA 8 vs 21 of every 4th candle), 2) Bitcoin is not strongly against the side (24 h change), 3) the market is not wild (ATR under 3.5% of price) */
         function babaSig2(K, PP) {
-            var R = babaSig(K, PP), n = K.length, hc = [], hi = [], i, k;
-            for (i = n - 1; i >= 0; i -= 4) { hc.unshift(K[i].c); hi.unshift(i); }
-            var e8 = ema(hc, 8), e21 = ema(hc, 21), dirAt = new Array(n), p = 0, at = atrArr(K, 14), btc = 0;
+            var R = babaSig(K, PP), n = K.length, i, k, at = atrArr(K, 14), btc = 0, dirAt = new Array(n), e8 = 0, e21 = 0, cnt = 0, dir = 0;
             try { btc = (S.tick && S.tick.BTCUSDT) ? +S.tick.BTCUSDT.chg || 0 : 0; } catch (e) { }
-            for (i = 0; i < n; i++) { while (p + 1 < hi.length && hi[p + 1] <= i) { p++; } dirAt[i] = hi[p] <= i && p >= 21 ? (e8[p] > e21[p] ? 1 : e8[p] < e21[p] ? -1 : 0) : 0; }
+            /* 1-hour direction from hour-aligned closes (the candle that opens at minute 45 closes the hour), EMA 8 vs EMA 21 of those closes */
+            for (i = 0; i < n; i++) { if (K[i].t % 3600000 === 2700000) { cnt++; e8 = cnt === 1 ? K[i].c : K[i].c * (2 / 9) + e8 * (1 - 2 / 9); e21 = cnt === 1 ? K[i].c : K[i].c * (2 / 22) + e21 * (1 - 2 / 22); dir = cnt >= 30 ? (e8 > e21 ? 1 : e8 < e21 ? -1 : 0) : 0; } dirAt[i] = dir; }
             var buy = [], sell = [], pos = [], cur = 0;
             for (i = 0; i < n; i++) {
                 var b = false, d = false, calm = at[i] / K[i].c < 0.035;
@@ -23694,69 +23734,122 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
     try {
         var SK = 'mintoosuite_sigfeed', F = [], R = { busy: 0, at: 0, n: 0, tot: 0, msg: '' };
         try { F = JSON.parse(localStorage.getItem(SK) || '[]') || []; if (!Array.isArray(F)) { F = []; } } catch (e) { F = []; }
-        function save() { try { var c = Date.now() - 24 * 3600000; F = F.filter(function (x) { return x.t > c; }).slice(0, 300); localStorage.setItem(SK, JSON.stringify(F)); } catch (e) { } }
+        function days() { var d = 2; try { d = +localStorage.getItem('mintoosuite_sigdays') || 2; } catch (e) { } return d; }
+        function save() { try { var c = Date.now() - days() * 86400000; F = F.filter(function (x) { return x.t > c; }).slice(0, 6000); localStorage.setItem(SK, JSON.stringify(F)); } catch (e) { } }
         function base(s) { return String(s).replace(/USDT$/, ''); }
         function ago(t) { var m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 90 ? m + ' min ago' : Math.round(m / 60) + ' h ago'; }
+        /* OKX and Bybit public data (top coins not on Binance), read-only */
+        var EXU = { at: 0, a: [], busy: 0 };
+        function jget(u) { return xcFetch(u).then(function (r) { return r.text(); }).then(function (t) { return JSON.parse(t); }); }
+        function extLoad() {
+            if (EXU.busy || Date.now() - EXU.at < 300000 || typeof xcFetch !== 'function') { return; } EXU.busy = 1;
+            var out = [];
+            Promise.all([
+                jget('https://www.okx.com/api/v5/market/tickers?instType=SWAP').then(function (j) { (j.data || []).forEach(function (d) { var m = /^([A-Z0-9]+)-USDT-SWAP$/.exec(d.instId || ''); if (m) { var q = (+d.volCcy24h || 0) * (+d.last || 0); if (q > 3e6) { out.push({ b: m[1], x: 'okx', ext: d.instId, q: q }); } } }); }).catch(function () { }),
+                jget('https://api.bybit.com/v5/market/tickers?category=linear').then(function (j) { ((j.result && j.result.list) || []).forEach(function (d) { var m = /^([A-Z0-9]+)USDT$/.exec(d.symbol || ''); if (m) { var q = +d.turnover24h || 0; if (q > 3e6) { out.push({ b: m[1], x: 'bybit', ext: d.symbol, q: q }); } } }); }).catch(function () { })
+            ]).then(function () { EXU = { at: Date.now(), a: out, busy: 0 }; }, function () { EXU.busy = 0; EXU.at = Date.now() - 240000; });
+        }
+        function extList() { extLoad(); var seen = {}, o = []; ['okx', 'bybit'].forEach(function (ex) { EXU.a.filter(function (c) { return c.x === ex && !(S.tick && S.tick[c.b + 'USDT']); }).sort(function (a, b) { return b.q - a.q; }).slice(0, 25).forEach(function (c) { var k = ex + c.b; if (!seen[k]) { seen[k] = 1; o.push({ sym: c.b + 'USDT', x: ex, ext: c.ext, fut: true }); } }); }); return o; }
+        function extKl(it) {
+            if (it.x === 'okx') { return jget('https://www.okx.com/api/v5/market/candles?instId=' + it.ext + '&bar=15m&limit=300').then(function (j) { return (j.data || []).slice().reverse().map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }; }); }); }
+            return jget('https://api.bybit.com/v5/market/kline?category=linear&symbol=' + it.ext + '&interval=15&limit=300').then(function (j) { return ((j.result && j.result.list) || []).slice().reverse().map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }; }); });
+        }
         function top() {
             var a = []; try { Object.keys(S.tick || {}).forEach(function (s) { var t = S.tick[s]; if (/USDT$/.test(s) && t && +t.q > 5e6 && !/^(USDC|FDUSD|TUSD|BUSD)/.test(s)) { a.push([s, +t.q]); } }); } catch (e) { }
-            a.sort(function (x, y) { return y[1] - x[1]; }); var L = a.slice(0, 50).map(function (x) { return { sym: x[0] }; });
+            a.sort(function (x, y) { return y[1] - x[1]; }); var L = a.slice(0, 260).map(function (x) { return { sym: x[0] }; });
             try {
-                var U = (window.__mxUni ? window.__mxUni() : []).filter(function (c) { return c && c.s && (+c.q || 0) >= 150000; }), seen = {}, add = function (c) { if (!seen[c.s] && L.length < 130) { seen[c.s] = 1; L.push({ sym: String(c.s) + 'USDT', c: c, x: c.x || 'mexc', fut: c.fut !== false }); } };
+                var U = (window.__mxUni ? window.__mxUni() : []).filter(function (c) { return c && c.s && (+c.q || 0) >= 150000; }), seen = {}, add = function (c) { if (!seen[c.s] && L.length < 340) { seen[c.s] = 1; L.push({ sym: String(c.s) + 'USDT', c: c, x: c.x || 'mexc', fut: c.fut !== false }); } };
                 U.slice().sort(function (p, q) { return (+q.q || 0) * Math.abs(+q.c || 0) - (+p.q || 0) * Math.abs(+p.c || 0); }).slice(0, 25).forEach(add);
                 U.filter(function (c) { return +c.c >= 5; }).sort(function (p, q) { return q.c - p.c; }).slice(0, 45).forEach(add);
                 U.filter(function (c) { return +c.c <= -8; }).sort(function (p, q) { return p.c - q.c; }).slice(0, 15).forEach(add);
             } catch (e) { }
+            try { extList().forEach(function (e) { L.push(e); }); } catch (e) { }
             return L;
         }
-        function scan() {
-            if (R.busy || document.hidden || !window.__ut || typeof m7kl !== 'function') { return; }
-            var L = top(); if (!L.length) { return; } R.busy = 1; R.n = 0; R.tot = L.length; R.msg = '';
+        var LASTSCAN = {}, FAILS = 0, NT = { t0: 0, n: 0, x: 0, sent: 0 };
+        function notify(lab, sy, side, price) {
+            var now = Date.now(); if (now - NT.t0 > 300000) { NT = { t0: now, n: 0, x: 0, sent: 0 }; }
+            if (NT.n < 3) { NT.n++; try { toast(lab + ' ' + side + ' on ' + base(sy)); } catch (e) { } try { alertPush(sy, lab + ': ' + base(sy) + ' ' + (side === 'BUY' ? 'LONG' : 'SHORT'), 'New ' + lab + ' signal on ' + base(sy) + ' near ' + price + '. Open the app, check the chart and use a stop. A signal is not a promise.'); } catch (e) { } }
+            else { NT.x++; if (NT.x === 3 && !NT.sent) { NT.sent = 1; try { alertPush(sy, 'More signals in the Signal feed', 'Several more signals arrived. Open the Signal feed to see them, newest first.', ''); } catch (e) { } } }
+        }
+        /* One coin: judge its old signals at exactly +2 h, then look for new UT Bot / Baba / Baba v2 signals on closed candles */
+        function evalCoin(it, k) {
+            var sy = it.sym, xx = it.x || 'binance', now = Date.now(), K = (k || []).filter(function (c) { return c && c.t + 900000 <= now; }); if (K.length < 80) { return; }
+            F.forEach(function (x) { if (x.rf == null && x.sym === sy && (x.x || 'binance') === xx && x.t + 7200000 <= now) { var tg = x.t + 7200000 - 900000, c2 = null, q0; for (q0 = K.length - 1; q0 >= 0; q0--) { if (K[q0].t === tg) { c2 = K[q0].c; break; } if (K[q0].t < tg) { break; } } if (c2 && x.p0) { var sd = x.side === 'BUY' ? 1 : -1; x.rf = sd * (c2 / x.p0 - 1) * 100 - 0.1; x.res = x.tf ? sd * (c2 / x.tf - 1) * 100 - 0.1 : x.rf; } } });
+            var u = window.__ut.utbot(K, 1, 10), n = u.pos.length, p = u.pos[n - 1], j = n - 1, age = 0, bp = window.__babaParams ? window.__babaParams() : { lb: 12, vm: 1.3 };
+            function put(bot, side, idx, early) {
+                var id = sy + (it.x || '') + bot + side + K[idx].t; if (F.some(function (z) { return z.id === id; })) { return; }
+                F.unshift({ id: id, bot: bot, early: early ? 1 : 0, sym: sy, side: side, t: K[idx].t + 900000, seen: Date.now(), x: xx, fut: it.fut, p0: K[n - 1].c, tf: K[idx].c, P: bot === 'ut' ? '' : bp.lb + '|' + bp.vm });
+                if (n - 1 - idx <= 1 && R.seenOnce) { notify(bot === 'baba2' ? 'Baba v2' : bot === 'baba' ? (early ? 'Baba Signal (early)' : 'Baba Signal') : 'UT Bot', sy, side, K[n - 1].c); }
+            }
+            if (p) { while (j > 0 && u.pos[j - 1] === p) { j--; age++; } if (j > 0 && age <= 3) { put('ut', p > 0 ? 'BUY' : 'SELL', j, 0); } }
+            try { var bs = window.__babaSig(K); for (var q = n - 1; q >= Math.max(0, n - 4); q--) { if (bs.buy[q] || bs.sell[q]) { put('baba', bs.buy[q] ? 'BUY' : 'SELL', q, bs.early && bs.early[q]); break; } } } catch (e) { }
+            try { var b2 = window.__babaSig2(K); for (var q2 = n - 1; q2 >= Math.max(0, n - 4); q2--) { if (b2.buy[q2] || b2.sell[q2]) { put('baba2', b2.buy[q2] ? 'BUY' : 'SELL', q2, 0); break; } } } catch (e) { }
+        }
+        function fail(e) { FAILS++; if (/418|429/.test(String(e && e.message || e)) || FAILS >= 8) { R.msg = 'Data source asked to slow down or is not answering; scanning paused for 10 minutes.'; R.cool = Date.now() + 600000; FAILS = 0; return true; } return false; }
+        function scan(bg) {
+            if (R.busy || document.hidden || !window.__ut || typeof m7kl !== 'function' || Date.now() < (R.cool || 0)) { return; }
+            var all = top(); if (!all.length) { return; }
+            /* coverage: the busiest 60 Binance coins and the 25 busiest MEXC/Bitget coins every scan, plus the 70 coins checked longest ago, so every coin is checked about every 15 minutes (a signal stays visible for 4 candles = 1 hour) */
+            var pri = all.filter(function (x, i2) { return i2 < 60 || x.ext || (x.c && all.indexOf(x) < 285); }), rest = all.filter(function (x) { return pri.indexOf(x) < 0; }).sort(function (a2, b2) { return (LASTSCAN[a2.sym + (a2.x || '')] || 0) - (LASTSCAN[b2.sym + (b2.x || '')] || 0); }), L = pri.concat(rest.slice(0, 70));
+            if (!L.length) { return; } R.busy = 1; R.n = 0; R.tot = L.length; R.msg = '';
             (function step(i) {
-                if (i >= L.length) { R.busy = 0; R.at = Date.now(); save(); if (S.win === 'sigfeed') { try { renderView(true); } catch (e) { } } return; }
-                var it = L[i], sy = it.sym;
-                (it.c ? window.XCH.kl(it.c, '15m', 120) : m7kl(sy, '15m', 120)).then(function (k) {
-                    var K = (k || []).slice(0, -1); if (K.length < 40) { return; }
-                    var u = window.__ut.utbot(K, 1, 10), n = u.pos.length, p = u.pos[n - 1], j = n - 1, age = 0, xx = it.x || 'binance', note = 0, bs = null;
-                    function put(bot, side, idx, early) {
-                        var id = sy + (it.x || '') + bot + side + K[idx].t, old = F.filter(function (z) { return z.id === id; })[0];
-                        if (old) { return; }
-                        F.unshift({ id: id, bot: bot, early: early ? 1 : 0, sym: sy, side: side, t: K[idx].t + 900000, seen: Date.now(), x: xx, fut: it.fut, p0: K[n - 1].c, tf: K[idx].c });
-                        if (n - 1 - idx <= 1 && note < 2) { note++; try { toast((bot === 'baba' ? 'Baba ' + (early ? 'early ' : '') : 'UT Bot ') + side + ' on ' + base(sy)); } catch (e) { } }
-                    }
-                    if (p) { while (j > 0 && u.pos[j - 1] === p) { j--; age++; } if (j > 0 && age <= 3) { put('ut', p > 0 ? 'BUY' : 'SELL', j, 0); } } /* UT Bot: flips in the last 4 finished candles */
-                    try { bs = window.__babaSig(K); for (var q = n - 1; q >= Math.max(0, n - 4); q--) { if (bs.buy[q] || bs.sell[q]) { put('baba', bs.buy[q] ? 'BUY' : 'SELL', q, bs.early && bs.early[q]); break; } } } catch (e) { }
-                    try { var b2 = window.__babaSig2(K); for (var q2 = n - 1; q2 >= Math.max(0, n - 4); q2--) { if (b2.buy[q2] || b2.sell[q2]) { put('baba2', b2.buy[q2] ? 'BUY' : 'SELL', q2, 0); break; } } } catch (e) { } /* Baba: its own signal (early or confirmed), also when UT Bot has not flipped */
-                }).catch(function (e) { if (/418|429/.test(String(e && e.message || e))) { R.msg = 'Binance asked to slow down; paused until the next scan.'; i = L.length; } }).then(function () { R.n = i + 1; setTimeout(function () { step(i + 1); }, 160); });
+                if (i >= L.length) { R.busy = 0; R.at = Date.now(); R.seenOnce = 1; save(); if (S.win === 'sigfeed') { try { renderView(true); } catch (e) { } } return; }
+                var it = L[i], sy = it.sym; LASTSCAN[sy + (it.x || '')] = Date.now();
+                Promise.resolve().then(function () { return it.ext ? extKl(it) : it.c ? window.XCH.kl(it.c, '15m', 300) : m7kl(sy, '15m', 499); }).then(function (k) { FAILS = 0; evalCoin(it, k); }).catch(function (e) { if (fail(e)) { i = L.length; } }).then(function () { R.n = i + 1; setTimeout(function () { step(i + 1); }, 160); });
             })(0);
         }
+        /* Live stream: Binance futures 15-minute candle streams for the 100 busiest coins; a signal is checked 1-3 seconds after each candle closes instead of waiting for the next scan */
+        var WK = { ws: null, cache: {}, q: [], busy: 0, retry: 0 };
+        function wsPump() {
+            if (WK.busy || !WK.q.length) { return; } WK.busy = 1; var sy = WK.q.shift();
+            Promise.resolve().then(function () { return m7kl(sy, '15m', 300); }).then(function (k) { WK.cache[sy] = (k || []).filter(function (c) { return c.t + 900000 <= Date.now(); }); evalCoin({ sym: sy }, WK.cache[sy]); }).catch(function (e) { fail(e); }).then(function () { WK.busy = 0; setTimeout(wsPump, 250); });
+        }
+        function wsCandle(sy, c) {
+            var A = WK.cache[sy];
+            if (!A) { if (WK.q.indexOf(sy) < 0) { WK.q.push(sy); wsPump(); } return; }
+            if (A.length && c.t === A[A.length - 1].t) { A[A.length - 1] = c; } else if (A.length && c.t === A[A.length - 1].t + 900000) { A.push(c); } else { delete WK.cache[sy]; if (WK.q.indexOf(sy) < 0) { WK.q.push(sy); wsPump(); } return; }
+            if (A.length > 420) { A.splice(0, A.length - 400); }
+            try { evalCoin({ sym: sy }, A); } catch (e) { }
+        }
+        function wsStart() {
+            if (WK.ws || document.hidden || typeof WebSocket === 'undefined' || Date.now() < WK.retry || !window.__ut) { return; }
+            var L = top().filter(function (x) { return !x.c && !x.ext; }).slice(0, 100); if (L.length < 10) { return; }
+            var ws; try { ws = new WebSocket('wss://fstream.binance.com/stream?streams=' + L.map(function (x) { return x.sym.toLowerCase() + '@kline_15m'; }).join('/')); } catch (e) { WK.retry = Date.now() + 30000; return; }
+            WK.ws = ws; WK.cache = {}; WK.q = [];
+            ws.onmessage = function (ev) { try { var d = JSON.parse(ev.data).data; if (d && d.k && d.k.x) { wsCandle(d.s, { t: +d.k.t, o: +d.k.o, h: +d.k.h, l: +d.k.l, c: +d.k.c, v: +d.k.v }); } } catch (e) { } };
+            ws.onclose = ws.onerror = function () { if (WK.ws === ws) { WK.ws = null; WK.cache = {}; WK.retry = Date.now() + 8000; } };
+        }
+        document.addEventListener('visibilitychange', function () { try { if (document.hidden && WK.ws) { var w = WK.ws; WK.ws = null; WK.cache = {}; w.close(); } } catch (e) { } });
         function px(x) { var t = S.tick && S.tick[x.sym]; return x.x === 'binance' && t ? +t.p : 0; }
         function score() {
             var o = { ut: [0, 0, 0], baba: [0, 0, 0], early: [0, 0, 0], v2: [0, 0, 0] };
             F.forEach(function (x) {
-                if (x.res == null && x.x === 'binance' && Date.now() - x.t > 2 * 3600000 && x.tf) { var p = px(x); if (p > 0) { x.res = (x.side === 'BUY' ? p / x.tf - 1 : 1 - p / x.tf) * 100 - 0.1; } }
-                if (x.res != null) { var ks = []; if (x.bot === 'baba2') { ks.push(o.v2); } else if (x.bot === 'baba' || x.baba) { ks.push(o.baba); if (x.early) { ks.push(o.early); } } if (x.bot !== 'baba' && x.bot !== 'baba2') { ks.push(o.ut); } ks.forEach(function (k) { k[0]++; if (x.res > 0) { k[1]++; } k[2] += x.res; }); }
+                var r = x.rf != null ? x.rf : x.res; if (r == null) { return; }
+                var ks = []; if (x.bot === 'baba2') { ks.push(o.v2); } else if (x.bot === 'baba' || x.baba) { ks.push(o.baba); if (x.early) { ks.push(o.early); } } if (x.bot !== 'baba' && x.bot !== 'baba2') { ks.push(o.ut); }
+                ks.forEach(function (k) { k[0]++; if (r > 0) { k[1]++; } k[2] += r; });
             });
             return o;
         }
         /* Tune on my phone: replays Baba on real 15-minute candles of the busiest coins, tries 27 settings, and only suggests one that is profitable in BOTH halves of the history after fees. */
-        var TU = { busy: 0, msg: '', res: null };
-        function fwdStats(K, R) { var o = { a: [0, 0, 0], b: [0, 0, 0] }, n = K.length, mid = Math.floor(n / 2), i; for (i = 80; i < n - 8; i++) { if (R.buy[i] || R.sell[i]) { var r = (R.buy[i] ? 1 : -1) * (K[i + 8].c / K[i].c - 1) * 100 - 0.1, g = i < mid ? o.a : o.b; g[0]++; if (r > 0) { g[1]++; } g[2] += r; } } return o; }
+        var TU = { busy: 0, msg: '', res: null }, SQ = { q: '', f: 'all', e: 'all' };
+        function fwdStats(K, R) { var o = { a: [0, 0, 0], b: [0, 0, 0] }, n = K.length, mid = Math.floor(n * 0.6), i; for (i = 80; i < n - 8; i++) { if (R.buy[i] || R.sell[i]) { var r = (R.buy[i] ? 1 : -1) * (K[i + 8].c / K[i].c - 1) * 100 - 0.1, g = i < mid ? o.a : o.b; g[0]++; if (r > 0) { g[1]++; } g[2] += r; } } return o; }
         function tune() {
             if (TU.busy || typeof m7kl !== 'function') { return; } TU.busy = 1; TU.res = null; TU.msg = 'Downloading candles…'; try { renderView(true); } catch (e) { }
-            var L = top().filter(function (x) { return !x.c; }).slice(0, 14), data = [];
+            var L = top().filter(function (x) { return !x.c && !x.ext; }).slice(0, 14), data = [];
             (function step(i) {
                 if (i >= L.length) {
-                    TU.msg = 'Testing 27 settings…'; try { renderView(true); } catch (e) { }
+                    TU.msg = 'Testing 9 settings…'; try { renderView(true); } catch (e) { }
                     setTimeout(function () {
-                        var best = null, def = null, res = [];
-                        [8, 12, 20].forEach(function (lb) { [1.0, 1.3, 1.6].forEach(function (vm) { [1.0, 1.5, 2.0].forEach(function (sk) {
+                        var best = null, def = null, cand = null, res = [];
+                        [8, 12, 20].forEach(function (lb) { [1.0, 1.3, 1.6].forEach(function (vm) { [1.5].forEach(function (sk) {
                             var A = [0, 0, 0], B = [0, 0, 0], P = { lb: lb, vm: vm, sk: sk };
                             data.forEach(function (K) { try { var st = fwdStats(K, window.__babaSig(K, P)); for (var q = 0; q < 3; q++) { A[q] += st.a[q]; B[q] += st.b[q]; } } catch (e) { } });
                             var r = { P: P, na: A[0], nb: B[0], wa: A[0] ? A[1] / A[0] : 0, wb: B[0] ? B[1] / B[0] : 0, aa: A[0] ? A[2] / A[0] : -9, ab: B[0] ? B[2] / B[0] : -9 };
                             res.push(r); if (lb === 12 && vm === 1.3 && sk === 1.5) { def = r; }
-                            if (r.na >= 15 && r.nb >= 15 && r.aa > 0 && r.ab > 0 && (!best || Math.min(r.aa, r.ab) > Math.min(best.aa, best.ab))) { best = r; }
+                            if (r.na >= 40 && r.aa > 0 && (!cand || r.aa > cand.aa)) { cand = r; }
                         }); }); });
-                        TU.res = { best: best, def: def, coins: data.length }; TU.busy = 0; TU.msg = ''; try { renderView(true); } catch (e) { }
+                        if (cand && cand.nb >= 30 && cand.ab > 0 && (!def || cand.ab >= def.ab)) { best = cand; } TU.res = { best: best, def: def, coins: data.length }; TU.busy = 0; TU.msg = ''; try { renderView(true); } catch (e) { }
                     }, 60);
                     return;
                 }
@@ -23766,41 +23859,52 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         }
         function pc(x) { return Math.round(x * 100) + '%'; }
         function tunePanel() {
-            var BP = window.__babaParams ? window.__babaParams() : { lb: 12, vm: 1.3, sk: 1.5 }, r = TU.res, h = '<div class="group pad"><b>🎛 Tune Baba on my phone</b><div class="note" style="margin:4px 0 8px">Replays Baba on about 10 days of real 15-minute candles of the busiest coins and tries 27 settings. It suggests a setting only if it is profitable in <b>both halves</b> of the history, after 0.1% fees, with at least 15 signals in each half. Now using: breakout ' + BP.lb + ' candles · volume ×' + BP.vm + ' · stop ' + BP.sk + ' ATR.</div>';
+            var BP = window.__babaParams ? window.__babaParams() : { lb: 12, vm: 1.3, sk: 1.5 }, r = TU.res, h = '<div class="group pad"><b>🎛 Tune Baba on my phone</b><div class="note" style="margin:4px 0 8px">Replays Baba on about 10 days of real 15-minute candles of the busiest coins and tries 9 settings. It picks the best one on the <b>first 60%</b> of the history, then checks it on the <b>untouched last 40%</b>; it is suggested only if it is still profitable there, after 0.1% fees, with enough signals. A short test like this can still be luck, so treat the result as a hint, not proof. Now using: breakout ' + BP.lb + ' candles · volume ×' + BP.vm + ' · stop ' + BP.sk + ' ATR.</div>';
             if (TU.busy) { return h + '<div class="note">⏳ ' + TU.msg + '</div></div>'; }
             h += '<span class="btn sec tap" data-act="tuneb:run" style="width:auto">▶ Run the test</span> <span class="btn sec tap" data-act="tuneb:reset" style="width:auto">↺ Back to default</span>';
             if (r) {
                 h += '<div class="note" style="margin-top:8px">' + r.coins + ' coins tested. ';
-                if (r.def) { h += 'Default: ' + r.def.na + '+' + r.def.nb + ' signals, win ' + pc(r.def.wa) + ' / ' + pc(r.def.wb) + ', avg ' + r.def.aa.toFixed(2) + '% / ' + r.def.ab.toFixed(2) + '% (first half / second half). '; }
-                if (r.best) { h += '<br><b>Best that passes both halves:</b> breakout ' + r.best.P.lb + ' · volume ×' + r.best.P.vm + ' · stop ' + r.best.P.sk + ' ATR → ' + r.best.na + '+' + r.best.nb + ' signals, win ' + pc(r.best.wa) + ' / ' + pc(r.best.wb) + ', avg ' + r.best.aa.toFixed(2) + '% / ' + r.best.ab.toFixed(2) + '%.</div><span class="btn tap" data-act="tuneb:apply" style="width:auto">Use this setting</span>'; } else { h += '<br><b>No setting is profitable in both halves.</b> Keep the default. That is an honest result: do not force it.</div>'; }
+                if (r.def) { h += 'Default: ' + r.def.na + '+' + r.def.nb + ' signals, win ' + pc(r.def.wa) + ' / ' + pc(r.def.wb) + ', avg ' + r.def.aa.toFixed(2) + '% / ' + r.def.ab.toFixed(2) + '% (first 60% / last 40%). '; }
+                if (r.best) { h += '<br><b>Best setting that also holds on the last 40%:</b> breakout ' + r.best.P.lb + ' · volume ×' + r.best.P.vm + ' · stop ' + r.best.P.sk + ' ATR → ' + r.best.na + '+' + r.best.nb + ' signals, win ' + pc(r.best.wa) + ' / ' + pc(r.best.wb) + ', avg ' + r.best.aa.toFixed(2) + '% / ' + r.best.ab.toFixed(2) + '%.</div><span class="btn tap" data-act="tuneb:apply" style="width:auto">Use this setting</span>'; } else { h += '<br><b>No setting holds up on the last 40%.</b> Keep the default. That is an honest result: do not force it.</div>'; }
             }
             return h + '</div>';
         }
+        document.addEventListener('click', function (e) { var t = e.target && e.target.closest ? e.target.closest('[data-act^="sfd:"]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); var k = t.getAttribute('data-act').slice(4);
+            if (k === 'clear') { if (!SQ.arm) { SQ.arm = 1; setTimeout(function () { SQ.arm = 0; try { renderView(true); } catch (x) { } }, 4000); } else { SQ.arm = 0; F = []; try { localStorage.setItem(SK, '[]'); toast('All stored signals deleted'); } catch (x) { } } } else { try { localStorage.setItem('mintoosuite_sigdays', k); } catch (x) { } save(); }
+            try { renderView(true); } catch (x) { } }, true);
+        var SQT = 0; document.addEventListener('input', function (e) { if (e.target && e.target.id === 'sfq') { SQ.q = e.target.value; if (e.isComposing) { return; } var pos = e.target.selectionStart; clearTimeout(SQT); SQT = setTimeout(function () { try { renderView(true); var n2 = document.getElementById('sfq'); if (n2) { n2.focus(); try { n2.setSelectionRange(pos, pos); } catch (e2) { } } } catch (x) { } }, 250); } }, true);
+        document.addEventListener('click', function (e) { var t = e.target && e.target.closest ? e.target.closest('[data-act^="sfe:"]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); SQ.e = t.getAttribute('data-act').slice(4); try { renderView(true); } catch (x) { } }, true);
+        document.addEventListener('click', function (e) { var t = e.target && e.target.closest ? e.target.closest('[data-act^="sfb:"]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); SQ.f = t.getAttribute('data-act').slice(4); try { renderView(true); } catch (x) { } }, true);
         document.addEventListener('click', function (e) {
             var t = e.target && e.target.closest ? e.target.closest('[data-act^="tuneb:"]') : null; if (!t) { return; }
             e.preventDefault(); e.stopPropagation(); var k = t.getAttribute('data-act').slice(6);
             if (k === 'run') { tune(); } else if (k === 'reset') { try { window.__babaReset(); toast('Baba back to default settings'); renderView(true); } catch (x) { } } else if (k === 'apply' && TU.res && TU.res.best) { try { window.__babaParams(TU.res.best.P); toast('Baba now uses the tuned setting'); renderView(true); } catch (x) { } }
         }, true);
         function vSig() {
-            var by = {}, sc = score(), h = '<div class="note" style="line-height:1.5">Every 2 minutes the app checks the 50 most traded Binance futures coins and up to 80 active or fast-moving MEXC/Bitget coins on the last finished 15-minute candles. Bots run side by side and each posts its own signals: <b>UT Bot</b> (its trailing stop flips), <b>🧓 Baba</b> (its own early breakout trigger plus 6 checks: trend, strength, RSI, volume, momentum, candle) and <b>Baba v2</b> (the same plus 1-hour direction, Bitcoin and calm-market checks, to test if extra checks help). Only <b>new</b> signals (last 4 candles) are shown. A signal is not a promise: both bots win and lose.</div>';
+            var by = {}, sc = score(), h = '<div class="note" style="line-height:1.5">The app watches the 100 busiest Binance futures coins live (it checks a coin 1 to 3 seconds after its 15-minute candle closes), and scans about 330 coins plus the busiest MEXC, Bitget, OKX and Bybit coins every few minutes, always on finished 15-minute candles. Bots run side by side and each posts its own signals: <b>UT Bot</b> (its trailing stop flips), <b>🧓 Baba</b> (its own early breakout trigger plus 6 checks: trend, strength, RSI, volume, momentum, candle) and <b>Baba v2</b> (the same plus 1-hour direction, Bitcoin and calm-market checks, to test if extra checks help). Only <b>new</b> signals (last 4 candles) are shown. A signal is not a promise: both bots win and lose.</div>';
             h += '<div class="note">' + (R.busy ? 'Scanning… ' + R.n + '/' + R.tot : R.at ? 'Last scan ' + ago(R.at) : 'Scan starts when this screen is open.') + (R.msg ? ' · ' + R.msg : '') + '</div>';
-            function cell(t, r, c) { return '<div style="flex:1;min-width:0;text-align:center;padding:8px 4px;border-radius:12px;background:rgba(128,128,128,.12)"><div style="font-size:11.5px;font-weight:800;color:' + c + '">' + t + '</div>' + (r[0] ? '<div style="font-size:19px;font-weight:900">' + Math.round(r[1] / r[0] * 100) + '%</div><div style="font-size:11px;opacity:.75">' + r[0] + ' judged · avg ' + (r[2] / r[0] >= 0 ? '+' : '') + (r[2] / r[0]).toFixed(2) + '%</div>' : '<div style="font-size:12px;opacity:.7;margin-top:6px">not enough yet</div>') + '</div>'; }
-            h += '<div class="group pad"><b>🏁 Who is better? The app keeps score</b><div style="display:flex;gap:6px;margin-top:8px">' + cell('UT Bot', sc.ut, '#0a84ff') + cell('🧓 Baba', sc.baba, '#e8a317') + cell('Baba early', sc.early, '#1a9e50') + cell('Baba v2', sc.v2, '#a05bff') + '</div><div class="note" style="margin:8px 0 0">Share of signals in profit 2 hours later (Binance coins, after 0.1% fees). Needs 30 or more judged signals per bot before the comparison means anything. No guarantee for the future.</div></div>';
-            F.forEach(function (x) { (by[x.sym + (x.x || '')] = by[x.sym + (x.x || '')] || []).push(x); });
-            var syms = Object.keys(by).sort(function (a, b) { var pa = by[a].some(function (x) { return x.bot === 'baba' || x.baba; }) ? 1 : 0, pb = by[b].some(function (x) { return x.bot === 'baba' || x.baba; }) ? 1 : 0; return pb - pa || by[b][0].t - by[a][0].t; });
-            if (!syms.length) { h += '<div class="note">No fresh signals yet. They appear here as they happen.</div>'; }
-            syms.forEach(function (s) {
-                var l = by[s], s0 = l[0].sym, t = S.tick && S.tick[s0], ex0 = l[0].x || 'binance';
-                h += '<div class="group pad" style="margin:6px 0"><div style="display:flex;align-items:center;gap:8px"><b style="flex:1;font-size:16px">' + base(s) + '</b>' + (t ? '<span style="font-size:12px;opacity:.8">' + (+t.chg >= 0 ? '+' : '') + (+t.chg).toFixed(1) + '% today</span>' : '') + (ex0 === 'binance' ? '<span class="btn sec" data-act="chart:' + s0 + '" style="width:auto;padding:6px 10px">📈 Chart</span>' : '<span class="btn sec" data-fsx="' + base(s0) + '@' + ex0 + (l[0].fut === false ? 's' : '') + '" style="width:auto;padding:6px 10px">📈 Open</span>') + '</div>' +
-                    l.slice(0, 5).map(function (x) { return '<div style="margin-top:4px"><span style="color:' + (x.side === 'BUY' ? '#16a34a' : '#dc2626') + ';font-weight:800">' + (x.bot === 'baba2' ? '🧓 Baba v2 ' : x.bot === 'baba' ? '🧓 Baba ' + (x.early ? 'early ' : '') : 'UT Bot ') + x.side + '</span> · candle closed ' + ago(x.t) + '</div>'; }).join('') + '</div>';
+            function wil(w, n) { var z = 1.96, p = w / n, d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d; return [Math.max(0, c - h), Math.min(1, c + h)]; }
+            function cell(t, r, c) { var ci = r[0] >= 5 ? wil(r[1], r[0]) : null; return '<div style="flex:1;min-width:0;text-align:center;padding:8px 4px;border-radius:12px;background:rgba(128,128,128,.12)"><div style="font-size:11.5px;font-weight:800;color:' + c + '">' + t + '</div>' + (r[0] ? '<div style="font-size:19px;font-weight:900">' + Math.round(r[1] / r[0] * 100) + '%</div><div style="font-size:11px;opacity:.75">' + r[0] + ' judged · avg ' + (r[2] / r[0] >= 0 ? '+' : '') + (r[2] / r[0]).toFixed(2) + '%</div>' + (ci ? '<div style="font-size:10.5px;opacity:.65">95% range ' + Math.round(ci[0] * 100) + '–' + Math.round(ci[1] * 100) + '%</div>' : '') : '<div style="font-size:12px;opacity:.7;margin-top:6px">not enough yet</div>') + '</div>'; }
+            h += '<div class="group pad"><b>🏁 Who is better? The app keeps score</b><div style="display:flex;gap:6px;margin-top:8px">' + cell('UT Bot', sc.ut, '#0a84ff') + cell('🧓 Baba', sc.baba, '#e8a317') + cell('Baba early', sc.early, '#1a9e50') + cell('Baba v2', sc.v2, '#a05bff') + '</div><div class="note" style="margin:8px 0 0">Share of signals in profit exactly 2 hours after the candle closed, priced from when the app found the signal, after 0.1% fees (no slippage or funding). All exchanges are judged. The 95% range shows how uncertain the number is: with fewer than about 100 judged signals per bot it is wide, so do not trust small differences. Past results, no guarantee.</div></div>';
+            var q = (SQ.q || '').trim().toUpperCase(), fl = SQ.f, now = Date.now();
+            function keep(x) { if (q && base(x.sym).indexOf(q) < 0) { return false; } if (SQ.e !== 'all' && (x.x || 'binance') !== SQ.e) { return false; } if (fl === 'ut') { return x.bot !== 'baba' && x.bot !== 'baba2'; } if (fl === 'baba') { return x.bot === 'baba' || !!x.baba; } if (fl === 'v2') { return x.bot === 'baba2'; } if (fl === 'early') { return !!x.early; } return true; }
+            var rows = F.filter(keep).sort(function (a, b) { return b.t - a.t; }), cnt = function (f) { return F.filter(function (x) { return f === 'ut' ? (x.bot !== 'baba' && x.bot !== 'baba2') : f === 'baba' ? (x.bot === 'baba' || !!x.baba) : f === 'v2' ? x.bot === 'baba2' : f === 'early' ? !!x.early : true; }).length; };
+            h += '<div class="group pad"><input id="sfq" type="search" placeholder="🔍 Search a coin (e.g. BTC, SOL)" value="' + (SQ.q || '').replace(/[&<>"]/g, '') + '" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid rgba(128,128,128,.3);font-size:15px;background:transparent;color:inherit"><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">' + [['all', 'All'], ['ut', 'UT Bot'], ['baba', '🧓 Baba'], ['v2', 'Baba v2'], ['early', '⚡ Early']].map(function (f) { return '<span class="btn ' + (fl === f[0] ? '' : 'sec ') + 'tap" data-act="sfb:' + f[0] + '" style="width:auto;padding:6px 12px;font-size:12.5px">' + f[1] + ' ' + cnt(f[0]) + '</span>'; }).join('') + '</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">' + [['all', 'All exchanges'], ['binance', 'Binance'], ['mexc', 'MEXC'], ['bitget', 'Bitget'], ['okx', 'OKX'], ['bybit', 'Bybit']].map(function (f) { var c2 = F.filter(function (x) { return f[0] === 'all' || (x.x || 'binance') === f[0]; }).length; return '<span class="btn ' + (SQ.e === f[0] ? '' : 'sec ') + 'tap" data-act="sfe:' + f[0] + '" style="width:auto;padding:6px 12px;font-size:12.5px">' + f[1] + ' ' + c2 + '</span>'; }).join('') + '</div><div class="note" style="margin:8px 0 0">Newest signal first. Scanning continues while the app is open (not while it is fully closed) and new signals send a phone notification, at most 3 per 5 minutes.</div></div>';
+            if (!rows.length) { h += '<div class="note">' + (F.length ? 'No signal matches this search or filter.' : 'No fresh signals yet. They appear here as they happen.') + '</div>'; }
+            rows.slice(0, 120).forEach(function (x) {
+                var t = S.tick && S.tick[x.sym], ex0 = x.x || 'binance', age = Math.max(0, Math.round((now - x.t) / 60000)), late = Math.max(0, Math.round(((x.seen || x.t) - x.t) / 60000)), col = age <= 5 ? '#16a34a' : age <= 15 ? '#e8a317' : '#8e8e93', lab = x.bot === 'baba2' ? '🧓 Baba v2' : x.bot === 'baba' ? '🧓 Baba' + (x.early ? ' ⚡early' : '') : 'UT Bot', up = x.side === 'BUY';
+                var mv = t && x.tf && ex0 === 'binance' ? ((up ? 1 : -1) * (+t.p / x.tf - 1) * 100) : null, hhmm = new Date(x.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                h += '<div class="group pad" style="margin:5px 0;padding:10px 12px"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px">' + base(x.sym) + '</b><span style="color:' + (up ? '#16a34a' : '#dc2626') + ';font-weight:800">' + lab + ' ' + x.side + '</span><span style="flex:1"></span><span style="font-size:12px;font-weight:800;color:' + col + '">' + (age < 1 ? 'just now' : age < 90 ? age + ' min ago' : Math.round(age / 60) + ' h ago') + '</span>' + (ex0 === 'okx' || ex0 === 'bybit' ? '' : ex0 === 'binance' ? '<span class="btn sec" data-act="chart:' + x.sym + '" style="width:auto;padding:5px 10px">📈</span>' : '<span class="btn sec" data-fsx="' + base(x.sym) + '@' + ex0 + (x.fut === false ? 's' : '') + '" style="width:auto;padding:5px 10px">📈</span>') + '</div><div class="note" style="margin:3px 0 0;font-size:11.5px">Candle closed ' + hhmm + (late >= 1 ? ' · found ' + late + ' min later' : ' · found at once') + (mv != null ? ' · since then <b style="color:' + (mv >= 0 ? '#16a34a' : '#dc2626') + '">' + (mv >= 0 ? '+' : '') + mv.toFixed(2) + '%</b>' : '') + ' · ' + ex0 + '</div></div>';
             });
+            var dsel = days();
+            h += '<div class="group pad"><b>🗂 Keep signals for</b><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">' + [1, 2, 3, 7, 14].map(function (d) { return '<span class="btn ' + (dsel === d ? '' : 'sec ') + 'tap" data-act="sfd:' + d + '" style="width:auto;padding:6px 12px;font-size:12.5px">' + d + (d === 1 ? ' day' : ' days') + '</span>'; }).join('') + '<span class="btn sec tap" data-act="sfd:clear" style="width:auto;padding:6px 12px;font-size:12.5px;color:#dc2626">' + (SQ.arm ? 'Tap again to delete all' : '🗑 Delete all now') + '</span></div><div class="note" style="margin:8px 0 0">Older signals are deleted automatically. ' + F.length + ' signals stored. The scoreboard judges each signal after 2 hours, so keep at least 1 day. Scanned: about ' + (R.tot || 0) + ' coins (all busy Binance coins on a rotation, plus the busiest MEXC, Bitget, OKX and Bybit coins).</div></div>';
             h += tunePanel();
-            return h + '<div class="note"><span data-act="win:safety" style="text-decoration:underline">Safety checks</span> · signals older than 24 hours are removed automatically.</div>';
+            return h + '<div class="note"><span data-act="win:safety" style="text-decoration:underline">Safety checks</span> · older signals are removed automatically (you choose how long).</div>';
         }
         WINS.push({ id: 'sigfeed', ic: '📡', c: '#0a84ff', n: 'Signal feed (UT Bot + Baba)', t: 'Signal feed', sub: 'UT Bot and Baba signals side by side, with a scoreboard' }); LIVE.sigfeed = 0; VIEWS.sigfeed = vSig;
-        try { MW_HELP.sigfeed = 'Two bots, one feed: UT Bot signals and Baba signals (Baba has its own early breakout trigger plus 6 checks). Grouped per coin, newest first, with a scoreboard that judges each signal 2 hours later after fees.'; } catch (e) { }
+        try { MW_HELP.sigfeed = 'Two bots, one feed: UT Bot signals and Baba signals (Baba has its own early breakout trigger plus 6 checks). Newest first with a coin search and filters; it also scans in the background every 3 minutes and notifies you; with a scoreboard that judges each signal 2 hours later after fees.'; } catch (e) { }
         try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Trade & signals' && g[1].indexOf('sigfeed') < 0) { g[1].unshift('sigfeed'); } }); } catch (e) { }
-        setInterval(function () { try { if (S.win === 'sigfeed' && Date.now() - R.at > 120000) { scan(); } } catch (e) { } }, 5000);
+        setInterval(function () { try { var on = S.win === 'sigfeed'; if (Date.now() - R.at > (on ? 120000 : 180000) * (window.__mwLowBatt ? 2 : 1)) { scan(!on); } wsStart(); } catch (e) { } }, 5000);
         document.addEventListener('click', function (e) { var t = e.target && e.target.closest ? e.target.closest('[data-fsx]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); try { window.__mxOpen(t.getAttribute('data-fsx')); } catch (er) { } }, true);
         window.__sigfeed = { scan: scan, list: function () { return F; } };
         try { PF_APP.push(['signal feed|ut bot signals list|new signals|signal alerts|fresh signals', 'Signal feed', 'Menu > Signal feed lists fresh UT Bot BUY/SELL flips on the 50 most traded Binance futures coins, grouped per coin, newest first (only the last 4 finished 15-minute candles). It scans every 2 minutes while the screen is open. Baba-confirmed signals are marked and listed first.', 'win:sigfeed']); } catch (e) { }
@@ -24851,7 +24955,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             try {
                 if (this === window.localStorage && SENS.test(k) && String(v) !== 'enc:1' && String(v) !== '') {
                     var n = null; try { n = mwNat(); } catch (e) { }
-                    if (n && n.secSet && window.localStorage[k] === String(v)) { Storage.prototype.removeItem.call(this, k); toast('Your phone could not save this key securely, so it was NOT saved. Restart the app and try again. Nothing was stored in plain text.'); }
+                    if (n && n.secSet && n.secGet && n.secDel && window.localStorage[k] === String(v)) { Storage.prototype.removeItem.call(this, k); toast('Your phone could not save this key securely, so it was NOT saved. Restart the app and try again. Nothing was stored in plain text.'); }
                 }
             } catch (e) { }
             return r;
@@ -24870,9 +24974,9 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 
         /* Screenshot and screen-recording block (Android FLAG_SECURE) on screens that show money, keys or backups. The user can allow screenshots with one tap. */
         try {
-            var SENS = { wallet: 1, safety: 1, account: 1, backup: 1, profile: 1, keys: 1, connections: 1 }, lastSec = null;
+            var SECWIN = { wallet: 1, safety: 1, account: 1, backup: 1, profile: 1, keys: 1, connections: 1 }, lastSec = null;
             function allowShots() { try { return localStorage.getItem('mintoosuite_allowshot') === '1'; } catch (e) { return false; } }
-            function applySec() { try { var n = mwNat(), want = !!(SENS[S.win]) && !allowShots(); if (!n || !n.setSecure || !window.__mwTok || lastSec === want) { return; } lastSec = want; n.setSecure(window.__mwTok, want); } catch (e) { } }
+            function applySec() { try { var n = mwNat(), want = !!(SECWIN[S.win]) && !allowShots(); if (!n || !n.setSecure || !window.__mwTok || lastSec === want) { return; } lastSec = want; n.setSecure(window.__mwTok, want); } catch (e) { } }
             setInterval(applySec, 600);
             var _vws = VIEWS.wallet;
             if (typeof _vws === 'function') { VIEWS.wallet = function () { var h = _vws.apply(this, arguments), on = !allowShots(); return h + '<div class="group pad"><b>📵 Screenshots on money screens</b><div class="note" style="margin:4px 0 8px">' + (on ? 'Blocked on the wallet, account and backup screens, so nobody can capture your addresses or codes. Turn this off only when you need a screenshot for support.' : 'Allowed. Turn blocking back on when you are done.') + '</div><button class="btn sec" data-ss="toggle">' + (on ? 'Allow screenshots (support)' : 'Block screenshots again') + '</button></div>'; }; }
@@ -25523,6 +25627,10 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['more menu|more list|where is markets|where is watch list|where is find a trade|where is home', 'More menu is shorter now', 'Home, Markets, Find a trade and Watch-list no longer have tiles in More, because they are one tap away elsewhere: Home and Markets are in the bottom bar, Find a trade is covered by the Bots and Ideas pages, and Watch-list is a tab inside Ideas (⭐ Watch-list). The bottom bar now shows Trade from the first moment instead of briefly showing Auto Bot.']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['baba signal|early signal|signal feed|utbot vs baba|who is better|baba early|scoreboard', 'Baba signal engine and Signal feed', 'Baba now has its OWN trigger: a fresh 12-candle breakout on a strong candle with a volume surge, checked by the same 6 filters (trend, strength, RSI, volume, momentum, candle), with a stop 1.5 ATR away. It can fire before UT Bot flips. The Signal feed shows both bots side by side (UT Bot, 🧓 Baba, 🧓 Baba early) and a scoreboard judges every signal 2 hours later after 0.1% fees. Judge them only after 30+ signals each. No bot can promise near-100% accuracy; the scoreboard is how you see the truth.']); PF_APP.push(['baba idea|baba pick notification|master pick|10m+15m agree', 'Baba idea (old Baba pick alert)', 'The notification that used to say "Baba pick" (10m and 15m agree) is the Master idea, so it is now named "Baba idea". Baba signals come from the Signal feed and chart marks. Ideas page is shorter: repeated notes and the "Available on" line under every card were removed.']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['baba v2|tune baba|tune on my phone|baba settings|best setting|server alert baba|baba signal alert|copyright|who owns|baba callout|baba label', 'Baba Signal: v2, tuning, alerts, callouts, copyright', 'Signal feed now has four scoreboard cells: UT Bot, Baba, Baba early and Baba v2 (adds 1-hour direction, Bitcoin and calm-market checks, to test whether extra checks help). "Tune Baba on my phone" replays Baba on about 10 days of real candles with 27 settings and suggests one only if it is profitable in both halves after fees; if none is, keep the default. When the app is closed you get "Baba Signal: COIN LONG/SHORT" (early breakout) and "UT Bot: COIN LONG/SHORT" alerts from the free GitHub alert job (needs the push setup). Chart callouts for Baba are now small rounded tags (⚡ = early, number = conviction). Copyright: MintooSuite, Baba AI, Baba Signal and the Baba bots are original works of Muhammad Awais; the notice is in About, Legal and the Signal feed. For legal protection also register the copyright and trademark in Pakistan.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['signal feed search|signal feed groups|keep signals|delete signals|signals missing|late signal|signal late|okx signals|bybit signals|background scan', 'Signal feed: search, groups, timing, storage', 'Signal feed is now one list, newest signal first. Search a coin at the top; filter by bot (UT Bot, Baba, Baba v2, Early) and by exchange group (Binance, MEXC, Bitget, OKX, Bybit). Each row shows when the candle closed, how many minutes later the app found it, and how far the price moved since. The scan now also runs in the background about every 3 minutes whenever the app is open (before, it only ran while the Signal feed screen was open, which is why signals came late), and a new signal sends a phone notification if your alert settings allow it. Coverage: the busiest Binance coins on a rotation (each coin about every 15 minutes) plus the busiest MEXC, Bitget, OKX and Bybit coins. OKX and Bybit are read-only (no chart button). Keep signals for 1, 2, 3, 7 or 14 days; older ones are deleted automatically, or tap Delete all now. A signal still needs a closed 15-minute candle, so it can never appear before that candle closes.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['always on alerts|alert server|server alerts|missed signal|double alert|request limiter|too many requests|battery|low battery|created by|who made|permissions camera microphone location|key not saved|key guard', 'Build 365: safer keys, one request limiter, battery, always-on alerts, permissions', '(1) Keys: exchange and AI keys are now really blocked from being saved in plain text. If the phone cannot lock a key in its secure storage, the key is NOT saved and you see a red message; restart the app and add it again. (2) One shared limiter now watches every Binance data request from every screen together (about 1,100 units a minute), queues the extras instead of failing, and pauses if Binance says slow down; orders you place are never delayed. (3) Battery: when the phone is at 20% or less and not charging, the background signal scan runs half as often; the live stream already stops when the app is in the background. (4) Always-on alerts: an optional small server (package MintooSuite_alert_server) checks at every 15-minute candle close, sends one alert per signal and remembers it, so none are missed or doubled; it needs a rented server and your Firebase key file on the server, never in the app. Server alerts are an early heads-up using the same rules as the free job, not a copy of every in-app signal. (5) Camera, microphone and location are optional and only asked when you tap the feature. (6) The app and its Baba bots are created by Muhammad Awais; contact details are in More > About.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['google play payment|pay with google play|subscribe|cancel subscription|refund|crash note|app stopped|send crash|trial restart|clock set back|revoked licence|wake lock|battery drain', 'Plans: Google Play payment, crash notes, safer trial and licences', '(1) Pay with Google Play: Plans shows the monthly and yearly Pro prices from Google Play; tap one to pay. Cancel any time in Google Play > Subscriptions; the app re-checks Google Play whenever it opens, so a cancelled or refunded plan stops (offline it is honoured for at most 3 days). (2) The 7-day trial counts from the day the app was first installed, so clearing app data does not restart it. (3) If your phone clock is set back by more than a day and a half, Pro pauses until the date and time are correct. (4) A licence code can be switched off by the developer if it was misused. (5) Crash notes: if the app stops unexpectedly, a short technical note (no keys, balances or personal data) is kept on your phone; open Menu > Legal > App problems to read it, send it on WhatsApp or delete it. If you switch on "Send crash reports to the developer", the same note is sent automatically (off until you agree). (6) Battery: the running-bot wake lock is now renewed every 30 minutes instead of being held for hours, so a stuck bot cannot drain the battery.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['shortcut buttons|round buttons|action strip|search signals|jump to exchange|jump to tune|licence code button|how this works|signal feed layout|plans layout', 'Build 367: round shortcut buttons on Signal feed and Plans', 'Signal feed now has three round shortcut buttons under a folded "How this works" note: Search (puts the cursor in the search box), Exchange (jumps to the exchange filter) and Tune Baba (jumps to the tuning panel). Plans has up to three: Licence code, How to get Pro and Google Play (the last only when this build has Google Play payment). They only jump to controls that were already on the screen; nothing was removed or changed, and the note text is the same, just folded after your first visit (tap it to open). Signal feed filter chips are a little taller so they are easier to tap. Chart, Wallet, Menu and Profile were left as they are on purpose, because reviewers found they already have these controls and a strip would only repeat them.']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -25624,7 +25732,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 /* Copyright line: shown in About, Legal and the Signal feed */
 (function () {
     try {
-        var CR = '<div class="note" style="margin:10px 0 0;font-size:11.5px;text-align:center">© 2026 Muhammad Awais. All rights reserved. Baba Signal, Baba AI, Baba Practice Bot, Baba Real Bot and MintooSuite are original works of Muhammad Awais.</div>';
+        var CR = '<div class="note" style="margin:10px 0 0;font-size:11.5px;text-align:center">© 2026 Muhammad Awais. All rights reserved. Baba Signal, Baba AI, Baba Practice Bot, Baba Real Bot and MintooSuite are original works of Muhammad Awais.<br>Created by Muhammad Awais, Islamabad, Pakistan · awaisrajpoot2@yahoo.com · WhatsApp +92 312 2602811</div>';
         ['sigfeed', 'aboutapp', 'legal'].forEach(function (id) { try { var _v = VIEWS[id]; if (_v) { VIEWS[id] = function () { return _v.apply(this, arguments) + CR; }; } } catch (e) { } });
     } catch (e) { }
 })();
@@ -25682,6 +25790,166 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         try { addLog('HEAL', 'The freeze guard restarted the app; safe mode on for 15 minutes'); } catch (e) { }
         try { PF_APP.push(['safe mode|restarted itself|freeze guard', 'Safe mode', 'If the app freezes for about 20 seconds, a guard outside the page restarts it, shows a notification and starts it in safe mode for 15 minutes (DO NOW check and live motion off). Your settings, keys and history are kept. If it happens again and again, open Menu > Problem log, tap Email and send it.']); } catch (e) { }
     } catch (e) { try { console.log('p9safe', e); } catch (er) { } }
+})();
+/* ===== p9crash: crash notes (kept on the phone), optional "send crash reports to the developer", shown in Menu > Legal ===== */
+(function () {
+    try {
+        var K = 'mintoosuite_crashsend';
+        function nat() { try { return window.MintooNative && window.MintooNative.crashLast && window.__mwTok ? window.MintooNative : null; } catch (e) { return null; } }
+        function st() { try { return localStorage.getItem(K); } catch (e) { return null; } }
+        function setSt(v) { try { localStorage.setItem(K, v); } catch (e) { } apply(true); }
+        var last = null;
+        function cloud() { var n = nat(); try { return !!(n && n.crashCloud(window.__mwTok)); } catch (e) { return false; } }
+        function apply(force) { var n = nat(); if (!n) { return; } var on = st() === '1'; if (!force && last === on) { return; } last = on; try { n.crashSend(window.__mwTok, on); } catch (e) { } }
+        setInterval(function () { try { apply(false); } catch (e) { } }, 4000);
+        function note() { var n = nat(); try { return n ? String(n.crashLast(window.__mwTok) || '') : ''; } catch (e) { return ''; } }
+        function eh(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        var _vl = VIEWS.legal;
+        VIEWS.legal = function () {
+            var h = _vl ? _vl.apply(this, arguments) : '';
+            if (!nat()) { return h; }
+            var c = note(), on = st() === '1', cl = cloud();
+            h += '<div class="group pad"><b>App problems</b>';
+            if (c) { h += '<div class="note" style="margin:4px 0 6px">The app stopped unexpectedly last time. This note stays on your phone and contains no keys, balances or personal data:</div><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;max-height:160px;overflow:auto;background:var(--fill,#eee);padding:8px;border-radius:10px">' + eh(c.slice(0, 1200)) + '</pre><a class="btn sec" style="display:block;text-align:center;text-decoration:none;margin-top:6px" target="_blank" rel="noopener" href="https://wa.me/923122602811?text=' + encodeURIComponent('MintooSuite crash note:\n' + c.slice(0, 1400)) + '">Send this note on WhatsApp</a><button class="btn sec" style="margin-top:6px" data-act="crashClear">Delete the note</button>'; }
+            else { h += '<div class="note" style="margin:4px 0 0">No crash was recorded. 👍</div>'; }
+            if (cl) { h += '<div class="note" style="margin:10px 0 4px">Send crash reports to the developer automatically: <b>' + (on ? 'ON' : 'OFF') + '</b>. Only the technical error and phone model, never keys, balances, orders or personal data.</div><span class="pfbtn" data-act="crashToggle" style="display:inline-block;padding:8px 14px;border-radius:12px;background:var(--fill,#eee);cursor:pointer;font-weight:700">Turn ' + (on ? 'OFF' : 'ON') + '</span>'; }
+            return h + '</div>';
+        };
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest ? e.target.closest('[data-act="crashClear"],[data-act="crashToggle"]') : null; if (!el) { return; }
+            e.preventDefault(); e.stopPropagation();
+            if (el.getAttribute('data-act') === 'crashClear') { try { nat().crashClear(window.__mwTok); } catch (er) { } } else { setSt(st() === '1' ? '0' : '1'); }
+            try { renderView(true); } catch (er) { }
+        }, true);
+    } catch (e) { }
+})();
+/* ===== p9strip (build 367): the Home screen's round-button look as a small "action strip" on Signal feed and Plans. Each cell only jumps to a control that already exists; nothing else changes. Reviewed by 3 independent reviewers. ===== */
+(function () {
+    try {
+        var CSS = '.mwq4{display:flex;gap:8px;margin:8px 0 10px;padding:10px 6px;border-radius:18px;background:rgba(128,128,128,.10)}' +
+            '.mwq4c{flex:1 1 0;min-width:0;min-height:44px;display:flex;flex-direction:column;align-items:center;gap:5px;border:0;background:transparent;color:inherit;font:inherit;padding:2px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}' +
+            '.mwq4c i{font-style:normal;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.18)}' +
+            '.mwq4c b{font-size:12px;font-weight:700;line-height:1.15;text-align:center;overflow-wrap:anywhere}' +
+            '.mwq4c:focus-visible{outline:3px solid #0a84ff;outline-offset:2px;border-radius:14px}' +
+            '[data-act^="sfd:"],[data-act^="sfe:"]{min-height:40px;display:inline-flex!important;align-items:center}' +
+            '.mwsfhow{margin:6px 0}.mwsfhow>summary{cursor:pointer;font-weight:700;padding:8px 2px;list-style:none}.mwsfhow>summary::-webkit-details-marker{display:none}';
+        try { var st = document.createElement('style'); st.id = 'mwq4css'; st.textContent = CSS; document.head.appendChild(st); } catch (e) { }
+        var G = { blue: 'linear-gradient(135deg,#5ac8fa,#0a84ff)', purple: 'linear-gradient(135deg,#bf5af2,#6e3bd8)', amber: 'linear-gradient(135deg,#ffd60a,#ff9f0a)', slate: 'linear-gradient(135deg,#8e9aaf,#4a5568)' };
+        function strip(items) {
+            if (!items || items.length < 3) { return ''; }      /* never a half-empty strip */
+            return '<div class="mwq4" role="group" aria-label="Shortcuts">' + items.map(function (x) {
+                return '<button type="button" class="mwq4c tap" data-mwq="' + x.t + '" data-nox="1" aria-label="' + x.a + '"><i style="background:' + G[x.g] + '" aria-hidden="true">' + x.i + '</i><b>' + x.l + '</b></button>';
+            }).join('') + '</div>';
+        }
+        function reduce() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+        /* one handler for every cell: finds the existing control by a fixed id/selector, does nothing if it is missing */
+        document.addEventListener('click', function (e) {
+            var c = e.target && e.target.closest ? e.target.closest('[data-mwq]') : null; if (!c) { return; }
+            e.preventDefault(); e.stopPropagation();
+            try {
+                var k = c.getAttribute('data-mwq'), el = null;
+                if (k === 'sfq') { el = document.getElementById('sfq'); }
+                else if (k === 'sfx') { el = document.querySelector('[data-act^="sfe:"]'); el = el && (el.parentElement || el); }
+                else if (k === 'sft') { el = document.getElementById('sfx-tune'); }
+                else if (k === 'plc') { el = document.getElementById('plx-code'); }
+                else if (k === 'plh') { el = document.getElementById('plx-help'); }
+                else if (k === 'plp') { el = document.getElementById('plx-play'); }
+                if (!el) { return; }
+                el.scrollIntoView({ behavior: reduce() ? 'auto' : 'smooth', block: 'center' });
+                if (k === 'sfq') { setTimeout(function () { try { var f = document.getElementById('sfq'); if (f) { f.focus({ preventScroll: true }); } } catch (e2) { } }, reduce() ? 0 : 350); }
+            } catch (er) { }
+        }, true);
+        /* ---- Signal feed: 3 cells (Days stays where it is), strip under the "How this works" fold, above the scoreboard ---- */
+        var HOW = null;
+        document.addEventListener('toggle', function (e) { try { if (e.target && e.target.id === 'sfx-how') { HOW = !!e.target.open; try { localStorage.setItem('mintoosuite_sfhow', '1'); } catch (e2) { } } } catch (er) { } }, true);
+        function howOpen() {
+            if (HOW === null) { var seen = null; try { seen = localStorage.getItem('mintoosuite_sfhow'); } catch (e) { } HOW = seen ? false : true; try { localStorage.setItem('mintoosuite_sfhow', '1'); } catch (e) { } }
+            return HOW;
+        }
+        var _vs = VIEWS.sigfeed;
+        if (typeof _vs === 'function') {
+            VIEWS.sigfeed = function () {
+                var h = _vs.apply(this, arguments);
+                try {
+                    if (typeof h !== 'string' || h.indexOf('<div class="note"') !== 0) { return h; }
+                    var i = h.indexOf('</div>') + 6, first = h.slice(0, i), rest = h.slice(i);
+                    rest = rest.replace('<div class="group pad"><b>🎛 Tune Baba', '<div class="group pad" id="sfx-tune"><b>🎛 Tune Baba');
+                    return '<details class="mwsfhow" id="sfx-how"' + (howOpen() ? ' open' : '') + '><summary>ℹ️ How this works</summary>' + first + '</details>' +
+                        strip([{ t: 'sfq', g: 'blue', i: '🔍', l: 'Search', a: 'Search a coin in the signal list' }, { t: 'sfx', g: 'purple', i: '🏦', l: 'Exchange', a: 'Jump to the exchange filter' }, { t: 'sft', g: 'amber', i: '🎛', l: 'Tune Baba', a: 'Tune Baba: jump to the tuning panel' }]) + rest;
+                } catch (e) { return h; }
+            };
+        }
+        /* ---- Plans: Licence code | How to get Pro | Google Play (only when this build has it) ---- */
+        var _vp = VIEWS.plans;
+        if (typeof _vp === 'function') {
+            VIEWS.plans = function () {
+                var h = _vp.apply(this, arguments);
+                try {
+                    if (typeof h !== 'string') { return h; }
+                    h = h.replace('<div class="group pad"><b>Have a licence code?</b>', '<div class="group pad" id="plx-code"><b>Have a licence code?</b>')
+                        .replace('<div class="group pad"><b>How to get Pro</b>', '<div class="group pad" id="plx-help"><b>How to get Pro</b>')
+                        .replace('<div class="group pad"><b>Pay with Google Play</b>', '<div class="group pad" id="plx-play"><b>Pay with Google Play</b>');
+                    var it = [];
+                    if (h.indexOf('id="plx-code"') >= 0) { it.push({ t: 'plc', g: 'blue', i: '🔑', l: 'Licence code', a: 'Jump to the licence code box' }); }
+                    if (h.indexOf('id="plx-help"') >= 0) { it.push({ t: 'plh', g: 'purple', i: 'ℹ️', l: 'How to get Pro', a: 'Jump to how to get Pro' }); }
+                    if (h.indexOf('id="plx-play"') >= 0) { it.push({ t: 'plp', g: 'amber', i: '💳', l: 'Google Play', a: 'Jump to Google Play payment' }); }
+                    var s = strip(it), k = h.indexOf('<div class="group pad" style="border-left:5px solid');
+                    return k > 0 && k < 1500 ? h.slice(0, k) + s + h.slice(k) : s + h;
+                } catch (e) { return h; }
+            };
+        }
+    } catch (e) { }
+})();
+/* ===== p9rl: ONE shared request limiter for every Binance data request (outermost wrapper). Keeps all screens together under a safe weight budget per minute, queues instead of failing, honours bans, refunds answers that came from the app's own cache. Also: low-battery slow-down flag. ===== */
+(function () {
+    try {
+        var nf = window.fetch; if (typeof nf !== 'function' || window.__mwRL) { return; }
+        var BUDGET = 1100, WINMS = 60000, MAXQ = 90, MAXWAIT = 25000, LOG = [], Q = [], tm = 0, ST = { sent: 0, queued: 0, dropped: 0 };
+        function isB(u) { return /^https:\/\/(fapi|api|dapi|data-api)\.binance\.com\//.test(u); }
+        function cost(u) {
+            var f = /^https:\/\/fapi\./.test(u);
+            if (/\/klines|\/continuousKlines/.test(u)) { var m = /limit=(\d+)/.exec(u), l = m ? +m[1] : 500; return l < 100 ? 1 : l < 500 ? 2 : l <= 1000 ? 5 : 10; }
+            if (/ticker\/24hr/.test(u)) { return /symbol=/.test(u) ? 1 : (f ? 40 : 80); }
+            if (/exchangeInfo/.test(u)) { return f ? 1 : 20; }
+            if (/ticker\/price|ticker\/bookTicker/.test(u)) { return /symbol=/.test(u) ? 1 : 2; }
+            if (/depth/.test(u)) { return 5; }
+            return 1;
+        }
+        function used(now) { while (LOG.length && now - LOG[0][0] > WINMS) { LOG.shift(); } var s = 0; for (var i = 0; i < LOG.length; i++) { s += LOG[i][1]; } return s; }
+        function banLeft() { try { return Math.max(0, (window.__banUntil ? window.__banUntil() : 0) - Date.now()); } catch (e) { return 0; } }
+        function send(j) {
+            var ent = [Date.now(), j.c]; LOG.push(ent); ST.sent++;
+            nf.call(window, j.u, j.o).then(function (r) {
+                try { if (r && r.ok && !r.headers.get('x-mbx-used-weight-1m') && !r.headers.get('x-mbx-used-weight')) { ent[1] = 0; } } catch (e) { }
+                j.ok(r);
+            }, function (e) { ent[1] = 0; j.no(e); });
+        }
+        function pump() {
+            tm = 0; var now = Date.now();
+            if (banLeft() > 0) { var a = Q.splice(0); a.forEach(function (j) { nf.call(window, j.u, j.o).then(j.ok, j.no); }); return; }
+            while (Q.length) {
+                var j = Q[0];
+                if (now - j.t > MAXWAIT) { Q.shift(); ST.dropped++; var e = new Error('HTTP 429 (busy, try again in a moment)'); e.rate = 5; j.no(e); continue; }
+                if (used(now) + j.c > BUDGET && LOG.length) { break; }
+                Q.shift(); send(j);
+            }
+            if (Q.length) { tm = setTimeout(pump, 700); }
+        }
+        window.fetch = function (u, o) {
+            var url = typeof u === 'string' ? u : (u && u.url) || '';
+            var method = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
+            if (!isB(url) || method !== 'GET' || /[?&]signature=/.test(url) || /^https:\/\/api\.binance\.com\/api\/v3\/(time|ping)/.test(url) || /fapi\/v1\/time/.test(url)) { return nf.apply(window, arguments); }
+            var c = cost(url), now = Date.now();
+            if (!Q.length && used(now) + c <= BUDGET) { return new Promise(function (ok, no) { send({ u: u, o: o, c: c, ok: ok, no: no, t: now }); }); }
+            if (Q.length >= MAXQ) { ST.dropped++; var e = new Error('HTTP 429 (busy, try again in a moment)'); e.rate = 5; return Promise.reject(e); }
+            ST.queued++;
+            return new Promise(function (ok, no) { Q.push({ u: u, o: o, c: c, ok: ok, no: no, t: now }); if (!tm) { tm = setTimeout(pump, 400); } });
+        };
+        window.__mwRL = function () { return { used: used(Date.now()), budget: BUDGET, waiting: Q.length, sent: ST.sent, queued: ST.queued, dropped: ST.dropped }; };
+        /* low battery: slow the background work (read by the signal feed) */
+        window.__mwLowBatt = 0;
+        try { if (navigator.getBattery) { navigator.getBattery().then(function (b) { function u() { window.__mwLowBatt = (!b.charging && b.level <= 0.2) ? 1 : 0; } u(); b.addEventListener('levelchange', u); b.addEventListener('chargingchange', u); }, function () { }); } } catch (e) { }
+    } catch (e) { }
 })();
 
 function renderView(keep) {

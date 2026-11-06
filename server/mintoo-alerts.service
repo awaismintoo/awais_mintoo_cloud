@@ -1,0 +1,17 @@
+[Unit]
+Description=MintooSuite always-on signal alerts
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=mintoo
+WorkingDirectory=/opt/mintoo-alerts
+ExecStart=/usr/bin/python3 /opt/mintoo-alerts/mintoo_server.py
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/opt/mintoo-alerts
+
+[Install]
+WantedBy=multi-user.target
