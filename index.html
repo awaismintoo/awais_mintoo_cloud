@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-10-31.311';
+var BUILD = '2026-10-31.315';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -5362,6 +5362,14 @@ function bpRefresh(force) {
 }
 function bpRender() { try { var a = document.activeElement; if (!(a && a.getAttribute && a.getAttribute('data-m7in'))) { renderView(true); } } catch (e) {} }
 // Strict filter: picks only what is lined up on every time frame AND supported by the all-factors check
+window.__mtfVote = function (sym) {
+    try {
+        var c = S.bp.c[sym]; if (!c || !c.tf || Date.now() - c.at > 900000) { window.__mtfAsk = window.__mtfAsk || {}; if (!window.__mtfAsk[sym] || Date.now() - window.__mtfAsk[sym] > 120000) { window.__mtfAsk[sym] = Date.now(); bpTF(sym).then(function (cc) { S.bp.c[sym] = cc; }).catch(function () { }); } return null; } var t = c.tf, a = t['1h'], b = t['4h'], d = t['1d']; if (!a || !b || !d) { return null; }
+        var ov = (a.sc * 1 + b.sc * 2 + d.sc * 2) / 5, up = [a, b, d].filter(function (x) { return x.sc > 0.5; }).length, dn = [a, b, d].filter(function (x) { return x.sc < -0.5; }).length;
+        var side = ov >= 1 && up === 3 ? 'LONG' : ov <= -1 && dn === 3 ? 'SHORT' : 'WAIT';
+        return { s: side, h: '<b>Multi time frame scan</b>: 1 hour, 4 hour and daily charts. ' + Math.max(up, dn) + ' of 3 point the same way. Strength ' + Math.abs(ov).toFixed(1) + ' (needs 1.0 and all three agreeing). Vote: <b>' + side + '</b>.' };
+    } catch (e) { return null; }
+};
 function bpList(hz) {
     var out = [], now = nowMs(), D0 = dayOpenFor(now);
     Object.keys(S.bp.c).forEach(function (sym) {
@@ -5390,8 +5398,7 @@ function bpCard(p) {
     return '<div class="group pad tap" id="' + id + '" data-ix="best" data-act="chart:' + p.sym + '"><div class="ph">' + who(p.sym) + '<div class="side">' + badge(p.side) + meterC(p.pct, p.ag, p.hz === 'fh' ? 4 : 3) + '</div></div>' +
         '<div class="pm"><div><div class="px">' + px(p.sym, p.price) + '</div>' + chgTxt(p.sym, true) + '</div>' + sparkOf(p.sym) + '</div>' + lv(p.side, p.price, p.sl, p.tp, p.sym) + plBox(p.side, p.price, p.sl, p.tp, p.sym) +
         '<div class="foot"><b class="vwin">VALID ' + hm(p.from) + ' → ' + hm(p.to) + '</b> • estimated chance of reaching the target before the stop about ' + p.pct + '% (not a chance of profit, not a promise)</div>' +
-        '<ul style="margin:8px 0 0 18px;padding:0;font-size:12.5px;line-height:1.5">' + why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>' + fxLine(p.e) +
-        (p.e.flags.length ? '<div class="warn">' + esc(p.e.flags[0]) + '</div>' : '') + '<details onclick="event.stopPropagation()"><summary style="font-size:12.5px;margin-top:6px">Show every factor checked</summary>' + fxTable(p.e) + '</details>' + ixBackHTML() + '</div>';
+        (p.e.flags.length ? '<div class="warn">' + esc(p.e.flags[0]) + '</div>' : '') + '<details onclick="event.stopPropagation()"><summary style="font-size:13px;font-weight:700;margin-top:8px;padding:6px 0">Why this pick (tap)</summary><ul style="margin:4px 0 0 18px;padding:0;font-size:12.5px;line-height:1.5">' + why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>' + fxLine(p.e) + '<div style="font-size:12.5px;margin-top:6px"><b>Every factor checked</b></div>' + fxTable(p.e) + '</details>' + ixBackHTML() + '</div>';
 }
 function vBest() {
     bpRefresh(false);
@@ -12979,6 +12986,18 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         };
         try { _bs(); } finally { getActions = g; }
     };
+    window.__docCaution = function (sym, side) {
+        try {
+            var A = accts(), all = []; Object.keys(A).forEach(function (k) { (A[k].closed || []).forEach(function (t) { all.push({ s: t.sym, pnl: +t.pnl || 0, ct: t.ct || t.at || 0 }); }); }); all.sort(function (x, y) { return y.ct - x.ct; });
+            var w = [], mine = all.filter(function (t) { return t.s === sym; }).slice(0, 3), st = 0, i;
+            if (mine.length >= 3 && mine.every(function (t) { return t.pnl <= 0; })) { w.push('the bot lost its last 3 trades on this coin'); }
+            for (i = 0; i < all.length && all[i].pnl <= 0; i++) { st++; } if (st >= 3 && all[0].ct && Date.now() - all[0].ct < 6 * 3600000) { w.push('losing streak of ' + st + ' trades in the last hours'); }
+            if (rest()) { w.push('the bot is resting after 3 losses in a row'); }
+            if (C.maxd > 0 && todayN() >= C.maxd) { w.push('the daily trade cap (' + C.maxd + ') is already reached'); }
+            var t = S.tick && S.tick[sym], c = t ? +t.chg : 0; if (isFinite(c) && ((side === 'LONG' && c > 12) || (side === 'SHORT' && c < -12))) { w.push('the coin already moved ' + c.toFixed(0) + '% today (chasing risk)'); }
+            return { caution: w.length > 0, why: w, n: all.length };
+        } catch (e) { return null; }
+    };
     function analyse(T) {
         var n = T.length, W = T.filter(function (t) { return t.pnl > 0; }), L = T.filter(function (t) { return t.pnl <= 0; }), gw = W.reduce(function (a, t) { return a + t.pnl; }, 0), gl = -L.reduce(function (a, t) { return a + t.pnl; }, 0), tot = gw - gl;
         function hold(t) { return t.at && t.ct ? (t.ct - t.at) / 60000 : null; }
@@ -17185,9 +17204,9 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 var rc = recommend(LM.K, sym); try { window.__cardRec = { sym: (function (z) { z = String(z || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); return z && !/USDT$/.test(z) ? z + 'USDT' : z; })(sym), side: rc ? rc.side : 0, wait: rc ? rc.wait : 'no clear side', t: Date.now() }; } catch (e) { } var el = document.getElementById('p9Rec');
                 if (!el) { el = document.createElement('div'); el.id = 'p9Rec'; el.className = 'note'; el.style.cssText = 'margin:6px 0 0;padding:8px 10px;border-radius:12px;border:1px solid rgba(124,58,237,.35);font-size:12px'; el0.parentNode.insertBefore(el, el0.nextSibling); recKey = ''; }
                 var key = rc ? [sym, rc.side, rc.slPct, rc.wait].join('|') : 'none'; if (key === recKey) { return; } recKey = key;
-                if (!rc) { el.innerHTML = '<b>🧓 Baba says:</b> no clear side right now. Wait.'; return; }
-                el.innerHTML = '<b>🧓 Baba says:</b> ' + (rc.wait ? '<b style="color:#f59e0b">WAIT</b> · ' + e2(rc.wait) : '<b style="color:' + (rc.side > 0 ? '#16a34a' : '#dc2626') + '">' + (rc.side > 0 ? 'LONG' : 'SHORT') + '</b> idea · stop ' + rc.slPct + '% · target ' + rc.tpPct + '% (1.5 to 1)') + '<br><span class="mut">' + e2(rc.why.join(' · ')) + '. ' + e2(recTxt(record(sym))) + '.</span><br>' +
-                    '<span class="pfbtn" data-xk="recprac:' + rc.side + '|' + rc.slPct + '|' + rc.tpPct + '">🧪 Practice this</span> <span class="pfbtn" data-act="win:trade">💵 Real: open Trade window</span> <span class="mut">Not advice. You decide.</span>';
+                if (!rc) { el.innerHTML = '<b>📈 UT Bot idea:</b> no clear side right now. Wait.'; return; }
+                el.innerHTML = '<b>📈 UT Bot idea</b> <span class="mut">(one signal, not the final verdict)</span><br>' + (rc.wait ? '<b style="color:#f59e0b">WAIT</b> · ' + e2(rc.wait) : '<b style="color:' + (rc.side > 0 ? '#16a34a' : '#dc2626') + '">' + (rc.side > 0 ? 'LONG' : 'SHORT') + '</b> idea · stop ' + rc.slPct + '% · target ' + rc.tpPct + '% (1.5 to 1)') + '<br><span class="mut">' + e2(rc.why.join(' · ')) + '. ' + e2(recTxt(record(sym))) + '.</span><br>' +
+                    '<span class="mut" style="display:block;margin-top:4px">If the Baba line above says <b>steps aside</b> or <b>WAIT</b>, treat this idea as low confidence.</span>'+'<span class="pfbtn" data-xk="recprac:' + rc.side + '|' + rc.slPct + '|' + rc.tpPct + '">🧪 Practice this</span> <span class="pfbtn" data-act="win:trade">💵 Real: open Trade window</span> <span class="mut">Not advice. You decide.</span>';
             } catch (er) { }
         }, 3000);
         X.on('recprac', function (v) { var a = v.split('|'), s = S.chart && S.chart.sym; if (!s || !window.__pt) { return; } var rp = window.__cf && window.__cf.R && window.__cf.R.on; var px = rp ? 0 : (S.tick[s] && S.tick[s].p); var o = { sl: +a[1], tp: +a[2], by: 'Baba Real Bot' }; if (rp) { say('Replay: use the buttons in the Practice card.'); return; } o.px = px; window.__pt.openAt(s, +a[0], o); });
@@ -18250,17 +18269,21 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             var h = X.seg('bmk', [['f', '📈 Futures (long and short)'], ['s', '🪙 Spot (buy only)']], bmk()) + X.seg('bxch', XL, ex) + '<div class="warn" style="margin:0 0 8px">⭐ <b>Real best picks</b> must pass the strict live check (all time frames agree, order book, volume, funding, news) <b>and</b> a test on that coin\'s own last 20 days. Often there are none, and then the right action is to wait. Never a promise of profit; always use the stop shown.</div>';
             h += '<div class="note" style="margin:0 0 6px">' + checked + ' big coins checked on 4 time frames. The order stays fixed while you look at the list; new coins join at the bottom.</div>';
             function card(x) { try { return x.t === 'r' ? idRow(x.m) : bpCard(x.p); } catch (e) { return ''; } }
+            var cardFn = card;
             function block(title, arr) {
                 var r = arr.filter(function (x) { return x.t === 'r'; }), c = arr.filter(function (x) { return x.t === 'c'; }), o = sh(title + ' (' + r.length + ' real · ' + c.length + ' close)');
                 if (!arr.length) { return o + '<div class="group pad mut">Nothing passes the checks on this exchange right now. That is normal: wait.</div>'; }
-                if (r.length) { o += '<div class="note" style="margin:0 0 4px">✅ Real best: passed the strict check and the 20-day test</div><div class="group">' + r.map(card).join('') + '</div>'; } else { o += '<div class="group pad mut">No pick has passed both checks here right now.</div>'; }
-                if (c.length) { o += '<div class="note" style="margin:6px 0 4px">👀 Close calls: strict live check passed, 20-day test not confirmed. Smaller size, extra care.</div>' + c.map(card).join(''); }
+                if (r.length) { o += '<div class="note" style="margin:0 0 4px">✅ Real best: passed the strict check and the 20-day test</div><div class="group">' + r.map(function (x) { return cardFn(x); }).join('') + '</div>'; } else { o += '<div class="group pad mut">No pick has passed both checks here right now.</div>'; }
+                if (c.length) { o += '<div class="note" style="margin:6px 0 4px">👀 Close calls: strict live check passed, 20-day test not confirmed. Smaller size, extra care.</div>' + c.map(function (x) { return cardFn(x); }).join(''); }
                 return o;
             }
             if (ex === 'all') {
-                var used = {}; XL.slice(1).forEach(function (e) { var arr = all.filter(function (x) { return onEx(e[0], x.sym, x); }); arr.forEach(function (x) { used[x.k] = 1; }); h += block(e[1], arr); });
+                var used = {}, exs = XL.slice(1), arrAll = all.filter(function (x) { return exs.some(function (e) { return onEx(e[0], x.sym, x); }); });
+                arrAll.forEach(function (x) { used[x.k] = 1; });
+                cardFn = function (x) { var on = exs.filter(function (e) { return onEx(e[0], x.sym, x); }).map(function (e) { return e[1]; }); return '<div class="note" style="margin:6px 0 2px;font-size:12px">🏦 Available on: <b>' + on.join(' · ') + '</b> (one card per coin; prices and stops are from the main chart price)</div>' + card(x); };
+                h += block('All exchanges, one card per coin', arrAll); cardFn = card;
                 var oth = bmk() === 's' ? [] : all.filter(function (x) { return !used[x.k]; }); if (oth.length) { h += block('Other markets (gold, indices, others)', oth); }
-                h += '<div class="note">A coin that trades on several exchanges appears under each of them.</div>';
+                h += '<div class="note">A coin that trades on several exchanges now appears once, with its exchanges listed. Pick one exchange above to see only that exchange.</div>';
             } else {
                 h += block((XL.filter(function (e) { return e[0] === ex; })[0] || [0, ex])[1], all.filter(function (x) { return onEx(ex, x.sym, x); }));
             }
@@ -19535,8 +19558,9 @@ try {
             var m = mode(), M = MODES[m], d = document.getElementById('twpop'); if (d) { d.remove(); }
             d = document.createElement('div'); d.id = 'twpop'; d.className = M.real ? 'r' : 'p'; d.setAttribute('data-noswipe', '1');
             d.innerHTML = '<span style="font-size:26px">' + M.ic + '</span><div class="tb"><b>' + (M.real ? 'REAL MONEY' : 'PAPER (pretend money)') + '</b>' + M.n + '. Change it in More › Trading options.</div><span class="tch" data-tw="chg">Change</span><span class="tc" data-tw="x" aria-label="Close">✕</span>';
-            document.body.appendChild(d); badge();
+            document.body.appendChild(d); badge(); clearTimeout(pop.t); pop.t = setTimeout(closePop, 6000);
         }
+        (function () { var z = document.createElement('style'); z.textContent = '#twpop{top:64px!important;padding:6px 10px!important;border-radius:14px!important;font-size:12px!important;gap:8px!important}#twpop>span:first-child{font-size:18px!important}#twpop .tb{font-size:11px!important;line-height:1.3!important}#twpop .tb b{display:inline!important;margin-right:4px}'; z.textContent += '#mwtitlebar{padding-left:128px!important;padding-right:92px!important;justify-content:flex-start!important}#mwtitlebar h1{max-width:100%;overflow:hidden;text-overflow:ellipsis}'; document.head.appendChild(z); })();
         var BW = { tpro: 1, ptrade: 1, quest: 1, paper: 1, rbot: 1, xtrade: 1, bots: 1, hub: 1 };
         function badge() {
             var b = document.getElementById('twbadge'); if (!b) { b = document.createElement('div'); b.id = 'twbadge'; document.body.appendChild(b); }
@@ -19684,6 +19708,42 @@ try {
             RC[sy] = r; return r;
         }
         window.__recSide = function (sy) { return rec(sy).side; };
+        window.__recFull = rec;
+        /* BABA CHIEF: one recommendation; every adviser gives a vote that can be opened in a box */
+        function chiefCss() { if (document.getElementById('chcss')) { return; } var st = document.createElement('style'); st.id = 'chcss'; st.textContent = '.chc{display:inline-flex;align-items:center;gap:4px;margin:3px 4px 3px 0;padding:8px 12px;border-radius:14px;font-size:12px;font-weight:700;background:rgba(120,120,128,.16);color:inherit;border:0;min-height:36px}.chc:active{transform:scale(.95);filter:brightness(.85)}#chbox{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}#chbox>div{background:var(--card,#fff);color:var(--tx,#111);width:100%;max-width:560px;max-height:75vh;overflow:auto;border-radius:22px 22px 0 0;padding:18px 16px 28px;font-size:13px;line-height:1.55}#chbox button.cl{display:block;width:100%;min-height:48px;margin-top:12px;border:0;border-radius:14px;background:#0a84ff;color:#fff;font-size:15px;font-weight:700}'; document.head.appendChild(st); }
+        var chOpen = false; function chiefFold() { var on = !chOpen; ['p9Rec', 'bsInfo'].forEach(function (id) { var e = document.getElementById(id); if (e) { e.style.display = on ? 'none' : ''; } }); }
+        function votes(sy, r) {
+            var v = [], cr = window.__cardRec, bi = document.getElementById('bsInfo'), bt = bi ? bi.textContent : '', xp = window.__lastExp, pr = document.getElementById('p9Rec');
+            if (cr && cr.sym === sy && Date.now() - cr.t < 12000) { v.push({ n: 'UT Bot', s: cr.wait ? 'WAIT' : (cr.side > 0 ? 'LONG' : 'SHORT'), h: pr ? pr.innerHTML : '' }); }
+            if (bt) { v.push({ n: 'Baba signals', s: /BUY side/.test(bt) ? 'LONG' : /SELL side/.test(bt) ? 'SHORT' : 'WAIT', h: bi.innerHTML }); }
+            if (xp) { v.push({ n: 'Baba experience', s: xp.veto ? 'WAIT' : xp.side, h: bi ? bi.innerHTML : '' }); }
+            try { var mv = window.__mtfVote && window.__mtfVote(sy); if (mv) { v.push({ n: 'Time-frame scan', s: mv.s, h: mv.h }); } } catch (e) { }
+            try { var dc = window.__docCaution && window.__docCaution(sy, r.side === 'WAIT' ? 'LONG' : r.side); if (dc) { v.push({ n: 'Bot Doctor', s: dc.caution ? 'WAIT' : 'OK', doc: 1, h: '<b>Bot Doctor</b> (checks the bots\' own loss record, it does not pick a direction).<br>' + (dc.caution ? '⚠ Caution: ' + dc.why.join('; ') + '.' : '✔ No warning. ' + (dc.n ? 'Based on ' + dc.n + ' closed bot trades.' : 'No bot trades yet, so nothing to warn about.')) }); } } catch (e) { }
+            v.push({ n: 'Market factors', s: r.side, h: '<b>Market factors</b> (trend, momentum, volume, order book, funding, Bitcoin, news) say <b>' + r.side + '</b>.' + (r.late ? '<br>Reason: ' + String(r.late).replace(/</g, '&lt;') : '') + (r.conv != null ? '<br>Baba score ' + r.conv + '/100' : '') });
+            return v;
+        }
+        document.addEventListener('click', function (e) {
+            var c = e.target.closest ? e.target.closest('[data-chv]') : null, cl = e.target.closest ? e.target.closest('[data-chx]') : null;
+            var tg = e.target.closest ? e.target.closest('[data-chall]') : null; if (tg) { chOpen = !chOpen; chiefFold(); tg.textContent = chOpen ? 'Hide adviser details' : 'Show all adviser details'; return; }
+            if (cl || (e.target.id === 'chbox')) { var o = document.getElementById('chbox'); if (o) { o.remove(); } return; }
+            if (!c) { return; } var a = window.__chiefV && window.__chiefV[+c.getAttribute('data-chv')]; if (!a) { return; }
+            var o2 = document.createElement('div'); o2.id = 'chbox'; o2.innerHTML = '<div><div style="font-size:12px;opacity:.6">Adviser input to Baba Chief</div><div style="font-size:19px;font-weight:800;margin:2px 0 8px">' + a.n + ': ' + a.s + '</div>' + (a.h || 'No further detail.') + '<button class="cl" data-chx="1">Close</button></div>'; document.body.appendChild(o2);
+        }, true);
+        setInterval(function () {
+            try {
+                var sy = S.chart && S.chart.sym, anchor = document.getElementById('p9Rec') || document.getElementById('p9Info'); if (!sy || !anchor || document.documentElement.getAttribute('data-win') !== 'chart') { var o = document.getElementById('p9Verdict'); if (o) { o.remove(); } return; }
+                chiefCss(); var r = rec(sy), V = votes(sy, r), cnt = { LONG: 0, SHORT: 0, WAIT: 0 }; V.forEach(function (x) { if (x.s !== 'OK') { cnt[x.s] = (cnt[x.s] || 0) + 1; } }); var docW = V.filter(function (x) { return x.doc && x.s === 'WAIT'; })[0];
+                var want = r.side !== 'WAIT' ? r.side : '', tot = V.filter(function (x) { return x.s !== 'OK'; }).length, agree = want ? cnt[want] : cnt.WAIT;
+                if (want && cnt[want] * 2 < tot) { want = ''; agree = cnt.WAIT; } var docNote = ''; if (want && docW) { want = ''; agree = cnt.WAIT; docNote = 'Bot Doctor warns: ' + docW.h.replace(/<[^>]+>/g, '').replace(/^.*Caution: /, ''); }
+                var col = want ? (want === 'LONG' ? '#16a34a' : '#dc2626') : '#d97706', txt = want ? (agree === tot ? 'Strong agreement' : 'Most advisers agree') : 'No clear edge, wait';
+                window.__chiefV = V; var el = document.getElementById('p9Verdict'); if (!el) { el = document.createElement('div'); el.id = 'p9Verdict'; el.className = 'note'; anchor.parentNode.insertBefore(el, anchor); }
+                var key = [sy, want, V.map(function (x) { return x.s; }).join() + (docW ? 'D' : ''), r.late || '', r.conv].join('|'); if (el.getAttribute('data-k') === key) { return; } el.setAttribute('data-k', key);
+                el.style.cssText = 'margin:8px 0;padding:12px 14px;border-radius:16px;border:2px solid ' + col + ';font-size:13px;line-height:1.5';
+                el.innerHTML = '<div style="font-size:12px;opacity:.7">🧓 BABA CHIEF · final recommendation</div><div style="font-size:22px;font-weight:800;color:' + col + '">' + (want ? (want === 'LONG' ? '▲ LONG' : '▼ SHORT') : '⏸ WAIT') + '</div><div style="font-weight:700">' + txt + ' · ' + agree + ' of ' + tot + ' advisers' + (want ? ' agree' : ' say wait') + '</div>' +
+                    ((r.late || docNote) && !want ? '<div style="opacity:.85">Why wait: ' + String(docNote || r.late).replace(/</g, '&lt;') + '</div>' : '') + '<div style="opacity:.7;font-size:12px;margin-top:6px">Advisers gave their input to the Chief (tap one to see its own view):</div><div>' + V.map(function (x, i) { var c2 = x.s === 'LONG' ? '#16a34a' : x.s === 'SHORT' ? '#dc2626' : x.s === 'OK' ? '#16a34a' : '#d97706'; return '<button type="button" class="chc" data-chv="' + i + '">' + x.n + ' <span style="color:' + c2 + '">' + (x.s === 'LONG' ? '▲ LONG' : x.s === 'SHORT' ? '▼ SHORT' : x.s === 'OK' ? '✔ no warning' : (x.doc ? '⚠ caution' : '⏸ WAIT')) + '</span></button>'; }).join('') + '</div><button type="button" class="chc" data-chall="1" style="margin-top:6px">' + (chOpen ? 'Hide adviser details' : 'Show all adviser details') + '</button><div style="opacity:.6;font-size:11px">Past tests only, not a promise. You decide.</div>';
+            } catch (e) { }
+        }, 2500);
+        setInterval(function () { try { if (document.getElementById('p9Verdict')) { chiefFold(); } } catch (e) { } }, 1500);
         function side() { try { return S.tp && S.tp.side === 'SHORT' ? 'SHORT' : 'LONG'; } catch (e) { return 'LONG'; } }
         function tick() {
             var w = document.documentElement.getAttribute('data-win'), show = !!WIN[w] && !!sym() && !document.getElementById('twback');
@@ -19727,6 +19787,28 @@ try {
         window.addEventListener('click', function (e) { if (Date.now() - last < 350 && e.isTrusted && e.target.closest && e.target.closest(SEL)) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
     } catch (e) { }
 })();
+;(function(){ try { PF_APP.push(['baba chief|chief|final verdict|final recommendation|combined verdict|advisers|one signal|conflicting signals|بابا چیف', 'Baba Chief (one final recommendation)', 'Under every chart, Baba Chief gives ONE recommendation: LONG, SHORT or WAIT. The other helpers (UT Bot, Baba signals, Baba experience, market factors) are advisers: each gives a vote to the Chief. Tap an adviser chip to see its own view, or tap Show all adviser details for their full cards. The Chief says WAIT unless most advisers agree. No tool can promise winning trades. Past tests are shown honestly and are not a promise. Use stop-loss and small size.']); } catch (e) { } })();
+;(function () {
+    /* search in Markets / Find also lists matching More buttons (windows) */
+    setInterval(function () {
+        try {
+            var inp = document.querySelector('input[data-m7in="mk"],input[data-m7in="find"]'), old = document.getElementById('mwmr');
+            if (!inp) { if (old) { old.remove(); } return; }
+            var q = String(inp.value || '').toLowerCase().trim(); if (q.length < 2) { if (old) { old.remove(); } return; }
+            var words = q.split(/\s+/), hits = [];
+            WINS.forEach(function (w) { var hay = [w.id, w.n, w.t, w.sub].join(' ').toLowerCase(); if (words.every(function (x) { return hay.indexOf(x) >= 0; })) { hits.push(w); } });
+            hits.sort(function (x, y) { var f = function (w) { return ([w.id, w.n, w.t].join(' ').toLowerCase().indexOf(q) >= 0 ? 0 : 1); }; return f(x) - f(y); }); hits = hits.slice(0, 6); var key = q + '|' + hits.map(function (w) { return w.id; }).join(',');
+            if (!hits.length) { if (old) { old.remove(); } return; }
+            var host = inp.closest('.m7q') || inp.parentNode;
+            if (old && old.getAttribute('data-k') === key && old.previousSibling === host) { return; }
+            if (old) { old.remove(); }
+            var d = document.createElement('div'); d.id = 'mwmr'; d.setAttribute('data-k', key);
+            d.innerHTML = '<div style="font-size:12px;font-weight:700;opacity:.65;margin:6px 2px">In the More menu</div>' + hits.map(function (w) { return '<div class="group pad tap" data-act="win:' + w.id + '" style="display:flex;gap:10px;align-items:center;padding:12px;margin:0 0 6px"><span style="font-size:22px">' + (w.ic || '▸') + '</span><span><b>' + String(w.n || w.t).replace(/</g, '&lt;') + '</b><br><span class="mut" style="font-size:12px">' + String(w.sub || '').replace(/</g, '&lt;') + '</span></span></div>'; }).join('');
+            host.parentNode.insertBefore(d, host.nextSibling);
+        } catch (e) { }
+    }, 500);
+})();
+;(function(){ try { PF_APP.push(['bot doctor caution|doctor warning|caution chip|one card per coin|available on exchanges|same coin twice', 'Bot Doctor caution and grouped Ideas', 'Bot Doctor now gives Baba Chief a caution flag, not a direction: if the bots lost their last 3 trades on this coin, are on a losing streak, are resting, hit the daily cap, or the coin already moved more than 12% today, the Chief says WAIT and shows why. On Ideas > Best with All exchanges selected, each coin now appears once with its exchanges listed under it.']); } catch (e) { } })();
 /* ===== p9sp: plain names for confusing windows + a "What do you want to do now?" card on Home ===== */
 (function () {
     try {
@@ -22395,7 +22477,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         }
         try {
             WINS.push({ id: 'xgold', ic: '🥇', c: '#ff9500', n: 'Exness Gold Practice', t: 'Exness Gold Practice', sub: 'Paper trading + paper auto bot with Exness-style costs' }); LIVE.xgold = 0; VIEWS.xgold = vX;
-            var g = MW_GROUPS[1][1], k = g.indexOf('exness'); if (g.indexOf('xgold') < 0) { g.splice(k < 0 ? g.length : k + 1, 0, 'xgold'); }
+            MW_GROUPS.forEach(function (gg) { var q = gg[1].indexOf('xgold'); if (q >= 0) { gg[1].splice(q, 1); } }); var g = MW_GROUPS[0][1], k = g.indexOf('market'); g.splice(k < 0 ? g.length : k + 1, 0, 'xgold');
             if (typeof MW_HELP === 'object') { MW_HELP.xgold = 'Practice gold trading with virtual money. You pay the spread like on an Exness Standard account, there is no commission, trades use lots and margin, and a stop-out closes trades if margin runs low. The paper auto bot follows Baba gold signals. Real Exness trading cannot be placed from this app.'; }
             if (typeof PF_WIN === 'object') { PF_WIN['Exness Gold Practice'] = 'xgold'; }
             if (typeof PF_APP !== 'undefined') { PF_APP.push(['exness paper|exness practice|exness demo|gold paper|gold practice|gold bot|exness bot|exness auto|xauusd bot|paper gold', 'Exness Gold Practice', 'Windows > Exness Gold Practice: paper trading and a paper auto bot for gold with Exness-style spread, lots, margin and stop-out. Real-money Exness trading is not possible from this app (no connection allowed); you place real trades in MT5.', 'win:xgold']); }
@@ -22925,12 +23007,12 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         var css = document.createElement('style'); css.textContent = '.mwmt{grid-column:1/-1;align-self:start;height:auto!important;min-height:0!important;margin:2px 0 4px;padding:12px 14px;border-radius:14px;background:rgba(128,128,128,.22)!important;color:var(--tx,#111)!important;opacity:1!important;box-shadow:none!important;font-size:14px;font-weight:800;line-height:1.2;cursor:pointer;user-select:none}.mwmore{display:none}body:has(.sheet.open) #mwtb,body:has(.sheet.open) #mwsp,body:has(.sheet.open) #mwPS,body:has(#mwpin) #mwtb{display:none!important}.mwmore.on{display:contents}'; document.head.appendChild(css);
         var _mt = mwTiles;
         mwTiles = function () {
-            var h = _mt.apply(this, arguments), parts = h.split('<div class="mwgh">'), out = parts[0];
+            var h = _mt.apply(this, arguments), parts = h.split('<div class="mwgh">'), out = parts[0]; var seen = {};
             for (var i = 1; i < parts.length; i++) {
                 var p = parts[i], k = p.indexOf('</div>'), name = p.slice(0, k), rest = p.slice(k + 6), tiles = rest.match(/<div class="tile[^>]*>[\s\S]*?<\/div>[^<]*<\/div>/g) || [];
                 if (!tiles.length) { out += '<div class="mwgh">' + p; continue; }
                 var shown = '', hid = '', n = 0;
-                tiles.forEach(function (t) { var m = /data-act="win:([a-z0-9_]+)"/.exec(t), id = m ? m[1] : ''; if (!id || keep(id)) { shown += t; } else { hid += t; n++; } });
+                tiles.forEach(function (t) { var m = /data-act="win:([a-z0-9_]+)"/.exec(t), id = m ? m[1] : ''; if (id) { if (seen[id]) { return; } seen[id] = 1; } if (!id || keep(id)) { shown += t; } else { hid += t; n++; } });
                 out += '<div class="mwgh">' + name + '</div>' + shown;
                 if (n) { var on = !!open[name]; out += '<div class="mwmt" data-mwm="' + name.replace(/"/g, '') + '">' + (on ? '▾ Hide' : '▸ Show') + ' ' + n + ' more in ' + name + '</div><div class="mwmore' + (on ? ' on' : '') + '">' + hid + '</div>'; }
             }
@@ -23596,7 +23678,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         PG.abs = function (from, to, lab) { if (!PG.on) { return; } PG.v = Math.max(PG.v, from); PG.cap = Math.max(PG.cap, to - 1); if (lab) { PG.lab = lab; } pgDraw(); };
         PG.set = function (v, lab) { if (!PG.on) { return; } PG.v = Math.max(PG.v, v); PG.cap = Math.max(PG.cap, v); if (lab) { PG.lab = lab; } pgDraw(); };
         PG.begin = function (act) {
-            PG.on = 1; PG.act = act; PG.v = 0; PG.cap = 4; PG.fail = 0; PG.t0 = Date.now(); PG.lab = 'Starting…';
+            ensureDock(); PG.on = 1; PG.act = act; PG.v = 0; PG.cap = 4; PG.fail = 0; PG.t0 = Date.now(); PG.lab = 'Starting…';
             var b = el('bkprog'); if (b) { b.style.display = 'block'; var f = el('bkpf'); if (f) { f.style.background = 'linear-gradient(90deg,#30d158,#0a84ff)'; } }
             clearInterval(PG.tick); PG.tick = setInterval(function () { if (PG.on && !PG.fail && PG.v < PG.cap) { PG.v += (PG.cap - PG.v) * 0.07 + 0.02; } pgDraw(); }, 120); pgDraw();
         };
@@ -23618,50 +23700,103 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         var _cauth = cloudAuth; cloudAuth = function () { if (PG.act === 'csave') { PG.abs(60, 70, 'Signing in to your account…'); } else { PG.abs(2, 25, 'Signing in to your account…'); } return _cauth.apply(this, arguments).then(function (x) { PG.set(PG.act === 'csave' ? 70 : 25); return x; }); };
         var _cput = cloudPut; cloudPut = function () { PG.abs(70, 97, 'Uploading to your cloud…'); return _cput.apply(this, arguments).then(function (x) { PG.set(97); return x; }); };
         var _apply = applyBackup; applyBackup = function (o) { PG.set(80, 'Restoring your data…'); var r = _apply(o); PG.set(99, 'Restarting…'); return r; };
+        /* ---- Backup screen design: cards, big buttons with pressed state, live password checklist, pinned status panel ---- */
+        var WORDS = 'maple river stone lamp cedar orbit amber falcon harbor meadow copper velvet anchor beacon canyon dolphin ember forest garden hazel island jasmine kettle lantern marble nectar olive pebble quartz raven saddle tunnel umbrella valley willow yonder zephyr apple basil cobalt daisy eagle fable glacier honey indigo jungle kernel lemon mango nickel oasis panda quiver ribbon sunset tulip uplift violet walnut xenon yellow zenith acorn bridge candle drift echo feather grove hammer ivory jacket koala ladder magnet needle orchid pillow quilt rocket silver timber unity vessel wagon almond breeze castle dragon engine flame guitar harvest iceberg jigsaw kitten lagoon mirror noodle ocean parcel quest rabbit spider thunder urchin voyage window yacht zipper arrow bamboo cactus desert elbow fabric galaxy helmet insect jelly kayak lizard mosaic napkin oyster paddle quarry radish saucer turtle utensil vortex whistle xylem yogurt zebra anchovy blanket cookie dinner engineer fiddle gadget hobby inkwell jersey kitchen lobster muffin nutmeg office poetry quartet roadway sandal teapot upward velcro waffle yeoman zodiac apricot barrel cheese donkey eclipse fossil goblet hornet iguana jockey keyboard locket marlin napoleon oatmeal peanut quokka ripple sponge thistle unicorn vanilla walrus yearn zinnia amulet button cherry dawn elixir finch gravel hockey impulse jacaranda kingdom lotus meteor nugget onion pepper quail rhythm shadow trumpet umpire velour wombat yodel zucchini anvil breakfast compass dynamo emerald fountain ginger hilltop ignite journey kettledrum lullaby mustard nomad opal paprika quince radar saffron tangerine upgrade vapor wheat yardstick zeppelin bronze cabin delta frost grain haven inlet jolly knoll lunar mocha north opera plume reef spruce tango ultra vivid'.split(' ');
+        var ICO = { shield: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>', cloud: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 010-8 5 5 0 019.6-1.2A3.6 3.6 0 0117 18z"/></svg>', file: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>', share: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 11l7.6-4M8.2 13l7.6 4"/></svg>', restore: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8"/><path d="M3 3v5h5M12 8v5l3 2"/></svg>', open: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>' };
+        function bkCss() {
+            if (el('bkcss')) { return; }
+            var s = document.createElement('style'); s.id = 'bkcss';
+            s.textContent = '.bkw{--bkb:#0a84ff;--bkg:#1d8a3b;--bkr:#d70015;--bkm:var(--mut,#6e6e73);--bkl:rgba(120,120,128,.2);padding:0 0 130px}' +
+                '.bkc{background:var(--card,#fff);color:var(--tx,#111);border-radius:20px;padding:16px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.05)}' +
+                '.bkh{display:flex;align-items:center;gap:10px;margin-bottom:8px}.bkn{width:28px;height:28px;border-radius:14px;background:var(--bkb);color:#fff;font:700 14px/28px system-ui,sans-serif;text-align:center;flex:none}' +
+                '.bkt{font-size:17px;font-weight:800;line-height:1.2}.bks{font-size:13px;color:var(--bkm);line-height:1.5;margin:4px 0}' +
+                '.bkf{position:relative;margin:8px 0}.bkf input{width:100%;box-sizing:border-box;height:52px;border-radius:14px;border:1.5px solid var(--bkl);background:rgba(120,120,128,.08);padding:0 62px 0 14px;font-size:16px;color:inherit;outline:none;margin:0}.bkf input:focus{border-color:var(--bkb);background:transparent}' +
+                '.bkeye{position:absolute;right:6px;top:6px;height:40px;min-width:48px;border:0;border-radius:10px;background:none;color:var(--bkb);font-size:13px;font-weight:700}' +
+                '.bkb{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;min-height:52px;margin:8px 0;padding:0 16px;border:0;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:var(--bkb);cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;position:relative;transition:transform .08s ease,filter .08s ease,box-shadow .12s ease;box-shadow:0 2px 0 rgba(0,0,0,.12)}' +
+                '.bkb.g{background:var(--bkg)}.bkb.r{background:var(--bkr)}.bkb.s{background:rgba(120,120,128,.16);color:var(--tx,#111);box-shadow:none}.bkb.o{background:transparent;color:var(--bkr);box-shadow:inset 0 0 0 1.5px var(--bkr)}.bkb.sm{min-height:44px;font-size:14px}' +
+                '.bkb:active,.bkb.bkp,.bkseg button:active,.bkseg button.bkp{transform:scale(.96);filter:brightness(.86);box-shadow:none}' +
+                '.bkb.bkd{opacity:.55;pointer-events:none}.bkb.bkl{color:transparent!important}.bkb.bkl::after{content:"";position:absolute;width:22px;height:22px;border:3px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:bkspin .8s linear infinite}.bkb.s.bkl::after{border-color:rgba(0,0,0,.2);border-top-color:#333}@keyframes bkspin{to{transform:rotate(360deg)}}' +
+                '.bkrow{display:flex;gap:10px}.bkrow>*{flex:1}' +
+                '.bkseg{display:flex;background:rgba(120,120,128,.16);border-radius:14px;padding:3px;margin:8px 0}.bkseg button{flex:1;min-height:44px;border:0;border-radius:11px;background:none;font-size:15px;font-weight:700;color:var(--tx,#111);transition:transform .08s,background .15s}.bkseg button.on{background:var(--card,#fff);box-shadow:0 1px 4px rgba(0,0,0,.18);color:var(--bkb)}' +
+                '.bksw{display:flex;gap:12px;align-items:center;margin:10px 0;font-size:14px;line-height:1.4;cursor:pointer}.bksw input{position:absolute;opacity:0;width:0;height:0}.bksw i{flex:none;width:50px;height:30px;border-radius:15px;background:rgba(120,120,128,.35);position:relative;transition:background .15s}.bksw i::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}.bksw input:checked+i{background:#30d158}.bksw input:checked+i::after{transform:translateX(20px)}' +
+                '.bkck{margin:4px 0 2px;font-size:13px;line-height:1.7}.bkck div{color:var(--bkm)}.bkck .ok{color:#1d8a3b;font-weight:700}' +
+                '.bkst{display:flex;gap:14px;align-items:center}.bkst .ic{flex:none;width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff}' +
+                '.bkd2{margin-top:6px}.bkd2 summary{font-size:14px;font-weight:700;color:var(--bkb);padding:10px 0;cursor:pointer;list-style:none}.bkd2 summary::-webkit-details-marker{display:none}' +
+                '#bkdock{position:fixed;left:12px;right:12px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:2147482000;background:var(--card,#fff);color:var(--tx,#111);border-radius:18px;padding:12px 14px 12px 16px;box-shadow:0 10px 36px rgba(0,0,0,.32);border-left:6px solid #8e8e93;display:none}#bkdock.ok{border-left-color:#30d158}#bkdock.err{border-left-color:#ff3b30}#bkdock .x{position:absolute;right:4px;top:4px;width:40px;height:40px;border:0;background:none;font-size:22px;color:var(--bkm)}';
+            document.head.appendChild(s);
+        }
+        function ensureDock() {
+            bkCss(); var d = el('bkdock'); if (d) { return d; }
+            d = document.createElement('div'); d.id = 'bkdock'; d.setAttribute('role', 'status'); d.setAttribute('aria-live', 'polite');
+            d.innerHTML = '<button class="x" type="button" data-bkx="1" aria-label="Close">×</button><div id="bkprog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="display:none;margin:0 36px 8px 0"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span id="bkpl" style="font-weight:700"></span><b id="bkpp">0%</b></div><div style="height:12px;border-radius:6px;background:rgba(120,120,128,.28);overflow:hidden"><div id="bkpf" style="height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,#30d158,#0a84ff)"></div></div><div id="bkpe" style="font-size:12px;opacity:.75;margin-top:4px"></div></div><div id="bkmsg" style="font-size:14px;line-height:1.5;word-break:break-word;margin-right:30px"></div>';
+            document.body.appendChild(d); return d;
+        }
+        function dockTimer() { clearTimeout(B.dt); B.dt = setTimeout(function () { var d = el('bkdock'); if (d && d.className.indexOf('ok') >= 0 && !PG.on) { d.style.display = 'none'; } }, 20000); }
+        msg = function (t, ok) {
+            if (S.win !== 'backup') { return; } var d = ensureDock(), m = el('bkmsg'); if (!m) { return; }
+            m.textContent = t; m.style.color = ok === false ? '#d70015' : (ok ? '#1d8a3b' : ''); d.className = ok === false ? 'err' : (ok ? 'ok' : ''); d.style.display = t ? 'block' : 'none'; dockTimer();
+        };
+        setInterval(function () { var d = el('bkdock'); if (d && S.win !== 'backup') { d.remove(); } }, 1000);
+        function pwLive() {
+            var a = val('bkpw'), b = val('bkpw2'), c = el('bkck'); if (!c) { return; } var long = a.length >= 14, easy = long ? pwOk(a) : '', match = a.length > 0 && a === b;
+            c.innerHTML = '<div class="' + (long ? 'ok' : '') + '">' + (long ? '✔' : '○') + ' 14 or more characters (' + a.length + ')</div><div class="' + (long && !easy ? 'ok' : '') + '">' + (long && !easy ? '✔' : '○') + ' Hard to guess (no names or simple patterns)</div><div class="' + (match ? 'ok' : '') + '">' + (match ? '✔' : '○') + ' Both boxes match</div>';
+        }
+        function suggest() {
+            var r = new Uint32Array(8); crypto.getRandomValues(r); var w = [], i;
+            for (i = 0; i < 6; i++) { w.push(WORDS[r[i] % WORDS.length]); } var pw = w.join('-') + '-' + (10 + r[6] % 90);
+            ['bkpw', 'bkpw2'].forEach(function (id) { var e = el(id); if (e) { e.value = pw; e.type = 'text'; } }); document.querySelectorAll('[data-bkeye]').forEach(function (e) { e.textContent = 'Hide'; });
+            pwLive(); msg('Your new backup password is shown above. WRITE IT ON PAPER NOW. If you lose it, the backup can never be opened.', true);
+        }
         function vBk() {
-            var l = lastInfo(), old = !l || (Date.now() - l.t > 7 * 86400000), nv = !!(nat() && nat().secSet), cfg = getCfg(), inp = 'class="inp" autocomplete="off" style="width:100%;margin:3px 0"';
-            var btn = function (act, tx, c) { return '<span class="pfbtn" data-bk="' + act + '" style="display:inline-block;margin:4px 6px 4px 0;padding:9px 14px;border-radius:12px;cursor:pointer;font-weight:700;background:' + (c || '#0a84ff') + ';color:#fff">' + tx + '</span>'; };
-            var h = '<div class="note" style="line-height:1.5;' + (old ? 'background:rgba(255,159,10,.15)' : '') + '">' + (l ? '<b>Last backup:</b> ' + new Date(l.t).toLocaleString() + ' (' + l.n + ' items, ' + esc(l.how) + ')' + (old ? ' — older than 7 days, back up again.' : '') : '⚠️ <b>You have no backup yet.</b> If you uninstall the app or lose the phone, everything is gone.') + '</div>';
-            h += '<div class="group pad"><b>💾 Back up</b><div class="note" style="margin:4px 0;line-height:1.5">Your settings, trade history, practice trades, alerts and saved ideas are put into one text and <b>locked with a password you choose</b> (AES-256, locked on this phone before it goes anywhere). Without that password nobody can open it, not even the app\'s developer. <b>If you forget the password, the backup can never be opened. Write it on paper.</b> The password needs 14+ characters: 4 random words of your own plus a number is best.</div>' +
-                '<input ' + inp + ' id="bkpw" type="password" placeholder="Backup password (14+ characters)"><input ' + inp + ' id="bkpw2" type="password" placeholder="Type the backup password again">' +
-                '<label style="display:flex;gap:8px;margin:4px 0;font-size:13px"><input type="checkbox" id="bkshow"> <span>Show passwords while I type</span></label>' +
-                '<label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:13px"><input type="checkbox" id="bksec"> <span>Also include my <b>API keys, secrets and passphrases</b> (Binance, Bitget, MEXC, AI key). They stay locked by the password. Leave this off if you prefer to create new keys on the new phone.</span></label>' +
-                btn('file', '📁 Save file' + (nv ? ' to Downloads' : ''), '#0a84ff') + btn('share', '📤 Share (WhatsApp, email…)', '#30b0c7') + '</div>';
-            h += '<div class="group pad"><b>☁️ Cloud backup (with your MintooSuite account)</b>' + (fbOk() && acctInfo() ? '<div class="note" style="margin:4px 0;line-height:1.5">Saves the <i>locked</i> backup under your account <b>' + esc(acctInfo().email) + '</b> (the last two copies are kept). The cloud only holds the locked text. Fill the two backup password boxes above, then your account password (the one you log in with, not the backup password):</div><input ' + inp + ' id="bkacc" type="password" placeholder="Your MintooSuite account password">' + btn('csave', '☁️ Save to cloud', '#5e5ce6') + btn('cget', '⬇️ Get latest', '#8e8e93') + btn('cprev', '⬇️ Get previous copy', '#8e8e93') +
-                '<details style="margin-top:6px"><summary style="font-size:13px">App owner only: one-time Firebase setup</summary><div class="note" style="line-height:1.5">1. Firebase console > Build > <b>Firestore Database</b> > Create database.<br>2. Open <b>Rules</b>, add this block inside your existing rules (keep the other rules), then Publish:<br><pre style="white-space:pre-wrap;font-size:11px;user-select:all">' + esc(RULES) + '</pre></div></details>' : '<div class="note" style="margin:4px 0;line-height:1.5">Cloud backup needs a logged-in MintooSuite account and a cloud-enabled build (Google-only logins have no account password, so use the file option). <b>The file option always works, for everyone, with no account.</b></div>') + '</div>';
-            h += '<div class="group pad"><b>⏰ Automatic backup' + (nv ? '' : ' (Android app only for now)') + '</b>' + (nv ? '<div class="note" style="margin:4px 0;line-height:1.5">The app backs up by itself on the schedule you choose <b>whenever you open it</b> (it cannot run while the phone is off or the app was not opened). The file is saved in Downloads/MintooSuite on this phone: tick Cloud so a copy also exists off the phone. Your backup password is kept in the phone\'s protected storage (Android Keystore).</div><div id="bkst" class="note" style="margin:2px 0">' + esc(stLine()) + '</div>' +
-                '<div>' + [[1, 'Daily'], [7, 'Weekly'], [30, 'Monthly']].map(function (f) { return btn('freq:' + f[0], f[1], (B.pf || cfg.freq) === f[0] ? '#1d8a3b' : '#8e8e93'); }).join('') + '</div>' +
-                '<label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:13px"><input type="checkbox" id="bkacl" ' + (cfg.cloud ? 'checked' : '') + '> <span>Also upload to the cloud (needs your account password once, above)</span></label>' +
-                '<div class="note" style="margin:2px 0">Fill the backup password boxes (and the account password if Cloud is ticked), choose how often, then press:</div>' + btn('auto', '✅ Turn on automatic backup', '#1d8a3b') + (cfg.freq && getPw() ? btn('autooff', '⛔ Turn off & forget password', '#e5383b') + btn('autonow', '▶ Back up now', '#0a84ff') : '') : '<div class="note">Automatic backup needs the installed Android app. Use the buttons above.</div>') + '</div>';
-            h += '<div class="group pad"><b>♻️ Restore (new phone, or after reinstalling)</b><div class="note" style="margin:4px 0;line-height:1.5"><b>Easiest on a new phone:</b> copy your backup file to the phone, install the app, open this screen, choose the file below, type the backup password, press Restore. No account needed. For the cloud copy you must be logged in to the same MintooSuite account. Restoring <b>overwrites</b> the same settings on this phone; the app first saves a safety copy of what is on the phone now (locked with the same password), then restarts.</div>' +
-                '<input type="file" id="bkfile" accept=".txt,text/plain" style="margin:4px 0;max-width:100%"><textarea id="bkin" class="inp" placeholder="…or paste the backup text here (starts with MWBAK2.)" style="width:100%;height:70px;margin:3px 0;font-size:11px"></textarea>' +
-                '<input ' + inp + ' id="bkrp" type="password" placeholder="Backup password">' + btn('restore', '♻️ Restore now', '#e5383b') + '</div>';
-            h += '<div id="bkprog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="display:none;margin:10px 0 6px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span id="bkpl"></span><b id="bkpp">0%</b></div><div style="height:12px;border-radius:6px;background:rgba(120,120,128,.28);overflow:hidden"><div id="bkpf" style="height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,#30d158,#0a84ff)"></div></div><div id="bkpe" style="font-size:12px;opacity:.75;margin-top:4px"></div></div>';
-            h += '<div id="bkmsg" class="note" style="line-height:1.5;word-break:break-word"></div>';
-            h += '<div class="note" style="line-height:1.5">Not backed up: your login session, age/terms confirmations, the Firebase connection, and any item that is too large (the message after each backup names them). After restoring you may need to switch phone-specific things on again (notifications, battery settings, fingerprint). Only back up API keys on a phone you control; you can always delete a key at the exchange to cut access.</div>';
+            bkCss(); var l = lastInfo(), old = !l || (Date.now() - l.t > 7 * 86400000), nv = !!(nat() && nat().secSet), cfg = getCfg();
+            var btn = function (act, ico, tx, cls) { return '<button type="button" class="bkb ' + (cls || '') + '" data-bk="' + act + '">' + (ico ? ICO[ico] : '') + '<span>' + tx + '</span></button>'; };
+            var fld = function (id, ph) { return '<div class="bkf"><input id="' + id + '" type="password" autocomplete="off" placeholder="' + ph + '"></div>'; };
+            var col = !l ? '#ff3b30' : old ? '#ff9f0a' : '#30d158';
+            var h = '<div class="bkw"><div class="bkc"><div class="bkst"><div class="ic" style="background:' + col + '">' + ICO.shield + '</div><div><div class="bkt">' + (!l ? 'Not backed up yet' : old ? 'Back up again soon' : 'Your data is protected') + '</div><div class="bks" style="margin:2px 0 0">' + (l ? 'Last backup: ' + new Date(l.t).toLocaleDateString() + ' · ' + l.n + ' items · ' + esc(l.how) : 'If you lose or reset this phone, your settings and history are gone. It takes one minute to fix that.') + '</div></div></div></div>';
+            h += '<div class="bkc"><div class="bkh"><span class="bkn">1</span><span class="bkt">Choose a backup password</span></div><div class="bks">This password locks your backup. Nobody can open it without it, not even the developer. Write it on paper.</div>' + fld('bkpw', 'Backup password (14+ characters)') + fld('bkpw2', 'Type it again') + '<div id="bkck" class="bkck"></div>' + btn('suggest', '', '✨ Suggest a strong password', 's sm') +
+                '<label class="bksw"><input type="checkbox" id="bksec"><i></i><span>Include my API keys and secrets (Binance, Bitget, MEXC, AI). They stay locked by the password.</span></label></div>';
+            h += '<div class="bkc"><div class="bkh"><span class="bkn">2</span><span class="bkt">Save your backup</span></div><div class="bkrow">' + btn('file', 'file', nv ? 'Save file' : 'Save file') + btn('share', 'share', 'Share', 's') + '</div><div class="bks">Keep a copy off this phone (Google Drive, or email it to yourself).</div>';
+            if (fbOk() && acctInfo()) { h += '<div style="height:1px;background:var(--bkl);margin:12px 0"></div><div class="bkt" style="font-size:15px">Cloud backup</div><div class="bks">Saves the locked backup under <b>' + esc(acctInfo().email) + '</b> (last two copies kept). Enter your account (login) password:</div>' + fld('bkacc', 'Your MintooSuite login password') + btn('csave', 'cloud', 'Save to cloud', 'g') + '<div class="bkrow">' + btn('cget', '', 'Get latest', 's sm') + btn('cprev', '', 'Get previous', 's sm') + '</div>'; }
+            else { h += '<div class="bks"><b>Cloud backup</b> needs a MintooSuite cloud account. The file option always works.</div>'; }
+            h += '</div>';
+            h += '<div class="bkc"><div class="bkh"><span class="bkn">3</span><span class="bkt">Automatic backup</span></div>' + (nv ? '<div class="bks">Backs up by itself whenever you open the app. Your backup password is kept in the phone\'s protected storage.</div><div id="bkst" class="bks" style="color:var(--tx,#111);font-weight:600">' + esc(stLine()) + '</div>' +
+                '<div class="bkseg">' + [[1, 'Daily'], [7, 'Weekly'], [30, 'Monthly']].map(function (f) { return '<button type="button" data-bk="freq:' + f[0] + '" class="' + ((B.pf || cfg.freq) === f[0] ? 'on' : '') + '">' + f[1] + '</button>'; }).join('') + '</div>' +
+                '<label class="bksw"><input type="checkbox" id="bkacl" ' + (cfg.cloud ? 'checked' : '') + '><i></i><span>Also upload to the cloud (needs your login password in step 2, once)</span></label>' + btn('auto', 'restore', 'Turn on automatic backup', 'g') + (cfg.freq && getPw() ? '<div class="bkrow">' + btn('autonow', '', 'Back up now', 'sm') + btn('autooff', '', 'Turn off', 'o sm') + '</div>' : '') : '<div class="bks">Automatic backup works in the installed Android app. Use step 2 here.</div>') + '</div>';
+            h += '<div class="bkc"><div class="bkh"><span class="bkn" style="background:#ff3b30">↺</span><span class="bkt">Restore (new phone or reinstall)</span></div><div class="bks">Create or log in to an account on this phone first. Restoring replaces the same settings here. A safety copy is saved first, then the app restarts.</div>' +
+                '<label class="bkb s" for="bkfile" style="margin:8px 0">' + ICO.open + '<span id="bkfn">Choose backup file</span></label><input type="file" id="bkfile" accept=".txt,text/plain" style="display:none">' +
+                '<details class="bkd2"><summary>…or paste the backup text</summary><textarea id="bkin" class="inp" placeholder="Starts with MWBAK2." style="width:100%;box-sizing:border-box;height:90px;border-radius:14px;font-size:12px;padding:10px"></textarea></details>' + fld('bkrp', 'Backup password') + btn('restore', 'restore', 'Restore now', 'r') + '</div>';
+            h += '<div class="bkc"><details class="bkd2" style="margin:0"><summary>How it works and limits</summary><div class="bks">Locked on this phone with AES-256 before it goes anywhere. Not included: your login session, age and terms confirmations, and the Firebase connection. After restoring you may need to switch phone-specific things on again (notifications, battery settings, fingerprint). Back up API keys only on a phone you control; you can always delete a key at the exchange.</div>' + (fbOk() && acctInfo() ? '<details class="bkd2"><summary>App owner: Firebase rules</summary><pre style="white-space:pre-wrap;font-size:11px;user-select:all">' + esc(RULES) + '</pre></details>' : '') + '</details></div></div>';
+            setTimeout(pwLive, 0);
             return h;
         }
+        document.addEventListener('input', function (e) { var t = e.target; if (t && (t.id === 'bkpw' || t.id === 'bkpw2')) { pwLive(); } });
+        document.addEventListener('click', function (e) {
+            var x = e.target.closest ? e.target.closest('[data-bkx]') : null; if (x) { var d = el('bkdock'); if (d) { d.style.display = 'none'; } return; }
+            var ey = e.target.closest ? e.target.closest('[data-bkeye]') : null; if (ey) { var i = el(ey.getAttribute('data-bkeye')); if (i) { var show = i.type === 'password'; i.type = show ? 'text' : 'password'; ey.textContent = show ? 'Hide' : 'Show'; } e.preventDefault(); e.stopPropagation(); }
+        }, true);
+        ['pointerdown', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, function (e) { var b = e.target.closest ? e.target.closest('.bkb,.bkseg button') : null; if (b) { b.classList.add('bkp'); setTimeout(function () { b.classList.remove('bkp'); }, 260); } }, { passive: true, capture: true }); });
         document.addEventListener('change', function (e) {
             var f = e.target; if (!f) { return; }
             if (f.id === 'bkshow') { ['bkpw', 'bkpw2', 'bkrp'].forEach(function (i) { var x = el(i); if (x) { x.type = f.checked ? 'text' : 'password'; } }); return; }
             if (f.id !== 'bkfile' || !f.files || !f.files[0]) { return; }
             if (f.files[0].size > 8000000) { msg('That file is too large to be a MintooSuite backup.', false); return; }
-            var r = new FileReader(); r.onload = function () { var t = el('bkin'); if (t) { t.value = String(r.result || '').trim(); } msg('File loaded. Enter the backup password and press Restore now.', true); }; r.onerror = function () { msg('Could not read that file.', false); }; r.readAsText(f.files[0]);
+            var fnE = el('bkfn'); if (fnE) { fnE.textContent = f.files[0].name; } var r = new FileReader(); r.onload = function () { var t = el('bkin'); if (t) { t.value = String(r.result || '').trim(); } msg('File loaded. Enter the backup password and press Restore now.', true); }; r.onerror = function () { msg('Could not read that file.', false); }; r.readAsText(f.files[0]);
         }, true);
         document.addEventListener('click', function (e) {
             var bn = e.target.closest ? e.target.closest('[data-bkb]') : null;
             if (bn) { var bb = el('bkbanner'); if (bb) { bb.remove(); } if (bn.getAttribute('data-bkb') === 'go') { try { gotoWin('backup'); } catch (er) { } } return; }
             var t = e.target.closest ? e.target.closest('[data-bk]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation();
             var a = t.getAttribute('data-bk'); if (B.busy) { return; }
-            var run = function (p) { B.busy = 1; var okRun = true; PG.begin(a); Promise.resolve().then(p).catch(function (er) { okRun = false; msg(er.message || String(er), false); }).then(function () { B.busy = 0; PG.end(okRun && !/^(Cancelled|Problem)/.test((el('bkmsg') || {}).textContent || '') && el('bkmsg') && el('bkmsg').style.color !== 'rgb(215, 0, 21)'); }); };
+            var run = function (p) { B.busy = 1; var okRun = true; ensureDock(); t.classList.add('bkl'); document.querySelectorAll('.bkb').forEach(function (x) { x.classList.add('bkd'); }); PG.begin(a); Promise.resolve().then(p).catch(function (er) { okRun = false; msg(er.message || String(er), false); }).then(function () { B.busy = 0; t.classList.remove('bkl'); document.querySelectorAll('.bkb').forEach(function (x) { x.classList.remove('bkd'); }); PG.end(okRun && !/^(Cancelled|Problem)/.test((el('bkmsg') || {}).textContent || '') && el('bkmsg') && el('bkmsg').style.color !== 'rgb(215, 0, 21)'); }); };
             var sec = function () { return !!(el('bksec') && el('bksec').checked); };
             var tail = function (r) { return skipTxt(r) + (r.sec ? ' API keys included: ' + r.secN + '.' : ' No API keys included.'); };
             function skipTxt(r) { return r.skipped.length ? ' Not included (' + r.skipped.length + '): ' + r.skipped.slice(0, 4).join(', ') + (r.skipped.length > 4 ? '…' : '') + '.' : ''; }
+            if (a === 'suggest') { suggest(); return; }
             if (a === 'file') { run(function () { var pw = pwCheck(); msg('Locking and checking your backup…', true); return make(pw, sec()).then(function (r) { var f = toFile(r); if (f.saved === 1) { done(r, 'file'); wipe('bkpw'); wipe('bkpw2'); msg('✅ Saved ' + f.name + ' in Downloads/MintooSuite (' + r.n + ' items).' + tail(r) + ' Copy it somewhere safe (Google Drive, email to yourself); a file on this phone alone is lost with the phone.', true); } else if (f.saved === 2) { msg('The browser started a download of ' + f.name + '. Check your downloads folder. (Not confirmed.)' + tail(r), true); } else { throw new Error('Could not save the file. Use Share instead.'); } }); }); }
             else if (a === 'share') { run(function () { var pw = pwCheck(); msg('Locking and checking your backup…', true); return make(pw, sec()).then(function (r) { if (r.s.length > SHARE_MAX) { throw new Error('This backup is too long to send as a message (' + Math.round(r.s.length / 1000) + ' KB; messengers cut long text). Use "Save file" and send the file instead.'); } var n = nat(), fin = function (how) { done(r, 'share'); wipe('bkpw'); wipe('bkpw2'); msg(how + ' (' + r.n + ' items).' + tail(r) + ' Keep it and the password.', true); }; if (n && n.shareText) { n.shareText(window.__mwTok, 'MintooSuite backup', r.s); fin('✅ Share sheet opened'); } else if (navigator.share) { return navigator.share({ title: 'MintooSuite backup', text: r.s }).then(function () { fin('✅ Shared'); }); } else if (navigator.clipboard && navigator.clipboard.writeText) { return navigator.clipboard.writeText(r.s).then(function () { fin('✅ Backup text copied to the clipboard. Paste it into a message or note to yourself'); }); } else { throw new Error('Sharing is not available here. Use Save file.'); } }); }); }
             else if (a === 'csave') { run(function () { var pw = pwCheck(); msg('Locking, checking and uploading…', true); var r0; return make(pw, sec()).then(function (r) { r0 = r; if (r.s.length > 900000) { throw new Error('The backup is too big for one cloud document (' + Math.round(r.s.length / 1000) + ' KB). Use the file option.'); } return cloudAuth(); }).then(function (j) { wipe('bkacc'); return cloudPut(j.idToken, j.localId, r0); }).then(function () { done(r0, 'cloud'); wipe('bkpw'); wipe('bkpw2'); msg('✅ Saved to your cloud (' + r0.n + ' items). The previous cloud copy was kept as "previous".' + tail(r0), true); }); }); }
             else if (a === 'cget' || a === 'cprev') { run(function () { msg('Getting your cloud backup…', true); return cloudAuth().then(function (j) { wipe('bkacc'); return tf(cloudUrl(a === 'cprev' ? j.localId + '_prev' : j.localId, 0), { headers: { Authorization: 'Bearer ' + j.idToken } }); }).then(function (r) { if (r.status === 404) { throw new Error('No ' + (a === 'cprev' ? 'previous ' : '') + 'backup found in your cloud.'); } if (!r.ok) { throw new Error(fsErr(r)); } return r.json(); }).then(function (d) { var s = d && d.fields && d.fields.data && d.fields.data.stringValue; if (!s) { throw new Error('No backup found in your cloud.'); } var ta = el('bkin'); if (ta) { ta.value = s; } msg('✅ Cloud backup loaded (saved ' + new Date(+((d.fields.t || {}).integerValue || 0)).toLocaleString() + ', ' + ((d.fields.n || {}).integerValue || '?') + ' items). Enter the backup password below and press Restore now.', true); }); }); }
-            else if (a.indexOf('freq:') === 0) { B.pf = +a.slice(5); document.querySelectorAll('[data-bk^="freq:"]').forEach(function (e) { e.style.background = e.getAttribute('data-bk') === a ? '#1d8a3b' : '#8e8e93'; }); msg('Chosen: every ' + B.pf + ' day(s). Now press "Turn on automatic backup".', true); }
+            else if (a.indexOf('freq:') === 0) { B.pf = +a.slice(5); document.querySelectorAll('[data-bk^="freq:"]').forEach(function (e) { e.classList.toggle('on', e.getAttribute('data-bk') === a); }); msg('Chosen: every ' + B.pf + ' day(s). Now press "Turn on automatic backup".', true); }
             else if (a === 'auto') { run(function () {
                 var n = nat(); if (!(n && n.secSet && n.secGet)) { throw new Error('Automatic backup works only in the installed Android app.'); } var c = getCfg(); c.freq = B.pf || c.freq; if (!c.freq) { throw new Error('Choose Daily, Weekly or Monthly first.'); }
                 var pw = pwCheck(), want = !!(el('bkacl') && el('bkacl').checked), rt = ''; c.sec = sec(); c.cloud = want; msg('Turning on…', true);
@@ -23687,7 +23822,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         }, true);
         WINS.push({ id: 'backup', ic: '💾', c: '#30d158', n: 'Backup & restore', t: 'Backup & restore', sub: 'Lock your data with a password; file, share or cloud; restore on a new phone' }); LIVE.backup = 0; VIEWS.backup = vBk;
         MW_HELP.backup = 'Backs up your settings, history and (optionally) API keys, locked with a password you choose. Save a file, share it, or use cloud. Restore on a new phone from the same screen.';
-        try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Tools & settings' && g[1].indexOf('backup') < 0) { g[1].unshift('backup'); } }); } catch (e) { }
+        try { MW_GROUPS.forEach(function (g) { var q = g[1].indexOf('backup'); if (q >= 0) { g[1].splice(q, 1); } }); var g0 = MW_GROUPS[0][1], qb = g0.indexOf('baba'); g0.splice(qb < 0 ? g0.length : qb + 1, 0, 'backup'); } catch (e) { }
         window.__backup = { open: open, seal: seal };
         PF_APP.push(['update the app|updating|after update|new version|lose data after update|will i lose|data safe on update|installer update', 'Do updates delete my data?', 'No. Installing a new MintooSuite APK over the old one keeps all your data, because it is the same app signed with the same key. Data is lost only if you uninstall the app, use Android Clear data, or Android refuses the update because of a signature conflict (then do NOT uninstall: ask for help). Turn on Automatic backup in Menu > Backup & restore for extra safety.']);
         PF_APP.push(['backup|restore|new phone|new mobile|change phone|uninstall|reinstall|lose my data|lost phone|move my data|transfer data|cloud backup|save my api keys', 'Backup & restore', 'Menu > Backup & restore. Choose a backup password (14+ characters, strong, write it on paper), then Save file, Share, or Save to cloud (your MintooSuite account). Tick the API-keys box only if you want keys included; they stay locked by the password. Automatic backup (Android app) backs up daily, weekly or monthly whenever you open the app, like WhatsApp. On a new phone: install, open Backup & restore, pick the file (or log in and Get latest), enter the password, Restore now. Uninstalling without a backup deletes everything. Android only for now; iOS and Windows versions do not exist yet.']);
