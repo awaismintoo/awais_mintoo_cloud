@@ -374,6 +374,10 @@ final class Bridge {
         if (a != null) { a.runOnUiThread(new Runnable() { @Override public void run() { a.finishAffinity(); } }); }
     }
 
+    /* freeze guard: number of automatic restarts in the last 15 minutes (the page then starts in safe mode) */
+    @JavascriptInterface
+    public int guardRecent(String tok) { return ok(tok) ? Guard.recent(ctx) : 0; }
+
     /* signed exchange requests (GET/POST/DELETE) - only to the exchanges the app supports; returns status + body to the page */
     @JavascriptInterface
     public void httpReq(String tok, final String method, final String url, final String headersJson, final String body, final String cb) {

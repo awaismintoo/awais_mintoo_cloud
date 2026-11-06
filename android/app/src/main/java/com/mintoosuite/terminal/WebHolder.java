@@ -155,6 +155,7 @@ final class WebHolder {
         if (wdOn) { return; }
         wdOn = true;
         wdLastOk = System.currentTimeMillis();
+        try { Guard.start(app); } catch (Throwable ignored) { }
         MAIN.postDelayed(new Runnable() {
             @Override
             public void run() {

@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-06.350';
+var BUILD = '2026-11-06.356';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -11475,7 +11475,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var txt = Math.round(b.up * 100) + '% of coins are green. Bitcoin ' + pc(btc) + (g != null ? ', gold ' + pc(g) : '') + '.';
             return { v: v, lab: lab, txt: txt, up: b.up, ok: 1, btc: btc, g: g };
         }
-        function ideas() { if (window.__dnMock) { return window.__dnMock; } try { var rr = (typeof idRows === 'function' ? idRows() : []) || []; /* DO NOW = only deals valid right now (same check as Ideas > DO NOW) */ if (window.__lvValid) { rr = rr.filter(function (m) { try { return window.__lvValid(m).ok; } catch (e) { return false; } }); } return rr; } catch (e) { return []; } }
+        function ideas() { if (window.__dnMock) { return window.__dnMock; } try { var rr = (typeof idRows === 'function' ? idRows() : []) || []; /* DO NOW = only deals valid right now (same check as Ideas > DO NOW) */ if (window.__lvValid) { rr = rr.slice(0, 15).filter(function (m) { try { return window.__lvValid(m).ok; } catch (e) { return false; } }); } return rr; } catch (e) { return []; } }
         function uniq(list) { var seen = {}, out = []; list.forEach(function (m) { var b = bs(m.sym); if (seen[b]) { return; } seen[b] = 1; out.push(m); }); return out; }
         function chips(sym) {
             var b = bs(sym), o = [];
@@ -16016,7 +16016,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
 /* BN part 4: fixes from his screenshot: (a) idea rows without score data crashed the Ideas window; (b) ideas now must agree with the last 30 minutes of price (no LONG while falling from a peak, no SHORT while rising) */
 (function () {
     try {
-        var MOM = {}, BAD = {}, pend = {}, FAPI = 'https://fapi.binance.com/fapi/v1/klines?symbol=', SPOT = 'https://api.binance.com/api/v3/klines?symbol=';
+        var MOM = {}, BAD = {}, BADN = 0, BADT = 0, pend = {}, FAPI = 'https://fapi.binance.com/fapi/v1/klines?symbol=', SPOT = 'https://api.binance.com/api/v3/klines?symbol=';
         function judge(k) {
             // k = binance candles [t,o,h,l,c,...] of 5m, last one still forming
             var c = k.slice(0, -1).slice(-6); if (c.length < 5) { return null; }
@@ -16035,7 +16035,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var t = MOM[m.sym]; if (!t || nowMs() - t.at > 300000) { fetchMom(m.sym); return !strict; }
             if (!t.j) { return !strict; }
             var good = m.side === 'LONG' ? t.j.up : m.side === 'SHORT' ? t.j.down : true;
-            if (!good) { var k = m.sym + m.side; if (!BAD[k] || nowMs() - BAD[k] > 600000) { BAD[k] = nowMs(); try { addLog('IDEA', 'Skipped ' + m.sym + ' ' + m.side + ': price moved against it in the last 30 minutes'); } catch (e) { } } }
+            if (!good) { var k = m.sym + m.side; if (!BAD[k] || nowMs() - BAD[k] > 600000) { BAD[k] = nowMs(); BADN++; if (nowMs() - BADT > 600000) { BADT = nowMs(); var n0 = BADN; BADN = 0; try { addLog('IDEA', 'Skipped ' + n0 + ' idea' + (n0 > 1 ? 's' : '') + ' whose price moved against them in the last 30 minutes (for example ' + m.sym + ' ' + m.side + ')'); } catch (e) { } } } }
             return good;
         }
         var _irF = idRows;
@@ -18467,7 +18467,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
     try {
         var X = window.__kx, KX = X.KX;
         var vB = VIEWS.best, vP = VIEWS.plan, vI = VIEWS.ideas;
-        var TABS = [['live', '⚡ DO NOW (valid)'], ['best', '⭐ Best (top picks)'], ['all', '📋 All (full list)'], ['plan', '🧭 Plan (gold & big coins)']];
+        var TABS = [['live', '⚡ DO NOW (valid)'], ['best', '⭐ Watch-list'], ['plan', '🧭 Live plan (gold + coins)'], ['all', '📋 All ideas']];
         function cur() { var t = KX.idT; return t === 'all' || t === 'plan' || t === 'live' ? t : 'best'; }
         function call(f) { try { return f.apply(null, []); } catch (e) { return '<div class="note">This part could not load: ' + X.e2(e && e.message) + '</div>'; } }
         /* ---------- Best tab: real best picks, with a tab per exchange so lists never mix ---------- */
@@ -18527,7 +18527,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         var LV = { k: {}, q: {}, run: 0 };
         function lvK(sym) {
             var c = LV.k[sym], now = Date.now(); if (c && now - c.at < 180000) { return c.K; }
-            if (!LV.q[sym] && LV.run < 2 && !c) {
+            if (!LV.q[sym] && LV.run < 2 && (!c || now - c.at >= 180000)) {
                 LV.q[sym] = 1; LV.run++;
                 var us = ['https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=15m&limit=200', 'https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=15m&limit=200', 'https://api.mexc.com/api/v3/klines?symbol=' + sym + '&interval=15m&limit=200'], i = 0;
                 (function nx() { if (i >= us.length) { return Promise.reject(0); } return fetchText(us[i++], 9000).then(function (t) { var a = JSON.parse(t); if (!Array.isArray(a) || a.length < 80) { throw 0; } return a.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }; }); }).catch(nx); })()
@@ -18535,7 +18535,21 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             }
             return c ? c.K : undefined;
         }
+        var LVC = {}, LVB = 0, BUD = { t: 0, n: 3 };
+        function BUDN() { var n = Date.now(); if (n - BUD.t > 1000) { BUD.t = n; BUD.n = 3; } return BUD.n; }
+        function BUDU() { BUD.n--; }
         function lvValid(m) {
+            var now = Date.now(), ck = m.sym + '|' + m.side + '|' + (m.to || 0), cc = LVC[ck];
+            if (cc && now - cc.t < 15000) { return cc.v; }
+            if (LVB || BUDN() <= 0) { return cc ? cc.v : { ok: false, pend: true }; }
+            BUDU();
+            if (window.__lvOff && now < window.__lvOff) { return { ok: false }; }
+            var t0 = Date.now(); LVB = 1; var v; try { v = lvValid0(m); } catch (e) { v = { ok: false }; } finally { LVB = 0; }
+            /* safety net: if the check ever costs too much time, pause it for 10 min instead of slowing or freezing the app */
+            try { var dt = Date.now() - t0; if (dt > 120) { window.__lvSt = (window.__lvSt || 0) + 1; if (window.__lvSt >= 3) { window.__lvOff = Date.now() + 600000; window.__lvSt = 0; } } } catch (e) { }
+            LVC[ck] = { t: now, v: v }; return v;
+        }
+        function lvValid0(m) {
             var now = Date.now();
             if (m.to && m.to < now) { return { ok: false }; }
             if (!(m.R && m.R.expR > 0)) { return { ok: false }; }
@@ -18550,12 +18564,12 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         function vLive() {
             try { bpRefresh(false); } catch (e) { }
             var ex = bxc(), rows = [], pend = 0, now = Date.now(), out = [];
-            try { rows = idRows().slice(0, 40); } catch (e) { }
+            try { rows = idRows().slice(0, 25); } catch (e) { }
             rows.forEach(function (m) {
                 if (!(ex === 'all' ? XL.slice(1).some(function (e) { return onEx(e[0], m.sym, { m: m }); }) : onEx(ex, m.sym, { m: m }))) { return; }
                 var v = lvValid(m); if (v.pend) { pend++; } if (v.ok) { out.push({ m: m, v: v }); }
             });
-            var h = X.seg('bxch', XL, ex) + '<div class="warn" style="margin:0 0 8px">⚡ <b>DO NOW</b>: only deals that pass <b>every</b> check <u>right now</u> (strict list, Baba chart check, no chasing, world and dollar checks). Each has a countdown. When a check fails or the time ends, the deal disappears. Nothing is loosened. <b>Not financial advice. Use a stop-loss.</b></div>';
+            var h = (window.__lvOff && Date.now() < window.__lvOff ? '<div class="warn">⏸ DO NOW is paused for a few minutes to keep the app smooth (the check was slow on this phone). Nothing is shown until it resumes.</div>' : '') + X.seg('bxch', XL, ex) + '<div class="warn" style="margin:0 0 8px">⚡ <b>DO NOW</b>: only deals that pass <b>every</b> check <u>right now</u> (strict list, Baba chart check, no chasing, world and dollar checks). Each has a countdown. When a check fails or the time ends, the deal disappears. Nothing is loosened. <b>Not financial advice. Use a stop-loss.</b></div>';
             h += '<div class="note" style="margin:0 0 6px">Exchanges with live scanning here: Binance, MEXC, Bitget. OKX, Bybit and others have order tickets but no live list yet, so they are not shown.' + (pend ? ' Checking ' + pend + ' more coin' + (pend > 1 ? 's' : '') + '…' : '') + '</div>';
             if (!out.length) { return h + '<div class="group pad mut">No deal passes every check right now. That is normal: waiting is a valid choice. This list refreshes by itself.</div>'; }
             out.forEach(function (x) {
@@ -18569,10 +18583,12 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         }, 1000);
         VIEWS.ideas = function () {
             var t = cur(), h = X.seg('idT', TABS, t);
+            var EXPL = { live: '<b>DO NOW</b>: deals that are valid <u>this minute</u>, with a timer. This is the one to act on. If it is empty, wait.', best: '<b>Watch-list</b>: the strongest coins of the day on Binance, MEXC and Bitget (they passed the strict check and the 20-day replay). Not an entry signal yet: watch them and wait for a DO NOW card.', plan: '<b>Live plan</b>: a fresh plan card for gold and the main Binance Futures coins, refreshed every minute (entry, stop, target fixed at plan time). The fixed daily plan at 05:15 PKT is in <b>New Plan</b> (More).', all: '<b>All ideas</b>: every idea in one ranked list, including everything the Scanner finds. For browsing. <span class="pfbtn" data-act="win:scanner" style="margin-left:4px">Open raw Scanner</span>' };
+            h += '<div class="note" style="margin:0 0 8px">' + EXPL[t] + '</div>';
             return h + call(t === 'live' ? vLive : t === 'best' ? (function () { try { return vBestX(); } catch (e) { return vB(); } }) : t === 'plan' ? vP : vI);
         };
         LIVE.ideas = 1;
-        try { WINS.push({ id: 'bpx', ic: '⭐', c: '#ff9f0a', n: 'Best picks', t: 'Best picks', sub: 'Top setups, with separate Futures and Spot tabs for Binance, MEXC and Bitget' }); LIVE.bpx = 1; VIEWS.bpx = function () { try { return vBestX(); } catch (e) { return vB(); } }; } catch (e) { }
+        try { WINS.push({ id: 'bpx', ic: '⭐', c: '#ff9f0a', n: 'Watch-list', t: 'Watch-list', sub: 'Strongest coins of the day, with separate Futures and Spot tabs for Binance, MEXC and Bitget' }); LIVE.bpx = 1; VIEWS.bpx = function () { try { return vBestX(); } catch (e) { return vB(); } }; } catch (e) { }
         try { var w = winDef('ideas'); if (w) { w.n = 'Ideas'; w.t = 'Ideas'; w.sub = 'Best picks, the full ranked list and the Master Plan, in one place'; } } catch (e) { }
         var _g = gotoWin;
         gotoWin = function (id) {
@@ -21819,8 +21835,8 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             cache = { k: key, rows: out }; return out;
         };
         function tabs(cur) {
-            var T = [['ideas', '⭐ Ideas'], ['scanner', '🔍 Scanner'], ['morning', '🧭 New Plan'], ['analyst', '🎯 Trading Analyst']];
-            return '<div class="m7row" data-noswipe="1" style="margin:0 0 8px">' + T.map(function (t) { return '<span class="' + (t[0] === cur ? 'on' : '') + '" data-act="win:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div><div class="note" style="margin:0 0 8px;font-size:11px">Scanner assists Ideas from inside this tab. New Plan (whole-day and few-hours plans with the 9-day replay of what hit target or stop) stays in More. Analyser gives a plan for any coin you choose.</div>';
+            var T = [['ideas', '⭐ Ideas'], ['morning', '🧭 New Plan (daily 05:15)'], ['analyst', '🎯 Trading Analyst']].concat(cur === 'scanner' ? [['scanner', '🔍 Scanner']] : []);
+            return '<div class="m7row" data-noswipe="1" style="margin:0 0 8px">' + T.map(function (t) { return '<span class="' + (t[0] === cur ? 'on' : '') + '" data-act="win:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div><div class="note" style="margin:0 0 8px;font-size:11px">New Plan = the fixed daily plan (locked at 05:15 PKT) with a 9-day replay of what hit target or stop. Trading Analyst gives a plan for any coin you choose. The Scanner is part of Ideas > All ideas.</div>';
         }
         ['scanner', 'morning'].forEach(function (id) { try { var _w = VIEWS[id]; if (_w) { VIEWS[id] = function () { return tabs(id) + _w.apply(this, arguments); }; } } catch (e) { } });
         var _vi = VIEWS.ideas;
@@ -24893,7 +24909,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             return '<div id="mwhero" style="border-radius:22px;padding:18px 16px 16px;margin:2px 0 16px;color:#fff;background:linear-gradient(135deg,#0b1f4a 0%,#3a2fb0 55%,#6a3df0 100%);box-shadow:0 10px 28px rgba(58,47,176,.35)">' +
                     '<div style="font-size:13px;opacity:.85">' + esc2(greet()) + (n ? ', ' + esc2(n) : '') + ' 👋</div>' +
                     '<div style="font-size:21px;font-weight:800;line-height:1.25;margin-top:3px">Trade smarter.<br>Protect your capital first.</div>' + btc() +
-                    '<div style="display:flex;gap:6px;margin-top:16px;background:rgba(255,255,255,.1);border-radius:18px;padding:12px 6px">' + bt('💡', 'Ideas', 'find', '#ffd60a', '#ff9f0a') + bt('🧪', 'Practice', 'trade', '#5ac8fa', '#0a84ff') + bt('👛', 'Wallet', 'wallet', '#30d158', '#0a8a35') + bt('🔔', 'Alerts', 'alerts', '#ff6b6b', '#d70015') + '</div></div>';
+                    '<div style="display:flex;gap:6px;margin-top:16px;background:rgba(255,255,255,.1);border-radius:18px;padding:12px 6px">' + bt('💡', 'Ideas', 'ideas', '#ffd60a', '#ff9f0a') + bt('🧪', 'Practice', 'trade', '#5ac8fa', '#0a84ff') + bt('👛', 'Wallet', 'wallet', '#30d158', '#0a8a35') + bt('🔔', 'Alerts', 'alerts', '#ff6b6b', '#d70015') + '</div></div>';
         }
         /* the hero is one persistent element placed above the Home tiles (not part of the redrawn view), so coming back to Home never duplicates or jumps */
         function placeHero() {
@@ -25407,16 +25423,20 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['bitget test connection|could not reach bitget|cors|bitget key not working|test connection failed', 'Test connection (Bitget, MEXC, Bybit, OKX)', 'Profile > Connections: save API key, secret and (Bitget/OKX) the passphrase, then Test connection. In the installed Android app the check now goes through the phone\\u2019s own connection, not the browser, so the old "browser could not reach" (CORS) message should be gone. If it still fails: check internet, that the passphrase is the one you set, that Read permission is on, that Withdraw is OFF and that Bind IP is empty or includes your current IP. Never share keys in chats.']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['live now|valid deals|live deals|recommended deals|live tab|only valid|timer deals|countdown', 'Ideas > Live now', 'Ideas > 🟢 Live now shows only the deals that pass every check at this moment (strict ideas list, Baba chart check, no chasing, dollar/world checks), for Binance, MEXC and Bitget (switch with the exchange chips). Each card has a countdown and a PKT end time. When a check fails or time ends, the card disappears by itself. No rule was loosened. An empty list means wait. Not advice; always use a stop-loss.']); MW_HELP.ideas = (MW_HELP.ideas || '') + ' Tab 🟢 Live now = only currently valid deals with countdown.'; } catch (e) { } })();
 ;(function () { try { PF_APP.push(['do now|do now tiles|valid deals home|home do now|why no do now', 'DO NOW (Home and Ideas)', 'DO NOW on Home and the Ideas > ⚡ DO NOW tab now use one single check: a deal appears only while it passes every check at this moment (strict ideas list, positive expected value, Baba chart check, no chasing, world and dollar checks). Each card shows a timer and an end time in PKT and disappears when a check fails or time ends. If nothing shows, nothing is valid and waiting is correct. No rule was loosened; nothing can guarantee a win, so use a stop-loss.']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['which ideas tab|difference between best and plan|watch list|watch-list|live plan|all ideas|scanner and all|which tab|ideas tabs explained', 'Ideas tabs: which one to use', '⚡ DO NOW = deals valid this minute, with a timer: act only on these. ⭐ Watch-list = strongest coins of the day on Binance, MEXC and Bitget; not an entry yet, wait for DO NOW. 🧭 Live plan = plan cards for gold and the main Binance Futures coins, refreshed every minute. 📋 All ideas = every idea in one list, including everything the Scanner finds (raw Scanner opens from there). New Plan (daily 05:15 PKT) = the fixed daily plan with a 9-day replay. Trading Analyst = a plan for any coin you choose. A good routine: Watch-list or Live plan to prepare, DO NOW to act, stop-loss always.']); MW_HELP.ideas = (MW_HELP.ideas || '') + ' Tabs: DO NOW (act), Watch-list (prepare), Live plan (gold + coins), All ideas (browse, includes Scanner).'; } catch (e) { } })();
+;(function () { try { PF_APP.push(['app freezes|app crashes|keeps crashing|freeze|slow app|lag|hang', 'If the app freezes or crashes', 'First: open Menu > Problem log (it lists slow moments). The DO NOW check now has a speed guard: if it is slow on your phone it pauses itself for 10 minutes. If the app still freezes: switch the Real/Practice bots off, close the app fully, and reopen. Also check Samsung battery settings (set MintooSuite to Unrestricted) and keep the phone storage above 1 GB. Tell Baba or send the Problem log by email so it can be fixed.']); MW_HELP.overview = (MW_HELP.overview || '') + ' Home Ideas shortcut now opens Ideas.'; } catch (e) { } })();
 /* ===== p9dn (build 350): DO NOW on Home = only deals that are valid right now, with a timer. Uses the same check as Ideas > DO NOW. Nothing loosened: this only hides what fails. ===== */
 (function () {
     try {
-        function rowsFor(a) { var out = []; try { (idRows() || []).forEach(function (m) { if (m.sym === a.sym && String(m.side).toUpperCase() === String(a.side).toUpperCase()) { out.push(m); } }); } catch (e) { } return out; }
+        function rowsFor(a) { var out = []; try { (idRows() || []).slice(0, 25).forEach(function (m) { if (m.sym === a.sym && String(m.side).toUpperCase() === String(a.side).toUpperCase()) { out.push(m); } }); } catch (e) { } return out; }
         function okRow(a) { var rs = rowsFor(a), i, v; if (!window.__lvValid) { return null; } for (i = 0; i < rs.length; i++) { try { v = window.__lvValid(rs[i]); if (v && v.ok) { return rs[i]; } } catch (e) { } } return null; }
-        var _g = getActions;
+        var _g = getActions, GB = 0, GC = { at: 0, src: null, out: null };
         getActions = function () {
             var a = _g.apply(this, arguments);
-            if (!window.__dnGate || !window.__lvValid) { return a; }
-            return a.filter(function (x) { return x.tier !== 'NOW' || okRow(x); });
+            if (!window.__dnGate || !window.__lvValid || GB) { return a; }
+            if (GC.src === a && Date.now() - GC.at < 3000) { return GC.out; }
+            GB = 1; var out; try { out = a.filter(function (x) { return x.tier !== 'NOW' || okRow(x); }); } catch (e) { out = a; } finally { GB = 0; }
+            GC = { at: Date.now(), src: a, out: out }; return out;
         };
         var _bh = boardHTML;
         boardHTML = function () { window.__dnGate = 1; try { return _bh.apply(this, arguments); } finally { window.__dnGate = 0; } };
@@ -25437,6 +25457,28 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             try { var els = document.querySelectorAll('[data-dnt]'), now = Date.now(); for (var i = 0; i < els.length; i++) { var to = +els[i].getAttribute('data-dnt'); if (!to) { continue; } var t = fl(to - now); if (els[i].textContent !== t) { els[i].textContent = t; } if (to - now <= 0) { var g = els[i].closest('.group'); if (g) { g.style.display = 'none'; } } } } catch (e) { }
         }, 1000);
     } catch (e) { try { console.log('p9dn', e); } catch (er) { } }
+})();
+/* ===== p9safe (build 356): safe mode after the native freeze guard restarted the app ===== */
+(function () {
+    try {
+        var n = 0; try { var nat = (typeof mwNat === 'function') ? mwNat() : null; if (nat && nat.guardRecent) { n = +nat.guardRecent(window.__mwTok) || 0; } } catch (e) { }
+        if (!n) { return; }
+        var until = Date.now() + 15 * 60000;
+        window.__lvOff = until;                                  /* DO NOW check paused */
+        try { localStorage.setItem('mintoosuite_calm', '1'); document.documentElement.classList.add('mwcalm', 'mwnolive'); } catch (e) { }
+        function banner() {
+            if (document.getElementById('mwSafe') || !document.body) { return; }
+            var d = document.createElement('div'); d.id = 'mwSafe'; d.setAttribute('data-noswipe', '1');
+            d.style.cssText = 'position:fixed;left:10px;right:10px;top:calc(70px + env(safe-area-inset-top));z-index:99998;background:#fff3cd;color:#5c4400;border:1px solid #e0b100;border-radius:14px;padding:10px 12px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.2)';
+            d.innerHTML = '<b>🛟 Safe mode</b>: the app froze and restarted itself. For 15 minutes the heavy live extras (DO NOW check, live motion) are off so it stays smooth. <span id="mwSafeX" style="float:right;font-weight:800;padding:0 6px;cursor:pointer">✕</span>';
+            document.body.appendChild(d);
+            d.addEventListener('click', function (e) { if (e.target && e.target.id === 'mwSafeX') { d.remove(); } }, true);
+            setTimeout(function () { try { d.remove(); } catch (e) { } }, 20000);
+        }
+        setTimeout(banner, 1500);
+        try { addLog('HEAL', 'The freeze guard restarted the app; safe mode on for 15 minutes'); } catch (e) { }
+        try { PF_APP.push(['safe mode|restarted itself|freeze guard', 'Safe mode', 'If the app freezes for about 20 seconds, a guard outside the page restarts it, shows a notification and starts it in safe mode for 15 minutes (DO NOW check and live motion off). Your settings, keys and history are kept. If it happens again and again, open Menu > Problem log, tap Email and send it.']); } catch (e) { }
+    } catch (e) { try { console.log('p9safe', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
