@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.373';
+var BUILD = '2026-11-07.375';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -8440,6 +8440,13 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         for (i = 0; i <= m; i++) { var uu = cl(u) * i / m; s += f1(lerp(x0, x1, uu)) + ',' + f1(ps(pts, uu)) + ' '; }
         return '<polyline points="' + s + '" fill="none" stroke="' + c + '" stroke-width="' + (w || 3) + '" stroke-linecap="round" stroke-linejoin="round"/>';
     }
+    function steps(list, per) {
+        return function (t) {
+            var s = '', i, n = list.length, h = Math.min(30, 172 / n - 6);
+            for (i = 0; i < n; i++) { var k = cl((t - i * per) / 1.2); if (k <= 0) { continue; } var y = 10 + i * (172 / n); s += '<g opacity="' + k + '">' + Rc(20, y, 280, h, 'rgba(10,132,255,.16)', 9) + T(32, y + h / 2 + 4.5, list[i], 'currentColor', 'start', 12) + '</g>'; }
+            return s;
+        };
+    }
     function T(x, y, t, c, a, sz) { return '<text x="' + x + '" y="' + y + '" fill="' + (c || 'currentColor') + '" text-anchor="' + (a || 'start') + '"' + (sz ? ' font-size="' + sz + '"' : '') + '>' + t + '</text>'; }
     function Rc(x, y, w, h, c, r) { return '<rect x="' + f1(x) + '" y="' + f1(y) + '" width="' + f1(Math.max(0, w)) + '" height="' + f1(Math.max(0, h)) + '" rx="' + (r || 3) + '" fill="' + c + '"/>'; }
     function Ln(x1, y1, x2, y2, c, w, d) { return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + c + '" stroke-width="' + (w || 2) + '"' + (d ? ' stroke-dasharray="5 4"' : '') + '/>'; }
@@ -8505,14 +8512,14 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
               for (i = 0; i < 6; i++) { var bw = 40 + i * 20 + w * 8 * (i % 2 ? 1 : -1), aw = 120 - i * 16 + w * 6; s += Rc(158 - bw, 28 + i * 20, bw, 15, 'rgba(48,209,88,.65)', 2) + Rc(162, 28 + i * 20, aw, 15, 'rgba(255,69,58,.65)', 2); }
               return s + Ln(160, 22, 160, 150, M, 1, 1) + T(80, 16, 'Bids (buy)', G, 'middle') + T(240, 16, 'Asks (sell)', R, 'middle') + (t > 4 ? '<rect x="150" y="62" width="20" height="16" fill="none" stroke="' + Y + '" stroke-width="2"/>' + T(160, 164, 'Spread: the gap between best bid and ask', Y, 'middle', 12) : '');
           } },
-        { id: 'risk', t: 'Risk 1% per trade', d: 14, lesson: 16, cap: [[0, 'Rule: risk only 1% of your account on one trade.'], [4, 'Even 7 losses in a row only cost about 7% of the account.'], [9, 'Compare: risking 20% per trade, 5 losses in a row wipes out two thirds. Small risk keeps you in the game.']],
+        { id: 'risk', t: 'Risk 1% per trade', d: 14, lesson: 16, cap: [[0, 'A common guideline: risk only about 1% of your account on one trade.'], [4, 'Even 7 losses in a row only cost about 7% of the account.'], [9, 'Compare: risking 20% per trade, 5 losses in a row wipes out two thirds. Small risk keeps you in the game.']],
           draw: function (t) {
               var n1 = Math.min(7, Math.floor(t / 0.6)), i, s = '', a1 = 100 * Math.pow(0.99, n1), n2 = t < 9 ? 0 : Math.min(5, Math.floor((t - 9) / 0.8) + 1), a2 = 100 * Math.pow(0.8, n2);
               s += T(20, 24, 'Risk 1% each trade', G) + Rc(20, 32, 280, 22, 'rgba(142,142,147,.25)', 6) + Rc(20, 32, 280 * a1 / 100, 22, G, 6) + T(160, 48, 'Account ' + f1(a1) + '%  (' + n1 + ' losses in a row)', '#000', 'middle', 12);
               if (t >= 9) { s += T(20, 96, 'Risk 20% each trade', R) + Rc(20, 104, 280, 22, 'rgba(142,142,147,.25)', 6) + Rc(20, 104, 280 * a2 / 100, 22, R, 6) + T(160, 120, 'Account ' + f1(a2) + '%  (' + n2 + ' losses)', '#fff', 'middle', 12); }
               return s;
           } },
-        { id: 'ideas', t: 'How Trade Ideas ranks', d: 12, lesson: 36, cap: [[0, 'Each idea is checked: indicators, volume, volatility, trend, news, timing.'], [4, 'Each check adds or subtracts from the chance score. The score is an estimate between 25% and 75%.'], [8, 'The best ideas rise to the top (max 8 get the star). No score is a promise.']],
+        { id: 'ideas', t: 'How Ideas ranks', d: 12, lesson: 36, cap: [[0, 'Each idea is checked: indicators, volume, volatility, trend, news, timing.'], [4, 'Each check adds or subtracts from the chance score. The score is an estimate between 25% and 75%.'], [8, 'Ideas that pass every check get the BEST star and rise to the top. A good score is an estimate, never a promise.']],
           draw: function (t) {
               var rows = [['BTC', 52], ['SOL', 66], ['ETH', 58], ['XRP', 47]], k = cl((t - 6) / 3), order = [1, 2, 0, 3], s = '', i;
               for (i = 0; i < 4; i++) { var r = rows[i], pos = lerp(i, order.indexOf(i), k), y = 22 + pos * 34, w = (r[1] - 25) / 50 * 150 * cl(t / 4); s += Rc(30, y, 260, 28, r[1] >= 62 && k > .9 ? 'rgba(255,159,10,.3)' : 'rgba(142,142,147,.2)', 8) + T(42, y + 19, (r[1] >= 62 && k > .9 ? '★ ' : '') + r[0], 'currentColor', 'start', 13) + Rc(110, y + 9, w, 10, r[1] >= 62 ? G : B, 5) + T(280, y + 19, Math.round(25 + (r[1] - 25) * cl(t / 4)) + '%', 'currentColor', 'end', 12); }
@@ -8528,11 +8535,24 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
               var w1 = 200 * cl(t / 3);
               return Rc(40, 50, w1, 26, G, 5) + T(44, 44, 'Gross gain 0.30%', G) + (t > 4 ? Rc(40 + 200 * cl((t - 4) / 3) * 0.667, 50, 200 * 0.333 * cl((t - 4) / 3), 26, R, 5) + T(44, 100, 'Fees + spread 0.20%', R) : '') + (t > 8 ? T(160, 150, 'Left for you: 0.10%', Y, 'middle', 15) : '');
           } },
-        { id: 'rest', t: 'When a bot should rest', d: 12, lesson: 38, cap: [[0, 'A bot scores itself honestly: wins, losses, fees and profit factor.'], [4, 'If 20 or more closed trades lose money after costs, it rests for 6 hours.'], [8, 'Resting is not failure. Protecting your balance comes first.']],
+        { id: 'rest', t: 'When a bot should rest', d: 12, lesson: 38, cap: [[0, 'A bot scores itself honestly: wins, losses, fees and profit factor.'], [4, 'If 20 or more closed trades lose money after costs, the Baba Practice Bot rests for 6 hours.'], [8, 'Resting is not failure. Protecting your balance comes first.']],
           draw: function (t) {
               var a = [[0, 70], [.3, 85], [.5, 100], [.7, 125], [1, 140]];
               return line(a, t / 6, 30, 290, R, 3.5) + (t > 4 ? T(160, 40, 'Net loss after costs', R, 'middle', 13) : '') + (t > 7 ? Rc(110, 150, 100, 26, Y, 8) + T(160, 168, 'REST 6 h', '#000', 'middle', 14) : '');
           } }
+,
+        { id: 'tour', t: 'Your first week in the app', d: 14, lesson: 36, cap: [[0, 'Bottom bar: Home, Zoom, Ideas, Markets, Trade, More.'], [5, 'Home has round buttons: Trading Analyst, Risk, News, Rates, Signals.'], [9, 'Practise first with virtual money. Learn is in More > Learn and help.']],
+          draw: steps(['Home: your overview', 'Ideas: the ranked list', 'Markets: coins and charts', 'Trade: orders and bots', 'More: Learn, Safety, help', 'Back button: one screen back'], 2) },
+        { id: 'ideacard', t: 'Reading an Ideas card', d: 12, lesson: 36, cap: [[0, 'Ideas holds the ranked list, Best Picks and the daily plan.'], [4, 'The chance is an estimate between 25% and 75%.'], [8, 'Tap a card for the reasons and the chart. A good score is not a promise.']],
+          draw: steps(['1. The coin and the side (long/short)', '2. The chance estimate (25-75%)', '3. Entry, stop and target', '4. Tap for reasons and chart', 'WAIT means do nothing'], 2) },
+        { id: 'practice', t: 'Practice before real money', d: 12, lesson: 36, cap: [[0, 'Baba Practice Bot and Paper Trading use virtual money.'], [4, 'Proof is an honest scoreboard with a pass mark.'], [8, 'Think about real money only after a long, good record.']],
+          draw: steps(['Practice with virtual money', 'Check the Proof scoreboard', 'If it loses after fees, it rests', 'Only then think about real money'], 2.5) },
+        { id: 'signals', t: 'Signals: where to look', d: 14, lesson: 36, cap: [[0, 'Signals opens the Signal feed: UT Bot, Baba, Baba early and Baba v2.'], [5, 'Signal Lab tunes Baba on your phone. Fresh ideas are on the Live Trades screen.'], [9, 'A signal is a suggestion with a timer. No bot can promise accuracy.']],
+          draw: steps(['Signal feed: all bots side by side', 'Baba early: fresh breakout trigger', 'Baba v2: three extra checks', 'Signal Lab: test settings', 'Scoreboard: judge after 30+ signals'], 2.2) },
+        { id: 'realsafe', t: 'Real bot safety', d: 14, lesson: 36, cap: [[0, 'The real bot stays locked until you type UNLOCK, and STOP stops all bots.'], [5, 'Keys: Withdraw and Transfer permissions OFF, trusted IPs ON.'], [9, 'Start small. There are no profit guarantees.']],
+          draw: steps(['Locked until you type UNLOCK', 'STOP button always visible', 'API key: Withdraw OFF, Transfer OFF', 'Never share keys or recovery words', 'Start with a small amount'], 2.2) },
+        { id: 'arcade', t: 'Money Quest games', d: 12, lesson: 36, cap: [[0, 'Money Quest has an Arcade, Missions and Challenges.'], [4, 'Games: Candle Racer, Bull vs Bear Brawl, Candle Reader, Risk Sizer, Scam Spotter, Rule Rush.'], [8, 'It is practice with virtual points, not trading.']],
+          draw: steps(['Candle Racer: dodge red bears', 'Bull vs Bear Brawl: arcade fighter', 'Candle Reader, Risk Sizer', 'Scam Spotter, Rule Rush', 'XP and levels, no real money'], 2) }
     ];
     function clipById(id) { var i; for (i = 0; i < CLIPS.length; i++) { if (CLIPS[i].id === id) { return CLIPS[i]; } } return null; }
     function clipForLesson(n) { var i, r = null; for (i = 0; i < CLIPS.length; i++) { if (+CLIPS[i].lesson === +n) { r = r || CLIPS[i]; } } return r; }
@@ -8575,7 +8595,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         return h;
     }
     WINS.push({ id: 'videos', ic: '🎬', c: '#ff3b30', n: 'Video lessons', t: 'Videos', sub: 'Animated lessons with a built-in player' }); LIVE.videos = 0; VIEWS.videos = vVideos;
-    MW_HELP.videos = 'Short animated lessons with captions. Play, pause, change speed or drag the slider. You can also play a video file from your phone.';
+    MW_HELP.videos = 'Short animated lessons with captions. Play, pause, change speed or drag the slider. You can also play a video file from your phone. Videos now include a first-week tour, how to read an Ideas card, practice before real money, signals, real-bot safety and Money Quest. Practise what you watch in Paper Bot or the Money Quest games (More > Learn and help).';
     function openClip(id) { plStop(); PL.id = id; PL.t = 0; PL.play = false; gotoWin('videos'); try { renderView(); } catch (e) { } }
 
     /* ---------- art for every lesson ---------- */
@@ -8591,7 +8611,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
 
     /* ---------- promo banners (the app's own, no outside ads) ---------- */
     var PROMOS = [
-        ['learn', 'Learn to trade, step by step', '36 lessons + 13 animated clips. Free.', 'win:academy', 210, '🎓'],
+        ['learn', 'Learn to trade, step by step', '36 lessons + 21 animated clips. Free.', 'win:academy', 210, '🎓'],
         ['safe', 'Safety first', 'Use a stop-loss. Risk 1%. Never share keys.', 'clip:risk', 140, '🛡'],
         ['chat', 'Ask Baba AI anything', 'Answers with pictures and videos.', 'win:pchat', 280, '💬'],
         ['verify', 'Get verified the safe way', 'Checklist for exchange identity checks.', 'win:verify', 195, '🪪']
@@ -8748,7 +8768,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
             '<b>Order tickets:</b> Binance Futures and Spot, plus Bitget, MEXC, Bybit and OKX connections (your own API keys).',
             '<b>My Wallet:</b> a self-custody wallet where you hold the keys. Receive and send on supported networks.',
             '<b>Baba AI:</b> a built-in helper and live chat that explains trading words, indicators and every screen, with pictures, lessons and video links.',
-            '<b>Academy and Video lessons:</b> 36 lessons with quizzes and 13 animated video lessons with a built-in player.',
+            '<b>Academy and Video lessons:</b> 36 lessons with quizzes and 21 animated video lessons with a built-in player.',
             '<b>Alerts and background run:</b> price alerts and notifications that keep working when you switch the Background run option on.',
             '<b>Security:</b> fingerprint or PIN app lock, API keys encrypted with the Android Keystore, show/hide password.',
             '<b>Extras:</b> achievements, 27 avatars, dark and light looks, swipe navigation, help centre, support desk and a KYC preparation guide.'
@@ -8782,7 +8802,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
             'Trade Ideas: five old windows merged into one ranked list.',
             'Calmer screens, fixes for flicker.',
             'Live Chat with Baba AI, Help centre, welcome tour, achievements.',
-            '13 animated video lessons with a built-in player, art for every lesson, support desk with WhatsApp and email.',
+            '21 animated video lessons with a built-in player, art for every lesson, support desk with WhatsApp and email.',
             'Optional banner ads and an Ads &amp; privacy page.'
         ]));
         h += '<div class="group pad"><b style="font-size:16px">📞 Contact</b><div class="note">Muhammad Awais, Islamabad, Pakistan<br>Email: awaisrajpoot2@yahoo.com<br>WhatsApp: +92 312 2602811</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="win:support">🛟 Support desk</span><span class="btn sec tap" data-kp="win:helpc">🔎 Help centre</span><span class="btn sec tap" data-kp="win:legal">📜 Legal</span><span class="btn sec tap" data-kp="win:adsinfo">📢 Ads &amp; privacy</span></div></div>';
@@ -10293,7 +10313,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function tickClock() { if (!ov) { return; } var d = new Date(), c = ov.querySelector('.clk'), t = ov.querySelector('.dt'); if (c) { c.textContent = pad2(d.getHours()) + ':' + pad2(d.getMinutes()); } if (t) { t.textContent = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }); } }
         function theme() {
             var cs = getComputedStyle(document.documentElement), a = (cs.getPropertyValue('--blu') || '').trim();
-            var pal = g('mintoosuite_pal'), neon = g('mintoosuite_palon') === '1', M = { violet: ['#5b8cff', '#a05bff'], ocean: ['#19c3e6', '#2f7bff'], sunset: ['#ff7a45', '#ff3d8b'], forest: ['#2ecc71', '#12a37f'], gold: ['#f0b90b', '#f8d33a'], black: ['#4d8dff', '#6c7bff'], rose: ['#ff4d8d', '#ff8fb1'], mint: ['#2ee6b8', '#3ad6ff'], royal: ['#7c5cff', '#c25bff'], crimson: ['#ff3b30', '#ff7a3d'], aurora: ['#38f2c0', '#8a5bff'], cyber: ['#1fff5a', '#00d1a0'], graphite: ['#9aa7bd', '#c5d0e6'], copper: ['#ff9a3d', '#e0663a'], sky: ['#3fa9ff', '#6c8cff'], lava: ['#ff4d2e', '#ffb300'] };
+            var pal = g('mintoosuite_pal'), neon = g('mintoosuite_palon') === '1', M = { violet: ['#5b8cff', '#a05bff'], ocean: ['#19c3e6', '#2f7bff'], sunset: ['#ff7a45', '#ff3d8b'], forest: ['#2ecc71', '#12a37f'], gold: ['#f0b90b', '#f8d33a'], black: ['#4d8dff', '#6c7bff'], rose: ['#ff4d8d', '#ff8fb1'], mint: ['#2ee6b8', '#3ad6ff'], royal: ['#7c5cff', '#c25bff'], crimson: ['#ff3b30', '#ff7a3d'], aurora: ['#38f2c0', '#8a5bff'], cyber: ['#1fff5a', '#00d1a0'], graphite: ['#9aa7bd', '#c5d0e6'], copper: ['#ff9a3d', '#e0663a'], sky: ['#3fa9ff', '#6c8cff'], lava: ['#ff4d2e', '#ffb300'], smartindigo: ['#6366f1', '#8b5cf6'], smartemerald: ['#10b981', '#14b8a6'], smartsunrise: ['#f97316', '#f43f5e'], smartpearl: ['#4f46e5', '#7c3aed'] };
             return (neon && M[pal]) ? M[pal] : ['#5b8cff', '#a05bff'];
         }
         function dotsHtml(n) { var s = ''; for (var i = 0; i < n; i++) { s += '<i class="' + (i < entry.length ? 'on' : '') + '"></i>'; } return s; }
@@ -11528,7 +11548,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var bpn = function () { try { return bpList('fh').length + bpList('day').length; } catch (e) { return 0; } }, rows = ideas(), nb = rows.filter(function (r) { return r.R && r.R.best; }).length, hot = Object.keys(S.tick || {}).filter(function (s) { return /USDT$/.test(s) && S.tick[s].q > 5e7; }).sort(function (a, b) { return S.tick[b].chg - S.tick[a].chg; }).slice(0, 2);
             var h = '<div class="mps">' + MP.map(function (x) { return '<div class="mp' + (cur === x[0] ? ' on' : '') + '" data-xch="' + x[0] + '">' + wm(x[0], x[1]) + '<small>' + (x[0] === 'all' ? 'every market' : cnt(x[0])) + '</small></div>'; }).join('') +
                 '<div class="mp" data-act="win:xtrade">' + wm('xt', 'Bybit · OKX') + '<small>order tickets</small></div><div class="mp" data-act="win:exdesk">' + wm('ex', 'Exness') + '<small>gold &amp; forex</small></div><div class="mp" data-act="win:gold">' + wm('gd', 'Gold') + '<small>desk</small></div><div class="mp" data-act="win:psx">' + wm('ps', 'PSX') + '<small>Pakistan</small></div></div>';
-            h += '<div class="mood" data-act="win:mood" data-noswipe="1"><i class="mgrip" data-bdflip="1"></i><span class="pgr"><i class="on"></i><i></i></span><div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="rgba(128,128,128,.22)" stroke-width="10"/><circle cx="50" cy="50" r="42" fill="none" stroke="' + col + '" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + dash + ' 264"/></svg><div class="n"><b>' + m.v + '</b><small>MOOD</small></div></div><div style="min-width:0"><h3>Market mood: ' + e2(m.lab) + '</h3><p>' + e2(m.txt) + '</p></div></div>';
+            h += '<div class="mood" data-lv="' + (m.v < 42 ? 'r' : m.v < 58 ? 'a' : 'g') + '" data-act="win:mood" data-noswipe="1"><i class="mgrip" data-bdflip="1"></i><span class="pgr"><i class="on"></i><i></i></span><div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="rgba(128,128,128,.22)" stroke-width="10"/><circle cx="50" cy="50" r="42" fill="none" stroke="' + col + '" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + dash + ' 264"/></svg><div class="n"><b>' + m.v + '</b><small>MOOD</small></div></div><div style="min-width:0"><h3>Market mood: ' + e2(m.lab) + '</h3><p>' + e2(m.txt) + '</p></div></div>';
             var Qd = null, Ar = null; try { Qd = window.__qDbg && window.__qDbg.Q; Ar = window.__mwOffers && window.__mwOffers.area; } catch (e) { }
             var qeq = ''; try { if (Qd) { var qp = Qd.cash + Qd.pos.reduce(function (a, p) { return a + p.usd; }, 0); qeq = 'Lv ' + (function () { var l = 0; [0, 100, 250, 500, 900, 1500, 2500, 4000, 6500, 10000].forEach(function (x, i) { if (Qd.xp >= x) { l = i; } }); return l + 1; })() + ' · $' + Math.round(qp).toLocaleString('en-US'); } } catch (e) { }
             h += '<div class="bnw" data-noswipe="1"><div class="bn2"><div class="c2" data-act="win:proof"><b>📒 My day</b><small>' + dayTxt() + '</small></div>' +
@@ -13993,64 +14013,40 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function g(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
         function sv(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
         var PAL = {
+            smartindigo: { n: 'Smart Indigo', e: '💠', bg: '#0b0d24', c1: '#1b1f52', c2: '#12163f', line: 'rgba(129,140,248,.34)', a: '#6366f1', b: '#8b5cf6', up: '#34d399', dn: '#fb7185', tx: '#f1f2ff', mut: '#a5aad6', glass: 1, fx: 'radial-gradient(560px 400px at 10% 0%,rgba(99,102,241,.38),transparent 70%),radial-gradient(520px 380px at 100% 30%,rgba(139,92,246,.28),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
+            smartemerald: { n: 'Smart Emerald', e: '🟢', bg: '#04120f', c1: '#0b3a30', c2: '#082a23', line: 'rgba(52,211,153,.32)', a: '#10b981', b: '#14b8a6', up: '#6ee7b7', dn: '#fb7185', tx: '#ecfdf5', mut: '#94cbbb', glass: 1, fx: 'radial-gradient(560px 400px at 10% 0%,rgba(16,185,129,.34),transparent 70%),radial-gradient(520px 380px at 100% 30%,rgba(20,184,166,.24),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
+            smartsunrise: { n: 'Smart Sunrise', e: '🌄', bg: '#160b0b', c1: '#3a1a14', c2: '#27120e', line: 'rgba(251,146,60,.32)', a: '#f97316', b: '#f43f5e', up: '#86efac', dn: '#fda4af', tx: '#fff4ec', mut: '#d7a99a', glass: 1, fx: 'radial-gradient(560px 400px at 10% 0%,rgba(249,115,22,.34),transparent 70%),radial-gradient(520px 380px at 100% 30%,rgba(244,63,94,.24),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
+            smartpearl: { n: 'Smart Pearl (light)', e: '🤍', bg: '#f4f3ff', c1: '#ffffff', c2: '#eeedfb', line: 'rgba(99,102,241,.24)', a: '#4f46e5', b: '#7c3aed', up: '#0b7f45', dn: '#dc2640', tx: '#16153a', mut: '#5a5d86', bt: '#fff', fx: 'radial-gradient(520px 380px at 0% 0%,rgba(99,102,241,.18),transparent 70%),radial-gradient(520px 380px at 100% 10%,rgba(124,58,237,.14),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
             violet: { n: 'Violet', e: '🌌', a: '#5b8cff', b: '#a05bff' },
             ocean: { n: 'Ocean', e: '🌊', bg: '#04141c', c1: '#0e2c3a', c2: '#082029', line: 'rgba(80,200,230,.24)', a: '#19c3e6', b: '#2f7bff', up: '#2cf5c0', dn: '#ff6b81', tx: '#e8fbff', mut: '#8fb9c6' },
             sunset: { n: 'Sunset', e: '🌅', bg: '#150a14', c1: '#2e1428', c2: '#200e1d', line: 'rgba(255,140,120,.24)', a: '#ff7a45', b: '#ff3d8b', up: '#7dff9a', dn: '#ff5d7a', tx: '#fff0f5', mut: '#cfa3b8' },
             forest: { n: 'Forest', e: '🌲', bg: '#07140d', c1: '#12301f', c2: '#0b2015', line: 'rgba(90,230,150,.24)', a: '#2ecc71', b: '#12a37f', up: '#3dff94', dn: '#ff6a6a', tx: '#eafff2', mut: '#9bc4ac' },
             gold: { n: 'Gold', e: '🟡', bg: '#0b0b0c', c1: '#1d1d21', c2: '#141416', line: 'rgba(240,185,11,.26)', a: '#f0b90b', b: '#f8d33a', up: '#0ecb81', dn: '#f6465d', tx: '#f5f5f5', mut: '#a9a9b0', bt: '#111' },
-            rose: { n: 'Rose', e: '🌹', bg: '#160810', c1: '#321628', c2: '#220e1b', line: 'rgba(255,120,170,.26)', a: '#ff4d8d', b: '#ff8fb1', up: '#5dffb0', dn: '#ff5c7c', tx: '#fff0f6', mut: '#d4a0b6' },
-            mint: { n: 'Mint', e: '🍃', bg: '#06130f', c1: '#0f2f27', c2: '#0a211b', line: 'rgba(110,255,210,.24)', a: '#2ee6b8', b: '#3ad6ff', up: '#46ffb8', dn: '#ff7a8a', tx: '#eafff9', mut: '#94c7b9' },
-            royal: { n: 'Royal', e: '👑', bg: '#0a0820', c1: '#1b1747', c2: '#120f33', line: 'rgba(160,140,255,.28)', a: '#7c5cff', b: '#c25bff', up: '#53f2c4', dn: '#ff6a9a', tx: '#f0eeff', mut: '#a9a3d9' },
             crimson: { n: 'Crimson', e: '🔥', bg: '#120606', c1: '#2d1111', c2: '#1d0b0b', line: 'rgba(255,100,90,.26)', a: '#ff3b30', b: '#ff7a3d', up: '#42f59b', dn: '#ff6b6b', tx: '#fff1ef', mut: '#d1a39f' },
-            aurora: { n: 'Aurora', e: '🌌', bg: '#050f1a', c1: '#0e2a3d', c2: '#0a1d2c', line: 'rgba(120,255,220,.24)', a: '#38f2c0', b: '#8a5bff', up: '#4dffcf', dn: '#ff6f95', tx: '#ecfffb', mut: '#92bdc9' },
-            cyber: { n: 'Cyber green', e: '💚', bg: '#020a04', c1: '#0a1f0d', c2: '#06150a', line: 'rgba(60,255,100,.28)', a: '#1fff5a', b: '#00d1a0', up: '#39ff6e', dn: '#ff4d6d', tx: '#e9ffee', mut: '#8bc79a', bt: '#012' },
             graphite: { n: 'Graphite', e: '🪨', bg: '#101113', c1: '#202226', c2: '#17181b', line: 'rgba(200,205,215,.2)', a: '#9aa7bd', b: '#c5d0e6', up: '#58e0a3', dn: '#ff7b8b', tx: '#eef0f4', mut: '#9aa0ab', bt: '#101113' },
-            copper: { n: 'Copper', e: '🧡', bg: '#120b06', c1: '#2f1d10', c2: '#20130a', line: 'rgba(255,170,100,.26)', a: '#ff9a3d', b: '#e0663a', up: '#7dff9a', dn: '#ff6a5a', tx: '#fff4ea', mut: '#cfae94' },
-            sky: { n: 'Sky', e: '☁️', bg: '#06101f', c1: '#102a4d', c2: '#0a1d38', line: 'rgba(120,190,255,.28)', a: '#3fa9ff', b: '#6c8cff', up: '#4df0c0', dn: '#ff7392', tx: '#eef6ff', mut: '#9db8d9' },
-            lava: { n: 'Lava', e: '🌋', bg: '#0e0508', c1: '#2a0d16', c2: '#1b0810', line: 'rgba(255,90,60,.28)', a: '#ff4d2e', b: '#ffb300', up: '#4dffa6', dn: '#ff5a7a', tx: '#fff0ec', mut: '#cfa0a0' },
             black: { n: 'Pure black', e: '⚫', bg: '#000', c1: '#0e0e10', c2: '#080809', line: 'rgba(255,255,255,.14)', a: '#4d8dff', b: '#6c7bff', up: '#2cf5a1', dn: '#ff5d86', tx: '#f2f2f7', mut: '#8e8e93' },
-            ai: { n: 'AI Neural', e: '🧠', bg: '#060818', c1: '#12163a', c2: '#0c0f2a', line: 'rgba(120,140,255,.28)', a: '#5b8cff', b: '#22d3ee', up: '#34f5c5', dn: '#ff6b8b', tx: '#eef1ff', mut: '#9aa3d9', glass: 1, fx: 'radial-gradient(520px 380px at 12% 0%,rgba(91,140,255,.38),transparent 70%),radial-gradient(540px 400px at 100% 18%,rgba(34,211,238,.24),transparent 70%),radial-gradient(rgba(150,170,255,.18) 1px,transparent 1.5px)', fxs: 'auto,auto,22px 22px', fxr: 'no-repeat,no-repeat,repeat' },
-            holo: { n: 'Hologram', e: '🪩', bg: '#06101a', c1: '#102235', c2: '#0a1726', line: 'rgba(125,249,255,.30)', a: '#7df9ff', b: '#ff7bd5', up: '#5dffc2', dn: '#ff6b9a', tx: '#eefcff', mut: '#9bc6d4', bt: '#06101a', glass: 1, fx: 'linear-gradient(115deg,rgba(125,249,255,.22),rgba(255,123,213,.16) 38%,rgba(160,255,200,.12) 68%,transparent 90%),radial-gradient(480px 340px at 90% 8%,rgba(255,123,213,.25),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
-            matrix: { n: 'Matrix', e: '🟢', bg: '#000a02', c1: '#06210d', c2: '#041507', line: 'rgba(0,255,102,.30)', a: '#00ff66', b: '#00c853', up: '#39ff6e', dn: '#ff4d6d', tx: '#dcffe6', mut: '#6fbf86', bt: '#001a07', fx: 'repeating-linear-gradient(0deg,rgba(0,255,100,.07) 0 1px,transparent 1px 3px),radial-gradient(520px 320px at 50% 0%,rgba(0,255,102,.22),transparent 70%)', fxs: 'auto,auto', fxr: 'repeat,no-repeat' },
-            space: { n: 'Deep Space', e: '🪐', bg: '#03030c', c1: '#111233', c2: '#0a0b22', line: 'rgba(160,150,255,.26)', a: '#8b7bff', b: '#ff9ad5', up: '#58f5c8', dn: '#ff6f9f', tx: '#f0f0ff', mut: '#a3a3d6', fx: 'radial-gradient(1.2px 1.2px at 8% 12%,#fff,transparent),radial-gradient(1px 1px at 22% 40%,#cfd6ff,transparent),radial-gradient(1.6px 1.6px at 35% 8%,#fff,transparent),radial-gradient(1px 1px at 48% 30%,#dfe3ff,transparent),radial-gradient(1.4px 1.4px at 61% 16%,#fff,transparent),radial-gradient(1px 1px at 74% 44%,#cfd6ff,transparent),radial-gradient(1.5px 1.5px at 88% 10%,#fff,transparent),radial-gradient(1px 1px at 92% 36%,#fff,transparent),radial-gradient(1.2px 1.2px at 15% 70%,#dfe3ff,transparent),radial-gradient(1px 1px at 40% 82%,#fff,transparent),radial-gradient(1.3px 1.3px at 66% 76%,#cfd6ff,transparent),radial-gradient(1px 1px at 84% 88%,#fff,transparent),radial-gradient(560px 420px at 85% 20%,rgba(139,123,255,.28),transparent 70%),radial-gradient(520px 380px at 10% 90%,rgba(255,154,213,.18),transparent 70%)', fxs: 'auto,auto,auto,auto,auto,auto,auto,auto,auto,auto,auto,auto,auto,auto', fxr: 'no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat,no-repeat' },
             tokyo: { n: 'Neon Tokyo', e: '🏙', bg: '#0a0614', c1: '#1f1038', c2: '#150a28', line: 'rgba(255,47,179,.30)', a: '#ff2fb3', b: '#26d9ff', up: '#4dffc4', dn: '#ff5470', tx: '#fff0fb', mut: '#c9a3cf', glass: 1, fx: 'linear-gradient(105deg,transparent 38%,rgba(255,47,179,.20) 50%,transparent 62%),linear-gradient(72deg,transparent 52%,rgba(38,217,255,.18) 64%,transparent 76%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
-            plasma: { n: 'Plasma', e: '⚡', bg: '#0d0518', c1: '#26104a', c2: '#190a35', line: 'rgba(178,75,255,.32)', a: '#b24bff', b: '#ff4bd8', up: '#56f7c4', dn: '#ff5f8f', tx: '#f7eeff', mut: '#b79bd6', fx: 'radial-gradient(500px 380px at 0% 0%,rgba(178,75,255,.40),transparent 70%),radial-gradient(520px 380px at 100% 60%,rgba(255,75,216,.26),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
-            quantum: { n: 'Quantum', e: '⚛️', bg: '#03120f', c1: '#0b2f29', c2: '#072019', line: 'rgba(0,229,195,.30)', a: '#00e5c3', b: '#b6ff3b', up: '#7dffb0', dn: '#ff6f7f', tx: '#e9fff9', mut: '#8fc7bb', bt: '#02130f', fx: 'radial-gradient(520px 380px at 90% 0%,rgba(0,229,195,.30),transparent 70%),radial-gradient(500px 360px at 0% 80%,rgba(182,255,59,.16),transparent 70%),radial-gradient(rgba(0,229,195,.14) 1px,transparent 1.5px)', fxs: 'auto,auto,26px 26px', fxr: 'no-repeat,no-repeat,repeat' },
-            carbon: { n: 'Carbon racer', e: '🏎', bg: '#0a0a0b', c1: '#1b1b1e', c2: '#121214', line: 'rgba(255,59,59,.32)', a: '#ff3b3b', b: '#ff8a3b', up: '#2cf5a1', dn: '#ff5d6c', tx: '#f4f4f6', mut: '#9a9aa2', fx: 'linear-gradient(45deg,rgba(255,255,255,.04) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.04) 75%),linear-gradient(45deg,rgba(255,255,255,.04) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.04) 75%),radial-gradient(500px 300px at 50% 0%,rgba(255,59,59,.24),transparent 70%)', fxs: '8px 8px,8px 8px,auto', fxr: 'repeat,repeat,no-repeat' },
             pearl: { n: 'Pearl (light)', e: '🤍', bg: '#f3f5fb', c1: '#ffffff', c2: '#eef1fa', line: 'rgba(90,100,160,.24)', a: '#5b6cff', b: '#9b5bff', up: '#0f9d58', dn: '#e5334b', tx: '#14172b', mut: '#5d6485', bt: '#fff', fx: 'radial-gradient(520px 380px at 0% 0%,rgba(91,108,255,.18),transparent 70%),radial-gradient(520px 380px at 100% 10%,rgba(155,91,255,.14),transparent 70%),radial-gradient(500px 360px at 50% 100%,rgba(0,200,180,.12),transparent 70%)', fxs: 'auto,auto,auto', fxr: 'no-repeat,no-repeat,no-repeat' },
             emerald: { n: 'Emerald AI', e: '💎', bg: '#03110c', c1: '#0c2f23', c2: '#08201a', line: 'rgba(16,230,154,.30)', a: '#10e69a', b: '#0ea5e9', up: '#4dffc2', dn: '#ff6f86', tx: '#eafff6', mut: '#8fc7b3', bt: '#02130c', fx: 'radial-gradient(520px 380px at 100% 0%,rgba(16,230,154,.28),transparent 70%),radial-gradient(480px 340px at 0% 70%,rgba(14,165,233,.20),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
-            solar: { n: 'Solar flare', e: '☀️', bg: '#130a02', c1: '#33200a', c2: '#241506', line: 'rgba(255,176,32,.32)', a: '#ffb020', b: '#ff5a1f', up: '#6dff9f', dn: '#ff5a6a', tx: '#fff5e6', mut: '#d1b48e', bt: '#1a0e00', fx: 'radial-gradient(560px 420px at 50% -6%,rgba(255,176,32,.42),transparent 70%),radial-gradient(480px 340px at 100% 60%,rgba(255,90,31,.20),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' },
             midnight: { n: 'Midnight glass', e: '🌃', bg: '#05070f', c1: '#101a33', c2: '#0a1124', line: 'rgba(77,163,255,.28)', a: '#4da3ff', b: '#7a5cff', up: '#4df0c0', dn: '#ff7392', tx: '#eef4ff', mut: '#9aaed4', glass: 1, fx: 'radial-gradient(520px 380px at 15% 0%,rgba(77,163,255,.30),transparent 70%),radial-gradient(520px 380px at 95% 40%,rgba(122,92,255,.22),transparent 70%)', fxs: 'auto,auto', fxr: 'no-repeat,no-repeat' }
         };
 
         var DESC = {
+            smartindigo: ['Deep indigo to violet with soft glass cards: the Trade smarter look everywhere.', 'Modern and calm'],
+            smartemerald: ['Deep green to teal with soft glass cards, in the Trade smarter style.', 'Fresh and easy on the eyes'],
+            smartsunrise: ['Warm amber to coral on dark glass, in the Trade smarter style.', 'Warm and bold'],
+            smartpearl: ['Light pearl-white with indigo and violet accents, in the Trade smarter style.', 'Best in daylight'],
             violet: ['Electric blue and purple on deep navy. The classic MintooSuite night look.', 'Everyday use, long sessions'],
             ocean: ['Cool cyan and blue on dark teal. Calm, clean and easy on the eyes.', 'Reading charts for hours'],
             sunset: ['Warm orange and pink on dark plum. Friendly and energetic.', 'Evening trading'],
             forest: ['Fresh green on deep forest black. Natural and relaxing.', 'Low eye strain, patient traders'],
             gold: ['Black with Binance-style gold accents. Serious and premium.', 'Traders who like the exchange look'],
             black: ['Pure black with a soft blue accent. Saves battery on OLED screens.', 'AMOLED phones, night time'],
-            rose: ['Dark berry with rose-pink highlights. Soft and stylish.', 'A gentle, modern look'],
-            mint: ['Dark green-teal with bright mint. Fresh and clear.', 'Clear contrast, daytime use'],
-            royal: ['Deep indigo with violet glow. Rich and royal.', 'A bold, premium feel'],
             crimson: ['Dark red with orange fire. High alert and intense.', 'Fast, focused sessions'],
-            aurora: ['Midnight blue with teal-purple northern-lights glow.', 'The most eye-catching look'],
-            cyber: ['Black with neon green, like a hacker terminal.', 'Terminal and bot lovers'],
             graphite: ['Neutral grey and silver. Quiet and professional.', 'Distraction-free work'],
-            copper: ['Dark brown with copper-orange warmth. Cosy and classic.', 'Warm, calm evenings'],
-            sky: ['Dark navy with bright sky blue. Light and airy.', 'Friendly, open feeling'],
-            lava: ['Black-red with molten orange. Hot and dramatic.', 'High energy'],
-            ai: ['Dark indigo with neural glow, light orbs and a fine dot grid. Frosted glass cards.', 'The AI look'],
-            holo: ['Cyan and pink hologram light sweeping across frosted glass.', 'A futuristic, shiny feel'],
-            matrix: ['Black with green scan-lines and a glowing top light, like a hacker screen.', 'Terminal and bot lovers'],
-            space: ['Deep space with stars and a violet nebula glow.', 'Calm night sessions'],
             tokyo: ['Magenta and cyan neon beams over dark glass, like a city at night.', 'Bold and exciting'],
-            plasma: ['Purple and pink plasma light on dark violet.', 'Eye-catching and energetic'],
-            quantum: ['Teal and lime glow with a fine particle grid.', 'Fresh, techy and clear'],
-            carbon: ['Carbon-fibre texture with red racing light.', 'Fast, focused trading'],
             pearl: ['Light pearl-white with soft pastel light. The only bright theme.', 'Daytime and bright rooms'],
             emerald: ['Deep green with emerald and blue light.', 'Rich and relaxed'],
-            solar: ['Dark amber with a warm sun glow from the top.', 'Warm, cosy, high contrast'],
             midnight: ['Midnight blue frosted glass with soft blue and violet light.', 'Clean and premium']
         };
         var css = '';
@@ -14084,6 +14080,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         css += 'html.mwcalm *,html.mwcalm *::before,html.mwcalm *::after{animation:none!important;transition:none!important;text-shadow:none!important}html.mwcalm .tile.on,html.mwcalm .btn{box-shadow:none!important}';
         css += '.mwpal{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0}.mwpal .o{padding:12px 6px;border-radius:16px;text-align:center;font-weight:800;border:2px solid transparent;background:var(--fill,#eee);cursor:pointer;font-size:13px}.mwpal .o.on{border-color:#6c93ff;box-shadow:0 0 16px rgba(108,147,255,.45)}.mwpal .o i{display:block;height:14px;border-radius:7px;margin-top:8px}';
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = css; document.head.appendChild(st);
+        try { var MIG = { rose: 'tokyo', mint: 'emerald', royal: 'violet', aurora: 'ocean', cyber: 'forest', copper: 'sunset', sky: 'ocean', lava: 'crimson', ai: 'violet', holo: 'ocean', matrix: 'forest', space: 'midnight', plasma: 'violet', quantum: 'emerald', carbon: 'crimson', solar: 'gold' }, _c0 = g(PK); if (_c0 && MIG[_c0]) { sv(PK, MIG[_c0]); } } catch (e) { }
         function paint() {
             try {
                 var neon = g('mintoosuite_palon') === '1', k = g(PK) || 'violet', h = document.documentElement;
@@ -14121,7 +14118,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var fxc = g('mintoosuite_fx') || 'off';
             var mo = '<div class="group pad"><b>Motion effects</b><div class="note" style="margin:2px 0 6px">How lively the app feels. None of these move buttons or change the layout.</div><div class="mwlk">' +
                 [['off', '⏸ Off', 'No extra effects'], ['soft', '✨ Soft', 'Smooth window changes and press feedback'], ['rich', '🌈 Rich', 'Glowing moving background in your theme colours, shine on buttons, pulsing active tab']].map(function (o) { return '<div class="o' + (fxc === o[0] ? ' on' : '') + '" data-lf="' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div><div class="note">Calm screen (below) switches every animation off, whatever you pick here.</div></div>';
-            var x = '<div class="group pad"><b>Colour theme</b><div class="note" style="margin:2px 0 0">Sixteen dark colour themes. They change colours only: every screen, button and menu stays exactly where it is.</div><div class="mwpal">' + pal + '<div class="o' + (!neon ? ' on' : '') + '" data-lp="off">↺ Default<i style="background:linear-gradient(90deg,#888,#ccc)"></i></div></div></div>' +
+            var x = '<div class="group pad"><b>Colour theme</b><div class="note" style="margin:2px 0 0">Sixteen colour themes (twelve classics and four new Smart ones). They change colours only: every screen, button and menu stays exactly where it is.</div><div class="mwpal">' + pal + '<div class="o' + (!neon ? ' on' : '') + '" data-lp="off">↺ Default<i style="background:linear-gradient(90deg,#888,#ccc)"></i></div></div></div>' +
                 mo + '<div class="group pad"><b>More modes</b><div class="mwlk"><div class="o' + (m === 'trader' ? ' on' : '') + '" data-lm="trader">📈 Trader focus<small>Only trading tools in the Menu</small></div><div class="o' + (calm ? ' on' : '') + '" data-lm="calm">🧘 Calm screen<small>' + (calm ? 'On: no animations' : 'Off: tap to turn on') + '</small></div></div><div class="note">Trader focus hides the learning, wallet and fun tiles. Tap Pro or Beginner above to leave it. Calm screen switches off all animations and glow, which also saves battery.</div></div>';
             var i = h.lastIndexOf('<div class="note">Beginner mode only hides'); return pv + (i > 0 ? h.slice(0, i) + x + h.slice(i) : h + x);
         };
@@ -16110,7 +16107,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function nm(id) { var w = null; try { w = winDef(id); } catch (e) { } var t = String((w && (w.t || w.n)) || id).replace(/[^\w &\/.\-+%]+/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 16 ? t.slice(0, 15) + '…' : t; }
         function strip(id) {
             if (window.__mwHT && window.__mwHT !== id) { window.__mwHT = ''; }
-            var f = famOf[id]; if (window.__mwHT && window.__mwHT === id && famOf.overview) { f = famOf.overview; } if (f && f[0] === 'Learn & play') { var LX = { quest: ['academy', 'videos', 'me'], academy: ['quest', 'me'], videos: ['quest', 'me'], tips: ['academy', 'videos', 'quest', 'me'] }[id]; if (LX) { f = [f[0], f[1].filter(function (k) { return LX.indexOf(k) < 0; })]; } } if (!f || f[1].length < 2) { return ''; }
+            var f = famOf[id]; if (window.__mwHT && window.__mwHT === id && famOf.overview) { f = famOf.overview; } if (f && f[0] === 'Learn & play') { var LX = { quest: ['academy', 'videos', 'me'], academy: ['quest', 'me'], videos: ['quest', 'me'], tips: ['academy', 'videos', 'quest', 'me'], me: ['academy', 'videos', 'quest', 'tips', 'me'] }[id]; if (LX) { f = [f[0], f[1].filter(function (k) { return LX.indexOf(k) < 0; })]; } } if (!f || f[1].length < 2) { return ''; }
             var rnd = f[0] === 'Home'; return '<div class="segc fmstrip' + (rnd ? ' mwr' : '') + '" data-noswipe="1" style="display:flex;gap:6px;overflow-x:auto;white-space:nowrap;margin:0 0 10px;padding:2px 0 6px;-webkit-overflow-scrolling:touch">' + (rnd ? (function () { var l = f[1].filter(function (k) { return k !== 'siglab' && k !== 'safety'; }), i = l.indexOf('brief'); [].splice.apply(l, [i < 0 ? l.length : i + 1, 0].concat(['siglab', 'safety'].filter(function (k) { return typeof VIEWS[k] === 'function'; }))); return l; })() : f[1]).map(function (k) {
                 var on = k === id;
                 return '<button type="button" data-act="win:' + k + '" data-noswipe="1" style="flex:none;padding:7px 12px;border-radius:16px;border:1px solid ' + (on ? '#0a84ff' : 'var(--line,#d1d1d6)') + ';background:' + (on ? '#0a84ff' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit') + ';font:700 13px system-ui,sans-serif">' + (rnd && window.__mwRI ? window.__mwRI(k) : '') + (rnd && k === 'live' ? 'Fresh ideas' : nm(k)) + (window.__lvb ? window.__lvb(k) : '') + '</button>';
@@ -18436,7 +18433,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             quantum: { t: 'float', i: 'glow', k:'duo',l:'big' }, carbon: { r: 'sharp', f: 'cond', i: 'bold', d: 'compact', k:'badge',l:'dense' }, pearl: { t: 'float', i: 'thin', k:'duo',l:'big' }, emerald: { t: 'float', k:'ring' },
             solar: { r: 'pill', i: 'bold', k:'badge',l:'big' }, midnight: { t: 'float', i: 'glow', k:'duo',l:'list' }
         };
-        var TAGS = { glass: ['ai', 'holo', 'tokyo', 'midnight'], light: ['pearl'], sharp: ['crimson', 'cyber', 'graphite', 'lava', 'matrix', 'tokyo', 'carbon'], ai: ['ai', 'holo', 'matrix', 'space', 'tokyo', 'plasma', 'quantum', 'midnight'] };
+        var TAGS = { glass: ['ai', 'holo', 'tokyo', 'midnight', 'smartindigo', 'smartemerald', 'smartsunrise'], light: ['pearl', 'smartpearl'], sharp: ['crimson', 'cyber', 'graphite', 'lava', 'matrix', 'tokyo', 'carbon'], ai: ['ai', 'holo', 'matrix', 'space', 'tokyo', 'plasma', 'quantum', 'midnight'] };
         window.__thm = { TD: TD, BASE: BASE, mini: function (k) { return mini(k); } };
         function themeKey() { return g(ON) === '1' && PAL[g(PK)] ? g(PK) : ''; }
         function eff() {
@@ -18521,7 +18518,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             var keys = Object.keys(PAL).filter(function (x) { return PAL[x].bg; });
             var list = keys.filter(function (x) { return G.flt === 'all' || (G.flt === 'dark' ? !inTag(x, 'light') : inTag(x, G.flt)); });
             h += '<div class="group pad"><b>Themes</b> <span class="mut" style="font-size:12px">' + (keys.length + 1) + ' looks. Tap one: the whole app changes at once.</span><div class="stflt">' + fl.map(function (f) { return '<span class="' + (G.flt === f[0] ? 'on' : '') + '" data-sx="' + f[0] + '">' + f[1] + '</span>'; }).join('') + '</div><div class="stgal">'
-                + (G.flt === 'all' ? '<div class="stc' + (!k ? ' on' : '') + '" data-sa="off">' + (!k ? '<span class="sto">APPLIED</span>' : '') + mini('') + '<b>☀️ Classic</b><small>Plain light or dark, the original look</small></div>' : '')
+                + (G.flt === 'all' ? '<div class="stc' + (!k ? ' on' : '') + '" data-sa="off">' + (!k ? '<span class="sto">APPLIED</span>' : '') + mini('') + '<b>☀️ Default</b><small>Plain light or dark, the original look</small></div>' : '')
                 + list.map(function (x) { var p = PAL[x], d = DESC[x] || ['', '']; return '<div class="stc' + (k === x ? ' on' : '') + '" data-sa="' + x + '">' + (k === x ? '<span class="sto">APPLIED</span>' : '') + mini(x) + '<b>' + p.e + ' ' + e2(p.n) + '</b><small>' + e2(d[1] || '') + '</small></div>'; }).join('') + '</div></div>';
             h += '<div class="group pad"><b>Style</b><div class="note" style="margin:2px 0 6px">Each theme brings its own style. Change any part here, or leave it on Auto.</div>'
                 + '<div class="note" style="margin:6px 0 0"><b>Shape</b></div>' + seg('r', [['auto', 'Auto'], ['sharp', 'Sharp'], ['round', 'Rounded'], ['pill', 'Pill']])
@@ -18547,7 +18544,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             var el = e.target.closest ? e.target.closest('[data-sa],[data-ss],[data-sx],[data-sm2],[data-sf2],[data-sr],[data-su]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
             if (el.hasAttribute('data-sa')) {
                 var k = el.getAttribute('data-sa'), prev = { on: g(ON), pal: g(PK), sty: g(SK) }, nm = k === 'off' ? 'Classic' : PAL[k].n;
-                if (k === 'off') { sv(ON, '0'); } else { sv(PK, k); sv(ON, '1'); sv('mintoosuite_theme', 'dark'); if (k === 'pearl') { sv('mintoosuite_theme', 'light'); } }
+                if (k === 'off') { sv(ON, '0'); } else { sv(PK, k); sv(ON, '1'); sv('mintoosuite_theme', 'dark'); if (k === 'pearl' || k === 'smartpearl') { sv('mintoosuite_theme', 'light'); } }
                 STY = {}; sv(SK, '{}');
                 try { applyTheme(); } catch (er) { } applyStyle(); try { mwHostSig = ''; buildNav(); } catch (er) { } again();
                 snack(nm + ' applied', prev); return;
@@ -25717,6 +25714,10 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['tip details|tip explanation|tip box|tip of the day box', 'Build 372: Tip of the day box opens an explanation', 'Tap the Tip of the day box (in its window, or in the daily popup at the top) and a sheet opens with Why it matters and What to do, a button to the matching window, Next tip and Close. Every tip in the list opens its own explanation. Today\'s tip is no longer repeated in the list, and the category name is written once as a heading instead of on every row.']); } catch (e) { } })();
 
 ;(function () { try { PF_APP.push(['back button more|phone back more|back to more|back from academy|back goes home', 'Build 373: Back returns to the More menu', 'When you open a window from the More tab (for example Academy) and press Back (the arrow at the top left or your phone\'s back button), you now return to the More menu, where you were. Press Back again to close More. The same already worked for the MENU button at the top right.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['market mood tile|mood tile|my day tile|movers tile|mood colour|mood color', 'Build 374: new look for the Market mood tile', 'On Home the Market mood tile now has the same modern look as Trade smarter: a dark card whose colour follows the mood (green positive, amber neutral, red negative), a glowing ring with the score, and white text. The numbers, the words and the swipe to the second page are unchanged. Colour shows the mood only, never a buy or sell signal. My day and Movers now show their title above the line of text.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['profile window|profile shortcuts|shortcuts tile|for you cards|baba ai card profile|where is shortcuts|profile tabs|profile look', 'Build 375: Profile window is cleaner and modern', 'The Profile window now opens with a gradient header card (your avatar, plan and status), then the tabs: Overview, P/L, Connections, Security, Settings. Account and sign-in, Lock screen and the Pro trial card sit below the tab content. The Baba AI card, the For you cards (Best Picks, Top risers, Paper Bot, At a glance), the Shortcuts tile and the Learn tab row were removed because the same things are one tap away in Ideas, Home, Baba AI (bottom bar > More) and More > Learn and help.']); PF_APP.push(['theme|themes|colour theme|color theme|smart indigo|smart emerald|smart sunrise|smart pearl|default theme|reset theme|removed theme', 'Colour themes (build 375)', 'Menu (top right) > Look & mode > Colour theme. Four new Smart themes in the Trade smarter style: Smart Indigo, Smart Emerald, Smart Sunrise and Smart Pearl (light). Default returns to the original look. Twelve classics stay: Violet, Ocean, Sunset, Forest, Gold, Crimson, Graphite, Pure black, Midnight glass, Pearl (light), Emerald AI, Neon Tokyo. If you used one of the retired themes the app moved you to the closest one automatically. Themes change colours only.']); PF_APP.push(['video lessons|videos list|how many videos|new videos|first week tour|real bot safety video', 'Video lessons (build 375)', 'Videos now has 21 short animated lessons. New: Your first week in the app, Reading an Ideas card, Practice before real money, Signals: where to look, Real bot safety and Money Quest games. Videos are under Learn tabs (Academy, Videos, Tip of the day). They teach habits and tools; none promises profit.']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26141,6 +26142,75 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             return false;
         };
     } catch (e) { try { console.error('p9back', e); } catch (e2) { } }
+})();
+/* ===== p9mood (build 374): Market mood tile on Home gets the modern "Trade smarter" look (dark gradient that follows the mood, glowing ring, white text); My day and Movers tiles stack their two lines instead of sitting side by side. Look only: same numbers, same text, same swipe and taps ===== */
+(function () {
+    try {
+        var H = 'html #mwcc ', M = H + '.mood[data-lv]';
+        var css = M + '{height:96px!important;padding:10px 14px!important;color:#fff!important;border:0!important;position:relative;background:linear-gradient(135deg,#0b3b2e 0%,#12804f 60%,#19a463 100%)!important;box-shadow:0 8px 22px rgba(18,128,79,.30)!important;overflow:hidden}'
+            + M + '[data-lv="a"]{background:linear-gradient(135deg,#3b2a08 0%,#a8680e 60%,#d98e12 100%)!important;box-shadow:0 8px 22px rgba(168,104,14,.30)!important}'
+            + M + '[data-lv="r"]{background:linear-gradient(135deg,#3d0f14 0%,#a31d2b 60%,#d63a45 100%)!important;box-shadow:0 8px 22px rgba(163,29,43,.30)!important}'
+            + M + ':before{content:"";position:absolute;right:-34px;top:-34px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.10);pointer-events:none}'
+            + M + ' .ring,' + M + ' .ring svg{width:74px!important;height:74px!important}'
+            + M + ' .ring svg circle:first-child{stroke:rgba(255,255,255,.28)!important}'
+            + M + ' .ring svg circle:last-child{stroke:#fff!important;filter:drop-shadow(0 0 5px rgba(255,255,255,.65))}'
+            + M + ' .ring .n b{font-size:23px!important;color:#fff!important;text-shadow:0 1px 3px rgba(0,0,0,.25)}'
+            + M + ' .ring .n small{font-size:8.5px!important;opacity:.85!important;color:#fff!important}'
+            + M + ' h3{color:#fff!important;font-size:16px!important;text-shadow:0 1px 3px rgba(0,0,0,.25)}'
+            + M + ' p{color:#fff!important;opacity:.9!important;font-size:12px!important;max-height:32px}'
+            + M + ' .mgrip{background:rgba(255,255,255,.55)!important}' + M + ' .mgrip:before{border-color:rgba(255,255,255,.85)!important}'
+            + M + ' .pgr i{background:rgba(255,255,255,.45)!important}' + M + ' .pgr i.on{background:#fff!important}'
+            + '@media (forced-colors:active){' + M + '{border:2px solid CanvasText!important}}'
+            + H + '.bn2 .c2{display:block!important}';
+        var st = document.createElement('style'); st.id = 'mwmoodcss'; st.textContent = css; document.head.appendChild(st);
+    } catch (e) { try { console.error('p9mood', e); } catch (e2) { } }
+})();
+/* ===== p9prof (build 375): Profile window. Removes what is already in better places (Baba AI card, For you cards, Shortcuts tile, Learn tab row), puts the header card first with a modern gradient look, tabs right under it, and moves the long Account / Lock / Pro cards below the tab content. Same buttons, same data-act targets, same tabs ===== */
+(function () {
+    try {
+        function txt(k) { return (k.textContent || '').replace(/\s+/g, ' ').trim(); }
+        function restyle(h) {
+            var doc = new DOMParser().parseFromString('<body>' + h + '</body>', 'text/html'), body = doc.body, kids = Array.prototype.slice.call(body.children);
+            var q = function (f) { for (var i = 0; i < kids.length; i++) { if (f(kids[i], i)) { return kids[i]; } } return null; };
+            var hero = q(function (k) { return k.querySelector && k.querySelector('.mehd'); }), tabs = q(function (k) { return k.classList.contains('metabs'); });
+            var acc = q(function (k) { return k.getAttribute('data-act') === 'win:account'; }), lock = q(function (k) { return k.getAttribute('data-act') === 'win:lockui'; });
+            var av = q(function (k) { return k.querySelector && k.querySelector('[data-m24="avopen"]'); });
+            var note = null; kids.forEach(function (k) { if (k.classList.contains('note') && /^Everything here comes/.test(txt(k))) { note = k; } });
+            if (!hero || !tabs || !note) { return h; }
+            var ih = kids.indexOf(hero), it = kids.indexOf(tabs), inote = kids.indexOf(note);
+            if (!(ih < it && it < inote)) { return h; }
+            var pro = null; var lo = Math.max(kids.indexOf(lock), kids.indexOf(acc)); kids.forEach(function (k, i) { if (i > lo && i < ih && k !== av && !k.classList.contains('fmstrip') && k.classList.contains('group')) { pro = k; } });
+            var drop = []; kids.forEach(function (k, i) {
+                if (k.classList.contains('fmstrip')) { drop.push(k); }
+                if (k.getAttribute('data-m13') === 'ask' && /Baba AI/.test(txt(k)) && k.classList.contains('group')) { drop.push(k); }
+                if (k.classList.contains('sh') && /^For you/i.test(txt(k))) { drop.push(k); var n = kids[i + 1]; if (n && n.classList.contains('mecar')) { drop.push(n); } }
+                if (/^Shortcuts/.test(txt(k)) && k.querySelector('[data-m13="edit"]')) { drop.push(k); var n2 = kids[i + 1]; if (n2 && n2.querySelector && n2.querySelector('#mecar1')) { drop.push(n2); } }
+            });
+            drop.forEach(function (k) { if (k.parentNode) { k.parentNode.removeChild(k); } });
+            hero.classList.add('mwhero'); if (av) { av.classList.add('mwav'); } tabs.classList.add('mwtabs'); if (acc) { acc.classList.add('mwq', 'mwq1'); } if (lock) { lock.classList.add('mwq', 'mwq2'); } if (pro) { pro.classList.add('mwpro'); }
+            var content = []; for (var j = it + 1; j < inote; j++) { if (kids[j].parentNode === body) { content.push(kids[j]); } }
+            var out = document.createElement('div'); out.className = 'mwme';
+            [hero, av, tabs].concat(content, [acc, lock, pro]).forEach(function (k) { if (k && k.parentNode === body) { out.appendChild(k); } });
+            Array.prototype.slice.call(body.children).forEach(function (k) { out.appendChild(k); });
+            return out.outerHTML;
+        }
+        var _me = VIEWS.me;
+        if (typeof _me === 'function') { VIEWS.me = function () { var h = _me.apply(this, arguments); if (typeof h !== 'string') { return h; } try { return restyle(h); } catch (e) { return h; } }; }
+        var P = 'html .mwme ';
+        var css = P + '.mwhero{background:linear-gradient(135deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%)!important;color:#fff!important;border:0!important;box-shadow:0 10px 26px rgba(67,56,202,.35)!important;position:relative;overflow:hidden;padding:16px!important}'
+            + P + '.mwhero:before{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.10);pointer-events:none}'
+            + P + '.mwhero .mehd{padding:2px 0 2px;position:relative}' + P + '.mwhero h2{color:#fff!important;font-size:22px!important}' + P + '.mwhero .em{color:rgba(255,255,255,.82)!important}'
+            + P + '.mwhero .meav{box-shadow:0 0 0 3px rgba(255,255,255,.9),0 0 22px rgba(167,139,250,.65)!important}'
+            + P + '.mwhero .mech span{background:rgba(255,255,255,.18)!important;color:#fff!important;border:1px solid rgba(255,255,255,.28)}'
+            + P + '.mwav{display:block;margin:-4px 0 12px!important;padding:8px 12px!important;border-radius:16px!important}' + P + '.mwav b{font-size:13.5px}'
+            + P + '.mwtabs{background:rgba(128,128,128,.14)!important;border-radius:18px!important;padding:4px!important;gap:3px!important}' + P + '.mwtabs span{border-radius:14px!important;padding:10px 1px!important}'
+            + P + '.mwtabs span.on{background:linear-gradient(135deg,#4f46e5,#7c3aed)!important;color:#fff!important;box-shadow:0 4px 12px rgba(79,70,229,.4)!important}'
+            + P + '.mwq{border-radius:18px!important}' + P + '.mwq>span:first-child{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px!important;flex:none;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.18)}'
+            + P + '.mwq1>span:first-child{background:linear-gradient(135deg,#6366f1,#8b5cf6)}' + P + '.mwq2>span:first-child{background:linear-gradient(135deg,#0e9f6e,#0e7490)}'
+            + P + '.mwpro{background:linear-gradient(135deg,rgba(52,199,89,.16),rgba(10,132,255,.10))!important;border-radius:18px!important}'
+            + '@media (forced-colors:active){' + P + '.mwhero{border:2px solid CanvasText!important}}';
+        var st = document.createElement('style'); st.id = 'mwprofcss'; st.textContent = css; document.head.appendChild(st);
+    } catch (e) { try { console.error('p9prof', e); } catch (e2) { } }
 })();
 
 function renderView(keep) {
