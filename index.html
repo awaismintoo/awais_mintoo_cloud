@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.378';
+var BUILD = '2026-11-07.380';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -17677,7 +17677,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         window.__mwTr = function (id, ok, data) { var c = TQ[id]; if (c) { delete TQ[id]; c(ok, data); } else if (_mt) { _mt(id, ok, data); } };
         function tcall(fn, args, cb) { var n = nat(); if (!n || !n[fn]) { return cb(false, 'Language packs work in the installed Android app.'); } var id = 't' + (++tseq); TQ[id] = cb; try { n[fn].apply(n, [window.__mwTok].concat(args, [id])); } catch (e) { delete TQ[id]; cb(false, 'Not available.'); } }
         function trOk() { try { var n = nat(); return !!(n && n.trAvailable && n.trAvailable(window.__mwTok)); } catch (e) { return false; } }
-        function refreshPacks() { if (!trOk()) { return; } tcall('trHave', [], function (ok, data) { if (ok) { haveRaw = String(data || ''); P.packs = {}; haveRaw.split(',').forEach(function (c) { if (c) { P.packs[c] = 1; } }); sv(); if (S.win === 'look') { X.again(); } } }); }
+        function refreshPacks() { if (!trOk()) { return; } tcall('trHave', [], function (ok, data) { if (ok) { var nv = String(data || ''), chg = nv !== haveRaw; haveRaw = nv; P.packs = {}; haveRaw.split(',').forEach(function (c) { if (c) { P.packs[c] = 1; } }); sv(); if (chg && (S.win === 'look' || S.win === 'langs')) { X.again(); } } }); }
         function has(l) { return l === 'en' ? true : !!P.packs[l]; }
         function packBox() {
             var ok = trOk(), h = '<div class="group pad"><b>📴 Offline languages</b> <span class="mut" style="font-size:12px">' + PACKS.length + ' languages</span><div class="note" style="margin:4px 0 8px">Download a language once (about 30 MB each, needs internet). After that, typed text can be translated with no internet. ' + (ok ? '' : '<b>This copy has no offline translator yet. The newest installer adds it.</b> ') + 'Reading text from the camera still needs internet. Offline reading of Urdu and Arabic pictures is not available on Android.</div>';
@@ -17688,7 +17688,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             });
             return h + '</div></div><div class="note" style="margin:6px 0 0">Pashto, Sindhi and Punjabi are not available offline (Google does not offer them). Baba AI still translates them online.</div>';
         }
-        try { var _vl = VIEWS.look; VIEWS.look = function () { setTimeout(refreshPacks, 50); return _vl.apply(this, arguments) + packBox(); }; } catch (e) { } window.__packBox = function () { setTimeout(refreshPacks, 50); return packBox(); };
+        /* build 379: the Look window no longer repeats the language packs (they live in More > Languages); this also ends the refresh loop that made Look jump */ window.__packBox = function () { setTimeout(refreshPacks, 50); return packBox(); };
         X.on('trdl', function (l) {
             if (busyPack[l] || l === 'en') { return; } if (!trOk()) { say('This copy of the app does not have the offline translator inside yet. Install the newest installer (it adds it), then this button downloads the language.'); return; } busyPack[l] = 1; X.again(); say('Downloading… keep the app open');
             tcall('trDownload', [l], function (ok, data) { busyPack[l] = 0; if (ok) { P.packs[l] = 1; sv(); say('Ready: ' + l.toUpperCase()); } else { say(String(data || 'Download failed. Check the internet and try again.')); } X.again(); });
@@ -18501,7 +18501,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         function seg(key, opts) { var cur = STY[key] || 'auto'; return '<div class="stseg">' + opts.map(function (o) { return '<span class="' + (cur === o[0] ? 'on' : '') + '" data-ss="' + key + ':' + o[0] + '">' + o[1] + '</span>'; }).join('') + '</div>'; }
         function stopCard() {
             var cur = window.__stopMode ? window.__stopMode.get() : 'full';
-            return '<div class="group pad"><b>STOP button on screen</b><div class="note" style="margin:2px 0 0">The round red button that stops all bots. Hidden works while the real bot is off.</div><div class="stseg">' + [['full', 'Full'], ['dot', 'Small dot'], ['hide', 'Hidden']].map(function (m) { return '<span class="' + (cur === m[0] ? 'on' : '') + '" data-sm="' + m[0] + '">' + m[1] + '</span>'; }).join('') + '</div></div>';
+            return '<div class="group pad"><b>STOP button on screen</b><div class="note" style="margin:2px 0 0">The round red button that stops all bots. It shows only while a bot is running. Hidden still shows a small dot while the real bot is running.</div><div class="stseg">' + [['full', 'Full'], ['dot', 'Small dot'], ['hide', 'Hidden']].map(function (m) { return '<span class="' + (cur === m[0] ? 'on' : '') + '" data-sm="' + m[0] + '">' + m[1] + '</span>'; }).join('') + '</div></div>';
         }
         var _prev = VIEWS.look;
         function vStudio() {
@@ -18509,11 +18509,11 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             var i = old.indexOf('<div class="group pad"><b>📴 Offline languages'), tail = i >= 0 ? old.slice(i) : '';
             var m = g(MK) || 'pro', calm = g(CK) === '1', fx = g(FK) || 'off', mo = calm || fx === 'off' ? 'off' : fx, k = themeKey(), q = k ? PAL[k] : null;
             var h = '<div class="group pad"><div style="display:flex;gap:12px;align-items:center"><div style="width:96px;flex:none">' + mini(k) + '</div><div style="min-width:0"><div style="opacity:.7;font-size:12px">Your look right now</div><div style="font-size:19px;font-weight:800">' + (q ? q.e + ' ' + e2(q.n) : '☀️ Classic') + '</div><div style="font-size:12.5px;opacity:.75;margin-top:2px">' + e2(describeStyle()) + '</div></div></div></div>';
-            h += '<div class="group pad"><b>Mode</b><div class="note" style="margin:2px 0 0">Same app, different amount of buttons. Nothing is deleted.</div><div class="stbig">'
+            h += '<div class="group pad"><b>Mode</b><div class="note" style="margin:2px 0 0">Beginner and Trader show fewer Menu buttons (Beginner also adds three first-step cards on Home). Pro shows everything. Nothing is deleted.</div><div class="stbig">'
                 + [['beginner', '🌱 Beginner', 'Few simple buttons'], ['pro', '⚡ Pro', 'Everything'], ['trader', '📈 Trader', 'Only trading tools']].map(function (o) { return '<div class="' + (m === o[0] ? 'on' : '') + '" data-sm2="' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div></div>';
-            h += '<div class="group pad"><b>Motion</b><div class="note" style="margin:2px 0 0">One switch for all movement. “Off” also calms every animation and saves battery.</div><div class="stbig">'
+            h += '<div class="group pad"><b>Motion</b><div class="note" style="margin:2px 0 0">One switch for movement. Off calms animations, Soft adds a gentle press, Rich adds glow and shine.</div><div class="stbig">'
                 + [['off', '⏸ Off', 'Calm, no motion'], ['soft', '✨ Soft', 'Smooth changes'], ['rich', '🌈 Rich', 'Glow and shine']].map(function (o) { return '<div class="' + (mo === o[0] ? 'on' : '') + '" data-sf2="' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div>'
-                + '<div class="note" style="margin:10px 0 0"><b>Tap feedback</b> (a faint dim when you tap; never while scrolling)</div><div class="stbig">'
+                + '<div class="note" style="margin:10px 0 0"><b>Tap feedback</b> (a faint dim on buttons, tiles and rows when you tap)</div><div class="stbig">'
                 + [['off', 'Off', 'Nothing at all'], ['soft', 'Faint', 'Very light dim']].map(function (o) { var tp = ''; try { tp = localStorage.getItem('mintoosuite_tapfx') || 'soft'; } catch (er) { tp = 'soft'; } return '<div class="' + (tp === o[0] ? 'on' : '') + '" data-sf2="tap:' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div></div>';
             var fl = [['all', 'All'], ['dark', 'Dark'], ['glass', 'Glass'], ['ai', 'AI'], ['sharp', 'Sharp'], ['light', 'Light']];
             var keys = Object.keys(PAL).filter(function (x) { return PAL[x].bg; });
@@ -18542,7 +18542,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             clearTimeout(snack.t); snack.t = setTimeout(function () { var x = document.getElementById('mwundo'); if (x) { x.remove(); } }, 7000);
         }
         document.addEventListener('click', function (e) {
-            var el = e.target.closest ? e.target.closest('[data-sa],[data-ss],[data-sx],[data-sm2],[data-sf2],[data-sr],[data-su]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
+            var el = e.target.closest ? e.target.closest('[data-sa],.stseg [data-ss],[data-sx],[data-sm2],[data-sf2],[data-sr],[data-su]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
             if (el.hasAttribute('data-sa')) {
                 var k = el.getAttribute('data-sa'), prev = { on: g(ON), pal: g(PK), sty: g(SK) }, nm = k === 'off' ? 'Classic' : PAL[k].n;
                 if (k === 'off') { sv(ON, '0'); } else { sv(PK, k); sv(ON, '1'); sv('mintoosuite_theme', 'dark'); if (k === 'pearl' || k === 'smartpearl') { sv('mintoosuite_theme', 'light'); } }
@@ -25726,6 +25726,12 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['menu look|menu sheet|modern menu|menu style|menu top right|menu colours|menu colors', 'Build 377: Menu has the modern look', 'The Menu (top right) now has a gradient header card, pill-style Light / Dark / Auto and Calm switches with a colour highlight, a tinted About card and rounded buttons; the More tab tiles have round icons. Only the look changed: every item, its order, wording and action is the same, and Back still returns to where you were. Colour themes are still under Menu > Look & mode.', 'win:look']); } catch (e) { } })();
 
 ;(function () { try { PF_APP.push(['simple words|glossary|word list|search a word|rsi meaning|what is ema|drawdown|candle meaning|support resistance|win rate|profit factor|position size', 'Build 378: Simple words is modern and bigger', 'More > Simple words now has a search box, groups (Basics, Risk, Reading charts, Costs), round icons and 33 words, each with an example and Roman Urdu. New words include RSI, EMA, candle, volume, support and resistance, drawdown, risk and reward, win rate and profit factor, WAIT and backtest. They explain how things work and are not advice.', 'win:words']); PF_APP.push(['signal lab time|15 minutes|1 hour|4 hours|candle size signal lab|signal lab buttons|search window|search markets|languages window|app language|world clock|time zone look|clocks', 'Build 378: Search, Signal Lab, Languages and World clock', 'Search markets has quick chips (Bitcoin, Ethereum, Gold, Silver, Oil, USD/PKR) and the modern look. In Signal Lab the 15 minutes / 1 hour / 4 hours buttons choose the candle size and now start the test by themselves. Search, Signal Lab and New Coins no longer show the extra Chart and Split chips at the top. Languages shows the six app languages as buttons (and going back to English now restores every screen). World clock and Time zone use the modern card look. Nothing here is a profit promise.', 'win:langs']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['look and mode|look & mode|beginner mode|pro mode|trader mode|motion off|motion soft|rich motion|tap feedback|faint|plain look|glass|stop button on screen|stop dot|stop hidden|look tabs', 'Build 379: Look & mode in tabs', 'Menu > Look & mode now has a "Right now" card and three tabs. Look: Glass/Plain, themes and text size. Style: shape, font, bottom bar, icons, grid, spacing. Behaviour: Mode, Motion, tap feedback and the STOP button. What they do: Beginner and Trader show fewer Menu buttons (Beginner also adds three first-step cards on Home), Pro shows everything. Motion Off calms animations, Soft adds a gentle press, Rich adds glow. Faint tap feedback dims buttons, tiles and rows for a moment. Plain turns off glass blur. The STOP button only appears while a bot is running; Hidden still shows a small dot while the real bot runs. Languages live in More > Languages.', 'win:look']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['missing buttons|buttons missing|where is exness|where is signal lab|more tab fewer buttons|beginner hides|show everything|exness missing|gold missing', 'More shows fewer buttons? Check Mode', 'If More shows only a few buttons, Beginner or Trader mode is on (Menu > Look & mode > Behaviour). Pro shows everything, including Exness, Gold and Signal Lab. Nothing is deleted. When Beginner or Trader is on, a bar at the top of More says so and one tap switches back to Pro.', 'win:look']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['sound|vibration|vibrate|click sound|tap sound|silent|haptic|button sound|button vibration', 'Build 380: Sound and vibration on taps', 'Menu > Look & mode > Behaviour > Sound and vibration: Silent (default), Vibrate, Click or Both. It only gives feedback when you tap a button or tile and never changes what the button does. Vibration depends on your phone allowing it. The click is a quiet tick made by the app itself.', 'win:look']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26241,6 +26247,12 @@ window.__pfAns = function (q) { return pfAnswer(q); };
                 });
                 if (changed) { h = box.innerHTML; }
             } catch (e) { }
+            try {
+                var md = localStorage.getItem('mintoosuite_mode') || 'pro';
+                if (md === 'beginner' || md === 'trader') {
+                    h = '<div class="mwmodebar" data-sm2="pro" role="button" style="grid-column:1/-1;margin:0 0 8px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font:700 13px/1.35 system-ui,sans-serif;cursor:pointer">' + (md === 'beginner' ? 'Beginner' : 'Trader') + ' mode is on, so only some buttons are shown. Nothing is deleted. <u>Tap here to show everything (Pro)</u></div>' + h;
+                }
+            } catch (e) { }
             return h;
         };
     } catch (e) { try { console.log('p9clean', e); } catch (er) { } }
@@ -26393,6 +26405,115 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             };
         }
     } catch (e) { try { console.log('p9win', e); } catch (er) { } }
+})();
+/* ===== p9haptic (build 380): touch sound and vibration. Silent (default, as before), Vibrate, Click sound, or both. Feedback only: never changes what a button does. ===== */
+(function () {
+    try {
+        if (window.__mwHapA) { return; } window.__mwHapA = 1;
+        var KEY = 'mintoosuite_tapsnd', LV = 'mintoosuite_tapvol';
+        function mode() { try { var m = localStorage.getItem(KEY); return /^(off|vib|click|both)$/.test(m || '') ? m : 'off'; } catch (e) { return 'off'; } }
+        var ac = null, last = 0;
+        function tick() {
+            try {
+                var A = window.AudioContext || window.webkitAudioContext; if (!A) { return; } if (!ac) { ac = new A(); } if (ac.state === 'suspended') { ac.resume(); }
+                var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime; o.type = 'square'; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(700, t + 0.03);
+                g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+                o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.05);
+            } catch (e) { }
+        }
+        function buzz() { try { if (navigator.vibrate) { navigator.vibrate(12); } } catch (e) { } }
+        window.__mwFeel = function (m) { m = m || mode(); if (m === 'vib' || m === 'both') { buzz(); } if (m === 'click' || m === 'both') { tick(); } };
+        document.addEventListener('click', function (e) {
+            try {
+                if (e.isTrusted === false) { return; } var m = mode(); if (m === 'off') { return; }
+                var t = e.target && e.target.closest ? e.target.closest('button,[role=button],.btn,.tile,[data-act],[data-xk],.tab,.stbig>div,.stseg span,.segc span,.row.tap,.mwqt,.mwmt,[data-lkt],[data-snd],[data-sm2],[data-sf2],[data-pln],[data-sm],[data-ss],[data-sa],[data-sx],[data-gc],[data-mwq],[data-mwl],[data-wd],[data-m7]') : null; if (!t) { return; }
+                var n = Date.now(); if (n - last < 60) { return; } last = n; window.__mwFeel(m);
+            } catch (er) { }
+        }, true);
+        var css = document.createElement('style'); css.setAttribute('data-mwkeep', '1'); css.textContent = '.mwlk .lksnd small{display:block}';
+        var _lk = VIEWS.look;
+        if (typeof _lk === 'function') {
+            VIEWS.look = function () {
+                var h = _lk.apply(this, arguments); if (typeof h !== 'string') { return h; } var m = mode();
+                var O = [['off', '🔇 Silent', 'No sound or buzz'], ['vib', '📳 Vibrate', 'Short buzz'], ['click', '🔈 Click', 'Soft tick sound'], ['both', '🔔 Both', 'Buzz and tick']];
+                return h + '<div class="group pad"><b>Sound and vibration</b><div class="note" style="margin:2px 0 0">What you feel or hear when you tap a button or tile. It only gives feedback; it never changes what the button does. Vibration needs a phone that allows it; the click is a quiet tick made by the app (no files).</div><div class="stbig">' + O.map(function (o) { return '<div class="' + (m === o[0] ? 'on' : '') + '" data-snd="' + o[0] + '">' + o[1] + '<small>' + o[2] + '</small></div>'; }).join('') + '</div></div>';
+            };
+            document.addEventListener('click', function (e) {
+                var t = e.target.closest ? e.target.closest('[data-snd]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation();
+                var v = t.getAttribute('data-snd'); try { localStorage.setItem(KEY, v); } catch (er) { } window.__mwFeel(v === 'off' ? 'off' : v);
+                try { if (typeof tst === 'function') { tst('Touch feedback: ' + ({ off: 'Silent', vib: 'Vibrate', click: 'Click', both: 'Vibrate and click' }[v])); } renderView(true); } catch (er) { }
+            }, true);
+        }
+    } catch (e) { try { console.log('p9haptic', e); } catch (er) { } }
+})();
+/* ===== p9look (build 379): Look & mode in the modern look. Four tabs (no re-render when you switch), a "Right now" card, Glass/Plain beside the looks, honest sentences, STOP preview. Nothing removed: same controls, same handlers. ===== */
+(function () {
+    try {
+        if (window.__mwLookA) { return; } window.__mwLookA = 1;
+        var css = document.createElement('style'); css.setAttribute('data-mwkeep', '1');
+        css.textContent =
+            '#view>.mwlk,.mwlk{display:block!important;width:100%;max-width:100%;flex:none;box-sizing:border-box;align-self:stretch}.mwlk>*{max-width:100%}' +
+            '.mwlk .lknow{margin:0 0 12px;padding:16px;border-radius:20px;background:linear-gradient(135deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%);color:#fff;box-shadow:0 8px 22px rgba(67,56,202,.26)}.mwlk .lknow b{display:block;font-size:18px;color:#fff}.mwlk .lknow span{display:block;margin-top:3px;font-size:13px;color:rgba(255,255,255,.9)}.mwlk .lknow i{display:inline-block;margin:9px 6px 0 0;padding:4px 10px;border-radius:12px;background:rgba(255,255,255,.18);font:700 12px system-ui,sans-serif;font-style:normal;color:#fff}' +
+            '.mwlk .lktabs{display:flex;gap:4px;background:var(--fill);border-radius:16px;padding:4px;margin:0 0 12px}.mwlk .lktabs span{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:13px;font:700 13px system-ui,sans-serif;color:var(--mut);cursor:pointer}.mwlk .lktabs span.on{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.35)}' +
+            '.mwlk .lkp{display:none}.mwlk .lkp.on{display:block}' +
+            '.mwlk .group{border-radius:20px;box-shadow:var(--shadow)}.mwlk .stbig>div,.mwlk .stseg span,.mwlk .ptsd span,.mwlk .stflt span{min-height:44px}' +
+            '.mwlk .stbig>div.on,.mwlk .stseg span.on,.mwlk .ptsd span.on,.mwlk .stflt span.on{background:linear-gradient(135deg,#4f46e5,#7c3aed)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 4px 12px rgba(79,70,229,.3)}' +
+            '.mwlk .stbig>div.on small,.mwlk .stbig>div.on *{color:rgba(255,255,255,.92)!important}' +
+            '.mwlk .lkpv{display:flex;gap:10px;align-items:center;margin:10px 0 0;padding:10px 12px;border-radius:14px;background:var(--fill);font-size:12px;color:var(--mut);flex-wrap:wrap}.mwlk .lkpv u{text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:700;color:var(--tx)}.mwlk .lkpv .pf{padding:4px 10px;border-radius:14px;background:#e11d48;color:#fff}.mwlk .lkpv .pd{width:22px;height:22px;border-radius:50%;background:#e11d48;display:inline-block}.mwlk .lkpv .ph{padding:2px 8px;border:1px dashed var(--mut);border-radius:10px}' +
+            '@media (forced-colors:active){.mwlk .lknow{background:Canvas;border:1px solid CanvasText;color:CanvasText}.mwlk .lktabs span.on{background:Highlight;color:HighlightText}}';
+        document.head.appendChild(css);
+        function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        var TABS = [['look', '🎨 Look'], ['style', '🧩 Style'], ['beh', '⚙️ Behaviour']];
+        function nowTxt() {
+            var m = ls('mintoosuite_mode') || 'pro', calm = ls('mintoosuite_calm') === '1', fx = ls('mintoosuite_fx') || 'off', mo = calm || fx === 'off' ? 'Off' : (fx === 'soft' ? 'Soft' : 'Rich'), tp = (ls('mintoosuite_tapfx') || 'soft') === 'off' ? 'Off' : 'Faint', pl = ls('mintoosuite_plain') === '1' ? 'Plain' : 'Glass', st = 'Full';
+            try { var sm = window.__stopMode && window.__stopMode.get(); st = sm === 'dot' ? 'Small dot' : sm === 'hide' ? 'Hidden' : 'Full'; } catch (e) { }
+            var M = { beginner: 'Beginner', trader: 'Trader', pro: 'Pro' }[m] || 'Pro';
+            return ['Mode ' + M, 'Motion ' + mo, 'Taps ' + tp, pl, 'STOP ' + st];
+        }
+        function cls(n) {
+            var t = (n.textContent || '').trim(), b = n.querySelector ? n.querySelector('b') : null, k = b ? b.textContent : t;
+            if (/^Beginner mode only/.test(t)) { return 'beh'; }
+            if (/Offline languages|Languages/.test(k) && !/Windows/.test(k)) { return /Offline languages/.test(k) ? 'lang' : 'look'; }
+            if (/^Mode$|^Motion$|STOP button|^Sound and vibration/.test(k.trim())) { return 'beh'; }
+            if (/^Style$|Text and icon size/.test(k.trim()) || /Text and icon size/.test(t.slice(0, 40))) { return 'style'; }
+            return 'look';
+        }
+        function restyle(h) {
+            var doc = new DOMParser().parseFromString('<div id="r">' + h + '</div>', 'text/html'), root = doc.getElementById('r'); if (!root) { return h; }
+            var B = { look: [], style: [], beh: [], lang: [] }, head = null, inLang = false;
+            Array.prototype.forEach.call(root.childNodes, function (n) {
+                if (n.nodeType !== 1) { if (n.nodeType === 3 && !n.textContent.trim()) { return; } B.look.push(n.outerHTML || n.textContent); return; }
+                var t = n.textContent || '', k = cls(n); if (k === 'lang') { inLang = true; } else if (inLang && !/^Plain look/.test(t.trim())) { k = 'lang'; }
+                if (/Your look right now/.test(t.slice(0, 60))) { head = n; return; }
+                if (k === 'beh' && /STOP button/.test(t.slice(0, 40))) { n.insertAdjacentHTML('beforeend', '<div class="lkpv" aria-label="STOP button preview"><u><span class="pf">🛑 STOP</span>Full</u><u><span class="pd"></span>Small dot</u><u><span class="ph">hidden</span>Hidden</u><span style="flex-basis:100%">Preview only. The real button shows while a bot is running.</span></div>'); }
+                B[k].push(n.outerHTML);
+            });
+            // Glass / Plain sits up with the looks, right at the top of the Look tab
+            var li = -1; B.look.forEach(function (x, i) { if (li < 0 && /<b>Plain look<\/b>/.test(x)) { li = i; } });
+            if (li > 0) { var pl = B.look.splice(li, 1)[0]; B.look.unshift(pl); }
+            var tab = window.__lkTab || 'look', nowT = nowTxt(), lookName = '';
+            if (head) { var nm = head.querySelectorAll('div div div'); lookName = nm.length > 1 ? nm[1].textContent : ''; }
+            var top = '<div class="lknow"><b>🎛 Look &amp; mode</b><span>' + (lookName ? 'Your look right now: ' + esc(lookName) + '. ' : '') + 'Pick a tab. Every change is saved at once. Languages are in More &gt; Languages.</span>' + nowT.map(function (x) { return '<i>' + esc(x) + '</i>'; }).join('') + '</div>' +
+                '<div class="lktabs" data-noswipe="1">' + TABS.map(function (t) { return '<span data-lkt="' + t[0] + '" class="' + (tab === t[0] ? 'on' : '') + '">' + t[1] + '</span>'; }).join('') + '</div>';
+            var body = TABS.map(function (t) { return '<div class="lkp' + (tab === t[0] ? ' on' : '') + '" data-lk="' + t[0] + '">' + (t[0] === 'look' && head ? head.outerHTML : '') + B[t[0]].join('') + '</div>'; }).join('');
+            return '<div class="mwlk">' + top + body + '</div>';
+        }
+        var _lk = VIEWS.look;
+        if (typeof _lk === 'function') {
+            VIEWS.look = function () { var h = _lk.apply(this, arguments); if (typeof h !== 'string') { return h; } try { return restyle(h); } catch (e) { return h; } };
+            document.addEventListener('click', function (e) {
+                var t = e.target.closest ? e.target.closest('[data-lkt]') : null; if (!t) { return; }
+                e.preventDefault(); e.stopPropagation(); window.__lkTab = t.getAttribute('data-lkt');
+                Array.prototype.forEach.call(document.querySelectorAll('.mwlk .lktabs span'), function (x) { x.classList.toggle('on', x === t); });
+                Array.prototype.forEach.call(document.querySelectorAll('.mwlk .lkp'), function (x) { x.classList.toggle('on', x.getAttribute('data-lk') === window.__lkTab); });
+            }, true);
+            var MSG = { 'data-sm2': 'Mode saved', 'data-sf2': 'Motion / tap feedback saved', 'data-pln': 'Glass / Plain saved', 'data-sm': 'STOP button style saved' };
+            document.addEventListener('click', function (e) {
+                try { var el = e.target.closest ? e.target.closest('.mwlk [data-sm2],.mwlk [data-sf2],.mwlk [data-pln],.mwlk [data-sm]') : null; if (!el) { return; } var k = ['data-sm2', 'data-sf2', 'data-pln', 'data-sm'].filter(function (a) { return el.hasAttribute(a); })[0]; if (k && typeof tst === 'function') { tst(MSG[k]); } } catch (er) { }
+            }, true);
+        }
+    } catch (e) { try { console.log('p9look', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
