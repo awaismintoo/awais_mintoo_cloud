@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.396';
+var BUILD = '2026-11-07.394';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -18702,8 +18702,6 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             var t0 = Date.now(); LVB = 1; var v; try { v = lvValid0(m); } catch (e) { v = { ok: false }; } finally { LVB = 0; }
             /* safety net: if the check ever costs too much time, pause it for 10 min instead of slowing or freezing the app */
             try { var dt = Date.now() - t0; if (dt > 120) { window.__lvSt = (window.__lvSt || 0) + 1; if (window.__lvSt >= 3) { window.__lvOff = Date.now() + 600000; window.__lvSt = 0; } } } catch (e) { }
-            /* build 394: hold across the whole chain (see p9hold.js) */
-            try { if (v && v.ok) { window.__holdSet && window.__holdSet(m.sym, m.side, v); } else if (v && !v.pend && window.__holdGet) { var hh = window.__holdGet(m.sym, m.side); if (hh) { v = { ok: true, conv: hh.conv, held: 1 }; } } } catch (e) { }
             LVC[ck] = { t: now, v: v }; return v;
         }
         function lvValid0(m) {
@@ -18739,17 +18737,17 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         }
         function vLive() {
             try { bpRefresh(false); } catch (e) { }
-            var ex = bxc(), rows = [], pend = 0, now = Date.now(), out = [], wt = [], seen = 0, FL = {}; try { (window.__fastList ? window.__fastList() : []).forEach(function (o) { FL[o.sym + o.side] = 1; }); } catch (e) { } try { (window.__sigList ? window.__sigList() : []).forEach(function (o) { FL[o.sym + o.side] = 1; }); } catch (e) { }
+            var ex = bxc(), rows = [], pend = 0, now = Date.now(), out = [], wt = [], seen = 0, FL = {}; try { (window.__fastList ? window.__fastList() : []).forEach(function (o) { FL[o.sym + o.side] = 1; }); } catch (e) { }
             try { rows = idRows().slice(0, 25); } catch (e) { }
             rows.forEach(function (m) {
                 if (!(ex === 'all' ? XL.slice(1).some(function (e) { return onEx(e[0], m.sym, { m: m }); }) : onEx(ex, m.sym, { m: m }))) { return; }
                 seen++; var v = lvValid(m); try { if (v.ok && window.__recSide && window.__recSide(m.sym) !== m.side) { v = { ok: false }; } } catch (e) { } if (v.pend) { pend++; } if (v.ok) { if (!FL[m.sym + m.side]) { out.push({ m: m, v: v }); } } else if (!v.pend) { wt.push(m); }
             });
             var h = (window.__lvOff && Date.now() < window.__lvOff ? '<div class="warn">⏸ DO NOW is paused for a few minutes to keep the app smooth (the check was slow on this phone). Nothing is shown until it resumes.</div>' : '') + X.seg('bxch', XL, ex) + '<div class="warn" style="margin:0 0 8px">⚡ <b>DO NOW</b>: only deals that pass <b>every</b> check <u>right now</u> (strict list, Baba chart check, no chasing, world and dollar checks). Each has a countdown. When a check fails or the time ends, the deal disappears. Nothing is loosened. <b>Not financial advice. Use a stop-loss.</b></div>';
-            try { h += window.__sigBox ? window.__sigBox() : ''; } catch (e) { } try { h += window.__fastBox ? window.__fastBox() : ''; } catch (e) { }
+            try { h += window.__fastBox ? window.__fastBox() : ''; } catch (e) { }
             try { var lg = window.__docLedger && window.__docLedger(); if (lg) { h += '<div class="note" style="margin:0 0 8px;min-height:5.6em">📒 <b>Bot track record</b>: ' + (lg.n ? lg.n + ' closed practice/bot trades, ' + Math.round(lg.win * 100) + '% winners, net ' + (lg.net >= 0 ? '+' : '') + lg.net.toFixed(2) + ' $ after fees. ' + (lg.n < 30 ? 'Fewer than 30 trades: too early to judge, keep practicing.' : (lg.net > 0 ? 'Positive after ' + lg.n + ' trades.' : 'Negative after ' + lg.n + ' trades: treat every call as unproven.')) : 'No closed bot trades yet. Run the Baba Practice Bot for a week or two: it trades the same calls with fake money and builds the record.') + ' A coin whose recent signals or bot trades lost money is not recommended.</div>'; } } catch (e) { }
             h += '<div class="note" style="margin:0 0 6px">Exchanges with live scanning here: Binance, MEXC, Bitget. OKX, Bybit and others have order tickets but no live list yet, so they are not shown.' + (pend ? ' Checking ' + pend + ' more coin' + (pend > 1 ? 's' : '') + '…' : '') + '</div>';
-            if (!out.length) { return h + '<div class="group pad mut">No other deal passes every check right now. That is normal: waiting is a valid choice. This list refreshes by itself.</div>' + waitBox(wt, seen, out.length, pend); }
+            if (!out.length) { return h + '<div class="group pad mut">No deal passes every check right now. That is normal: waiting is a valid choice. This list refreshes by itself.</div>' + waitBox(wt, seen, out.length, pend); }
             out.forEach(function (x) {
                 var m = x.m, left = m.to ? m.to - now : 0;
                 h += '<div class="note" style="margin:8px 0 2px;display:flex;justify-content:space-between;gap:8px"><span>🏦 <b>' + XL.slice(1).filter(function (e) { return onEx(e[0], m.sym, { m: m }); }).map(function (e) { return e[1]; }).join(' · ') + '</b></span><span>⏱ <b data-lvt="' + (m.to || 0) + '">' + (m.to ? fmtLeft(left) : 'no limit') + '</b>' + (m.to ? ' · until ' + pkt(m.to) : '') + (x.v.conv ? ' · Baba ' + x.v.conv + '%' : '') + '</span></div>' + idRow(m);
@@ -25824,8 +25822,6 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['do now flicker|calm look|jumping list|no key positions|last synced|positions empty', 'Steadier Do now and clearer position sync (build 392)', 'The Do now boxes (Checked, Bot track record, Fast movers) now keep a fixed height so the list stops jumping and the "Calm look" fix should no longer trigger there. In the Exchange trade window, if no read-only API key is saved for the chosen exchange the app now says so plainly instead of showing nothing, and the open-positions list shows when it was last updated. Remember: ideas show as "not expected to make money after fees" on quiet days and when the practice bot record is negative; that is the app protecting you, not a fault.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['disappear after few seconds|recommendation vanished|changed to wait|stays valid|commitment', 'Recommendations last one 15-minute candle (build 393)', 'A deal that passed every check now stays valid for at least one full 15-minute candle through small dips (volume, momentum wobble), so it no longer vanishes seconds after you see it. It still ends immediately for a hard reason: the stop level breaks, the trend reverses, it becomes a pump, Bitcoin shocks the market, or the coin has a losing track record. Nothing was loosened for new entries: a deal must still pass in full to appear.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['do now only valid|do now waiting|waiting ideas not shown', 'Do now shows only valid trades (build 394)', 'The Do now tab now lists only deals that are valid LONG or SHORT right now, each with a timer. Waiting ideas are no longer listed there; you find them in Watch-list and All ideas. When nothing passes, Do now shows a one-line status and the answer is to wait.', 'win:ideas']); } catch (e) { } })();
-;(function () { try { PF_APP.push(['hold fifteen minutes|never valid for a minute|deal disappears|held recommendation', 'A valid deal is held for one 15-minute candle (build 395)', 'When a deal passes every check it is now held across the whole app (Do now, chart bar, Chief box, notifications) for 15 minutes, so it cannot flip to WAIT a few seconds later because of a small wobble. It still ends at once on a hard reason: pump, reversal, losing track record, stop break or a Bitcoin shock. Most days very few deals pass every check; when none does, waiting is the right answer.', 'win:ideas']); } catch (e) { } })();
-;(function () { try { PF_APP.push(['bot signals|strong signal|baba signal and ut bot|bot buy sell recommendation', 'Bot signals in Do now and notifications (build 396)', 'Baba Signal and UT Bot watch the liquid coins. When ONE shows a fresh BUY or SELL (last two closed 15-minute candles) the deal appears in Do now and in notifications as a Bot signal; when BOTH agree it is marked STRONG. It is held for 15 minutes. Only hard safety blocks apply: already up or down 25% or more today, stop broken, both bots turned the other way, a Bitcoin shock, or a stop so tight that fees eat the trade. Use a small size and the stop shown. Signals are not guaranteed to win.', 'win:ideas']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26855,101 +26851,6 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         }
     } catch (e) { try { console.log('p9look', e); } catch (er) { } }
 })();
-/* build 394: HOLD. A deal that passed EVERY check (Do now list: entry gate, chart signal, Chief, fee-adjusted expectancy, experience check) is held for one full 15-minute candle across the whole app: Do now, chart bar, Chief box, notifications. Only a HARD reason ends it early: the entry gate reports a pump, a reversal, a bad track record, a stop break or a Bitcoin shock, or the 15 minutes are over. Soft wobbles (volume, momentum, advisers) no longer make it flip to WAIT. */
-;(function () {
-    try {
-        var HOLD = {}, TTL = 900000;
-        function hard(sym, side) {
-            try { var g = window.__gate && window.__gate(sym, side); if (g && !g.unknown && !g.ok && (g.pump || g.rev || g.trackBad || g.live || (g.hard && g.hard.length))) { return g.why || 'hard stop'; } } catch (e) { }
-            return '';
-        }
-        window.__holdSet = function (sym, side, info) {
-            var k = sym + '|' + side, n = Date.now(), h = HOLD[k];
-            if (h && n < h.until && !h.ended) { return h; }
-            h = HOLD[k] = { sym: sym, side: side, at: n, until: n + TTL, conv: info && info.conv, ended: 0 }; return h;
-        };
-        window.__holdGet = function (sym, side) {
-            var h = HOLD[sym + '|' + side]; if (!h) { return null; }
-            if (Date.now() >= h.until) { delete HOLD[sym + '|' + side]; return null; }
-            var w = hard(sym, side); if (w) { delete HOLD[sym + '|' + side]; return null; }
-            return h;
-        };
-        window.__holdAny = function (sym) { return window.__holdGet(sym, 'LONG') || window.__holdGet(sym, 'SHORT'); };
-        window.__holdList = function () { var o = []; for (var k in HOLD) { if (window.__holdGet(HOLD[k].sym, HOLD[k].side)) { o.push(HOLD[k]); } } return o; };
-        var _rf = window.__recFull;
-        if (_rf) {
-            window.__recFull = function (sy) {
-                var r = _rf(sy);
-                try {
-                    if (r && r.side === 'WAIT') {
-                        var h = window.__holdAny(sy); if (!h && window.__sigGet) { var sg = window.__sigGet(sy); if (sg) { h = { side: sg.side, until: sg.until, sig: 1 }; } }
-                        if (h) { var c = {}; for (var kk in r) { c[kk] = r[kk]; } c.side = h.side; c.late = ''; c.held = 1; c.heldUntil = h.until; return c; }
-                    }
-                } catch (e) { }
-                return r;
-            };
-            window.__recSide = function (sy) { return window.__recFull(sy).side; };
-        }
-    } catch (e) { try { console.error('p9hold', e); } catch (e2) { } }
-})();
-/* build 396: BOT SIGNALS. Two signal engines watch the chart of every liquid coin: Baba Signal and UT Bot. When ONE shows a fresh BUY/SELL (last 2 closed 15-minute candles, still pointing that way) the deal appears in Do now and in notifications as a Bot signal; when BOTH agree it is marked STRONG. Only hard safety blocks apply: coin already moved 25%+ today in that direction, stop broken, both engines turned the other way, a Bitcoin shock, and a deal whose stop is too tight to survive fees. A listed signal is held for 15 minutes. */
-;(function () {
-    try {
-        var SIG = {}, SENT = {}, RR = 0, TTL = 900000, RUN = 0;
-        function base(s) { return String(s).replace(/USDT$/, ''); }
-        function atr(K, n) { var i, s = 0, c = 0; for (i = K.length - n; i < K.length; i++) { var p = K[i - 1]; s += Math.max(K[i].h - K[i].l, Math.abs(K[i].h - p.c), Math.abs(K[i].l - p.c)); c++; } return s / c; }
-        function read(sym) {
-            var K0 = window.__lvK ? window.__lvK(sym) : undefined; if (!K0 || K0.length < 100) { return K0 === undefined ? undefined : null; }
-            var K = K0.slice(0, -1), i = K.length - 1, R = window.__babaSig(K), U = window.__ut.utbot(K, 1, 10), b = R.pos[i], u = U.pos[i], j, lg = 0, sh = 0;
-            for (j = i; j >= i - 1; j--) { if ((R.buy[j] && b === 1) || (U.buy[j] && u === 1)) { lg = 1; } if ((R.sell[j] && b === -1) || (U.sell[j] && u === -1)) { sh = 1; } }
-            if ((lg && sh) || (!lg && !sh)) { return { none: 1, b: b, u: u }; }
-            var side = lg ? 1 : -1, strong = (b === side && u === side), px = K[i].c, A = atr(K, 14), stop = U.stop && U.stop[i] ? U.stop[i] : (side > 0 ? px - 1.5 * A : px + 1.5 * A);
-            if ((side > 0 && stop >= px) || (side < 0 && stop <= px)) { stop = side > 0 ? px - 1.5 * A : px + 1.5 * A; }
-            return { side: side > 0 ? 'LONG' : 'SHORT', strong: strong, px: px, stop: stop, a: A, b: b, u: u };
-        }
-        function block(sym, o) {
-            var t = S.tick && S.tick[sym], lp = t ? +t.p : o.px, ch = t ? +t.chg : 0, sd = o.side === 'LONG' ? 1 : -1;
-            if (ch * sd > 25) { return 'already ' + (sd > 0 ? 'up ' : 'down ') + Math.abs(ch).toFixed(0) + '% today: chasing'; }
-            if (lp > 0 && ((sd > 0 && lp < o.stop) || (sd < 0 && lp > o.stop))) { return 'price already broke the stop'; }
-            var sp = Math.abs(o.px - o.stop) / o.px * 100; if (sp < 0.4) { return 'stop is only ' + sp.toFixed(2) + '% away: fees would eat the trade'; }
-            try { var KX = window.__lvK && window.__lvK(sym), xp = (KX && KX.length > 70 && window.__babaExp) ? window.__babaExp(sym, o.side, KX) : null; if (xp && xp.hard && xp.hard.length) { return 'news / world / dollar check: ' + String(xp.hard[0] && (xp.hard[0].t || xp.hard[0].text || xp.hard[0])).slice(0, 80); } } catch (e) { }
-            try { var g = window.__gate && window.__gate(sym, o.side); if (g && !g.unknown && !g.ok && g.live) { return g.why; } } catch (e) { }
-            return '';
-        }
-        function tick() {
-            try {
-                if (typeof S === 'undefined' || !S.tick || RUN) { return; } var now = Date.now(), L = [], k;
-                for (k in S.tick) { var t = S.tick[k]; if (/USDT$/.test(k) && k.indexOf(':') < 0 && t && +t.p > 0 && (+t.q || 0) >= 10e6) { L.push(k); } }
-                L.sort(function (a, b) { return (+S.tick[b].q || 0) - (+S.tick[a].q || 0); }); L = L.slice(0, 80);
-                var n = 0, tries = 0; while (n < 4 && tries < L.length) { var sym = L[RR++ % L.length]; tries++;
-                    var o = read(sym); if (o === undefined) { continue; } n++; if (!o) { continue; }
-                    var key = sym + (o.side || ''), cur = SIG[sym];
-                    if (o.none) { if (cur && ((cur.side === 'LONG' && o.b === -1 && o.u === -1) || (cur.side === 'SHORT' && o.b === 1 && o.u === 1))) { delete SIG[sym]; } continue; }
-                    var bl = block(sym, o);
-                    if (bl) { if (cur && cur.side === o.side) { delete SIG[sym]; } continue; }
-                    if (cur && cur.side === o.side && now < cur.until) { var up0 = !cur.strong && o.strong; cur.strong = cur.strong || o.strong; cur.last = now; if (up0 && (!SENT[sym + o.side + 'S'] || now - SENT[sym + o.side + 'S'] > 1800000)) { SENT[sym + o.side + 'S'] = now; try { window.__gateNoWrap = 1; alertPush(sym, '🤖 STRONG bot signal: ' + base(sym) + ' ' + o.side, 'Baba Signal and UT Bot now agree. Entry ' + o.px + ', stop ' + cur.stop.toFixed(6).replace(/0+$/, '') + '. Use a small size and the stop.'); } finally { window.__gateNoWrap = 0; } } continue; }
-                    var e = SIG[sym] = { sym: sym, side: o.side, strong: o.strong, px: o.px, stop: o.stop, tp: o.side === 'LONG' ? o.px + 1.5 * (o.px - o.stop) : o.px - 1.5 * (o.stop - o.px), t: now, until: now + TTL, last: now };
-                    var nk = sym + o.side + (o.strong ? 'S' : '');
-                    if (!SENT[nk] || now - SENT[nk] > 1800000) { SENT[nk] = now; try { window.__gateNoWrap = 1; alertPush(sym, (o.strong ? '🤖 STRONG bot signal: ' : '🤖 Bot signal: ') + base(sym) + ' ' + o.side, (o.strong ? 'Baba Signal and UT Bot agree. ' : 'One bot shows it. ') + 'Entry ' + o.px + ', stop ' + o.stop.toFixed(6).replace(/0+$/, '') + '. Held for 15 minutes. Use a small size and the stop.'); } finally { window.__gateNoWrap = 0; } }
-                }
-                /* upkeep: end a listed signal when time is up, or when both bots turned against it, or a hard block appears */
-                Object.keys(SIG).forEach(function (s) { var e = SIG[s]; if (now >= e.until) { delete SIG[s]; return; } var t2 = S.tick[s], lp = t2 ? +t2.p : 0; if (lp > 0 && ((e.side === 'LONG' && lp < e.stop) || (e.side === 'SHORT' && lp > e.stop))) { delete SIG[s]; } });
-            } catch (e) { }
-        }
-        setInterval(tick, 3000);
-        window.__sigList = function () { var n = Date.now(); return Object.keys(SIG).map(function (k) { return SIG[k]; }).filter(function (e) { return n < e.until; }).sort(function (a, b) { return (b.strong ? 1 : 0) - (a.strong ? 1 : 0) || b.t - a.t; }); };
-        window.__sigGet = function (sym) { var e = SIG[sym]; return e && Date.now() < e.until ? e : null; };
-        function fmt(v) { return (+v).toPrecision(5).replace(/\.?0+$/, ''); }
-        window.__sigBox = function () {
-            var L = window.__sigList(), now = Date.now(); if (!L.length) { return '<div class="note" style="margin:0 0 8px">🤖 <b>Bot signals</b>: Baba Signal and UT Bot are watching the liquid coins. No fresh BUY/SELL right now.</div>'; }
-            var h = '<div class="note" style="margin:0 0 4px">🤖 <b>Bot signals</b>: one bot shows a fresh BUY/SELL = signal; both bots agree = <b>STRONG</b>. Held 15 minutes. Use a small size and the stop.</div><div class="group">';
-            L.forEach(function (e) { var up = e.side === 'LONG', left = Math.max(0, e.until - now), m = Math.floor(left / 60000), s = Math.floor(left % 60000 / 1000);
-                h += '<div class="row tap" data-act="chart:' + e.sym + '"><span><b>' + base(e.sym) + '</b> <span style="color:' + (up ? '#1a9d4a' : '#e5383b') + '">' + (up ? '▲ LONG' : '▼ SHORT') + '</span>' + (e.strong ? ' <b style="background:#ff9f0a;color:#fff;border-radius:6px;padding:1px 6px">STRONG</b>' : '') + '<br><small>entry ' + fmt(e.px) + ' · stop ' + fmt(e.stop) + ' · target ' + fmt(e.tp) + '</small></span><b>' + m + ':' + (s < 10 ? '0' : '') + s + '</b></div>'; });
-            return h + '</div>';
-        };
-    } catch (e) { try { console.error('p9bsig', e); } catch (e2) { } }
-})();
-;(function () { try { window.__sigPx = function (sym) { var t = S.tick && S.tick[sym]; return t ? +t.p : 0; }; window.__sigSyms = function () { return Object.keys(S.tick || {}).filter(function (k) { var t = S.tick[k]; return /USDT$/.test(k) && t && +t.p > 0 && (+t.q || 0) >= 10e6; }); }; } catch (e) { } })();
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
