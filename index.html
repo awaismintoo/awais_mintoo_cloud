@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.404';
+var BUILD = '2026-11-07.405';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -20178,6 +20178,7 @@ try {
         /* strong moves are allowed, but the person is told plainly */
         window.__hot = function (sy) { try { var tk = S.tick && S.tick[sy], c = tk ? +tk.chg : 0; if (isFinite(c) && Math.abs(c) >= 25) { return 'already ' + (c > 0 ? 'up ' : 'down ') + Math.abs(c).toFixed(0) + '% today: strong moves can continue, but a reversal can be fast. Use a small size and a stop-loss.'; } } catch (e) { } return ''; };
         var RC = {};
+        function recW(sy) { try { return (window.__recFull || rec)(sy); } catch (e) { return rec(sy); } }
         function rec(sy) {
             var n = Date.now(), c = RC[sy]; if (c && n - c.t < 4000) { return c; }
             var r = { side: 'WAIT', t: n };
@@ -20256,7 +20257,7 @@ try {
         setInterval(function () {
             try {
                 var sy = S.chart && S.chart.sym, anchor = document.getElementById('p9Rec') || document.getElementById('p9Info'); if (!sy || !anchor || document.documentElement.getAttribute('data-win') !== 'chart') { var o = document.getElementById('p9Verdict'); if (o) { o.remove(); } return; }
-                chiefCss(); var r = rec(sy), V = votes(sy, r), cnt = { LONG: 0, SHORT: 0, WAIT: 0 }; V.forEach(function (x) { if (x.s !== 'OK' && !x.self) { cnt[x.s] = (cnt[x.s] || 0) + 1; } }); var docW = V.filter(function (x) { return x.doc && x.s === 'WAIT'; })[0];
+                chiefCss(); var r = recW(sy), V = votes(sy, r), cnt = { LONG: 0, SHORT: 0, WAIT: 0 }; V.forEach(function (x) { if (x.s !== 'OK' && !x.self) { cnt[x.s] = (cnt[x.s] || 0) + 1; } }); var docW = V.filter(function (x) { return x.doc && x.s === 'WAIT'; })[0];
                 var want = r.side !== 'WAIT' ? r.side : '', tot = V.filter(function (x) { return x.s !== 'OK' && !x.self; }).length, agree = want ? cnt[want] : cnt.WAIT;
                 var opp = want === 'LONG' ? 'SHORT' : 'LONG', clash = ''; if (want && (r.fastNote ? (cnt[opp] > 0 || cnt[want] < 1) : (cnt[want] * 2 <= tot || cnt[opp] > 0 || cnt[want] < 2))) { clash = cnt[opp] > 0 ? 'Advisers disagree: ' + V.filter(function (x) { return x.s === opp; }).map(function (x) { return x.n; }).join(', ') + ' say ' + opp + '.' : 'Not enough advisers agree yet.'; want = ''; agree = cnt.WAIT; } var docNote = clash || ''; if (want && docW) { want = ''; agree = cnt.WAIT; docNote = 'Bot Doctor warns: ' + docW.h.replace(/<[^>]+>/g, '').replace(/^.*Caution: /, ''); }
                 want = r.side !== 'WAIT' ? r.side : ''; if (!want) { agree = cnt.WAIT; } else { docNote = ''; agree = cnt[want] || agree; } /* single authority: the headless Chief decides, the chips above are the display of the votes */
@@ -20273,16 +20274,16 @@ try {
         function tick() {
             var w = document.documentElement.getAttribute('data-win'), show = !!WIN[w] && !!sym() && !document.getElementById('twback');
             bar.style.display = show ? 'flex' : 'none'; bar.className = w === 'chart' ? 'ch' : '';
-            if (show) { var r = rec(sym()); bar.children[3].textContent = r.side === 'WAIT' ? '⭐ Recommended: WAIT (' + (r.late || 'no clear edge') + ')' : '⭐ Recommended: ' + (r.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + (r.veto ? ' · Baba says WAIT' + (r.why ? ' (' + String(r.why).slice(0, 24) + ')' : '') : (r.conv ? ' · Baba score ' + r.conv + '/100' : '') + ' · tap to open the trade form'); bar.children[3].style.background = (r.side === 'WAIT' || r.veto) ? '#f59e0b' : r.side === 'LONG' ? '#86efac' : '#fca5a5'; }
-            if (show) { try { var cf = window.__chiefFinal, s0 = sym(), rr = rec(s0); if (cf && cf.sym === s0 && Date.now() - cf.t < 6000 && cf.want !== (rr.side === 'WAIT' ? '' : rr.side)) { bar.children[3].textContent = cf.want ? '⭐ Recommended: ' + (cf.want === 'LONG' ? '▲ LONG' : '▼ SHORT') + ' · Baba Chief · tap to open the trade form' : '⭐ Recommended: WAIT (Baba Chief: advisers do not agree)'; bar.children[3].style.background = cf.want ? (cf.want === 'LONG' ? '#86efac' : '#fca5a5') : '#f59e0b'; } } catch (e) { } }
-            if (show) { try { var hh = rec(sym()); if (hh.side !== 'WAIT' && window.__hot(sym())) { bar.children[3].textContent += ' \u00b7 \u26a0 strong move: small size'; } } catch (e) { } }
+            if (show) { var r = recW(sym()); bar.children[3].textContent = r.side === 'WAIT' ? '⭐ Recommended: WAIT (' + (r.late || 'no clear edge') + ')' : '⭐ Recommended: ' + (r.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + (r.veto ? ' · Baba says WAIT' + (r.why ? ' (' + String(r.why).slice(0, 24) + ')' : '') : (r.conv ? ' · Baba score ' + r.conv + '/100' : '') + ' · tap to open the trade form'); bar.children[3].style.background = (r.side === 'WAIT' || r.veto) ? '#f59e0b' : r.side === 'LONG' ? '#86efac' : '#fca5a5'; }
+            if (show) { try { var cf = window.__chiefFinal, s0 = sym(), rr = recW(s0); if (cf && cf.sym === s0 && Date.now() - cf.t < 6000 && cf.want !== (rr.side === 'WAIT' ? '' : rr.side)) { bar.children[3].textContent = cf.want ? '⭐ Recommended: ' + (cf.want === 'LONG' ? '▲ LONG' : '▼ SHORT') + ' · Baba Chief · tap to open the trade form' : '⭐ Recommended: WAIT (Baba Chief: advisers do not agree)'; bar.children[3].style.background = cf.want ? (cf.want === 'LONG' ? '#86efac' : '#fca5a5') : '#f59e0b'; } } catch (e) { } }
+            if (show) { try { var hh = recW(sym()); if (hh.side !== 'WAIT' && window.__hot(sym())) { bar.children[3].textContent += ' \u00b7 \u26a0 strong move: small size'; } } catch (e) { } }
             if (show) { var sd = side(); bar.children[0].classList.toggle('on', w === 'tpro' && sd === 'LONG'); bar.children[1].classList.toggle('on', w === 'tpro' && sd === 'SHORT'); }
         }
         setInterval(tick, 500);
         function fire(sd) {
             var w = document.documentElement.getAttribute('data-win'), sy = sym(); if (!sy) { return; }
             if (sd === 'LK') { try { window.__lkOpen(sy); } catch (e) { } return; }
-            if (sd === 'REC') { var cf2 = window.__chiefFinal; sd = (cf2 && cf2.sym === sy && Date.now() - cf2.t < 6000) ? (cf2.want || 'WAIT') : rec(sy).side; if (sd === 'WAIT') { try { toast('Recommended: WAIT. ' + (rec(sy).late || 'The app sees no clear edge right now.')); } catch (e) { } return; } }
+            if (sd === 'REC') { var cf2 = window.__chiefFinal; sd = (cf2 && cf2.sym === sy && Date.now() - cf2.t < 6000) ? (cf2.want || 'WAIT') : recW(sy).side; if (sd === 'WAIT') { try { toast('Recommended: WAIT. ' + (recW(sy).late || 'The app sees no clear edge right now.')); } catch (e) { } return; } }
             if (sd === 'NOW') { sd = side(); }
             var TW = window.__tw || {}, m = TW.mode ? TW.mode() : 'rm';
             if (w === 'tpro' && m === 'rm') {
@@ -25841,6 +25842,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['merged watch-list|watch-list gone|home tiles bots', 'Fewer tabs, no duplicates (build 402)', 'Watch-list is merged into All ideas (nothing was lost: the strongest coins, the strict list, fast movers and the practice-bot record are all there). The old Do now name is gone: Ideas has Bots recommended trades, Live plan and All ideas, and the Home tiles show the bot signals. New Plan is marked fixed daily and Live plan updates every minute.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['split screen trade|trade in split|dock trade|split dock bots', 'Trade from the Split screen (build 403)', 'Open the Split screen (the round ⬓ button), tap the Watch tab: the bot signals (Baba Signal and UT Bot) are listed on top with a Trade button for Binance coins, so you can open the trade window in the top half without leaving the split screen. Every coin in your watch list also has ▲ Long and ▼ Short. Signals can lose: use the stop shown.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['one coin split|split one coin|same coin different time frames|multi time frame split|2 3 4 windows', 'One coin in 2 to 4 windows (build 404)', 'Split Charts has a new box at the top: pick the exchange (Binance, MEXC, Bitget, Bybit, OKX, KuCoin, Coinbase or Kraken), type a coin (or use the coin from your chart) and tap 2, 3 or 4 windows. The same coin opens in that many panes, each on a different time frame: 2 = 15m and 1h; 3 = 1m, 15m and 1h; 4 = 1m, 15m, 1h and 4h. You can still change any pane afterwards. The ⛶ Full screen button (same box) shows the split you have, one coin or many, in the whole screen with the same panes at full size; Long/Short buttons sit on top: one set when all panes show the same coin, a set for each coin when the panes show different coins (exchanges the app can trade). Back or Exit full screen returns.', 'win:split']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['chart bar says wait bots tab shows signal|recommended wait but bot signal', 'Chart bar now agrees with Bots tab (build 405)', 'If a bot signal is listed in Bots recommended trades, the chart bar of that coin now shows the same Long/Short instead of WAIT (it used to read an older copy of the decision). Coins that already moved more than 30% today are no longer offered as bot signals in either direction: the move is too wild and spikes can hit any stop.', 'win:tpro']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26942,6 +26945,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         }
         function block(e, o) {
             var sym = e.sym, t = S.tick && S.tick[sym], lp = e.x === 'binance' && t ? +t.p : e.p, ch = e.x === 'binance' && t ? +t.chg : e.c, sd = o.side === 'LONG' ? 1 : -1;
+            if (Math.abs(ch) > 30) { return 'moved ' + ch.toFixed(0) + '% today: too wild, spikes can hit any stop'; }
             if (ch * sd > 25) { return 'already ' + (sd > 0 ? 'up ' : 'down ') + Math.abs(ch).toFixed(0) + '% today: chasing'; }
             if (lp > 0 && ((sd > 0 && lp < o.stop) || (sd < 0 && lp > o.stop))) { return 'price already broke the stop'; }
             var sp = Math.abs(o.px - o.stop) / o.px * 100; if (sp < 0.4) { return 'stop is only ' + sp.toFixed(2) + '% away: fees would eat the trade'; }
