@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.398';
+var BUILD = '2026-11-07.401';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -18623,7 +18623,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
     try {
         var X = window.__kx, KX = X.KX;
         var vB = VIEWS.best, vP = VIEWS.plan, vI = VIEWS.ideas;
-        var TABS = [['live', '⚡ Do now'], ['best', '⭐ Watch-list'], ['plan', '🧭 Live plan (gold + coins)'], ['all', '📋 All ideas']];
+        var TABS = [['live', '🤖 Bots recommended trades'], ['best', '⭐ Watch-list'], ['plan', '🧭 Live plan (gold + coins)'], ['all', '📋 All ideas']];
         function cur() { var t = KX.idT; return t === 'all' || t === 'plan' || t === 'live' || t === 'best' ? t : 'live'; }
         function call(f) { try { return f.apply(null, []); } catch (e) { return '<div class="note">This part could not load: ' + X.e2(e && e.message) + '</div>'; } }
         /* ---------- Best tab: real best picks, with a tab per exchange so lists never mix ---------- */
@@ -18737,7 +18737,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             /* build 394: DO NOW lists only valid LONG/SHORT deals. Waiting ideas are NOT shown here (they live in Watch-list and All ideas); only a one-line status */
             return '<div class="note" style="margin:10px 0 4px">📊 Checked ' + seen + ' idea' + (seen === 1 ? '' : 's') + ': ' + okN + ' valid now' + (pend ? ', ' + pend + ' still being checked' : '') + '. Waiting ideas are not shown here: see Watch-list or All ideas.</div>';
         }
-        function vLive() {
+        function vLive(emb) {
             try { bpRefresh(false); } catch (e) { }
             var ex = bxc(), rows = [], pend = 0, now = Date.now(), out = [], wt = [], seen = 0, FL = {}; try { (window.__fastList ? window.__fastList() : []).forEach(function (o) { FL[o.sym + o.side] = 1; }); } catch (e) { } try { (window.__sigList ? window.__sigList() : []).forEach(function (o) { FL[o.sym + o.side] = 1; }); } catch (e) { }
             try { rows = idRows().slice(0, 25); } catch (e) { }
@@ -18745,8 +18745,8 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 if (!(ex === 'all' ? XL.slice(1).some(function (e) { return onEx(e[0], m.sym, { m: m }); }) : onEx(ex, m.sym, { m: m }))) { return; }
                 seen++; var v = lvValid(m); try { if (v.ok && window.__recSide && window.__recSide(m.sym) !== m.side) { v = { ok: false }; } } catch (e) { } if (v.pend) { pend++; } if (v.ok) { if (!FL[m.sym + m.side]) { out.push({ m: m, v: v }); } } else if (!v.pend) { wt.push(m); }
             });
-            var h = (window.__lvOff && Date.now() < window.__lvOff ? '<div class="warn">⏸ DO NOW is paused for a few minutes to keep the app smooth (the check was slow on this phone). Nothing is shown until it resumes.</div>' : '') + X.seg('bxch', XL, ex) + '<div class="warn" style="margin:0 0 8px">⚡ <b>DO NOW</b>: only deals that pass <b>every</b> check <u>right now</u> (strict list, Baba chart check, no chasing, world and dollar checks). Each has a countdown. When a check fails or the time ends, the deal disappears. Nothing is loosened. <b>Not financial advice. Use a stop-loss.</b></div>';
-            try { h += window.__sigBox ? window.__sigBox(ex) : ''; } catch (e) { } try { h += window.__fastBox ? window.__fastBox() : ''; } catch (e) { }
+            var h = (window.__lvOff && Date.now() < window.__lvOff ? '<div class="warn">⏸ DO NOW is paused for a few minutes to keep the app smooth (the check was slow on this phone). Nothing is shown until it resumes.</div>' : '') + (emb ? '' : X.seg('bxch', XL, ex)) + (emb ? '' : '<div class="warn" style="margin:0 0 8px">⚡ <b>Strict list</b>: only deals that pass <b>every</b> check <u>right now</u> (strict list, Baba chart check, no chasing, world and dollar checks). Each has a countdown.</div>');
+             try { h += window.__fastBox ? window.__fastBox() : ''; } catch (e) { }
             try { var lg = window.__docLedger && window.__docLedger(); if (lg) { h += '<div class="note" style="margin:0 0 8px;min-height:5.6em">📒 <b>Bot track record</b>: ' + (lg.n ? lg.n + ' closed practice/bot trades, ' + Math.round(lg.win * 100) + '% winners, net ' + (lg.net >= 0 ? '+' : '') + lg.net.toFixed(2) + ' $ after fees. ' + (lg.n < 30 ? 'Fewer than 30 trades: too early to judge, keep practicing.' : (lg.net > 0 ? 'Positive after ' + lg.n + ' trades.' : 'Negative after ' + lg.n + ' trades: treat every call as unproven.')) : 'No closed bot trades yet. Run the Baba Practice Bot for a week or two: it trades the same calls with fake money and builds the record.') + ' A coin whose recent signals or bot trades lost money is not recommended.</div>'; } } catch (e) { }
             h += '<div class="note" style="margin:0 0 6px">Exchanges with live scanning here: Binance, MEXC, Bitget. OKX, Bybit and others have order tickets but no live list yet, so they are not shown.' + (pend ? ' Checking ' + pend + ' more coin' + (pend > 1 ? 's' : '') + '…' : '') + '</div>';
             if (!out.length) { return h + '<div class="group pad mut">No other deal passes every check right now. That is normal: waiting is a valid choice. This list refreshes by itself.</div>' + waitBox(wt, seen, out.length, pend); }
@@ -18759,11 +18759,17 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         setInterval(function () {
             try { var els = document.querySelectorAll('[data-lvt]'), now = Date.now(); for (var i = 0; i < els.length; i++) { var to = +els[i].getAttribute('data-lvt'); if (!to) { continue; } var t = fmtLeft(to - now); if (els[i].textContent !== t) { els[i].textContent = t; } if (to - now <= 0) { var row = els[i].parentNode && els[i].parentNode.parentNode; if (row && row.nextElementSibling) { row.nextElementSibling.style.display = 'none'; } if (row) { row.style.display = 'none'; } } } } catch (e) { }
         }, 1000);
+        function vBots() {
+            var ex = bxc(), h = X.seg('bxch', XL, ex);
+            h += '<div class="warn" style="margin:0 0 8px">🤖 <b>BOTS RECOMMENDED TRADES</b>: only signals from the two bots, <b>Baba Signal</b> and <b>UT Bot</b>. One bot with a fresh BUY/SELL = a trade. Both bots agree = <b>STRONG</b>. Each bot signal is scored on the full factor check (trend, six chart checks, volume, news, world and dollar, the coin\'s own record) and is dropped when the score is too low or a hard block shows. Held 15 minutes. <b>Not financial advice. Use the stop shown.</b></div>';
+            try { h += window.__sigBox ? window.__sigBox(ex) : ''; } catch (e) { }
+            return h;
+        }
         VIEWS.ideas = function () {
             var t = cur(), h = X.seg('idT', TABS, t);
-            var EXPL = { live: '<b>DO NOW</b>: deals that are valid <u>this minute</u>, with a timer. This is the one to act on. If it is empty, wait.', best: '<b>Watch-list</b>: the strongest coins of the day on Binance, MEXC and Bitget (they passed the strict check and the 20-day replay). Not an entry signal yet: watch them and wait for a DO NOW card.', plan: '<b>Live plan</b>: a fresh plan card for gold and the main Binance Futures coins, refreshed every minute (entry, stop, target fixed at plan time). The fixed daily plan at 05:15 PKT is in <b>New Plan</b> (More).', all: '<b>All ideas</b>: every idea in one ranked list, including everything the Scanner finds. For browsing. <span class="pfbtn" data-act="win:scanner" style="margin-left:4px">Open raw Scanner</span>' };
+            var EXPL = { live: '<b>BOTS RECOMMENDED TRADES</b>: the fresh BUY/SELL signals of Baba Signal and UT Bot, with a timer. This is the one to act on. If it is empty, wait.', best: '<b>Watch-list</b>: the strongest coins of the day on Binance, MEXC and Bitget (they passed the strict check and the 20-day replay). Not an entry signal yet: watch them and wait for a DO NOW card.', plan: '<b>Live plan</b>: a fresh plan card for gold and the main Binance Futures coins, refreshed every minute (entry, stop, target fixed at plan time). The fixed daily plan at 05:15 PKT is in <b>New Plan</b> (More).', all: '<b>All ideas</b>: every idea in one ranked list, including everything the Scanner finds. For browsing. <span class="pfbtn" data-act="win:scanner" style="margin-left:4px">Open raw Scanner</span>' };
             h += '<div class="note" style="margin:0 0 8px">' + EXPL[t] + '</div>';
-            return h + call(t === 'live' ? vLive : t === 'best' ? (function () { try { return vBestX(); } catch (e) { return vB(); } }) : t === 'plan' ? vP : vI);
+            return h + call(t === 'live' ? vBots : t === 'best' ? (function () { try { var wl = vBestX(); try { wl += '<div class="note" style="margin:14px 0 4px"><b>More checks</b>: the strict list, fast movers and the practice-bot track record.</div>' + vLive(true); } catch (e2) { } return wl; } catch (e) { return vB(); } }) : t === 'plan' ? vP : vI);
         };
         LIVE.ideas = 1;
         try { WINS.push({ id: 'bpx', ic: '⭐', c: '#ff9f0a', n: 'Watch-list', t: 'Watch-list', sub: 'Strongest coins of the day, with separate Futures and Spot tabs for Binance, MEXC and Bitget' }); LIVE.bpx = 1; VIEWS.bpx = function () { try { return vBestX(); } catch (e) { return vB(); } }; } catch (e) { }
@@ -25828,6 +25834,9 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['bot signals|strong signal|baba signal and ut bot|bot buy sell recommendation', 'Bot signals in Do now and notifications (build 396)', 'Baba Signal and UT Bot watch the liquid coins. When ONE shows a fresh BUY or SELL (last three closed 15-minute candles) the deal appears in Do now and in notifications as a Bot signal; when BOTH agree it is marked STRONG. It is held for 15 minutes. Only hard safety blocks apply: already up or down 25% or more today, stop broken, both bots turned the other way, a Bitcoin shock, or a stop so tight that fees eat the trade. Use a small size and the stop shown. Signals are not guaranteed to win.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['freeze recorder|app hangs|app freezes|how many coins scanned', 'Freeze recorder and scan counter (build 397)', 'Any stall of 1.5 seconds or more is now written to Menu > Logs with the window and the last thing you tapped, so a freeze can be traced. The Bot signals box shows how many coins have been checked, and a signal counts if it appeared in the last three closed 15-minute candles.', 'win:log']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['bot signals mexc bitget|exchange tabs do now|all coins scanned', 'Bot signals on every exchange, under the Do now exchange tabs (build 398)', 'Baba Signal and UT Bot now read the 15-minute chart of every coin above 1 million USDT daily volume on Binance futures, and of MEXC and Bitget futures coins that Binance does not list, in rotating batches. Signals show under the All, Binance, MEXC and Bitget tabs of Do now, with the exchange name and a STRONG mark when both bots agree. OKX and Bybit are not scanned yet because the app has no live list for them.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['bot signal wait|notification says strong but chart says wait|one verdict bot signal', 'A bot signal is the same verdict everywhere (build 399)', 'When Baba Signal or UT Bot gives a signal, the chart bar, the Chief box, Do now and the notification now all show the same side for the 15 minutes the signal is held. Before, the notification could say STRONG while the chart bar said WAIT. A hard reason (pump, reversal, bad track record, stop break, Bitcoin shock) still turns it to WAIT.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['bots recommended trades|do now renamed|only bots signals', 'Bots recommended trades (build 400)', 'The Do now tab is now called Bots recommended trades (Ideas window). It shows only the signals of the two bots, Baba Signal and UT Bot, under the exchange tabs All, Binance, MEXC and Bitget. One bot = a trade, both bots = STRONG. Each signal is scored on the full factor check (trend, six chart checks, volume, news, world and dollar, the coin record) and dropped when the score is too low or a hard block appears. The advisers no longer decide here. The old strict list, fast movers and practice-bot track record moved to the Watch-list tab under More checks.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['signal at same time|signal delay|recommendation late|bots signal timing', 'Bot recommendation appears with the chart signal (build 401)', 'The Bots recommended trades list now starts a fresh round every time a new 15-minute candle closes, checks the coin you have open first (using the chart candles already on screen), and scans faster, so a bot BUY or SELL shows in the list and in the notification about when it appears on the chart.', 'win:ideas']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26918,7 +26927,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             return c ? c.K : undefined;
         }
         function read(e) {
-            var K0 = kOf(e); if (!K0 || K0.length < 100) { return K0 === undefined ? undefined : null; }
+            var K0 = null; try { if (S.chart && S.chart.sym === e.sym && S.chart.k && S.chart.k.length > 100 && String(S.chart.tf || '') === '15m') { K0 = S.chart.k; } } catch (e0) { }
+            if (!K0) { K0 = kOf(e); } if (!K0 || K0.length < 100) { return K0 === undefined ? undefined : null; }
             var K = K0.slice(0, -1), i = K.length - 1, R = window.__babaSig(K), U = window.__ut.utbot(K, 1, 10), b = R.pos[i], u = U.pos[i], j, lg = 0, sh = 0;
             for (j = i; j >= i - 2; j--) { if ((R.buy[j] && b === 1) || (U.buy[j] && u === 1)) { lg = 1; } if ((R.sell[j] && b === -1) || (U.sell[j] && u === -1)) { sh = 1; } }
             if ((lg && sh) || (!lg && !sh)) { return { none: 1, b: b, u: u }; }
@@ -26931,11 +26941,9 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             if (ch * sd > 25) { return 'already ' + (sd > 0 ? 'up ' : 'down ') + Math.abs(ch).toFixed(0) + '% today: chasing'; }
             if (lp > 0 && ((sd > 0 && lp < o.stop) || (sd < 0 && lp > o.stop))) { return 'price already broke the stop'; }
             var sp = Math.abs(o.px - o.stop) / o.px * 100; if (sp < 0.4) { return 'stop is only ' + sp.toFixed(2) + '% away: fees would eat the trade'; }
+            try { var KX = o.K, xp = (KX && KX.length > 70 && window.__babaExp) ? window.__babaExp(sym, o.side, KX) : null; if (xp) { o.conv = xp.conv; if (xp.veto) { return xp.hard && xp.hard.length ? 'factor check: ' + String(xp.hard[0] && (xp.hard[0].t || xp.hard[0].text || xp.hard[0])).slice(0, 80) : 'factor score ' + xp.conv + '/100 is too low'; } } } catch (e1) { }
             if (e.x === 'binance') {
-                try { var KX = o.K, xp = (KX && KX.length > 70 && window.__babaExp) ? window.__babaExp(sym, o.side, KX) : null; if (xp && xp.hard && xp.hard.length) { return 'news / world / dollar check: ' + String(xp.hard[0] && (xp.hard[0].t || xp.hard[0].text || xp.hard[0])).slice(0, 80); } } catch (e1) { }
                 try { var g = window.__gate && window.__gate(sym, o.side); if (g && !g.unknown && !g.ok && g.live) { return g.why; } } catch (e2) { }
-            } else {
-                try { var b0 = S.tick && S.tick.BTCUSDT; } catch (e3) { }
             }
             return '';
         }
@@ -26943,8 +26951,10 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         function tick() {
             try {
                 if (typeof S === 'undefined' || !S.tick) { return; } var now = Date.now(), L = uni();
+                var q15 = Math.floor(now / 900000); if (ST.q15 !== q15) { ST.q15 = q15; RR = 0; } /* a new 15-minute candle just closed: start a fresh round from the busiest coins */
+                try { var cs = S.chart && S.chart.sym; if (cs) { L = L.slice(); for (var ci = 0; ci < L.length; ci++) { if (L[ci].sym === cs) { L.unshift(L.splice(ci, 1)[0]); break; } } if (L[0] && L[0].sym === cs) { RR = Math.min(RR, 0); } } } catch (ec) { }
                 var n = 0, tries = 0; ST.total = L.length; ST.by = { binance: 0, mexc: 0, bitget: 0 }; L.forEach(function (e) { ST.by[e.x]++; });
-                while (n < 10 && tries < L.length) { var e = L[RR++ % L.length]; tries++; var sym = e.sym;
+                while (n < 14 && tries < L.length) { var e = L[RR++ % L.length]; tries++; var sym = e.sym;
                     var o = read(e); if (o === undefined) { continue; } n++; ST.seen[sym] = now; if (!o) { continue; }
                     var cur = SIG[sym];
                     if (o.none) { if (cur && ((cur.side === 'LONG' && o.b === -1 && o.u === -1) || (cur.side === 'SHORT' && o.b === 1 && o.u === 1))) { delete SIG[sym]; } continue; }
@@ -26955,14 +26965,14 @@ window.__pfAns = function (q) { return pfAnswer(q); };
                         if (up0 && (!SENT[sym + o.side + 'S'] || now - SENT[sym + o.side + 'S'] > 1800000)) { SENT[sym + o.side + 'S'] = now; push(sym, '🤖 STRONG bot signal: ' + e.base + ' ' + o.side + ' (' + EXN[e.x] + ')', 'Baba Signal and UT Bot now agree. Entry ' + o.px + ', stop ' + cur.stop.toFixed(6).replace(/0+$/, '') + '. Use a small size and the stop.'); }
                         continue;
                     }
-                    SIG[sym] = { sym: sym, x: e.x, base: e.base, side: o.side, strong: o.strong, px: o.px, stop: o.stop, tp: o.side === 'LONG' ? o.px + 1.5 * (o.px - o.stop) : o.px - 1.5 * (o.stop - o.px), t: now, until: now + TTL, last: now };
+                    SIG[sym] = { sym: sym, x: e.x, base: e.base, side: o.side, strong: o.strong, conv: o.conv, px: o.px, stop: o.stop, tp: o.side === 'LONG' ? o.px + 1.5 * (o.px - o.stop) : o.px - 1.5 * (o.stop - o.px), t: now, until: now + TTL, last: now };
                     var nk = sym + o.side + (o.strong ? 'S' : '');
                     if (!SENT[nk] || now - SENT[nk] > 1800000) { SENT[nk] = now; push(sym, (o.strong ? '🤖 STRONG bot signal: ' : '🤖 Bot signal: ') + e.base + ' ' + o.side + ' (' + EXN[e.x] + ')', (o.strong ? 'Baba Signal and UT Bot agree. ' : 'One bot shows it. ') + 'Entry ' + o.px + ', stop ' + o.stop.toFixed(6).replace(/0+$/, '') + '. Held for 15 minutes. Use a small size and the stop.'); }
                 }
                 Object.keys(SIG).forEach(function (s) { var g = SIG[s]; if (now >= g.until) { delete SIG[s]; return; } var t2 = g.x === 'binance' ? S.tick[s] : null, lp = t2 ? +t2.p : 0; if (lp > 0 && ((g.side === 'LONG' && lp < g.stop) || (g.side === 'SHORT' && lp > g.stop))) { delete SIG[s]; } });
             } catch (er) { }
         }
-        setInterval(tick, 3000);
+        setInterval(tick, 1500);
         window.__sigList = function (ex) { var n = Date.now(); return Object.keys(SIG).map(function (k) { return SIG[k]; }).filter(function (e) { if (n >= e.until) { return false; } if (ex && ex !== 'all') { try { return window.XCH ? XCH.listed(ex, e.sym) === 'f' : e.x === ex; } catch (er) { return e.x === ex; } } return true; }).sort(function (a, b) { return (b.strong ? 1 : 0) - (a.strong ? 1 : 0) || b.t - a.t; }); };
         window.__sigGet = function (sym) { var e = SIG[sym]; return e && Date.now() < e.until ? e : null; };
         function fmt(v) { return (+v).toPrecision(5).replace(/\.?0+$/, ''); }
@@ -26972,10 +26982,20 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             if (!L.length) { return '<div class="note" style="margin:0 0 8px">🤖 <b>Bot signals' + nm + '</b>: Baba Signal and UT Bot read the 15-minute chart of every coin above 1M USDT volume. No fresh BUY/SELL (last 3 closed candles) among the ' + scanned() + ' coins checked so far.</div>'; }
             var h = '<div class="note" style="margin:0 0 4px">🤖 <b>Bot signals' + nm + '</b>: one bot shows a fresh BUY/SELL = signal; both agree = <b>STRONG</b>. Held 15 minutes. Use a small size and the stop. Checked ' + scanned() + '.</div><div class="group">';
             L.forEach(function (e) { var up = e.side === 'LONG', left = Math.max(0, e.until - now), m = Math.floor(left / 60000), s = Math.floor(left % 60000 / 1000);
-                h += '<div class="row tap" data-act="chart:' + e.sym + '"><span><b>' + e.base + '</b> <span style="color:' + (up ? '#1a9d4a' : '#e5383b') + '">' + (up ? '▲ LONG' : '▼ SHORT') + '</span>' + (e.strong ? ' <b style="background:#ff9f0a;color:#fff;border-radius:6px;padding:1px 6px">STRONG</b>' : '') + ' <small class="mut">' + EXN[e.x] + '</small><br><small>entry ' + fmt(e.px) + ' · stop ' + fmt(e.stop) + ' · target ' + fmt(e.tp) + '</small></span><b>' + m + ':' + (s < 10 ? '0' : '') + s + '</b></div>'; });
+                h += '<div class="row tap" data-act="chart:' + e.sym + '"><span><b>' + e.base + '</b> <span style="color:' + (up ? '#1a9d4a' : '#e5383b') + '">' + (up ? '▲ LONG' : '▼ SHORT') + '</span>' + (e.strong ? ' <b style="background:#ff9f0a;color:#fff;border-radius:6px;padding:1px 6px">STRONG</b>' : '') + ' <small class="mut">' + EXN[e.x] + (e.conv ? ' · score ' + e.conv + '/100' : '') + '</small><br><small>entry ' + fmt(e.px) + ' · stop ' + fmt(e.stop) + ' · target ' + fmt(e.tp) + '</small></span><b>' + m + ':' + (s < 10 ? '0' : '') + s + '</b></div>'; });
             return h + '</div>';
         };
     } catch (e) { try { console.error('p9bsig', e); } catch (e2) { } }
+})();
+
+;(function () {
+    /* build 399: ONE VERDICT. A listed bot signal is the verdict everywhere: chart bar, Chief box, notifications. It reaches rec() through the three existing doors (fast list, entry gate, Chief head), so nothing else is touched. Hard reasons (pump, reversal, bad track record, stop break, Bitcoin shock) still win. */
+    try {
+        var fg = window.__fastGet, gg = window.__gate, ch = window.__chiefHead;
+        window.__fastGet = function (sym) { var f = fg ? fg(sym) : null; if (f) { return f; } var g = window.__sigGet && window.__sigGet(sym); return g ? { sym: sym, side: g.side, mode: 'fast', t: g.t, why: (g.strong ? 'STRONG bot signal: Baba Signal and UT Bot agree' : 'Bot signal: one bot shows a fresh BUY/SELL') + '. Held 15 minutes. Use a small size and the stop.' } : null; };
+        if (gg) { window.__gate = function (sym, side) { var g = gg(sym, side), s = window.__sigGet && window.__sigGet(sym); if (s && s.side === side) { if (g && !g.unknown && !g.ok && (g.pump || g.rev || g.trackBad || g.live)) { return g; } return { ok: true, mode: 'fast', held: 1, why: 'Bot signal', t: Date.now() }; } return g; }; }
+        if (ch) { window.__chiefHead = function (sym, side, fastF) { var s = window.__sigGet && window.__sigGet(sym); if (s && s.side === side) { return true; } return ch(sym, side, fastF); }; }
+    } catch (e) { }
 })();
 
 ;(function () { try { window.__sigPx = function (sym) { var t = S.tick && S.tick[sym]; return t ? +t.p : 0; }; window.__sigSyms = function () { return Object.keys(S.tick || {}).filter(function (k) { var t = S.tick[k]; return /USDT$/.test(k) && t && +t.p > 0 && (+t.q || 0) >= 10e6; }); }; } catch (e) { } })();
