@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.405';
+var BUILD = '2026-11-07.406';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -22814,7 +22814,8 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             if (hb && Date.now() - hb.t < 120000 && hb.win && hb.win !== 'overview' && hb.win !== 'home') {
                 setTimeout(function () {
                     try {
-                        var why = ''; try { var nn = window.MintooNative; if (nn && nn.lastRestart && window.__mwTok) { var w0 = String(nn.lastRestart(window.__mwTok) || ''); if (w0) { why = w0.split('|')[1] || w0; } } } catch (er) { } note('App restarted by itself while on ' + hb.win + (hb.sym ? ' ' + hb.sym : '') + ' (cause: ' + (why || 'no engine crash was recorded, so Android most likely closed the whole app for memory or battery, or it was swiped away') + '): taking you back');
+                        var why = ''; try { var nn = window.MintooNative; if (nn && nn.lastRestart && window.__mwTok) { var w0 = String(nn.lastRestart(window.__mwTok) || ''); if (w0) { why = w0.split('|')[1] || w0; } } } catch (er) { } try { var rl = JSON.parse(localStorage.getItem('mintoosuite_rst') || '[]').filter(function (t) { return Date.now() - t < 21600000; }); rl.push(Date.now()); localStorage.setItem('mintoosuite_rst', JSON.stringify(rl)); } catch (er0) { }
+                        note('App restarted by itself while on ' + hb.win + (hb.sym ? ' ' + hb.sym : '') + ' (cause: ' + (why || 'no engine crash was recorded, so Android most likely closed the whole app for memory or battery, or it was swiped away') + '): taking you back');
                         var c = document.createElement('div');
                         if (hb.win === 'chart' && hb.sym) { c.setAttribute('data-act', 'chart:' + hb.sym); } else { c.setAttribute('data-act', 'win:' + hb.win); }
                         document.body.appendChild(c); c.click(); c.remove();
@@ -25844,6 +25845,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['one coin split|split one coin|same coin different time frames|multi time frame split|2 3 4 windows', 'One coin in 2 to 4 windows (build 404)', 'Split Charts has a new box at the top: pick the exchange (Binance, MEXC, Bitget, Bybit, OKX, KuCoin, Coinbase or Kraken), type a coin (or use the coin from your chart) and tap 2, 3 or 4 windows. The same coin opens in that many panes, each on a different time frame: 2 = 15m and 1h; 3 = 1m, 15m and 1h; 4 = 1m, 15m, 1h and 4h. You can still change any pane afterwards. The ⛶ Full screen button (same box) shows the split you have, one coin or many, in the whole screen with the same panes at full size; Long/Short buttons sit on top: one set when all panes show the same coin, a set for each coin when the panes show different coins (exchanges the app can trade). Back or Exit full screen returns.', 'win:split']); } catch (e) { } })();
 
 ;(function () { try { PF_APP.push(['chart bar says wait bots tab shows signal|recommended wait but bot signal', 'Chart bar now agrees with Bots tab (build 405)', 'If a bot signal is listed in Bots recommended trades, the chart bar of that coin now shows the same Long/Short instead of WAIT (it used to read an older copy of the decision). Coins that already moved more than 30% today are no longer offered as bot signals in either direction: the move is too wild and spikes can hit any stop.', 'win:tpro']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['lite mode freeze hang android closed app memory|scanner pauses while trading', 'Lite mode and calm trading (build 406)', 'The bot scanner now stops while Trade Pro is open, so placing an order has the whole phone to itself; signals already found stay held for their 15 minutes. If Android has closed the app twice in six hours, the app switches itself to Lite: it checks the 120 busiest coins, 4 per step instead of 14, and keeps less chart data in memory. For best results set Android Settings > Apps > MintooSuite > Battery to Unrestricted.', 'win:tpro']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26958,11 +26961,16 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         function push(sym, title, body) { try { window.__gateNoWrap = 1; alertPush(sym, title, body); } catch (e) { } finally { window.__gateNoWrap = 0; } }
         function tick() {
             try {
-                if (typeof S === 'undefined' || !S.tick) { return; } var now = Date.now(), L = uni();
+                if (typeof S === 'undefined' || !S.tick) { return; } var now = Date.now();
+                /* build 406 LITE: never scan while you are placing an order (Trade Pro / order dialogs), and scan lighter when Android has closed the app twice in 6 hours */
+                if (document.hidden || S.win === 'tpro' || document.getElementById('mwtc') || document.querySelector('[data-xk^="cpTrade"]') && S.win === 'tpro') { return; }
+                var LITE = 0; try { LITE = JSON.parse(localStorage.getItem('mintoosuite_rst') || '[]').filter(function (t) { return now - t < 21600000; }).length >= 2 ? 1 : 0; } catch (el) { }
+                window.__sigLite = LITE; if (LITE && ST.lt && now - ST.lt < 3000) { return; } ST.lt = now;
+                var L = uni(); if (LITE) { L = L.slice(0, 120); try { var ks = Object.keys(KC); if (ks.length > 40) { ks.sort(function (a, b) { return KC[a].at - KC[b].at; }).slice(0, ks.length - 40).forEach(function (k) { delete KC[k]; }); } } catch (ek) { } }
                 var q15 = Math.floor(now / 900000); if (ST.q15 !== q15) { ST.q15 = q15; RR = 0; } /* a new 15-minute candle just closed: start a fresh round from the busiest coins */
                 try { var cs = S.chart && S.chart.sym; if (cs) { L = L.slice(); for (var ci = 0; ci < L.length; ci++) { if (L[ci].sym === cs) { L.unshift(L.splice(ci, 1)[0]); break; } } if (L[0] && L[0].sym === cs) { RR = Math.min(RR, 0); } } } catch (ec) { }
                 var n = 0, tries = 0; ST.total = L.length; ST.by = { binance: 0, mexc: 0, bitget: 0 }; L.forEach(function (e) { ST.by[e.x]++; });
-                while (n < 14 && tries < L.length) { var e = L[RR++ % L.length]; tries++; var sym = e.sym;
+                while (n < (LITE ? 4 : 14) && tries < L.length) { var e = L[RR++ % L.length]; tries++; var sym = e.sym;
                     var o = read(e); if (o === undefined) { continue; } n++; ST.seen[sym] = now; if (!o) { continue; }
                     var cur = SIG[sym];
                     if (o.none) { if (cur && ((cur.side === 'LONG' && o.b === -1 && o.u === -1) || (cur.side === 'SHORT' && o.b === 1 && o.u === 1))) { delete SIG[sym]; } continue; }
