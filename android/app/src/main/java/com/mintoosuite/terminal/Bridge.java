@@ -38,6 +38,22 @@ final class Bridge {
             android.content.SharedPreferences sp = ctx.getSharedPreferences("mw_why", 0);
             String v = sp.getString("w", "");
             if (v != null && v.length() > 0) { sp.edit().remove("w").apply(); }
+            if ((v == null || v.length() == 0) && android.os.Build.VERSION.SDK_INT >= 30) {
+                /* build 412: ask Android itself why the app process last ended (low memory, native crash, killed...) */
+                try {
+                    android.app.ActivityManager am = (android.app.ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
+                    java.util.List<android.app.ApplicationExitInfo> xl = am.getHistoricalProcessExitReasons(ctx.getPackageName(), 0, 3);
+                    if (xl != null && !xl.isEmpty()) {
+                        android.app.ApplicationExitInfo xi = xl.get(0);
+                        if (xi.getTimestamp() > sp.getLong("xt", 0L)) {
+                            sp.edit().putLong("xt", xi.getTimestamp()).apply();
+                            String[] nm = {"unknown", "app exited itself", "killed by a signal", "LOW MEMORY (Android closed it)", "app crashed", "NATIVE CRASH", "app not responding", "start-up failed", "permission change", "too many resources", "user closed it", "user stopped it", "dependency died", "other", "frozen by Android", "package state change", "package updated"};
+                            int rs = xi.getReason();
+                            v = "x|" + (rs >= 0 && rs < nm.length ? nm[rs] : "code " + rs) + " - " + xi.getDescription() + " (memory use about " + (xi.getPss() / 1024) + " MB)";
+                        }
+                    }
+                } catch (Throwable e2) { }
+            }
             return v == null ? "" : v;
         } catch (Throwable e) { return ""; }
     }
