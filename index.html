@@ -164,7 +164,7 @@ a{color:var(--blu);text-decoration:none}.nws a{color:var(--tx);font-weight:700;l
 
 <div class="sheet" id="sheetWin"><div class="sheet-in">
   <div class="grab"></div>
-  <div class="sheet-t"><span>Windows</span><button class="x" data-act="closesheets">✕</button></div>
+  <div class="sheet-t"><span>More</span><button class="x" data-act="closesheets">✕</button></div>
   <div class="tiles" id="tiles"></div>
 </div></div>
 
@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.375';
+var BUILD = '2026-11-07.377';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -14592,8 +14592,9 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             h += seg('lgT', [['all', 'All'], ['trade', '💵 Trading'], ['alert', '🔔 Alerts'], ['app', '🧯 App problems']], tab);
             h += seg('lgL', [['any', 'Any level'], ['high', '🔴 High'], ['med', '🟠 Medium'], ['low', '🟢 Low']], lv);
             var rows = all.filter(function (x) { return (tab === 'all' || x.cat === tab) && (lv === 'any' || x.lv === lv); });
-            h += '<div class="group">' + (rows.length ? rows.slice(0, 80).map(function (x) {
-                var c = LVC[x.lv]; return '<div class="row" style="display:block"><div>' + c[0] + ' <span class="badge wait">' + e2(x.ty) + '</span> <span style="font-size:12px;word-break:break-word">' + e2(x.tx) + '</span></div><div class="note" style="margin:3px 0 0">' + (x.t ? new Date(x.t).toLocaleString() : '') + '</div></div>';
+            var grp = [], gi = {}; rows.forEach(function (x) { var k = x.lv + '|' + x.ty + '|' + String(x.tx).replace(/\d+/g, '#').slice(0, 90); if (gi[k] === undefined) { gi[k] = grp.length; grp.push({ x: x, n: 1 }); } else { grp[gi[k]].n++; } });
+            h += (grp.length < rows.length ? '<div class="note" style="margin:0 0 6px">Repeated lines are grouped (×count, newest time shown). Copy and Email still include every line.</div>' : '') + '<div class="group">' + (rows.length ? grp.slice(0, 80).map(function (g) {
+                var x = g.x, c = LVC[x.lv]; return '<div class="row" style="display:block"><div>' + c[0] + ' <span class="badge wait">' + e2(x.ty) + '</span>' + (g.n > 1 ? ' <b style="font-size:12px">×' + g.n + '</b>' : '') + ' <span style="font-size:12px;word-break:break-word">' + e2(x.tx) + '</span></div><div class="note" style="margin:3px 0 0">' + (x.t ? new Date(x.t).toLocaleString() : '') + '</div></div>';
             }).join('') : '<div class="row"><span class="mut">Nothing here. That is good news.</span></div>') + '</div>';
             h += '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sec" data-xk="lgcopy:1" style="flex:1">📋 Copy</button><button class="btn sec" data-xk="lgmail:1" style="flex:1">✉️ Email</button><button class="btn sec" data-act="clearlog" data-xclr="1" style="flex:1">🗑 Clear all</button></div>';
             return h + '<div class="note">This is a record of what the app recommended and noticed. For real orders, your exchange history is the official record.</div>';
@@ -16101,13 +16102,13 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         if (rest.length) { ng.push(['Detail pages', rest]); }
         MW_GROUPS.length = 0; ng.forEach(function (g) { MW_GROUPS.push(g); });
         // menu shows only the main window of each family (the others are tabs inside it)
-        var HID2 = []; FAM.forEach(function (f) { f[1].slice(1).forEach(function (id) { HID2.push(id); }); }); var SHOWN = { exness: 1, exdesk: 1, gold: 1, split: 1, rates: 1, compare: 1, quest: 1 }; HID2 = HID2.filter(function (id) { return !SHOWN[id]; });
+        var HID2 = []; FAM.forEach(function (f) { f[1].slice(1).forEach(function (id) { HID2.push(id); }); }); var SHOWN = { exness: 1, exdesk: 1, gold: 1, split: 1, rates: 1, compare: 1, quest: 1, siglab: 1, news: 1, newc: 1 }; HID2 = HID2.filter(function (id) { return !SHOWN[id]; });
         var _mt2 = mwTiles;
         mwTiles = function () { var h = _mt2.apply(this, arguments); HID2.forEach(function (id) { h = h.replace(new RegExp('<div class="tile[^"]*" data-act="win:' + id + '"><div class="ic"[^>]*>[^<]*</div>[^<]*</div>', 'g'), ''); }); return h; };
         function nm(id) { var w = null; try { w = winDef(id); } catch (e) { } var t = String((w && (w.t || w.n)) || id).replace(/[^\w &\/.\-+%]+/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 16 ? t.slice(0, 15) + '…' : t; }
         function strip(id) {
             if (window.__mwHT && window.__mwHT !== id) { window.__mwHT = ''; }
-            var f = famOf[id]; if (window.__mwHT && window.__mwHT === id && famOf.overview) { f = famOf.overview; } if (f && f[0] === 'Learn & play') { var LX = { quest: ['academy', 'videos', 'me'], academy: ['quest', 'me'], videos: ['quest', 'me'], tips: ['academy', 'videos', 'quest', 'me'], me: ['academy', 'videos', 'quest', 'tips', 'me'] }[id]; if (LX) { f = [f[0], f[1].filter(function (k) { return LX.indexOf(k) < 0; })]; } } if (!f || f[1].length < 2) { return ''; }
+            var f = famOf[id]; if (window.__mwHT && window.__mwHT === id && famOf.overview) { f = famOf.overview; } if (f && f[0] === 'Markets') { f = [f[0], f[1].filter(function (k) { return ['siglab', 'gold', 'rates', 'news', 'newc'].indexOf(k) < 0; })]; } if (f && f[0] === 'Learn & play') { var LX = { quest: ['academy', 'videos', 'me'], academy: ['quest', 'me'], videos: ['quest', 'me'], tips: ['academy', 'videos', 'quest', 'me'], me: ['academy', 'videos', 'quest', 'tips', 'me'] }[id]; if (LX) { f = [f[0], f[1].filter(function (k) { return LX.indexOf(k) < 0; })]; } } if (!f || f[1].length < 2) { return ''; }
             var rnd = f[0] === 'Home'; return '<div class="segc fmstrip' + (rnd ? ' mwr' : '') + '" data-noswipe="1" style="display:flex;gap:6px;overflow-x:auto;white-space:nowrap;margin:0 0 10px;padding:2px 0 6px;-webkit-overflow-scrolling:touch">' + (rnd ? (function () { var l = f[1].filter(function (k) { return k !== 'siglab' && k !== 'safety'; }), i = l.indexOf('brief'); [].splice.apply(l, [i < 0 ? l.length : i + 1, 0].concat(['siglab', 'safety'].filter(function (k) { return typeof VIEWS[k] === 'function'; }))); return l; })() : f[1]).map(function (k) {
                 var on = k === id;
                 return '<button type="button" data-act="win:' + k + '" data-noswipe="1" style="flex:none;padding:7px 12px;border-radius:16px;border:1px solid ' + (on ? '#0a84ff' : 'var(--line,#d1d1d6)') + ';background:' + (on ? '#0a84ff' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit') + ';font:700 13px system-ui,sans-serif">' + (rnd && window.__mwRI ? window.__mwRI(k) : '') + (rnd && k === 'live' ? 'Fresh ideas' : nm(k)) + (window.__lvb ? window.__lvb(k) : '') + '</button>';
@@ -23366,7 +23367,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         try { MW_HELP.findtrade = 'A front door for every idea screen. Best picks for beginners, Analyst for one coin.'; PF_APP.push(['find a trade|which screen|where to start|best screen|what should i open', 'Find a trade', 'More > Find a trade lists every idea screen with one line on when to use it. New users should start with Best picks, then practice.', 'win:findtrade']); } catch (e) { }
     } catch (e) { try { console.log('p9ft', e); } catch (er) { } }
 })();
-/* ===== p9nc: Native chart (experimental). Needs the experimental installer; the chart itself is drawn by Android, this page only supplies data and position. ===== */
+/* ===== p9nc: Fast chart (experimental). Needs the experimental installer; the chart itself is drawn by Android, this page only supplies data and position. ===== */
 (function () {
     try {
         var NC = { sym: 'BTCUSDT', iv: '15m', data: null, busy: 0, at: 0, shown: false, last: '' };
@@ -23396,14 +23397,14 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         setInterval(function () { if (S.win === 'nchart' || NC.shown) { sync(); } }, 400);
         setInterval(function () { if (S.win === 'nchart' && nat() && Date.now() - NC.at > 10000) { load(); } }, 2000);
         function vNc() {
-            var n = nat(), h = '<div class="group pad"><b style="font-size:17px">⚡ Native chart (experimental)</b><div class="note" style="margin:6px 0 0;line-height:1.5">Drawn by Android itself, not by the web page. <b>Drag</b> to move, <b>pinch</b> to zoom, <b>hold</b> a finger on a candle for its details, <b>tap</b> to close the details, <b>double-tap</b> to reset. It cannot slide out of the frame. If anything looks wrong, use the normal Chart and tell Baba what happened.</div></div>';
+            var n = nat(), h = '<div class="group pad"><b style="font-size:17px">⚡ Fast chart (experimental)</b><div class="note" style="margin:6px 0 0;line-height:1.5">Drawn by Android itself, not by the web page. <b>Drag</b> to move, <b>pinch</b> to zoom, <b>hold</b> a finger on a candle for its details, <b>tap</b> to close the details, <b>double-tap</b> to reset. It cannot slide out of the frame. If anything looks wrong, use the normal Chart and tell Baba what happened.</div></div>';
             h += '<div class="group pad"><div style="display:flex;gap:6px"><input id="ncSym" class="tin" value="' + esc(NC.sym) + '" style="flex:1;min-width:0;text-transform:uppercase" autocomplete="off"><span class="btn tap" data-nc="go" style="width:auto;padding:10px 16px;display:inline-block">Load</span></div>' +
                 '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + IVS.map(function (v) { return '<span class="btn ' + (v === NC.iv ? '' : 'sec ') + 'tap" data-nc="iv:' + v + '" style="width:auto;padding:8px 14px;display:inline-block">' + v + '</span>'; }).join('') + '</div></div>';
             h += '<div id="ncBox" style="height:calc(100vh - 530px);min-height:260px;max-height:70vh;border-radius:14px;background:rgba(128,128,128,.12);display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;box-sizing:border-box">' + (n ? '<span class="note">Loading…</span>' : '<span class="note">The native chart is only in the experimental installer (GD). This normal build cannot show it.</span>') + '</div>';
             setTimeout(function () { if (n) { if (!NC.data) { load(); } else { push(); } } }, 50);
             return h;
         }
-        WINS.push({ id: 'nchart', ic: '⚡', c: '#ff9f0a', n: 'Native chart', t: 'Native chart', sub: 'Android-drawn chart: smooth drag, pinch zoom, hold for candle details' }); LIVE.nchart = 0; VIEWS.nchart = vNc;
+        WINS.push({ id: 'nchart', ic: '⚡', c: '#ff9f0a', n: 'Fast chart', t: 'Fast chart', sub: 'Android-drawn chart: smooth drag, pinch zoom, hold for candle details' }); LIVE.nchart = 0; VIEWS.nchart = vNc;
         try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Markets' || /Main/.test(g[0])) { if (g[1].indexOf('nchart') < 0 && g[1].indexOf('chart') >= 0) { g[1].splice(g[1].indexOf('chart') + 1, 0, 'nchart'); } } }); } catch (e) { }
         try { MW_HELP.nchart = 'An experimental chart drawn by Android. Drag, pinch, hold for details.'; } catch (e) { }
         document.addEventListener('click', function (e) {
@@ -23499,7 +23500,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         };
         document.addEventListener('click', function (e) {
             var t = e.target.closest ? e.target.closest('[data-mwm]') : null;
-            if (t) { e.preventDefault(); e.stopPropagation(); var g = t.getAttribute('data-mwm'); open[g] = !open[g]; var el = document.getElementById('tiles'); if (el) { el.innerHTML = mwTiles(); } return; }
+            if (t) { e.preventDefault(); e.stopPropagation(); var g = t.getAttribute('data-mwm'); open[g] = !open[g]; var el = document.getElementById('tiles'); if (el) { if (typeof buildNav === 'function') { buildNav(); } else { el.innerHTML = mwTiles(); } } return; }
             var w = e.target.closest ? e.target.closest('#tiles [data-act^="win:"]') : null;
             if (w) { var id = w.getAttribute('data-act').slice(4); V[id] = (V[id] || 0) + 1; try { localStorage.setItem(VK, JSON.stringify(V)); } catch (er) { } }
         }, true);
@@ -23552,7 +23553,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         setTimeout(push, 6000); setInterval(push, 60000);
     } catch (e) { }
 })();
-/* ===== p9nl: Native prices (experimental). Coin list drawn by Android; this page supplies rows and position. ===== */
+/* ===== p9nl: Fast prices (experimental). Coin list drawn by Android; this page supplies rows and position. ===== */
 (function () {
     try {
         var NL = { shown: false, last: '', q: '', sort: 'q' };
@@ -23578,13 +23579,13 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         setInterval(function () { if (S.win === 'nlist' || NL.shown) { sync(); } }, 400);
         setInterval(function () { if (S.win === 'nlist' && NL.shown) { push(); } }, 3000);
         function vNl() {
-            var n = nat(), h = '<div class="group pad"><b style="font-size:17px">⚡ Native prices (experimental)</b><div class="note" style="margin:6px 0 0;line-height:1.5">A coin list drawn by Android itself: smooth scrolling and light on memory. Tap a coin to open its chart. ' + (n ? '' : '<b>This needs the Android app; in a browser it is not available.</b>') + '</div></div>';
+            var n = nat(), h = '<div class="group pad"><b style="font-size:17px">⚡ Fast prices (experimental)</b><div class="note" style="margin:6px 0 0;line-height:1.5">A coin list drawn by Android itself: smooth scrolling and light on memory. Tap a coin to open its chart. ' + (n ? '' : '<b>This needs the Android app; in a browser it is not available.</b>') + '</div></div>';
             h += '<div class="group pad"><div style="display:flex;gap:6px"><input id="nlQ" class="tin" placeholder="Search coin, e.g. BTC" value="' + String(NL.q).replace(/[^A-Z0-9]/g, '') + '" style="flex:1;min-width:0;text-transform:uppercase" autocomplete="off"><span class="btn tap" data-nl="go" style="width:auto;padding:0 14px">Go</span></div>' +
                 '<div style="display:flex;gap:6px;margin-top:8px"><span class="btn ' + (NL.sort === 'q' ? '' : 'sec ') + 'tap" data-nl="s:q" style="width:auto;padding:6px 12px">Most traded</span><span class="btn ' + (NL.sort === 'c' ? '' : 'sec ') + 'tap" data-nl="s:c" style="width:auto;padding:6px 12px">Top movers</span></div></div>';
             h += '<div id="nlBox" style="height:calc(100vh - 470px);min-height:260px;max-height:70vh;border-radius:14px;background:rgba(128,128,128,.12);display:flex;align-items:center;justify-content:center;text-align:center;padding:10px" class="note">' + (n ? 'Loading list…' : 'Not available here') + '</div>';
             return h;
         }
-        WINS.push({ id: 'nlist', ic: '📈', c: '#30d158', n: 'Native prices', t: 'Native prices', sub: 'Android-drawn coin list: smooth, light, tap for the chart' }); LIVE.nlist = 1; VIEWS.nlist = vNl;
+        WINS.push({ id: 'nlist', ic: '📈', c: '#30d158', n: 'Fast prices', t: 'Fast prices', sub: 'Android-drawn coin list: smooth, light, tap for the chart' }); LIVE.nlist = 1; VIEWS.nlist = vNl;
         try { MW_GROUPS.forEach(function (g) { if (g[0] === 'Markets' || /Main/.test(g[0])) { if (g[1].indexOf('nlist') < 0 && g[1].indexOf('nchart') >= 0) { g[1].splice(g[1].indexOf('nchart') + 1, 0, 'nlist'); } } }); } catch (e) { }
         try { MW_HELP.nlist = 'A coin price list drawn by Android. Search, sort by traded amount or biggest movers, tap a coin to open its chart.'; } catch (e) { }
         window.__nlTap = function (sym) { try { hide(); S.chart.sym = sym; S.cx.src = 'f'; S.cx.srcFor = sym; var e = document.createElement('div'); e.setAttribute('data-act', 'win:chart'); document.body.appendChild(e); e.click(); setTimeout(function () { e.remove(); }, 50); try { loadChart(); } catch (x) { } } catch (e) { } };
@@ -23629,7 +23630,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         if (typeof PF_APP === 'undefined') { return; }
         PF_APP.push(['start here|first steps|new user|getting started|privacy|delete my data|tester|feedback|app health|health card', 'Start here and App health', 'Menu > Start here shows five short steps for new users, where to delete your data, what the results do and do not prove, a way to send feedback to the maker, and an App health card (prices fresh, alerts on, storage). It is honest: no profit promise.', 'win:launch']);
         PF_APP.push(['background alert|alerts when closed|alerts when app closed|native alert|pump alert closed|notification when app is closed', 'Alerts when the app is closed', 'A small background service checks Binance futures about every 30 seconds (phone battery saving can delay it by minutes) while the app is NOT on screen and shows a notification when a coin rises fast (thresholds 10% / 20%, with a quieter level for big coins). Phone battery saving (Doze) can delay it, so keep the app out of battery saving. It is a heads-up, not advice.', 'win:launch']);
-        PF_APP.push(['native prices|prices list|fast list|coin list slow', 'Native prices list', 'Menu > Native prices shows a fast Android list of coins. Tap a coin to open it. If it looks wrong, the normal Markets screen still works.', 'win:nlist']);
+        PF_APP.push(['native prices|fast prices|native chart|fast chart|prices list|fast list|coin list slow', 'Native prices list', 'More > Fast prices (earlier called Native prices) shows a fast Android list of coins. Tap a coin to open it. If it looks wrong, the normal Markets screen still works.', 'win:nlist']);
         PF_APP.push(['obsolete idea|old idea|idea may be obsolete|open anyway|run broke|stale recommendation|late entry|atr rule|3x swing|normal swing', 'The “obsolete idea” check', 'It is ONLY a staleness gate, borrowed from the Chandelier-exit idea. For an idea made earlier (Long), it checks the last finished 15-minute candle: if it closed more than N times the coin’s normal swing (ATR, 14 candles) below the recent high, the run has broken and the idea is old, so the app says WAIT or asks “Open anyway”. It never blocks a coin just because it already rose a lot, and it does not replace UT Bot, Baba or bot signals. N = 3 is the usual published convention (Chandelier exit); it is not proven for your trades. Use Menu > Test the rule to compare N = 2, 3, 4 on your own closed trades.', 'win:ruletest']);
         PF_APP.push(['strong move|small size|already pumped|test the rule|ruletest|test settings|n=2|n=3|n=4', 'Strong-move warning and Test the rule', 'When a coin moved 25% or more in 24 hours the app shows “strong move: small size”. It warns, it does not forbid: strong coins can go further. Menu > Test the rule replays the obsolete-idea check on up to 40 of your closed practice trades and shows losses avoided and wins missed for N = 2, 3, 4. Small samples mislead; keep N = 3 unless you have 10+ stopped trades. Past results never guarantee the future.', 'win:ruletest']);
         PF_APP.push(['price drift|use today.s price|idea is old|stale price|liquidation beyond|stop beyond liquidation|gap fill|double tap', 'Safety checks before a trade', 'Before opening a trade the app refuses a price older than 30 seconds, ignores an accidental double tap (1.5 s), warns when the price moved more than a quarter of the idea’s own stop distance (and offers “Use today’s price”), and refuses a practice trade whose stop sits beyond the liquidation price. Practice stop-losses fill at the real price after a gap, so a gap can lose more than planned, as in real trading.', 'win:safety']);
@@ -24735,7 +24736,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 (function () {
     try {
         var PLAN = [
-            ['🎨 Themes and quick start', ['look', 'wallet', 'analyst']],
+            ['🎨 Quick start', ['look', 'wallet', 'analyst']],
             ['Trade and bots', ['tpro', 'xtrade', 'hub', 'trade', 'strade', 'tmode', 'bots', 'rbot', 'botpro', 'paper', 'bot', 'ptrade', 'risk', 'hist']],
             ['Markets and ideas', ['market', 'find', 'chart', 'nchart', 'nlist', 'best', 'bpx', 'ideas', 'scanner', 'analyst', 'findtrade', 'movers', 'news', 'newc', 'siglab', 'sigfeed', 'nhist', 'overview', 'launch']],
             ['Gold and Exness', ['exness', 'exdesk', 'xgold', 'gold', 'split', 'rates']],
@@ -25718,6 +25719,10 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['market mood tile|mood tile|my day tile|movers tile|mood colour|mood color', 'Build 374: new look for the Market mood tile', 'On Home the Market mood tile now has the same modern look as Trade smarter: a dark card whose colour follows the mood (green positive, amber neutral, red negative), a glowing ring with the score, and white text. The numbers, the words and the swipe to the second page are unchanged. Colour shows the mood only, never a buy or sell signal. My day and Movers now show their title above the line of text.']); } catch (e) { } })();
 
 ;(function () { try { PF_APP.push(['profile window|profile shortcuts|shortcuts tile|for you cards|baba ai card profile|where is shortcuts|profile tabs|profile look', 'Build 375: Profile window is cleaner and modern', 'The Profile window now opens with a gradient header card (your avatar, plan and status), then the tabs: Overview, P/L, Connections, Security, Settings. Account and sign-in, Lock screen and the Pro trial card sit below the tab content. The Baba AI card, the For you cards (Best Picks, Top risers, Paper Bot, At a glance), the Shortcuts tile and the Learn tab row were removed because the same things are one tap away in Ideas, Home, Baba AI (bottom bar > More) and More > Learn and help.']); PF_APP.push(['theme|themes|colour theme|color theme|smart indigo|smart emerald|smart sunrise|smart pearl|default theme|reset theme|removed theme', 'Colour themes (build 375)', 'Menu (top right) > Look & mode > Colour theme. Four new Smart themes in the Trade smarter style: Smart Indigo, Smart Emerald, Smart Sunrise and Smart Pearl (light). Default returns to the original look. Twelve classics stay: Violet, Ocean, Sunset, Forest, Gold, Crimson, Graphite, Pure black, Midnight glass, Pearl (light), Emerald AI, Neon Tokyo. If you used one of the retired themes the app moved you to the closest one automatically. Themes change colours only.']); PF_APP.push(['video lessons|videos list|how many videos|new videos|first week tour|real bot safety video', 'Video lessons (build 375)', 'Videos now has 21 short animated lessons. New: Your first week in the app, Reading an Ideas card, Practice before real money, Signals: where to look, Real bot safety and Money Quest games. Videos are under Learn tabs (Academy, Videos, Tip of the day). They teach habits and tools; none promises profit.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['show more|hide more|show 2 more|markets and ideas more|more tab tiles|signal lab|news and world|new coins|split charts strip|fast chart|fast prices|native chart|native prices|quick start|problem log repeated|repeated lines', 'Build 376: More tab tidy-up', 'More now counts only tiles that really exist behind "Show N more", and the icons no longer change when you press Show or Hide. Signal Lab, News and New Coins are listed in More > Markets and ideas (New Coins under "Show more"); the top chip row on Split Charts now shows only Search, Chart and Split, and Gold and Rates are in Gold and Exness. Native chart and Native prices are now called Fast chart and Fast prices (still experimental, same pages). The sheet title says More, the first group says Quick start, and the Problem log groups repeated lines as ×count while Copy and Email still send every line. Nothing here is a profit promise.', 'win:nchart']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['menu look|menu sheet|modern menu|menu style|menu top right|menu colours|menu colors', 'Build 377: Menu has the modern look', 'The Menu (top right) now has a gradient header card, pill-style Light / Dark / Auto and Calm switches with a colour highlight, a tinted About card and rounded buttons; the More tab tiles have round icons. Only the look changed: every item, its order, wording and action is the same, and Back still returns to where you were. Colour themes are still under Menu > Look & mode.', 'win:look']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26211,6 +26216,66 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             + '@media (forced-colors:active){' + P + '.mwhero{border:2px solid CanvasText!important}}';
         var st = document.createElement('style'); st.id = 'mwprofcss'; st.textContent = css; document.head.appendChild(st);
     } catch (e) { try { console.error('p9prof', e); } catch (e2) { } }
+})();
+/* ===== p9clean (build 376): More sheet "Show N more" must count what is really there, and tiles stay identical after Show/Hide. ===== */
+(function () {
+    try {
+        if (window.__mwCleanA) { return; } window.__mwCleanA = 1;
+        var _mtc = mwTiles;
+        mwTiles = function () {
+            var h = _mtc.apply(this, arguments);
+            try {
+                var box = document.createElement('div'); box.innerHTML = h;
+                var changed = false;
+                Array.prototype.forEach.call(box.querySelectorAll('.mwmore'), function (m) {
+                    var lab = m.previousElementSibling; if (!lab || !lab.classList.contains('mwmt')) { return; }
+                    // tiles that other modules always hide cannot count as "more"
+                    Array.prototype.forEach.call(m.querySelectorAll('[data-act="win:scanner"],[data-act="win:health"]'), function (t) { t.parentNode.removeChild(t); changed = true; });
+                    var n = m.querySelectorAll('.tile').length;
+                    var mm = /^(\S+ )(Hide|Show) \d+ more in (.*)$/.exec(lab.textContent);
+                    if (!n) { lab.parentNode.removeChild(lab); m.parentNode.removeChild(m); changed = true; }
+                    else if (mm) { var t2 = mm[1] + mm[2] + ' ' + n + ' more in ' + mm[3]; if (t2 !== lab.textContent) { lab.textContent = t2; changed = true; } }
+                });
+                if (changed) { h = box.innerHTML; }
+            } catch (e) { }
+            return h;
+        };
+    } catch (e) { try { console.log('p9clean', e); } catch (er) { } }
+})();
+/* ===== p9menu (build 376): modern look for the top-right Menu sheet and the More sheet. Look only: same items, order, wording, actions. ===== */
+(function () {
+    try {
+        if (window.__mwMenuA) { return; } window.__mwMenuA = 1;
+        var css = document.createElement('style'); css.setAttribute('data-mwkeep', '1');
+        css.textContent =
+            '#sheetMenu .mwmh{margin:2px 0 14px;padding:16px 16px 15px;border-radius:20px;background:linear-gradient(135deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%);color:#fff;box-shadow:0 8px 22px rgba(67,56,202,.28);position:relative;overflow:hidden}' +
+            '#sheetMenu .mwmh b{display:block;font-size:17px;font-weight:800;color:#fff}' +
+            '#sheetMenu .mwmh span{display:block;margin-top:3px;font-size:13px;line-height:1.35;color:rgba(255,255,255,.88)}' +
+            '#sheetMenu .mwmh i{display:inline-block;margin-top:9px;padding:4px 10px;border-radius:12px;background:rgba(255,255,255,.18);font:700 12px system-ui,sans-serif;font-style:normal;color:#fff}' +
+            '#sheetMenu .sh{margin:18px 4px 8px;letter-spacing:.06em}' +
+            '#sheetMenu .segc{background:var(--fill);border-radius:16px;padding:4px;gap:4px}' +
+            '#sheetMenu .segc span{min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:13px;font-size:14px}' +
+            '#sheetMenu .segc span.on{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.35)}' +
+            '#sheetMenu .group{border-radius:18px;box-shadow:var(--shadow)}' +
+            '#sheetMenu #aboutBox{background:linear-gradient(180deg,rgba(99,102,241,.07),rgba(99,102,241,.02)),var(--card);border:1px solid rgba(99,102,241,.16)}' +
+            '#sheetMenu #aboutBox .row{min-height:44px}' +
+            '#sheetMenu .btn{min-height:48px;border-radius:15px}' +
+            '#sheetMenu .btn.sec{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}' +
+            '#sheetMenu .btn:not(.sec){background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff}' +
+            '#sheetWin .tile{border-radius:18px;box-shadow:var(--shadow)}' +
+            '#sheetWin .tile .ic{border-radius:50%}' +
+            '#sheetWin .mwgh{letter-spacing:.06em}' +
+            '[data-calm="1"] #sheetMenu .mwmh,html.calm #sheetMenu .mwmh{box-shadow:none}' +
+            '@media (forced-colors:active){#sheetMenu .mwmh{background:Canvas;border:1px solid CanvasText;color:CanvasText}#sheetMenu .mwmh b,#sheetMenu .mwmh span,#sheetMenu .mwmh i{color:CanvasText}#sheetMenu .segc span.on{background:Highlight;color:HighlightText}}';
+        document.head.appendChild(css);
+        function addHead() {
+            try {
+                var t = document.querySelector('#sheetMenu .sheet-t');
+                if (t && !document.querySelector('#sheetMenu .mwmh')) { t.insertAdjacentHTML('afterend', '<div class="mwmh"><b>MintooSuite settings</b><span>Look, language, alerts and help in one place.</span><i>Build ' + String(typeof BUILD !== 'undefined' ? BUILD : '').replace(/[^0-9.\-]/g, '') + '</i></div>'); }
+            } catch (e) { }
+        }
+        addHead(); setTimeout(addHead, 1500);
+    } catch (e) { try { console.log('p9menu', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
