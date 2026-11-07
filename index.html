@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.370';
+var BUILD = '2026-11-07.373';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -8827,7 +8827,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
     window.__huPush = push;
     function go(a) {
         if (!a) { return; } var i = a.indexOf(':'), v = a.slice(0, i), x = a.slice(i + 1);
-        try { if (v === 'win') { gotoWin(x); } else if (v === 'mx') { window.__mxOpen && window.__mxOpen(x); } else if (v === 'an' || v === 'chart') { pfAct(a); } else if (a === 'reconnect') { var b = document.querySelector('[data-act="reconnect"]'); if (b) { b.click(); } } } catch (er) { }
+        try { if (v === 'win') { gotoWin(x); } else if (v === 'mx') { window.__mxOpen && window.__mxOpen(x); } else if (v === 'an' || v === 'chart') { pfAct(a); } else if (v === 'tipd') { window.__tipDetail && window.__tipDetail(x); } else if (a === 'reconnect') { var b = document.querySelector('[data-act="reconnect"]'); if (b) { b.click(); } } } catch (er) { }
     }
     /* ----- generic: important log events become popups ----- */
     var _al = addLog; addLog = function (type, text) { var r = _al.apply(this, arguments); try { var t = String(type); if (/BOT|ALERT|MASTER|MOVER|HEAL|FACTORS|TRADE|ORDER|RISK/.test(t)) { push('log:' + t + ':' + String(text).slice(0, 40), /ALERT|MOVER/.test(t) ? '🔔' : /BOT/.test(t) ? '🤖' : /HEAL/.test(t) ? '🩺' : '📣', t === 'ALERT' ? 'Price alert' : t === 'MOVER' ? 'Big mover' : t === 'BOT' ? 'Bot' : 'Notice', String(text).slice(0, 140), /BOT/.test(t) ? 'win:bot' : '', /BOT|HEAL/.test(t) ? 'warn' : 'info', 600000); } } catch (e) { } return r; };
@@ -12989,12 +12989,12 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var REDIR = { prof: ['baba', 'about'], pchat: ['baba', 'chat'], pbrain: ['baba', 'settings'], gridbot: ['paper', 'grid'], botpro: ['paper', 'pro'], lab: ['paper', 'lab'], botdoc: ['paper', 'doc'], btest: ['paper', 'test'] };
         var _gw = gotoWin;
         gotoWin = function (id, isBack) {
-            var menuOpen = false; try { menuOpen = document.getElementById('sheetMenu').classList.contains('open'); } catch (e) { }
+            var menuOpen = ''; try { menuOpen = document.getElementById('sheetMenu').classList.contains('open') ? 'sheetMenu' : (document.getElementById('sheetWin').classList.contains('open') ? 'sheetWin' : ''); } catch (e) { }
             var from = S.win;
             if (REDIR[id] && window.__babaSet) { window.__babaSet(REDIR[id]); id = REDIR[id][0]; }
-            if (isBack) { var wasVia = viaMenu[from]; delete viaMenu[from]; var r0 = _gw.call(this, id, true); if (wasVia) { try { openSheet('sheetMenu'); } catch (e) { } } return r0; }
+            if (isBack) { var wasVia = viaMenu[from]; delete viaMenu[from]; var r0 = _gw.call(this, id, true); if (wasVia) { try { if (wasVia === 'sheetWin') { buildNav(); } openSheet(wasVia === 'sheetWin' ? 'sheetWin' : 'sheetMenu'); } catch (e) { } } return r0; }
             if (swipe && S.hist.length) { return _gw.call(this, id, true); }
-            if (menuOpen && id !== S.win) { viaMenu[id] = 1; }
+            if (menuOpen && id !== S.win) { viaMenu[id] = menuOpen; }
             return _gw.call(this, id, isBack);
         };
         /* ---------- Baba AI window: Chat | Ask & paste | Settings | About ---------- */
@@ -14393,13 +14393,102 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             ['Learn', 'Open the Academy window: short lessons with quizzes, from candles to risk management.'],
             ['Learn', 'Ask Baba AI anything: "how do I create a Binance API key", "what is funding rate", "why did my bot lose".']
         ];
+        /* explanations: [why it matters, what to do] in the same order as T */
+        var EX = [
+            ['Your account is a battery: each loss drains it. If one trade can only cost 1-2%, even ten losses in a row leave most of the money, so you can keep learning.', 'Before every trade, work out the money-at-risk first (the Risk window does the sum), then size the trade to that.'],
+            ['Without a stop, a small mistake can grow into a large one while you sleep or hesitate. The stop is the exit you chose when you were calm.', 'Set the stop in the same moment you enter. Only ever move it closer to price (to protect profit), never further away.'],
+            ['Win rate alone is misleading: ten trades with six small wins and four big losses can end below zero.', 'Look at average win versus average loss. Aim for a reward at least as big as your risk, then check the numbers in your results.'],
+            ['Leverage makes every price move count more, in both directions. It also moves the liquidation price closer to you.', 'Stay at 3x or lower until you have about 50 trades of history. Raise it only if your records show you handle it well.'],
+            ['Isolated margin puts only the money you assign into one trade. Cross margin lets one losing trade draw on your whole futures balance.', 'On the exchange, set the position to Isolated before you enter, and check it again on each new coin.'],
+            ['Money you need for rent, food or school fees makes you scared, and scared people close good trades early and hold bad ones.', 'Decide a trading amount you could lose completely without hurting your family, and never go above it.'],
+            ['Adding to a loser means the market is already saying you are wrong, and you are betting more on being right. Small losses become big ones this way.', 'If the stop is hit, accept the loss. If you still like the idea, wait for a new, separate entry with its own stop.'],
+            ['A bad day tends to produce more bad trades as you try to win it back. A hard limit cuts that chain.', 'Pick a daily loss limit (for example 3% of the account). When it is hit, close the app and come back tomorrow.'],
+            ['Trading fees and slippage are charged on every trade. A small target can be mostly eaten before you earn anything.', 'Before you enter, compare the target with the costs. If the profit is not clearly bigger than the fees, skip it.'],
+            ['Ten long trades on correlated coins are really one big bet. If the market turns, they all lose together.', 'Count open trades in the same direction. Keep their combined risk inside your daily limit, not each one separately.'],
+            ['Memory flatters us. A written record shows which setups truly work for you and which ones you only remember fondly.', 'After each trade note coin, reason, entry, stop, target and result. After 30 trades, read the pattern.'],
+            ['Most of the money lost by beginners is lost on trades that were not clear. Waiting is a decision, and it costs nothing.', 'Write a short checklist for a good trade. If a setup does not tick every box, do nothing.'],
+            ['A new idea can look great in your head and fail in practice. Fifty practice trades show it without costing real money.', 'Run the idea in Baba Practice Bot or Paper Trading and check the results before using real money.'],
+            ['In the moment, excitement tells you to break your rules. Rules written when you are calm protect the excited you.', 'Write 5 to 7 rules on one page (risk per trade, stop, daily limit, when not to trade) and look at them before trading.'],
+            ['After a big result your feelings run hot: confidence after a win, anger after a loss. Both lead to oversized, careless trades.', 'Step away for at least 30 minutes after a very big win or loss. Take a walk, then look at the chart again.'],
+            ['A weekly review turns experience into improvement. Without it you repeat the same mistakes for months.', 'Each Sunday ask three questions: what worked, which rule did I break, what is one thing I change next week.'],
+            ['Tiredness, anger and hurry reduce your judgement. Most rule-breaking trades happen in this state.', 'If you are not rested and calm, only watch the market today. Trade tomorrow.'],
+            ['Screenshots show only the wins, so they make your normal results look poor. Real progress is measured against your own past.', 'Compare this month with last month using your own journal. If it is better, you are improving.'],
+            ['Short charts are noisy and flip constantly. The 1-hour and 4-hour direction is the tide, and the 1-minute wiggle is the ripple.', 'Check the 1-hour and 4-hour trend first, then take entries that go the same way.'],
+            ['Bitcoin leads the market. When it drops or jumps hard, most other coins are dragged along regardless of their own news.', 'Open the Bitcoin chart before any altcoin trade. If Bitcoin is moving fast, wait for it to settle.'],
+            ['A coin that already moved 20% or more has usually used up its easy move. Late buyers are the ones who get stuck at the top.', 'Look for coins that are early and clean, not already far from their start. Ideas shows how fresh each setup is.'],
+            ['Volume shows how many traders agree. A breakout with little volume often reverses.', 'Before trusting a breakout, check that volume is clearly higher than recent bars.'],
+            ['News such as interest rates or an exchange listing can move prices within seconds, faster than a stop can protect you.', 'Check the news and rates before big events. Trade smaller or stay out until the first reaction is over.'],
+            ['At weekends and late hours fewer traders are active. Prices jump more and the gap between buy and sell price widens.', 'Use smaller size during quiet hours, and be careful with market orders then.'],
+            ['A very high funding rate means many traders are on one side and are paying to stay there. Crowded trades unwind fast.', 'When funding is extreme, be careful joining the crowd. Look at the Rates window for the current numbers.'],
+            ['Price reacts around an area, not an exact number. A stop placed exactly on the line is easily touched and then price moves on without you.', 'Draw a zone, and put the stop clearly beyond the far side of it.'],
+            ['RSI above 70 or below 30 only says price has stretched. In a strong trend it can stay stretched for a long time.', 'Use RSI as a warning together with trend and volume, not as a button that says buy or sell.'],
+            ['Trend strategies lose in sideways markets, and range strategies lose in trends. Using the wrong one is a common hidden loss.', 'First decide: trending or ranging? Then pick the matching approach, or stay out if unclear.'],
+            ['If someone gets your key, a Withdrawal-ON key lets them take your money. With Withdrawal OFF and trusted IPs, a stolen key cannot move funds out.', 'When you create an API key, keep Withdrawal and Transfer OFF and add trusted IPs. In this app, add keys only in Profile > Connections.'],
+            ['A password alone can be guessed or stolen. SMS codes can be hijacked by SIM-swap.', 'Turn on an authenticator app or passkey on every exchange and email account.'],
+            ['Fake sites copy real ones perfectly and wait for you to type your login.', 'Type the address yourself or use your saved bookmark. Never log in from a link you were sent.'],
+            ['Anyone who asks for your secret key, password or recovery words is a scammer, whatever name they use.', 'Never share them with anyone. Report and block the person.'],
+            ['Anyone who sees your 12 words owns your wallet. A phone screenshot can be synced, leaked or hacked.', 'Write the words on paper, store it somewhere safe and offline, and never type them into an app or chat.'],
+            ['Real trading has no guaranteed profit. Promises like this are how scams attract people.', 'Walk away from guaranteed profit, 100% accuracy, or doubling your money. Check any offer with someone you trust.'],
+            ['A wrong network or address can lose money permanently, and there is no undo.', 'Send a tiny amount first, confirm it arrived on the correct network, then send the rest.'],
+            ['If a secret ever went into the wrong place, assume someone could use it.', 'Change that password now, turn on two-step login, delete old API keys on the exchange and make new ones with Withdrawal OFF.'],
+            ['Ideas ranks opportunities for you and shows the reasons and the score estimate (an estimate, not a promise) in one place.', 'Open Ideas first each session instead of hunting through charts.'],
+            ['Entry, stop and target are the numbers beginners get wrong most often. The Trade card fills sensible ones.', 'Use the Trade card under the chart, read the numbers, and confirm every real order yourself.'],
+            ['When the Smart Guard skips a trade, it is protecting you from a setup that failed its checks. A skipped loser costs nothing.', 'Open the practice bot log to see the reasons for the skips and learn what a poor setup looks like.'],
+            ['Real-money bots need a clear safety lock and a stop button that is always within reach.', 'Keep the STOP button visible. The real bot stays locked until you type UNLOCK, so do that only when you are ready.'],
+            ['If something freezes, the Problem log keeps the error so the cause can be fixed instead of guessed.', 'Open More > Problem log after a freeze, then copy or e-mail it to support (WhatsApp 03122602811).'],
+            ['The Bot Doctor explains in plain words why trades lost and suggests what to change.', 'Open it once a week, read the reasons, and change one thing at a time.'],
+            ['A grid bot makes small profits when price moves up and down in a range, and struggles in a strong trend.', 'Try the paper Grid Bot on a calm, sideways coin first and watch how it behaves before any real money.'],
+            ['Staring at the screen all day tires you and tempts you into extra trades.', 'Set alerts for the coins you follow and let the app tell you when something happens.'],
+            ['Constant motion on screen uses battery and distracts you.', 'Switch on Calm screen under Look & mode for a quieter, battery-friendly view.'],
+            ['Chasing a perfect system leads to disappointment. A small edge repeated many times with small losses is how professionals work.', 'Judge yourself by your process over many trades, not by one result.'],
+            ['Surviving the first 100 trades builds the skills and records you need. Early profit can be luck and teaches bad habits.', 'Set the goal "follow my rules for 100 trades" and track it in your journal.'],
+            ['Every business has costs, and losses are the trading cost. Small, planned losses are normal. Large surprise ones are the problem.', 'Know the loss amount before you enter, and accept it as the price of the trade.'],
+            ['Luck affects single trades. Following the plan is the part you control and the part that pays over time.', 'After each trade ask only: did I follow my plan? Good process with a loss is still a good trade.'],
+            ['Small gains repeated and reinvested grow steadily. Chasing one huge win usually means huge risk.', 'Aim for small, steady, repeatable results, and let time do the work.'],
+            ['Wanting to win it back is the strongest feeling that leads to oversized, rule-breaking trades.', 'When you notice the thought, close the app for the day. Review the trade tomorrow.'],
+            ['Ten shallow strategies give ten half-understood sets of rules. One deep one gives you data on how it behaves.', 'Pick one strategy, practise it in paper mode, and keep notes before adding another.'],
+            ['Money you still have is the only thing that lets you trade tomorrow. Big recovery from a big loss is mathematically hard (down 50% needs +100%).', 'Take profits and risk seriously in that order: first limit the loss, then think about the gain.'],
+            ['A candle shows who won the period. Long wicks show price was pushed back, and big bodies show strong conviction.', 'Practise in the Academy lessons or in the Money Quest Candle Reader game.'],
+            ['Moving averages smooth noise. EMA 20 above EMA 50 and rising means an uptrend, but crossovers come late.', 'Use them to see direction, and wait for confirmation before you trust a crossover.'],
+            ['ATR is the normal distance a coin moves. A stop inside that range gets hit by ordinary noise.', 'Put the stop about 1.5 times ATR from entry, then size the trade so that distance equals your planned loss.'],
+            ['At 1.5 to 1 reward-to-risk you can be wrong more often than right and still come out ahead, before fees.', 'Before entry, compare distance to target with distance to stop. Skip trades under about 1 to 1.5.'],
+            ['Sizing by feeling leads to big losses on the trades that feel certain. Sizing by risk keeps every loss the same small amount.', 'Units = money you accept to lose divided by the distance to your stop. The Risk window and Money Quest Risk Sizer practise this.'],
+            ['Spot buying cannot be liquidated and has no funding fees. Futures add leverage and funding costs.', 'Start with spot or small, low-leverage futures until you have a track record.'],
+            ['Short lessons with quizzes build understanding step by step, offline.', 'Open the Academy and do one lesson a day. It takes a few minutes.'],
+            ['Baba AI answers questions about the app and trading basics in plain language. It is an AI helper, not a financial adviser.', 'Ask a specific question, such as how to make an API key safely, and check anything important yourself.']
+        ];
         function dayIdx() { var d = new Date(), s = new Date(d.getFullYear(), 0, 0); return Math.floor((d - s) / 86400000); }
         function today() { return T[dayIdx() % T.length]; }
+        var CATC = { Risk: '#e11d48', Habit: '#7c3aed', Market: '#0e7490', Safety: '#b3261e', App: '#0060df', Mindset: '#b45309', Learn: '#15803d' };
+        var CATW = { Risk: ['risk', 'Open Risk'], Habit: ['paper', 'Open Paper trading'], Market: ['find', 'Open Markets'], Safety: ['safety', 'Open Safety'], App: ['ideas', 'Open Ideas'], Mindset: ['academy', 'Open Academy'], Learn: ['academy', 'Open Academy'] };
+        (function () { try { var st = document.createElement('style'); st.textContent = '.tpbox{display:block;width:100%;text-align:left;border:0;border-radius:20px;padding:16px 16px 14px;color:#fff;background:linear-gradient(135deg,#ffb020 0%,#ff7a00 55%,#f2552c 100%);box-shadow:0 8px 22px rgba(255,122,0,.32);position:relative;overflow:hidden;font-family:inherit;cursor:pointer}.tpbox:before{content:"";position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.16)}.tpbox .tpt{display:flex;align-items:center;gap:10px;position:relative}.tpbox .tpb{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 2px 8px rgba(0,0,0,.18)}.tpbox .tpl{font:800 11px system-ui,sans-serif;letter-spacing:.08em;opacity:.95}.tpbox .tpc{display:inline-block;margin-top:3px;padding:2px 9px;border-radius:10px;background:rgba(0,0,0,.2);font:700 11px system-ui,sans-serif}.tpbox .tpx{font:800 18px/1.35 system-ui,sans-serif;margin-top:12px;position:relative;text-shadow:0 1px 2px rgba(0,0,0,.18)}.tpbox .tpm{display:inline-block;margin-top:12px;padding:6px 12px;border-radius:14px;background:rgba(255,255,255,.95);color:#c2410c;font:800 12.5px system-ui,sans-serif;position:relative}.tprow{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line,rgba(128,128,128,.2));padding:11px 12px;color:inherit;font-family:inherit;cursor:pointer}.tprow small{display:block;opacity:.85;margin-top:2px;font-size:12.5px;line-height:1.35}.tprow i{font-style:normal;opacity:.5;margin-left:auto;align-self:center;font-size:18px}.tpcat{display:flex;align-items:center;gap:8px;margin:14px 4px 6px;font:800 12px system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase}.tpcat u{width:10px;height:10px;border-radius:50%;display:inline-block}#mwtipd{position:fixed;inset:0;z-index:2147482500;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}#mwtipd .tpc2{width:100%;max-width:560px;max-height:88vh;overflow:auto;background:var(--card,#fff);color:var(--ink,#111);border-radius:22px 22px 0 0;padding:16px 18px 20px;box-shadow:0 -10px 30px rgba(0,0,0,.3)}#mwtipd .tph{border-radius:16px;padding:14px;color:#fff;background:linear-gradient(135deg,#ffb020,#ff7a00 55%,#f2552c)}#mwtipd h4{margin:14px 0 4px;font:800 13px system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em;opacity:.7}#mwtipd p{margin:0;font:500 15px/1.5 system-ui,sans-serif}#mwtipd .tpbt{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}#mwtipd .tpbt button{flex:1 1 120px;min-height:44px;border-radius:14px;border:0;font:800 14px system-ui,sans-serif;cursor:pointer}'; document.head.appendChild(st); } catch (e) { } })();
+        function tipOpen(k) {
+            try {
+                var o = document.getElementById('mwtipd'); if (o) { o.remove(); }
+                k = ((+k % T.length) + T.length) % T.length; var t = T[k], x = EX[k] || ['', ''], w = CATW[t[0]] || ['academy', 'Open Academy'], isT = k === dayIdx() % T.length;
+                var d = document.createElement('div'); d.id = 'mwtipd'; d.setAttribute('data-noswipe', '1'); d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true');
+                d.innerHTML = '<div class="tpc2"><div class="tph"><div style="font:800 11px system-ui,sans-serif;letter-spacing:.08em;opacity:.95">💡 ' + (isT ? 'TIP OF THE DAY' : 'TRADING TIP') + ' · ' + esc(t[0]).toUpperCase() + '</div><div style="font:800 19px/1.35 system-ui,sans-serif;margin-top:8px">' + esc(t[1]) + '</div></div><h4>Why it matters</h4><p>' + esc(x[0]) + '</p><h4>What to do</h4><p>' + esc(x[1]) + '</p><p style="margin-top:12px;font-size:12px;opacity:.65">General education, not financial advice. Nothing here promises profit.</p><div class="tpbt"><button type="button" data-tp="go" style="background:#0a84ff;color:#fff">' + esc(typeof VIEWS[w[0]] === 'function' ? w[1] : 'All tips') + '</button><button type="button" data-tp="next" style="background:rgba(128,128,128,.18);color:inherit">Next tip ›</button><button type="button" data-tp="close" class="x" style="background:rgba(128,128,128,.18);color:inherit">Close</button></div></div>';
+                d.__k = k; d.__w = w[0]; document.body.appendChild(d);
+                d.addEventListener('click', function (e) {
+                    var b = e.target && e.target.closest ? e.target.closest('[data-tp]') : null;
+                    if (!b) { if (e.target === d) { d.remove(); } return; }
+                    var a = b.getAttribute('data-tp');
+                    if (a === 'close') { d.remove(); } else if (a === 'next') { tipOpen(d.__k + 1); } else if (a === 'go') { d.remove(); try { gotoWin(typeof VIEWS[d.__w] === 'function' ? d.__w : 'tips'); } catch (er) { } }
+                });
+            } catch (e) { try { window.__mwRec && window.__mwRec('tipopen', String(e && e.message)); } catch (er) { } }
+        }
+        window.__tipDetail = function (x) { tipOpen(x === 'today' ? dayIdx() % T.length : +x); };
+        document.addEventListener('click', function (e) { try { var b = e.target && e.target.closest ? e.target.closest('[data-tipd]') : null; if (b) { e.preventDefault(); e.stopPropagation(); tipOpen(b.getAttribute('data-tipd') === 'today' ? dayIdx() % T.length : +b.getAttribute('data-tipd')); } } catch (er) { } }, true);
         function vTips() {
-            var i = dayIdx() % T.length, t = T[i], h = '<div class="group pad" style="border-left:5px solid #ff9f0a"><div class="note" style="margin:0">💡 TIP OF THE DAY · ' + esc(t[0]) + '</div><div style="font-size:17px;font-weight:700;margin-top:6px;line-height:1.35">' + esc(t[1]) + '</div></div>';
-            h += '<div class="note">A new tip every day. These habits do not make profit certain (nothing can), but they remove most of the avoidable losses.</div>' + sh('All tips', T.length) + '<div class="group">';
-            T.forEach(function (x, k) { h += '<div class="row" style="align-items:flex-start"><span><b>' + esc(x[0]) + '</b><br><small>' + esc(x[1]) + '</small></span><b>' + (k === i ? '⭐' : '') + '</b></div>'; });
-            return h + '</div>';
+            var i = dayIdx() % T.length, t = T[i], h = '<button type="button" class="tpbox" data-tipd="today" data-noswipe="1"><div class="tpt"><div class="tpb">💡</div><div><div class="tpl">TIP OF THE DAY</div><span class="tpc">' + esc(t[0]) + '</span></div></div><div class="tpx">' + esc(t[1]) + '</div><span class="tpm">Tap for the full explanation ›</span></button>';
+            h += '<div class="note">A new tip every day. These habits do not make profit certain (nothing can), but they remove most of the avoidable losses.</div>' + sh('More tips', T.length - 1) + '<div class="group">';
+            var cats = []; T.forEach(function (x) { if (cats.indexOf(x[0]) < 0) { cats.push(x[0]); } });
+            h += '</div>';
+            cats.forEach(function (c) {
+                var rows = ''; T.forEach(function (x, k) { if (x[0] === c && k !== i) { rows += '<button type="button" class="tprow" data-tipd="' + k + '" data-noswipe="1"><span>' + esc(x[1]) + '</span><i>›</i></button>'; } });
+                if (rows) { h += '<div class="tpcat" style="color:' + (CATC[c] || '#555') + '"><u style="background:' + (CATC[c] || '#555') + '"></u>' + esc(c) + '</div><div class="group">' + rows + '</div>'; }
+            });
+            return h;
         }
         WINS.push({ id: 'tips', ic: '💡', c: '#ff9f0a', n: 'Tip of the day', t: 'Tip of the day', sub: 'One useful trading habit or safety tip every day' }); LIVE.tips = 0; VIEWS.tips = vTips; MW_HELP.tips = 'A new trading tip every day, plus all tips in one list.';
         try { var Gp = MW_GROUPS.filter(function (x) { return /^Tools|^Learn|^Help|^Account/i.test(x[0]); })[0] || MW_GROUPS[MW_GROUPS.length - 1]; Gp[1].unshift('tips'); mwHostSig = ''; } catch (e) { }
@@ -14410,7 +14499,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 var d = new Date().toISOString().slice(0, 10); if (localStorage.getItem('mintoosuite_tipday') === d) { return; }
                 var a = JSON.parse(localStorage.getItem('mintoosuite_agree') || 'null'); if (!(a && a.t) || !window.__huPush) { return; }
                 localStorage.setItem('mintoosuite_tipday', d); var t = today();
-                window.__huPush('tip:' + d, '💡', 'Tip of the day', t[1], 'win:tips', 'info', 86400000, false);
+                window.__huPush('tip:' + d, '💡', 'Tip of the day', t[1], 'tipd:today', 'info', 86400000, false);
             } catch (e) { }
         }, 14000);
     } catch (e) { try { window.__mwRec && window.__mwRec('tips', String(e && e.message)); } catch (er) { } }
@@ -16021,10 +16110,10 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function nm(id) { var w = null; try { w = winDef(id); } catch (e) { } var t = String((w && (w.t || w.n)) || id).replace(/[^\w &\/.\-+%]+/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 16 ? t.slice(0, 15) + '…' : t; }
         function strip(id) {
             if (window.__mwHT && window.__mwHT !== id) { window.__mwHT = ''; }
-            var f = famOf[id]; if (window.__mwHT && window.__mwHT === id && famOf.overview) { f = famOf.overview; } if (!f || f[1].length < 2) { return ''; }
+            var f = famOf[id]; if (window.__mwHT && window.__mwHT === id && famOf.overview) { f = famOf.overview; } if (f && f[0] === 'Learn & play') { var LX = { quest: ['academy', 'videos', 'me'], academy: ['quest', 'me'], videos: ['quest', 'me'], tips: ['academy', 'videos', 'quest', 'me'] }[id]; if (LX) { f = [f[0], f[1].filter(function (k) { return LX.indexOf(k) < 0; })]; } } if (!f || f[1].length < 2) { return ''; }
             var rnd = f[0] === 'Home'; return '<div class="segc fmstrip' + (rnd ? ' mwr' : '') + '" data-noswipe="1" style="display:flex;gap:6px;overflow-x:auto;white-space:nowrap;margin:0 0 10px;padding:2px 0 6px;-webkit-overflow-scrolling:touch">' + (rnd ? (function () { var l = f[1].filter(function (k) { return k !== 'siglab' && k !== 'safety'; }), i = l.indexOf('brief'); [].splice.apply(l, [i < 0 ? l.length : i + 1, 0].concat(['siglab', 'safety'].filter(function (k) { return typeof VIEWS[k] === 'function'; }))); return l; })() : f[1]).map(function (k) {
                 var on = k === id;
-                return '<button type="button" data-act="win:' + k + '" data-noswipe="1" style="flex:none;padding:7px 12px;border-radius:16px;border:1px solid ' + (on ? '#0a84ff' : 'var(--line,#d1d1d6)') + ';background:' + (on ? '#0a84ff' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit') + ';font:700 13px system-ui,sans-serif">' + (rnd && window.__mwRI ? window.__mwRI(k) : '') + nm(k) + (window.__lvb ? window.__lvb(k) : '') + '</button>';
+                return '<button type="button" data-act="win:' + k + '" data-noswipe="1" style="flex:none;padding:7px 12px;border-radius:16px;border:1px solid ' + (on ? '#0a84ff' : 'var(--line,#d1d1d6)') + ';background:' + (on ? '#0a84ff' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit') + ';font:700 13px system-ui,sans-serif">' + (rnd && window.__mwRI ? window.__mwRI(k) : '') + (rnd && k === 'live' ? 'Fresh ideas' : nm(k)) + (window.__lvb ? window.__lvb(k) : '') + '</button>';
             }).join('') + '</div>';
         }
         FAM.forEach(function (f) {
@@ -25620,6 +25709,14 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['home tabs|home row buttons|movers button|round tabs ideas briefing|signal lab button|safety button', 'Build 370: round tabs on Home, with Signal Lab and Safety added', 'The row of tabs on Home (New coin alerts, Briefing, Signal Lab, Safety and Live; the extra Home and Ideas chips were removed because the Home and Ideas tabs at the bottom do the same) now has round coloured buttons with the name underneath; the tab you are on has a blue ring. The Movers and Trading Analyst tabs were taken out of this row because they are already on Home (the Movers card and the Trading Analyst button). You can still open them from there; when you are on one of those two windows its own tab stays visible. Two hard-to-find windows now have their own tab in their place: Signal Lab (tests how accurate UT Bot, Supertrend, RSI and Baba Practice Bot were on past candles) and Safety (PIN or pattern lock, auto-erase, panic erase, encrypted backup). They are the same windows as before, nothing was duplicated.']); } catch (e) { } })();
 
 ;(function () { try { PF_APP.push(['back button|back arrow|go back|scroll position|return to same place|where i tapped', 'Build 370: Back takes you to the exact place you tapped', 'When you open a window by tapping something halfway down a screen, the Back arrow (and your phone back button) now returns you to that same spot instead of the top or a few steps further down. If you touch or scroll the screen yourself while it settles, the app stops moving it. Tabs at the bottom and menu items still open windows from the top, as before.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['fresh ideas button|live button home|home row live', 'Build 371: the Live tab on Home is now called Fresh ideas', 'In the round row on Home the tab that used to say Live now says Fresh ideas. It opens the same window (Live Trades): the paper bot\'s open trades and the fresh ideas that are still valid, refreshed every 15 minutes. The five round tabs now share the full width of the screen.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['learn tabs|academy tabs|money quest tabs|tip of the day tabs|profile tab', 'Build 372: simpler Learn tabs', 'Money Quest now shows only its own tab and Tip of the day. Academy and Videos show Academy, Videos and Tip of the day. Tip of the day has no tab row. Profile has left these rows: open it from More > Learn and help. Tip of the day can also be found in More > Learn and help, in a daily notification on Home, and by asking Baba AI for a tip.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['tip details|tip explanation|tip box|tip of the day box', 'Build 372: Tip of the day box opens an explanation', 'Tap the Tip of the day box (in its window, or in the daily popup at the top) and a sheet opens with Why it matters and What to do, a button to the matching window, Next tip and Close. Every tip in the list opens its own explanation. Today\'s tip is no longer repeated in the list, and the category name is written once as a heading instead of on every row.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['back button more|phone back more|back to more|back from academy|back goes home', 'Build 373: Back returns to the More menu', 'When you open a window from the More tab (for example Academy) and press Back (the arrow at the top left or your phone\'s back button), you now return to the More menu, where you were. Press Back again to close More. The same already worked for the MENU button at the top right.']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -25974,7 +26071,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         st.textContent =
             F + ' [data-act="win:movers"]:not([style*="#0a84ff"]),' + F + ' [data-act="win:analyst"]:not([style*="#0a84ff"]),' + F + ' [data-act="win:overview"],' + F + ' [data-act="win:ideas"]{display:none!important}'
             + F + '{gap:4px!important;align-items:flex-start}'
-            + B + '{position:relative;flex:0 0 62px!important;width:62px!important;min-height:68px;padding:2px 0 0!important;border:0!important;background:none!important;box-shadow:none!important;border-radius:0!important;color:var(--ink,inherit)!important;display:flex!important;flex-direction:column;align-items:center;gap:4px;font:700 11px/1.1 system-ui,sans-serif!important;white-space:normal!important;text-align:center;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent}'
+            + B + '{position:relative;flex:1 0 58px!important;width:auto!important;min-width:58px;min-height:68px;padding:2px 0 0!important;border:0!important;background:none!important;box-shadow:none!important;border-radius:0!important;color:var(--ink,inherit)!important;display:flex!important;flex-direction:column;align-items:center;gap:4px;font:700 11px/1.1 system-ui,sans-serif!important;white-space:normal!important;text-align:center;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent}'
             + B + '[style*="#0a84ff"]{background:none!important;box-shadow:none!important;color:var(--ink,inherit)!important;font-weight:800!important}'
             + B + ' .mwri{box-sizing:border-box;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background-image:linear-gradient(150deg,rgba(255,255,255,.30),rgba(0,0,0,.16));box-shadow:0 2px 6px rgba(0,0,0,.18)}'
             + B + ' .mwri svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}'
@@ -26034,7 +26131,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
                 var pin = document.getElementById('mwpin'); if (pin) { var no = pin.querySelector('#mwpinno'); if (no) { no.click(); } return true; }
                 var st = document.getElementById('sheetTerms'); if (st && st.classList.contains('open')) { return true; }
                 if (S.fsKey) { var fb = document.querySelector('[data-fsb]'); if (fb) { fb.click(); return true; } }
-                var ov = document.querySelectorAll('#callPopX,#mwSafeX,#mwdel,#mwez,#mwfc,#mwfx,#mwrc');
+                var ov = document.querySelectorAll('#callPopX,#mwSafeX,#mwdel,#mwez,#mwfc,#mwfx,#mwrc,#mwtipd');
                 for (var oi = 0; oi < ov.length; oi++) { var o = ov[oi]; if (o && o.getBoundingClientRect().width > 0) { var c = o.querySelector('.x,[data-act^="close"],[data-act="cancel"],#mwdelno,button'); var btns = o.querySelectorAll('button,[data-act]'), cb = null; for (var bi = 0; bi < btns.length; bi++) { if (/^(cancel|close|no|not now|later|✕|×)/i.test((btns[bi].textContent || '').trim())) { cb = btns[bi]; break; } } cb = cb || o.querySelector('.x'); if (cb) { cb.click(); } else { o.remove(); } return true; } }
                 var sw = document.getElementById('sheetWin'), sm = document.getElementById('sheetMenu');
                 if ((sw && sw.classList.contains('open')) || (sm && sm.classList.contains('open'))) { closeSheets(); return true; }
