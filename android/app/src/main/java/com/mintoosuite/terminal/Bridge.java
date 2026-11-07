@@ -520,6 +520,13 @@ final class Bridge {
     }
 
     @JavascriptInterface
+    public String notifOpen(String tok) {
+        if (!ok(tok)) { return ""; }
+        MainActivity a = MainActivity.cur;
+        return a == null ? "" : a.takeNotif();
+    }
+
+    @JavascriptInterface
     public void notify(String tok, String title, String body) {
         if (!ok(tok)) { return; }
         if (title != null && title.length() > 80) { title = title.substring(0, 80); }
@@ -528,7 +535,9 @@ final class Bridge {
         try { NativeAlerts.jsNotified(ctx, title); } catch (Exception ignored) { }
         MainActivity.alertChannel(ctx);
         Intent open = new Intent(ctx, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent pi = PendingIntent.getActivity(ctx, 0, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        final int slot = nid++ % 50;
+        open.putExtra("mw_t", title == null ? "" : title).putExtra("mw_b", body == null ? "" : body);
+        PendingIntent pi = PendingIntent.getActivity(ctx, 100 + slot, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, MainActivity.CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat)
                 .setContentTitle(title == null ? "MintooSuite" : title)
@@ -538,7 +547,7 @@ final class Bridge {
                 .setAutoCancel(true)
                 .setShowWhen(true).setWhen(System.currentTimeMillis()).setTimeoutAfter(60L * 60L * 1000L)
                 .setContentIntent(pi);
-        ((NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE)).notify(100 + (nid++ % 50), b.build());
+        ((NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE)).notify(100 + slot, b.build());
         try { Overlay.show(ctx, title, body); } catch (Exception ignored) { }
     }
 

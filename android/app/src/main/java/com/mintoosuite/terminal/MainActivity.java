@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
         });
         createChannel();
         WebHolder.attach(this, root);
+        grabNotif(getIntent());
         try { AdsHelper.start(this, root); } catch (Throwable ignored) { }
         if (lockOn()) { showLock(); }
 
@@ -109,6 +110,37 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         WebHolder.fg(true);
         AdsHelper.resume();
+    }
+
+    /* build 381: a tapped notification carries its title and text; the page asks for them and opens that coin's chart */
+    private String notifJson;
+
+    void grabNotif(Intent in) {
+        try {
+            if (in == null) { return; }
+            String t = in.getStringExtra("mw_t"), b = in.getStringExtra("mw_b");
+            if (t == null && b == null) { return; }
+            org.json.JSONObject o = new org.json.JSONObject();
+            o.put("t", t == null ? "" : t);
+            o.put("b", b == null ? "" : b);
+            notifJson = o.toString();
+            in.removeExtra("mw_t");
+            in.removeExtra("mw_b");
+        } catch (Exception ignored) { }
+    }
+
+    String takeNotif() {
+        String s = notifJson;
+        notifJson = null;
+        return s == null ? "" : s;
+    }
+
+    @Override
+    protected void onNewIntent(Intent in) {
+        super.onNewIntent(in);
+        setIntent(in);
+        grabNotif(in);
+        try { WebHolder.js("window.__mwNotifPoll&&window.__mwNotifPoll();"); } catch (Throwable ignored) { }
     }
 
     @Override

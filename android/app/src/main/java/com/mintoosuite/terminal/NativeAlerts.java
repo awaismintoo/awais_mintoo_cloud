@@ -136,7 +136,8 @@ final class NativeAlerts {
         if (Build.VERSION.SDK_INT >= 33 && c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { return false; }
         MainActivity.alertChannel(c);
         Intent open = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent pi = PendingIntent.getActivity(c, 3, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        open.putExtra("mw_t", title == null ? "" : title).putExtra("mw_b", body == null ? "" : body);
+        PendingIntent pi = PendingIntent.getActivity(c, 3000 + (base.hashCode() & 0x3ff), open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder b = new NotificationCompat.Builder(c, MainActivity.CHANNEL).setSmallIcon(R.drawable.ic_stat).setContentTitle(title).setContentText(body)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(body)).setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setShowWhen(true).setWhen(System.currentTimeMillis()).setTimeoutAfter(60L * 60L * 1000L).setContentIntent(pi);
         ((NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE)).notify("nal_" + base, 500, b.build());

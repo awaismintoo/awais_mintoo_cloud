@@ -47,7 +47,7 @@ public class Overlay {
                             @Override
                             public void onClick(View v) {
                                 try {
-                                    Intent i = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                    Intent i = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra("mw_t", title == null ? "" : title).putExtra("mw_b", body == null ? "" : body);
                                     c.startActivity(i);
                                     wm.removeView(t);
                                     cur = null;
