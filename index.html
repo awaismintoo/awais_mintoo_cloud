@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.401';
+var BUILD = '2026-11-07.404';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -11507,6 +11507,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function pf(v, sym) { try { return fmtP(v, sym); } catch (e) { return String(+v.toPrecision(5)); } }
         function ago(ms) { var m = Math.round(ms / 60000); return m < 1 ? '<1 min' : m < 90 ? m + ' min' : Math.round(m / 60) + ' h'; }
         function doNowTiles() {
+            try { if (window.__botTiles) { return window.__botTiles(); } } catch (e) { }
             try { if (window.__ocTile) { var oc = window.__ocTile(); if (oc) { return oc; } } } catch (e) { }
             var rows = uniq(ideas().filter(function (m) { return m && m.R && !m.R.blocked; })), strong = rows.filter(function (m) { return m.R.best || m.R.p >= 0.6; });
             var pick = (strong.length ? strong : rows.slice(0, 1)).slice(0, 1), h = '';
@@ -18623,8 +18624,8 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
     try {
         var X = window.__kx, KX = X.KX;
         var vB = VIEWS.best, vP = VIEWS.plan, vI = VIEWS.ideas;
-        var TABS = [['live', '🤖 Bots recommended trades'], ['best', '⭐ Watch-list'], ['plan', '🧭 Live plan (gold + coins)'], ['all', '📋 All ideas']];
-        function cur() { var t = KX.idT; return t === 'all' || t === 'plan' || t === 'live' || t === 'best' ? t : 'live'; }
+        var TABS = [['live', '🤖 Bots recommended trades'], ['plan', '🧭 Live plan (gold + coins, updates every minute)'], ['all', '📋 All ideas']];
+        function cur() { var t = KX.idT; if (t === 'best') { return 'all'; } return t === 'all' || t === 'plan' || t === 'live' ? t : 'live'; }
         function call(f) { try { return f.apply(null, []); } catch (e) { return '<div class="note">This part could not load: ' + X.e2(e && e.message) + '</div>'; } }
         /* ---------- Best tab: real best picks, with a tab per exchange so lists never mix ---------- */
         var BST = { keys: null, at: 0 }, LT2 = Date.now();
@@ -18745,7 +18746,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 if (!(ex === 'all' ? XL.slice(1).some(function (e) { return onEx(e[0], m.sym, { m: m }); }) : onEx(ex, m.sym, { m: m }))) { return; }
                 seen++; var v = lvValid(m); try { if (v.ok && window.__recSide && window.__recSide(m.sym) !== m.side) { v = { ok: false }; } } catch (e) { } if (v.pend) { pend++; } if (v.ok) { if (!FL[m.sym + m.side]) { out.push({ m: m, v: v }); } } else if (!v.pend) { wt.push(m); }
             });
-            var h = (window.__lvOff && Date.now() < window.__lvOff ? '<div class="warn">⏸ DO NOW is paused for a few minutes to keep the app smooth (the check was slow on this phone). Nothing is shown until it resumes.</div>' : '') + (emb ? '' : X.seg('bxch', XL, ex)) + (emb ? '' : '<div class="warn" style="margin:0 0 8px">⚡ <b>Strict list</b>: only deals that pass <b>every</b> check <u>right now</u> (strict list, Baba chart check, no chasing, world and dollar checks). Each has a countdown.</div>');
+            var h = (window.__lvOff && Date.now() < window.__lvOff ? '<div class="warn">⏸ The strict check is paused for a few minutes to keep the app smooth (the check was slow on this phone). Nothing is shown until it resumes.</div>' : '') + (emb ? '' : X.seg('bxch', XL, ex)) + (emb ? '' : '<div class="warn" style="margin:0 0 8px">⚡ <b>Strict list</b>: only deals that pass <b>every</b> check <u>right now</u> (strict list, Baba chart check, no chasing, world and dollar checks). Each has a countdown.</div>');
              try { h += window.__fastBox ? window.__fastBox() : ''; } catch (e) { }
             try { var lg = window.__docLedger && window.__docLedger(); if (lg) { h += '<div class="note" style="margin:0 0 8px;min-height:5.6em">📒 <b>Bot track record</b>: ' + (lg.n ? lg.n + ' closed practice/bot trades, ' + Math.round(lg.win * 100) + '% winners, net ' + (lg.net >= 0 ? '+' : '') + lg.net.toFixed(2) + ' $ after fees. ' + (lg.n < 30 ? 'Fewer than 30 trades: too early to judge, keep practicing.' : (lg.net > 0 ? 'Positive after ' + lg.n + ' trades.' : 'Negative after ' + lg.n + ' trades: treat every call as unproven.')) : 'No closed bot trades yet. Run the Baba Practice Bot for a week or two: it trades the same calls with fake money and builds the record.') + ' A coin whose recent signals or bot trades lost money is not recommended.</div>'; } } catch (e) { }
             h += '<div class="note" style="margin:0 0 6px">Exchanges with live scanning here: Binance, MEXC, Bitget. OKX, Bybit and others have order tickets but no live list yet, so they are not shown.' + (pend ? ' Checking ' + pend + ' more coin' + (pend > 1 ? 's' : '') + '…' : '') + '</div>';
@@ -18767,9 +18768,9 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         }
         VIEWS.ideas = function () {
             var t = cur(), h = X.seg('idT', TABS, t);
-            var EXPL = { live: '<b>BOTS RECOMMENDED TRADES</b>: the fresh BUY/SELL signals of Baba Signal and UT Bot, with a timer. This is the one to act on. If it is empty, wait.', best: '<b>Watch-list</b>: the strongest coins of the day on Binance, MEXC and Bitget (they passed the strict check and the 20-day replay). Not an entry signal yet: watch them and wait for a DO NOW card.', plan: '<b>Live plan</b>: a fresh plan card for gold and the main Binance Futures coins, refreshed every minute (entry, stop, target fixed at plan time). The fixed daily plan at 05:15 PKT is in <b>New Plan</b> (More).', all: '<b>All ideas</b>: every idea in one ranked list, including everything the Scanner finds. For browsing. <span class="pfbtn" data-act="win:scanner" style="margin-left:4px">Open raw Scanner</span>' };
+            var EXPL = { live: '<b>BOTS RECOMMENDED TRADES</b>: the fresh BUY/SELL signals of Baba Signal and UT Bot, with a timer. This is the one to act on. If it is empty, wait.', best: '<b>All ideas</b>: the strongest coins of the day on Binance, MEXC and Bitget (they passed the strict check and the 20-day replay). Not an entry signal yet: watch them and wait for a DO NOW card.', plan: '<b>Live plan</b>: a fresh plan card for gold and the main Binance Futures coins, refreshed every minute (entry, stop, target fixed at plan time). The fixed daily plan at 05:15 PKT is in <b>New Plan</b> (More).', all: '<b>All ideas</b>: for browsing, not for entries. First the strongest coins of the day on Binance, MEXC and Bitget, then the strict list, fast movers and practice-bot record, then every idea ranked, including everything the Scanner finds. Trades to act on come only from <b>Bots recommended trades</b>. <span class="pfbtn" data-act="win:scanner" style="margin-left:4px">Open raw Scanner</span>' };
             h += '<div class="note" style="margin:0 0 8px">' + EXPL[t] + '</div>';
-            return h + call(t === 'live' ? vBots : t === 'best' ? (function () { try { var wl = vBestX(); try { wl += '<div class="note" style="margin:14px 0 4px"><b>More checks</b>: the strict list, fast movers and the practice-bot track record.</div>' + vLive(true); } catch (e2) { } return wl; } catch (e) { return vB(); } }) : t === 'plan' ? vP : vI);
+            return h + call(t === 'live' ? vBots : t === 'best' ? (function () { try { return vBestX(); } catch (e) { return vB(); } }) : t === 'plan' ? vP : (function () { var w = ''; try { w = vBestX(); } catch (e) { try { w = vB(); } catch (e3) { } } try { w += '<div class="note" style="margin:14px 0 4px"><b>More checks</b>: the strict list, fast movers and the practice-bot track record.</div>' + vLive(true); } catch (e2) { } return w + '<div class="note" style="margin:14px 0 4px"><b>Every idea, ranked</b></div>' + call(vI); }));
         };
         LIVE.ideas = 1;
         try { WINS.push({ id: 'bpx', ic: '⭐', c: '#ff9f0a', n: 'Watch-list', t: 'Watch-list', sub: 'Strongest coins of the day, with separate Futures and Spot tabs for Binance, MEXC and Bitget' }); LIVE.bpx = 1; VIEWS.bpx = function () { try { return vBestX(); } catch (e) { return vB(); } }; } catch (e) { }
@@ -20768,7 +20769,7 @@ try {
                 var s = c + 'USDT', t = S.tick[s], rc = 'WAIT', tr = null; try { rc = window.__recSide(s); } catch (e) { } try { tr = idTrend(s); } catch (e) { }
                 h += '<div class="rw"><div style="flex:1"><b>' + c + '</b> ' + (t ? fp2(t.p, s) + ' <b style="color:' + (t.chg >= 0 ? '#16a34a' : '#dc2626') + '">' + (t.chg >= 0 ? '▲ +' : '▼ ') + t.chg.toFixed(2) + '%</b>' : '<span class="mut">no price</span>') + '<div style="font-size:11.5px;opacity:.8">⭐ ' + (rc === 'WAIT' ? 'WAIT' : rc) + (tr && tr.txt ? ' · ' + tr.txt : '') + '</div></div><span class="bt" data-sp="long:' + s + '" style="background:#16a34a">▲</span><span class="bt" data-sp="short:' + s + '" style="background:#dc2626">▼</span><span class="bt" data-sp="chart:' + c + '" style="background:#64748b">📈</span><span class="bt" data-sp="lk:' + s + '" style="background:#6e5bd8">🔗</span><span class="bt" data-sp="del:' + c + '" style="background:rgba(127,127,127,.5)">✕</span></div>';
             });
-            return h + '<div class="note" style="margin:6px 0 0">▲ Long and ▼ Short open the trade window of your Trading mode in the top half. 🔗 shows the linked master coins.</div>';
+            return (window.__sigDock ? window.__sigDock() : '') + h + '<div class="note" style="margin:6px 0 0">▲ Long and ▼ Short open the trade window of your Trading mode in the top half. 🔗 shows the linked master coins.</div>';
         }
         function botsTab() {
             var h = '', R = S.rb || {}, F = S.fb || {}, B = S.bot || {}, any = false;
@@ -22093,7 +22094,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             cache = { k: key, rows: out }; return out;
         };
         function tabs(cur) {
-            var T = [['ideas', '⭐ Ideas'], ['morning', '🧭 New Plan (daily 05:15)'], ['analyst', '🎯 Trading Analyst']].concat(cur === 'scanner' ? [['scanner', '🔍 Scanner']] : []);
+            var T = [['ideas', '⭐ Ideas'], ['morning', '🧭 New Plan (fixed daily 05:15)'], ['analyst', '🎯 Trading Analyst']].concat(cur === 'scanner' ? [['scanner', '🔍 Scanner']] : []);
             return '<div class="m7row" data-noswipe="1" style="margin:0 0 8px">' + T.map(function (t) { return '<span class="' + (t[0] === cur ? 'on' : '') + '" data-act="win:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div>';
         }
         ['scanner', 'morning'].forEach(function (id) { try { var _w = VIEWS[id]; if (_w) { VIEWS[id] = function () { return tabs(id) + _w.apply(this, arguments); }; } } catch (e) { } });
@@ -25773,7 +25774,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['bitget test connection|could not reach bitget|cors|bitget key not working|test connection failed', 'Test connection (Bitget, MEXC, Bybit, OKX)', 'Profile > Connections: save API key, secret and (Bitget/OKX) the passphrase, then Test connection. In the installed Android app the check now goes through the phone\\u2019s own connection, not the browser, so the old "browser could not reach" (CORS) message should be gone. If it still fails: check internet, that the passphrase is the one you set, that Read permission is on, that Withdraw is OFF and that Bind IP is empty or includes your current IP. Never share keys in chats.']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['live now|valid deals|live deals|recommended deals|live tab|only valid|timer deals|countdown', 'Ideas > Live now', 'Ideas > 🟢 Live now shows only the deals that pass every check at this moment (strict ideas list, Baba chart check, no chasing, dollar/world checks), for Binance, MEXC and Bitget (switch with the exchange chips). Each card has a countdown and a PKT end time. When a check fails or time ends, the card disappears by itself. No rule was loosened. An empty list means wait. Not advice; always use a stop-loss.']); MW_HELP.ideas = (MW_HELP.ideas || '') + ' Tab 🟢 Live now = only currently valid deals with countdown.'; } catch (e) { } })();
 ;(function () { try { PF_APP.push(['do now|do now tiles|valid deals home|home do now|why no do now', 'DO NOW (Home and Ideas)', 'DO NOW on Home and the Ideas > ⚡ DO NOW tab now use one single check: a deal appears only while it passes every check at this moment (strict ideas list, positive expected value, Baba chart check, no chasing, world and dollar checks). Each card shows a timer and an end time in PKT and disappears when a check fails or time ends. If nothing shows, nothing is valid and waiting is correct. No rule was loosened; nothing can guarantee a win, so use a stop-loss.']); } catch (e) { } })();
-;(function () { try { PF_APP.push(['which ideas tab|difference between best and plan|watch list|watch-list|live plan|all ideas|scanner and all|which tab|ideas tabs explained', 'Ideas tabs: which one to use', '⚡ DO NOW = deals valid this minute, with a timer: act only on these. ⭐ Watch-list = strongest coins of the day on Binance, MEXC and Bitget; not an entry yet, wait for DO NOW. 🧭 Live plan = plan cards for gold and the main Binance Futures coins, refreshed every minute. 📋 All ideas = every idea in one list, including everything the Scanner finds (raw Scanner opens from there). New Plan (daily 05:15 PKT) = the fixed daily plan with a 9-day replay. Trading Analyst = a plan for any coin you choose. A good routine: Watch-list or Live plan to prepare, DO NOW to act, stop-loss always.']); MW_HELP.ideas = (MW_HELP.ideas || '') + ' Tabs: DO NOW (act), Watch-list (prepare), Live plan (gold + coins), All ideas (browse, includes Scanner).'; } catch (e) { } })();
+;(function () { try { var T = '🤖 Bots recommended trades = the fresh BUY/SELL signals of Baba Signal and UT Bot (one bot = a trade, both = STRONG), scored on the full factor check, held 15 minutes, with exchange tabs All, Binance, MEXC, Bitget: act only on these. 🧭 Live plan (gold + coins) = plan cards for gold and the main Binance Futures coins, refreshed every minute. 📋 All ideas = for browsing: the strongest coins of the day, then the strict list, fast movers and practice-bot record, then every idea ranked (incl. the Scanner). TOP ROW: ⭐ Ideas = this page. 🧭 New Plan (fixed daily 05:15 PKT) = the fixed daily plan with a 9-day replay. 🎯 Trading Analyst = a plan for any market with profit and loss on $50, $100, $200. ⚙ Custom hours = plans for the hours you pick. HOME: the tiles under the market mood show the same bot signals. Signals can lose: use the stop shown and a small size.'; PF_APP.push(['which ideas tab|difference between best and plan|watch list|watch-list|live plan|all ideas|scanner and all|which tab|ideas tabs explained|bots recommended trades|do now|new plan|trading analyst|custom hours', 'Ideas window: what every tab does', T]); MW_HELP.ideas = (MW_HELP.ideas || '') + ' Tabs: Bots recommended trades (act), Live plan (gold + coins), All ideas (browse, includes Scanner).'; } catch (e) { } })();
 ;(function () { try { PF_APP.push(['app freezes|app crashes|keeps crashing|freeze|slow app|lag|hang', 'If the app freezes or crashes', 'First: open Menu > Problem log (it lists slow moments). The DO NOW check now has a speed guard: if it is slow on your phone it pauses itself for 10 minutes. If the app still freezes: switch the Real/Practice bots off, close the app fully, and reopen. Also check Samsung battery settings (set MintooSuite to Unrestricted) and keep the phone storage above 1 GB. Tell Baba or send the Problem log by email so it can be fixed.']); MW_HELP.overview = (MW_HELP.overview || '') + ' Home Ideas shortcut now opens Ideas.'; } catch (e) { } })();
 ;(function () { try { PF_APP.push(['exchange row|exchange buttons|binance mexc bitget buttons|home exchange tiles|exchange names', 'Exchange buttons on Home', 'The row under the hero card (All, Binance, MEXC, Bitget, Bybit · OKX, Exness, Gold, PSX) shows each name in its own colour and style, with the live coin or pair count. Tap one to filter markets to that exchange. They are plain text names, not official logos. Bybit · OKX open order tickets; Exness and Gold open their desks; PSX opens Pakistan stocks.']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['my day|best picks tile|home tiles|best picks|movers tile|todays profit|today profit', 'Home: My day tile and tile names', 'The old "Best picks" tile on Home is now 📒 My day: it shows today\'s profit or loss from your Baba Practice Bot and Baba Real Bot trades, how many are done and how many are still open. Tap it to open Proof. The watch-list of coins to keep an eye on is still inside Ideas (⭐ Watch-list); coins to act on are under DO NOW. Names on the Gold, Bitcoin, Ethereum tiles and the bottom tiles use the same bold clean style as the hero buttons. The exchange row keeps the coloured names (no round icons).']); PF_APP.push(['split charts search|split search|search pane|search not working split|choose market pane', 'Split Charts: search a market', 'In Split Charts tap the 🔎 button at the top of any pane. A search box opens: type gold, btc, usd/pkr, oil, sp500 and tap a result. It no longer closes by itself after a tap. Tap outside the box or ✕ to close it.']); MW_HELP.overview = (MW_HELP.overview || '') + ' Home tile My day replaces Best picks.'; } catch (e) { } })();
@@ -25837,6 +25838,9 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['bot signal wait|notification says strong but chart says wait|one verdict bot signal', 'A bot signal is the same verdict everywhere (build 399)', 'When Baba Signal or UT Bot gives a signal, the chart bar, the Chief box, Do now and the notification now all show the same side for the 15 minutes the signal is held. Before, the notification could say STRONG while the chart bar said WAIT. A hard reason (pump, reversal, bad track record, stop break, Bitcoin shock) still turns it to WAIT.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['bots recommended trades|do now renamed|only bots signals', 'Bots recommended trades (build 400)', 'The Do now tab is now called Bots recommended trades (Ideas window). It shows only the signals of the two bots, Baba Signal and UT Bot, under the exchange tabs All, Binance, MEXC and Bitget. One bot = a trade, both bots = STRONG. Each signal is scored on the full factor check (trend, six chart checks, volume, news, world and dollar, the coin record) and dropped when the score is too low or a hard block appears. The advisers no longer decide here. The old strict list, fast movers and practice-bot track record moved to the Watch-list tab under More checks.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['signal at same time|signal delay|recommendation late|bots signal timing', 'Bot recommendation appears with the chart signal (build 401)', 'The Bots recommended trades list now starts a fresh round every time a new 15-minute candle closes, checks the coin you have open first (using the chart candles already on screen), and scans faster, so a bot BUY or SELL shows in the list and in the notification about when it appears on the chart.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['merged watch-list|watch-list gone|home tiles bots', 'Fewer tabs, no duplicates (build 402)', 'Watch-list is merged into All ideas (nothing was lost: the strongest coins, the strict list, fast movers and the practice-bot record are all there). The old Do now name is gone: Ideas has Bots recommended trades, Live plan and All ideas, and the Home tiles show the bot signals. New Plan is marked fixed daily and Live plan updates every minute.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['split screen trade|trade in split|dock trade|split dock bots', 'Trade from the Split screen (build 403)', 'Open the Split screen (the round ⬓ button), tap the Watch tab: the bot signals (Baba Signal and UT Bot) are listed on top with a Trade button for Binance coins, so you can open the trade window in the top half without leaving the split screen. Every coin in your watch list also has ▲ Long and ▼ Short. Signals can lose: use the stop shown.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['one coin split|split one coin|same coin different time frames|multi time frame split|2 3 4 windows', 'One coin in 2 to 4 windows (build 404)', 'Split Charts has a new box at the top: pick the exchange (Binance, MEXC, Bitget, Bybit, OKX, KuCoin, Coinbase or Kraken), type a coin (or use the coin from your chart) and tap 2, 3 or 4 windows. The same coin opens in that many panes, each on a different time frame: 2 = 15m and 1h; 3 = 1m, 15m and 1h; 4 = 1m, 15m, 1h and 4h. You can still change any pane afterwards. The ⛶ Full screen button (same box) shows the split you have, one coin or many, in the whole screen with the same panes at full size; Long/Short buttons sit on top: one set when all panes show the same coin, a set for each coin when the panes show different coins (exchanges the app can trade). Back or Exit full screen returns.', 'win:split']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26251,7 +26255,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
                 var pin = document.getElementById('mwpin'); if (pin) { var no = pin.querySelector('#mwpinno'); if (no) { no.click(); } return true; }
                 var st = document.getElementById('sheetTerms'); if (st && st.classList.contains('open')) { return true; }
                 if (S.fsKey) { var fb = document.querySelector('[data-fsb]'); if (fb) { fb.click(); return true; } }
-                var ov = document.querySelectorAll('#callPopX,#mwSafeX,#mwdel,#mwez,#mwfc,#mwfx,#mwrc,#mwtipd');
+                var ov = document.querySelectorAll('#callPopX,#mwSafeX,#mwdel,#mwez,#mwfc,#mwfx,#mwrc,#mwtipd,#mwspfs');
                 for (var oi = 0; oi < ov.length; oi++) { var o = ov[oi]; if (o && o.getBoundingClientRect().width > 0) { var c = o.querySelector('.x,[data-act^="close"],[data-act="cancel"],#mwdelno,button'); var btns = o.querySelectorAll('button,[data-act]'), cb = null; for (var bi = 0; bi < btns.length; bi++) { if (/^(cancel|close|no|not now|later|✕|×)/i.test((btns[bi].textContent || '').trim())) { cb = btns[bi]; break; } } cb = cb || o.querySelector('.x'); if (cb) { cb.click(); } else { o.remove(); } return true; } }
                 var sw = document.getElementById('sheetWin'), sm = document.getElementById('sheetMenu');
                 if ((sw && sw.classList.contains('open')) || (sm && sm.classList.contains('open'))) { closeSheets(); return true; }
@@ -26989,6 +26993,36 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 })();
 
 ;(function () {
+    /* build 403: bot signals inside the Split screen dock (Watch tab, on top): trade without leaving the split screen */
+    try {
+        window.__sigDock = function () {
+            var L = (window.__sigList ? window.__sigList('all') : []).slice(0, 8), now = Date.now(), nm = { binance: 'Binance', mexc: 'MEXC', bitget: 'Bitget' };
+            function f(v) { return (+v).toPrecision(5).replace(/\.?0+$/, ''); }
+            var h = '<div style="margin:2px 0 4px"><b>🤖 Bots recommended trades</b></div>';
+            if (!L.length) { return h + '<div class="note" style="margin:0 0 8px">No fresh bot signal right now. Baba Signal and UT Bot are scanning.</div>'; }
+            L.forEach(function (g) { var up = g.side === 'LONG', m = Math.max(1, Math.round((g.until - now) / 60000)), tr = g.x === 'binance';
+                h += '<div class="rw"><div style="flex:1"><b>' + g.base + '</b> <b style="color:' + (up ? '#16a34a' : '#dc2626') + '">' + (up ? '▲ LONG' : '▼ SHORT') + '</b>' + (g.strong ? ' <b style="background:#ff9f0a;color:#fff;border-radius:6px;padding:1px 6px">STRONG</b>' : '') + ' <span class="mut" style="font-size:11.5px">' + (nm[g.x] || g.x) + ' · ' + m + ' min</span><div style="font-size:11.5px;opacity:.8">entry ' + f(g.px) + ' · stop ' + f(g.stop) + ' · target ' + f(g.tp) + '</div></div>' +
+                    (tr ? '<span class="bt" data-sp="' + (up ? 'long:' : 'short:') + g.sym + '" style="background:' + (up ? '#16a34a' : '#dc2626') + '">' + (up ? '▲ Trade' : '▼ Trade') + '</span>' : '') + '<span class="bt" data-sp="chart:' + g.base + '" style="background:#64748b">📈</span></div>'; });
+            return h + '<div style="height:6px"></div>';
+        };
+    } catch (e) { }
+})();
+
+;(function () {
+    /* build 402: Home tile = the bot signals (replaces the old strict-list DO NOW tile) */
+    try {
+        function e2(v) { return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+        function f(v) { return (+v).toPrecision(5).replace(/\.?0+$/, ''); }
+        window.__botTiles = function () {
+            var L = (window.__sigList ? window.__sigList('all') : []).slice(0, 2), now = Date.now(), nm = { binance: 'Binance', mexc: 'MEXC', bitget: 'Bitget' };
+            if (!L.length) { return '<div class="kpc mwdn none" data-act="win:ideas" data-sg0="none"><div class="dh"><span>🤖 BOTS RECOMMENDED TRADES</span><span>scanning</span></div><div class="dt"><b>No fresh bot signal</b></div><div class="ds">Baba Signal and UT Bot have no fresh BUY or SELL right now. When one does, it shows here and in Ideas, with a timer. Waiting is a valid choice.</div></div>'; }
+            return L.map(function (g) { var up = g.side === 'LONG', left = Math.max(0, g.until - now), m = Math.max(1, Math.round(left / 60000));
+                return '<div class="kpc mwdn' + (up ? '' : ' sh2') + '" data-act="chart:' + e2(g.sym) + '"><div class="dh"><span>🤖 ' + (g.strong ? 'STRONG BOT SIGNAL' : 'BOT SIGNAL') + '</span><span>valid ' + m + ' min</span></div><div class="dt"><b>' + (up ? '▲ ' : '▼ ') + e2(g.base) + ' <small style="font-size:12px;font-weight:800;opacity:1;color:#fff;background:rgba(255,255,255,.22);border-radius:8px;padding:1px 6px;margin-left:4px">' + g.side + '</small></b>' + (g.conv ? '<em>' + g.conv + '</em>' : '') + '</div><div class="dl"><div>Entry<b>' + f(g.px) + '</b></div><div>Stop<b>' + f(g.stop) + '</b></div><div>Target<b>' + f(g.tp) + '</b></div></div><div class="db"><div class="dx"><i>' + (nm[g.x] || g.x) + '</i></div><div class="go">Review ›</div></div></div>'; }).join('');
+        };
+    } catch (e) { }
+})();
+
+;(function () {
     /* build 399: ONE VERDICT. A listed bot signal is the verdict everywhere: chart bar, Chief box, notifications. It reaches rec() through the three existing doors (fast list, entry gate, Chief head), so nothing else is touched. Hard reasons (pump, reversal, bad track record, stop break, Bitcoin shock) still win. */
     try {
         var fg = window.__fastGet, gg = window.__gate, ch = window.__chiefHead;
@@ -27007,6 +27041,73 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         document.addEventListener('click', function (e) { try { var t = e.target && e.target.closest ? e.target.closest('[data-act],[data-xk],[data-m20],[data-tw],[data-plan]') : null; lastTap = { w: t ? (t.getAttribute('data-act') || t.getAttribute('data-xk') || t.getAttribute('data-m20') || t.getAttribute('data-tw') || 'plan') : 'other', t: Date.now() }; } catch (e2) { } }, true);
         if (window.PerformanceObserver) { new PerformanceObserver(function (l) { l.getEntries().forEach(function (en) { if (en.duration >= 1500) { try { var ago = Math.round((Date.now() - lastTap.t - en.duration) / 1000); window.__mwRec && window.__mwRec('doctor', 'Freeze ' + Math.round(en.duration) + ' ms on ' + (S.win || '?') + (lastTap.t && ago < 30 ? ', ' + Math.max(0, ago) + ' s after tapping ' + lastTap.w : '')); } catch (e3) { } } }); }).observe({ entryTypes: ['longtask'] }); }
     } catch (e) { }
+})();
+/* build 404: Split Charts > "One coin, 2 to 4 time frames": the same coin in 2, 3 or 4 panes, each with a different time frame (you can still change any pane afterwards). Uses the existing split panes; nothing else changes. */
+;(function () {
+    try {
+        var FR = { 2: ['15', '60'], 3: ['1', '15', '60'], 4: ['1', '15', '60', '240'] };
+        var EXS = [['BINANCE', 'Binance', 'USDT.P'], ['MEXC', 'MEXC', 'USDT'], ['BITGET', 'Bitget', 'USDT'], ['BYBIT', 'Bybit', 'USDT.P'], ['OKX', 'OKX', 'USDT'], ['KUCOIN', 'KuCoin', 'USDT'], ['COINBASE', 'Coinbase', 'USD'], ['KRAKEN', 'Kraken', 'USD']], XSEL = 'BINANCE';
+        try { var x0 = localStorage.getItem('mintoosuite_sp1x'); if (x0 && EXS.some(function (e) { return e[0] === x0; })) { XSEL = x0; } } catch (e) { }
+        function tv(v) { v = String(v || '').trim(); if (!v) { return ''; } if (v.indexOf(':') >= 0) { return v.toUpperCase(); } v = v.toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/USDT$/, '').replace(/USD$/, ''); var ex = EXS.filter(function (e) { return e[0] === XSEL; })[0] || EXS[0]; return v ? ex[0] + ':' + v + ex[2] : ''; }
+        function curCoin() { try { var c = S.chart && S.chart.sym; return c ? String(c).replace(/USDT$/, '') : ''; } catch (e) { return ''; } }
+        function box() {
+            var c = curCoin(), nm = { '1': '1m', '15': '15m', '60': '1h', '240': '4h' };
+            return '<div class="group pad" data-noswipe="1" id="mwsp1"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>🔎 One coin, 2 to 4 time frames</b><span class="badge long tap" data-sp1fs="open" style="padding:9px 12px;white-space:nowrap">⛶ Full screen</span></div><div class="note" style="margin:2px 0 6px">Pick the exchange, type the coin, then tap 2, 3 or 4 windows: the same coin opens in that many panes, each on a different time frame (1m · 15m · 1h · 4h). You can still change any pane below.</div>' +
+                '<input id="mwsp1c" placeholder="Coin, e.g. BTC, SOL (or a TradingView symbol)" value="' + (c || '') + '" autocomplete="off" autocapitalize="characters" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit;text-transform:uppercase;margin-bottom:6px">' +
+                '<div class="note" style="margin:0 0 4px">Exchange</div><div id="mwsp1x" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' + EXS.map(function (e) { return '<span class="badge ' + (e[0] === XSEL ? 'long' : 'wait') + ' tap" data-sp1x="' + e[0] + '" style="padding:8px 11px">' + e[1] + '</span>'; }).join('') + '</div><div style="display:flex;gap:6px;flex-wrap:wrap">' + [2, 3, 4].map(function (n) { return '<span class="badge wait tap" data-sp1="' + n + '" style="padding:9px 12px">' + n + ' windows · ' + FR[n].map(function (x) { return nm[x]; }).join(' / ') + '</span>'; }).join('') + '</div></div>';
+        }
+        var _s = VIEWS.split;
+        if (_s) { VIEWS.split = function () { var h = ''; try { h = box(); } catch (e) { } return h + _s.apply(this, arguments); }; }
+
+        /* ---- full screen: the same split (one coin or many) in the whole screen ---- */
+        var ROWS = { 1: 1, 2: 2, 3: 2, 4: 2, 5: 2, 6: 3, 7: 3, 8: 4 };
+        function fsSize() { try { var o = document.getElementById('mwspfs'); if (!o) { return; } var n = (S.sp && S.sp.n) || 4, r = ROWS[n] || 2, top = 52, hdr = 48, gap = 8, h = Math.floor((window.innerHeight - top - gap * (r + 1) - (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--mwdk')) || 0)) / r) - hdr; o.style.setProperty('--spfsh', Math.max(120, h) + 'px'); } catch (e) { } }
+        function openFS() {
+            try {
+                if (typeof mwSplitMount === 'function') { mwSplitMount(); }
+                var host = document.getElementById('mwSplitHost'); if (!host) { return; }
+                var o = document.getElementById('mwspfs'); if (o) { o.remove(); }
+                var st = document.getElementById('mwspfscss'); if (!st) { st = document.createElement('style'); st.id = 'mwspfscss'; st.setAttribute('data-mwkeep', '1'); st.textContent = '#mwspfs{position:fixed;left:0;right:0;top:0;bottom:0;z-index:9500;background:var(--bg,#f2f2f7);color:var(--tx,#111);display:flex;flex-direction:column}#mwspfs .tb{display:flex;align-items:center;justify-content:space-between;padding:calc(6px + env(safe-area-inset-top)) 10px 6px;height:52px;box-sizing:border-box;flex:0 0 auto}#mwspfs .tb button{padding:10px 16px;border:0;border-radius:12px;background:#ff3b30;color:#fff;font-weight:800;font-size:15px}#mwspfs .bd{flex:1;overflow:auto;padding:0 8px 8px;-webkit-overflow-scrolling:touch}#mwspfs iframe{height:var(--spfsh,300px)!important}#mwspfs .note,#mwspfs .segc,#mwspfs input[data-spc]{display:none!important}#mwspfs .segc:first-child{display:flex!important}'; document.head.appendChild(st); }
+                o = document.createElement('div'); o.id = 'mwspfs'; o.setAttribute('data-noswipe', '1'); o.innerHTML = '<div class="tb"><button type="button" data-sp1fs="close">✕ Exit full screen</button><b>Split charts · full screen</b></div><div id="mwspfst" style="flex:0 0 auto;display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 6px"></div><div class="bd"></div>';
+                document.body.appendChild(o); o.querySelector('.bd').appendChild(host); fsTrade(); fsSize();
+            } catch (e) { }
+        }
+
+        /* trade buttons: one coin in all panes = one set; different coins = a set for each coin (only exchanges the app can trade) */
+        function fsTrade() {
+            try {
+                var b = document.getElementById('mwspfst'); if (!b) { return; }
+                var ok = { BINANCE: 1, MEXC: 1, BITGET: 1, BYBIT: 1, OKX: 1 }, seen = {}, h = '';
+                ((S.sp && S.sp.panes) || []).slice(0, (S.sp && S.sp.n) || 4).forEach(function (p) {
+                    var m = /^([A-Z]+):(.+?)(\.P)?$/.exec(String(p && p.s || '').toUpperCase()); if (!m || !ok[m[1]] || !/USDT$/.test(m[2])) { return; }
+                    var k = m[2]; if (seen[k]) { return; } seen[k] = 1;
+                    h += '<span style="display:inline-flex;gap:4px;align-items:center;background:rgba(127,127,127,.15);border-radius:12px;padding:3px 6px"><b style="font-size:13px">' + k.replace(/USDT$/, '') + '</b><span class="badge long tap" data-sp1t="' + k + '|LONG" style="padding:8px 12px">Long</span><span class="badge short tap" data-sp1t="' + k + '|SHORT" style="padding:8px 12px">Short</span></span>';
+                });
+                b.innerHTML = h;
+            } catch (e) { }
+        }
+        function closeFS() { try { var o = document.getElementById('mwspfs'); if (!o) { return; } var host = document.getElementById('mwSplitHost'), m = document.getElementById('mwSplitMount'); if (host && m) { m.appendChild(host); } o.remove(); try { if (typeof renderView === 'function' && S.win === 'split') { renderView(true); } } catch (e) { } } catch (e) { } }
+        window.addEventListener('resize', fsSize); window.addEventListener('orientationchange', function () { setTimeout(fsSize, 300); });
+        document.addEventListener('click', function (e) {
+            var t = e.target && e.target.closest ? e.target.closest('[data-sp1t]') : null;
+            if (t) { e.preventDefault(); e.stopPropagation(); var a = t.getAttribute('data-sp1t').split('|'); closeFS(); try { window.__tw.run({ sym: a[0], side: a[1] }); } catch (er) { } return; }
+            var f = e.target && e.target.closest ? e.target.closest('[data-sp1fs]') : null; if (!f) { return; }
+            e.preventDefault(); e.stopPropagation(); if (f.getAttribute('data-sp1fs') === 'open') { openFS(); } else { closeFS(); }
+        }, true);
+        document.addEventListener('click', function (e) {
+            var xq = e.target && e.target.closest ? e.target.closest('[data-sp1x]') : null;
+            if (xq) { e.preventDefault(); e.stopPropagation(); XSEL = xq.getAttribute('data-sp1x'); try { localStorage.setItem('mintoosuite_sp1x', XSEL); } catch (e1) { } [].forEach.call(document.querySelectorAll('#mwsp1x [data-sp1x]'), function (b) { b.className = 'badge ' + (b.getAttribute('data-sp1x') === XSEL ? 'long' : 'wait') + ' tap'; }); return; }
+            var q = e.target && e.target.closest ? e.target.closest('[data-sp1]') : null; if (!q) { return; }
+            e.preventDefault(); e.stopPropagation();
+            try {
+                var n = +q.getAttribute('data-sp1'), inp = document.getElementById('mwsp1c'), s = tv(inp && inp.value) || tv(curCoin()) || 'BINANCE:BTCUSDT.P', i;
+                if (!FR[n]) { return; }
+                S.sp.n = n; for (i = 0; i < n; i++) { S.sp.panes[i].s = s; S.sp.panes[i].i = FR[n][i]; }
+                spSave(); spRebuild();
+                try { if (typeof toast === 'function') { toast(s.replace(/\.P$/, '') + ' in ' + n + ' windows'); } } catch (e2) { }
+            } catch (er) { }
+        }, true);
+    } catch (e) { try { console.error('p9sp1', e); } catch (e2) { } }
 })();
 
 function renderView(keep) {
