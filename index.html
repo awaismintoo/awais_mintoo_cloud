@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.382';
+var BUILD = '2026-11-07.383';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -18615,8 +18615,8 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
     try {
         var X = window.__kx, KX = X.KX;
         var vB = VIEWS.best, vP = VIEWS.plan, vI = VIEWS.ideas;
-        var TABS = [['live', '⚡ DO NOW (valid)'], ['best', '⭐ Watch-list'], ['plan', '🧭 Live plan (gold + coins)'], ['all', '📋 All ideas']];
-        function cur() { var t = KX.idT; return t === 'all' || t === 'plan' || t === 'live' ? t : 'best'; }
+        var TABS = [['live', '⚡ Do now'], ['best', '⭐ Watch-list'], ['plan', '🧭 Live plan (gold + coins)'], ['all', '📋 All ideas']];
+        function cur() { var t = KX.idT; return t === 'all' || t === 'plan' || t === 'live' || t === 'best' ? t : 'live'; }
         function call(f) { try { return f.apply(null, []); } catch (e) { return '<div class="note">This part could not load: ' + X.e2(e && e.message) + '</div>'; } }
         /* ---------- Best tab: real best picks, with a tab per exchange so lists never mix ---------- */
         var BST = { keys: null, at: 0 }, LT2 = Date.now();
@@ -18707,22 +18707,39 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         window.__lvValid = lvValid;
         function fmtLeft(ms) { if (ms <= 0) { return '0:00'; } var t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s2 = t % 60; return (h ? h + 'h ' : '') + (h ? ('0' + m).slice(-2) : m) + ':' + ('0' + s2).slice(-2); }
         function pkt(ts) { try { return new Date(ts).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hour12: false }) + ' PKT'; } catch (e) { return ''; } }
+        /* WAITING BOX: the ideas the app does have, and the one check each is still waiting on (nothing is loosened; this only explains) */
+        function whyNot(m) {
+            try {
+                if (!(m.R && m.R.expR > 0)) { return 'after fees the odds are not better than break-even for this stop and target'; }
+                var r = window.__recFull ? window.__recFull(m.sym) : null;
+                if (r && r.side !== m.side) { return r.late ? String(r.late).slice(0, 90) : 'the chart bar says ' + (r.side === 'WAIT' ? 'WAIT (no clear edge)' : r.side + ', not ' + m.side); }
+                var g = window.__gate && window.__gate(m.sym, m.side); if (g && !g.ok) { return 'Entry check: ' + g.why; }
+                return 'Baba experience says WAIT';
+            } catch (e) { return 'one check is still open'; }
+        }
+        function waitBox(wt, total) {
+            var n = wt.length, h = '<div class="note" style="margin:10px 0 4px"><b>📊 Scanned ' + total + ' idea' + (total === 1 ? '' : 's') + ': ' + (total - n) + ' valid or checking, ' + n + ' waiting.</b> Waiting ideas are not entries. Each shows the check it is stuck on.</div>';
+            if (!n) { return h; }
+            h += '<div class="group">';
+            wt.slice(0, 8).forEach(function (m) { var L = (m.side > 0 || /long|buy/i.test(String(m.side))); h += '<div class="row tap" data-act="chart:' + m.sym + '"><span><b>' + String(m.sym).replace(/USDT$/, '') + '</b> <span style="color:' + (L ? '#1a9d4a' : '#d1352b') + '">' + (L ? 'LONG' : 'SHORT') + '</span><br><small class="mut">waiting: ' + whyNot(m).replace(/</g, '&lt;') + '</small></span></div>'; });
+            return h + '</div>';
+        }
         function vLive() {
             try { bpRefresh(false); } catch (e) { }
-            var ex = bxc(), rows = [], pend = 0, now = Date.now(), out = [];
+            var ex = bxc(), rows = [], pend = 0, now = Date.now(), out = [], wt = [];
             try { rows = idRows().slice(0, 25); } catch (e) { }
             rows.forEach(function (m) {
                 if (!(ex === 'all' ? XL.slice(1).some(function (e) { return onEx(e[0], m.sym, { m: m }); }) : onEx(ex, m.sym, { m: m }))) { return; }
-                var v = lvValid(m); if (v.pend) { pend++; } if (v.ok) { out.push({ m: m, v: v }); }
+                var v = lvValid(m); if (v.pend) { pend++; } if (v.ok) { out.push({ m: m, v: v }); } else if (!v.pend) { wt.push(m); }
             });
             var h = (window.__lvOff && Date.now() < window.__lvOff ? '<div class="warn">⏸ DO NOW is paused for a few minutes to keep the app smooth (the check was slow on this phone). Nothing is shown until it resumes.</div>' : '') + X.seg('bxch', XL, ex) + '<div class="warn" style="margin:0 0 8px">⚡ <b>DO NOW</b>: only deals that pass <b>every</b> check <u>right now</u> (strict list, Baba chart check, no chasing, world and dollar checks). Each has a countdown. When a check fails or the time ends, the deal disappears. Nothing is loosened. <b>Not financial advice. Use a stop-loss.</b></div>';
             h += '<div class="note" style="margin:0 0 6px">Exchanges with live scanning here: Binance, MEXC, Bitget. OKX, Bybit and others have order tickets but no live list yet, so they are not shown.' + (pend ? ' Checking ' + pend + ' more coin' + (pend > 1 ? 's' : '') + '…' : '') + '</div>';
-            if (!out.length) { return h + '<div class="group pad mut">No deal passes every check right now. That is normal: waiting is a valid choice. This list refreshes by itself.</div>'; }
+            if (!out.length) { return h + '<div class="group pad mut">No deal passes every check right now. That is normal: waiting is a valid choice. This list refreshes by itself.</div>' + waitBox(wt, rows.length); }
             out.forEach(function (x) {
                 var m = x.m, left = m.to ? m.to - now : 0;
                 h += '<div class="note" style="margin:8px 0 2px;display:flex;justify-content:space-between;gap:8px"><span>🏦 <b>' + XL.slice(1).filter(function (e) { return onEx(e[0], m.sym, { m: m }); }).map(function (e) { return e[1]; }).join(' · ') + '</b></span><span>⏱ <b data-lvt="' + (m.to || 0) + '">' + (m.to ? fmtLeft(left) : 'no limit') + '</b>' + (m.to ? ' · until ' + pkt(m.to) : '') + (x.v.conv ? ' · Baba ' + x.v.conv + '%' : '') + '</span></div>' + idRow(m);
             });
-            return h;
+            return h + waitBox(wt, rows.length);
         }
         setInterval(function () {
             try { var els = document.querySelectorAll('[data-lvt]'), now = Date.now(); for (var i = 0; i < els.length; i++) { var to = +els[i].getAttribute('data-lvt'); if (!to) { continue; } var t = fmtLeft(to - now); if (els[i].textContent !== t) { els[i].textContent = t; } if (to - now <= 0) { var row = els[i].parentNode && els[i].parentNode.parentNode; if (row && row.nextElementSibling) { row.nextElementSibling.style.display = 'none'; } if (row) { row.style.display = 'none'; } } } } catch (e) { }
@@ -20148,6 +20165,8 @@ try {
             /* never recommend chasing: a coin that already ran (or crashed) a long way is "too late", not an entry */
             try { if (r.side !== 'WAIT') { var lt = window.__late(sy, r.side); if (lt) { r.late = lt; r.side = 'WAIT'; } } } catch (e) { }
             try { if (r.side !== 'WAIT' && window.__gate) { var gt = window.__gate(sy, r.side); if (gt && !gt.ok) { r.late = 'Entry check: ' + gt.why; r.side = 'WAIT'; r.gate = 1; } } } catch (e) { }
+            /* never show LONG/SHORT first and WAIT seconds later: hold the answer at WAIT "checking" until the entry check and the chart's own signal have both been read (max 8 s for the chart signal) */
+            try { if (r.side !== 'WAIT') { var hold = '', fs0 = (window.__recFirst = window.__recFirst || {}); var l0 = (fs0.l = fs0.l || {}); if (!fs0[sy] || n - (l0[sy] || 0) > 30000) { fs0[sy] = n; } l0[sy] = n; if (window.__gateReady && !window.__gateReady(sy, r.side)) { hold = 'checking the entry (trend, momentum, volume)…'; } else if (S.chart && S.chart.sym === sy && n - fs0[sy] < 8000) { var cr2 = window.__cardRec; if (!(cr2 && cr2.sym === sy && n - cr2.t < 10000)) { hold = 'checking the chart signal…'; } } if (hold) { r.late = hold; r.side = 'WAIT'; r.hold = 1; r.t = n - 3500; } } } catch (e) { }
             try { var cr = window.__cardRec; if (r.side !== 'WAIT' && cr && cr.sym === sy && Date.now() - cr.t < 10000 && (cr.wait || cr.side !== (r.side === 'LONG' ? 1 : -1))) { r.late = 'Baba chart card: ' + (cr.wait || ('chart signal is ' + (cr.side > 0 ? 'LONG' : 'SHORT'))); r.side = 'WAIT'; } } catch (e) { }
             try { if (r.side !== 'WAIT' && r.veto) { r.late = 'Baba says WAIT' + (r.why ? ': ' + String(r.why).slice(0, 40) : ''); r.side = 'WAIT'; } } catch (e) { }
             /* never show LONG/SHORT before the chart candles are in: the early answer used to flip to WAIT 2-3 s later */
@@ -25739,6 +25758,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 
 ;(function () { try { PF_APP.push(['notification tap|tap notification|notification opens|notification chart|notification goes|open from notification|baba pick notification|binance trade not showing|trade not showing|positions not showing|real time positions|realtime positions|live positions', 'Build 381: notifications open the coin chart; Binance positions refresh faster', 'Tap a notification (Baba pick, pump alert, price alert) and the app opens that coin chart. This needs the new installer and an app update. Positions you open on Binance now show in Trade windows (Trade Pro and the Trading Terminal) within a few seconds: the app re-checks every 4 seconds while one of them is open and straight away when you come back to the app. It needs your read-only API key saved under Profile > Connections (keep Withdraw and Transfer permissions OFF). The check uses Binance public account calls, so it can be a few seconds behind the exchange.', 'win:tpro']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['entry check|wrong long|wrong signal|no recommendation|nothing recommended|why wait|pumped coin|chasing|entry gate|bot doctor|doctor wrong|recommend|best idea|no trade', 'Build 382: smarter entry check (LONG and SHORT) and fairer ideas', 'Before the app shows LONG or SHORT, every coin now passes one shared Entry check: it blocks a LONG on a coin that already pumped (about 15% or more today) or whose 15-minute trend has turned down or is making lower highs, and the same for SHORT on a coin that already crashed. A falling coin can now be a SHORT when its trend agrees, and a rising coin a LONG. Needs at least 3 of 5 confirmations (price not stretched, trend strength, momentum, volume, 1-hour trend). The reason is written on the bar, for example "Entry check: the 15-minute trend points down". Best ideas used to need a chance the math could never reach, so almost nothing qualified; the bar is now fair for the stop and target used. The same check works for Bitget, MEXC, OKX and the coins of the other exchanges too. Bot Doctor also uses this check and only gives side/hour advice after 30 trades. It reduces bad entries; it cannot guarantee profit or beat any other tool every time.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['do now tab|do now|ideas tab|no recommendations|nothing to trade|waiting ideas|why waiting|time frame scan|chief wait|short but wait', 'Ideas opens on "Do now"', 'Ideas now opens on the Do now tab. At the top are the deals that pass every check this minute, each with a timer. Below is a list of the ideas the app does have that are still waiting, with the one check each is stuck on (for example "Entry check: the 15-minute trend points up" or "the chart bar says WAIT"). Waiting ideas are not entries. If the 15-minute chart looks clear but Baba Chief says WAIT, open the adviser buttons: usually the 1-hour, 4-hour and daily charts (Time-frame scan) still point the other way, which makes a trade against the bigger trend riskier. The bar no longer shows LONG or SHORT first and WAIT seconds later: it stays on WAIT (checking) until the entry check and the chart signal are both read, then shows the final answer.', 'win:ideas']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26576,6 +26596,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             if (!c || Date.now() - c.t > 120000) { run(sym, dir); }
             return c && !c.unknown ? c : null;
         };
+        window.__gateReady = function (sym, side) { if (!isCr(sym)) { return true; } return !!GC[sym + (sd(side) > 0 ? 'L' : 'S')]; };
         window.__gateWait = function (sym, side) { if (!isCr(sym)) { return Promise.resolve(null); } return run(sym, sd(side)); };
         /* 1. Trade Ideas BEST needs the gate */
         try { var _ic = idCalc; idCalc = function (c) { var R = _ic.apply(this, arguments); try { if (R && R.best && c && c.sym) { var g = window.__gate(c.sym, c.side); if (!g || !g.ok) { R.best = false; R.gate = g ? g.why : 'checking the trend…'; } } } catch (e) { } return R; }; } catch (e) { }
