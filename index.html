@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.388';
+var BUILD = '2026-11-07.390';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -13153,10 +13153,13 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     };
     window.__docCaution = function (sym, side) {
         try {
-            var A = accts(), all = []; Object.keys(A).forEach(function (k) { (A[k].closed || []).forEach(function (t) { all.push({ s: t.sym, pnl: +t.pnl || 0, ct: t.ct || t.at || 0 }); }); }); all.sort(function (x, y) { return y.ct - x.ct; });
+            var A = accts(), all = []; Object.keys(A).forEach(function (k) { (A[k].closed || []).forEach(function (t) { all.push({ s: t.sym, pnl: +t.pnl || 0, ct: t.ct || t.at || 0, side: t.side, usd: +t.usd || 0 }); }); }); all.sort(function (x, y) { return y.ct - x.ct; });
             var w = [], bw = [], mine = all.filter(function (t) { return t.s === sym; }).slice(0, 3), st = 0, i;
             if (mine.length >= 3 && mine.every(function (t) { return t.pnl <= 0; })) { w.push('the bot lost its last 3 trades on this coin'); }
             for (i = 0; i < all.length && all[i].pnl <= 0; i++) { st++; } if (st >= 3 && all[0].ct && Date.now() - all[0].ct < 6 * 3600000) { bw.push('losing streak of ' + st + ' trades in the last hours'); }
+            /* per-coin record and cool-down (measure first): the bots lost money on this coin over 14 days, or were stopped out on it less than an hour ago */
+            try { var nw = Date.now(), m14 = all.filter(function (t) { return t.s === sym && t.ct > nw - 14 * 86400000; }); if (m14.length >= 5) { var net14 = m14.reduce(function (a, t) { return a + (t.usd || t.pnl); }, 0); if (net14 < 0) { w.push('the bots lost money on this coin: ' + m14.length + ' trades in 14 days, net ' + net14.toFixed(2) + ' $'); } }
+                var lastC = all.filter(function (t) { return t.s === sym; })[0]; if (lastC && lastC.pnl < 0 && nw - lastC.ct < 3600000) { w.push('the bot was stopped out on this coin less than an hour ago (cool-down)'); } } catch (ec) { }
             if (rest()) { bw.push('the bot is resting after 3 losses in a row'); }
             if (C.maxd > 0 && todayN() >= C.maxd) { bw.push('the daily trade cap (' + C.maxd + ') is already reached'); }
             var t = S.tick && S.tick[sym], c = t ? +t.chg : 0; if (side && isFinite(c) && ((side === 'LONG' && c > 12) || (side === 'SHORT' && c < -12))) { w.push('the coin already moved ' + c.toFixed(0) + '% today (chasing risk)'); }
@@ -13164,6 +13167,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             return { caution: w.length > 0, why: w, bot: bw, n: all.length };
         } catch (e) { return null; }
     };
+    /* the practice-bot ledger: is the system earning? (shown in Do now) */
+    window.__docLedger = function () { try { var A = accts(), all = []; Object.keys(A).forEach(function (k) { (A[k].closed || []).forEach(function (t) { all.push(+t.usd || +t.pnl || 0); }); }); var n = all.length, w = all.filter(function (x) { return x > 0; }).length; return { n: n, win: n ? w / n : 0, net: all.reduce(function (a, b) { return a + b; }, 0) }; } catch (e) { return null; } };
     function analyse(T) {
         var n = T.length, W = T.filter(function (t) { return t.pnl > 0; }), L = T.filter(function (t) { return t.pnl <= 0; }), gw = W.reduce(function (a, t) { return a + t.pnl; }, 0), gl = -L.reduce(function (a, t) { return a + t.pnl; }, 0), tot = gw - gl;
         function hold(t) { return t.at && t.ct ? (t.ct - t.at) / 60000 : null; }
@@ -18675,7 +18680,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         /* ---------- Live now tab: only deals that pass EVERY check right now, with a countdown. When a check fails or time runs out the card disappears. ---------- */
         var LV = { k: {}, q: {}, run: 0 };
         function lvK(sym) {
-            var c = LV.k[sym], now = Date.now(); if (c && now - c.at < 180000) { return c.K; }
+            var c = LV.k[sym], now = Date.now(); if (c && now - c.at < 180000 && !(Math.floor(now / 9e5) > Math.floor(c.at / 9e5) && now - c.at > 15000)) { return c.K; }
             if (!LV.q[sym] && LV.run < 2 && (!c || now - c.at >= 180000)) {
                 LV.q[sym] = 1; LV.run++;
                 var us = ['https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=15m&limit=200', 'https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=15m&limit=200', 'https://api.mexc.com/api/v3/klines?symbol=' + sym + '&interval=15m&limit=200'], i = 0;
@@ -18687,6 +18692,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         var LVC = {}, LVB = 0, BUD = { t: 0, n: 3 };
         function BUDN() { var n = Date.now(); if (n - BUD.t > 1000) { BUD.t = n; BUD.n = 3; } return BUD.n; }
         function BUDU() { BUD.n--; }
+        window.__lvK = lvK;
         function lvValid(m) {
             var now = Date.now(), ck = m.sym + '|' + m.side + '|' + (m.to || 0), cc = LVC[ck];
             if (cc && now - cc.t < 15000) { return cc.v; }
@@ -18706,8 +18712,10 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             var K = lvK(m.sym); if (K === undefined) { return { ok: false, pend: true }; }
             /* same chart-card (UT Bot / Baba chart signal) check the chart bar uses, so the list and the chart can never disagree after a tap */
             try { var gF = window.__gate && window.__gate(m.sym, m.side), fastOn = gF && gF.ok && gF.mode === 'fast'; if (K && window.__recommendK) { var rc0 = window.__recommendK(K, m.sym); if (rc0 && (fastOn ? rc0.side === (m.side === 'LONG' ? -1 : 1) : (rc0.wait || rc0.side !== (m.side === 'LONG' ? 1 : -1)))) { return { ok: false }; } } } catch (e) { }
+            /* the Baba Chief adviser vote, computed without the chart: the list never shows what the Chief would turn into WAIT */
+            try { var chh = window.__chiefHead ? window.__chiefHead(m.sym, m.side) : true; if (chh === undefined) { return { ok: false, pend: true }; } if (chh === false) { return { ok: false, chief: 1 }; } } catch (e) { }
             try { if (K && window.__babaExp) { var xp = window.__babaExp(m.sym, m.side, K); if (xp && xp.veto) { return { ok: false }; } if (xp) { return { ok: true, conv: xp.conv }; } } } catch (e) { }
-            return { ok: K ? true : false, conv: 0, pend: !K };
+            return { ok: false, conv: 0, pend: !K }; /* no expert check, no entry */
         }
         window.__lvValid = lvValid;
         function fmtLeft(ms) { if (ms <= 0) { return '0:00'; } var t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s2 = t % 60; return (h ? h + 'h ' : '') + (h ? ('0' + m).slice(-2) : m) + ':' + ('0' + s2).slice(-2); }
@@ -18719,6 +18727,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 var r = window.__recFull ? window.__recFull(m.sym) : null;
                 if (r && r.side !== m.side) { return r.late ? String(r.late).slice(0, 90) : 'the chart bar says ' + (r.side === 'WAIT' ? 'WAIT (no clear edge)' : r.side + ', not ' + m.side); }
                 var g = window.__gate && window.__gate(m.sym, m.side); if (g && !g.ok) { return 'Entry check: ' + g.why; }
+                if (window.__chiefHead && window.__chiefHead(m.sym, m.side) === false) { return 'the Baba advisers do not agree (UT Bot, Baba signals, Baba experience, time-frame scan)'; }
                 return 'past results on similar setups were poor';
             } catch (e) { return 'one check is still open'; }
         }
@@ -18736,10 +18745,11 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             try { rows = idRows().slice(0, 25); } catch (e) { }
             rows.forEach(function (m) {
                 if (!(ex === 'all' ? XL.slice(1).some(function (e) { return onEx(e[0], m.sym, { m: m }); }) : onEx(ex, m.sym, { m: m }))) { return; }
-                seen++; var v = lvValid(m); if (v.pend) { pend++; } if (v.ok) { if (!FL[m.sym + m.side]) { out.push({ m: m, v: v }); } } else if (!v.pend) { wt.push(m); }
+                seen++; var v = lvValid(m); try { if (v.ok && window.__recSide && window.__recSide(m.sym) !== m.side) { v = { ok: false }; } } catch (e) { } if (v.pend) { pend++; } if (v.ok) { if (!FL[m.sym + m.side]) { out.push({ m: m, v: v }); } } else if (!v.pend) { wt.push(m); }
             });
             var h = (window.__lvOff && Date.now() < window.__lvOff ? '<div class="warn">⏸ DO NOW is paused for a few minutes to keep the app smooth (the check was slow on this phone). Nothing is shown until it resumes.</div>' : '') + X.seg('bxch', XL, ex) + '<div class="warn" style="margin:0 0 8px">⚡ <b>DO NOW</b>: only deals that pass <b>every</b> check <u>right now</u> (strict list, Baba chart check, no chasing, world and dollar checks). Each has a countdown. When a check fails or the time ends, the deal disappears. Nothing is loosened. <b>Not financial advice. Use a stop-loss.</b></div>';
             try { h += window.__fastBox ? window.__fastBox() : ''; } catch (e) { }
+            try { var lg = window.__docLedger && window.__docLedger(); if (lg) { h += '<div class="note" style="margin:0 0 8px">📒 <b>Bot track record</b>: ' + (lg.n ? lg.n + ' closed practice/bot trades, ' + Math.round(lg.win * 100) + '% winners, net ' + (lg.net >= 0 ? '+' : '') + lg.net.toFixed(2) + ' $ after fees. ' + (lg.n < 30 ? 'Fewer than 30 trades: too early to judge, keep practicing.' : (lg.net > 0 ? 'Positive after ' + lg.n + ' trades.' : 'Negative after ' + lg.n + ' trades: treat every call as unproven.')) : 'No closed bot trades yet. Run the Baba Practice Bot for a week or two: it trades the same calls with fake money and builds the record.') + ' A coin whose recent signals or bot trades lost money is not recommended.</div>'; } } catch (e) { }
             h += '<div class="note" style="margin:0 0 6px">Exchanges with live scanning here: Binance, MEXC, Bitget. OKX, Bybit and others have order tickets but no live list yet, so they are not shown.' + (pend ? ' Checking ' + pend + ' more coin' + (pend > 1 ? 's' : '') + '…' : '') + '</div>';
             if (!out.length) { return h + '<div class="group pad mut">No deal passes every check right now. That is normal: waiting is a valid choice. This list refreshes by itself.</div>' + waitBox(wt, seen, out.length, pend); }
             out.forEach(function (x) {
@@ -20170,16 +20180,17 @@ try {
             /* a coin in the Fast movers list shows the same side on the chart bar (one verdict everywhere) */
             try { var fe = window.__fastGet && window.__fastGet(sy); if (fe) { if (r.side === 'WAIT') { r.side = fe.side; r.fastNote = fe.why; } else if (r.side === fe.side) { r.fastNote = fe.why; } } } catch (e) { }
             /* second opinion from Baba's experience engine, so the bar and the chart never disagree silently */
-            try { if (r.side !== 'WAIT' && window.__babaExp && S.chart && S.chart.sym === sy && S.chart.k && S.chart.k.length > 80) { var xp = window.__babaExp(sy, r.side, S.chart.k); if (xp) { r.conv = xp.conv; r.veto = !!xp.veto; r.why = xp.hard && xp.hard[0] || ''; } } } catch (e) { }
+            try { if (r.side !== 'WAIT' && window.__babaExp && S.chart && S.chart.sym === sy && S.chart.k && S.chart.k.length > 80) { var xp = window.__babaExp(sy, r.side, S.chart.k); if (xp) { r.conv = xp.conv; r.veto = false; r.vetoSeen = !!xp.veto; r.why = xp.hard && xp.hard[0] || ''; } } } catch (e) { }
             /* never recommend chasing: a coin that already ran (or crashed) a long way is "too late", not an entry */
             try { if (r.side !== 'WAIT' && !r.fastNote) { var lt = window.__late(sy, r.side); if (lt) { r.late = lt; r.side = 'WAIT'; } } } catch (e) { }
             try { if (r.side !== 'WAIT' && window.__gate) { var gt = window.__gate(sy, r.side); if (gt && !gt.ok) { r.late = 'Entry check: ' + gt.why; r.side = 'WAIT'; r.gate = 1; } else if (gt && gt.mode === 'fast') { r.fastNote = gt.why; } } } catch (e) { }
             /* never show LONG/SHORT first and WAIT seconds later: hold the answer at WAIT "checking" until the entry check and the chart's own signal have both been read (max 8 s for the chart signal) */
-            try { if (r.side !== 'WAIT') { var hold = '', fs0 = (window.__recFirst = window.__recFirst || {}); var l0 = (fs0.l = fs0.l || {}); if (!fs0[sy] || n - (l0[sy] || 0) > 30000) { fs0[sy] = n; } l0[sy] = n; if (window.__gateReady && !window.__gateReady(sy, r.side)) { hold = 'checking the entry (trend, momentum, volume)…'; } else if (S.chart && S.chart.sym === sy && n - fs0[sy] < 8000) { var cr2 = window.__cardRec; if (!(cr2 && cr2.sym === sy && n - cr2.t < 10000)) { hold = 'checking the chart signal…'; } } if (hold) { r.late = hold; r.side = 'WAIT'; r.hold = 1; r.t = n - 3500; } } } catch (e) { }
-            try { var cr = window.__cardRec; if (r.side !== 'WAIT' && cr && cr.sym === sy && Date.now() - cr.t < 10000 && (r.fastNote ? (cr.side === (r.side === 'LONG' ? -1 : 1)) : (cr.wait || cr.side !== (r.side === 'LONG' ? 1 : -1)))) { r.late = 'Baba chart card: ' + (cr.wait || ('chart signal is ' + (cr.side > 0 ? 'LONG' : 'SHORT'))); r.side = 'WAIT'; } } catch (e) { }
-            try { if (r.side !== 'WAIT' && r.veto) { r.late = 'Baba says WAIT' + (r.why ? ': ' + String(r.why).slice(0, 40) : ''); r.side = 'WAIT'; } } catch (e) { }
+            try { if (r.side !== 'WAIT') { var hold = '', fs0 = (window.__recFirst = window.__recFirst || {}); var l0 = (fs0.l = fs0.l || {}); if (!fs0[sy] || n - (l0[sy] || 0) > 30000) { fs0[sy] = n; } l0[sy] = n; if (window.__gateReady && !window.__gateReady(sy, r.side)) { hold = 'checking the entry (trend, momentum, volume)…'; }  if (hold) { r.late = hold; r.side = 'WAIT'; r.hold = 1; r.t = n - 3500; } } } catch (e) { }
+            /* (the chart's own timeframe signal no longer decides: the headless Chief below is the single authority, so the list, the bar, the Chief box and notifications always agree) */
+
             /* never show LONG/SHORT before the chart candles are in: the early answer used to flip to WAIT 2-3 s later */
             try { if (r.side !== 'WAIT' && S.chart && S.chart.sym === sy && !(S.chart.k && S.chart.k.length > 80)) { r.side = 'WAIT'; r.late = 'checking the chart…'; r.t = n - 3500; } } catch (e) { }
+            try { if (r.side !== 'WAIT' && window.__chiefHead) { var chx = window.__chiefHead(sy, r.side); if (chx === undefined) { r.late = 'checking the advisers…'; r.side = 'WAIT'; r.t = n - 3500; } else if (chx === false) { r.late = 'Baba Chief: the advisers do not agree'; r.side = 'WAIT'; r.chiefNo = 1; } } } catch (e) { }
             RC[sy] = r; return r;
         }
         window.__recSide = function (sy) { return rec(sy).side; };
@@ -20196,6 +20207,30 @@ try {
                 return p.join('; ') || 'the advisers do not agree';
             } catch (e) { return 'the advisers do not agree'; }
         }
+        /* HEADLESS CHIEF: the same adviser vote the Baba Chief box uses, computed from candles without opening the chart, so the Do now list, notifications and the bottom bar can never show a direction the Chief would turn into WAIT. Returns true (confirmed), false (Chief says WAIT) or undefined (still loading). */
+        var CHH = {};
+        function chiefHead(sym, side, fastF) {
+            var fast = fastF !== undefined ? !!fastF : (function () { var fe = window.__fastGet && window.__fastGet(sym); return !!(fe && fe.side === side); })(), key = sym + side + (fast ? 'F' : ''), n = Date.now(), c = CHH[key]; if (c && n - c.t < 8000 && c.v !== undefined) { return c.v; }
+            var K = window.__lvK ? window.__lvK(sym) : undefined; if (K === undefined) { return undefined; } if (!K || K.length < 80) { return (CHH[key] = { t: n, v: fast }).v; } /* a brand-new coin has no candles for the advisers: only the fast lane may go on without them */
+            var res = false, hardNo = false;
+            try {
+                var V = [], cnt = { LONG: 0, SHORT: 0, WAIT: 0 }, rc = window.__recommendK && window.__recommendK(K, sym);
+                if (rc) { V.push({ s: rc.wait ? 'WAIT' : (rc.side > 0 ? 'LONG' : 'SHORT') }); }
+                var R = window.__babaSig ? window.__babaSig(K.slice(0, -1)) : null, nn = R ? R.pos.length : 0, p = (R && R.pos[nn - 1]) || 0, lastAt = -1, i;
+                if (R) { V.push({ s: p > 0 ? 'LONG' : p < 0 ? 'SHORT' : 'WAIT' }); for (i = nn - 1; i >= 0; i--) { if (R.buy[i] || R.sell[i]) { lastAt = i; break; } } }
+                var sd = p !== 0 ? p : (lastAt >= 0 ? (R.buy[lastAt] ? 1 : -1) : 0), xp = null;
+                if (sd && window.__babaExp) { xp = window.__babaExp(sym, sd > 0 ? 'LONG' : 'SHORT', K.slice(0, -1)); }
+                if (xp) { V.push({ s: (xp.veto || p === 0) ? 'WAIT' : xp.side }); }
+                var mv = window.__mtfVote && window.__mtfVote(sym), ML = (chiefHead._m = chiefHead._m || {}); if (mv) { ML[sym] = mv; } else if (ML[sym]) { mv = ML[sym]; } else { var ask = window.__mtfAsk && window.__mtfAsk[sym]; if (window.__mtfVote && (!ask || n - ask < 25000)) { return undefined; } } if (mv) { V.push({ s: mv.s }); }
+                var dc = window.__docCaution && window.__docCaution(sym, side); var docW = dc && dc.caution;
+                V.forEach(function (x) { cnt[x.s] = (cnt[x.s] || 0) + 1; }); var tot = V.length, opp = side === 'LONG' ? 'SHORT' : 'LONG';
+                var clash = fast ? (cnt[opp] > 0 || cnt[side] < 1) : (cnt[side] * 2 <= tot || cnt[opp] > 0 || cnt[side] < 2);
+                res = !clash && !docW; hardNo = cnt[opp] > 0 || !!docW;
+            } catch (e) { res = false; }
+            if (c && c.v === true && res === false && !(c.f >= 1) && !hardNo) { CHH[key] = { t: n, v: true, f: 1 }; return true; }
+            CHH[key] = { t: n, v: res, f: 0 }; return res;
+        }
+        window.__chiefHead = chiefHead;
         function votes(sy, r) {
             var v = [], cr = window.__cardRec, bi = document.getElementById('bsInfo'), bt = bi ? bi.textContent : '', xp = window.__lastExp, pr = document.getElementById('p9Rec');
             if (cr && cr.sym === sy && Date.now() - cr.t < 12000) { v.push({ n: 'UT Bot', s: cr.wait ? 'WAIT' : (cr.side > 0 ? 'LONG' : 'SHORT'), h: pr ? pr.innerHTML : '' }); }
@@ -20218,7 +20253,8 @@ try {
                 var sy = S.chart && S.chart.sym, anchor = document.getElementById('p9Rec') || document.getElementById('p9Info'); if (!sy || !anchor || document.documentElement.getAttribute('data-win') !== 'chart') { var o = document.getElementById('p9Verdict'); if (o) { o.remove(); } return; }
                 chiefCss(); var r = rec(sy), V = votes(sy, r), cnt = { LONG: 0, SHORT: 0, WAIT: 0 }; V.forEach(function (x) { if (x.s !== 'OK' && !x.self) { cnt[x.s] = (cnt[x.s] || 0) + 1; } }); var docW = V.filter(function (x) { return x.doc && x.s === 'WAIT'; })[0];
                 var want = r.side !== 'WAIT' ? r.side : '', tot = V.filter(function (x) { return x.s !== 'OK' && !x.self; }).length, agree = want ? cnt[want] : cnt.WAIT;
-                var opp = want === 'LONG' ? 'SHORT' : 'LONG', clash = ''; if (want && (r.fastNote ? cnt[opp] > 0 : (cnt[want] * 2 <= tot || cnt[opp] > 0 || cnt[want] < 2))) { clash = cnt[opp] > 0 ? 'Advisers disagree: ' + V.filter(function (x) { return x.s === opp; }).map(function (x) { return x.n; }).join(', ') + ' say ' + opp + '.' : 'Not enough advisers agree yet.'; want = ''; agree = cnt.WAIT; } var docNote = clash || ''; if (want && docW) { want = ''; agree = cnt.WAIT; docNote = 'Bot Doctor warns: ' + docW.h.replace(/<[^>]+>/g, '').replace(/^.*Caution: /, ''); }
+                var opp = want === 'LONG' ? 'SHORT' : 'LONG', clash = ''; if (want && (r.fastNote ? (cnt[opp] > 0 || cnt[want] < 1) : (cnt[want] * 2 <= tot || cnt[opp] > 0 || cnt[want] < 2))) { clash = cnt[opp] > 0 ? 'Advisers disagree: ' + V.filter(function (x) { return x.s === opp; }).map(function (x) { return x.n; }).join(', ') + ' say ' + opp + '.' : 'Not enough advisers agree yet.'; want = ''; agree = cnt.WAIT; } var docNote = clash || ''; if (want && docW) { want = ''; agree = cnt.WAIT; docNote = 'Bot Doctor warns: ' + docW.h.replace(/<[^>]+>/g, '').replace(/^.*Caution: /, ''); }
+                want = r.side !== 'WAIT' ? r.side : ''; if (!want) { agree = cnt.WAIT; } else { docNote = ''; agree = cnt[want] || agree; } /* single authority: the headless Chief decides, the chips above are the display of the votes */
                 var col = want ? (want === 'LONG' ? '#16a34a' : '#dc2626') : '#d97706', txt = want ? (agree === tot ? 'All advisers lean the same way' : 'Most advisers agree') + (r.fastNote ? ' · ⚡ FAST realtime entry: 15m not confirmed, higher risk, small size' : '') : 'No clear edge, wait';
                 window.__chiefV = V; window.__chiefFinal = { sym: sy, want: want, t: Date.now() }; var el = document.getElementById('p9Verdict'); if (!el) { el = document.createElement('div'); el.id = 'p9Verdict'; el.className = 'note'; anchor.parentNode.insertBefore(el, anchor); }
                 var key = [sy, want, V.map(function (x) { return x.s; }).join() + (docW ? 'D' : ''), r.late || '', r.conv].join('|'); if (el.getAttribute('data-k') === key) { return; } el.setAttribute('data-k', key);
@@ -25783,6 +25819,9 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['expected result|break-even|odds after fees|baba pick target|reward risk|target and stop|why waiting list|list and chart disagree|do now disappears', 'Build 385: Baba pick target/stop and Do now matches the chart', 'Most Baba pick ideas used a target only half the size of the stop. That needs a win rate above about 70% just to break even after fees, so almost every idea showed "after fees the odds are not better than break-even". The plan now uses a stop of 1.5 average candles and a target of 1.8 times the stop (the same shape as the Analyst plan), which needs roughly 45 to 50% wins to break even after fees. Do now also now runs the exact same chart signal check as the chart bar, so the list and the chart usually agree; they can still differ for a few seconds when the price moves. The reason is written on the line.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['fast movers|fast mover|new listing|pump alert|realtime scan|missed pump|icnt|breakout', 'Fast movers (build 387)', 'Do now now starts with Fast movers: the app watches every live price every few seconds, and a coin that moves about 1.5% in 5 minutes or 3% in 15 minutes gets a 1-minute check (trend, real move, rising volume, not a spike candle, not stretched). If it passes it is listed with the price now, a stop and a target, and you get a notification. It works for brand-new listings too, which have no 15-minute history yet. These are riskier than 15-minute confirmed ideas, so they are marked FAST: use a small size and the stop shown. A fast mover disappears from the list when the 1-minute trend breaks the other way. Binance coins only for now; MEXC and Bitget coins use the same check when you open their chart. No guarantee: fast moves can reverse in seconds.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['auto bot|bots|baba practice bot|bot entry|bot uses entry check|bot wrong trade|bot chasing|all bots updated', 'Bots now use the same Entry check (build 387)', 'The Baba Practice Bot and the auto bots no longer open a trade unless the shared Entry check passes: the 15-minute rule (trend, structure, momentum, volume, 1-hour agreement, no chasing a pump). If the check is still loading the bot waits for the next signal. Bots never open FAST entries; they wait for the 15-minute confirmation. Skipped signals appear in the bot log with the reason, for example "Entry check: the 15-minute trend points down". Bot Doctor warns only for reasons about the coin or the entry; the bots own losing streak is shown as a small note. The Baba pick plan now uses a target 1.5 times the stop. Practice first: judge a bot after 20 or more closed trades, after fees.', 'win:botpro']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['recommendation flips|flips to wait|changed to wait|disappears|vanishes|recommended then wait|do now disappeared|notification then wait|chief confirms', 'One verdict everywhere (build 389)', 'A direction now shows in only three places after the same Baba Chief check has agreed: the bottom Recommended bar, the Do now list and notifications. Before, the bar showed a direction as soon as the market factors leaned one way, and the Chief (UT Bot, Baba signals, Baba experience, time-frame scan, Bot Doctor) only said WAIT a few seconds later, so a call could appear and vanish. Now the bar shows "WAIT (checking the advisers…)" for a moment, then the final answer; Do now and notifications run the same adviser vote without opening the chart, and drop anything the Chief would turn into WAIT. The Chief is strict by design: it needs at least 2 advisers on the same side and none against, so on a quiet day there can be no valid idea. A shown call can still be cancelled later when the price breaks its stop.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['track record|coin record|measure first|bot track record|signals lost money|bitcoin fell|cool-down|cooldown|unproven coin', 'The app now measures first (build 389)', 'Before a coin can be recommended, the app checks its own record: (1) Baba signals on that coin\'s recent candles, after fees; if the last 8 or more trades lost money the coin is not recommended and the line says so, (2) the bots\' own trades on that coin over 14 days (net negative = caution), (3) a one-hour cool-down after a bot stop-out on that coin, (4) Bitcoin: alt LONGs wait when Bitcoin fell 1% or more in the last 15 minutes, alt SHORTs wait on the mirror move. Do now shows the Bot track record (trades, winners, net result): under 30 trades it is too early to judge, so keep the Baba Practice Bot running for a week or two with fake money. FAST calls now need at least one adviser to agree, are shown for 8 minutes with a countdown, and are only for coins with 5M or more of 24h volume. Past results do not guarantee future results.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['single verdict|one authority|chief authority|bar and chart agree|chart timeframe|different timeframe', 'One authority for every call (build 389)', 'The Baba Chief vote computed from the last 15-minute candles is now the only thing that decides whether a LONG or SHORT is shown. The Do now list, the bottom bar, the Chief box on the chart and notifications all use it, so they cannot disagree even if you view the chart on 1 minute or 1 hour. The adviser buttons on the chart still show each adviser view for your information. One failing read does not cancel a shown call, but an adviser saying the opposite side, a Bot Doctor warning, a broken stop or a Bitcoin drop cancels it at once.', 'win:ideas']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26652,6 +26691,13 @@ window.__pfAns = function (q) { return pfAnswer(q); };
                 var r = (K15 && KH && K15.length > 40 && KH.length > 40) ? judge(K15, KH, ch, dir, lp) : { ok: false, pump: false, hard: ['new coin'], soft: 0, why: 'not enough 15-minute history yet (new coin)' }, f = null;
                 try { f = fastJudge(K1, K15 && K15.length > 20 ? K15 : null, ch, dir, lp); } catch (e) { }
                 r.mode = '15m';
+                /* TRACK RECORD (the app's own measure-first rule): how Baba's signals did on THIS coin's recent candles, after fees. A coin whose recent signals lost money is not recommended. */
+                try {
+                    if (K15 && K15.length >= 120 && window.__babaSig && window.__ut && window.__ut.sim) {
+                        var Rg = window.__babaSig(K15), sg9 = window.__ut.stats(window.__ut.sim(K15, Rg.pos)); r.track = { n: sg9.n, win: sg9.win, avg: sg9.avg };
+                        if (sg9.n >= 8 && sg9.avg <= 0) { r.trackBad = 'Baba signals on this coin lost money after fees on their last ' + sg9.n + ' trades (' + Math.round(sg9.win * 100) + '% winners, ' + (sg9.avg >= 0 ? '+' : '') + sg9.avg.toFixed(2) + '% each, past test)'; }
+                    }
+                } catch (et) { }
                 if (f && f.rev && r.ok) { r.ok = false; r.why = 'realtime reversal: the 1-minute trend just broke the other way with a real move'; r.mode = 'fast'; r.rev = 1; }
                 else if (!r.ok && f && f.ok) {
                     /* the fast lane may replace "the 15-minute trend has not confirmed yet", never the pump cap, unless the move is fresh (most of today's move happened in the last 15 minutes) and not above 25% */
@@ -26661,8 +26707,9 @@ window.__pfAns = function (q) { return pfAnswer(q); };
                 }
                 else if (!r.ok && f) { r.why += ' (fast check: ' + f.why + ')'; }
                 /* hysteresis: a shown entry is kept through ONE failing read (not for a pump or a reversal) so the answer does not flicker */
+                if (r.trackBad && (r.ok || r.mode === 'fast')) { r.ok = false; r.why = r.trackBad; r.pump = r.pump; }
                 var prev = GC[key];
-                if (prev && prev.ok && !prev.unknown && !r.ok && !r.pump && !r.rev && !(prev.fails >= 1)) { var kp = {}; for (var kk in prev) { kp[kk] = prev[kk]; } kp.fails = 1; kp.t = Date.now(); GC[key] = kp; delete BUSY[key]; return kp; }
+                if (prev && prev.ok && !prev.unknown && !r.ok && !r.pump && !r.rev && !r.trackBad && !(prev.fails >= 1)) { var kp = {}; for (var kk in prev) { kp[kk] = prev[kk]; } kp.fails = 1; kp.t = Date.now(); GC[key] = kp; delete BUSY[key]; return kp; }
                 r.fails = 0; r.t = Date.now(); GC[key] = r; delete BUSY[key]; try { tally(r); } catch (e) { } return r;
             }).catch(function () { delete BUSY[key]; var r = { ok: false, unknown: 1, why: 'could not load the entry data yet (retrying)', t: Date.now() }; GC[key] = r; return r; });
             return BUSY[key];
@@ -26670,8 +26717,16 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         window.__gateJudge = judge; window.__gateFast = fastJudge;
         window.__gate = function (sym, side) {
             if (!isCr(sym)) { return null; } var dir = sd(side), key = sym + (dir > 0 ? 'L' : 'S'), c = GC[key];
-            if (!c || Date.now() - c.t > (c.unknown ? 30000 : ((typeof S !== 'undefined' && S.chart && S.chart.sym === sym) ? 15000 : 45000))) { run(sym, dir); }
+            if (!c || Date.now() - c.t > (c.unknown ? 30000 : 30000)) { run(sym, dir); }
             if (!c) { return null; } if (c.unknown) { return c; }
+            /* Bitcoin shock: an alt LONG is not an entry while Bitcoin fell 1% or more in the last 15 minutes (mirror for SHORT) */
+            try {
+                if (sym !== 'BTCUSDT' && !isX(sym)) { var hb = H['BTCUSDT'], tb = (typeof S !== 'undefined' && S.tick) ? S.tick.BTCUSDT : null;
+                    var h0b = null, jb; if (hb) { for (jb = 0; jb < hb.length; jb++) { if (Date.now() - hb[jb].t <= 900000) { h0b = hb[jb]; break; } } }
+                    if (h0b && Date.now() - h0b.t >= 600000 && tb && +tb.p > 0) { var b15 = (+tb.p - h0b.p) / h0b.p * 100;
+                        if (dir > 0 && b15 <= -1) { return { ok: false, why: 'Bitcoin fell ' + Math.abs(b15).toFixed(1) + '% in the last 15 minutes, alt LONGs wait', live: 1, t: c.t }; }
+                        if (dir < 0 && b15 >= 1) { return { ok: false, why: 'Bitcoin rose ' + b15.toFixed(1) + '% in the last 15 minutes, alt SHORTs wait', live: 1, t: c.t }; } } }
+            } catch (e) { }
             /* live check on top of the cached read: a price that just broke the 15-minute trend stop, or fell/jumped sharply since the read, is not an entry */
             try {
                 var t = (typeof S !== 'undefined' && S.tick) ? S.tick[sym] : null, px = t ? +t.p : 0;
@@ -26689,7 +26744,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         /* 2. chart bar */
         try { var _tr = window.__recFull; if (_tr) { window.__recFull = function (sy) { var r = _tr(sy); try { if (r && r.side !== 'WAIT') { var g = window.__gate(sy, r.side); if (g && !g.ok) { r.late = 'Entry check: ' + g.why; r.side = 'WAIT'; r.gate = 1; } } } catch (e) { } return r; }; window.__recSide = function (sy) { return window.__recFull(sy).side; }; } } catch (e) { }
         /* 3. alerts that say LONG/SHORT wait for the gate */
-        try { var _ap = alertPush; alertPush = function (sym, title, body) { var self = this, a = arguments; try { var m = typeof title === 'string' && /\b(LONG|SHORT)\b/.exec(title); if (m && isCr(sym) && !window.__gateNoWrap) { window.__gateWait(sym, m[1]).then(function (g) { if (!g || g.ok) { try { _ap.apply(self, a); } catch (e) { } } }); return; } } catch (e) { } return _ap.apply(this, arguments); }; } catch (e) { }
+        try { var _ap = alertPush; alertPush = function (sym, title, body) { var self = this, a = arguments; try { var m = typeof title === 'string' && /\b(LONG|SHORT)\b/.exec(title); if (m && isCr(sym) && !window.__gateNoWrap) { window.__gateWait(sym, m[1]).then(function (g) { if (g && !g.ok) { return; } var tries = 0; (function ask() { var ch = window.__chiefHead ? window.__chiefHead(sym, m[1]) : true; if (ch === undefined && tries++ < 6) { setTimeout(ask, 1500); return; } if (ch === false || ch === undefined) { return; } try { _ap.apply(self, a); } catch (e) { } })(); }); return; } } catch (e) { } return _ap.apply(this, arguments); }; } catch (e) { }
 
         /* ---------- FAST MOVERS: realtime scan of live prices; a coin that moves fast gets the 1-minute check and, if it passes, shows in Do now ---------- */
         var H = {}, FAST = {}, CD = {}, SENT = {}, BLK = [];
@@ -26697,17 +26752,17 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         function scanTick() {
             try {
                 if (typeof S === 'undefined' || !S.tick) { return; } var now = Date.now(), cand = [], k;
-                for (k in S.tick) { var t = S.tick[k]; if (!/USDT$/.test(k) || !t || !(+t.p > 0) || !((+t.q || 0) >= 1.5e6)) { continue; }
+                for (k in S.tick) { var t = S.tick[k]; if (!/USDT$/.test(k) || !t || !(+t.p > 0) || !((+t.q || 0) >= 5e6)) { continue; }
                     var h = H[k] || (H[k] = []); if (!h.length || now - h[h.length - 1].t >= 3000) { h.push({ t: now, p: +t.p }); } while (h.length && now - h[0].t > 1200000) { h.shift(); }
                     if (h.length < 4) { continue; } var p5 = null, p15 = h[0].p, j; for (j = h.length - 1; j >= 0; j--) { if (now - h[j].t >= 300000) { p5 = h[j].p; break; } } if (p5 === null) { p5 = h[0].p; if (now - h[0].t < 120000) { continue; } }
                     var m5 = (+t.p - p5) / p5 * 100, m15 = (+t.p - p15) / p15 * 100; if (Math.abs(m5) >= 1.5 || Math.abs(m15) >= 3) { cand.push({ s: k, m5: m5, m15: m15, sc: Math.max(Math.abs(m5), Math.abs(m15) / 2) }); } }
                 cand.sort(function (a, b) { return b.sc - a.sc; });
                 var n = 0; cand.forEach(function (c) { if (n >= 4 || (CD[c.s] && now - CD[c.s] < 45000)) { return; } n++; CD[c.s] = now; var side = (Math.abs(c.m5) >= 1.5 ? c.m5 : c.m15) > 0 ? 'LONG' : 'SHORT';
                     window.__gateWait(c.s, side).then(function (g) {
-                        var key = c.s + side; if (g && g.ok && !g.unknown && g.mode) { var o = FAST[key], f = g.fast || {}; FAST[key] = { sym: c.s, side: side, t: o ? o.t : Date.now(), px: f.px || (S.tick[c.s] && +S.tick[c.s].p), stop: f.stop, tgt: f.tgt, m5: c.m5, mode: g.mode, why: g.why };
+                        var key = c.s + side; if (g && g.ok && !g.unknown && g.mode) { var chv = window.__chiefHead ? window.__chiefHead(c.s, side, g.mode === 'fast') : true; if (chv === undefined) { CD[c.s] = 0; return; } if (chv === false) { delete FAST[key]; BLK = BLK.filter(function (b) { return b.key !== key; }); BLK.unshift({ key: key, sym: c.s, side: side, m5: c.m5, why: 'the Baba advisers do not agree', t: Date.now() }); BLK = BLK.slice(0, 3); return; } var o = FAST[key], f = g.fast || {}; FAST[key] = { sym: c.s, side: side, t: o ? o.t : Date.now(), px: f.px || (S.tick[c.s] && +S.tick[c.s].p), stop: f.stop, tgt: f.tgt, m5: c.m5, mode: g.mode, why: g.why };
                             if (!SENT[key] || Date.now() - SENT[key] > 1800000) { SENT[key] = Date.now(); try { window.__gateNoWrap = 1; alertPush(c.s, '⚡ Fast mover: ' + base(c.s) + ' ' + side, (g.mode === 'fast' ? 'Realtime move, 15-minute not confirmed yet (higher risk, small size). ' : 'Moving with the 15-minute trend. ') + (c.m5 >= 0 ? '+' : '') + c.m5.toFixed(1) + '% in 5 min. Tap for the chart.'); } catch (e) { } window.__gateNoWrap = 0; } }
                         else { delete FAST[key]; if (g && !g.unknown) { BLK = BLK.filter(function (b) { return b.key !== key; }); BLK.unshift({ key: key, sym: c.s, side: side, m5: c.m5, why: String(g.why || '').slice(0, 90), t: Date.now() }); BLK = BLK.slice(0, 3); } } }); });
-                Object.keys(FAST).forEach(function (key) { var o = FAST[key], g = window.__gate(o.sym, o.side), lv = S.tick[o.sym], lpx = lv ? +lv.p : 0; if ((g && !g.ok) || now - o.t > 900000 || (lpx > 0 && o.stop && (o.side === 'LONG' ? lpx < o.stop : lpx > o.stop))) { delete FAST[key]; } });
+                Object.keys(FAST).forEach(function (key) { var o = FAST[key], g = window.__gate(o.sym, o.side), lv = S.tick[o.sym], lpx = lv ? +lv.p : 0; if ((g && !g.ok) || (window.__chiefHead && window.__chiefHead(o.sym, o.side, o.mode === 'fast') === false) || now - o.t > 480000 || (lpx > 0 && o.stop && (o.side === 'LONG' ? lpx < o.stop : lpx > o.stop))) { delete FAST[key]; } });
             } catch (e) { }
         }
         setInterval(scanTick, 4000);
@@ -26715,10 +26770,10 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         window.__fastGet = function (sym) { var r = null; Object.keys(FAST).forEach(function (k) { if (FAST[k].sym === sym && (!r || FAST[k].t > r.t)) { r = FAST[k]; } }); return r; };
         window.__fastList = function () { return Object.keys(FAST).map(function (k) { return FAST[k]; }); };
         window.__fastBox = function () {
-            var L = window.__fastList(), now = Date.now(); if (!L.length) { return '<div class="note" style="margin:0 0 8px">⚡ <b>Fast movers</b>: watching live prices of Binance USDT coins (24h volume above 1.5M) every few seconds. Nothing is moving fast with a clean 1-minute setup right now.' + blkLine() + '</div>'; }
+            var L = window.__fastList(), now = Date.now(); if (!L.length) { return '<div class="note" style="margin:0 0 8px">⚡ <b>Fast movers</b>: watching live prices of Binance USDT coins (24h volume above 5M) every few seconds. Nothing is moving fast with a clean 1-minute setup right now.' + blkLine() + '</div>'; }
             var h = '<div class="note" style="margin:0 0 4px">⚡ <b>Fast movers (realtime)</b>: coins moving now that passed the 1-minute check. Riskier than the 15-minute rule: use a small size and the stop shown.</div><div class="group">';
             L.sort(function (a, b) { return b.t - a.t; }).forEach(function (o) { var L1 = o.side === 'LONG', fm = function (x) { return x ? (x >= 100 ? x.toFixed(2) : x >= 1 ? x.toFixed(4) : x.toPrecision(4)) : '?'; };
-                h += '<div class="row tap" data-act="chart:' + o.sym + '"><span><b>' + base(o.sym) + '</b> <span style="color:' + (L1 ? '#1a9d4a' : '#d1352b') + '">' + (L1 ? 'LONG' : 'SHORT') + '</span> <small class="mut">' + (o.mode === 'fast' ? '⚡ FAST' : '15m confirmed') + ' · ' + (o.m5 >= 0 ? '+' : '') + o.m5.toFixed(1) + '% in 5 min · ' + Math.max(0, Math.round((now - o.t) / 60000)) + ' min ago</small><br><small class="mut">now ' + fm(o.px) + ' · stop ' + fm(o.stop) + ' · target ' + fm(o.tgt) + '</small></span></div>'; });
+                h += '<div class="row tap" data-act="chart:' + o.sym + '"><span><b>' + base(o.sym) + '</b> <span style="color:' + (L1 ? '#1a9d4a' : '#d1352b') + '">' + (L1 ? 'LONG' : 'SHORT') + '</span> <small class="mut">' + (o.mode === 'fast' ? '⚡ FAST' : '15m confirmed') + ' · ' + (o.m5 >= 0 ? '+' : '') + o.m5.toFixed(1) + '% in 5 min · ' + Math.max(0, Math.round((now - o.t) / 60000)) + ' min ago · valid ' + Math.max(0, Math.round((o.t + 480000 - now) / 60000)) + ' more min</small><br><small class="mut">now ' + fm(o.px) + ' · stop ' + fm(o.stop) + ' · target ' + fm(o.tgt) + '</small></span></div>'; });
             return h + '</div><div class="note" style="margin:4px 0 8px">Seen a few minutes ago may already be late: compare the price now with the stop and target before you enter. These are possible levels, not promises.' + blkLine() + '</div>';
         };
         window.__fastScan = scanTick;
