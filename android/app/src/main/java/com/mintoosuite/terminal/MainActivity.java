@@ -68,8 +68,19 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                WebView w = WebHolder.alive() ? WebHolder.get(MainActivity.this) : null;
-                if (w != null && w.canGoBack()) { w.goBack(); } else { finish(); }
+                if (lockView != null) { moveTaskToBack(true); return; }
+                final WebView w = WebHolder.alive() ? WebHolder.get(MainActivity.this) : null;
+                if (w == null) { finish(); return; }
+                try {
+                    w.evaluateJavascript("(function(){try{return window.__mwBackStep&&window.__mwBackStep()?'1':'0'}catch(e){return '0'}})()", new android.webkit.ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String v) {
+                            if (v != null && v.indexOf('1') >= 0) { return; }
+                            if (v != null && v.indexOf('0') >= 0) { MainActivity.this.finish(); return; }
+                            if (w.canGoBack()) { w.goBack(); } else { MainActivity.this.finish(); }
+                        }
+                    });
+                } catch (Throwable t) { if (w.canGoBack()) { w.goBack(); } else { finish(); } }
             }
         });
     }
