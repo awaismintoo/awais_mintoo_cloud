@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-07.377';
+var BUILD = '2026-11-07.378';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -15831,7 +15831,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var t = tf(), names = Object.keys(LAB.res), h = '';
             h += X.box('<b style="font-size:17px">🔬 Signal Lab: how accurate are the indicators?</b><div class="note" style="margin:6px 0 0">This tests the famous indicators (UT Bot, Supertrend, EMA cross, RSI) on real past candles of 10 markets: Bitcoin and other coins, Gold, Silver, Oil and EUR/USD. Every trade pays a fee and slippage of 0.08% each side. Entries use the <b>next</b> candle, so there is no cheating.</div>' +
                 '<div class="note" style="margin:6px 0 0"><b>About "99.9% accuracy":</b> no indicator on earth can honestly do that. A bot can show a high win rate by taking many tiny wins and a few huge losses, by repainting old signals, or by showing only lucky coins. What counts is win rate <b>and</b> the size of wins versus losses, after fees, on many trades. This page shows exactly that, with the number of trades, so you can see the truth.</div>', '#0a84ff');
-            h += X.seg('labtf', [['15m', '15 minutes'], ['1h', '1 hour'], ['4h', '4 hours']], t);
+            h += X.seg('labtf', [['15m', '15 minutes'], ['1h', '1 hour'], ['4h', '4 hours']], t); h += '<div class="note" style="margin:-4px 2px 8px">Candle size: how long each price bar lasts in the test. Tap one and the test starts by itself. Short bars give more trades but more noise; long bars give fewer, calmer trades.</div>';
             h += '<button class="btn" data-xk="labrun:1" ' + (LAB.busy ? 'disabled' : '') + '>' + (LAB.busy ? 'Testing… ' + LAB.done + '/' + LAB.tot : (names.length ? 'Run the test again' : 'Run the test (about 20 seconds)')) + '</button>';
             if (LAB.t && LAB.t !== t && !LAB.busy) { h += '<div class="note" style="color:#ff9f0a">Showing the old ' + LAB.t + ' result. Tap Run to test ' + t + '.</div>'; }
             if (LAB.msg) { h += '<div class="note">' + e2(LAB.msg) + '</div>'; }
@@ -15857,7 +15857,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             return h + '<div class="group pad"><div class="note" style="margin:0">Honest limits: past candles, a short window, simple fee model, no guarantee. Use stops, small size, and the practice bot first.</div></div>';
         }
         X.on('labrun', function () { runLab(); });
-        try { document.addEventListener('click', function (e) { var b = e.target && e.target.closest ? e.target.closest('[data-xk^="labtf:"]') : null; if (b) { setTimeout(function () { if (!LAB.busy && S.win === 'siglab') { runLab(); } }, 120); } }); } catch (e) { }
+        try { document.addEventListener('click', function (e) { var b = e.target && e.target.closest ? e.target.closest('[data-xk^="labtf:"]') : null; if (b) { setTimeout(function () { if (!LAB.busy && S.win === 'siglab') { runLab(); } }, 120); } }, true); } catch (e) { }
         try {
             VIEWS.siglab = vLab; LIVE.siglab = 0;
             WINS.push({ id: 'siglab', ic: '🔬', c: '#0a84ff', n: 'Signal Lab', t: 'Signal Lab', sub: 'Honest accuracy test of UT Bot, Supertrend, RSI and Baba Practice Bot on past candles' });
@@ -16108,7 +16108,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function nm(id) { var w = null; try { w = winDef(id); } catch (e) { } var t = String((w && (w.t || w.n)) || id).replace(/[^\w &\/.\-+%]+/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 16 ? t.slice(0, 15) + '…' : t; }
         function strip(id) {
             if (window.__mwHT && window.__mwHT !== id) { window.__mwHT = ''; }
-            var f = famOf[id]; if (window.__mwHT && window.__mwHT === id && famOf.overview) { f = famOf.overview; } if (f && f[0] === 'Markets') { f = [f[0], f[1].filter(function (k) { return ['siglab', 'gold', 'rates', 'news', 'newc'].indexOf(k) < 0; })]; } if (f && f[0] === 'Learn & play') { var LX = { quest: ['academy', 'videos', 'me'], academy: ['quest', 'me'], videos: ['quest', 'me'], tips: ['academy', 'videos', 'quest', 'me'], me: ['academy', 'videos', 'quest', 'tips', 'me'] }[id]; if (LX) { f = [f[0], f[1].filter(function (k) { return LX.indexOf(k) < 0; })]; } } if (!f || f[1].length < 2) { return ''; }
+            var f = famOf[id]; if (window.__mwHT && window.__mwHT === id && famOf.overview) { f = famOf.overview; } if (f && f[0] === 'Markets' && id !== 'chart' && id !== 'split') { return ''; } if (f && f[0] === 'Markets') { f = [f[0], f[1].filter(function (k) { return ['siglab', 'gold', 'rates', 'news', 'newc'].indexOf(k) < 0; })]; } if (f && f[0] === 'Learn & play') { var LX = { quest: ['academy', 'videos', 'me'], academy: ['quest', 'me'], videos: ['quest', 'me'], tips: ['academy', 'videos', 'quest', 'me'], me: ['academy', 'videos', 'quest', 'tips', 'me'] }[id]; if (LX) { f = [f[0], f[1].filter(function (k) { return LX.indexOf(k) < 0; })]; } } if (!f || f[1].length < 2) { return ''; }
             var rnd = f[0] === 'Home'; return '<div class="segc fmstrip' + (rnd ? ' mwr' : '') + '" data-noswipe="1" style="display:flex;gap:6px;overflow-x:auto;white-space:nowrap;margin:0 0 10px;padding:2px 0 6px;-webkit-overflow-scrolling:touch">' + (rnd ? (function () { var l = f[1].filter(function (k) { return k !== 'siglab' && k !== 'safety'; }), i = l.indexOf('brief'); [].splice.apply(l, [i < 0 ? l.length : i + 1, 0].concat(['siglab', 'safety'].filter(function (k) { return typeof VIEWS[k] === 'function'; }))); return l; })() : f[1]).map(function (k) {
                 var on = k === id;
                 return '<button type="button" data-act="win:' + k + '" data-noswipe="1" style="flex:none;padding:7px 12px;border-radius:16px;border:1px solid ' + (on ? '#0a84ff' : 'var(--line,#d1d1d6)') + ';background:' + (on ? '#0a84ff' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit') + ';font:700 13px system-ui,sans-serif">' + (rnd && window.__mwRI ? window.__mwRI(k) : '') + (rnd && k === 'live' ? 'Fresh ideas' : nm(k)) + (window.__lvb ? window.__lvb(k) : '') + '</button>';
@@ -20301,6 +20301,7 @@ try {
             return h;
         }
         try { WINS.push({ id: 'words', ic: '📘', c: '#0a84ff', n: 'Simple words', t: 'Simple words', sub: 'Every trading word explained in plain language, with Roman Urdu' }); LIVE.words = 0; VIEWS.words = vWords; var g2 = MW_GROUPS[0][1]; if (g2.indexOf('words') < 0) { var k2 = g2.indexOf('ptrade'); g2.splice(k2 < 0 ? g2.length : k2 + 1, 0, 'words'); } } catch (e) { }
+        try { window.__mwG = G; } catch (e) { }
         document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-wd]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); var i = +t.getAttribute('data-wd'); window.__wOpen = window.__wOpen === i ? -1 : i; try { renderView(true); } catch (er) { } }, true);
 
         /* fresh installs start in Beginner (simple) mode; people who already chose keep their choice */
@@ -25723,6 +25724,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['show more|hide more|show 2 more|markets and ideas more|more tab tiles|signal lab|news and world|new coins|split charts strip|fast chart|fast prices|native chart|native prices|quick start|problem log repeated|repeated lines', 'Build 376: More tab tidy-up', 'More now counts only tiles that really exist behind "Show N more", and the icons no longer change when you press Show or Hide. Signal Lab, News and New Coins are listed in More > Markets and ideas (New Coins under "Show more"); the top chip row on Split Charts now shows only Search, Chart and Split, and Gold and Rates are in Gold and Exness. Native chart and Native prices are now called Fast chart and Fast prices (still experimental, same pages). The sheet title says More, the first group says Quick start, and the Problem log groups repeated lines as ×count while Copy and Email still send every line. Nothing here is a profit promise.', 'win:nchart']); } catch (e) { } })();
 
 ;(function () { try { PF_APP.push(['menu look|menu sheet|modern menu|menu style|menu top right|menu colours|menu colors', 'Build 377: Menu has the modern look', 'The Menu (top right) now has a gradient header card, pill-style Light / Dark / Auto and Calm switches with a colour highlight, a tinted About card and rounded buttons; the More tab tiles have round icons. Only the look changed: every item, its order, wording and action is the same, and Back still returns to where you were. Colour themes are still under Menu > Look & mode.', 'win:look']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['simple words|glossary|word list|search a word|rsi meaning|what is ema|drawdown|candle meaning|support resistance|win rate|profit factor|position size', 'Build 378: Simple words is modern and bigger', 'More > Simple words now has a search box, groups (Basics, Risk, Reading charts, Costs), round icons and 33 words, each with an example and Roman Urdu. New words include RSI, EMA, candle, volume, support and resistance, drawdown, risk and reward, win rate and profit factor, WAIT and backtest. They explain how things work and are not advice.', 'win:words']); PF_APP.push(['signal lab time|15 minutes|1 hour|4 hours|candle size signal lab|signal lab buttons|search window|search markets|languages window|app language|world clock|time zone look|clocks', 'Build 378: Search, Signal Lab, Languages and World clock', 'Search markets has quick chips (Bitcoin, Ethereum, Gold, Silver, Oil, USD/PKR) and the modern look. In Signal Lab the 15 minutes / 1 hour / 4 hours buttons choose the candle size and now start the test by themselves. Search, Signal Lab and New Coins no longer show the extra Chart and Split chips at the top. Languages shows the six app languages as buttons (and going back to English now restores every screen). World clock and Time zone use the modern card look. Nothing here is a profit promise.', 'win:langs']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26276,6 +26279,120 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         }
         addHead(); setTimeout(addHead, 1500);
     } catch (e) { try { console.log('p9menu', e); } catch (er) { } }
+})();
+/* ===== p9gloss (build 378): Simple words in the modern look: search, groups, round icons, more terms. Same window id (words), same tap-to-open rule. ===== */
+(function () {
+    try {
+        if (window.__mwGlossA) { return; } window.__mwGlossA = 1;
+        var EXTRA = [
+            ['RSI', 'A 0-to-100 gauge of how fast price has moved lately.', 'Above 70 is often called "stretched up", below 30 "stretched down". It is a hint, not a promise: strong trends can stay stretched for days.', 'Roman Urdu: qeemat ki raftaar napne ka paimana.'],
+            ['EMA', 'A smoothed average price that follows recent candles more closely.', 'Price above the 50-candle EMA often means an up-trend; below means a down-trend. It lags, so it confirms rather than predicts.', 'Roman Urdu: haal ki qeematon ka hamwar ausat.'],
+            ['UT Bot and Supertrend', 'Two popular rules that flip between BUY and SELL as price moves.', 'They draw a line under or over price. When price crosses the line the rule flips. Signal Lab shows how they really did on past candles, after fees.', 'Roman Urdu: do mashhoor rules jo buy aur sell badalte hain.'],
+            ['Candle', 'One bar on the chart showing open, close, high and low for a period.', 'A 15-minute candle summarises 15 minutes. Green usually means it closed higher than it opened, red lower.', 'Roman Urdu: ek waqt ki qeemat ka dabba.'],
+            ['Volume', 'How much was traded in a period.', 'A move on high volume is more believable than the same move on thin volume. Small coins can show big moves on tiny volume.', 'Roman Urdu: kitna len-den hua.'],
+            ['Support and resistance', 'Price levels where the market has often paused or turned.', 'Support is a floor price has bounced from; resistance is a ceiling it failed to pass. Levels can break, so a stop-loss is still needed.', 'Roman Urdu: qeemat ke rukne ya palatne ki satah.'],
+            ['Trend', 'The general direction of price over a stretch of time.', 'Higher highs and higher lows = up-trend. Trading with the trend is usually calmer than against it, but trends end.', 'Roman Urdu: qeemat ka aam rukh.'],
+            ['Risk and reward', 'How much you risk compared with how much you could gain.', 'Stop 2% away and target 4% away is 1:2. Even a good ratio loses money if you win too rarely, so look at win rate too.', 'Roman Urdu: nuksan ka khatra aur mumkin nafa.'],
+            ['Position size', 'How much money you put into one trade.', 'Many careful traders risk only 1% to 2% of the account per trade. Smaller size lets you survive a bad streak.', 'Roman Urdu: ek trade mein kitni raqam.'],
+            ['Win rate and profit factor', 'Win rate = share of trades that made money. Profit factor = total wins divided by total losses.', 'A 70% win rate can still lose if the losses are huge. Profit factor above 1 means wins beat losses; the app asks for 1.2+ on 100+ trades before it says "edge seen".', 'Roman Urdu: kitne trade jeete aur jeet nuksan se kitni barhi.'],
+            ['Drawdown', 'How far your account fell from its highest point.', 'Account went from 1000 to 800: the drawdown is 20%. Big drawdowns need even bigger gains to recover.', 'Roman Urdu: sab se uncha point se kitna neeche aaye.'],
+            ['Market and limit orders', 'Market = buy or sell now at the current price. Limit = only at your chosen price or better.', 'A limit buy at 95 waits until price comes down to 95. It may never fill. A market order fills at once but can slip.', 'Roman Urdu: abhi ki qeemat par ya apni muqarrar qeemat par.'],
+            ['Breakout', 'Price moving out of a range it was stuck in.', 'Many breakouts fail and fall back ("fake breakout"). Waiting for a closed candle and volume helps a little.', 'Roman Urdu: range tor kar bahar nikalna.'],
+            ['Volatility', 'How much and how fast price swings.', 'High volatility means bigger wins and bigger losses. Use smaller size and wider stops when volatility is high.', 'Roman Urdu: qeemat ka utar charhao.'],
+            ['Stablecoin', 'A coin designed to stay near one dollar (like USDT).', 'It is used as cash on exchanges. It can still lose its peg or be frozen, so it is not risk-free.', 'Roman Urdu: dollar ke barabar rehne wala coin.'],
+            ['Altcoin', 'Any coin other than Bitcoin.', 'Altcoins often move more than Bitcoin, up and down. Small ones can be pumped and dumped.', 'Roman Urdu: Bitcoin ke ilawa coin.'],
+            ['Open interest', 'The total size of futures positions still open.', 'Rising open interest with rising price means new money is joining the move. A sudden drop often means positions were closed or liquidated.', 'Roman Urdu: abhi khule futures trades ka kul size.'],
+            ['Backtest', 'Testing a rule on past prices to see how it would have done.', 'Signal Lab does this. A good past result does not guarantee the future, and a rule tuned on old data can fail on new data.', 'Roman Urdu: purani qeematon par rule ka imtihan.'],
+            ['WAIT', 'The app says WAIT when the checks do not line up for a safe idea.', '"Recommended: WAIT" means no valid trade right now. Not trading is a valid choice and protects your money.', 'Roman Urdu: abhi trade na karein.'],
+            ['Trade journal', 'A record of your trades and why you took them.', 'Reviewing it shows your repeat mistakes. The app keeps your practice trades in My results.', 'Roman Urdu: apne trades ka hisaab aur wajah.']
+        ];
+        var CATS = [['all', 'All'], ['basic', 'Basics'], ['risk', 'Risk'], ['read', 'Reading charts'], ['cost', 'Costs']];
+        var MAPC = { 'Leverage': 'risk', 'Margin': 'risk', 'Stop-loss': 'risk', 'Take-profit': 'risk', 'Liquidation': 'risk', 'ATR': 'read', 'Funding fee': 'cost', 'Spread and slippage': 'cost', 'Pump': 'read', 'RSI': 'read', 'EMA': 'read', 'UT Bot and Supertrend': 'read', 'Candle': 'read', 'Volume': 'read', 'Support and resistance': 'read', 'Trend': 'read', 'Breakout': 'read', 'Volatility': 'read', 'Open interest': 'read', 'Risk and reward': 'risk', 'Position size': 'risk', 'Win rate and profit factor': 'risk', 'Drawdown': 'risk', 'Market and limit orders': 'basic', 'Backtest': 'basic', 'WAIT': 'basic', 'Trade journal': 'basic' };
+        var ICON = { basic: '📘', risk: '🛡', read: '📈', cost: '💸' };
+        var GRAD = { basic: 'linear-gradient(135deg,#2563eb,#38bdf8)', risk: 'linear-gradient(135deg,#dc2626,#f97316)', read: 'linear-gradient(135deg,#4f46e5,#7c3aed)', cost: 'linear-gradient(135deg,#0e9f6e,#0e7490)' };
+        var css = document.createElement('style'); css.setAttribute('data-mwkeep', '1');
+        css.textContent = '.mwgl{margin:0 0 12px;padding:16px;border-radius:20px;background:linear-gradient(135deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%);color:#fff;box-shadow:0 8px 22px rgba(67,56,202,.26)}.mwgl b{font-size:18px;color:#fff}.mwgl div{margin-top:4px;font-size:13px;color:rgba(255,255,255,.9)}.mwgs{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:10px 14px;border-radius:16px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}.mwgs input{flex:1;border:0;background:transparent;color:var(--tx);font-size:15px;outline:0;min-width:0}.mwgc{display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;padding:2px 0 6px}.mwgc span{flex:none;padding:8px 14px;border-radius:16px;border:1px solid var(--line);font:700 13px system-ui,sans-serif;cursor:pointer;min-height:20px}.mwgc span.on{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:transparent}.mwgt{display:flex;gap:12px;align-items:flex-start;margin:0 0 10px;padding:14px;border-radius:18px;background:var(--card);box-shadow:var(--shadow);cursor:pointer}.mwgt .gi{flex:none;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff}.mwgt .gb{flex:1;min-width:0}.mwgt b{font-size:16px}.mwgt .gd{margin-top:3px;font-size:14px}.mwgt .gx{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--fill);font-size:13px}.mwgt .gh{margin-top:6px;font-size:12px;color:var(--mut)}.mwgt .gu{margin-top:6px;font-size:13px;color:var(--mut)}';
+        document.head.appendChild(css);
+        window.__gQ = window.__gQ || ''; window.__gC = window.__gC || 'all';
+        function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function all() { return (window.__mwG || []).concat(EXTRA); }
+        function vWords2() {
+            var L = all(), q = String(window.__gQ || '').toLowerCase(), c = window.__gC || 'all';
+            var h = '<div class="mwgl"><b>📘 Simple words</b><div>' + L.length + ' trading words in plain language, each with an example and Roman Urdu. Tap a word to open it. Not financial advice.</div></div>' +
+                '<div class="mwgs"><span>🔍</span><input id="mwgq" type="search" placeholder="Search a word (RSI, margin, stop…)" value="' + esc(window.__gQ || '') + '" aria-label="Search words"></div>' +
+                '<div class="mwgc" data-noswipe="1">' + CATS.map(function (k) { return '<span data-gc="' + k[0] + '" class="' + (c === k[0] ? 'on' : '') + '">' + k[1] + '</span>'; }).join('') + '</div>';
+            var n = 0;
+            L.forEach(function (x, i) {
+                var cat = MAPC[x[0]] || 'basic';
+                if (c !== 'all' && cat !== c) { return; }
+                if (q && (x[0] + ' ' + x[1] + ' ' + x[3]).toLowerCase().indexOf(q) < 0) { return; }
+                n++; var on = window.__wOpen === i;
+                h += '<div class="mwgt" data-wd="' + i + '"><div class="gi" style="background:' + GRAD[cat] + '">' + ICON[cat] + '</div><div class="gb"><b>' + esc(x[0]) + '</b><div class="gd">' + esc(x[1]) + '</div>' + (on ? '<div class="gx"><b>Example:</b> ' + esc(x[2]) + '</div><div class="gu">' + esc(x[3]) + '</div>' : '<div class="gh">Tap for an example ▾</div>') + '</div></div>';
+            });
+            if (!n) { h += '<div class="group pad"><span class="mut">No word matches. Try another spelling, or open Baba AI and ask.</span></div>'; }
+            return h + '<div class="note">Words explain how things work. They are not advice and no rule here promises a profit.</div>';
+        }
+        VIEWS.words = vWords2;
+        document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-gc]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); window.__gC = t.getAttribute('data-gc'); try { renderView(true); } catch (er) { } }, true);
+        document.addEventListener('input', function (e) { if (e.target && e.target.id === 'mwgq') { window.__gQ = e.target.value; var p = e.target.selectionStart; clearTimeout(window.__gT); window.__gT = setTimeout(function () { try { renderView(true); var i = document.getElementById('mwgq'); if (i) { i.focus(); i.setSelectionRange(p, p); } } catch (er) { } }, 250); } }, true);
+    } catch (e) { try { console.log('p9gloss', e); } catch (er) { } }
+})();
+/* ===== p9win (build 378): modern look for Search, Languages and World clock. Same windows, same actions; look and a few helper cards only. ===== */
+(function () {
+    try {
+        if (window.__mwWinA) { return; } window.__mwWinA = 1;
+        var css = document.createElement('style'); css.setAttribute('data-mwkeep', '1');
+        css.textContent =
+            '.mwhd{margin:0 0 12px;padding:16px;border-radius:20px;background:linear-gradient(135deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%);color:#fff;box-shadow:0 8px 22px rgba(67,56,202,.26)}.mwhd b{display:block;font-size:18px;color:#fff}.mwhd span{display:block;margin-top:4px;font-size:13px;line-height:1.35;color:rgba(255,255,255,.9)}.mwhd i{display:inline-block;margin:9px 6px 0 0;padding:4px 10px;border-radius:12px;background:rgba(255,255,255,.18);font:700 12px system-ui,sans-serif;font-style:normal;color:#fff}' +
+            '.mwqc{display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;padding:2px 0 6px}.mwqc span{flex:none;padding:9px 14px;border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);font:700 13px system-ui,sans-serif;cursor:pointer}' +
+            '#view .m7q{border-radius:18px;box-shadow:var(--shadow);background:var(--card);border:1px solid var(--line)}' +
+            '.mwlg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}.mwlg span{display:flex;align-items:center;gap:8px;min-height:48px;padding:8px 12px;border-radius:16px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);font:700 13px system-ui,sans-serif;cursor:pointer}.mwlg span.on{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:transparent}.mwlg small{display:block;font-weight:600;font-size:11px;opacity:.75}' +
+            '#view .mwyt{background:linear-gradient(135deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%)!important;color:#fff;border:0!important;border-radius:20px!important;box-shadow:0 8px 22px rgba(67,56,202,.26)}#view .mwyt .note,#view .mwyt div{color:#fff}' +
+            '#view .mwck{background:linear-gradient(160deg,#1e1b4b,#312e81 60%,#4338ca)!important;color:#fff;border:0!important;border-radius:20px!important;box-shadow:0 6px 16px rgba(67,56,202,.22)}#view .mwck .note,#view .mwck div{color:#fff}#view .mwck .note{opacity:.8}';
+        document.head.appendChild(css);
+        function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        // ---- Search ----
+        var _f = VIEWS.find;
+        if (typeof _f === 'function') {
+            VIEWS.find = function () {
+                var h = _f.apply(this, arguments); if (typeof h !== 'string') { return h; }
+                var chips = [['Bitcoin', 'BTC'], ['Ethereum', 'ETH'], ['Gold', 'GOLD'], ['Silver', 'SILVER'], ['Oil', 'OIL'], ['USD/PKR', 'PKR']];
+                return '<div class="mwhd"><b>🔍 Search markets</b><span>Find any coin, gold, silver, oil or currency, then open its chart or ask the bot.</span></div>' + h.replace('<div id="m7find">', '<div class="mwqc" data-noswipe="1">' + chips.map(function (c) { return '<span data-mwq="' + c[1] + '">' + c[0] + '</span>'; }).join('') + '</div><div id="m7find">');
+            };
+            document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-mwq]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation(); try { S.m7.fq = t.getAttribute('data-mwq'); renderView(true); } catch (er) { } }, true);
+        }
+        // ---- Languages ----
+        var LANGS = [['en', 'English', 'US'], ['ur', 'اردو', 'Urdu'], ['ar', 'العربية', 'Arabic'], ['zh', '中文', 'Chinese'], ['de', 'Deutsch', 'German'], ['fr', 'Français', 'French']];
+        var _l = VIEWS.langs;
+        if (typeof _l === 'function') {
+            VIEWS.langs = function () {
+                var h = _l.apply(this, arguments); if (typeof h !== 'string') { return h; }
+                var cur = String(S.lang || 'en');
+                var top = '<div class="mwhd"><b>🌐 Languages</b><span>Pick the app language, read how translation works, and download packs for offline use.</span><i>App: ' + esc((LANGS.filter(function (l) { return l[0] === cur; })[0] || ['', cur, ''])[1]) + '</i><i>English ⇄ Urdu built in</i></div>' +
+                    '<div class="sh" style="margin-top:0">App language</div><div class="mwlg">' + LANGS.map(function (l) { return '<span data-mwl="' + l[0] + '" class="' + (cur === l[0] ? 'on' : '') + '"><div>' + esc(l[1]) + '<small>' + esc(l[2]) + '</small></div></span>'; }).join('') + '</div>' +
+                    '<div class="note" style="margin:-4px 2px 12px">The app language changes the title and the top buttons. Baba AI and the Dictionary answer in English and Urdu (also Roman Urdu) without internet.</div>';
+                h = h.replace('<b style="font-size:18px">🌐 Languages</b>', '<b style="font-size:17px">Offline languages</b>');
+                return top + h;
+            };
+            document.addEventListener('click', function (e) {
+                var t = e.target.closest ? e.target.closest('[data-mwl]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation();
+                try { var sel = document.getElementById('langSel'); if (sel) { sel.value = t.getAttribute('data-mwl'); sel.dispatchEvent(new Event('change', { bubbles: true })); } renderView(true); } catch (er) { }
+            }, true);
+        }
+        // going back to English must rebuild the screens (translated text is otherwise left behind)
+        document.addEventListener('change', function (e) { if (e.target && e.target.id === 'langSel') { setTimeout(function () { try { if (S.lang === 'en') { buildNav(); renderView(true); } } catch (er) { } }, 150); } }, false);
+        // ---- Time zone / World clock ----
+        var _t = VIEWS.timez;
+        if (typeof _t === 'function') {
+            VIEWS.timez = function () {
+                var h = _t.apply(this, arguments); if (typeof h !== 'string') { return h; }
+                h = h.replace('<div class="group pad" style="border-radius:14px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="note" style="margin:0">YOUR TIME', '<div class="group pad mwyt" style="border-radius:14px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="note" style="margin:0">YOUR TIME');
+                h = h.split('<div class="xkcard" style="margin:0;text-align:center">').join('<div class="xkcard mwck" style="margin:0;text-align:center">');
+                h = h.split('fill="#fff6d6"').join('fill="#4338ca"').split('stroke="#222"').join('stroke="#fff"').split('fill="#1c2340"').join('fill="#1e1b4b"');
+                return h;
+            };
+        }
+    } catch (e) { try { console.log('p9win', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
