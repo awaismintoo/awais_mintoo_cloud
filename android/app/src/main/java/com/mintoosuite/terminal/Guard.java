@@ -14,7 +14,7 @@ import android.os.Process;
 import androidx.core.app.NotificationCompat;
 
 /* Freeze guard (build 356). The page runs on the Android main thread, so a watchdog that also runs there cannot help when the page is stuck.
-   This guard runs on its own thread: if the main thread does not answer for 20 s while the app is on screen, it posts a notification,
+   This guard runs on its own thread: if the main thread does not answer for 8 s (was 20 s before build 426) while the app is on screen, it posts a notification,
    schedules a re-launch and ends the process (the foreground bot service restarts by itself). At most 2 restarts in 10 minutes. */
 final class Guard {
     private static volatile long beat = System.currentTimeMillis();
@@ -35,7 +35,7 @@ final class Guard {
                     try {
                         long now = System.currentTimeMillis();
                         if (!WebHolder.isFg()) { beat = now; continue; }
-                        if (now - beat > 20000) { beat = now; recover(app); }
+                        if (now - beat > 8000) { beat = now; recover(app); }
                         if (!pending) { pending = true; main.post(ping); }
                     } catch (Throwable ignored) { }
                 }
