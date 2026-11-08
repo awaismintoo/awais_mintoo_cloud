@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-08.419';
+var BUILD = '2026-11-08.420';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -18842,6 +18842,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             else if ((t === 'plan') && exn !== 'all' && exn !== 'binance') { note0 = '<div class="note" style="margin:0 0 8px">The live plan uses gold and Binance Futures prices, so it is the same for every exchange.</div>'; }
             return X.seg('bxch', XL2, exn) + note0 + full;
         };
+        var lastNL = -1; setInterval(function () { try { if (document.hidden || document.documentElement.getAttribute('data-win') !== 'ideas') { return; } var n = window.__sigAlerts ? window.__sigAlerts().length : 0; if (lastNL >= 0 && n !== lastNL && cur() === 'alert') { renderView(true); } lastNL = n; } catch (e) { } }, 4000);
         LIVE.ideas = 1;
         try { WINS.push({ id: 'bpx', ic: '⭐', c: '#ff9f0a', n: 'Top picks', t: 'Top picks', sub: 'Strongest coins of the day, with separate Futures and Spot tabs for Binance, MEXC and Bitget' }); LIVE.bpx = 1; VIEWS.bpx = function () { try { return vBestX(); } catch (e) { return vB(); } }; } catch (e) { }
         try { var w = winDef('ideas'); if (w) { w.n = 'Ideas'; w.t = 'Ideas'; w.sub = 'Best picks, the full ranked list and the Master Plan, in one place'; } } catch (e) { }
@@ -27143,6 +27144,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         }
         setInterval(tick, 1500);
         window.__sigBook = function (v) { BOOK = v ? 1 : 0; };
+window.__alogPush = function (a) { ALOG.unshift(a); };
+        window.__sigAlerts = function () { var n = Date.now(); return ALOG.filter(function (a) { return n - a.t < 3600000; }).map(function (a) { var g = SIG[a.sym], live = g && g.side === a.side && n < g.until; var lp = 0; try { lp = +(S.tick[a.sym] || {}).p; } catch (e) { } var hit = lp > 0 && ((a.side === 'LONG' && lp < a.stop) || (a.side === 'SHORT' && lp > a.stop)); return { sym: a.sym, base: a.base, x: a.x, side: a.side, strong: a.strong, t: a.t, stop: a.stop, ver: live ? g.ver : 0, ended: !live, hit: hit }; }); }; 
         window.__sigList = function (ex) { var n = Date.now(); return Object.keys(SIG).map(function (k) { return SIG[k]; }).filter(function (e) { if (n >= e.until) { return false; } if (BOOK && e.ver !== 1) { return false; } if (ex && ex !== 'all') { try { return window.XCH ? XCH.listed(ex, e.sym) === 'f' : e.x === ex; } catch (er) { return e.x === ex; } } return true; }).sort(function (a, b) { return (b.ver === 1 ? 1 : 0) - (a.ver === 1 ? 1 : 0) || (b.strong ? 1 : 0) - (a.strong ? 1 : 0) || b.t - a.t; }); };
         window.__sigGet = function (sym) { var e = SIG[sym]; return e && Date.now() < e.until && (!BOOK || e.ver === 1) ? e : null; };
         function fmt(v) { return (+v).toPrecision(5).replace(/\.?0+$/, ''); }
@@ -27236,7 +27239,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 
 ;(function () { /* build 413: the old Home 'Do now' board is gone; the Book-rule tile at the top of Home is the only one */ try { boardHTML = function () { return ''; }; } catch (e) { } })();
 
-;(function () { try { window.__sigAlerts = function () { var n = Date.now(); return ALOG.filter(function (a) { return n - a.t < 3600000; }).map(function (a) { var g = SIG[a.sym], live = g && g.side === a.side && n < g.until; var lp = 0; try { lp = +(S.tick[a.sym] || {}).p; } catch (e) { } var hit = lp > 0 && ((a.side === 'LONG' && lp < a.stop) || (a.side === 'SHORT' && lp > a.stop)); return { sym: a.sym, base: a.base, x: a.x, side: a.side, strong: a.strong, t: a.t, stop: a.stop, ver: live ? g.ver : 0, ended: !live, hit: hit }; }); }; } catch (e) { } })();
+
 /* build 404: Split Charts > "One coin, 2 to 4 time frames": the same coin in 2, 3 or 4 panes, each with a different time frame (you can still change any pane afterwards). Uses the existing split panes; nothing else changes. */
 ;(function () {
     try {
