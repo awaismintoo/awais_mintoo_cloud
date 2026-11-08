@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-08.421';
+var BUILD = '2026-11-08.422';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -25953,6 +25953,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['bot alerts empty|alert in notification but not in tab', 'Bot alerts list', 'Every bot notification is now also kept in the Bot alerts tab for one hour, even if the signal ends quickly. A tag says VERIFIED, not verified, ended, or stop level passed.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['ideas exchange tabs|ideas exchanges choose|binance mexc bitget bybit okx ideas', 'Exchange choice in Ideas', 'At the top of Ideas, choose All, Binance, MEXC, Bitget, Bybit or OKX. The choice applies to every tab below it: Live plan, Bot alerts and All ideas. Bybit and OKX are not scanned for bot signals yet.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['notifications window|notification history|alerts window|bot alert switch|turn off bot alerts|quiet hours|only verified alerts|merge alerts history', 'Notifications (Menu)', 'Notification history is now inside Menu > Notifications (the old Alerts window), and is gone from More. At the top: switches for Bot signal alerts, Only VERIFIED bot alerts and Quiet hours (11 pm to 6 am Pakistan time), then the history cards (filter All, Bot signals, Pump & other; keep 1 to 7 days; Clear), then the Push, Pop-ups and Background settings.', 'win:alerts']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['http 418|feed paused|binance blocked me|too many requests bot|slow down feed', 'Feed paused (HTTP 418)', 'HTTP 418 means Binance paused your phone for sending too many requests. Build 422 lowers the app load: the price keeper checks only 5 coins every 8 seconds, and both the price keeper and the bot scanner stop at once when Binance says slow down, then resume after a few minutes. If it keeps happening, switch on Only VERIFIED bot alerts and close extra chart windows.', 'win:alerts']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -27076,9 +27077,9 @@ window.__pfAns = function (q) { return pfAnswer(q); };
                 /* build 408: the scanner loads Binance candles itself, 6 at a time (the chart loader only did 2 and was too slow to check the market) */
                 var cb = KC[e.sym], nb = Date.now(); if (cb && nb - cb.at < 180000 && !cb.busy && Math.floor(cb.at / 9e5) === Math.floor(nb / 9e5)) { return cb.K; }
                 if (!(cb && cb.busy) && KRUN < (window.__sigLite ? 3 : 6) && typeof fetchText === 'function') {
-                    KRUN++; var en = KC[e.sym] = { K: cb ? cb.K : undefined, at: cb ? cb.at : 0, busy: 1 }, us = ['https://fapi.binance.com/fapi/v1/klines?symbol=' + e.sym + '&interval=15m&limit=130', 'https://api.binance.com/api/v3/klines?symbol=' + e.sym + '&interval=15m&limit=130'], ui = 0;
+                    if (typeof RL !== 'undefined' && RL.until > Date.now()) { return cb ? cb.K : undefined; } KRUN++; var en = KC[e.sym] = { K: cb ? cb.K : undefined, at: cb ? cb.at : 0, busy: 1 }, us = ['https://fapi.binance.com/fapi/v1/klines?symbol=' + e.sym + '&interval=15m&limit=130', 'https://api.binance.com/api/v3/klines?symbol=' + e.sym + '&interval=15m&limit=130'], ui = 0;
                     (function nx() { if (ui >= us.length) { return Promise.reject(0); } return fetchText(us[ui++], 7000).then(function (t) { var a = JSON.parse(t); if (!Array.isArray(a) || a.length < 100) { throw 0; } return a.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }; }); }).catch(nx); })()
-                        .then(function (K) { en.K = K; en.at = Date.now(); }, function () { en.K = null; en.at = Date.now() - 120000; }).then(function () { en.busy = 0; KRUN--; });
+                        .then(function (K) { en.K = K; en.at = Date.now(); window.__kFail = 0; }, function () { en.K = null; en.at = Date.now() - 120000; window.__kFail = (window.__kFail || 0) + 1; if (window.__kFail >= 8) { window.__kFail = 0; try { RL.until = Date.now() + 180000; } catch (x) { } } }).then(function () { en.busy = 0; KRUN--; });
                 }
                 return cb ? cb.K : undefined;
             }
@@ -27315,12 +27316,12 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
 ;(function () { try {
     var busy = {};
     function px(sym) {
-        if (busy[sym] || typeof fetchText !== 'function') { return Promise.resolve(); } busy[sym] = 1;
-        return fetchText('https://fapi.binance.com/fapi/v1/ticker/price?symbol=' + sym, 5000).then(function (t) { var j = JSON.parse(t), p = +j.price; if (p > 0) { var o = S.tick[sym]; if (o) { o.p = p; o.at = Date.now(); } else { S.tick[sym] = { p: p, o: p, h: p, l: p, q: 0, chg: 0, at: Date.now() }; } } }).catch(function () { }).then(function () { busy[sym] = 0; });
+        if (busy[sym] || typeof fxGet !== 'function' || (typeof RL !== 'undefined' && RL.until > Date.now())) { return Promise.resolve(); } busy[sym] = 1;
+        return fxGet('https://fapi.binance.com/fapi/v1/ticker/price?symbol=' + sym).then(function (j) { var p = +j.price; if (p > 0) { var o = S.tick[sym]; if (o) { o.p = p; o.at = Date.now(); } else { S.tick[sym] = { p: p, o: p, h: p, l: p, q: 0, chg: 0, at: Date.now() }; } } }).catch(function () { }).then(function () { busy[sym] = 0; });
     }
-    function wanted() { var m = {}; try { (window.__sigList ? window.__sigList() : []).forEach(function (e) { if (e && e.x === 'binance') { m[e.sym] = 1; } }); } catch (e) { } try { var c = S.chart && S.chart.sym; if (c) { m[c] = 1; } } catch (e2) { } return Object.keys(m).slice(0, 12); }
+    function wanted() { var m = {}; try { (window.__sigList ? window.__sigList() : []).forEach(function (e) { if (e && e.x === 'binance') { m[e.sym] = 1; } }); } catch (e) { } try { var c = S.chart && S.chart.sym; if (c) { m[c] = 1; } } catch (e2) { } return Object.keys(m).slice(0, 5); }
     window.__freshPx = function (sym) { var t = S.tick && S.tick[sym]; if (t && Date.now() - (+t.at || 0) < 20000) { return Promise.resolve(); } return px(sym); };
-    setInterval(function () { try { if (document.hidden) { return; } wanted().forEach(function (s) { var t = S.tick[s]; if (!t || Date.now() - (+t.at || 0) > 8000) { px(s); } }); } catch (e) { } }, 4000);
+    setInterval(function () { try { if (document.hidden) { return; } wanted().forEach(function (s) { var t = S.tick[s]; if (!t || Date.now() - (+t.at || 0) > 12000) { px(s); } }); } catch (e) { } }, 8000);
     /* before a trade attempt: refresh a stale price first so the "Price is old" block rarely appears */
     document.addEventListener('click', function (e) { try { var b = e.target.closest ? e.target.closest('[data-tr],[data-act^="trade"]') : null; var s = b && (b.getAttribute('data-sym')); if (s) { window.__freshPx(s); } } catch (x) { } }, true);
 } catch (e) { } })();
