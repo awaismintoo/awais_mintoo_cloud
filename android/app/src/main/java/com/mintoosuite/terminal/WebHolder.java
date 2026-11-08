@@ -171,10 +171,10 @@ final class WebHolder {
         if (w == null) { return; }
         long now = System.currentTimeMillis();
         if (!w.isShown() || !fgOn) { wdLastOk = now; return; }
-        if (now - wdLastOk > 15000) {
+        if (now - wdLastOk > 45000) {
             if (now - wdWinStart > 600000) { wdWinStart = now; wdReloads = 0; }
             wdLastOk = now;
-            why("page silent for 15 s: app restarted itself");
+            why("page silent for 45 s: app restarted itself");
             try { rebuild(); } catch (Throwable ignored) { }
             if (false) {
                 wdReloads++;
