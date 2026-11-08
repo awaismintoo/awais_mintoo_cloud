@@ -59,6 +59,7 @@ final class WebHolder {
                 try { why(detail != null && detail.didCrash() ? "engine crashed" : "android closed the page engine (low memory)"); } catch (Throwable ignored) { }
                 try { if (view.getParent() instanceof ViewGroup) { ((ViewGroup) view.getParent()).removeView(view); } view.destroy(); } catch (Exception ignored) { }
                 web = null;
+                try { Guard.recover(app, true); } catch (Throwable ignored) { }
                 return true;
             }
 
@@ -170,9 +171,11 @@ final class WebHolder {
         if (w == null) { return; }
         long now = System.currentTimeMillis();
         if (!w.isShown() || !fgOn) { wdLastOk = now; return; }
-        if (now - wdLastOk > 40000) {
+        if (now - wdLastOk > 15000) {
             if (now - wdWinStart > 600000) { wdWinStart = now; wdReloads = 0; }
             wdLastOk = now;
+            why("page silent for 15 s: app restarted itself");
+            try { Guard.recover(app); } catch (Throwable ignored) { }
             if (wdReloads < 3) {
                 wdReloads++;
                 why("watchdog reloaded the page (it was silent for 40 s)");

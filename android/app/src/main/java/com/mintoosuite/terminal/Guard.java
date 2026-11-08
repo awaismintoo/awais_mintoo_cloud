@@ -45,12 +45,14 @@ final class Guard {
         t.start();
     }
 
-    private static void recover(Context app) {
+    static void recover(Context app) { recover(app, false); }
+
+    static void recover(Context app, boolean force) {
         try {
             SharedPreferences sp = app.getSharedPreferences("mw_guard", Context.MODE_PRIVATE);
             long now = System.currentTimeMillis();
             long t1 = sp.getLong("t1", 0), t2 = sp.getLong("t2", 0);
-            if (now - t2 < 600000 && now - t1 < 600000 && t1 > 0 && t2 > 0) { return; }
+            if (!force && now - t2 < 600000 && now - t1 < 600000 && t1 > 0 && t2 > 0) { return; }
             sp.edit().putLong("t1", t2).putLong("t2", now).putInt("n", sp.getInt("n", 0) + 1).commit();
             try {
                 if (Build.VERSION.SDK_INT < 33 || app.checkSelfPermission("android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
