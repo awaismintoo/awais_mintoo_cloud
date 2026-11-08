@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-08.445';
+var BUILD = '2026-11-08.447';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -20173,8 +20173,68 @@ try {
         var BYPASS = 0;
         function ask(t, b, y, col, cb) { if (window.__ask) { window.__ask(t, b, y, col, cb); } else if (window.confirm(t + ' ' + String(b).replace(/<[^>]+>/g, ' '))) { cb(); } }
         var LASTRUN = {};
+        /* build 447: two-tap real trade. Tap 1 = Long/Short (or "Trade this"), tap 2 = Confirm in one sheet. Uses the same order code as Trade Pro (tpGo). */
+        function qClose() { var q = document.getElementById('mwq'); if (q) { q.remove(); } }
+        function qSheet(c) {
+            try {
+                var sym = c.sym, long = c.side === 'LONG', tk = S.tick && S.tick[sym], px = tk && +tk.p > 0 ? +tk.p : 0; if (!px) { return false; }
+                if (!window.__tplan || !tpHas()) { return false; }
+                var slp = c.slp > 0 ? c.slp : 2, sg = long ? 1 : -1, sl = c.sl > 0 ? c.sl : px * (1 - sg * slp / 100), tp = c.tp > 0 ? c.tp : px * (1 + sg * slp * 1.5 / 100);
+                if (c.sl > 0 && c.tp > 0 && Math.abs(c.sl / px - 1) * 100 > 25) { sl = px * (1 - sg * slp / 100); tp = px * (1 + sg * slp * 1.5 / 100); }
+                var P = window.__tplan.mkPlan(sym, c.side, px, sl, tp, 0, 'bin', true); if (!P) { return false; }
+                var A = window.__acct && window.__acct(), free = A ? A.free : 0, mg = P.margin, fit = '';
+                if (A && A.wallet > 0) { var rk = Math.min(P.notional * (P.sp / 100 + 0.001), A.wallet * 0.018), nt = rk / (P.sp / 100 + 0.001); if (nt / P.lev < mg) { mg = Math.max(0.5, nt / P.lev); fit = 'Sized so a stop-out costs about $' + rk.toFixed(2) + ' (1.8% of your $' + A.wallet.toFixed(2) + ' account, inside the app 2% safety rule). '; } }
+                if (free > 0 && mg > free * 0.95) { mg = free * 0.95; fit += 'Size reduced to fit your $' + free.toFixed(2) + ' free.'; }
+                mg = Math.max(1, Math.floor(mg * 100) / 100);
+                var lossAmt = mg * P.lev * P.sp / 100, winAmt = mg * P.lev * P.tpp / 100, lt = ''; try { lt = window.__late ? window.__late(sym, c.side) : ''; } catch (e) { }
+                var q = document.getElementById('mwq'); if (q) { q.remove(); }
+                q = document.createElement('div'); q.id = 'mwq'; q.setAttribute('data-noswipe', '1');
+                q.style.cssText = 'position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center';
+                var col = long ? '#16a34a' : '#dc2626', nm = bs(sym), fm = function (v) { try { return fmtP(+v, sym); } catch (e) { return String(v); } };
+                q.innerHTML = '<div style="background:var(--card,#fff);color:var(--tx,#111);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.4)"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:19px;color:' + col + '">' + (long ? '▲ LONG ' : '▼ SHORT ') + nm + '</b><span data-qx="x" style="font-size:22px;padding:4px 10px">✕</span></div><div style="color:#d70015;font-weight:700;font-size:13px;margin:2px 0 8px">REAL MONEY · Binance Futures · isolated</div>' +
+                    (lt ? '<div style="background:#fff4e0;border-radius:12px;padding:8px 10px;margin:0 0 8px;font-size:13px"><b>The app says PREPARE:</b> ' + String(lt).replace(/</g, '&lt;') + '. Your call: you may trade at your own will.</div>' : '') +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:6px 0"><div style="background:rgba(128,128,128,.12);border-radius:12px;padding:8px;text-align:center"><small>ENTRY (market)</small><br><b>' + fm(px) + '</b></div><div style="background:rgba(215,0,21,.1);border-radius:12px;padding:8px;text-align:center"><small>STOP</small><br><b style="color:#d70015">' + fm(P.sl) + '</b></div><div style="background:rgba(22,163,74,.12);border-radius:12px;padding:8px;text-align:center"><small>TARGET</small><br><b style="color:#16a34a">' + fm(P.tp) + '</b></div></div>' +
+                    '<div style="display:flex;justify-content:space-between;font-size:14px;margin:6px 0"><span>Margin <b>$' + mg.toFixed(2) + '</b> · ' + P.lev + '×</span><span>If stop <b style="color:#d70015">−$' + lossAmt.toFixed(2) + '</b> · target <b style="color:#16a34a">+$' + winAmt.toFixed(2) + '</b></span></div>' +
+                    (fit ? '<div style="font-size:12px;color:#1d8a3b;margin:2px 0">✅ ' + fit + '</div>' : '') +
+                    '<div data-qx="go" style="background:' + col + ';color:#fff;text-align:center;font-weight:800;font-size:17px;border-radius:16px;padding:15px;margin:10px 0 6px">Confirm ' + (long ? 'LONG' : 'SHORT') + ' · real $' + mg.toFixed(2) + '</div><div style="font-size:11.5px;opacity:.7">Stop and target are sent with the order. Estimates only, fees extra. You can lose the margin.</div><div id="mwqr" style="font-size:13px;margin-top:6px"></div></div>';
+                document.body.appendChild(q);
+                q.addEventListener('click', function (ev) {
+                    var t = ev.target.closest ? ev.target.closest('[data-qx]') : null; if (!t && ev.target !== q) { return; } ev.stopPropagation(); ev.preventDefault();
+                    var k = t ? t.getAttribute('data-qx') : 'x';
+                    if (k === 'x') { qClose(); return; }
+                    if (k === 'open') { qClose(); go('tpro'); return; }
+                    if (k === 'go') {
+                        var T = S.tp; if (T.busy) { return; }
+                        T.sym = sym; T.side = c.side; T.type = 'MARKET'; T.mode = 'ISOLATED'; T.lev = P.lev; T.sizeBy = 'margin'; T.margin = mg.toFixed(2); T.slOn = true; T.tpOn = true; T.slP = fm(P.sl); T.tpP = fm(P.tp); T.conf = 'TRADE'; T.confAt = Date.now(); T.log = []; T.at = 0; T.maxLev = 125;
+                        var r = document.getElementById('mwqr'); if (r) { r.innerHTML = '⏳ Sending the order to Binance…'; }
+                        t.style.opacity = '.5'; t.removeAttribute('data-qx');
+                        var launch = function () {
+                            if (!(S.filt && S.filt[sym] && (S.filt[sym].mstep || S.filt[sym].step))) { var rr0 = document.getElementById('mwqr'); if (rr0) { rr0.innerHTML = '<div style="background:#fff0f0;border-radius:12px;padding:8px 10px">Binance trading rules for ' + nm + ' could not be loaded, so the order was NOT sent. Binance may be limiting this phone for a while (Menu > Logs shows HTTP 418 or 429 when that happens). Wait a few minutes and try again.</div><div style="display:flex;gap:8px;margin-top:8px"><span data-qx="x" style="flex:1;text-align:center;background:#0a84ff;color:#fff;border-radius:12px;padding:10px;font-weight:700">Close</span></div>'; } return; }
+                            try { tpGo(); } catch (er) { var r1 = document.getElementById('mwqr'); if (r1) { r1.innerHTML = 'Could not send: ' + String(er && er.message || er).replace(/</g, '&lt;'); } return; }
+                            poll();
+                        };
+                        var poll = function () {
+                        var n0 = Date.now(), iv = setInterval(function () {
+                            var done = !T.busy && T.log && T.log.length || Date.now() - n0 > 20000; if (!done) { return; } clearInterval(iv);
+                            var rr = document.getElementById('mwqr'); if (rr) { rr.innerHTML = '<div style="background:rgba(128,128,128,.12);border-radius:12px;padding:8px 10px;white-space:pre-wrap">' + String((T.log || []).join('\n') || 'No answer from Binance yet. Check Trade Pro > Positions.').replace(/</g, '&lt;') + '</div><div style="display:flex;gap:8px;margin-top:8px"><span data-qx="open" style="flex:1;text-align:center;background:rgba(128,128,128,.16);border-radius:12px;padding:10px;font-weight:700">Open full ticket</span><span data-qx="x" style="flex:1;text-align:center;background:#0a84ff;color:#fff;border-radius:12px;padding:10px;font-weight:700">Done</span></div>'; }
+                        }, 400);
+                        };
+                        var once = 0, L1 = function () { if (once) { return; } once = 1; launch(); }; if (S.filt && S.filt[sym]) { L1(); } else { var lp; try { lp = loadListings(); } catch (e) { lp = null; } if (lp && lp.then) { lp.then(L1, L1); setTimeout(L1, 5000); } else { L1(); } }
+                    }
+                }, true);
+                return true;
+            } catch (e) { return false; }
+        }
+        window.__quickTrade = qSheet;
         function run(c) {
             var m = mode(), M = MODES[m];
+            try {
+                if (m === 'rm' && c && c.sym && (c.side === 'LONG' || c.side === 'SHORT') && !c._ok2 && (!c.x || c.x === 'bin') && S.tick && S.tick[c.sym] && !/^(XAU|XAG|PAXG)/.test(c.sym)) {
+                    var tq = S.tick[c.sym], stq = +tq.at > 0 && Date.now() - (+tq.at) > 20000;
+                    if (stq && window.__freshPx) { var dq = 0, fq = function () { if (dq) { return; } dq = 1; if (!qSheet(c)) { var c4 = JSON.parse(JSON.stringify(c)); c4._ok2 = 1; run(c4); } }; try { window.__freshPx(c.sym).then(fq, fq); } catch (e) { fq(); } setTimeout(fq, 2500); return; }
+                    if (qSheet(c)) { return; }
+                }
+            } catch (e) { }
             try {
                 if (c && c.sym && (c.side === 'LONG' || c.side === 'SHORT') && !c._ok && m !== 'pb' && m !== 'rb') {
                     var nw = Date.now(), kk = c.sym + c.side;
@@ -20228,11 +20288,11 @@ try {
                     var dr = Math.abs(cur / en - 1) * 100, lim = slpp * 0.25; /* tolerance = a quarter of the idea's own stop distance (1R): a convention, not a tuned value */
                     if (dr > lim) {
                         var tpd = Math.abs(tp - en) / en, nsl = sdp === 'LONG' ? cur * (1 - slpp / 100) : cur * (1 + slpp / 100), ntp = sdp === 'LONG' ? cur * (1 + tpd) : cur * (1 - tpd);
-                        ask('\u23f1 This idea is old', '<b>' + String(f[1]).replace(/USDT$/, '') + '</b>: the idea was made at <b>' + en + '</b> but the price is now <b>' + cur + '</b> (' + dr.toFixed(1) + '% different). Its stop and target are out of date. Open a trade with the same stop and target distances from the price now?', 'Use today\u2019s price', '#ff9500', function () { run({ sym: f[1], side: sdp, sl: nsl, tp: ntp, slp: slpp, rr: rrp }); });
+                        ask('\u23f1 This idea is old', '<b>' + String(f[1]).replace(/USDT$/, '') + '</b>: the idea was made at <b>' + en + '</b> but the price is now <b>' + cur + '</b> (' + dr.toFixed(1) + '% different). Its stop and target are out of date. Open a trade with the same stop and target distances from the price now?', 'Use today\u2019s price', '#ff9500', function () { run({ x: f[0], sym: f[1], side: sdp, sl: nsl, tp: ntp, slp: slpp, rr: rrp }); });
                         return;
                     }
                 }
-                run({ sym: f[1], side: sdp, sl: sl, tp: tp, slp: slpp, rr: rrp, el: p });
+                run({ sym: f[1], side: sdp, sl: sl, tp: tp, slp: slpp, rr: rrp, el: p, x: f[0] });
             }
         }, true);
     } catch (e) { try { console.log('tw', e); } catch (er) { } }
@@ -26026,6 +26086,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['invest table|profit at target on 50 100|amount at target at stop|small account profit table', 'Idea card: amount table at target and at stop', 'Every green-light idea card now shows a small table: if you put in $X (at the card leverage), what you make at the target and lose at the stop, after about 0.1% fees. When a Binance key is connected the amounts follow your free balance (25%, 50% and 95%); otherwise it shows $50 and $100.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['details button|bot alert details|alert tile colour|tile colour success|percentage tile', 'Bot alert tiles: Details and colour by score', 'Ideas > Bot alerts: each alert is a tile coloured by its Baba score (green 70%+, light green 60%+, amber 50%+, red below 50%, grey when no score). The blue Details button beside the coin name opens the full trade card for that very alert (entry, stop, target, risk, profit at your amounts, Trade button). Each tile also shows entry, target and stop and the profit or loss for amounts based on your free balance.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['prepare|wait label|recommended prepare|next check|estimated time', 'PREPARE instead of WAIT on the trade bar', 'On the bar above the Long and Short buttons, a no-clear-edge result now reads PREPARE with the time of the next check (the next 15-minute candle close, in your phone time). It is still a wait: the app does not open a trade for you and the safety rules are unchanged. The time is when the app looks again, not a prediction that a trade will appear.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['app frozen|hanging|crash|page silent|trade pro freezes|jumping to home|jumps to top', 'Freeze fix: idea list was recalculated about 100 times a second', 'Found with a call counter on the Trade Pro screen: the idea list ran the full recommendation for every coin on every call, and several parts of the screen call it many times a second. It is now remembered for 1.8 seconds (and each coin side for 2.5 seconds), which removes most of that work. If the page still stops answering for 15 seconds the app rebuilds it and returns to Home; if that happens, open Menu > Logs and send me the screen.', 'win:log']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['quick trade|two tap|one tap|confirm sheet|order not placed|real money dialog', 'Two-tap real trade (Long or Short, then Confirm)', 'Tap Long or Short on the chart bar. A small sheet shows the coin, margin, leverage, stop-loss and target already sized to your real Binance balance and the 2% safety rule, then Confirm sends the order with its stop-loss and take-profit. The old extra REAL MONEY pop-up no longer blocks this path (the confirm sheet is the confirmation). Withdraw stays blocked. Practice and paper modes are unchanged. This is not a promise of profit.', 'win:chart']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -27521,6 +27583,23 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         c.id = 'mwmodern';
         c.textContent = '.segc span[data-xk^="idS:"],.segc span[data-xk^="adt:"],#view .m7row>span[data-m25],#view .m7row>span[data-xk^="idc:"],.segc span[data-xk^="lgT:"],.segc span[data-xk^="lgL:"]{border-radius:999px!important;padding:9px 14px!important;background:linear-gradient(180deg,#fff,#f1f2f6)!important;border:1px solid rgba(60,60,67,.14)!important;box-shadow:0 1px 3px rgba(0,0,0,.07)!important;font-weight:700!important;transition:transform .1s,box-shadow .15s,background .15s!important;flex:1 1 auto}.segc span[data-xk^="idS:"].on,.segc span[data-xk^="lgT:"].on,.segc span[data-xk^="lgL:"].on,#view .m7row>span.on[data-m25],#view .m7row>span.on[data-xk^="idc:"]{background:linear-gradient(135deg,#0a84ff,#5e5ce6)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 4px 12px rgba(10,132,255,.35)!important}.segc span[data-xk^="idS:"]:active,#view .m7row>span[data-m25]:active{transform:scale(.95)}';
         (document.head || document.documentElement).appendChild(c);
+    } catch (e) { }
+})();
+
+/* build 446: stop the render storm. idRows ran the full recommendation for every idea on every call, and many parts of the screen call it several times a second. Cache the result for 1.8 s per filter state, and the per-coin side for 2.5 s. */
+;(function () {
+    try {
+        var _irc = idRows, ct = 0, cv = null, ck = '';
+        function key() { var k = [S.xch, window.__xf, (window.__xex || '')]; try { Object.keys(IDS).forEach(function (n) { var v = IDS[n]; if (v === null || typeof v !== 'object') { k.push(n + '=' + v); } }); } catch (e) { } return k.join('|'); }
+        idRows = function () {
+            var n = Date.now(), k = key();
+            if (cv && !arguments.length && n - ct < 1800 && k === ck) { return cv.slice(); }
+            var r = _irc.apply(this, arguments);
+            if (!arguments.length && r && r.slice) { cv = r.slice(); ct = n; ck = k; }
+            return r;
+        };
+        var _rs = window.__recSide, rc = {};
+        if (_rs) { window.__recSide = function (sy) { var n = Date.now(), c = rc[sy]; if (c && n - c.t < 2500) { return c.v; } var v = _rs(sy); rc[sy] = { t: n, v: v }; return v; }; }
     } catch (e) { }
 })();
 
