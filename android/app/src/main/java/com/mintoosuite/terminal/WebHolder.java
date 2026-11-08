@@ -59,7 +59,7 @@ final class WebHolder {
                 try { why(detail != null && detail.didCrash() ? "engine crashed" : "android closed the page engine (low memory)"); } catch (Throwable ignored) { }
                 try { if (view.getParent() instanceof ViewGroup) { ((ViewGroup) view.getParent()).removeView(view); } view.destroy(); } catch (Exception ignored) { }
                 web = null;
-                try { Guard.recover(app, true); } catch (Throwable ignored) { }
+                try { rebuild(); } catch (Throwable ignored) { }
                 return true;
             }
 
@@ -175,8 +175,8 @@ final class WebHolder {
             if (now - wdWinStart > 600000) { wdWinStart = now; wdReloads = 0; }
             wdLastOk = now;
             why("page silent for 15 s: app restarted itself");
-            try { Guard.recover(app); } catch (Throwable ignored) { }
-            if (wdReloads < 3) {
+            try { rebuild(); } catch (Throwable ignored) { }
+            if (false) {
                 wdReloads++;
                 why("watchdog reloaded the page (it was silent for 40 s)");
                 try { w.reload(); } catch (Exception ignored) { }
@@ -189,6 +189,32 @@ final class WebHolder {
                 public void onReceiveValue(String v) { wdLastOk = System.currentTimeMillis(); }
             });
         } catch (Exception ignored) { }
+    }
+
+    /* build 439: rebuild the page engine inside the running app (no process kill, so the app stays on screen and comes back by itself) */
+    private static long lastRebuild = 0;
+    static void rebuild() {
+        MAIN.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    long n = System.currentTimeMillis();
+                    if (n - lastRebuild < 20000) { return; }
+                    lastRebuild = n;
+                    WebView old = web;
+                    web = null;
+                    if (old != null) {
+                        try { if (old.getParent() instanceof ViewGroup) { ((ViewGroup) old.getParent()).removeView(old); } } catch (Exception ignored) { }
+                        try { old.stopLoading(); } catch (Exception ignored) { }
+                        try { old.destroy(); } catch (Exception ignored) { }
+                    }
+                    why("page engine rebuilt after it stopped answering");
+                    wdLastOk = System.currentTimeMillis();
+                    MainActivity a = MainActivity.cur;
+                    if (a != null && !a.isFinishing()) { a.recreate(); }
+                } catch (Throwable ignored) { }
+            }
+        });
     }
 
     static boolean alive() { return web != null; }
