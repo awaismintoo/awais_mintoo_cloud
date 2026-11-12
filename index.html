@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.491';
+var BUILD = '2026-11-12.493';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -10786,6 +10786,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             { t: 'Markets', b: 'Live prices for Binance, MEXC and Bitget. Tap any coin for its chart.', el: function () { return document.querySelector('.tab[data-act="win:market"]'); }, dir: 'up' },
             { t: 'Bots (practice money)', b: 'Baba Practice Bot trades with practice money only. Watch it for a while before you ever think of real money. It never trades real money on its own.', el: function () { return document.querySelector('.tab[data-act="win:botpro"]'); }, dir: 'up' },
             { t: 'More', b: 'All other windows live here: learning lessons, wallet, news, settings.', el: function () { return document.querySelector('.tab[data-act="openwin"]'); }, dir: 'up' },
+            { t: 'Signals together', b: 'Coin charts and the Exness Desk (gold, forex) now show UT Bot and Baba Signal marks with a Combined view: act only when the call and both signals agree.' },
+            { t: 'Places and Partners', b: 'More > Pakistan > Places searches hostels, cafes, shops and more anywhere, saves them offline and plays YouTube links. Partners holds your Exness and exchange referral links. Buy and sell listings now last 60 days.' },
             { t: 'MintooSuiteVPN', b: 'More > Tools & settings > VPN: paste your own free WireGuard config, tap Connect, and test which exchanges your phone can reach. It warns you if the VPN drops while the Real Bot is on.' },
             { t: 'Buy & sell and Business', b: 'On Home, Business holds the marketing tools (posts, customers, invoices, links, ads, SEO). Buy & sell lets anyone browse listings with pictures, video and reviews, and post their own after the owner approves them.', el: function () { return document.querySelector('.mwqt[data-act="win:listings"]') || document.querySelector('.tab[data-act="openwin"]'); }, dir: 'down' },
             { t: 'Market view', b: 'The Market view box on Home shows one exchange at a time: Binance, MEXC, Bitget, Bybit or OKX. Swipe left or right on its heading to change; it remembers your choice.', el: function () { return document.querySelector('.mwxs') || document.querySelector('.tab[data-act="openwin"]'); }, dir: 'down' },
@@ -27323,6 +27325,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         window.__sigGet = function (sym) { var e = SIG[sym]; return e && Date.now() < e.until && (!BOOK || e.ver === 1) ? e : null; };
         function fmt(v) { return (+v).toPrecision(5).replace(/\.?0+$/, ''); }
         function scanned() { var n = Date.now(), c = 0, k; for (k in ST.seen) { if (n - ST.seen[k] < 900000) { c++; } } return c + ' of ' + ST.total + ' (Binance ' + (ST.by.binance || 0) + ', MEXC ' + (ST.by.mexc || 0) + ', Bitget ' + (ST.by.bitget || 0) + ', Bybit ' + (ST.by.bybit || 0) + ', OKX ' + (ST.by.okx || 0) + ')'; }
+        window.__sigScanned = scanned;
         window.__sigBox = function (ex) {
             var L = window.__sigList(ex), nm = ex && ex !== 'all' ? ' on ' + (EXN[ex] || ex) : '';
             var hd = '<div class="note" style="margin:0 0 8px">📖 <b>Book-rule trades' + nm + '</b>: shown only when ALL checks pass: both bots agree, trend strength ADX(14) 25 or more, volume 1.5x its average, not against a big day move, and the 1h and 4h trend agree. Checked ' + scanned() + ' coins so far. Use a small size and the stop.</div>';
@@ -27356,7 +27359,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         function f(v) { return (+v).toPrecision(5).replace(/\.?0+$/, ''); }
         window.__botTiles = function (ex, mx) {
             var L = (window.__sigList ? window.__sigList(ex || 'all') : []).slice(0, mx || 2), now = Date.now(), nm = { binance: 'Binance', mexc: 'MEXC', bitget: 'Bitget' };
-            if (!L.length) { return '<div class="kpc mwdn none" data-act="win:ideas" data-sg0="none"><div class="dh"><span>📖 BOOK-RULE TRADES</span><span>scanning</span></div><div class="dt"><b>No trade passes every check</b></div><div class="ds">Both bots agreeing, trend strength, volume, the 1h/4h trend and the day-move rule must all pass. When a coin does, it shows here with a timer. Waiting is a valid choice.</div></div>'; }
+            if (!L.length) { return '<div class="kpc mwdn none" data-act="win:ideas" data-sg0="none"><div class="dh"><span>📖 BOOK-RULE TRADES</span><span>scanning</span></div><div class="dt"><b>No trade passes every check</b></div><div class="ds">Both bots agreeing, trend strength, volume, the 1h/4h trend and the day-move rule must all pass. When a coin does, it shows here with a timer. Waiting is a valid choice.</div><div class="ds" style="opacity:.85;margin-top:4px">' + (window.__sigScanned ? 'Checked in the last 15 min: ' + e2(window.__sigScanned()) + '. ' : '') + 'Strict on purpose: most hours nothing passes, and that is normal. It is not stopped; a call appears with a timer the moment one passes.</div></div>'; }
             return L.map(function (g) { var up = g.side === 'LONG', left = Math.max(0, g.until - now), m = Math.max(1, Math.round(left / 60000));
                 return '<div class="kpc mwdn' + (up ? '' : ' sh2') + '" data-act="chart:' + e2(g.sym) + '"><div class="dh"><span>🤖 ' + (g.ver === 1 ? '<b style="display:inline-block;background:linear-gradient(135deg,#1a9d4a,#0f7a35);color:#fff;border-radius:10px;padding:5px 12px;font-size:16px;letter-spacing:.4px;margin-right:6px">✔ VERIFIED</b>' : '') + (g.strong ? 'BOTH BOTS · BOOK RULES MET' : 'BOT SIGNAL') + '</span><span>valid ' + m + ' min</span></div><div class="dt"><b>' + (up ? '▲ ' : '▼ ') + e2(g.base) + ' <small style="font-size:12px;font-weight:800;opacity:1;color:#fff;background:rgba(255,255,255,.22);border-radius:8px;padding:1px 6px;margin-left:4px">' + g.side + '</small></b>' + (g.conv ? '<em>' + g.conv + '</em>' : '') + (g.warn ? '<em style="background:#ff9f0a" title="' + g.warn + '">⚠</em>' : '') + '</div><div class="dl"><div>Entry<b>' + f(g.px) + '</b></div><div>Stop<b>' + f(g.stop) + '</b></div><div>Target<b>' + f(g.tp) + '</b></div></div><div class="db"><div class="dx"><i>' + (nm[g.x] || g.x) + '</i></div><div class="go">Review ›</div></div></div>'; }).join('');
         };
@@ -27938,8 +27941,8 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
     try {
         var X = window.__kx; if (!X || !VIEWS.overview) { return; }
         var KX = X.KX, e2 = X.e2, K = 'mintoosuite_shortcuts', ED = 0;
-        var DEF = ['chart', 'ideas', 'shophub', 'study', 'baba', 'wallet'];
-        function get() { try { var a = JSON.parse(localStorage.getItem(K) || 'null'); if (Array.isArray(a)) { return a; } } catch (e) { } return DEF.slice(); }
+        var DEF = ['chart', 'ideas', 'shophub', 'study', 'baba', 'wallet', 'exdesk', 'places', 'listings'];
+        function get() { try { var a = JSON.parse(localStorage.getItem(K) || 'null'); if (Array.isArray(a)) { if (!localStorage.getItem('mw_sc493')) { ['exdesk', 'places', 'listings'].forEach(function (id) { if (a.indexOf(id) < 0) { a.push(id); } }); localStorage.setItem('mw_sc493', '1'); localStorage.setItem(K, JSON.stringify(a)); } return a; } } catch (e) { } return DEF.slice(); }
         function put(a) { try { localStorage.setItem(K, JSON.stringify(a)); } catch (e) { } }
         function win(id) { for (var i = 0; i < WINS.length; i++) { if (WINS[i].id === id) { return WINS[i]; } } return null; }
         var _ov = VIEWS.overview;
@@ -28549,7 +28552,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             var cnt = {}; ST.forEach(function (s) { cnt[s] = 0; }); D.leads.forEach(function (l) { cnt[l.s] = (cnt[l.s] || 0) + 1; });
             var h = '<div class="group pad"><b>👥 Customers and leads</b>' + note('Keep every enquiry in one list, set a follow-up date and message them on WhatsApp in one tap. Stored only on this phone.') +
                 '<div>' + ST.map(function (s) { return '<span style="display:inline-block;margin:2px 4px 2px 0;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;background:' + STC[s] + '22;color:' + STC[s] + '">' + s + ' ' + cnt[s] + '</span>'; }).join('') + '</div>' +
-                inp('bzLn', 'Name') + inp('bzLp', 'Phone (03xx xxxxxxx)', '', 'tel') + inp('bzLd', 'Follow-up date', '', 'date') + inp('bzLnote', 'Note (what they want)') + btn('➕ Add customer', 'bzaddl', '') + '</div>';
+                inp('bzLn', 'Name') + inp('bzLp', 'Phone (03xx xxxxxxx)', '', 'tel') + '<div class="note" style="margin:6px 2px 0;font-weight:700">'+"'Follow-up date'"+' (tap to choose a date)</div>' + inp('bzLd', 'Follow-up date', '', 'date') + inp('bzLnote', 'Note (what they want)') + btn('➕ Add customer', 'bzaddl', '') + '</div>';
             var due = today();
             var L = D.leads.slice().sort(function (x, y) { return String(x.fd || '9999').localeCompare(String(y.fd || '9999')); });
             h += '<div class="group pad"><b>List (' + L.length + ')</b>' + (L.length ? '' : note('No customers yet.')) + L.map(function (l) {
@@ -28655,7 +28658,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         function sellerMsg(n) { return 'Assalam o Alaikum. I am looking for: ' + n.k + (n.w ? ' (' + n.w + ')' : '') + (n.c ? ' in ' + n.c : '') + (n.b ? '. My budget is ' + n.b : '') + (n.t ? '. I need it by ' + n.t : '') + '. Please send details, photos, the exact price and the ownership/registration papers. I would like to see it in person. Thank you.'; }
         function vNeed() {
             var h = '<div class="group pad"><b>🏠 Needs finder</b>' + note('Tell me what you need. I then prepare the searches, a message to send to sellers and brokers, and a safety checklist, and I keep a reminder. I cannot buy, sell or pay for anything for you: you stay in control.') +
-                sel('nK', KIND, KX.nk || KIND[0]) + inp('nC', 'City or area (for example Islamabad, DHA Lahore)') + inp('nW', 'What exactly (size, bedrooms, model, product, skill)') + inp('nB', 'Budget (for example 1.5 crore, 80,000 per month)') + inp('nM', 'Must-haves (for example corner plot, near school)') + inp('nT', 'Needed by', '', 'date') + btn('✅ Do the needful', 'bznead', '') + '</div>';
+                sel('nK', KIND, KX.nk || KIND[0]) + inp('nC', 'City or area (for example Islamabad, DHA Lahore)') + inp('nW', 'What exactly (size, bedrooms, model, product, skill)') + inp('nB', 'Budget (for example 1.5 crore, 80,000 per month)') + inp('nM', 'Must-haves (for example corner plot, near school)') + '<div class="note" style="margin:6px 2px 0;font-weight:700">'+"'Needed by'"+' (tap to choose a date)</div>' + inp('nT', 'Needed by', '', 'date') + btn('✅ Do the needful', 'bznead', '') + '</div>';
             D.needs.slice().reverse().forEach(function (n) {
                 var k = kindKey(n.k);
                 h += '<div class="group pad"><b>' + e2(n.k) + '</b>' + (n.c ? ' · ' + e2(n.c) : '') + '<div class="note">' + e2([n.w, n.b ? 'Budget: ' + n.b : '', n.m ? 'Must: ' + n.m : '', n.t ? 'By: ' + n.t : ''].filter(Boolean).join(' · ')) + '</div>' +
@@ -29078,13 +29081,13 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
 /* ===== p9home3f: like top apps, coming back after the app was away for a couple of minutes opens Home at the top ===== */
 (function () {
     try {
-        var away = 0, LIM = 15000;
+        var away = 0, LIM = 21600000;
         function home() { try { if (S.win !== 'overview') { gotoWin('overview'); } } catch (e) { } try { window.scrollTo(0, 0); } catch (e) { } }
         document.addEventListener('visibilitychange', function () {
             if (document.hidden) { away = Date.now(); return; }
             if (away && Date.now() - away > LIM) { away = 0; home(); setTimeout(function () { try { window.scrollTo(0, 0); } catch (e) { } }, 300); }
         });
-        window.addEventListener('pageshow', function (e) { if (e.persisted) { home(); } });
+        
         setTimeout(function () { try { window.scrollTo(0, 0); } catch (e) { } }, 800);
     } catch (e) { try { console.log('home3f', e); } catch (er) { } }
 })();
@@ -29199,11 +29202,11 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
 (function () {
     try {
         var X = window.__kx, KX = X.KX, e2 = X.e2, K = 'mintoosuite_mp', CK = 'mintoosuite_mp_cache';
-        var M = { cfg: {}, au: {}, tab: 'browse', cat: 'All', q: '', list: [], mine: [], pend: [], sel: null, rev: {}, photos: [], busy: '', err: '', at: 0, off: false, loading: 0 };
-        try { var s0 = JSON.parse(localStorage.getItem(K) || '{}') || {}; M.cfg = s0.cfg || {}; M.au = s0.au || {}; } catch (e) { }
+        var M = { own: (function () { try { return !!localStorage.getItem('mw_mpown'); } catch (e) { return false; } })(), cfg: {}, au: {}, tab: 'browse', cat: 'All', q: '', list: [], mine: [], pend: [], sel: null, rev: {}, photos: [], busy: '', err: '', at: 0, off: false, loading: 0 };
+        try { var s0 = JSON.parse(localStorage.getItem(K) || '{}') || {}; M.cfg = s0.cfg || {}; M.au = s0.au || {}; if (!M.cfg.key) { M.cfg = { key: 'AIzaSyDDzaNKLgEpYv8Ar0MYiDmXZIcfE0WknQo', pid: 'mintoo-suite', bucket: 'mintoo-suite.firebasestorage.app', admin: M.cfg.admin || '', phone: M.cfg.phone || '' }; } } catch (e) { }
         try { var c0 = JSON.parse(localStorage.getItem(CK) || '{}') || {}; M.list = c0.list || []; M.at = c0.at || 0; } catch (e) { }
         function sv() { try { localStorage.setItem(K, JSON.stringify({ cfg: M.cfg, au: M.au })); } catch (e) { } }
-        function svc() { try { localStorage.setItem(CK, JSON.stringify({ list: M.list.slice(0, 60), at: M.at })); } catch (e) { } }
+        function svc() { var n = 60; while (n >= 5) { try { localStorage.setItem(CK, JSON.stringify({ list: M.list.slice(0, n), at: M.at })); return; } catch (e) { n = Math.floor(n / 2); } } }
         function tst(m) { try { toast(m); } catch (e) { } }
         function V(id) { var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
         function again() { try { X.again(); } catch (e) { try { renderView(true); } catch (er) { } } }
@@ -29213,7 +29216,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         function sel(id, opts, cur) { return '<select id="' + id + '" style="' + IN + '">' + opts.map(function (o) { return '<option' + (o === cur ? ' selected' : '') + '>' + e2(o) + '</option>'; }).join('') + '</select>'; }
         function btn(l, act, cls) { if (act.indexOf(':') < 0) { act += ':'; } return '<span class="btn ' + (cls || '') + ' tap" data-xk="' + act + '" style="display:block;margin:6px 0">' + l + '</span>'; }
         function money(n) { return 'Rs ' + Math.round(+n || 0).toLocaleString('en-US'); }
-        function ok() { return !!(M.cfg.key && M.cfg.pid && M.cfg.bucket); }
+        function ok() { return !!(M.cfg.key && M.cfg.pid); }
         function wa(n, t) { var d = String(n || '').replace(/\D/g, ''); if (d.indexOf('0092') === 0) { d = d.slice(2); } else if (d.charAt(0) === '0') { d = '92' + d.slice(1); } else if (d.length === 10 && d.charAt(0) === '3') { d = '92' + d; } return 'https://wa.me/' + d + '?text=' + encodeURIComponent(t || ''); }
 
         /* ---------- Firebase REST ---------- */
@@ -29245,29 +29248,32 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             try {
                 if (S.win !== 'listings') { return; }
                 var im = document.querySelectorAll('img[data-pc]:not([data-pd])'), i;
-                for (i = 0; i < im.length; i++) { (function (el) { el.setAttribute('data-pd', '1'); var u = el.getAttribute('data-pc'); pget(u).then(function (r) { if (r && r.b) { el.src = URL.createObjectURL(r.b); return; } el.src = u; fetch(u).then(function (x) { return x.ok ? x.blob() : null; }).then(function (b) { if (b && b.size < 4e6) { pput(u, b); } }).catch(function () { }); }); })(im[i]); }
+                for (i = 0; i < im.length; i++) { (function (el) { el.setAttribute('data-pd', '1'); var u = el.getAttribute('data-pc'); if (/^data:/.test(u)) { el.src = u; return; } pget(u).then(function (r) { if (r && r.b) { el.src = URL.createObjectURL(r.b); return; } el.src = u; fetch(u).then(function (x) { return x.ok ? x.blob() : null; }).then(function (b) { if (b && b.size < 4e6) { pput(u, b); } }).catch(function () { }); }); })(im[i]); }
             } catch (e) { }
         }
         setInterval(hydrate, 700);
 
         /* ---------- loading ---------- */
+        var D60 = 60 * 864e5;
+        function gone(x) { return x.exp ? x.exp < Date.now() : (x.at && +x.at + D60 < Date.now()); }
+        function sweep(a, coll) { try { (a || []).filter(gone).slice(0, 10).forEach(function (x) { if (coll === 'listings' && !(M.au.uid && (x.seller === M.au.uid || (M.cfg.admin && M.au.uid === M.cfg.admin)))) { return; } fs('DELETE', '/' + coll + '/' + encodeURIComponent(x.id)).catch(function () { }); }); } catch (e) { } }
         function loadAll() {
-            if (!ok() || M.loading) { return; } M.loading = 1; M.err = '';
-            query('listings', 'status', 'approved', 100).then(function (a) { M.list = recent(a); M.at = Date.now(); M.off = false; svc(); }).catch(function (e) { M.off = true; M.err = String(e.message || e); }).then(function () {
+            if (!ok() || M.loading) { return; } if (navigator.onLine === false) { M.off = true; M.at = M.at || 0; M.list = (M.list || []).filter(function (x) { return !gone(x); }); again(); return; } M.loading = 1; M.err = '';
+            query('listings', 'status', 'approved', 100).then(function (a) { sweep(a, 'listings'); M.list = recent(a.filter(function (x) { return !gone(x); })); M.at = Date.now(); M.off = false; svc(); }).catch(function (e) { M.off = true; M.err = String(e.message || e); }).then(function () {
                 M.loading = 0; again();
-                if (M.au.uid) { query('listings', 'seller', M.au.uid, 60).then(function (a) { M.mine = recent(a); again(); }).catch(function () { }); }
+                if (M.au.uid) { query('listings', 'seller', M.au.uid, 60).then(function (a) { sweep(a, 'listings'); M.mine = recent(a.filter(function (x) { return !gone(x); })); again(); }).catch(function () { }); }
                 if (M.cfg.admin && M.au.uid === M.cfg.admin) { query('listings', 'status', 'pending', 60).then(function (a) { M.pend = recent(a); again(); }).catch(function () { }); }
             });
         }
-        function loadRev(id) { query('reviews', 'listing', id, 40).then(function (a) { M.rev[id] = recent(a); again(); }).catch(function () { M.rev[id] = M.rev[id] || []; }); }
+        function loadRev(id) { query('reviews', 'listing', id, 40).then(function (a) { sweep(a, 'reviews'); M.rev[id] = recent(a.filter(function (x) { return !gone(x); })); try { var rc = JSON.parse(localStorage.getItem('mw_revc') || '{}'); rc[id] = { t: Date.now(), r: M.rev[id].slice(0, 20) }; var ks = Object.keys(rc); if (ks.length > 40) { ks.sort(function (x, y) { return rc[x].t - rc[y].t; }); delete rc[ks[0]]; } localStorage.setItem('mw_revc', JSON.stringify(rc)); } catch (e) { } again(); }).catch(function () { try { var c = (JSON.parse(localStorage.getItem('mw_revc') || '{}') || {})[id]; if (c && !M.rev[id]) { M.rev[id] = c.r.filter(function (x) { return !gone(x); }); } } catch (e) { } M.rev[id] = M.rev[id] || []; again(); }); }
         function find(id) { var all = M.list.concat(M.mine, M.pend), i; for (i = 0; i < all.length; i++) { if (all[i].id === id) { return all[i]; } } return null; }
 
         /* ---------- picture resize + upload ---------- */
         function shrink(file, max, q) { return new Promise(function (res, rej) { var im = new Image(), u = URL.createObjectURL(file); im.onload = function () { var r = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.width * r)); c.height = Math.max(1, Math.round(im.height * r)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob(function (b) { b ? res({ blob: b, data: c.toDataURL('image/jpeg', q) }) : rej(new Error('picture')); }, 'image/jpeg', q); }; im.onerror = function () { rej(new Error('Could not read that picture')); }; im.src = u; }); }
         document.addEventListener('change', function (e) {
             var t = e.target; if (!t || t.id !== 'mpf' || !t.files) { return; }
-            var fl = Array.prototype.slice.call(t.files, 0, 5 - M.photos.length), n = fl.length; if (!n) { return; } M.busy = 'Preparing pictures…'; again();
-            Promise.all(fl.map(function (f) { return Promise.all([shrink(f, 1280, 0.8), shrink(f, 360, 0.55)]).then(function (r) { return { blob: r[0].blob, thumb: r[1].data, prev: r[0].data }; }); })).then(function (a) { M.photos = M.photos.concat(a).slice(0, 5); M.busy = ''; again(); }).catch(function (er) { M.busy = ''; tst(String(er.message || er)); again(); });
+            var fl = Array.prototype.slice.call(t.files, 0, 3 - M.photos.length), n = fl.length; if (!n) { return; } M.busy = 'Preparing pictures…'; again();
+            Promise.all(fl.map(function (f) { return Promise.all([shrink(f, 640, 0.5), shrink(f, 360, 0.55)]).then(function (r) { return { blob: r[0].blob, thumb: r[1].data, prev: r[0].data, full: r[0].data }; }); })).then(function (a) { M.photos = M.photos.concat(a).slice(0, 3); M.busy = ''; again(); }).catch(function (er) { M.busy = ''; tst(String(er.message || er)); again(); });
         }, true);
         function upload(p, i) {
             return token().then(function (t) {
@@ -29277,13 +29283,13 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         }
 
         /* ---------- views ---------- */
-        var RULES_FS = "rules_version = '2';\nservice cloud.firestore { match /databases/{db}/documents {\n  function admin() { return request.auth != null && request.auth.uid == 'PASTE_YOUR_ID_HERE'; }\n  match /listings/{id} {\n    allow read: if resource.data.status == 'approved' || (request.auth != null && resource.data.seller == request.auth.uid) || admin();\n    allow create: if request.auth != null && request.resource.data.seller == request.auth.uid && request.resource.data.status == 'pending';\n    allow update: if (request.auth != null && resource.data.seller == request.auth.uid && request.resource.data.status in ['pending','sold']) || admin();\n    allow delete: if (request.auth != null && resource.data.seller == request.auth.uid) || admin();\n  }\n  match /reviews/{id} { allow read: if true; allow create: if request.auth != null && request.resource.data.uid == request.auth.uid && request.resource.data.stars >= 1 && request.resource.data.stars <= 5; }\n  match /reports/{id} { allow create: if request.auth != null; allow read: if admin(); }\n} }";
+        var RULES_FS = "rules_version = '2';\nservice cloud.firestore { match /databases/{db}/documents {\nmatch /mwbackups/{docId} { allow read, write: if request.auth != null && (docId == request.auth.uid || docId == request.auth.uid + '_prev'); }\nmatch /mwdevices/{uid} { allow read: if request.auth != null && request.auth.uid == uid; allow write: if request.auth != null && request.auth.uid == uid && request.resource.data.devices.size() <= 1; }\nmatch /mwerrors/{docId} { allow create: if request.resource.data.keys().hasOnly(['m','f','v','s','t']) && request.resource.data.m is string && request.resource.data.m.size() < 400; allow read, update, delete: if false; }\n  function admin() { return request.auth != null && request.auth.uid == 'PASTE_YOUR_ID_HERE'; }\n  match /listings/{id} {\n    allow read: if resource.data.status == 'approved' || (request.auth != null && resource.data.seller == request.auth.uid) || admin();\n    allow create: if request.auth != null && request.resource.data.seller == request.auth.uid && request.resource.data.status == 'pending';\n    allow update: if (request.auth != null && resource.data.seller == request.auth.uid && request.resource.data.status in ['pending','sold']) || admin();\n    allow delete: if (request.auth != null && resource.data.seller == request.auth.uid) || admin();\n  }\n  match /reviews/{id} { allow delete: if admin(); allow read: if true; allow create: if request.auth != null && request.resource.data.uid == request.auth.uid && request.resource.data.stars >= 1 && request.resource.data.stars <= 5; }\n  match /reports/{id} { allow create: if request.auth != null; allow read: if admin(); }\n} }";
         var RULES_ST = "rules_version = '2';\nservice firebase.storage { match /b/{b}/o {\n  match /listings/{uid}/{file} {\n    allow read: if true;\n    allow write: if request.auth != null && request.auth.uid == uid && request.resource.size < 3 * 1024 * 1024 && request.resource.contentType.matches('image/.*');\n  }\n} }";
         function vSetup() {
-            var c = M.cfg, h = '<div class="group pad"><b>⚙️ Connect your Firebase (owner only, once)</b><div class="note" style="margin:4px 0 8px">Listings are stored in YOUR free Firebase project, so you own the data. Steps:<br>1. console.firebase.google.com → Add project.<br>2. Build → <b>Authentication</b> → Sign-in method → turn on <b>Anonymous</b>.<br>3. Build → <b>Firestore Database</b> → Create (production mode). Then Rules → paste the Firestore rules below.<br>4. Build → <b>Storage</b> → Get started → Rules → paste the Storage rules below.<br>5. Project settings → General → Your apps → Web app → copy <b>apiKey</b>, <b>projectId</b>, <b>storageBucket</b> into the boxes here. Never paste these in any chat.</div>' +
+            var c = M.cfg, h = '<div class="group pad"><b>⚙️ Connect your Firebase (owner only, once)</b><div class="note" style="margin:4px 0 8px">Your Firebase project (mintoo-suite) is already built into this app, so nothing is needed except your owner ID. Pictures are stored inside the listing (up to 3, small), so no Storage and no card are needed. Listings, pictures, videos and reviews disappear after 60 days and are replaced by newer ones.<br>1. Tap <b>Save and test</b> below.<br>2. Copy your ID shown below, paste it in the owner box, and in Firebase Rules where it says PASTE_YOUR_ID_HERE, then Publish.<br>Never paste secrets in any chat.</div>' +
                 inp('mpKey', 'apiKey (starts with AIza…)', c.key) + inp('mpPid', 'projectId', c.pid) + inp('mpBkt', 'storageBucket (for example myapp.appspot.com)', c.bucket) + inp('mpAdm', 'Your owner ID (shown after Save and test, then paste it into the rules too)', c.admin) +
                 btn('💾 Save and test', 'mpsave', '') + (M.err ? '<div class="warn">' + e2(M.err) + '</div>' : '') + (M.au.uid ? '<div class="note">Your ID on this phone: <b style="word-break:break-all">' + e2(M.au.uid) + '</b><br>To be the owner (approve listings), copy this ID into the box above and into the Firestore rule where it says PASTE_YOUR_ID_HERE.</div>' : '') + '</div>';
-            h += '<div class="group pad"><b>Firestore rules (copy all)</b><textarea readonly style="' + IN + ';height:150px;font-size:11px">' + e2(RULES_FS) + '</textarea>' + btn('📋 Copy Firestore rules', 'mpcopy:fs', 'sec') + '<b>Storage rules (copy all)</b><textarea readonly style="' + IN + ';height:110px;font-size:11px">' + e2(RULES_ST) + '</textarea>' + btn('📋 Copy Storage rules', 'mpcopy:st', 'sec') + '</div>';
+            h += '<div class="group pad"><b>Firestore rules (copy all)</b><textarea readonly style="' + IN + ';height:150px;font-size:11px">' + e2(RULES_FS) + '</textarea>' + btn('📋 Copy Firestore rules', 'mpcopy:fs', 'sec') + '</div>';
             return h;
         }
         function thumb(l, big) { var u = (l.photos && l.photos[0]) || ''; return '<img ' + (u ? 'data-pc="' + e2(u) + '" ' : '') + 'src="' + e2(l.thumb || '') + '" alt="" style="width:100%;' + (big ? 'max-height:260px;' : 'height:140px;') + 'object-fit:cover;border-radius:14px;background:rgba(127,127,127,.18);display:block">'; }
@@ -29303,7 +29309,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             var ph = (l.photos || []).map(function (u) { return '<img data-pc="' + e2(u) + '" src="" alt="" style="flex:0 0 86%;scroll-snap-align:start;height:230px;object-fit:cover;border-radius:16px;background:rgba(127,127,127,.18)">'; }).join('');
             h += '<div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;touch-action:pan-x pan-y" data-noswipe="1">' + (ph || thumb(l, 1)) + '</div>';
             h += '<div class="group pad"><b style="font-size:19px">' + e2(l.title) + '</b><div style="font-size:20px;font-weight:800;color:#16a34a;margin:4px 0">' + money(l.price) + (l.deal === 'Rent' ? ' / month' : /^Hire/.test(l.deal || '') ? ' / job or day' : /^Instal/.test(l.deal || '') ? ' (agreed instalments)' : '') + '</div><div class="note">' + e2(l.cat) + ' · ' + e2(l.deal || 'Sale') + ' · ' + e2(l.city) + ' · ' + stars(rv) + '</div><div style="margin:8px 0;white-space:pre-wrap">' + e2(l.desc) + '</div>' +
-                (l.video ? '<a class="btn sec tap" target="_blank" rel="noopener" href="' + e2(l.video) + '" style="display:block;text-decoration:none">▶ Watch video</a>' : '') +
+                (l.video ? (window.__vEmbed ? window.__vEmbed(l.video) : '<a class="btn sec tap" target="_blank" rel="noopener" href="' + e2(l.video) + '" style="display:block;text-decoration:none">▶ Watch video</a>') : '') +
                 '<a class="btn tap" target="_blank" rel="noopener" href="' + e2(wa(l.phone, 'Hello, I saw "' + l.title + '" (' + money(l.price) + ') on MintooSuite. Is it still available?')) + '" style="display:block;text-decoration:none">💬 WhatsApp the seller</a><a class="btn sec tap" href="tel:' + e2(String(l.phone || '').replace(/[^\d+]/g, '')) + '" style="display:block;text-decoration:none">📞 Call</a></div>';
             h += '<div class="group pad"><b>🛡 Stay safe</b><div class="note">Meet in a public place and bring a friend. Never pay in advance or send an OTP. For property or vehicles check the owner\'s documents with the registry or excise office. This app does not hold money and cannot refund.</div>' + btn('🚩 Report this listing', 'mprep:' + l.id, 'sec') + '</div>';
             h += '<div class="group pad"><b>⭐ Reviews</b>' + (rv === undefined ? '<div class="note">Loading…</div>' : rv.length ? rv.map(function (r) { return '<div style="padding:6px 0;border-top:1px solid rgba(128,128,128,.2)"><b>' + '★'.repeat(Math.max(1, Math.min(5, +r.stars || 1))) + '</b> ' + e2(r.text) + '</div>'; }).join('') : '<div class="note">No reviews yet.</div>') +
@@ -29313,7 +29319,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         function vSell() {
             var h = '<div class="group pad"><b>📣 Post a listing</b><div class="note" style="margin:3px 0 6px">Free. The owner checks it before it appears. Your phone number is shown to buyers. Real pictures sell faster.</div>' +
                 sel('mpCat', CATS, '') + sel('mpDeal', ['Sale', 'Rent', 'Hire (service or labour)', 'Instalments (hire purchase)'], 'Sale') + inp('mpTitle', 'Title (for example: 5 marla house, Bahria Town)') + inp('mpPrice', 'Price in Rs (rent: per month)', '', 'number') + inp('mpCity', 'City / area') + '<textarea id="mpDesc" placeholder="Details: size, condition, documents, anything buyers ask" style="' + IN + ';height:90px"></textarea>' + inp('mpPhone', 'Your WhatsApp / phone (03xx…)', M.cfg.phone, 'tel') + inp('mpVid', 'Video link (YouTube / Facebook / TikTok), optional') +
-                '<div class="note" style="margin:6px 0 2px">Pictures (up to 5):</div><input id="mpf" type="file" accept="image/*" multiple style="' + IN + '">' + (M.busy ? '<div class="note">' + e2(M.busy) + '</div>' : '') +
+                '<div class="note" style="margin:6px 0 2px">Pictures (up to 3, shrunk to save space):</div><input id="mpf" type="file" accept="image/*" multiple style="' + IN + '">' + (M.busy ? '<div class="note">' + e2(M.busy) + '</div>' : '') +
                 (M.photos.length ? '<div style="display:flex;gap:8px;overflow-x:auto;margin:6px 0">' + M.photos.map(function (p, i) { return '<div style="flex:0 0 90px;position:relative"><img src="' + p.prev + '" style="width:90px;height:90px;object-fit:cover;border-radius:12px"><span class="tap" data-xk="mprmp:' + i + '" style="position:absolute;top:2px;right:2px;background:#000a;color:#fff;border-radius:50%;width:26px;height:26px;text-align:center;line-height:26px">✕</span></div>'; }).join('') + '</div>' : '') +
                 btn(M.busy ? '…' : '📤 Submit for approval', 'mppost', '') + (M.err ? '<div class="warn">' + e2(M.err) + '</div>' : '') + '</div>';
             return h;
@@ -29323,24 +29329,25 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
 
         WINS.push({ id: 'listings', ic: '🛍️', c: '#ff2d55', n: 'Buy and sell listings', t: 'Buy & sell', sub: 'Browse and post houses, plots, cars, phones, shop items with pictures, video and reviews' }); LIVE.listings = 0;
         VIEWS.listings = function () {
-            var adm = !!(M.cfg.admin && M.au.uid === M.cfg.admin), tabs = [['browse', '🛍 Browse'], ['sell', '📣 Sell'], ['mine', '📋 My ads']].concat(adm ? [['admin', '🛂 Approve']] : []).concat([['setup', '⚙️ Setup']]);
+            var adm = !!(M.cfg.admin && M.au.uid === M.cfg.admin), tabs = [['browse', '🛍 Browse'], ['sell', '📣 Sell'], ['mine', '📋 My ads']].concat(adm ? [['admin', '🛂 Approve']] : []).concat((adm || M.own || M.tab === 'setup') ? [['setup', '⚙️ Setup']] : []);
             var h = '<div class="m7row" data-noswipe="1">' + tabs.map(function (t) { return '<span class="' + (M.tab === t[0] ? 'on' : '') + '" data-xk="mptab:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div>';
             if (!ok() && M.tab !== 'setup') { return h + '<div class="group pad"><b>Listings are not connected yet</b><div class="note">The owner needs to connect a free Firebase project once (Setup tab). After that everyone can browse and post.</div>' + btn('Open Setup', 'mptab:setup', '') + '</div>'; }
-            if (M.tab === 'setup') { return h + vSetup(); }
+            if (M.tab === 'setup') { return h + vSetup() + btn('Hide owner Setup', 'mpown:0', 'sec'); }
             if (M.sel) { var l = find(M.sel); if (l) { return h + vDetail(l); } }
             if (M.tab === 'sell') { return h + vSell(); } if (M.tab === 'mine') { return h + vMine(); } if (M.tab === 'admin') { return h + vAdmin(); }
             if (!M.at && !M.loading && !M.off) { setTimeout(loadAll, 50); }
-            return h + vBrowse();
+            return h + vBrowse() + '<div class="note" style="text-align:center;opacity:.65;margin:10px 0"><span class="tap" data-xk="mpown:1" style="padding:8px">Owner? Tap here</span></div>';
         };
         X.on('mptab', function (v) { M.tab = v; M.sel = null; M.err = ''; if (v === 'browse' || v === 'mine' || v === 'admin') { loadAll(); } again(); });
         X.on('mpcat', function (v) { M.cat = v; again(); }); X.on('mpsearch', function () { M.q = V('mpq'); again(); });
         X.on('mpload', function () { M.loading = 0; loadAll(); }); X.on('mpback', function () { M.sel = null; again(); });
         X.on('mpopen', function (v) { M.sel = v; again(); loadRev(v); try { window.scrollTo(0, 0); } catch (e) { } });
         X.on('mprmp', function (v) { M.photos.splice(+v, 1); again(); });
+        X.on('mpown', function (v) { M.own = v === '1'; try { localStorage.setItem('mw_mpown', v === '1' ? '1' : ''); } catch (e) { } if (!M.own) { M.tab = 'browse'; } again(); });
         X.on('mpcopy', function (v) { var t = v === 'fs' ? RULES_FS : RULES_ST; try { navigator.clipboard.writeText(t).then(function () { tst('Copied'); }, function () { tst('Could not copy'); }); } catch (e) { tst('Could not copy'); } });
         X.on('mpsave', function () {
             M.cfg = { key: V('mpKey'), pid: V('mpPid'), bucket: V('mpBkt'), admin: V('mpAdm'), phone: M.cfg.phone || '' }; M.err = ''; sv();
-            if (!ok()) { M.err = 'Fill apiKey, projectId and storageBucket.'; again(); return; }
+            if (!ok()) { M.err = 'Fill apiKey and projectId.'; again(); return; }
             M.au = {}; token().then(function () { tst('Connected. Your ID is shown below.'); M.at = 0; again(); }).catch(function (e) { M.err = 'Could not connect: ' + String(e.message || e) + (/ADMIN_ONLY|OPERATION_NOT_ALLOWED/.test(String(e.message)) ? ' (turn on Anonymous sign-in)' : ''); again(); });
         });
         X.on('mppost', function () {
@@ -29351,8 +29358,9 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             var vid = V('mpVid'); if (vid && !/^https?:\/\//i.test(vid)) { M.err = 'Video link must start with https://'; again(); return; }
             var rec = { title: t.slice(0, 120), price: pr, city: ci.slice(0, 60), desc: V('mpDesc').slice(0, 2000), cat: V('mpCat') || CATS[0], deal: V('mpDeal') || 'Sale', phone: ph, video: vid, thumb: M.photos[0].thumb, status: 'pending', at: Date.now() };
             M.cfg.phone = ph; sv(); M.busy = 'Uploading…'; again();
-            token().then(function () { rec.seller = M.au.uid; return Promise.all(M.photos.map(upload)); }).then(function (urls) {
-                rec.photos = urls; var f = {}; Object.keys(rec).forEach(function (k) { f[k] = enc(rec[k]); });
+            token().then(function () { rec.seller = M.au.uid; return Promise.all(M.photos.map(function (p) { return Promise.resolve(p.full); })); }).then(function (urls) {
+                var sz = 0; urls.forEach(function (u) { sz += u.length; }); if (sz > 700000) { throw new Error('Pictures are too big together. Use 1 or 2 pictures.'); }
+                rec.photos = urls; rec.exp = Date.now() + 60 * 864e5; var f = {}; Object.keys(rec).forEach(function (k) { f[k] = enc(rec[k]); });
                 return fs('POST', '/listings', { fields: f });
             }).then(function () { M.photos = []; M.busy = ''; M.tab = 'mine'; tst('Sent. It shows after the owner approves it.'); loadAll(); again(); }).catch(function (e) { M.busy = ''; M.err = 'Could not post: ' + String(e.message || e); again(); });
         });
@@ -29599,8 +29607,8 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         }
         window.__pumpHome = function (LOG) {
             var seen = LOG.map(function (x, i) { return { x: x, i: i }; }).filter(function (o) { var x = o.x; try { if (x.kind === 'new' && x.bn && S.fst && /Binance futures/.test(x.title || '')) { var f = S.fst[x.bn]; return !!(f && f.st === 'TRADING'); } } catch (e) { } return true; });
-            var pumps = seen.filter(function (o) { return o.x.kind !== 'new'; }).slice(0, 30), news = seen.filter(function (o) { return o.x.kind === 'new'; }).slice(0, 30);
-            return '<div class="group pad" id="mwpumpcard"><div class="mwpp" data-noswipe="1">' + tile('🚀', 'Pumps', '', pumps, 1, 'No pumps yet. A coin that jumps fast shows here and stays until you clear it.') + tile('🆕', 'New coins', '', news, 1, 'No new listings yet. Newly listed coins on MEXC or Binance show here.') + '</div>' +
+            var pumps = seen.filter(function (o) { return o.x.kind !== 'new' && Date.now() - (+o.x.t || 0) < 3600000; }).slice(0, 30), news = seen.filter(function (o) { return o.x.kind === 'new'; }).slice(0, 30);
+            return '<div class="group pad" id="mwpumpcard"><div class="mwpp" data-noswipe="1">' + tile('🚀', 'Pumps', '', pumps, 1, 'No coin has pumped in the last hour. A coin that jumps fast shows here for one hour; older ones are under See all.') + tile('🆕', 'New coins', '', news, 1, 'No new listings yet. Newly listed coins on MEXC or Binance show here.') + '</div>' +
                 '<div class="mwpb"><span class="on" data-pg="0">🚀 Pumps</span><div class="tr"><i></i></div><span data-pg="1">🆕 New coins</span></div></div>';
         };
         function sync(sc) { try { var w = sc.clientWidth || 1, p = sc.scrollLeft / w; pg = p > 0.5 ? 1 : 0; var b = sc.parentNode.querySelector('.mwpb'); if (!b) { return; } b.querySelector('.tr i').style.left = Math.max(0, Math.min(50, p * 50)) + '%'; b.querySelectorAll('span').forEach(function (s, k) { s.classList.toggle('on', k === pg); }); } catch (e) { } }
@@ -29878,6 +29886,10 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             T('studyx', '🎓 Study', 'study', 'Pick a level and subject, then a topic. If the subject does not exist at that level in Pakistan (for example Law before Bachelors) an orange box explains why and what to study instead. Offline lessons are built in; teaching on any topic needs internet or your own AI key.'),
             T('vpnx', '🛡 MintooSuiteVPN', 'vpn', 'More > Tools & settings > VPN. A WireGuard tunnel inside the app: paste your own free WireGuard config (for example from ProtonVPN Free), tap Connect and allow Android\'s popup. A test shows which exchanges your phone can reach. If the VPN drops while the Real Bot is on you get a warning. No servers are provided by the app, and some exchanges do not allow certain countries, so check their rules.'),
             T('rbstop', '🤖 Real Bot stop-loss check', 'bot', 'Every 45 seconds the Real Bot checks that each open trade has its stop-loss on the exchange. If one is missing it places it again; if that fails it closes the trade and alerts you. Paper close, half-close and cancel now act on the exact trade you tapped.'),
+            T('sigs', '📈 Baba Signal and UT Bot signals', 'exdesk', 'Every coin chart (Binance, MEXC, Bitget, Bybit, OKX) shows UT Bot and Baba Signal buy/sell marks and a Combined view line: UT Bot, Baba Signal and the app safety check, and whether they agree. The Exness Desk has a Signals chart for gold, silver, forex, oil and indices, with a table for 15 min, 1 hour, 4 hours and daily. Trade only when the desk call and both signals agree. Signals use finished candles only. Past tests are not a promise.'),
+            T('plc', '📍 Places search', 'places', 'Search hostels, cafes, restaurants, shops, pharmacies, banks and money exchangers in any area worldwide (for example Hostel City Park Road Islamabad or Quetta). Tap Save offline to keep a place without internet, then add your stars, notes, a picture and a YouTube or Vimeo link. Saved items are removed after 60 days unless you open or edit them. The source is OpenStreetMap, which can be incomplete and has no ratings.'),
+            T('prt', '🤝 Partners and referral links', 'partners', 'Paste your Exness partner link or Binance, Bybit and OKX referral links (https only). People open a licensed broker from your link; the broker holds their money and trades, and pays you a commission. Keep a private directory of money exchangers and brokers. The app does not hold money or place customers orders.'),
+            T('lst60', '🛍️ Listings last 60 days', 'listings', 'Buy and sell listings, up to 3 small pictures, video links and reviews disappear after 60 days and are deleted automatically. Post again to renew. YouTube and Vimeo links play inside the app after you tap Play.'),
             T('exbo', '🟧 Bybit and ⬛ OKX coins', 'bybit', 'Bybit and OKX now have full coin pages like MEXC and Bitget: tap a coin for its chart (15m, 1h, 4h, 1d), plan, order book, funding rate and the Bots and advisors box. Both bots scan their coins too, and the Ideas exchange chips include them. Perpetuals only. OKX is blocked on some networks: turn on MintooSuiteVPN. Data only; real orders need your own key.'),
             T('goldx', '🥇 Gold desk', 'exdesk', 'Home has a golden Gold desk card: Exness Desk (gold, silver and forex calls with entry, stop, targets and lots) and Gold practice (free paper trading with Exness-style costs). Gold can fall fast too: use a stop-loss, small lots and practise first. Nothing is guaranteed.'),
             T('doc', '🩺 Logs and Doctor', 'log', 'Menu > Logs lists problems with their cause. The Doctor names the box that jumps ("Jump culprit"), slows heavy background jobs, repaints a frozen chart and restarts stale prices. If something still flickers or jumps, send a Logs screenshot.')
@@ -29944,6 +29956,176 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
     try { PF_APP.push(['bybit coin|okx coin|bybit chart|okx chart|bybit bot|okx bot|bybit scan|okx scan|bybit page|okx page', 'Bybit and OKX coin pages (build 491)', 'Tap any Bybit or OKX coin (Bybit and OKX windows, Ideas with the Bybit or OKX chip, or the search box) to open its full page: chart, plan, order book, funding rate and the Bots and advisors box. Baba Signal and UT Bot now scan Bybit and OKX perpetual coins too. OKX is blocked on some networks, so use MintooSuiteVPN if it stays empty. These pages show data only; real orders need your own key.', 'win:bybit']); } catch (e) { }
     X.LIST = X.LIST; /* LIST already holds all five exchanges (p9zw) */
 } catch (e) { try { console.log('p9byok', e); } catch (x) { } } })();
+/* ===== p9plc (build 492): Places search (OpenStreetMap, saved offline, own notes/ratings/photo/video), embedded videos (YouTube/Vimeo tap-to-load), Partners window (referral-link slot + local directory + guide). Saved places, photos and notes rotate out after 60 days unless you open or edit them. ===== */
+;(function () { try {
+    var X = window.__kx, e2 = X.e2, D60 = 60 * 864e5;
+    function tst(m) { try { toast(m); } catch (e) { } }
+    function V(id) { var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
+    function again() { try { X.again(); } catch (e) { try { renderView(true); } catch (er) { } } }
+    function ls(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
+    function lset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+    var IN = 'width:100%;box-sizing:border-box;padding:10px;margin:4px 0;border-radius:12px;border:1px solid rgba(128,128,128,.35);background:var(--fill,#f0f0f3);color:inherit;font-size:15px';
+    function inp(id, ph, val) { return '<input id="' + id + '" placeholder="' + e2(ph) + '" value="' + e2(val || '') + '" style="' + IN + '">'; }
+    function btn(l, act, cls) { return '<span class="btn ' + (cls || '') + ' tap" data-xk="' + act + '" style="display:block;margin:6px 0">' + l + '</span>'; }
+    function lnk(l, href) { return '<a class="btn sec tap" target="_blank" rel="noopener" href="' + e2(href) + '" style="display:inline-block;text-decoration:none;margin:3px 6px 3px 0;padding:8px 12px">' + l + '</a>'; }
+    function box(t, b) { return '<div class="group pad"><b>' + t + '</b><div class="note" style="margin-top:4px">' + b + '</div></div>'; }
+    function safeUrl(u) { u = String(u || '').trim(); return /^https:\/\/[^\s<>"']+$/i.test(u) ? u : ''; }
+
+    /* ---------- embedded video (YouTube / Vimeo), tap to load ---------- */
+    var VL = {};
+    function vparse(u) {
+        u = String(u || ''); var m;
+        if ((m = u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i))) { return { k: 'y', id: m[1] }; }
+        if ((m = u.match(/vimeo\.com\/(?:video\/)?(\d{6,12})/i))) { return { k: 'v', id: m[1] }; }
+        return null;
+    }
+    window.__vEmbed = function (url) {
+        var p = vparse(url), u = safeUrl(url), key = p ? p.k + p.id : '';
+        var link = u ? '<a class="btn sec tap" target="_blank" rel="noopener" href="' + e2(u) + '" style="display:block;text-decoration:none;margin-top:6px">▶ Open video in browser</a>' : '';
+        if (!p) { return link || ''; }
+        if (VL[key]) {
+            var src = p.k === 'y' ? 'https://www.youtube-nocookie.com/embed/' + p.id + '?rel=0&playsinline=1' : 'https://player.vimeo.com/video/' + p.id;
+            return '<div style="position:relative;padding-top:56.25%;margin-top:8px;border-radius:14px;overflow:hidden;background:#000"><iframe src="' + src + '" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>' + link;
+        }
+        return '<div class="tap" data-xk="vplay:' + key + '" style="margin-top:8px;border-radius:14px;padding:22px 12px;text-align:center;font-weight:800;color:#fff;background:linear-gradient(120deg,#ff375f,#ff9f0a);box-shadow:0 4px 14px rgba(255,55,95,.3)">▶ Play video here<div style="font-size:11.5px;font-weight:600;opacity:.9">needs internet; loads only when you tap</div></div>' + link;
+    };
+    X.on('vplay', function (v) { VL[v] = 1; again(); });
+
+    /* ---------- Places ---------- */
+    var CATS = [
+        ['hostel', '🛏️', 'Hostels and guest houses', '["tourism"~"hostel|guest_house"]', 'Ask for the room you will get, the monthly rent in writing, electricity and gas bills, the curfew, a security deposit receipt, and visit once at night before paying.'],
+        ['cafe', '☕', 'Cafes', '["amenity"="cafe"]', 'Check the menu prices before ordering, ask about wifi and opening hours, and read recent reviews before a group booking.'],
+        ['restaurant', '🍽️', 'Restaurants and fast food', '["amenity"~"restaurant|fast_food"]', 'Look for a busy place with fresh turnover, ask the price of deals and tax, and prefer places with clean kitchens.'],
+        ['hotel', '🏨', 'Hotels', '["tourism"~"hotel|motel"]', 'Confirm the final price with tax, the cancellation rule, and the ID they will ask for. Book through a number you have verified.'],
+        ['shop', '🛍️', 'Shops', '["shop"]', 'Compare two shops, ask for a receipt and the return rule, and check the expiry or warranty before paying.'],
+        ['clothes', '👗', 'Clothing shops', '["shop"~"clothes|boutique|fabric|tailor"]', 'Check fabric, stitching and size, ask the exchange rule, and keep the receipt.'],
+        ['grocery', '🛒', 'Grocery and supermarkets', '["shop"~"supermarket|convenience|greengrocer|bakery"]', 'Check expiry dates and the printed price on each item.'],
+        ['pharmacy', '💊', 'Pharmacies', '["amenity"="pharmacy"]', 'Ask for the original pack and the expiry date. Do not take prescription medicine without a doctor.'],
+        ['hospital', '🏥', 'Hospitals and clinics', '["amenity"~"hospital|clinic|doctors"]', 'For an emergency call 1122 in Pakistan. Confirm the doctor and the fee before the visit.'],
+        ['bank', '🏦', 'Banks and ATMs', '["amenity"~"bank|atm"]', 'Use the bank branch for important matters and never share your PIN or OTP with anyone.'],
+        ['exchange', '💱', 'Money exchangers', '["amenity"="bureau_de_change"]', 'Use only a licensed exchange company (check on the State Bank of Pakistan list), ask the written rate, count the money, and keep the receipt.'],
+        ['school', '🏫', 'Schools and colleges', '["amenity"~"school|college|university"]', 'Visit in person, ask for the fee list in writing and the exam results of the last two years.'],
+        ['mosque', '🕌', 'Mosques', '["amenity"="place_of_worship"]', 'Check prayer times at the mosque notice board.'],
+        ['gym', '🏋️', 'Gyms', '["leisure"~"fitness_centre|sports_centre"]', 'Ask for a trial day before paying for months.'],
+        ['salon', '💈', 'Salons and barbers', '["shop"~"hairdresser|beauty"]', 'Ask the price list before the service.']
+    ];
+    var ADV = 'Tip: read two or three recent reviews, visit once before paying anything, and never send an advance payment to a stranger.';
+    var P = { cat: 'hostel', area: '', res: [], busy: 0, err: '', sel: null, from: '' };
+    var SV = ls('mw_places', []);
+    function sweep() { var n = Date.now(), b = SV.length; SV = SV.filter(function (x) { return n - (x.t || 0) < D60; }); if (SV.length !== b) { lset('mw_places', SV); } }
+    sweep();
+    function pid(r) { return r.osm || (r.n + '|' + r.la + '|' + r.lo); }
+    function saved(r) { var k = pid(r), f = null; SV.forEach(function (x) { if (pid(x) === k) { f = x; } }); return f; }
+    function catOf(id) { var c = CATS[0]; CATS.forEach(function (x) { if (x[0] === id) { c = x; } }); return c; }
+    function jfetch(url, opt, ms) { var ac = window.AbortController ? new AbortController() : null, t = setTimeout(function () { try { ac && ac.abort(); } catch (e) { } }, ms || 25000); opt = opt || {}; if (ac) { opt.signal = ac.signal; } return fetch(url, opt).then(function (r) { clearTimeout(t); if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.json(); }); }
+    function parse(j) {
+        var out = []; (j.elements || []).forEach(function (el) {
+            var t = el.tags || {}, nm = t.name || t['name:en']; if (!nm) { return; }
+            var la = el.lat != null ? el.lat : (el.center && el.center.lat), lo = el.lon != null ? el.lon : (el.center && el.center.lon); if (la == null) { return; }
+            var ad = [t['addr:housename'], t['addr:street'], t['addr:suburb'] || t['addr:neighbourhood'], t['addr:city']].filter(Boolean).join(', ');
+            out.push({ osm: el.type + el.id, n: nm, la: +la, lo: +lo, ad: ad, ph: t.phone || t['contact:phone'] || t['contact:mobile'] || '', web: safeUrl(t.website || t['contact:website']), oh: t.opening_hours || '', ty: t.tourism || t.amenity || t.shop || t.leisure || '' });
+        }); return out;
+    }
+    function search() {
+        var area = V('plArea') || P.area, q = V('plQ'); P.area = area;
+        if (!area) { tst('Type an area or city'); return; }
+        var cat = catOf(P.cat), key = 'mw_pc_' + area.toLowerCase() + '|' + (q ? q.toLowerCase() : cat[0]);
+        P.busy = 1; P.err = ''; P.sel = null; again();
+        jfetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(area)).then(function (g) {
+            if (!g || !g[0]) { throw new Error('Area not found. Try a bigger name, for example Park Road Islamabad.'); }
+            var b = g[0].boundingbox, s = +b[0], n = +b[1], w = +b[2], e = +b[3];
+            if (n - s > 0.25) { var cy = (n + s) / 2; s = cy - .125; n = cy + .125; } if (e - w > 0.25) { var cx = (e + w) / 2; w = cx - .125; e = cx + .125; }
+            var bb = '(' + s + ',' + w + ',' + n + ',' + e + ')', body;
+            if (q) { var rx = q.replace(/["\\]/g, ''); body = '["name"~"' + rx + '",i]'; body = 'node' + body + bb + ';way' + body + bb + ';'; } else { body = 'node' + cat[3] + bb + ';way' + cat[3] + bb + ';'; }
+            var ql = '[out:json][timeout:25];(' + body + ');out center 80;';
+            return jfetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(ql), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+        }).then(function (j) { P.res = parse(j); P.from = 'live'; lset(key, { t: Date.now(), r: P.res.slice(0, 80) }); }).catch(function (e) {
+            var c = ls(key, null);
+            if (c && c.r) { P.res = c.r; P.from = 'saved copy from ' + new Date(c.t).toLocaleString(); P.err = ''; } else { P.res = []; P.err = 'Could not search: ' + (e.message || e) + '. Check your internet (a VPN may be needed). Saved places still work offline.'; }
+        }).then(function () { P.busy = 0; again(); });
+    }
+    function card(r, i, isSaved) {
+        var s = saved(r), cat = catOf(P.cat), h = '<div style="padding:10px 0;border-top:1px solid rgba(128,128,128,.2)"><b>' + e2(r.n) + '</b>' + (r.ty ? ' <span class="note">' + e2(r.ty) + '</span>' : '') +
+            (r.ad ? '<div class="note">📍 ' + e2(r.ad) + '</div>' : '') + (r.oh ? '<div class="note">🕒 ' + e2(r.oh) + '</div>' : '') + (r.ph ? '<div class="note">📞 ' + e2(r.ph) + '</div>' : '') + '<div>';
+        h += lnk('🗺️ Map', 'https://www.google.com/maps/search/?api=1&query=' + r.la + ',' + r.lo);
+        if (r.ph) { var d = String(r.ph).replace(/[^\d+]/g, ''); h += lnk('📞 Call', 'tel:' + d) + lnk('💬 WhatsApp', 'https://wa.me/' + d.replace(/^\+/, '').replace(/^0/, '92')); }
+        if (r.web) { h += lnk('🌐 Website', r.web); }
+        h += lnk('▶ Videos', 'https://www.youtube.com/results?search_query=' + encodeURIComponent(r.n + ' ' + (P.area || ''))) + lnk('⭐ Reviews', 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.n + ' ' + (P.area || '')));
+        h += '</div><div class="tap" data-xk="plsave:' + i + (isSaved ? 's' : 'r') + '" style="display:inline-block;margin-top:4px;padding:8px 12px;border-radius:12px;font-weight:800;background:' + (s ? 'rgba(52,199,89,.2)' : 'rgba(10,132,255,.15)') + '">' + (s ? '✅ Saved offline (tap to open notes)' : '💾 Save offline') + '</div>';
+        if (isSaved && P.sel === pid(r)) { h += notes(s); }
+        return h + '</div>';
+    }
+    function notes(s) {
+        var h = '<div style="margin-top:8px;padding:10px;border-radius:14px;background:rgba(128,128,128,.1)"><b>My notes (private, on this phone)</b><div class="note">' + e2(catOf(s.cat || P.cat)[4] || ADV) + '</div>' +
+            '<div>' + [1, 2, 3, 4, 5].map(function (n) { return '<span class="tap" data-xk="plstar:' + n + '" style="font-size:26px;padding:2px 4px;opacity:' + (n <= (s.star || 0) ? 1 : .3) + '">★</span>'; }).join('') + '</div>' +
+            '<textarea id="plNote" placeholder="What you saw, price, who you spoke to…" style="' + IN + ';height:70px">' + e2(s.note || '') + '</textarea>' + inp('plVid', 'YouTube or Vimeo link (optional)', s.vid || '') + btn('💾 Save notes', 'plnote:x', '') +
+            (s.img ? '<img src="' + e2(s.img) + '" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:14px;margin-top:6px">' : '') +
+            '<label class="btn sec tap" style="display:block;margin:6px 0;text-align:center">📷 ' + (s.img ? 'Change picture' : 'Add a picture') + '<input id="plPh" type="file" accept="image/*" style="display:none"></label>' +
+            (s.vid ? window.__vEmbed(s.vid) : '') + btn('🗑️ Remove from saved', 'pldel:x', 'sec') + '<div class="note">Saved places, pictures and notes are removed after 60 days unless you open or edit them.</div></div>';
+        return h;
+    }
+    function vPlaces() {
+        sweep(); var h = '<div class="group pad"><b>📍 Search places, worldwide</b><div class="note" style="margin:4px 0 8px">Hostels, cafes, restaurants, shops, pharmacies, hospitals, banks, money exchangers and more, from OpenStreetMap. Type an area (for example Hostel City Park Road Islamabad, Quetta, London) and pick a type, or type a shop name.</div>' +
+            inp('plArea', 'Area or city', P.area) + inp('plQ', 'Name of a shop, cafe or restaurant (optional)', '') +
+            '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0">' + CATS.map(function (c) { return '<span class="tap" data-xk="plcat:' + c[0] + '" style="padding:8px 11px;border-radius:99px;font-weight:700;font-size:13px;background:' + (P.cat === c[0] ? 'hsl(var(--mw-h,210),80%,52%)' : 'rgba(128,128,128,.18)') + ';color:' + (P.cat === c[0] ? '#fff' : 'inherit') + '">' + c[1] + ' ' + c[2] + '</span>'; }).join('') + '</div>' +
+            btn(P.busy ? '⏳ Searching…' : '🔎 Search', 'plgo:x', '') + (P.err ? '<div class="warn">' + e2(P.err) + '</div>' : '') + '</div>';
+        if (P.res.length) { h += '<div class="group pad"><b>' + P.res.length + ' results</b> <span class="note">' + (P.from === 'live' ? 'live from OpenStreetMap, updated ' + new Date().toLocaleString() : e2(P.from)) + '</span><div class="note">' + e2(catOf(P.cat)[4]) + '</div>' + P.res.slice(0, 60).map(function (r, i) { return card(r, i, false); }).join('') + '</div>'; }
+        else if (!P.busy && !P.err) { h += box('Advice', e2(catOf(P.cat)[4]) + '<br>' + ADV); }
+        h += '<div class="group pad"><b>💾 Saved offline (' + SV.length + ')</b>' + (SV.length ? SV.map(function (r, i) { return card(r, i, true); }).join('') : '<div class="note">Nothing saved yet. Search, then tap Save offline. Saved places open without internet.</div>') + '</div>';
+        h += box('Honest limits', 'OpenStreetMap is volunteer-made: some places are missing and it has no ratings or photos. "Reviews" and "Videos" open Google Maps and YouTube. Your own stars, notes, picture and video link stay on your phone. Check any place yourself before paying.');
+        return h;
+    }
+    X.on('plcat', function (v) { P.cat = v; again(); });
+    X.on('plgo', function () { search(); });
+    X.on('plsave', function (v) {
+        var s = v.slice(-1) === 's', i = parseInt(v, 10), r = (s ? SV : P.res)[i]; if (!r) { return; }
+        var f = saved(r);
+        if (!f) { f = { osm: r.osm, n: r.n, la: r.la, lo: r.lo, ad: r.ad, ph: r.ph, web: r.web, oh: r.oh, ty: r.ty, cat: P.cat, t: Date.now() }; SV.unshift(f); SV = SV.slice(0, 60); tst('Saved offline'); }
+        else { f.t = Date.now(); P.sel = P.sel === pid(f) ? null : pid(f); }
+        lset('mw_places', SV); again();
+    });
+    function cur() { var f = null; SV.forEach(function (x) { if (pid(x) === P.sel) { f = x; } }); return f; }
+    X.on('plstar', function (v) { var f = cur(); if (f) { f.star = +v; f.t = Date.now(); lset('mw_places', SV); again(); } });
+    X.on('plnote', function () { var f = cur(); if (!f) { return; } f.note = V('plNote').slice(0, 600); var v = V('plVid'); f.vid = (v && (vparse(v) || safeUrl(v))) ? v : ''; if (v && !f.vid) { tst('Use a https link'); } f.t = Date.now(); lset('mw_places', SV); tst('Saved'); again(); });
+    X.on('pldel', function () { var f = cur(); if (!f) { return; } SV = SV.filter(function (x) { return x !== f; }); P.sel = null; lset('mw_places', SV); again(); });
+    document.addEventListener('change', function (ev) {
+        var el = ev.target; if (!el || el.id !== 'plPh' || !el.files || !el.files[0]) { return; } var f = cur(); if (!f) { return; }
+        var rd = new FileReader(); rd.onload = function () { var im = new Image(); im.onload = function () { try { var k = Math.min(1, 560 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); f.img = c.toDataURL('image/jpeg', .55); f.t = Date.now(); if (!lset('mw_places', SV)) { f.img = ''; tst('Storage is full; remove old saved places'); } again(); } catch (e) { tst('Could not read the picture'); } }; im.src = rd.result; }; rd.readAsDataURL(el.files[0]);
+    }, true);
+
+    /* ---------- Partners and referral links ---------- */
+    var BAKED = { exness: '', binance: '', bybit: '', okx: '' }; /* your own partner links go here when you send them */
+    var PL = ls('mw_partlinks', {}), PD = ls('mw_partdir', []);
+    window.__partLink = function (k) { return safeUrl(PL[k]) || safeUrl(BAKED[k]) || ''; };
+    var PN = [['exness', 'Exness (partner link)'], ['binance', 'Binance (referral link)'], ['bybit', 'Bybit (referral link)'], ['okx', 'OKX (referral link)'], ['other', 'Another broker or exchange']];
+    function vPartners() {
+        var h = '<div class="group pad"><b>🔗 Your referral and partner links</b><div class="note" style="margin:4px 0 8px">The legal way for people to trade through your app: they open a real, licensed broker or exchange from YOUR partner or referral link, and the broker pays you a commission. The broker holds the money and executes the trades, not this app. Paste only a https link you got from the broker\'s own partner page.</div>';
+        PN.forEach(function (p) { var u = window.__partLink(p[0]); h += '<div style="margin:6px 0"><b style="font-size:13px">' + p[1] + '</b>' + inp('pl_' + p[0], 'https://…', PL[p[0]] || '') + (u ? lnk('Open', u) : '') + '</div>'; });
+        h += btn('💾 Save links', 'ptsave:x', '') + '<div class="note">Links stay on this phone. Never paste a password or an API secret here.</div></div>';
+        h += '<div class="group pad"><b>🤝 Money exchangers and brokers I know</b><div class="note">Your own private directory (Islamabad or anywhere). Add a name and a phone number.</div>' + inp('pdN', 'Name (company or person)', '') + inp('pdP', 'Phone or WhatsApp number', '') + inp('pdT', 'Notes (licence checked, rates, area)', '') + btn('➕ Add', 'ptadd:x', '') +
+            (PD.length ? PD.map(function (d, i) { var n = String(d.p || '').replace(/[^\d+]/g, ''); return '<div style="padding:8px 0;border-top:1px solid rgba(128,128,128,.2)"><b>' + e2(d.n) + '</b><div class="note">' + e2(d.t || '') + '</div>' + (n ? lnk('📞 Call', 'tel:' + n) + lnk('💬 WhatsApp', 'https://wa.me/' + n.replace(/^\+/, '').replace(/^0/, '92')) : '') + '<span class="tap" data-xk="ptdel:' + i + '" style="padding:8px;font-weight:800;color:#ff453a">Remove</span></div>'; }).join('') : '') + '</div>';
+        h += box('How to work with a money exchanger or broker in Islamabad', '1. Choose an <b>SBP-licensed exchange company</b> (State Bank of Pakistan list) for foreign currency, or a <b>PSX trading-right holder / SECP-registered broker</b> for shares.<br>2. Visit the office, ask for the licence number and check it on the SBP, PSX or SECP website.<br>3. Agree in writing: what you refer, what commission or fee is paid, and by whom. They hold and move customers\' money, not you.<br>4. Customers sign up with the broker themselves (their own ID and bank account). You never hold their money or place orders for them.<br>5. Keep records and pay tax on your commission. A lawyer should read any agreement before you sign.');
+        h += box('Why not trade for customers inside the app?', 'Holding customers\' money or placing their trades makes you a broker, which needs licences (SECP, SBP, PSX, FBR). Referral links and a licensed partner are the safe route. No result or income is guaranteed.');
+        return h;
+    }
+    X.on('ptsave', function () { PN.forEach(function (p) { var v = V('pl_' + p[0]); if (!v) { delete PL[p[0]]; } else if (safeUrl(v)) { PL[p[0]] = v; } else { tst(p[1] + ': use a https link'); } }); lset('mw_partlinks', PL); tst('Saved'); again(); });
+    X.on('ptadd', function () { var n = V('pdN'); if (n.length < 2) { tst('Type a name'); return; } PD.unshift({ n: n.slice(0, 80), p: V('pdP').slice(0, 30), t: V('pdT').slice(0, 200) }); PD = PD.slice(0, 40); lset('mw_partdir', PD); again(); });
+    X.on('ptdel', function (v) { PD.splice(+v, 1); lset('mw_partdir', PD); again(); });
+
+    WINS.push({ id: 'places', ic: '📍', c: '#30b0c7', n: 'Places search (worldwide)', t: 'Places', sub: 'Hostels, cafes, shops, restaurants, pharmacies, banks and more. Save offline, add notes, picture and video' }); LIVE.places = 0; VIEWS.places = vPlaces;
+    WINS.push({ id: 'partners', ic: '🤝', c: '#ff9f0a', n: 'Partners and referral links', t: 'Partners', sub: 'Your Exness, Binance, Bybit, OKX links and a directory of exchangers and brokers' }); LIVE.partners = 0; VIEWS.partners = vPartners;
+    (function () { function grp() { try { if (typeof MW_GROUPS === 'undefined') { return false; } var n = 0; MW_GROUPS.forEach(function (g) { if (g[0] === 'Pakistan') { ['places', 'partners'].forEach(function (id) { if (g[1].indexOf(id) < 0) { g[1].push(id); } }); n++; } }); try { mwHostSig = ''; } catch (e) { } return n > 0; } catch (e) { return false; } }
+        var tr = 0, iv = setInterval(function () { if (grp() || ++tr > 60) { clearInterval(iv); } }, 300); })();
+
+    /* ---------- Baba and Help ---------- */
+    try {
+        PF_APP.push(['hostel|cafe|restaurant|shop near|find a shop|places|park road|hostel city|quetta|pharmacy near|hospital near|money exchanger|search places', 'Places search (build 492)', 'Open More > Pakistan > Places. Type an area (Hostel City Park Road Islamabad, Quetta, any city in the world), pick a type or type a shop name, and tap Search. Results come from OpenStreetMap with map, call and WhatsApp buttons. Tap Save offline to keep a place without internet, then add your stars, notes, a picture and a YouTube link. Saved items are removed after 60 days unless you open them. OpenStreetMap has no ratings, so Reviews and Videos open Google Maps and YouTube.', 'win:places'],
+            ['referral|partner link|exness link|affiliate|introducing broker|money exchanger partner|broker partner|trade through app|people trade', 'Partners and referral links (build 492)', 'Open More > Pakistan > Partners. Paste your Exness partner link or Binance, Bybit, OKX referral links (https only). People open a licensed broker from your link and the broker holds their money and trades; you earn the broker\'s commission. The app itself cannot hold money or place customers\' orders without broker licences. The window also keeps your own directory of money exchangers and brokers and a checklist for an SBP-licensed exchanger or a PSX/SECP broker.', 'win:partners'],
+            ['video|embed|youtube|play video|vimeo', 'Videos inside the app (build 492)', 'YouTube and Vimeo links in Buy and sell listings and in your saved places play inside the app after you tap Play. They need internet. Other video links open in your browser.', 'win:listings'],
+            ['listing expire|60 days|old listings|photos expire|listing photos|delete old', 'Listings last 60 days (build 492)', 'Buy and sell listings, their pictures (up to 3, small), video links and reviews disappear after 60 days and are deleted automatically when you or the owner next open the app. Post again to renew. Pictures are stored inside the listing, so no Firebase Storage is needed.', 'win:listings'],
+            ['come back|stay on same screen|jumps to home|returns to home|switch app', 'App stays where you left it (build 492)', 'When you switch to another app and come back, MintooSuite now stays on the screen you were on. It only returns to Home after 6 hours away.', 'win:overview']);
+    } catch (e) { }
+} catch (e) { try { console.log('p9plc', e); } catch (x) { } } })();
 /* ===== p9gold2 (build 491): Gold desk card on Home: Exness Desk + Gold Practice up front, live gold (PAXG) reference. No profit claims. ===== */
 ;(function () { try {
     var _ov = VIEWS.overview; if (typeof _ov !== 'function') { return; }
@@ -29952,7 +30134,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         return '<div id="mwgold" style="border-radius:20px;padding:14px;margin:0 0 14px;color:#2b1a00;background:linear-gradient(120deg,#ffe27a,#ffb300,#ff8f00,#ffe27a);background-size:300% 300%;animation:mwgl 9s ease infinite;box-shadow:0 6px 18px rgba(255,160,0,.35)">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">🥇 Gold desk</b><span style="color:#fff;background:rgba(60,30,0,.75);border-radius:99px;padding:3px 10px;font-size:12px">' + px + '</span></div>' +
             '<div style="font-size:12.5px;margin:6px 0 10px;font-weight:600">Gold and silver on Exness: calls with entry, stop and targets, lot size, and a free practice account. Practise here first; no result is guaranteed.</div>' +
-            '<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="tap" data-act="win:exdesk" style="flex:1 1 140px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#2b1a00;color:#ffd24a;border-radius:14px;font-weight:800">🟢 Exness Desk</span><span class="tap" data-act="win:xgold" style="flex:1 1 140px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.65);color:#2b1a00;border-radius:14px;font-weight:800">🥇 Gold practice</span></div></div>';
+            '<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="tap" data-act="win:exdesk" style="flex:1 1 140px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#2b1a00;color:#ffd24a;border-radius:14px;font-weight:800">🟢 Exness Desk</span><span class="tap" data-act="win:xgold" style="flex:1 1 140px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.65);color:#2b1a00;border-radius:14px;font-weight:800">🥇 Gold practice</span>' + ((window.__partLink && window.__partLink('exness')) ? '<a target="_blank" rel="noopener" href="' + window.__partLink('exness') + '" style="flex:1 1 100%;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#fff;color:#2b1a00;border-radius:14px;font-weight:800;text-decoration:none">🔗 Open Exness account (partner link)</a>' : '<span class="tap" data-act="win:partners" style="flex:1 1 100%;min-height:40px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.5);color:#2b1a00;border-radius:14px;font-weight:800">🤝 Partners and account links</span>') + '</div></div>';
     }
     VIEWS.overview = function () {
         var h = _ov.apply(this, arguments), s = String(h), i = s.indexOf('<div class="mwxs">');
@@ -29961,6 +30143,153 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
     var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = '@keyframes mwgl{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}'; document.head.appendChild(st);
     try { PF_APP.push(['gold|silver|xauusd|exness gold|gold desk|gold trading|why gold', 'Gold desk (build 491)', 'Home now has a golden Gold desk card near the top: Exness Desk (gold, silver, forex calls with entry, stop, targets and lots) and Gold practice (free paper trading with Exness-style costs). Gold is a big, liquid market and many people use it to diversify away from crypto, but it can also fall fast: use a stop-loss, small lots and practise first. Nobody can promise that any asset will rise or that another will disappear.', 'win:exdesk']); } catch (e) { }
 } catch (e) { try { console.log('p9gold2', e); } catch (x) { } } })();
+/* ===== p9offc (build 492): offline copies. Successful GET answers for prices and data (shares, real estate, autos, news, weather, etc.) are kept with their date and time; when there is no internet, the saved copy is shown with a banner "saved <date time>" instead of blanks. Copies older than 60 days are dropped. Live crypto feeds and Firebase are not touched here. ===== */
+;(function () { try {
+    var _f = window.fetch; if (typeof _f !== 'function' || window.__mwOffc) { return; } window.__mwOffc = 1;
+    var PX = 'mw_fc_', IDX = 'mw_fc_idx', D60 = 60 * 864e5, MAXB = 200000, MAXN = 40, SKIP = /(binance|mexc|bitget|bybit|okx|googleapis\.com|firebase|gstatic|identitytoolkit|nominatim|overpass|youtube|vimeo|localhost)/i;
+    function idx() { try { return JSON.parse(localStorage.getItem(IDX) || '{}') || {}; } catch (e) { return {}; } }
+    function sidx(o) { try { localStorage.setItem(IDX, JSON.stringify(o)); } catch (e) { } }
+    function key(u) { var h = 0, s = String(u); for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; } return PX + (h >>> 0).toString(36) + s.length; }
+    function put(u, txt, ct) {
+        try {
+            var k = key(u), ix = idx(), now = Date.now(); Object.keys(ix).forEach(function (x) { if (now - ix[x] > D60) { try { localStorage.removeItem(x); } catch (e) { } delete ix[x]; } });
+            var ks = Object.keys(ix); while (ks.length >= MAXN && !ix[k]) { ks.sort(function (a, b) { return ix[a] - ix[b]; }); var o = ks.shift(); try { localStorage.removeItem(o); } catch (e) { } delete ix[o]; }
+            localStorage.setItem(k, JSON.stringify({ t: now, c: ct, b: txt })); ix[k] = now; sidx(ix);
+        } catch (e) { try { var i2 = idx(), a = Object.keys(i2).sort(function (x, y) { return i2[x] - i2[y]; })[0]; if (a) { localStorage.removeItem(a); delete i2[a]; sidx(i2); } } catch (x) { } }
+    }
+    var bar = null, hideT = 0;
+    function banner(t) {
+        try {
+            if (!bar) { bar = document.createElement('div'); bar.setAttribute('data-mwkeep', '1'); bar.style.cssText = 'position:fixed;left:8px;right:8px;bottom:70px;z-index:99999;padding:9px 12px;border-radius:14px;font-size:12.5px;font-weight:700;color:#fff;background:rgba(255,149,0,.95);box-shadow:0 4px 14px rgba(0,0,0,.3);text-align:center;pointer-events:none'; document.body.appendChild(bar); }
+            bar.textContent = '📴 Offline: showing prices and data saved ' + new Date(t).toLocaleString() + '. They update when you are online.'; bar.style.display = 'block'; clearTimeout(hideT); hideT = setTimeout(function () { bar.style.display = 'none'; }, 6000);
+        } catch (e) { }
+    }
+    window.__mwOffcAt = 0;
+    window.fetch = function (u, o) {
+        var url = typeof u === 'string' ? u : (u && u.url) || '', m = ((o && o.method) || (u && u.method) || 'GET').toUpperCase();
+        if (m !== 'GET' || !/^https?:/i.test(url) || SKIP.test(url)) { return _f.apply(this, arguments); }
+        var self = this, args = arguments;
+        function fromCache(err) {
+            try { var c = JSON.parse(localStorage.getItem(key(url)) || 'null'); if (c && Date.now() - c.t < D60) { window.__mwOffcAt = c.t; banner(c.t); return new Response(c.b, { status: 200, headers: { 'content-type': c.c || 'application/json', 'x-mw-cached': String(c.t) } }); } } catch (e) { }
+            throw err;
+        }
+        if (navigator.onLine === false) { try { return Promise.resolve(fromCache(new Error('offline'))); } catch (e) { return Promise.reject(e); } }
+        return _f.apply(self, args).then(function (r) {
+            try { if (r && r.ok && r.status === 200) { var ct = r.headers.get('content-type') || ''; if (/json|text|xml/i.test(ct)) { r.clone().text().then(function (t) { if (t && t.length < MAXB) { put(url, t, ct); } }).catch(function () { }); } } } catch (e) { }
+            return r;
+        }, function (err) { return fromCache(err); });
+    };
+} catch (e) { try { console.log('p9offc', e); } catch (x) { } } })();
+/* ===== p9sig493 (build 493): Baba Signal + UT Bot together with the recommendation. (1) Exness Desk gets a signals chart (candles, UT Bot and Baba markers) and a table by time frame for the chosen market (gold, silver, forex, oil, indices). (2) Every coin chart (Binance, MEXC, Bitget, Bybit, OKX) gets one combined verdict line: UT Bot, Baba Signal, the app's safety check and Baba's experience score. Past tests only; no result is guaranteed. ===== */
+;(function () { try {
+    function E(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function toK(a) { return (a || []).map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] || 0 }; }).filter(function (x) { return x.c > 0; }); }
+    function side(p) { return p > 0 ? 'BUY' : p < 0 ? 'SELL' : 'none'; }
+    function col(p) { return p > 0 ? '#16a34a' : p < 0 ? '#dc2626' : '#6b7280'; }
+    function both(K) {
+        if (!K || K.length < 71 || !window.__ut || !window.__babaSig) { return null; }
+        var Kc = K.slice(0, -1), n = Kc.length, U, B; try { U = window.__ut.utbot(Kc, 1, 10); B = window.__babaSig(Kc); } catch (e) { return null; }
+        var u = U.pos[n - 1], b = B.pos[n - 1], agree = u && b && u === b;
+        return { U: U, B: B, u: u, b: b, n: n, agree: agree, Kc: Kc };
+    }
+    function pill(l, p) { return '<span style="display:inline-block;margin:2px 4px 2px 0;padding:4px 9px;border-radius:99px;font-weight:800;font-size:12px;color:#fff;background:' + col(p) + '">' + l + ': ' + side(p) + '</span>'; }
+    function verdict(r, call) {
+        var votes = [r.u, r.b]; if (call) { votes.push(call); }
+        var up = votes.filter(function (v) { return v > 0; }).length, dn = votes.filter(function (v) { return v < 0; }).length;
+        if (up === votes.length) { return ['All ' + votes.length + ' agree: BUY side', 1]; } if (dn === votes.length) { return ['All ' + votes.length + ' agree: SELL side', -1]; }
+        return ['Mixed (' + up + ' buy, ' + dn + ' sell, ' + (votes.length - up - dn) + ' no view): wait for agreement', 0];
+    }
+
+    /* ---------- (2) combined verdict under every coin chart ---------- */
+    var _o = window.__cxOver;
+    window.__cxOver = function (c, m) {
+        if (_o) { _o(c, m); }
+        try {
+            var K = m.K, r = both(K), host = document.getElementById('utInfo') || document.getElementById('bsInfo'); if (!host) { return; }
+            var el = document.getElementById('cvd'); if (!el) { el = document.createElement('div'); el.id = 'cvd'; el.className = 'note'; el.style.cssText = 'margin:6px 0;padding:8px 10px;border-radius:12px;background:rgba(127,127,127,.12)'; host.parentNode.insertBefore(el, host); }
+            if (!r) { el.innerHTML = ''; return; }
+            var gn = null; try { gn = window.__botNow && window.__botNow(m.sym); } catch (e) { }
+            var call = gn && gn.side ? (gn.side === 'LONG' ? 1 : gn.side === 'SHORT' ? -1 : 0) : 0, v = verdict(r, call || 0), xp = window.__lastExp;
+            el.innerHTML = '<b>Combined view</b> ' + pill('UT Bot', r.u) + pill('Baba Signal', r.b) + (gn ? pill('App check', call) : '') + '<div style="margin-top:2px"><b style="color:' + col(v[1]) + '">' + E(v[0]) + '</b></div>' +
+                (xp && xp._s === m.sym ? '<div>Baba experience: ' + (xp.veto ? 'WAIT (not confirmed)' : 'score ' + xp.conv + '/100 for ' + E(xp.side)) + '</div>' : '') +
+                (gn && gn.warn ? '<div style="color:#b45309">Safety check: ' + E(gn.warn) + '</div>' : '') + '<div style="opacity:.75;font-size:11.5px">Signals use finished candles only. Recommendations, advisors and bots follow the strict safety rules; a past test is not a promise.</div>';
+        } catch (e) { }
+    };
+
+    /* ---------- (1) Exness Desk signals chart ---------- */
+    function draw() {
+        try {
+            var cv = document.getElementById('xsgc'); if (!cv || cv.getAttribute('data-d') || typeof S === 'undefined' || !S.xd) { return; } cv.setAttribute('data-d', '1');
+            var I = (typeof exdI === 'function') ? exdI() : null, D = S.xd, ks = I && D.ks && D.ks[I.k + D.tf]; if (!ks) { return; }
+            var K = toK(ks), r = both(K); if (!r) { return; }
+            var dpr = window.devicePixelRatio || 1, W = cv.clientWidth || 340, H = 230; cv.width = W * dpr; cv.height = H * dpr; var c = cv.getContext('2d'); c.scale(dpr, dpr);
+            var N = Math.min(90, K.length - 1), s0 = K.length - 1 - N, lo = Infinity, hi = -Infinity, i;
+            for (i = s0; i < K.length; i++) { lo = Math.min(lo, K[i].l); hi = Math.max(hi, K[i].h); } var pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
+            var xs = function (j) { return 6 + (j - s0 + .5) * (W - 12) / (N + 1); }, ys = function (p) { return 8 + (hi - p) / (hi - lo) * (H - 16); }, bw = Math.max(2, (W - 12) / (N + 1) * .6);
+            c.clearRect(0, 0, W, H);
+            for (i = s0; i < K.length; i++) { var k = K[i], up = k.c >= k.o, x = xs(i); c.strokeStyle = c.fillStyle = up ? '#16a34a' : '#dc2626'; c.beginPath(); c.moveTo(x, ys(k.h)); c.lineTo(x, ys(k.l)); c.stroke(); c.fillRect(x - bw / 2, Math.min(ys(k.o), ys(k.c)), bw, Math.max(1, Math.abs(ys(k.o) - ys(k.c)))); }
+            c.lineWidth = 1.4; c.globalAlpha = .6; for (i = Math.max(s0, 1); i < r.n; i++) { var a = r.U.stop[i - 1], b = r.U.stop[i]; if (!isFinite(a) || !isFinite(b)) { continue; } c.strokeStyle = r.U.pos[i] < 0 ? '#dc2626' : '#16a34a'; c.beginPath(); c.moveTo(xs(i - 1), ys(a)); c.lineTo(xs(i), ys(b)); c.stroke(); } c.globalAlpha = 1;
+            c.font = '800 9px -apple-system,Segoe UI,sans-serif'; c.textAlign = 'center';
+            for (i = s0; i < r.n; i++) {
+                var x2 = xs(i);
+                if (r.U.buy[i]) { c.fillStyle = '#16a34a'; c.beginPath(); c.moveTo(x2, ys(K[i].l) + 4); c.lineTo(x2 - 5, ys(K[i].l) + 13); c.lineTo(x2 + 5, ys(K[i].l) + 13); c.fill(); c.fillRect(x2 - 14, ys(K[i].l) + 13, 28, 12); c.fillStyle = '#fff'; c.fillText('BUY', x2, ys(K[i].l) + 22); }
+                if (r.U.sell[i]) { c.fillStyle = '#dc2626'; c.beginPath(); c.moveTo(x2, ys(K[i].h) - 4); c.lineTo(x2 - 5, ys(K[i].h) - 13); c.lineTo(x2 + 5, ys(K[i].h) - 13); c.fill(); c.fillRect(x2 - 14, ys(K[i].h) - 25, 28, 12); c.fillStyle = '#fff'; c.fillText('SELL', x2, ys(K[i].h) - 16); }
+                if (r.B.buy[i]) { c.fillStyle = '#0a84ff'; c.beginPath(); c.arc(x2, ys(K[i].l) + 36, 6, 0, 7); c.fill(); c.fillStyle = '#fff'; c.fillText('B', x2, ys(K[i].l) + 39); }
+                if (r.B.sell[i]) { c.fillStyle = '#ff9f0a'; c.beginPath(); c.arc(x2, ys(K[i].h) - 36, 6, 0, 7); c.fill(); c.fillStyle = '#fff'; c.fillText('S', x2, ys(K[i].h) - 33); }
+            }
+        } catch (e) { window.__sgErr = String(e && e.stack || e); }
+    }
+    function section() {
+        try {
+            var I = exdI(), D = S.xd, ks = D.ks && D.ks[I.k + D.tf], P = null; if (!ks) { return ''; }
+            var K = toK(ks), r = both(K); if (!r) { return '<div class="group pad"><b>Signals (UT Bot and Baba)</b><div class="note">Needs about 70 finished candles on this time frame. Pick another time frame or tap Refresh.</div></div>'; }
+            var rows = [['15m', '15 min'], ['1h', '1 hour'], ['4h', '4 hours'], ['1d', 'Daily']].map(function (t) {
+                var a = D.ks[I.k + t[0]], q = a && both(toK(a)); if (!q) { return '<tr><td>' + t[1] + '</td><td colspan="3" class="mut">n/a</td></tr>'; }
+                var v = verdict(q, 0); return '<tr><td><b>' + t[1] + '</b></td><td style="color:' + col(q.u) + ';font-weight:800">' + side(q.u) + '</td><td style="color:' + col(q.b) + ';font-weight:800">' + side(q.b) + '</td><td style="color:' + col(v[1]) + ';font-weight:800">' + (q.agree ? side(q.u) : 'mixed') + '</td></tr>';
+            }).join('');
+            var call = 0; try { var cf = exdConf(I, ['1h', '4h', '1d']); call = cf == null ? 0 : cf >= 25 ? 1 : cf <= -25 ? -1 : 0; } catch (e) { }
+            var v = verdict(r, call);
+            return '<div class="group pad"><b>📈 Signals on ' + E(I.pair) + ' (' + E(D.tf) + ')</b><canvas id="xsgc" style="width:100%;height:230px;display:block;margin:6px 0;border-radius:12px;background:rgba(127,127,127,.08)"></canvas>' +
+                '<div class="note">Green BUY / red SELL tags = UT Bot, blue B / orange S circles = Baba Signal, like the marks on the coin charts. Finished candles only.</div>' +
+                '<div>' + pill('UT Bot', r.u) + pill('Baba Signal', r.b) + pill('Desk call (1h, 4h, 1d)', call) + '</div><div style="margin:4px 0"><b style="color:' + col(v[1]) + '">' + E(v[0]) + '</b></div>' +
+                '<table class="mwt" style="width:100%;font-size:13px"><tr><th>Time frame</th><th>UT Bot</th><th>Baba</th><th>Both</th></tr>' + rows + '</table>' +
+                '<div class="note">Use the entry, stop and targets above only when the desk call and both signals agree. For forex and gold the volume factor is limited, so Baba leans on trend and momentum. A past test is not a promise.</div></div>';
+        } catch (e) { return ''; }
+    }
+    var _v = VIEWS.exdesk;
+    if (typeof _v === 'function') {
+        VIEWS.exdesk = function () {
+            var h = String(_v.apply(this, arguments)), sec = section(), i = h.indexOf('Your settings');
+            if (sec) { var j = i >= 0 ? h.lastIndexOf('<div class="group-title', i) : -1; if (j < 0 && i >= 0) { j = h.lastIndexOf('<', h.lastIndexOf('<', i) - 1); } h = i >= 0 && j >= 0 ? h.slice(0, j) + sec + h.slice(j) : h + sec; }
+            return h;
+        };
+    }
+    (function () { var t = 0; function arm() { var v = document.getElementById('view'); if (!v) { return setTimeout(arm, 500); } new MutationObserver(function () { if (t) { return; } t = setTimeout(function () { t = 0; draw(); }, 80); }).observe(v, { childList: true, subtree: true }); draw(); } arm(); })();
+
+    /* ---------- (3) marks on the MEXC / Bitget / Bybit / OKX coin-page chart (SVG) ---------- */
+    function markSvg() {
+        try {
+            var host = document.getElementById('mxcht'), sv = host && host.querySelector('svg'); if (!sv || sv.getAttribute('data-sg') || !window.__MXD || !__MXD.k || __MXD.k.length < 80) { return; }
+            var all = __MXD.k, k = all.slice(-72), n = k.length, W = 360, H = __MXD.tall ? 360 : 240, pad = 6, ph = H - 54, r = both(all.map(function (x) { return { t: +x.t, o: +x.o, h: +x.h, l: +x.l, c: +x.c, v: +x.v || 0 }; })); if (!r) { return; }
+            var hi = Math.max.apply(null, k.map(function (x) { return x.h; })), lo = Math.min.apply(null, k.map(function (x) { return x.l; })), rg = (hi - lo) || hi * 0.01, cw = (W - 50) / n, base = all.length - n, out = '', i;
+            function y(v) { return pad + (hi - v) / rg * (ph - pad * 2); }
+            for (i = 0; i < n - 1; i++) {
+                var g = base + i, cx = 2 + i * cw + cw / 2, yl = y(k[i].l), yh = y(k[i].h);
+                if (r.U.buy[g]) { out += '<path d="M' + cx.toFixed(1) + ' ' + (yl + 3).toFixed(1) + 'l-4 8h8z" fill="#16a34a"/><rect x="' + (cx - 11).toFixed(1) + '" y="' + (yl + 11).toFixed(1) + '" width="22" height="10" rx="2" fill="#16a34a"/><text x="' + cx.toFixed(1) + '" y="' + (yl + 19).toFixed(1) + '" font-size="7.5" font-weight="800" text-anchor="middle" fill="#fff">BUY</text>'; }
+                if (r.U.sell[g]) { out += '<path d="M' + cx.toFixed(1) + ' ' + (yh - 3).toFixed(1) + 'l-4 -8h8z" fill="#dc2626"/><rect x="' + (cx - 11).toFixed(1) + '" y="' + (yh - 21).toFixed(1) + '" width="22" height="10" rx="2" fill="#dc2626"/><text x="' + cx.toFixed(1) + '" y="' + (yh - 13).toFixed(1) + '" font-size="7.5" font-weight="800" text-anchor="middle" fill="#fff">SELL</text>'; }
+                if (r.B.buy[g]) { out += '<circle cx="' + cx.toFixed(1) + '" cy="' + (yl + 28).toFixed(1) + '" r="5" fill="#0a84ff"/><text x="' + cx.toFixed(1) + '" y="' + (yl + 30.5).toFixed(1) + '" font-size="7" font-weight="800" text-anchor="middle" fill="#fff">B</text>'; }
+                if (r.B.sell[g]) { out += '<circle cx="' + cx.toFixed(1) + '" cy="' + (yh - 28).toFixed(1) + '" r="5" fill="#ff9f0a"/><text x="' + cx.toFixed(1) + '" y="' + (yh - 25.5).toFixed(1) + '" font-size="7" font-weight="800" text-anchor="middle" fill="#fff">S</text>'; }
+            }
+            sv.setAttribute('data-sg', '1'); sv.insertAdjacentHTML('beforeend', out);
+            var el = document.getElementById('cvd2'), v = verdict(r, 0);
+            if (!el) { el = document.createElement('div'); el.id = 'cvd2'; el.className = 'note'; el.style.cssText = 'margin:6px 0;padding:8px 10px;border-radius:12px;background:rgba(127,127,127,.12)'; host.parentNode.insertBefore(el, host.nextSibling); }
+            el.innerHTML = '<b>Combined view</b> ' + pill('UT Bot', r.u) + pill('Baba Signal', r.b) + '<div><b style="color:' + col(v[1]) + '">' + E(v[0]) + '</b></div><div style="opacity:.75;font-size:11.5px">Green BUY / red SELL tags = UT Bot; blue B / orange S circles = Baba Signal. Finished candles only. Trade only with the recommendation and safety checks; a past test is not a promise.</div>';
+        } catch (e) { }
+    }
+    (function () { var t = 0; function arm() { var v = document.getElementById('view'); if (!v) { return setTimeout(arm, 500); } new MutationObserver(function () { if (t) { return; } t = setTimeout(function () { t = 0; markSvg(); }, 80); }).observe(v, { childList: true, subtree: true }); markSvg(); } arm(); })();
+    try { PF_APP.push(['book rule|book-rule trades|no trade passes|why no trade|nothing passes|pumps old|pumping list', 'Book-rule tile and Pumps (build 493)', 'The Book-rule tile shows a trade only when every check passes (both bots agree, trend strength, volume, 1h/4h trend, day-move rule). Most hours nothing passes; that is by design, not a fault, and the tile now shows how many coins were checked. Pumps on Home now show only the last hour; older ones are under See all. My shortcuts now include Exness Desk, Places and Buy and sell; tap Edit to change them.', 'win:ideas']); } catch (e) { }
+    try { PF_APP.push(['utbot on exness|baba signal exness|signals on gold|ut bot gold|baba gold|signals chart|buy sell signals|combined view|both bots agree', 'Baba Signal and UT Bot with recommendations (build 493)', 'Every coin chart (Binance, MEXC, Bitget, Bybit, OKX) shows UT Bot and Baba Signal buy/sell marks plus a Combined view line: UT Bot, Baba Signal and the app safety check, and whether they agree. The Exness Desk now has a Signals chart for gold, silver, forex, oil and indices with the same marks and a table for 15 min, 1 hour, 4 hours and daily. Trade only when the desk call and both signals agree. Past tests only; nothing is guaranteed.', 'win:exdesk']); } catch (e) { }
+} catch (e) { try { console.log('p9sig493', e); } catch (x) { } } })();
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;
