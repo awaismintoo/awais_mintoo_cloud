@@ -62,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
         });
         createChannel();
         WebHolder.attach(this, root);
+        /* build 502: a fresh open (not a return from another app, not a restore after Android freed memory) starts on Home */
+        if (state == null) { try { WebView fw = WebHolder.get(this); fw.evaluateJavascript("window.__mwFresh&&window.__mwFresh()", null); } catch (Throwable ignored) { } }
         grabNotif(getIntent());
         try { AdsHelper.start(this, root); } catch (Throwable ignored) { }
         if (lockOn()) { showLock(); }
