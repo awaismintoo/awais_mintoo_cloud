@@ -188,7 +188,50 @@ def oil():
     elif old:
         json.dump(old, open(os.path.join(OUT, 'oil.json'), 'w'), separators=(',', ':')); print('oil kept (old)')
 
+EV_CITIES = ['Islamabad', 'Rawalpindi', 'Lahore', 'Karachi', 'Peshawar', 'Quetta', 'Multan', 'Faisalabad', 'Hyderabad', 'Sialkot', 'Gilgit', 'Murree']
+EV_Q = {
+    'events': '{c} (expo OR exhibition OR festival OR mela OR "car show" OR "auto show" OR concert OR "book fair" OR "trade show" OR "food festival" OR gala OR seminar OR conference)',
+    'sports': '{c} (match OR tournament OR PSL OR cricket OR hockey OR football OR marathon OR "sports gala" OR championship)',
+    'tourism': '{c} (tourism OR tourists OR "tourist spot" OR park OR trek OR "hill station" OR heritage)',
+}
+def rss_items(q):
+    import xml.etree.ElementTree as ET, email.utils as eu
+    u = 'https://news.google.com/rss/search?hl=en-PK&gl=PK&ceid=PK:en&q=' + requests.utils.quote(q + ' when:30d')
+    r = requests.get(u, timeout=30, headers={'User-Agent': 'MintooSuite data job'})
+    root = ET.fromstring(r.content); out = []
+    for it in root.iter('item'):
+        t = (it.findtext('title') or '').strip(); l = (it.findtext('link') or '').strip(); d = it.findtext('pubDate') or ''; src = it.find('source')
+        try: ts = int(eu.parsedate_to_datetime(d).timestamp() * 1000)
+        except Exception: ts = 0
+        if t and l: out.append({'t': t[:160], 'u': l, 'd': ts, 's': (src.text if src is not None else '')[:40]})
+    return out
+def events():
+    """Headlines (title, link, date, publisher) about events, sports and tourism per city, from Google News RSS.
+    Only the headline and link are kept; the full story opens on the publisher's site."""
+    old = load_old('events.json') or {}
+    if old and time.time()*1000 - old.get('t', 0) < 3*3600*1000:
+        json.dump(old, open(os.path.join(OUT, 'events.json'), 'w'), separators=(',', ':')); print('events kept (fresh)'); return
+    out = {}
+    for c in EV_CITIES:
+        for k, q in EV_Q.items():
+            try:
+                L = rss_items(q.format(c=c))
+                seen = set(); L2 = []
+                for x in sorted(L, key=lambda x: -x['d']):
+                    key = x['t'].lower()[:60]
+                    if key in seen: continue
+                    seen.add(key); L2.append(x)
+                out.setdefault(c, {})[k] = L2[:25]
+            except Exception as e:
+                print('events fail', c, k, e)
+                if old.get('c', {}).get(c, {}).get(k): out.setdefault(c, {})[k] = old['c'][c][k]
+            time.sleep(1)
+    if out:
+        json.dump({'t': int(time.time()*1000), 'src': 'Headlines via Google News; stories on the publishers\' sites', 'c': out}, open(os.path.join(OUT, 'events.json'), 'w'), separators=(',', ':')); print('events ok', sum(len(v) for c in out.values() for v in c.values()))
+    elif old:
+        json.dump(old, open(os.path.join(OUT, 'events.json'), 'w'), separators=(',', ':'))
+
 if __name__ == '__main__':
-    for f in (weather, prices, oil):
+    for f in (weather, prices, oil, events):
         try: f()
         except Exception as e: print('job fail', f.__name__, e)

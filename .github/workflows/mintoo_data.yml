@@ -24,7 +24,7 @@ jobs:
       - name: Get the last published data
         run: |
           mkdir -p old out
-          for f in weather.json prices.json; do curl -fsSL "https://raw.githubusercontent.com/${{ github.repository }}/data/$f" -o "old/$f" || true; done
+          for f in weather.json prices.json oil.json events.json; do curl -fsSL "https://raw.githubusercontent.com/${{ github.repository }}/data/$f" -o "old/$f" || true; done
       - name: Fetch weather (MET Norway) and official prices (PBS)
         run: python data/fetch_data.py out old
       - name: Publish to the data branch (one commit, no history)
