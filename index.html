@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.475';
+var BUILD = '2026-11-12.477';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -9644,6 +9644,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     function learned() { try { return JSON.parse(ls(LRN, '[]')) || []; } catch (e) { return []; } }
     function learn(q, a, src) { try { var L = learned().filter(function (x) { return norm(x.q) !== norm(q); }); L.unshift({ q: q, a: a, t: nowv(), s: src }); lss(LRN, JSON.stringify(L.slice(0, 120))); } catch (e) { } }
     function findLearned(q) {
+        if (String(q).length > 160 || /^Student level:/.test(String(q))) { return null; } /* build 477: long study prompts share boilerplate and matched the wrong cached answer */
         var qs = norm(q).trim().split(' ').filter(function (w) { return w.length > 2; }); if (qs.length < 2) { return null; } var best = null, bs = 0;
         learned().forEach(function (x) { var xs = norm(x.q).trim().split(' ').filter(function (w) { return w.length > 2; }), inter = qs.filter(function (w) { return xs.indexOf(w) >= 0; }).length, uni = qs.length + xs.length - inter, j = uni ? inter / uni : 0; if (j > bs) { bs = j; best = x; } });
         return bs >= 0.75 ? best : null;
@@ -9729,7 +9730,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             if (/(news|headline|what happened|latest)/.test(low) && /(crypto|market|bitcoin|today|binance|news)/.test(low)) { var nh = newsHtml(); if (nh) { return Promise.resolve({ html: nh, local: 1 }); } }
         }
         if (!ensureConsent()) { return Promise.resolve({ html: 'I can answer this with an <b>online AI engine</b>. Your question text and any attachment you add will be sent to that online service (never your keys, passwords or balances). Allow it?<br><span class="pfbtn" data-pb="consent:yes:' + esc(q).slice(0, 300) + '">✅ Allow and answer</span><span class="pfbtn" data-pb="consent:no">Not now</span><br><small>You can change this any time in Baba AI › Settings.</small>', pending: 1 }); }
-        return callAI(q, atts).then(function (t) { var html = fmt(t) + '<div class="note" style="margin:6px 0 0">Answered by an online AI engine. It can make mistakes; check important facts. Not financial advice.</div>'; if (!hasAtt) { learn(q, html, 'AI'); } return { html: html }; }, function (err) {
+        var refused = function (t) { return String(t || '').length < 200 && /^\s*(i'?m sorry|sorry|i apologi[sz]e)[^.]{0,60}(can'?t|cannot|unable|not able)[^.]{0,40}(help|assist|answer|do that)/i.test(String(t || '')); };
+        return callAI(q, atts).then(function (t) { if (!refused(t)) { return t; } return callAI('This is a normal school, college or general knowledge request from a student. Please answer it fully and helpfully, step by step.\n\n' + q, atts).then(function (t2) { if (refused(t2)) { throw new Error('the free online AI declined this one; try rewording or use another AI key in Baba AI Settings'); } return t2; }); }).then(function (t) { var html = fmt(t) + '<div class="note" style="margin:6px 0 0">Answered by an online AI engine. It can make mistakes; check important facts. Not financial advice.</div>'; if (!hasAtt) { learn(q, html, 'AI'); } return { html: html }; }, function (err) {
             if (fb) { return { html: '<b>' + esc(fb.title || '') + '</b><br>' + fb.html + '<div class="note">The online AI did not answer (' + esc(/abort/i.test(String(err && err.message)) ? 'it took too long: slow internet or a busy free AI service. Try again in a minute' : err.message) + '), so this is my closest built-in topic. It may not match your question.</div>' }; }
             if (hasAtt) { return { html: '⚠️ ' + esc(err.message) + '<br><small>Without a working AI engine I cannot look inside pictures, videos or audio. Text files, the microphone and typed questions still work.</small>' }; }
             var m = /^(what is|who is|what are|tell me about|explain|meaning of)\s+(.{2,40})$/.exec(low.trim().replace(/[?.!]+$/, ''));
@@ -11176,6 +11178,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 var h = v.offsetHeight, y = window.pageYOffset, mh = parseFloat(v.style.minHeight) || 0;
                 if (h > mh) { v.style.minHeight = h + 'px'; }
                 var r = _rvC.apply(this, arguments);
+                setTimeout(function () { try { if (v) { v.style.minHeight = ''; } } catch (e) { } }, 900); /* build 476: never leave an empty gap behind */
                 if (Math.abs(window.pageYOffset - y) > 1) { window.scrollTo(0, y); requestAnimationFrame(function () { if (Math.abs(window.pageYOffset - y) > 1) { window.scrollTo(0, y); } }); }
                 return r;
             }
@@ -11562,7 +11565,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             var Qd = null, Ar = null; try { Qd = window.__qDbg && window.__qDbg.Q; Ar = window.__mwOffers && window.__mwOffers.area; } catch (e) { }
             var qeq = ''; try { if (Qd) { var qp = Qd.cash + Qd.pos.reduce(function (a, p) { return a + p.usd; }, 0); qeq = 'Lv ' + (function () { var l = 0; [0, 100, 250, 500, 900, 1500, 2500, 4000, 6500, 10000].forEach(function (x, i) { if (Qd.xp >= x) { l = i; } }); return l + 1; })() + ' · $' + Math.round(qp).toLocaleString('en-US'); } } catch (e) { }
             h += '<div class="bnw" data-noswipe="1"><div class="bn2"><div class="c2" data-act="win:proof"><b>📒 My results</b><small>' + dayTxt() + '</small></div>' +
-                '<div class="c2" data-act="win:movers"><b>🚀 Movers</b><small>' + (hot.length ? hot.map(function (s) { return e2(bs(s)) + ' <span class="' + (S.tick[s].chg >= 0 ? 'up' : 'dn') + '">' + pc(S.tick[s].chg) + '</span>'; }).join(' · ') : 'early movers') + '</small></div>' +
+                '<div class="c2" data-xk="panic:1"><b>🛑 Panic stop</b><small>stop every bot · close every trade ›</small></div>' +
                 '<div class="c2" data-act="win:' + (Ar && Ar.cc === 'PK' ? 'psx' : 'offers') + '"><b>' + (Ar && Ar.cc === 'PK' ? '🇵🇰 Pakistan desk' : '🌍 Local market') + '</b><small>' + (Ar && Ar.cc === 'PK' ? 'PSX · autos · property · offers ›' : (Ar ? e2(Ar.cc) + ' markets &amp; offers ›' : 'your area · offers ›')) + '</small></div>' +
                 '<div class="c2" data-act="win:quest"><b>🎮 Money Quest</b><small>' + (qeq || 'practice game · virtual money ›') + '</small></div></div><div class="bsb"><i></i></div></div>';
             h += '<div class="q5"><div class="c3" data-act="win:analyst" style="color:#6366f1">' + ic('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>') + '<span style="color:var(--ink,#111)">Trading Analyst</span></div>' +
@@ -22994,6 +22997,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         function lines() { try { return JSON.parse(localStorage.getItem('mintoosuite_errlog') || '[]') || []; } catch (e) { return []; } }
         function when(l) { var d = Date.parse((l.split(' [')[0] || '').replace(/,/, '')); return isFinite(d) ? d : 0; }
         function pin(sel, px) {
+            return false; /* build 476: height pins made tiles stay huge (hero pinned to 500px, #mwcc to 540px); never pin */
             if (pinned[sel] || pinCount >= 6 || /^(#view|body|html|#app)$/.test(sel) || !/^[#.][\w-]+(\.[\w-]+)?$/.test(sel)) { return false; }
             pinned[sel] = px; pinCount++; ds.textContent += sel + '{min-height:' + px + 'px}'; note('Pinned ' + sel + ' to at least ' + px + 'px (it kept changing height)'); return true;
         }
@@ -26187,6 +26191,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['live chat|human chat|talk to a person|developer|who made this app|about the developer|owner', 'Live human chat and developer', 'Help centre now has 💬 Chat with a human (WhatsApp: the owner and team) and an About the developer card: Muhammad Awais, Islamabad, email and WhatsApp, with links to About MintooSuite and Legal. When nobody is online, Baba AI answers.', 'win:helpc']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 473|size usd|50 100 150|custom size|trade size|ticket size', 'Build 473/474: trade tickets have fixed USD sizes. Paper ticket: $50, $100, $150 chips plus a custom USD box (cannot exceed your free paper money). Real Pro ticket: $50, $100, $150 chips plus the margin box for any custom size; the ticket still shrinks the order to fit 95% of your free balance and shows the risk before you confirm.', 'win:tpro']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 475|exchange balance|mexc balance|bitget balance|live balance|refresh balance|live chat|tawk', 'Build 475: My Wallet shows live balances for every exchange whose API key you linked (Binance Futures, MEXC, Bitget, Bybit, OKX) with a Refresh button; it updates every 30 seconds while the screen is open. MEXC and Bitget coin charts now say MEXC/Bitget everywhere. Back returns to the exact spot in Ideas. Help has an in-app Live chat (Tawk.to) next to WhatsApp.', 'win:wallet']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['build 476|white tiles|expanded tiles|panic stop|stop everything|pinned height|home tile', 'Build 476: the stretched empty tiles on Home (hero card pinned to 500px, Market mood to 540px) came from two height-pin helpers (Stability and Doctor); both are switched off. The app also repaints when you return to it, redraws a blank screen by itself, and switches to a Lite look if the phone freezes repeatedly. The Home Movers tile was replaced by 🛑 Panic stop (asks first, then stops every bot and closes every trade). Early movers is still in Ideas > Bot alerts and in More.', 'win:overview']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['build 477|marketplace|marketplace buttons|categories|study wrong answer|i can\'t help with that|live chat baba', 'Build 477: Marketplace categories now work without any feed: tap Goats, Cars, Houses, Mobiles, Shoes, Fruit and the rest to open real Pakistani sites searched for it (OLX, PakWheels, Zameen, Graana, Lamudi, Daraz, Booking, Google Maps), with an optional city box, a Baba AI safe-buying checklist and the Smart Advisor. Study: a long study request no longer returns an old cached answer for a different subject, and a refusal from the free online AI is retried once with a clearer request. Live chat has Ask Baba AI and WhatsApp buttons.', 'win:mkplace']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -28399,7 +28405,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         WINS.push({ id: 'livechat', ic: '💬', c: '#34c759', n: 'Live chat', t: 'Chat', sub: 'Talk to the owner and team' }); LIVE.livechat = 0;
         VIEWS.livechat = function () {
             if (!CHAT_URL) { return '<div class="group pad"><b>Live chat</b><div class="note">Live chat is being set up. Use WhatsApp: +92 312 2602811.</div></div>'; }
-            return '<div class="group pad"><b>💬 Live chat</b><div class="note">Messages go to the owner and team. Please do not send passwords or keys.</div></div><a class="btn sec" href="' + CHAT_URL + '" target="_blank" rel="noopener" style="text-decoration:none;margin:6px 0">↗ Open chat full screen</a><iframe src="' + CHAT_URL + '" style="width:100%;height:70vh;border:0;border-radius:14px;background:#fff" allow="clipboard-write"></iframe>';
+            return '<div class="group pad"><b>💬 Live chat</b><div class="note">Tap <b>New Conversation</b> below. Messages go to the owner and team, who reply when they are online. For an instant answer use Baba AI; to reach a person fast use WhatsApp. Please do not send passwords or keys.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-hc="win:pchat">🤖 Ask Baba AI (instant)</span><a class="btn sec" href="https://wa.me/923122602811" target="_blank" rel="noopener" style="text-decoration:none">💬 WhatsApp</a></div></div><a class="btn sec" href="' + CHAT_URL + '" target="_blank" rel="noopener" style="text-decoration:none;margin:6px 0">↗ Open chat full screen</a><iframe src="' + CHAT_URL + '" style="width:100%;height:70vh;border:0;border-radius:14px;background:#fff" allow="clipboard-write"></iframe>';
         };
         var _h = VIEWS.helpc;
         function add(h) { return window.__chatOn ? h.replace('💬 Chat with a human (WhatsApp)</a>', '💬 Chat with a human (WhatsApp)</a><span class="btn tap" data-kp="win:livechat">💬 Live chat (in the app)</span>') : h; }
@@ -28461,6 +28467,67 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         X.on('balref', function () { load(true); try { renderView(true); } catch (e) { } });
         setInterval(function () { try { if (S.win === 'wallet' && !document.hidden) { load(false); } } catch (e) { } }, 30000);
     } catch (e) { try { console.log('p9bal', e); } catch (er) { } }
+})();
+/* ===== p9perf2 (build 476): white-tile protection. Android WebView paints "white tiles" when too many blur/glass layers are alive or after the app returns from the background. This (1) removes glass/blur layers inside scrolling content, (2) forces a repaint when the app comes back or a tile stays blank, (3) switches to Lite look automatically if the phone is struggling, and logs what it did to the Problem log. ===== */
+(function () {
+    try {
+        var st = document.createElement('style');
+        st.textContent = '#view *,#view,.sheet *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;will-change:auto!important}html.mwlite *{animation:none!important;transition:none!important;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important;text-shadow:none!important}';
+        document.head.appendChild(st);
+        try { if (window.__stab && window.__stab.off) { window.__stab.off(); } } catch (e) { } /* the height-pin layer pinned tiles at their tallest size: switched off for good */
+        function log(a, b) { try { addLog(a, b); } catch (e) { } }
+        function repaint() { try { var b = document.body, d = b.style.display; b.style.display = 'none'; void b.offsetHeight; b.style.display = d; } catch (e) { } }
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) { repaint(); setTimeout(repaint, 400); log('PERF', 'Back from background: repainted the screen'); } });
+        window.addEventListener('pageshow', function () { repaint(); });
+        /* blank-screen watchdog */
+        var blank = 0;
+        setInterval(function () {
+            try {
+                if (document.hidden) { return; } var v = document.getElementById('view'); if (!v) { return; }
+                var txt = (v.innerText || '').trim().length, h = v.getBoundingClientRect().height;
+                if (txt < 20 || h < 120) { blank++; } else { blank = 0; }
+                if (blank >= 2) { blank = 0; log('PERF', 'Blank screen detected on ' + S.win + ' (text ' + txt + ', height ' + Math.round(h) + '): redrawing'); try { renderView(true); } catch (e) { } repaint(); }
+            } catch (e) { }
+        }, 3000);
+        /* lite look when the phone struggles: 4 long tasks (>250 ms) inside 20 s */
+        try {
+            var L = [], po = new PerformanceObserver(function (l) {
+                l.getEntries().forEach(function (e) { if (e.duration > 250) { var n = Date.now(); L.push(n); L = L.filter(function (t) { return n - t < 20000; }); if (L.length >= 4 && !document.documentElement.classList.contains('mwlite')) { document.documentElement.classList.add('mwlite'); log('PERF', 'The phone was struggling (' + L.length + ' freezes in 20 s): Lite look switched on (no animations or glass)'); } } });
+            }); po.observe({ type: 'longtask', buffered: false });
+        } catch (e) { }
+        try { window.__kx.on('panic', function () { if (window.__forceAll) { window.__forceAll(); } else { gotoWin('overview'); } }); } catch (e) { }
+        setInterval(function () { try { [].forEach.call(document.querySelectorAll('.mwqt[data-act="win:movers"]'), function (t) { t.removeAttribute('data-act'); t.setAttribute('data-xk', 'panic:1'); var i = t.querySelector('i'); if (i) { i.innerHTML = '<svg viewBox="0 0 24 24" style="stroke:#fff;fill:none;stroke-width:2"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><path d="M12 8v5M12 16v.5"/></svg>'; } var tn = null; [].forEach.call(t.childNodes, function (n) { if (n.nodeType === 3 && n.textContent.trim()) { tn = n; } }); if (tn) { tn.textContent = 'Panic stop'; } else { var sp = t.querySelector('span,b,small'); if (sp) { sp.textContent = 'Panic stop'; } } }); } catch (e) { } }, 1500);
+        window.__perfLite = function (on) { document.documentElement.classList.toggle('mwlite', !!on); };
+    } catch (e) { try { console.log('p9perf2', e); } catch (er) { } }
+})();
+/* ===== p9mkt2 (build 477): Marketplace categories work without a feed: tap a category and get real Pakistani marketplaces searched for it (OLX, Daraz, PakWheels, Zameen, Graana, Lamudi, Google Maps...). The feed address stays for owners who have their own listings. ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2;
+        function g(q, d) { return 'https://www.google.com/search?q=' + encodeURIComponent(q + ' site:' + d); }
+        function olx(q) { return 'https://www.olx.com.pk/items/q-' + encodeURIComponent(q).replace(/%20/g, '-'); }
+        function daraz(q) { return 'https://www.daraz.pk/catalog/?q=' + encodeURIComponent(q); }
+        function maps(q) { return 'https://www.google.com/maps/search/' + encodeURIComponent(q); }
+        var M = { animals: [['OLX Pakistan', olx], ['Google Maps: cattle mandi near me', function () { return maps('cattle mandi near me'); }]], vehicles: [['PakWheels', function (q) { return g(q, 'pakwheels.com'); }], ['OLX Pakistan', olx]], prop: [['Zameen.com', function (q) { return g(q, 'zameen.com'); }], ['Graana', function (q) { return g(q, 'graana.com'); }], ['Lamudi', function (q) { return g(q, 'lamudi.pk'); }], ['OLX Pakistan', olx]], stay: [['Google Maps', maps], ['Booking.com', function (q) { return 'https://www.booking.com/searchresults.html?ss=' + encodeURIComponent(q + ' Pakistan'); }]], shop: [['Daraz', daraz], ['OLX Pakistan', olx]], food: [['Google Maps: near me', function (q) { return maps(q + ' near me'); }], ['Foodpanda', function (q) { return g(q, 'foodpanda.pk'); }]], mob: [['Daraz', daraz], ['OLX Pakistan', olx], ['PriceOye', function (q) { return g(q, 'priceoye.pk'); }]] };
+        var MAP = { 'Qurbani animals': 'animals', 'Goats': 'animals', 'Cows': 'animals', 'Mobiles': 'mob', 'Bikes': 'vehicles', 'Cars': 'vehicles', 'Accident vehicles': 'vehicles', 'Electric vehicles': 'vehicles', 'Houses': 'prop', 'Plots': 'prop', 'Flats for rent': 'prop', 'Shops': 'prop', 'Hostels and rooms': 'stay', 'Guest houses': 'stay', 'Hotels and motels': 'stay', 'Home appliances': 'shop', 'Ladies dresses': 'shop', 'Gents garments': 'shop', 'Ladies garments': 'shop', 'Shoes': 'shop', 'Cosmetics': 'shop', 'Undergarments': 'shop', 'Groceries': 'shop', 'Fruit': 'food', 'Vegetables': 'food', 'Meat': 'food', 'Chicken': 'food', 'Fish': 'food', 'Restaurant offers': 'food', 'Food offers': 'food', 'Hawkers and vendors': 'food' };
+        var _v = VIEWS.mkplace; if (typeof _v !== 'function') { return; }
+        VIEWS.mkplace = function () {
+            var h = _v.apply(this, arguments), sel = KX.mkfc || '';
+            h = h.replace(/<span style="display:inline-block;margin:3px 4px 3px 0;padding:6px 11px;border-radius:14px;font-size:13px;background:var\(--fill,#f0f0f3\)">([^<]+)<\/span>/g, function (m, n) { return MAP[n] ? '<span class="tap" data-xk="mkfind:' + e2(n) + '" style="display:inline-block;margin:3px 4px 3px 0;padding:8px 13px;border-radius:14px;font-size:13px;cursor:pointer;font-weight:600;' + (sel === n ? 'background:#0a84ff;color:#fff' : 'background:var(--fill,#f0f0f3)') + '">' + e2(n) + '</span>' : m; });
+            if (sel && MAP[sel]) {
+                var city = KX.mkcity || '', q = (city ? sel + ' ' + city : sel);
+                var links = M[MAP[sel]].map(function (s) { return '<a class="btn tap" target="_blank" rel="noopener" href="' + s[1](q) + '" style="display:block;text-decoration:none;margin:6px 0">🔎 ' + e2(s[0]) + ': ' + e2(q) + '</a>'; }).join('');
+                var panel = '<div class="group pad"><b>🛒 ' + e2(sel) + ': where to find it in Pakistan</b><div class="note" style="margin:6px 0">Add your city for local results (for example Islamabad, Lahore, Karachi).</div><input id="mkCity" placeholder="City (optional)" value="' + e2(city) + '" style="width:100%;box-sizing:border-box;padding:10px;border-radius:12px;border:1px solid var(--line,#ddd);font-size:14px;margin-bottom:6px">' + links +
+                    '<span class="btn sec tap" data-act="win:advisor" style="display:block;margin:6px 0">🧭 Smart Advisor: book rules and red flags</span><span class="btn sec tap" data-xk="mkask:' + e2(sel) + '" style="display:block;margin:6px 0">🤖 Ask Baba AI: how to buy ' + e2(sel) + ' safely</span><div class="note">These open the sellers\' own sites. The app only shows where to look: prices, deals and payment are between you and the seller. Meet in public, check papers (for property and vehicles verify the registry), never pay in advance to a stranger.</div></div>';
+                var i = h.indexOf('<div class="group pad" data-noswipe="1">'); h = i >= 0 ? h.slice(0, i) + panel + h.slice(i) : h + panel;
+            }
+            return h;
+        };
+        X.on('mkfind', function (v) { KX.mkfc = v; renderView(true); });
+        X.on('mkask', function (v) { if (window.__askBaba) { window.__askBaba('I want to buy ' + v + ' in Pakistan. Give me a safe step by step checklist: what to check, usual price range factors, scams to avoid, and which papers or registry checks I need.'); } });
+        document.addEventListener('input', function (e) { var t = e.target; if (t && t.id === 'mkCity') { KX.mkcity = t.value; } }, true);
+        document.addEventListener('change', function (e) { var t = e.target; if (t && t.id === 'mkCity') { KX.mkcity = t.value; renderView(true); } }, true);
+    } catch (e) { try { console.log('p9mkt2', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
