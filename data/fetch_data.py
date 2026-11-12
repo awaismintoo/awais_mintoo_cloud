@@ -170,7 +170,25 @@ def prices():
     if old:
         json.dump(old, open(os.path.join(OUT, 'prices.json'), 'w'), separators=(',', ':')); print('prices kept (old)')
 
+def oil():
+    """WTI and Brent daily spot prices from the U.S. Energy Information Administration (public domain),
+    via the datahub.io copy of the EIA series (no key). Keeps the old file when the source fails."""
+    old = load_old('oil.json')
+    out = {}
+    for k, u in (('wti', 'https://datahub.io/core/oil-prices/r/wti-daily.csv'), ('brent', 'https://datahub.io/core/oil-prices/r/brent-daily.csv')):
+        try:
+            r = requests.get(u, timeout=40, headers={'User-Agent': 'MintooSuite data job'})
+            rows = [l.split(',') for l in r.text.strip().splitlines()[1:] if ',' in l]
+            pts = [[x[0], float(x[1])] for x in rows[-400:] if x[1] not in ('', 'null')]
+            if len(pts) > 20: out[k] = pts
+        except Exception as e:
+            print('oil fail', k, e)
+    if len(out) == 2:
+        json.dump({'t': int(time.time()*1000), 'src': 'U.S. Energy Information Administration (public domain), daily spot prices', 'wti': out['wti'], 'brent': out['brent']}, open(os.path.join(OUT, 'oil.json'), 'w'), separators=(',', ':')); print('oil ok', out['wti'][-1])
+    elif old:
+        json.dump(old, open(os.path.join(OUT, 'oil.json'), 'w'), separators=(',', ':')); print('oil kept (old)')
+
 if __name__ == '__main__':
-    for f in (weather, prices):
+    for f in (weather, prices, oil):
         try: f()
         except Exception as e: print('job fail', f.__name__, e)
