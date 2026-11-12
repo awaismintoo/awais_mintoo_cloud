@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.473';
+var BUILD = '2026-11-12.474';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -6999,7 +6999,7 @@ function vTpro() {
     if (T.type === 'TRAILING_STOP_MARKET') { h += '<div class="note" style="margin:6px 0 2px">Callback rate % (0.1 to 10)</div>' + tpIn('cb', '1', T.cb) + '<div class="note" style="margin:6px 0 2px">Activation price (optional)</div>' + tpIn('act', 'Leave empty to start now', T.act); }
     if (T.type === 'LIMIT') { h += tpSeg([['GTC', 'GTC'], ['IOC', 'IOC'], ['FOK', 'FOK']], T.tif, 'tif') + '<span class="pfbtn" data-m20="post:0" style="display:inline-block;margin:3px 6px 3px 0;padding:8px 12px;border-radius:12px;cursor:pointer;' + (T.post ? 'background:#0a84ff;color:#fff' : 'background:var(--fill,#eee)') + '">' + (T.post ? '☑' : '☐') + ' Post-only</span>'; }
     h += '<div class="note" style="margin:10px 0 4px">Size</div>' + tpSeg([['margin', 'Margin $'], ['pct', '% of available'], ['qty', 'Quantity']], T.sizeBy, 'sizeby');
-    if (T.sizeBy === 'margin') { h += tpIn('margin', 'Margin in USDT', T.margin); } else if (T.sizeBy === 'qty') { h += tpIn('qtyIn', 'Quantity in ' + esc(base(T.sym)), T.qtyIn); } else { h += '<div>' + [10, 25, 50, 75, 100].map(function (x) { return tpBtn('pct:' + x, x + '%', +T.pct === x ? '#0a84ff' : ''); }).join('') + '</div>'; }
+    if (T.sizeBy === 'margin') { h += '<div>' + [50, 100, 150].map(function (u) { return tpBtn('usd:' + u, '$' + u, +T.margin === u ? '#0a84ff' : ''); }).join('') + '</div>' + tpIn('margin', 'Margin in USDT (type any custom size)', T.margin); } else if (T.sizeBy === 'qty') { h += tpIn('qtyIn', 'Quantity in ' + esc(base(T.sym)), T.qtyIn); } else { h += '<div>' + [10, 25, 50, 75, 100].map(function (x) { return tpBtn('pct:' + x, x + '%', +T.pct === x ? '#0a84ff' : ''); }).join('') + '</div>'; }
     var pend = T.type !== 'MARKET';
     if (pend) { h += '<div class="note">Take-profit and stop-loss can be attached only to Market orders (Binance fills pending orders later). Set them from the position card after the fill.</div>'; }
     else {
@@ -7098,7 +7098,7 @@ document.addEventListener('click', function (e) {
     var el = e.target.closest ? e.target.closest('[data-m20]') : null; if (!el) { return; } e.preventDefault(); e.stopPropagation();
     var a = el.getAttribute('data-m20'), p = a.split(':'), v = p[0], T = S.tp, x = p[1];
     if (v === 'side') { T.side = x; T.slP = ''; T.tpP = ''; } else if (v === 'mode') { T.mode = x; } else if (v === 'type') { T.type = x; } else if (v === 'tif') { T.tif = x; } else if (v === 'sizeby') { T.sizeBy = x; }
-    else if (v === 'lev') { T.lev = +x; } else if (v === 'pct') { T.pct = +x; } else if (v === 'post') { T.post = !T.post; } else if (v === 'reduce') { T.reduce = !T.reduce; } else if (v === 'slon') { T.slOn = !T.slOn; } else if (v === 'tpon') { T.tpOn = !T.tpOn; }
+    else if (v === 'usd') { T.sizeBy = 'margin'; T.margin = String(+x); } else if (v === 'lev') { T.lev = +x; } else if (v === 'pct') { T.pct = +x; } else if (v === 'post') { T.post = !T.post; } else if (v === 'reduce') { T.reduce = !T.reduce; } else if (v === 'slon') { T.slOn = !T.slOn; } else if (v === 'tpon') { T.tpOn = !T.tpOn; }
     else if (v === 'last') { var t = S.tick[T.sym]; if (t) { T[x] = fmtP(t.p, T.sym).replace(/,/g, ''); } }
     else if (v === 'slpct') { var t1 = S.tick[T.sym]; if (t1) { var s = T.side === 'LONG' ? -1 : 1; T.slP = (t1.p * (1 + s * (+x) / 100)).toFixed((S.filt[T.sym] && S.filt[T.sym].tick) ? decOf(S.filt[T.sym].tick) : 4); } }
     else if (v === 'tppct') { var t2 = S.tick[T.sym]; if (t2) { var s2 = T.side === 'LONG' ? 1 : -1; T.tpP = (t2.p * (1 + s2 * (+x) / 100)).toFixed((S.filt[T.sym] && S.filt[T.sym].tick) ? decOf(S.filt[T.sym].tick) : 4); } }
@@ -20079,7 +20079,7 @@ try {
                 '<div class="ptsd"><span class="' + (L ? 'on g' : '') + '" data-pt="side:LONG">▲ Buy / Long</span><span class="' + (!L ? 'on r' : '') + '" data-pt="side:SHORT">▼ Sell / Short</span></div>' +
                 '<div class="ptsd"><span class="' + (FS.type === 'MARKET' ? 'on' : '') + '" data-pt="type:MARKET">Market</span><span class="' + (FS.type === 'LIMIT' ? 'on' : '') + '" data-pt="type:LIMIT">Limit</span></div>' +
                 (FS.type === 'LIMIT' ? '<input class="tin" data-ptin="lp" inputmode="decimal" placeholder="Limit price" value="' + esc(FS.lp) + '" style="width:100%;box-sizing:border-box">' : '') +
-                '<div class="note" style="margin:8px 0 0">Size: part of your free paper money (' + m2(avail()) + ')</div>' + chips('pct', [10, 25, 50, 100], FS.pct, function (v) { return v + '%'; }) +
+                '<div class="note" style="margin:8px 0 0">Size: part of your free paper money (' + m2(avail()) + ')</div>' + chips('pct', [10, 25, 50, 100], FS.pct, function (v) { return v + '%'; }) + '<div class="note" style="margin:0">Or a fixed size in USD:</div>' + '<div class="ptsd">' + [50, 100, 150].map(function (u) { return '<span data-pt="usd:' + u + '">$' + u + '</span>'; }).join('') + '</div><input class="tin" data-ptin="usdc" inputmode="decimal" placeholder="Custom size in USD, e.g. 75" value="' + esc(FS.usdc || '') + '" style="width:100%;box-sizing:border-box">' +
                 '<div class="note" style="margin:0">Leverage (borrowed power: wins and losses both grow) <span data-act="win:words" style="cursor:pointer;font-weight:800;color:#0a84ff">?</span></div>' + chips('lev', [1, 2, 3, 5, 10, 20], FS.lev, function (v) { return v + '×'; }) +
                 '<div style="display:flex;gap:8px"><input class="tin" data-ptin="sl" inputmode="decimal" placeholder="Stop-loss price" value="' + esc(FS.sl) + '" style="flex:1;min-width:0"><input class="tin" data-ptin="tp" inputmode="decimal" placeholder="Take-profit price" value="' + esc(FS.tp) + '" style="flex:1;min-width:0"></div>' +
                 '<div class="ptsd" style="margin:6px 0"><span class="' + (FS.be ? 'on g' : '') + '" data-pt="be:1">' + (FS.be ? '✔ ' : '') + 'Stop follows profit (breakeven, then locks gain)</span></div><div class="note" style="margin:0">No stop typed? A protective stop and a backup stop are set for you.</div>' + '<div class="ptsm" id="ptsm">' + sumLine(px, margin, nt, risk) + '</div>' +
@@ -20145,7 +20145,7 @@ try {
             var t = e.target.closest ? e.target.closest('[data-pt]') : null; if (!t) { return; } e.preventDefault(); e.stopPropagation();
             var v = t.getAttribute('data-pt'), i = v.indexOf(':'), k = v.slice(0, i), a = v.slice(i + 1); FS.msg = ''; if (k !== 'reset') { FS.confirm = 0; }
             if (k === 'side' || k === 'type' || k === 'tab') { FS[k] = a; if (k === 'side') { FS.sl = ''; FS.tp = ''; } }
-            else if (k === 'pct' || k === 'lev') { FS[k] = +a; } else if (k === 'be') { FS.be = FS.be ? 0 : 1; }
+            else if (k === 'usd') { var av9 = avail(), u9 = +a; if (av9 > 0 && u9 > 0) { FS.pct = Math.max(1, Math.min(100, u9 / av9 * 100)); FS.msg = u9 > av9 ? 'Only ' + m2(av9) + ' of paper money is free, so the size was reduced to all of it.' : ''; } } else if (k === 'pct' || k === 'lev') { FS[k] = +a; } else if (k === 'be') { FS.be = FS.be ? 0 : 1; }
             else if (k === 'go') { place(); }
             else if (k === 'close') { closePos(+a, price(A.pos[+a].sym) || A.pos[+a].entry, 'Closed by you'); }
             else if (k === 'half') { var p = A.pos[+a]; if (p) { var px = price(p.sym) || p.entry, h = p.qty / 2, pl = upnl({ side: p.side, entry: p.entry, qty: h }, px) - h * px * FEE; A.bal += pl; p.qty = h; p.margin = p.margin / 2; A.hist.unshift({ sym: p.sym, side: p.side, lev: p.lev, entry: p.entry, exit: px, pl: pl, why: 'Closed half', at: Date.now() }); save(); } }
@@ -20154,7 +20154,7 @@ try {
             else if (k === 'reset') { if (FS.confirm) { A = fresh(); save(); FS.confirm = 0; FS.msg = 'New paper account: $10,000.'; } else { FS.confirm = 1; } }
             again();
         }, true);
-        document.addEventListener('input', function (e) { var t = e.target; if (!t || !t.getAttribute) { return; } var k = t.getAttribute('data-ptin'); if (!k) { return; } FS[k] = t.value; if (k === 'sym') { var px = price(nm(t.value)), el = document.getElementById('ptpx'); if (el) { el.textContent = px > 0 ? fp(px, nm(t.value)) : '…'; } } }, true);
+        document.addEventListener('input', function (e) { var t = e.target; if (!t || !t.getAttribute) { return; } var k = t.getAttribute('data-ptin'); if (!k) { return; } FS[k] = t.value; if (k === 'usdc') { var u8 = +t.value, a8 = avail(); if (u8 > 0 && a8 > 0) { FS.pct = Math.max(1, Math.min(100, u8 / a8 * 100)); } return; } if (k === 'sym') { var px = price(nm(t.value)), el = document.getElementById('ptpx'); if (el) { el.textContent = px > 0 ? fp(px, nm(t.value)) : '…'; } } }, true);
         setInterval(function () {
             try {
                 var ch = check(); if (document.documentElement.getAttribute('data-win') !== 'ptrade') { return; }
@@ -25084,7 +25084,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             if (MW_GROUPS.__org) { return; }
             var used = {}, ng = [];
             PLAN.forEach(function (p) { var ids = p[1].filter(function (id) { if (used[id] || typeof VIEWS[id] !== 'function') { return false; } used[id] = 1; return true; }); if (ids.length) { ng.push([p[0], ids]); } });
-            var rest = order.filter(function (id) { return id !== 'plans' && id !== 'support' && id !== 'errlog' && !used[id] && typeof VIEWS[id] === 'function'; }); if (rest.length) { ng.push(['Other tools', rest]); }
+            var rest = order.filter(function (id) { return id !== 'plans' && id !== 'support' && id !== 'errlog' && id !== 'livechat' && !used[id] && typeof VIEWS[id] === 'function'; }); if (rest.length) { ng.push(['Other tools', rest]); }
             MW_GROUPS.length = 0; ng.forEach(function (g) { MW_GROUPS.push(g); }); MW_GROUPS.__org = 1; try { mwHostSig = ''; } catch (e) { }
         }
         setTimeout(apply, 0);
@@ -26185,6 +26185,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['build 472|early movers|movers stuck|scanning|mexc movers|bitget movers', 'Build 472: Early movers no longer sticks on "Scanning": every candle request has a time limit and a stuck scan frees itself, with a Retry button if Binance cannot be reached. It now covers Binance, MEXC and Bitget (chips: All exchanges, Binance, MEXC, Bitget) and the filters (Early, Running trend, Watch, Fading) work on every row. The old stand-alone Movers window now opens Ideas > Bot alerts > Early movers, so there is one place. Tap a MEXC or Bitget row to open its full chart.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 472|bots notification|background run|stop bots|notification bar|running in background', 'Build 472: the "MintooSuite is running" notification now comes back every time you open the app (within about a second). Pressing Stop bots in the notification only stops it until the next time you open the app; the switch in Permissions (Background run) is the only thing that turns it off for good. If you still see nothing, check that Notifications are allowed for MintooSuite in Android settings.', 'win:perms']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['live chat|human chat|talk to a person|developer|who made this app|about the developer|owner', 'Live human chat and developer', 'Help centre now has 💬 Chat with a human (WhatsApp: the owner and team) and an About the developer card: Muhammad Awais, Islamabad, email and WhatsApp, with links to About MintooSuite and Legal. When nobody is online, Baba AI answers.', 'win:helpc']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['build 473|size usd|50 100 150|custom size|trade size|ticket size', 'Build 473/474: trade tickets have fixed USD sizes. Paper ticket: $50, $100, $150 chips plus a custom USD box (cannot exceed your free paper money). Real Pro ticket: $50, $100, $150 chips plus the margin box for any custom size; the ticket still shrinks the order to fit 95% of your free balance and shows the risk before you confirm.', 'win:tpro']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -28388,6 +28389,21 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         }; }
         wrap('helpc'); if (VIEWS.help !== VIEWS.helpc) { wrap('help'); }
     } catch (e) { try { console.log('p9hc2', e); } catch (er) { } }
+})();
+/* ===== p9chat (build 473): in-app live chat window (Tawk.to). Set CHAT_URL to the direct chat link once the owner has a free Tawk.to account. Until then Help shows WhatsApp only. ===== */
+(function () {
+    try {
+        var CHAT_URL = ''; /* e.g. https://tawk.to/chat/PROPERTYID/WIDGETID */
+        window.__chatOn = !!CHAT_URL;
+        WINS.push({ id: 'livechat', ic: '💬', c: '#34c759', n: 'Live chat', t: 'Chat', sub: 'Talk to the owner and team' }); LIVE.livechat = 0;
+        VIEWS.livechat = function () {
+            if (!CHAT_URL) { return '<div class="group pad"><b>Live chat</b><div class="note">Live chat is being set up. Use WhatsApp: +92 312 2602811.</div></div>'; }
+            return '<div class="group pad"><b>💬 Live chat</b><div class="note">Messages go to the owner and team. Please do not send passwords or keys.</div></div><iframe src="' + CHAT_URL + '" style="width:100%;height:70vh;border:0;border-radius:14px;background:#fff" allow="clipboard-write"></iframe>';
+        };
+        var _h = VIEWS.helpc;
+        function add(h) { return window.__chatOn ? h.replace('💬 Chat with a human (WhatsApp)</a>', '💬 Chat with a human (WhatsApp)</a><span class="btn tap" data-kp="win:livechat">💬 Live chat (in the app)</span>') : h; }
+        ['helpc', 'help'].forEach(function (k) { var o = VIEWS[k]; if (!o) { return; } VIEWS[k] = function () { return add(o.apply(this, arguments)); }; });
+    } catch (e) { try { console.log('p9chat', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
