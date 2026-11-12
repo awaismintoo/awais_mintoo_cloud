@@ -47,6 +47,7 @@ final class WebHolder {
         s.setJavaScriptEnabled(true);
         s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false); s.setUseWideViewPort(true);
         s.setDomStorageEnabled(true);
+        try { s.setUserAgentString(s.getUserAgentString() + " MintooSuite/10.8 (Android app)"); } catch (Exception ignored) { }
         try { if (android.os.Build.VERSION.SDK_INT >= 26) { w.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false); } } catch (Exception ignored) { }
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);

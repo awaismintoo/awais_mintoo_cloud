@@ -63,21 +63,26 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
-        run: gradle -p android assembleRelease bundleRelease --no-daemon
+        run: |
+          gradle -p android assembleFullRelease assemblePlayRelease bundlePlayRelease --no-daemon
+          cp android/app/build/outputs/apk/full/release/app-full-release.apk android/app/build/outputs/app-release.apk
+          cp android/app/build/outputs/bundle/playRelease/app-play-release.aab android/app/build/outputs/app-release.aab
+          cp android/app/build/outputs/apk/play/release/app-play-release.apk android/app/build/outputs/app-play-release.apk
 
       - name: Show the signing fingerprint
-        run: keytool -printcert -jarfile android/app/build/outputs/apk/release/app-release.apk | head -12
+        run: keytool -printcert -jarfile android/app/build/outputs/app-release.apk | head -12
 
       - uses: actions/upload-artifact@v4
         with:
           name: MintooSuite-signed
           path: |
-            android/app/build/outputs/apk/release/app-release.apk
-            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/app-release.apk
+            android/app/build/outputs/app-release.aab
+            android/app/build/outputs/app-play-release.apk
 
       - name: Publish a downloadable release
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "build-${{ github.run_number }}" android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/bundle/release/app-release.aab --repo "${{ github.repository }}" --title "MintooSuite build ${{ github.run_number }}" --notes "Signed APK (install on your phone) and AAB (upload to Google Play)." --latest
+          gh release create "build-${{ github.run_number }}" android/app/build/outputs/app-release.apk android/app/build/outputs/app-release.aab android/app/build/outputs/app-play-release.apk --repo "${{ github.repository }}" --title "MintooSuite build ${{ github.run_number }}" --notes "app-release.apk = full app with VPN (install on your phone). app-release.aab = Google Play version without VPN (upload to Play). app-play-release.apk = the Play version to test." --latest

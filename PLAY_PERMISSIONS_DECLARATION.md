@@ -1,15 +1,17 @@
-# Permissions: what the app declares and why (use these exact answers in Play Console)
+# Permissions: what the app declares and why (build 2026-11-12.495; use these answers in Play Console)
 | Permission | Used for | When asked |
 |---|---|---|
-| INTERNET, ACCESS_NETWORK_STATE | prices, charts, exchanges | always |
-| POST_NOTIFICATIONS | signal / price alerts | Android 13+ prompt |
-| FOREGROUND_SERVICE + _SPECIAL_USE | optional "keep bot running" notification (user switches it on) | on switch-on |
-| WAKE_LOCK | keeps the optional running bot awake while it is switched on | only while on |
-| RECEIVE_BOOT_COMPLETED | restarts the optional bot/alerts after a phone restart if the user left them on | - |
+| INTERNET, ACCESS_NETWORK_STATE | prices, charts, exchanges, weather, listings | always |
+| POST_NOTIFICATIONS | price and signal alerts | Android 13+ prompt |
+| FOREGROUND_SERVICE + FOREGROUND_SERVICE_SPECIAL_USE | user-switched background run with a visible notification: live price monitoring, price alerts and user-authorised automated trading on the user's own exchange account | when the user switches it on |
+| WAKE_LOCK | keeps that switched-on background run awake | only while on |
+| RECEIVE_BOOT_COMPLETED | restarts alerts / background run after a restart if the user left them on | - |
 | VIBRATE | alert vibration | - |
-| RECORD_AUDIO | optional voice commands / voice to text | when user taps the mic |
-| CAMERA | optional: scan a wallet QR code, profile picture | when user taps it |
-| ACCESS_COARSE/FINE_LOCATION | optional "Around me" local news/weather, only when the user taps it; location is not stored on a server | when user taps it |
-Camera, microphone and location are declared `required=false` (the app works without them). No contacts, SMS, call log, storage-wide or overlay permissions.
-Data safety answers must match: location (approximate, optional, not stored by us), audio (voice-to-text on device/phone service, optional), no financial data collected by us, keys stay on the phone.
-Foreground-service "special use" justification to type in Play: "User-started trading-alert helper that keeps price checks running with a visible notification."
+| RECORD_AUDIO | voice questions to Baba AI | when the user taps the mic |
+| CAMERA | attach a photo, scan a wallet QR code | when the user taps it |
+| ACCESS_COARSE/FINE_LOCATION | optional: weather, prayer times and places near the user ("Use my location") | when the user taps it |
+| (Play version: no VPN) | The Google Play AAB is built without the WireGuard library, so it has no VpnService. Only the full APK from GitHub has MintooSuiteVPN. | - |
+
+Foreground-service "special use" description to type in Play (must match the manifest): "User-switched background run with a visible notification: live price monitoring, price alerts and user-authorised automated trading on the user's own exchange account." Record a short video: open Auto Bot > switch on background run > notification appears > switch off.
+
+No contacts, SMS, call log, all-files storage, overlay or battery-optimisation-exemption permissions are declared. Photos are picked through the system picker (no media permission).

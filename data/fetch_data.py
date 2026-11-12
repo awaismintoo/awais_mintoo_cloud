@@ -1,0 +1,176 @@
+"""MintooSuite data job (runs on GitHub Actions, build 496).
+1) Weather for main cities from MET Norway (free, CC BY 4.0, also for commercial use with credit;
+   requests are made from this server with an identifying User-Agent and cached, as MET asks).
+2) Official weekly average prices of 51 essential items from the Pakistan Bureau of Statistics (SPI PDF).
+Writes out/weather.json and out/prices.json. Old files are kept when a source fails."""
+import json, math, os, re, sys, time, datetime as dt
+import requests
+
+UA = {'User-Agent': 'MintooSuite/10.8 github.com/awaismintoo/awais_mintoo_cloud'}
+OUT = sys.argv[1] if len(sys.argv) > 1 else 'out'
+OLD = sys.argv[2] if len(sys.argv) > 2 else 'old'
+os.makedirs(OUT, exist_ok=True)
+
+CITIES = [
+ ('Islamabad','PK',33.68,73.05,5),('Rawalpindi','PK',33.60,73.04,5),('Lahore','PK',31.55,74.34,5),('Karachi','PK',24.86,67.01,5),
+ ('Peshawar','PK',34.01,71.58,5),('Quetta','PK',30.18,66.98,5),('Multan','PK',30.20,71.47,5),('Faisalabad','PK',31.42,73.08,5),
+ ('Hyderabad','PK',25.40,68.37,5),('Gujranwala','PK',32.16,74.19,5),('Sialkot','PK',32.49,74.53,5),('Sargodha','PK',32.08,72.67,5),
+ ('Bahawalpur','PK',29.40,71.68,5),('Sukkur','PK',27.71,68.85,5),('Abbottabad','PK',34.15,73.21,5),('Murree','PK',33.91,73.39,5),
+ ('Muzaffarabad','PK',34.37,73.47,5),('Gilgit','PK',35.92,74.31,5),('Hunza (Karimabad)','PK',36.32,74.66,5),('Skardu','PK',35.30,75.63,5),
+ ('Swat (Mingora)','PK',34.78,72.36,5),('Gwadar','PK',25.12,62.32,5),('Larkana','PK',27.56,68.21,5),('Mardan','PK',34.20,72.04,5),
+ ('Dera Ismail Khan','PK',31.83,70.90,5),('Chitral','PK',35.85,71.79,5),('Sahiwal','PK',30.66,73.11,5),('Jhelum','PK',32.93,73.73,5),
+ ('Dubai','AE',25.20,55.27,4),('Abu Dhabi','AE',24.45,54.38,4),('Riyadh','SA',24.71,46.68,3),('Jeddah','SA',21.49,39.19,3),
+ ('Makkah','SA',21.39,39.86,3),('Madinah','SA',24.47,39.61,3),('Doha','QA',25.29,51.53,3),('Kuwait City','KW',29.38,47.99,3),
+ ('Muscat','OM',23.59,58.41,4),('London','GB',51.51,-0.13,0),('Manchester','GB',53.48,-2.24,0),('New York','US',40.71,-74.01,-5),
+ ('Toronto','CA',43.65,-79.38,-5),('Sydney','AU',-33.87,151.21,11),('Kuala Lumpur','MY',3.14,101.69,8),('Istanbul','TR',41.01,28.98,3),
+ ('Delhi','IN',28.61,77.21,5.5),('Mumbai','IN',19.08,72.88,5.5),('Kabul','AF',34.53,69.17,4.5),('Tehran','IR',35.69,51.39,3.5),
+ ('Beijing','CN',39.90,116.41,8),('Tokyo','JP',35.68,139.69,9),('Paris','FR',48.86,2.35,1),('Berlin','DE',52.52,13.40,1),
+]
+# MET symbol -> WMO-like code used by the app
+def wcode(sym):
+    s = (sym or '').split('_')[0]
+    if s in ('clearsky',): return 0
+    if s in ('fair',): return 1
+    if s in ('partlycloudy',): return 2
+    if s in ('cloudy',): return 3
+    if s in ('fog',): return 45
+    if 'thunder' in s: return 95
+    if 'sleet' in s or 'snow' in s: return 85 if 'showers' in s else 73
+    if 'showers' in s: return 80
+    if 'lightrain' in s: return 61
+    if 'heavyrain' in s: return 65
+    if 'rain' in s: return 63
+    return 2
+def feels(t, rh, ws):
+    if t is None: return None
+    if t >= 27 and rh is not None:
+        f = t * 9 / 5 + 32
+        hi = (-42.379 + 2.04901523*f + 10.14333127*rh - .22475541*f*rh - .00683783*f*f - .05481717*rh*rh + .00122874*f*f*rh + .00085282*f*rh*rh - .00000199*f*f*rh*rh)
+        return round((hi - 32) * 5 / 9, 1)
+    if t <= 10 and ws is not None and ws * 3.6 > 4.8:
+        v = (ws * 3.6) ** 0.16
+        return round(13.12 + 0.6215*t - 11.37*v + 0.3965*t*v, 1)
+    return t
+def sun(lat, lon, day, tz):
+    # NOAA sunrise equation (approximate, +-2 min)
+    n = day.timetuple().tm_yday
+    g = 2*math.pi/365*(n-1)
+    eq = 229.18*(0.000075+0.001868*math.cos(g)-0.032077*math.sin(g)-0.014615*math.cos(2*g)-0.040849*math.sin(2*g))
+    de = 0.006918-0.399912*math.cos(g)+0.070257*math.sin(g)-0.006758*math.cos(2*g)+0.000907*math.sin(2*g)-0.002697*math.cos(3*g)+0.00148*math.sin(3*g)
+    la = math.radians(lat)
+    c = (math.cos(math.radians(90.833))/(math.cos(la)*math.cos(de)) - math.tan(la)*math.tan(de))
+    if c > 1 or c < -1: return None, None
+    ha = math.degrees(math.acos(c))
+    def hm(m):
+        m = (m + tz*60) % 1440
+        return '%02d:%02d' % (int(m//60), int(m % 60))
+    return hm(720-4*(lon+ha)-eq), hm(720-4*(lon-ha)-eq)
+def city_wx(name, cc, lat, lon, tz):
+    r = requests.get('https://api.met.no/weatherapi/locationforecast/2.0/complete', params={'lat': lat, 'lon': lon}, headers=UA, timeout=30)
+    r.raise_for_status()
+    ts = r.json()['properties']['timeseries']
+    hours = []
+    for x in ts:
+        t = dt.datetime.strptime(x['time'], '%Y-%m-%dT%H:%M:%SZ') + dt.timedelta(hours=tz)
+        d = x['data']['instant']['details']
+        n1 = x['data'].get('next_1_hours') or x['data'].get('next_6_hours') or {}
+        sym = (n1.get('summary') or {}).get('symbol_code', '')
+        pp = (n1.get('details') or {}).get('probability_of_precipitation')
+        hours.append((t, d.get('air_temperature'), d.get('relative_humidity'), d.get('wind_speed'), d.get('ultraviolet_index_clear_sky'), sym, pp))
+    if not hours: raise RuntimeError('empty')
+    h0 = hours[0]
+    cur = {'temperature_2m': h0[1], 'apparent_temperature': feels(h0[1], h0[2], h0[3]), 'relative_humidity_2m': h0[2],
+           'weather_code': wcode(h0[5]), 'wind_speed_10m': round((h0[3] or 0)*3.6, 1), 'is_day': 0 if 'night' in (h0[5] or '') else 1}
+    hh = [h for h in hours if h[0] - h0[0] <= dt.timedelta(hours=48)]
+    hourly = {'time': [h[0].strftime('%Y-%m-%dT%H:00') for h in hh], 'temperature_2m': [h[1] for h in hh],
+              'weather_code': [wcode(h[5]) for h in hh], 'precipitation_probability': [h[6] if h[6] is not None else None for h in hh]}
+    days = {}
+    for h in hours:
+        k = h[0].strftime('%Y-%m-%d'); days.setdefault(k, []).append(h)
+    daily = {'time': [], 'weather_code': [], 'temperature_2m_max': [], 'temperature_2m_min': [], 'sunrise': [], 'sunset': [], 'precipitation_probability_max': [], 'uv_index_max': []}
+    for k in sorted(days):
+        a = days[k]; temps = [x[1] for x in a if x[1] is not None]
+        if not temps: continue
+        mid = min(a, key=lambda x: abs(x[0].hour - 13))
+        sr, ss = sun(lat, lon, dt.date.fromisoformat(k), tz)
+        pps = [x[6] for x in a if x[6] is not None]; uvs = [x[4] for x in a if x[4] is not None]
+        daily['time'].append(k); daily['weather_code'].append(wcode(mid[5])); daily['temperature_2m_max'].append(max(temps)); daily['temperature_2m_min'].append(min(temps))
+        daily['sunrise'].append(k + 'T' + sr if sr else ''); daily['sunset'].append(k + 'T' + ss if ss else '')
+        daily['precipitation_probability_max'].append(max(pps) if pps else None); daily['uv_index_max'].append(max(uvs) if uvs else None)
+    return {'n': name, 'cc': cc, 'la': lat, 'lo': lon, 'wx': {'current': cur, 'hourly': hourly, 'daily': daily}}
+
+def load_old(fn):
+    try:
+        return json.load(open(os.path.join(OLD, fn)))
+    except Exception:
+        return None
+
+def weather():
+    old = load_old('weather.json') or {}
+    oldc = {c['n']: c for c in old.get('cities', [])}
+    out = []
+    for c in CITIES:
+        try:
+            out.append(city_wx(*c)); time.sleep(0.3)
+        except Exception as e:
+            print('weather fail', c[0], e)
+            if c[0] in oldc: out.append(oldc[c[0]])
+    json.dump({'t': int(time.time()*1000), 'src': 'MET Norway (CC BY 4.0)', 'cities': out}, open(os.path.join(OUT, 'weather.json'), 'w'), separators=(',', ':'))
+    print('weather ok', len(out))
+
+ROW = re.compile(r'^\s*\d{1,2}\s+(.+?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s*$')
+def spi_parse(text):
+    items = {}
+    for line in text.splitlines():
+        m = ROW.match(line)
+        if not m: continue
+        name = m.group(1).strip()
+        if name in items: continue
+        items[name] = {'n': name, 'p': float(m.group(2)), 'prev': float(m.group(3)), 'yago': float(m.group(4)), 'wow': float(m.group(5)), 'yoy': float(m.group(6))}
+    return list(items.values())
+def spi_urls():
+    urls = []
+    for page in ('https://www.pbs.gov.pk/spi/', 'https://www.pbs.gov.pk/spi', 'https://www.pbs.gov.pk/weekly-spi/', 'https://www.pbs.gov.pk/price-statistics/'):
+        try:
+            h = requests.get(page, headers=UA, timeout=30).text
+            for u in re.findall(r'href="([^"]+\.pdf)"', h):
+                if 'SPI' in u.upper(): urls.append(requests.compat.urljoin(page, u))
+        except Exception as e:
+            print('page fail', page, e)
+    today = dt.date.today()
+    for back in range(0, 15):
+        d = (today - dt.timedelta(days=back)).strftime('%d.%m.%Y')
+        for pat in ('Executive-Summary-SPI-Report_%s.pdf', 'Executive-SummarySPI-Report_%s.pdf', 'SPI-Executive-Summary-SPI-Report_-%s.pdf', 'SPI-Executive-Summary-SPI-Report_%s.pdf'):
+            urls.append('https://www.pbs.gov.pk/wp-content/uploads/2020/07/' + pat % d)
+    seen = []
+    for u in urls:
+        if u not in seen: seen.append(u)
+    def key(u):
+        m = re.search(r'(\d{2})\.(\d{2})\.(\d{4})', u)
+        return (m.group(3) + m.group(2) + m.group(1)) if m else '0'
+    return sorted(seen, key=key, reverse=True)
+def prices():
+    old = load_old('prices.json')
+    if old and time.time()*1000 - old.get('t', 0) < 12*3600*1000:
+        json.dump(old, open(os.path.join(OUT, 'prices.json'), 'w'), separators=(',', ':')); print('prices kept (fresh)'); return
+    import pdfplumber, io
+    for u in spi_urls()[:80]:
+        try:
+            r = requests.get(u, headers=UA, timeout=40)
+            if r.status_code != 200 or b'%PDF' not in r.content[:1024]: continue
+            with pdfplumber.open(io.BytesIO(r.content)) as pdf:
+                text = '\n'.join((p.extract_text() or '') for p in pdf.pages)
+            items = spi_parse(text)
+            m = re.search(r'week ended on (\d{2}[-.]\d{2}[-.]\d{4})', text, re.I)
+            if len(items) >= 30:
+                json.dump({'t': int(time.time()*1000), 'week': m.group(1) if m else '', 'src': u, 'items': items}, open(os.path.join(OUT, 'prices.json'), 'w'), separators=(',', ':'))
+                print('prices ok', len(items), u); return
+        except Exception as e:
+            print('pdf fail', u, e)
+    if old:
+        json.dump(old, open(os.path.join(OUT, 'prices.json'), 'w'), separators=(',', ':')); print('prices kept (old)')
+
+if __name__ == '__main__':
+    for f in (weather, prices):
+        try: f()
+        except Exception as e: print('job fail', f.__name__, e)

@@ -1,0 +1,38 @@
+name: MintooSuite data (weather and official prices)
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mintoo-data
+  cancel-in-progress: false
+
+jobs:
+  data:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests pdfplumber
+      - name: Get the last published data
+        run: |
+          mkdir -p old out
+          for f in weather.json prices.json; do curl -fsSL "https://raw.githubusercontent.com/${{ github.repository }}/data/$f" -o "old/$f" || true; done
+      - name: Fetch weather (MET Norway) and official prices (PBS)
+        run: python data/fetch_data.py out old
+      - name: Publish to the data branch (one commit, no history)
+        run: |
+          cd out
+          git init -q -b data
+          git config user.name "MintooSuite data"
+          git config user.email "mintoosuite@users.noreply.github.com"
+          git add -A
+          git commit -q -m "data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" data

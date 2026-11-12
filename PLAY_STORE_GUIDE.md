@@ -1,4 +1,6 @@
-# MintooSuite: signing and publishing guide (build 2026-10-19.4)
+# MintooSuite: signing and publishing guide (updated for build 2026-11-12.495)
+
+Read the audit document first (MintooSuite A-to-Z Audit and Store Readiness). It lists what still blocks approval.
 
 ## What the Android app is
 A standalone app: the whole MintooSuite web app is packed inside it (no website needed to open it). Live prices, news and trading still need internet. Package ID `com.mintoosuite.terminal`, targets Android 16 (API 36), which Google Play has required for new apps and updates since 31 Aug 2026.
@@ -20,13 +22,19 @@ Your old APK (from the website wrapper) was signed with a key named "MintooSuite
 3. Test and release > Closed testing: upload `app-release.aab`, add 12+ tester Gmail addresses, share the opt-in link. After 14 days apply for production.
 4. App content:
    - Privacy policy URL: https://awaismintoo.github.io/awais_mintoo_cloud/privacy.html
-   - Ads: No. Target audience: 18+. Content rating questionnaire: finance/trading information, no gambling.
+   - Ads: YES (AdMob banner in the free version, 18+ only). Target audience: 18+. Content rating questionnaire: finance/trading information, no gambling.
    - Financial features declaration: the app can place orders on a crypto exchange with the user's own API keys, so do NOT choose "no financial features". Choose the trading and funds options that describe it, and read Google's Cryptocurrency Exchanges and Software Wallets policy page. Apps that facilitate trading may need licences in some countries; choose target countries where you are sure you comply, or ask Play support. This is not legal advice.
-   - Data safety: you collect nothing. API keys stay on the device. Orders go from the device straight to Binance (user-initiated).
+   - Data safety (answer exactly): data is encrypted in transit; users can request deletion (in-app and delete-account page).
+     Collected (optional): Personal info (email: account management; name and phone in listings: app functionality, public); Location (approximate and precise, only when the user taps Use my location or shares a price note: app functionality); Photos (listing photos: app functionality); App activity (user-generated content: listings, reviews, reports, price notes; app interactions only if analytics is switched on); App info and performance (crash logs, opt-in); Device or other IDs (device list for account security; advertising ID for ads); Financial info (purchase history through Google Play).
+     Shared: advertising ID with Google AdMob; location with weather, prayer-time and map services (Open-Meteo, AlAdhan, OpenStreetMap); photos and AI text with OpenAI / Gemini only when the user runs that feature with their own key.
+     Not collected: exchange API keys and wallet words (they stay on the phone and go only to the chosen exchange).
+   - Financial features: declare the non-custodial software wallet and the crypto order tools (user's own exchange accounts); leave out countries where you do not hold the licences Google lists (for example US, UK, EU, Japan, South Korea). Pakistan: see the audit (Virtual Assets Act 2026 / PVARA).
+   - AI-generated content: the app has in-app reporting (Baba AI answers and Photo studio pictures).
+   - VPN: from build 497 the Play version (app-release.aab, flavour "play") is built without the VPN library, so it declares no VpnService and needs no VPN declaration. The full APK from GitHub keeps MintooSuiteVPN.
 5. Store listing:
    - Title: MintooSuite
-   - Short description (80): Live Binance Futures data, trade plans with stop and target, and gold levels.
-   - Full description: Live Binance Futures prices (700+ coins), ranked trade ideas with entry, stop-loss, target and a validity window, a Master Plan for the day, an Exness gold plan with lot sizes, a virtual paper-trading bot, news and alerts. Optional Binance order tickets using your own API keys (test mode first). Not financial advice; trading can lose money.
+   - Short description (80): Markets, business and daily life in one app: signals, gold, shopping, weather.
+   - Full description (start with): MintooSuite is an independent app, not affiliated with any exchange or shop. Crypto market data from major exchanges (700+ coins), ranked trade ideas with entry, stop-loss, target and a validity window, a Master Plan for the day, an Exness gold plan with lot sizes, a virtual paper-trading bot, news and alerts. Optional Binance order tickets using your own API keys (test mode first). Not financial advice; trading can lose money.
    - Do not write "guaranteed", "risk-free", "make $X per day". Google forbids promoting or glamorising trading earnings.
    - Icon: icon-512.png. Feature graphic: feature_graphic_1024x500.png. Screenshots: 2 to 8 phone screenshots from your S20 Plus.
 

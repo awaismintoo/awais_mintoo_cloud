@@ -20,3 +20,16 @@ self.addEventListener('message', (event) => {
         });
     }
 });
+
+/* build 495: offline start. Same-site pages and icons are fetched fresh when online and the last copy is used offline. Market data and other websites are never cached here. */
+const MW_CACHE = 'mintoosuite-shell-v495';
+self.addEventListener('fetch', (event) => {
+    const req = event.request;
+    if (req.method !== 'GET') { return; }
+    let url; try { url = new URL(req.url); } catch (e) { return; }
+    if (url.origin !== self.location.origin) { return; }
+    event.respondWith(fetch(req).then((res) => {
+        if (res && res.ok) { const copy = res.clone(); caches.open(MW_CACHE).then((c) => c.put(req, copy)).catch(() => {}); }
+        return res;
+    }).catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('./index.html'))));
+});

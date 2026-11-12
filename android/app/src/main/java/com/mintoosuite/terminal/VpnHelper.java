@@ -22,6 +22,39 @@ final class VpnHelper {
 
     private static android.content.SharedPreferences sp(Context c) { return c.getApplicationContext().getSharedPreferences("mw_vpn", Context.MODE_PRIVATE); }
 
+    /* build 497: the WireGuard config (it holds the private key) is stored encrypted with the Android Keystore (AES-256-GCM). Old plain copies still load and are re-saved encrypted. */
+    private static javax.crypto.SecretKey key() throws Exception {
+        java.security.KeyStore ks = java.security.KeyStore.getInstance("AndroidKeyStore");
+        ks.load(null);
+        if (!ks.containsAlias("mw_vpn_key")) {
+            javax.crypto.KeyGenerator g = javax.crypto.KeyGenerator.getInstance(android.security.keystore.KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+            g.init(new android.security.keystore.KeyGenParameterSpec.Builder("mw_vpn_key", android.security.keystore.KeyProperties.PURPOSE_ENCRYPT | android.security.keystore.KeyProperties.PURPOSE_DECRYPT)
+                    .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .setKeySize(256).build());
+            g.generateKey();
+        }
+        return (javax.crypto.SecretKey) ks.getKey("mw_vpn_key", null);
+    }
+    private static void putCfg(Context c, String text) {
+        try {
+            javax.crypto.Cipher ci = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+            ci.init(javax.crypto.Cipher.ENCRYPT_MODE, key());
+            byte[] ct = ci.doFinal(text.getBytes("UTF-8"));
+            sp(c).edit().putString("cfg", "e1:" + android.util.Base64.encodeToString(ci.getIV(), android.util.Base64.NO_WRAP) + ":" + android.util.Base64.encodeToString(ct, android.util.Base64.NO_WRAP)).apply();
+        } catch (Throwable e) { sp(c).edit().putString("cfg", text).apply(); }
+    }
+    private static String getCfg(Context c) {
+        String v = sp(c).getString("cfg", "");
+        if (!v.startsWith("e1:")) { if (v.length() > 20) { putCfg(c, v); } return v; }
+        try {
+            String[] p = v.split(":", 3);
+            javax.crypto.Cipher ci = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+            ci.init(javax.crypto.Cipher.DECRYPT_MODE, key(), new javax.crypto.spec.GCMParameterSpec(128, android.util.Base64.decode(p[1], android.util.Base64.NO_WRAP)));
+            return new String(ci.doFinal(android.util.Base64.decode(p[2], android.util.Base64.NO_WRAP)), "UTF-8");
+        } catch (Throwable e) { return ""; }
+    }
+
     static boolean has(Context c) { return sp(c).getString("cfg", "").length() > 20; }
 
     static String state(Context c) {
@@ -32,7 +65,7 @@ final class VpnHelper {
         try {
             if (text == null || text.length() > 8000 || !text.contains("[Interface]") || !text.contains("[Peer]")) { err = "That is not a WireGuard config (it needs [Interface] and [Peer])."; return false; }
             parse(text);
-            sp(c).edit().putString("cfg", text).apply(); err = ""; return true;
+            putCfg(c, text); err = ""; return true;
         } catch (Throwable e) { err = msg(e); return false; }
     }
 
@@ -93,7 +126,7 @@ final class VpnHelper {
                             }
                         });
                     }
-                    Object cfg = parse(sp(app).getString("cfg", ""));
+                    Object cfg = parse(getCfg(app));
                     @SuppressWarnings({"unchecked", "rawtypes"})
                     Object up = Enum.valueOf((Class) sc, "UP");
                     bc.getMethod("setState", tc, sc, cc).invoke(backend, tunnel, up, cfg);

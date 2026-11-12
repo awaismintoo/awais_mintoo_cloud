@@ -450,6 +450,7 @@ final class Bridge {
                     String h = u.getHost();
                     boolean allowed = "https".equals(u.getProtocol()) && ("api.bitget.com".equals(h) || "api.mexc.com".equals(h) || "api.bybit.com".equals(h) || "www.okx.com".equals(h) || "www.binance.com".equals(h) || "fapi.binance.com".equals(h) || "api.binance.com".equals(h) || "testnet.binancefuture.com".equals(h));
                     if (!allowed) { throw new Exception("host not allowed"); }
+                    if (java.util.regex.Pattern.compile("withdraw|/transfer|sub-?account/(universal|transfer)|capital/deposit/subAddress|asset/(transfer|withdraw)|wallet/withdraw|sapi/v1/(capital/withdraw|asset/transfer|sub-account)", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(u.getPath() == null ? "" : u.getPath()).find()) { throw new Exception("withdrawals and transfers are blocked by MintooSuite"); }
                     String m = "POST".equals(method) ? "POST" : ("DELETE".equals(method) ? "DELETE" : "GET");
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
                     c.setInstanceFollowRedirects(false);

@@ -37,6 +37,14 @@ android {
         }
     }
 
+    /* build 496: two versions from the same code. "full" = the APK you install from GitHub (with MintooSuiteVPN);
+       "play" = the Google Play version without the VPN library (Google allows VpnService only in VPN apps). */
+    flavorDimensions 'store'
+    productFlavors {
+        full { dimension 'store' }
+        play { dimension 'store' }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -51,7 +59,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads:23.6.0'
     implementation 'com.google.android.ump:user-messaging-platform:3.1.0'
     implementation 'com.google.guava:guava:33.3.1-android'
-    implementation 'com.wireguard.android:tunnel:1.0.20230706'
+    fullImplementation 'com.wireguard.android:tunnel:1.0.20230706'
     implementation 'com.google.mlkit:translate:17.0.3'
     implementation 'com.android.billingclient:billing:7.1.1'
 }
