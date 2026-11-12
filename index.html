@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.500';
+var BUILD = '2026-11-12.501';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -29312,7 +29312,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             var c = M.cfg, h = '<div class="group pad"><b>⚙️ Connect your Firebase (owner only, once)</b><div class="note" style="margin:4px 0 8px">Your Firebase project (mintoo-suite) is already built into this app, so nothing is needed except your owner ID. Pictures are stored inside the listing (up to 3, small), so no Storage and no card are needed. Listings, pictures, videos and reviews disappear after 60 days and are replaced by newer ones.<br>1. Tap <b>Save and test</b> below.<br>2. Copy your ID shown below, paste it in the owner box, and in Firebase Rules where it says PASTE_YOUR_ID_HERE, then Publish.<br>Never paste secrets in any chat.</div>' +
                 inp('mpKey', 'apiKey (starts with AIza…)', c.key) + inp('mpPid', 'projectId', c.pid) + inp('mpBkt', 'storageBucket (for example myapp.appspot.com)', c.bucket) + inp('mpAdm', 'Your owner ID (shown after Save and test, then paste it into the rules too)', c.admin) +
                 btn('💾 Save and test', 'mpsave', '') + (M.err ? '<div class="warn">' + e2(M.err) + '</div>' : '') + (M.au.uid ? '<div class="note">Your ID on this phone: <b style="word-break:break-all">' + e2(M.au.uid) + '</b><br>To be the owner (approve listings), copy this ID into the box above and into the Firestore rule where it says PASTE_YOUR_ID_HERE.</div>' : '') + '</div>';
-            h += '<div class="group pad"><b>Firestore rules (copy all)</b><textarea readonly style="' + IN + ';height:150px;font-size:11px">' + e2(RULES_FS) + '</textarea>' + btn('📋 Copy Firestore rules', 'mpcopy:fs', 'sec') + '</div>';
+            h += '<div class="group pad"><b>Firestore rules (copy all)</b><textarea readonly style="' + IN + ';height:150px;font-size:11px">' + e2(RULES_FS) + '</textarea>' + btn('📋 Copy Firestore rules', 'mpcopy:fs', 'sec') + '<div class="note">Your owner ID is put into the copied rules for you. Firebase console > Firestore Database > Rules: select all, paste, Publish.</div></div>' + '<div class="group pad"><b>Storage rules (for photos)</b><textarea readonly style="' + IN + ';height:110px;font-size:11px">' + e2(RULES_ST) + '</textarea>' + btn('📋 Copy Storage rules', 'mpcopy:st', 'sec') + '<div class="note">Firebase console > Storage > Rules: select all, paste, Publish.</div></div>';
             return h;
         }
         function thumb(l, big) { var u = (l.photos && l.photos[0]) || ''; return '<img ' + (u ? 'data-pc="' + e2(u) + '" ' : '') + 'src="' + e2(l.thumb || '') + '" alt="" style="width:100%;' + (big ? 'max-height:260px;' : 'height:140px;') + 'object-fit:cover;border-radius:14px;background:rgba(127,127,127,.18);display:block">'; }
@@ -29370,7 +29370,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         X.on('mpopen', function (v) { M.sel = v; again(); loadRev(v); try { window.scrollTo(0, 0); } catch (e) { } });
         X.on('mprmp', function (v) { M.photos.splice(+v, 1); again(); });
         X.on('mpown', function (v) { M.own = v === '1'; try { localStorage.setItem('mw_mpown', v === '1' ? '1' : ''); } catch (e) { } if (!M.own) { M.tab = 'browse'; } again(); });
-        X.on('mpcopy', function (v) { var t = v === 'fs' ? RULES_FS : RULES_ST; try { navigator.clipboard.writeText(t).then(function () { tst('Copied'); }, function () { tst('Could not copy'); }); } catch (e) { tst('Could not copy'); } });
+        X.on('mpcopy', function (v) { var t = v === 'fs' ? RULES_FS : RULES_ST; var oid = (M.cfg && M.cfg.admin) || (M.au && M.au.uid) || ''; if (oid) { t = t.split('PASTE_YOUR_ID_HERE').join(oid); } else if (v === 'fs') { tst('First tap Save and test so your owner ID can be put into the rules'); } try { navigator.clipboard.writeText(t).then(function () { tst('Copied'); }, function () { tst('Could not copy'); }); } catch (e) { tst('Could not copy'); } });
         X.on('mpsave', function () {
             M.cfg = { key: V('mpKey'), pid: V('mpPid'), bucket: V('mpBkt'), admin: V('mpAdm'), phone: M.cfg.phone || '' }; M.err = ''; sv();
             if (!ok()) { M.err = 'Fill apiKey and projectId.'; again(); return; }
@@ -31565,7 +31565,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
     X.on('aireport', function (k) {
         var why = ''; try { why = prompt('What is wrong with this AI result? (offensive, wrong, harmful, someone else\'s photo…)') || ''; } catch (e) { }
         var L = U.ls('mw_aireports', []); L.unshift({ k: k, why: why.slice(0, 300), t: Date.now(), w: S.win }); U.lset('mw_aireports', L.slice(0, 50));
-        var body = 'MintooSuite AI report (' + k + ')%0D%0AScreen: ' + encodeURIComponent(S.win) + '%0D%0AReason: ' + encodeURIComponent(why) + '%0D%0ABuild: 2026-11-12.500';
+        var body = 'MintooSuite AI report (' + k + ')%0D%0AScreen: ' + encodeURIComponent(S.win) + '%0D%0AReason: ' + encodeURIComponent(why) + '%0D%0ABuild: 2026-11-12.501';
         try { window.open('mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('AI content report') + '&body=' + body, '_blank'); } catch (e) { }
         U.tst('Thank you. The report is saved and an email to the developer is ready to send.');
     });
@@ -32012,6 +32012,7 @@ window.__srchIdx = [["MintooSuite Terminal","aboutapp",""],["Your all-in-one tra
     }
     try { PF_APP.push(['google|seo|search engine|website|topics|listed on google|share link', 'MintooSuite on Google and the web', 'The website has public topic pages (live gold rate per tola, fruit and vegetable prices, weather in Pakistani cities, daily hadith in Urdu, and a page for each part of the app) listed in the sitemap, so Google and Bing can show them. Searching the name MintooSuite should find it once Google has indexed it; general words like trading or fashion take months and links from other sites. A link like ...awais_mintoo_cloud/?w=grocery opens that window directly, good for sharing on WhatsApp or Facebook.', 'win:help']); } catch (e) { }
     try { if (typeof MW_TOPICS !== 'undefined') { MW_TOPICS.splice(1, 0, { id: 'seo500', t: '🌐 MintooSuite on Google', win: 'help', b: 'The MintooSuite website now has public topic pages: live gold rate per tola, official fruit and vegetable prices, weather in Pakistani cities, daily hadith in Urdu, and one page for each part of the app, all in the sitemap for Google and Bing (Bing, Yahoo and DuckDuckGo are told at once after each update). Share a direct link: add ?w= and the window name, for example ?w=grocery or ?w=hadith.', l: [], v: '' }); } } catch (e) { }
+    try { PF_APP.push(['firebase rules|publish rules|owner setup|setup buy and sell|where is setup|firestore rules|storage rules', 'Buy & sell owner Setup and Firebase rules', 'Open Buy & sell, scroll to the very bottom and tap the small grey "Owner? Tap here", then Open Setup. Tap Save and test (your owner ID appears), then 📋 Copy Firestore rules: your ID is already inside. In console.firebase.google.com open your project > Firestore Database > Rules, select all, paste, Publish. Then 📋 Copy Storage rules > Storage > Rules > paste > Publish.', 'win:listings']); } catch (e) { }
 } catch (e) { try { console.log('p9seo', e); } catch (x) { } } })();
 
 
