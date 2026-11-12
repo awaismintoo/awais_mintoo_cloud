@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-09.471';
+var BUILD = '2026-11-12.472';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -15156,6 +15156,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         function pstate() { try { var n = nat(); return n && n.permState ? JSON.parse(n.permState(tok())) : null; } catch (e) { return null; } }
         function sstate() { try { var n = nat(); return n && n.svcState ? JSON.parse(n.svcState(tok())) : null; } catch (e) { return null; } }
         /* 1) keep the background service on by default unless the user turned it off on purpose */
+        try { if (!localStorage.getItem('mintoosuite_bgmig472')) { localStorage.setItem('mintoosuite_bgmig472', '1'); localStorage.removeItem('mintoosuite_bgoff'); } } catch (e) { } /* one-time: undo an old Stop-bots press */
         function autoStart() {
             try {
                 var n = nat(); if (!n || !n.svcStart) { return; }
@@ -15166,14 +15167,14 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 if (n.svcStart(tok())) { try { S.bg.on = true; } catch (e) { } }
             } catch (e) { }
         }
-        setTimeout(autoStart, 6000); setInterval(autoStart, 120000);
+        setTimeout(autoStart, 1200); setTimeout(autoStart, 4000); setInterval(autoStart, 60000);
         document.addEventListener('click', function (e) {
             var el = e.target.closest ? e.target.closest('[data-m8]') : null; if (!el) { return; }
             var v = el.getAttribute('data-m8') || '';
             if (v === 'pm:bg:off') { try { localStorage.setItem('mintoosuite_bgoff', '1'); } catch (er) { } }
             if (v === 'pm:bg:on') { try { localStorage.removeItem('mintoosuite_bgoff'); } catch (er) { } }
         }, true);
-        var _c = window.__mwSvcCmd; window.__mwSvcCmd = function (c) { if (c === 'svcoff') { try { localStorage.setItem('mintoosuite_bgoff', '1'); } catch (e) { } } return _c ? _c.apply(this, arguments) : undefined; };
+        /* build 472: pressing Stop bots in the notification only stops it for now; the next time the app opens it comes back. Only the switch in Permissions turns it off for good. */
 
         /* 2) permission centre rows */
         var ROWS = [
@@ -26181,6 +26182,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['build 468|mexc coin|bitget coin|pumping gold tap|real order stop loss|other exchange chart', 'Build 468: tapping a MEXC or Bitget coin (including in Pumping + gold) now opens the same full chart window as Binance coins, with candles and live price from that exchange and the right badge. Real Binance manual orders now always get a protective stop plus a backup stop. Advisers, bots and one-click real trading on MEXC/Bitget are not finished yet; paper trade works.', 'win:chart']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 469|split maximize|maximize chart|full screen chart split|double tap chart', 'Build 469: in Split Charts each pane has a ⤢ button (and a double tap on the pane header) that opens that chart full screen inside the app with all TradingView tools; "Back to split" returns you.', 'win:split']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 471|duplicate buttons|contact us|email support|early movers in ideas|where is about|about page', 'Build 471: Contact now lives in one place (More > Help centre > Contact us: email, WhatsApp, report a problem); the other Help screen only links to it. The old Support desk and Problem log entries were merged (they open Help centre and Logs). Early movers is now also a tab under Ideas > Bot alerts. The About page is More > Other tools > About MintooSuite, and the Baba AI window has its own About tab.', 'win:helpc']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['build 472|early movers|movers stuck|scanning|mexc movers|bitget movers', 'Build 472: Early movers no longer sticks on "Scanning": every candle request has a time limit and a stuck scan frees itself, with a Retry button if Binance cannot be reached. It now covers Binance, MEXC and Bitget (chips: All exchanges, Binance, MEXC, Bitget) and the filters (Early, Running trend, Watch, Fading) work on every row. The old stand-alone Movers window now opens Ideas > Bot alerts > Early movers, so there is one place. Tap a MEXC or Bitget row to open its full chart.', 'win:ideas']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['build 472|bots notification|background run|stop bots|notification bar|running in background', 'Build 472: the "MintooSuite is running" notification now comes back every time you open the app (within about a second). Pressing Stop bots in the notification only stops it until the next time you open the app; the switch in Permissions (Background run) is the only thing that turns it off for good. If you still see nothing, check that Notifications are allowed for MintooSuite in Android settings.', 'win:perms']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -28289,6 +28292,85 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         WINS.push({ id: 'advisor', ic: '🧭', c: '#0a9d6b', n: 'Smart Advisor: property, cars, shopping, shares, stays, travel', t: 'Advisor', sub: 'Book rules, red flags, Chief verdict. Works offline' }); LIVE.advisor = 0;
         PF_APP.push(['smart advisor|advisor|book rules|buy property|sell property|rent shop|buy car|hostel safety|hotel check|share buying|restaurant check|tourist place|business plan check|chief verdict checklist', 'Smart Advisor (build 470)', 'More > Pakistan > Smart Advisor. Choose property, cars, shopping, shares, food, stays, travel, fun, study or business. Tick the book rules you have checked; the Chief shows STOP, Caution or Looks reasonable. Price adviser compares the asking price with the market. Red flags and questions are listed, and the Baba AI buttons give a risk view, value view, step-by-step plan and area guidance. It is offline guidance, not legal or financial advice, and it never buys or signs for you.', 'win:advisor']);
     } catch (e) { try { console.error('p9adv', e); } catch (e2) { } }
+})();
+/* ===== p9mv2 (build 472): Early movers that never stick, cover Binance + MEXC + Bitget, and live inside Ideas ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX; window.__S = S;
+        var MV = S.mvx = { at: 0, list: [], busy: false, t0: 0, n: 0, err: '' };
+        function tfetch(url, ms) { return new Promise(function (res, rej) { var done = 0, t = setTimeout(function () { if (!done) { done = 1; rej(new Error('timeout')); } }, ms || 8000); try { fetch(url).then(function (r) { return r.json(); }).then(function (j) { if (!done) { done = 1; clearTimeout(t); res(j); } }, function (e) { if (!done) { done = 1; clearTimeout(t); rej(e); } }); } catch (e) { clearTimeout(t); rej(e); } }); }
+        function tmo(p, ms) { return new Promise(function (res) { var d = 0, t = setTimeout(function () { if (!d) { d = 1; res(null); } }, ms); p.then(function (v) { if (!d) { d = 1; clearTimeout(t); res(v); } }, function () { if (!d) { d = 1; clearTimeout(t); res(null); } }); }); }
+        /* 1) Binance scan: every request has a time limit and a stuck scan frees itself */
+        moversScan = function () {
+            var t = S.tick, syms, idx = 0, res = [], c3 = [], k, pool = [];
+            if (S.rd.busy && Date.now() - (MV.t0 || 0) < 90000) { return; }
+            if (Object.keys(t).length < 20) { return; }
+            m7sample(); syms = m7pickSyms().filter(function (s) { return !(t[s] && t[s].fx); }); if (!syms.length) { return; }
+            S.rd.busy = true; S.mv.busy = true; MV.t0 = Date.now(); var gen = MV.t0, bad = 0;
+            function worker() {
+                if (idx >= syms.length || gen !== MV.t0) { return Promise.resolve(); } var s = syms[idx++];
+                return tfetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + s + '&interval=1m&limit=130', 7000).then(function (ks) {
+                    if (!Array.isArray(ks)) { bad++; return; }
+                    var m = m7analyze(s, ks, t[s] ? t[s].chg : 0); if (m) { m.x = 'binance'; res.push(m); }
+                    var grp = {}, order = [], lastB = Math.floor(+ks[ks.length - 1][0] / 180000) * 180000; ks.forEach(function (r) { var b = Math.floor(+r[0] / 180000) * 180000; if (!grp[b]) { grp[b] = []; order.push(b); } grp[b].push(r); });
+                    var out3 = order.filter(function (b) { return grp[b].length === 3 && b !== lastB; }).map(function (b) { var g = grp[b]; return [b, g[0][1], Math.max.apply(null, g.map(function (x) { return +x[2]; })), Math.min.apply(null, g.map(function (x) { return +x[3]; })), g[2][4], g.reduce(function (a, x) { return a + +x[5]; }, 0), 0, g.reduce(function (a, x) { return a + +x[7]; }, 0)]; });
+                    var cc = m7candle3(s, out3.concat([[0, 0, 0, 0, 0, 0, 0, 0]])); if (cc) { c3.push(cc); }
+                }).catch(function () { bad++; }).then(worker);
+            }
+            for (k = 0; k < 8; k++) { pool.push(worker()); }
+            tmo(Promise.all(pool), 60000).then(function () {
+                if (gen !== MV.t0) { return; }
+                var tn = nowMs(); res.sort(function (a, b) { return b.score - a.score; });
+                S.rd.list = res; S.rd.c3 = c3.sort(function (a, b) { return b.ba - a.ba; }); S.rd.at = tn; S.rd.n = syms.length;
+                S.mv.list = res.filter(function (m) { return m.kind !== 'FADING'; }).slice(0, 60); S.mv.at = tn; S.mv.n = Object.keys(t).filter(function (s) { return /USDT$/.test(s) && !t[s].fx; }).length;
+                MV.err = bad > syms.length * 0.8 ? 'Binance candles did not load (' + bad + ' of ' + syms.length + ' failed). Check your connection; the scan retries by itself.' : '';
+                S.mv.list.forEach(function (m) { var key = m.sym + m.side; if (m.tag === 'EARLY' && (!S.mv.seen[key] || tn - S.mv.seen[key] > 3600000)) { S.mv.seen[key] = tn; addLog('MOVER', (m.kind === 'TREND' ? 'Running trend: ' : 'Early mover: ') + nm(m.sym) + ' ' + m.side + ' ' + pct(m.r15) + ' in 15 min, volume ×' + m.vr.toFixed(1)); } });
+            }).catch(function () { }).then(function () { if (gen === MV.t0) { S.rd.busy = false; S.mv.busy = false; } try { if (S.win === 'movers' || S.win === 'candles' || S.win === 'alert' || S.win === 'ideas') { renderView(true); } } catch (e) { } });
+        };
+        /* 2) MEXC + Bitget scan: top movers of each exchange, analysed with the same rules */
+        function fxScan() {
+            if (!window.XCH) { return; } if (MV.busy && Date.now() - MV.t1 < 90000) { return; }
+            try { mxLoad(); XCH.bgLoad(); } catch (e) { }
+            var X = S.mx || {}, B = XCH.bg || {}, min = isFinite(+window.__mxmin) ? +window.__mxmin : 30000, cand = [], seen = {};
+            function add(arr, x, fut) {
+                (arr || []).slice().sort(function (a, b) { return Math.abs(b.c || 0) - Math.abs(a.c || 0); }).filter(function (r) { var b = (r.s || '').replace(/USDT$/, ''); if (!b || (r.q || 0) < min) { return false; } try { if (XCH.binFut(b)) { return false; } } catch (e) { } try { if (!XCH.listed(x, b)) { return false; } } catch (e) { } return true; }).slice(0, 14).forEach(function (r) { var b = r.s.replace(/USDT$/, ''), key = x + b + (fut ? 'f' : 's'); if (!seen[key]) { seen[key] = 1; cand.push({ b: b, x: x, fut: fut, c: r.c || 0 }); } });
+            }
+            add(X.fut, 'mexc', 1); add(X.spot, 'mexc', 0); add(B.fut, 'bitget', 1); add(B.spot, 'bitget', 0);
+            if (!cand.length) { return; } MV.busy = true; MV.t1 = Date.now(); var res = [], i = 0;
+            function w() { if (i >= cand.length) { return Promise.resolve(); } var c = cand[i++]; return tmo(XCH.kl({ s: c.b, fut: c.fut, x: c.x }, '1m', 130), 9000).then(function (ks) { if (!Array.isArray(ks) || ks.length < 40) { return; } ks = ks.map(function (r) { r = r.slice(); if (!(+r[7] > 0)) { r[7] = (+r[5] || 0) * (+r[4] || 0); } return r; }); var m = m7analyze(c.b + 'USDT', ks, c.c); if (m) { m.x = c.x; m.fut = c.fut; m.b = c.b; res.push(m); } }).then(w); }
+            tmo(Promise.all([w(), w(), w(), w()]), 45000).then(function () { res.sort(function (a, b) { return b.score - a.score; }); MV.list = res; MV.at = nowMs(); MV.n = cand.length; }).then(function () { MV.busy = false; try { if (S.win === 'movers' || S.win === 'ideas') { renderView(true); } } catch (e) { } });
+        }
+        window.__fxScan = fxScan;
+        setInterval(function () { try { if (S.win === 'movers' || S.win === 'ideas' || S.win === 'home') { fxScan(); } } catch (e) { } }, 60000);
+        setTimeout(function () { try { fxScan(); } catch (e) { } }, 15000);
+        /* 3) the window: exchange chips + one combined list, filters work on every row */
+        var _vm = VIEWS.movers;
+        VIEWS.movers = function () {
+            var h = ''; try { h = _vm.apply(this, arguments); } catch (e) { h = ''; }
+            var i = h.indexOf('<div class="note" style="margin:14px 0 6px"><b>Other exchanges'); if (i >= 0) { h = h.slice(0, i); }
+            if (MV.err) { h += '<div class="group pad mut">⚠ ' + esc(MV.err) + ' <span class="pfbtn" data-xk="mvretry:1">Retry now</span></div>'; }
+            var f = S.m7.mvf, q = (S.m7.mvq || '').toUpperCase(), ex = S.mvEx || 'all';
+            var chips = [['all', 'All exchanges'], ['binance', 'Binance'], ['mexc', 'MEXC'], ['bitget', 'Bitget']].map(function (x) { return '<span class="' + (ex === x[0] ? 'on' : '') + '" data-xk="mvex:' + x[0] + '">' + x[1] + '</span>'; }).join('');
+            if (ex !== 'binance') {
+                var L = MV.list.filter(function (m) { return (ex === 'all' || m.x === ex) && (f === 'all' || m.kind === f) && (!q || m.sym.indexOf(q) >= 0) && f !== 'c3'; });
+                h += '<div class="note" style="margin:14px 0 6px"><b>MEXC and Bitget movers</b>' + (MV.at ? ' · checked ' + MV.n + ' coins · updated ' + ago(MV.at) : '') + '. Coins that are not on Binance Futures, analysed with the same rules.</div>';
+                if (!MV.at) { h += '<div class="group pad mut">' + (MV.busy ? 'Scanning MEXC and Bitget… first results in about 20 seconds.' : 'Waiting for MEXC and Bitget prices…') + '</div>'; }
+                else if (!L.length) { h += '<div class="group pad mut">Nothing in this group on MEXC or Bitget right now.</div>'; }
+                else { h += '<div class="group">' + L.slice(0, 30).map(function (m) { var tg = m.kind === 'EARLY' ? 'long' : m.kind === 'FADING' ? 'short' : 'wait'; return '<div class="m7r tap" data-mx="det:' + m.b + '@' + (m.x === 'mexc' ? 'mexc' : 'bitget') + (m.fut ? '' : 's') + '"><div class="l"><b>' + esc(m.b) + '</b> <small>' + (m.x === 'mexc' ? 'MEXC' : 'Bitget') + (m.fut ? ' Futures' : ' Spot') + ' · ' + m.side + ' · 15 min ' + pct(m.r15) + ' · volume ×' + m.vr.toFixed(1) + ' · day ' + pct(m.chg24) + '</small></div><div class="r"><span class="badge ' + tg + '">' + m.kind + ' · ' + m.score + '</span><div>' + fmtP(m.price, m.sym) + '</div></div></div>'; }).join('') + '</div>'; }
+            }
+            if (ex === 'mexc' || ex === 'bitget') { var j = h.indexOf('<div class="m7row">'); var k2 = h.indexOf('<div class="group', j); /* hide the Binance-only list when a single other exchange is chosen */ var m7end = h.indexOf('<div class="note" style="margin:14px 0 6px"><b>MEXC and Bitget movers'); if (j >= 0 && m7end > j) { var rowEnd = h.indexOf('</div>', j) + 6; h = h.slice(0, rowEnd) + h.slice(m7end); } }
+            return h.replace('<div class="m7row">', '<div class="m7row">' + chips + '</div><div class="m7row">');
+        };
+        X.on('mvex', function (v) { S.mvEx = v; renderView(true); if (v !== 'binance') { fxScan(); } });
+        X.on('mvretry', function () { MV.err = ''; S.rd.busy = false; S.mv.busy = false; MV.t0 = 0; moversScan(); fxScan(); renderView(true); });
+        /* 4) one place: the stand-alone Early movers window now opens Ideas > Bot alerts > Early movers */
+        var _gw2 = gotoWin;
+        window.__idMoveGo = function () { KX.idT = 'alert'; KX.idS = 'move'; return _gw2.call(null, 'ideas'); };
+        gotoWin = function (id, isBack) {
+            if (id === 'movers' && !isBack && window.__idMoveGo) { try { return window.__idMoveGo(); } catch (e) { } }
+            return _gw2.apply(this, arguments);
+        };
+    } catch (e) { try { console.log('p9mv2', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
