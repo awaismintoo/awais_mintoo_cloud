@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.477';
+var BUILD = '2026-11-12.478';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -6962,7 +6962,7 @@ function tpCalc() {
     r.qty = qty; r.qtyS = qty.toFixed(decOf(step)); r.price = price; r.notional = notional; r.lev = L; r.margin = notional / L; r.fees = notional * 0.0005 * 2; r.liq = long ? price * (1 - 1 / L + 0.004) : price * (1 + 1 / L - 0.004); if (T.mode === 'CROSS') { r.liqNote = 'Cross margin: the whole balance backs this trade, so liquidation is further away but risks more.'; }
     if (r.margin > tpAvail() && T.bal) { r.warn = 'Margin needed $' + r.margin.toFixed(2) + ' is more than your available $' + tpAvail().toFixed(2) + '.'; }
     var dt = decOf(f.tick), sl = tpN(T.slP), tp = tpN(T.tpP); r.dt = dt;
-    if (T.slOn && sl > 0) { r.sl = +(Math.round(sl / f.tick) * f.tick).toFixed(dt); r.lossAtSl = qty * Math.abs(price - r.sl) + r.fees; if (long ? r.sl >= price : r.sl <= price) { r.err = 'Stop-loss is on the wrong side of the price.'; } }
+    if (T.slOn && sl > 0) { r.sl = +(Math.round(sl / f.tick) * f.tick).toFixed(dt); r.lossAtSl = qty * Math.abs(price - r.sl) + r.fees; if (long ? r.sl >= price : r.sl <= price) { r.err = 'Stop-loss is on the wrong side of the price.'; } if (!r.err && T.mode !== 'CROSS' && r.liq > 0 && (long ? r.sl <= r.liq * 1.002 : r.sl >= r.liq * 0.998)) { r.err = 'Your stop-loss is beyond the liquidation price (about ' + (+r.liq).toPrecision(5) + ') at ' + L + 'x, so the exchange would liquidate you before the stop works. Move the stop closer or lower the leverage.'; } }
     if (T.tpOn && tp > 0) { r.tp = +(Math.round(tp / f.tick) * f.tick).toFixed(dt); r.gainAtTp = qty * Math.abs(r.tp - price) - r.fees; if (long ? r.tp <= price : r.tp >= price) { r.err = 'Take-profit is on the wrong side of the price.'; } }
     return r;
 }
@@ -20030,7 +20030,7 @@ try {
             var hrs = Math.max(0, (Date.now() - p.at) / 3600000), fund = p.qty * p.entry * FUND * hrs / 8, feeC = p.qty * px * FEE, gross = upnl(p, px), pl = gross - feeC - fund;
             if (why === 'LIQ') { pl = -p.margin; }
             A.bal += pl; A.pos.splice(i, 1);
-            var rec = { id: p.id, sym: p.sym, side: p.side, lev: p.lev, entry: p.entry, exit: px, pl: pl, why: why, at: Date.now(), t0: p.at, gross: gross, fee: (p.feeO || p.qty * p.entry * FEE) + feeC, fund: fund, slip: (p.slipO || 0) + slipC, margin: p.margin, sl: p.sl, tp: p.tp };
+            var rec = { id: p.id, sym: p.sym, side: p.side, lev: p.lev, entry: p.entry, exit: px, pl: pl - (p.feeO || p.qty * p.entry * FEE), why: why, at: Date.now(), t0: p.at, gross: gross, fee: (p.feeO || p.qty * p.entry * FEE) + feeC, fund: fund, slip: (p.slipO || 0) + slipC, margin: p.margin, sl: p.sl, tp: p.tp };
             A.hist.unshift(rec); A.hist = A.hist.slice(0, 2000); save();
             if (why === 'Stop-loss' || why === 'Take-profit' || why === 'LIQ') { /* closed by itself: say so clearly, never vanish silently */
                 try { var nm0 = String(p.sym || '').replace(/USDT$/, ''), lbl = why === 'LIQ' ? 'liquidated' : (why === 'Stop-loss' ? 'stopped out by your stop-loss' : 'closed by your take-profit'); window.__huPush('pt' + p.id + why, pl >= 0 ? '🎯' : '🛑', 'Paper trade ' + nm0 + ' ' + p.side + ': ' + lbl, (pl >= 0 ? '+' : '') + '$' + pl.toFixed(2) + ' (' + (p.margin ? (pl / p.margin * 100).toFixed(1) : '0') + '% of your $' + (+p.margin).toFixed(2) + ' margin) · fees $' + rec.fee.toFixed(2), 'win:ptrade', pl >= 0 ? 'good' : 'bad', 1000); } catch (e) { }
@@ -20109,7 +20109,7 @@ try {
             var h = '';
             if (FS.tab === 'pos') {
                 if (!A.pos.length) { return '<div class="note" style="padding:10px">No open positions. Use the ticket above to open one.</div>'; }
-                A.pos.forEach(function (p, i) { var px = price(p.sym) || p.entry, u = upnl(p, px), pc = u / p.margin * 100; h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + esc(bs(p.sym)) + ' <span style="color:' + (p.side === 'LONG' ? '#16a34a' : '#dc2626') + '">' + (p.side === 'LONG' ? 'Long' : 'Short') + ' ' + p.lev + '×</span></b><b style="color:' + (u >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(u) + ' (' + (pc >= 0 ? '+' : '') + pc.toFixed(1) + '%)</b></div><div class="note" style="margin:3px 0 0">Entry ' + fp(p.entry, p.sym) + ' · Now ' + fp(px, p.sym) + ' · Margin ' + m2(p.margin) + (p.sl ? ' · SL ' + fp(p.sl, p.sym) : '') + (p.tp ? ' · TP ' + fp(p.tp, p.sym) : '') + ' · Liq ' + fp(p.liq, p.sym) + '</div>' + proj(p, px) + (window.__glBtn ? window.__glBtn({ sym: p.sym, side: p.side, entry: p.entry, sl: p.sl, tp: p.tp, lev: p.lev, margin: p.margin, notional: p.notional, kind: '🧾 Paper by hand' }) : '') + '<div style="display:flex;gap:6px;margin-top:6px"><span class="ptc" data-pt="close:' + i + '">Close all</span><span class="ptc" data-pt="half:' + i + '">Close half</span>' + (p.sl !== p.entry ? '<span class="ptc" data-pt="be:' + i + '">Stop to break-even</span>' : '') + '</div></div>'; });
+                A.pos.forEach(function (p, i) { var px = price(p.sym) || p.entry, u = upnl(p, px), pc = u / p.margin * 100; h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + esc(bs(p.sym)) + ' <span style="color:' + (p.side === 'LONG' ? '#16a34a' : '#dc2626') + '">' + (p.side === 'LONG' ? 'Long' : 'Short') + ' ' + p.lev + '×</span></b><b style="color:' + (u >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(u) + ' (' + (pc >= 0 ? '+' : '') + pc.toFixed(1) + '%)</b></div><div class="note" style="margin:3px 0 0">Entry ' + fp(p.entry, p.sym) + ' · Now ' + fp(px, p.sym) + ' · Margin ' + m2(p.margin) + (p.sl ? ' · SL ' + fp(p.sl, p.sym) : '') + (p.tp ? ' · TP ' + fp(p.tp, p.sym) : '') + ' · Liq ' + fp(p.liq, p.sym) + '</div>' + proj(p, px) + (window.__glBtn ? window.__glBtn({ sym: p.sym, side: p.side, entry: p.entry, sl: p.sl, tp: p.tp, lev: p.lev, margin: p.margin, notional: p.notional, kind: '🧾 Paper by hand' }) : '') + '<div style="display:flex;gap:6px;margin-top:6px"><span class="ptc" data-pt="close:' + i + '">Close all</span><span class="ptc" data-pt="half:' + i + '">Close half</span>' + (p.sl !== p.entry ? '<span class="ptc" data-pt="pbe:' + i + '">Stop to break-even</span>' : '') + '</div></div>'; });
             } else if (FS.tab === 'ord') {
                 if (!A.ord.length) { return '<div class="note" style="padding:10px">No waiting orders.</div>'; }
                 A.ord.forEach(function (o, i) { h += '<div class="ptp"><b>' + esc(bs(o.sym)) + ' ' + o.side + ' limit ' + fp(o.lp, o.sym) + '</b><div class="note" style="margin:3px 0 0">Margin ' + m2(o.margin) + ' · ' + o.lev + '×</div><div style="margin-top:6px"><span class="ptc" data-pt="cancel:' + i + '">Cancel</span></div></div>'; });
@@ -20152,7 +20152,7 @@ try {
             else if (k === 'go') { place(); }
             else if (k === 'close') { closePos(+a, price(A.pos[+a].sym) || A.pos[+a].entry, 'Closed by you'); }
             else if (k === 'half') { var p = A.pos[+a]; if (p) { var px = price(p.sym) || p.entry, h = p.qty / 2, pl = upnl({ side: p.side, entry: p.entry, qty: h }, px) - h * px * FEE; A.bal += pl; p.qty = h; p.margin = p.margin / 2; A.hist.unshift({ sym: p.sym, side: p.side, lev: p.lev, entry: p.entry, exit: px, pl: pl, why: 'Closed half', at: Date.now() }); save(); } }
-            else if (k === 'be') { var q = A.pos[+a]; if (q) { q.sl = q.entry; save(); } }
+            else if (k === 'pbe') { var q = A.pos[+a]; if (q) { var pxq = price(q.sym) || q.entry, okq = q.side === 'LONG' ? pxq > q.entry : pxq < q.entry; if (okq) { q.sl = q.entry; q.sl0 = q.sl0 || q.sl; save(); FS.msg = 'Stop moved to your entry price.'; } else { FS.msg = 'The trade is not in profit yet, so the stop cannot move to break-even.'; } } }
             else if (k === 'cancel') { A.ord.splice(+a, 1); save(); }
             else if (k === 'reset') { if (FS.confirm) { A = fresh(); save(); FS.confirm = 0; FS.msg = 'New paper account: $10,000.'; } else { FS.confirm = 1; } }
             again();
@@ -25337,7 +25337,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             tpGo = function () {
                 var T = S.tp, c = trCfg();
                 if (T.conf && !(Date.now() - (T.confAt || 0) < 30000)) { T.conf = ''; }
-                if (c.net !== 'live' || T.reduce || T.busy) { return _tg.apply(this, arguments); }
+                var closes = false; try { closes = !!(T.reduce && !T.dual && ((S.tp && S.tp.pos) || []).some(function (p) { return p.symbol === T.sym && ((+p.positionAmt > 0 && T.side === 'SHORT') || (+p.positionAmt < 0 && T.side === 'LONG')); })); } catch (e0) { }
+                if (c.net !== 'live' || closes || T.busy) { return _tg.apply(this, arguments); }
                 var C = tpCalc(); if (C.err) { return _tg.apply(this, arguments); }
                 if (T.type !== 'MARKET') { T.conf = ''; T.log = ['⚠️ Real-money Limit and conditional entry orders do not place a stop-loss for you, so the 2% safety rule cannot be guaranteed. Use a Market order with the stop-loss switched on, or practise this order type in Paper mode. Nothing was sent.']; try { renderView(true); } catch (e) { } return; }
                 function stopMsg(m) { T.conf = ''; T.log = ['⚠️ ' + m + ' Nothing was sent.']; try { renderView(true); } catch (e) { } }
@@ -26193,6 +26194,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['build 475|exchange balance|mexc balance|bitget balance|live balance|refresh balance|live chat|tawk', 'Build 475: My Wallet shows live balances for every exchange whose API key you linked (Binance Futures, MEXC, Bitget, Bybit, OKX) with a Refresh button; it updates every 30 seconds while the screen is open. MEXC and Bitget coin charts now say MEXC/Bitget everywhere. Back returns to the exact spot in Ideas. Help has an in-app Live chat (Tawk.to) next to WhatsApp.', 'win:wallet']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 476|white tiles|expanded tiles|panic stop|stop everything|pinned height|home tile', 'Build 476: the stretched empty tiles on Home (hero card pinned to 500px, Market mood to 540px) came from two height-pin helpers (Stability and Doctor); both are switched off. The app also repaints when you return to it, redraws a blank screen by itself, and switches to a Lite look if the phone freezes repeatedly. The Home Movers tile was replaced by 🛑 Panic stop (asks first, then stops every bot and closes every trade). Early movers is still in Ideas > Bot alerts and in More.', 'win:overview']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 477|marketplace|marketplace buttons|categories|study wrong answer|i can\'t help with that|live chat baba', 'Build 477: Marketplace categories now work without any feed: tap Goats, Cars, Houses, Mobiles, Shoes, Fruit and the rest to open real Pakistani sites searched for it (OLX, PakWheels, Zameen, Graana, Lamudi, Daraz, Booking, Google Maps), with an optional city box, a Baba AI safe-buying checklist and the Smart Advisor. Study: a long study request no longer returns an old cached answer for a different subject, and a refusal from the free online AI is retried once with a clearer request. Live chat has Ask Baba AI and WhatsApp buttons.', 'win:mkplace']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['build 478|real order gate|fingerprint before order|pin before order|stop beyond liquidation|break even|reduce only|paper profit fee', 'Build 478 (safety): real-money orders now need your fingerprint/PIN first. Stop-loss beyond the liquidation price is refused with a clear message. Reduce-only orders pass the shield only when they truly close a position. Paper trades now subtract the entry fee in profit/loss, and Trade Pro has a Break-even button that only moves the stop when the trade is in profit.', 'win:tradepro']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26969,191 +26972,39 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         window.addEventListener('pageshow', function () { setTimeout(function () { sync(true); }, 400); });
     } catch (e) { try { console.log('p9sync', e); } catch (er) { } }
 })();
-/* ===== p9gate (build 382): ENTRY GATE. One shared, symmetric check used by the chart bar, Trade Ideas BEST, Baba pick alerts and Bot Doctor.
-   A LONG on a coin that already pumped, or that the 15-minute trend has turned against, is not recommended (and the same for SHORT on a coin that already crashed).
-   Falling coins are allowed SHORT when the trend agrees. Unknown (data not loaded yet) never blocks a plain WAIT bar; it fetches in the background. ===== */
-;(function () {
+/* ===== p9gate (build 478): second factor before real money. A real order, the Real Bot switch-on and an order on another exchange each ask for the phone's fingerprint / PIN / pattern (valid 3 minutes). Closing trades and Panic stop never ask. ===== */
+(function () {
     try {
-        var GC = {}, BUSY = {}, ST_B = { fl: 0, fu: 0 };
-        function isX(s) { return typeof s === 'string' && /^X:[^:]+:[fs]:/.test(s); }
-        function isCr(s) { return typeof s === 'string' && ((/USDT$/.test(s) && s.indexOf(':') < 0) || isX(s)); }
-        function sd(x) { return (x === 'SHORT' || x === 'SELL' || x === -1 || x === '-1') ? -1 : 1; }
-        function ema(a, n) { var k = 2 / (n + 1), e = a[0], o = [e], i; for (i = 1; i < a.length; i++) { e = a[i] * k + e * (1 - k); o.push(e); } return o; }
-        function trs(K) { var t = [], i; for (i = 0; i < K.length; i++) { var pc = i ? K[i - 1].c : K[i].c; t.push(Math.max(K[i].h - K[i].l, Math.abs(K[i].h - pc), Math.abs(K[i].l - pc))); } return t; }
-        function atrN(K, n) { var t = trs(K), s = 0, i; for (i = Math.max(0, t.length - n); i < t.length; i++) { s += t[i]; } return s / Math.min(n, t.length); }
-        function st(K, n, m) {
-            ST_B.fl = 0; ST_B.fu = 0; if (K.length < n + 3) { return 0; } var t = trs(K), a = 0, i; for (i = 0; i < n; i++) { a += t[i]; } a /= n; var at = []; at[n - 1] = a; for (i = n; i < K.length; i++) { a = (a * (n - 1) + t[i]) / n; at[i] = a; }
-            var s = n - 1, h = (K[s].h + K[s].l) / 2, fu = h + m * at[s], fl = h - m * at[s], d = K[s].c > h ? 1 : -1;
-            for (i = s + 1; i < K.length; i++) { h = (K[i].h + K[i].l) / 2; var bu = h + m * at[i], bl = h - m * at[i]; fu = (bu < fu || K[i - 1].c > fu) ? bu : fu; fl = (bl > fl || K[i - 1].c < fl) ? bl : fl; if (d < 0) { d = K[i].c > fu ? 1 : -1; } else { d = K[i].c < fl ? -1 : 1; } }
-            ST_B.fl = fl; ST_B.fu = fu; return d;
+        var OKMS = 3 * 60 * 1000, at = 0, pend = null;
+        function nat() { try { return typeof mwNat === 'function' ? mwNat() : null; } catch (e) { return null; } }
+        function say(t) { try { toast(t); } catch (e) { try { alert(t); } catch (er) { } } }
+        function live() { try { return trCfg().net === 'live'; } catch (e) { return false; } }
+        function gate(go, what) {
+            var n = nat(); if (!n || !n.lockAuth) { go(); return; }              /* web build: no phone lock to ask */
+            if (Date.now() - at < OKMS) { go(); return; }
+            if (pend) { return; }
+            var id = 'rg' + Date.now(); pend = { id: id, go: go };
+            try { n.lockAuth(window.__mwTok, id); } catch (e) { pend = null; say('Could not open the phone lock. Real orders need it: set a screen lock in Android settings.'); }
+            try { addLog('SECURITY', 'Asked for fingerprint/PIN before ' + what); } catch (e) { }
         }
-        function adx(K, n) {
-            var pd = 0, md = 0, tr = 0, i, dx = [], ap = 0, am = 0, at = 0;
-            for (i = 1; i < K.length; i++) { var up = K[i].h - K[i - 1].h, dn = K[i - 1].l - K[i].l, p = up > dn && up > 0 ? up : 0, m = dn > up && dn > 0 ? dn : 0, t = Math.max(K[i].h - K[i].l, Math.abs(K[i].h - K[i - 1].c), Math.abs(K[i].l - K[i - 1].c));
-                if (i <= n) { ap += p; am += m; at += t; } else { ap = ap - ap / n + p; am = am - am / n + m; at = at - at / n + t; }
-                if (i >= n && at > 0) { var a = 100 * ap / at, b = 100 * am / at; dx.push(a + b ? 100 * Math.abs(a - b) / (a + b) : 0); } }
-            if (dx.length < n) { return 20; } var s = 0; for (i = dx.length - n; i < dx.length; i++) { s += dx[i]; } return s / n;
-        }
-        /* FAST lane (realtime, 1-minute): for pumps, small coins and big coins that just started to move. Used together with the 15-minute rule (dual criteria):
-           15m agrees = confirmed entry; 15m not yet agreeing but the 1-minute move is real (trend, volume, momentum, not a spike candle) = FAST entry, labelled. */
-        function rsiN(c, n) { var g = 0, l = 0, i; for (i = Math.max(1, c.length - n); i < c.length; i++) { var d = c[i] - c[i - 1]; if (d > 0) { g += d; } else { l -= d; } } return l === 0 ? 100 : 100 - 100 / (1 + g / l); }
-        function fastJudge(K1, K15, chg, dir, lp) {
-            var d = dir > 0, n = K1.length, cl = K1.map(function (x) { return x.c; }), px = lp > 0 ? lp : cl[n - 1], a1 = atrN(K1, 14), a15 = K15 ? atrN(K15, 14) : atrN(K1, 14) * 3.9, sg = st(K1, 10, 3), fl = ST_B.fl, fu = ST_B.fu;
-            var e5 = ema(cl, 5), e20 = ema(cl, 20), mvv = (px - cl[n - 16]), mv = mvv * dir, v3 = 0, v20 = 0, i, r = rsiN(cl, 14), last = K1[n - 1], why = [];
-            for (i = n - 3; i < n; i++) { v3 += K1[i].v; } v3 /= 3; for (i = n - 23; i < n - 3; i++) { v20 += K1[i].v; } v20 /= 20;
-            var spike = v20 > 0 ? v3 / v20 : 1, rev = sg * dir < 0 && (d ? px < fl : px > fu) && -mv >= 1.2 * a15;
-            var okT = sg * dir > 0 && (d ? px > fl : px < fu) && (d ? e5[n - 1] > e20[n - 1] : e5[n - 1] < e20[n - 1]);
-            if (!okT) { why.push('the 1-minute trend does not agree'); }
-            if (!(mv >= 1.2 * a15)) { why.push('no real move in the last 15 minutes'); }
-            if (!(spike >= 1.3)) { why.push('volume is not picking up'); }
-            if ((last.h - last.l) > 4 * a1) { why.push('the last 1-minute candle is already a spike'); }
-            if (Math.abs(px - e20[n - 1]) > 4 * a1) { why.push('price is stretched far from its 1-minute average'); }
-            if (d ? r > 88 : r < 12) { why.push('the move looks overdone, a pullback is likely'); }
-            if (chg * dir > 25) { why.push('already moved ' + Math.abs(chg).toFixed(0) + '% today'); }
-            var sd0 = Math.min(Math.max(d ? px - fl : fu - px, 2 * a1, 0.35 * a15, 0.005 * px), 0.05 * px), stp = d ? px - sd0 : px + sd0, tgt = d ? px + 2 * sd0 : px - 2 * sd0;
-            return { ok: why.length === 0, why: why[0] || '', rev: rev, px: px, stop: stp, tgt: tgt, mv: mvv / cl[n - 16] * 100 };
-        }
-        function raw(sym, iv) {
-            var MINC = iv === '1m' ? 30 : 60; if (Date.now() < BAN) { return Promise.reject(new Error('ban')); }
-            if (isX(sym)) { if (!(window.XCH && window.XCH.kl)) { return Promise.reject(new Error('noxch')); } var z = sym.split(':'); return window.XCH.kl({ x: z[1], fut: z[2] === 'f', s: z[3] }, iv, 150).then(function (K) { if (!K || K.length < MINC) { throw new Error('few'); } return K.slice(-150); }); }
-            var P = ['https://fapi.binance.com/fapi/v1/klines?symbol=' + sym + '&interval=' + iv + '&limit=150', 'https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=' + iv + '&limit=150', 'https://data-api.binance.vision/api/v3/klines?symbol=' + sym + '&interval=' + iv + '&limit=150'], i = 0;
-            function nx() { if (i >= P.length || Date.now() < BAN) { return Promise.reject(new Error('none')); } return fetch(P[i++], { cache: 'no-store' }).then(function (r) { if (r.status === 418 || r.status === 429) { BAN = Date.now() + 60000; throw new Error('ban'); } return r.json(); }).then(function (j) { if (!Array.isArray(j) || j.length < MINC) { throw new Error('x'); } return j.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5] }; }); }).catch(nx); }
-            return nx();
-        }
-        var KC = {}, KQ = [], KN = 0, BAN = 0, KTTL = { '1m': 8000, '15m': 20000, '1h': 120000 };
-        function pumpQ() { while (KN < 4 && KQ.length) { var jb = KQ.shift(); KN++; (function (jb) { raw(jb.sym, jb.iv).then(jb.res, jb.rej).then(function () { KN--; pumpQ(); }); })(jb); } }
-        function get(sym, iv) {
-            var key = sym + '|' + iv, c = KC[key], now = Date.now(); if (c && now - c.t < (KTTL[iv] || 20000)) { return c.p; }
-            var pr = new Promise(function (res, rej) { KQ.push({ sym: sym, iv: iv, res: res, rej: rej }); pumpQ(); }); KC[key] = { t: now, p: pr };
-            pr.catch(function () { if (KC[key] && KC[key].p === pr) { delete KC[key]; } });
-            try { var ks = Object.keys(KC); if (ks.length > 400) { ks.sort(function (a, b) { return KC[a].t - KC[b].t; }).slice(0, 150).forEach(function (k) { delete KC[k]; }); } } catch (e) { }
-            return pr;
-        }
-        /* pure judgement: K15, K1h candle arrays, chg24 percent, dir +1/-1. Returns { ok, hard:[], soft:n, why } */
-        function judge(K15, K1, chg, dir, lp) {
-            var hard = [], pump = false, px = lp > 0 ? lp : K15[K15.length - 1].c, cl15 = K15.map(function (x) { return x.c; }), cl1 = K1.map(function (x) { return x.c; });
-            var a15 = atrN(K15, 14), a1 = atrN(K1, 14), e20 = ema(cl15, 20), e50h = ema(cl1, 50), s15 = st(K15, 10, 3), fl15 = ST_B.fl, fu15 = ST_B.fu, s1 = st(K1, 10, 3);
-            var d = dir > 0, c24 = isFinite(chg) ? chg : 0, mv = d ? c24 : -c24;
-            if (mv > 15) { pump = true; hard.push(d ? 'already up ' + c24.toFixed(0) + '% today: chasing a pump' : 'already down ' + Math.abs(c24).toFixed(0) + '% today: chasing a crash'); }
-            else if (mv > 8 && s15 * dir < 0) { hard.push((d ? 'pumped +' + c24.toFixed(0) + '% today' : 'dropped ' + c24.toFixed(0) + '% today') + ' and the 15-minute trend has already turned back'); }
-            if (s15 * dir < 0) { hard.push('the 15-minute trend points ' + (d ? 'down' : 'up') + ' (against this trade)'); }
-            var n = K15.length, hi1 = 0, hi0 = 0, lo1 = 1e99, lo0 = 1e99, i; for (i = n - 8; i < n; i++) { hi1 = Math.max(hi1, K15[i].h); lo1 = Math.min(lo1, K15[i].l); } for (i = n - 16; i < n - 8; i++) { hi0 = Math.max(hi0, K15[i].h); lo0 = Math.min(lo0, K15[i].l); }
-            if (d && hi1 < hi0 && lo1 < lo0 && px < e20[n - 1]) { hard.push('price is making lower highs and lower lows below its average'); }
-            if (!d && lo1 > lo0 && hi1 > hi0 && px > e20[n - 1]) { hard.push('price is making higher highs and higher lows above its average'); }
-            var soft = 0, ok5 = [];
-            if (Math.abs(px - e20[n - 1]) <= 1.5 * a15 && Math.abs(px - e20[n - 1]) / a1 <= 2) { soft++; } else { ok5.push('price is stretched far from its average (late entry)'); }
-            if (adx(K15, 14) >= 20) { soft++; } else { ok5.push('the price is going sideways'); }
-            var m12 = ema(cl15, 12), m26 = ema(cl15, 26), mac = m12.map(function (v, j) { return v - m26[j]; }), sg = ema(mac, 9), h1 = mac[n - 1] - sg[n - 1], h0 = mac[n - 2] - sg[n - 2];
-            if ((h1 > 0 && h1 >= h0 && d) || (h1 < 0 && h1 <= h0 && !d)) { soft++; } else { ok5.push('momentum is not building in this direction'); }
-            var v = (K15[n - 1].v + K15[n - 2].v) / 2, vm = K15.slice(n - 22, n - 2).map(function (x) { return x.v; }).sort(function (a, b) { return a - b; }), v20 = vm.length ? (vm[Math.floor(vm.length / 2)] + vm[Math.ceil(vm.length / 2) - 1]) / 2 : 0; if (v20 > 0 && v >= v20 * 0.9) { soft++; } else { ok5.push('trading volume is low'); }
-            if (s1 * dir > 0 && (d ? cl1[cl1.length - 1] > e50h[e50h.length - 1] : cl1[cl1.length - 1] < e50h[e50h.length - 1])) { soft++; } else { ok5.push('the 1-hour trend does not agree'); }
-            var okk = !hard.length && soft >= 3, why = hard.length ? hard[0] : (soft < 3 ? 'only ' + soft + ' of 5 confirmations: ' + ok5.slice(0, 2).join('; ') : 'trend, momentum and volume agree');
-            return { ok: okk, pump: pump, hard: hard, soft: soft, why: why, fl: fl15, fu: fu15, px: px, a15: a15 };
-        }
-        var TL = [];
-        function tally(r) { var k = r.ok ? (r.mode === 'fast' ? 'passed (fast)' : 'passed') : String(r.why || 'blocked').replace(/\d+%/g, 'N%').replace(/ \(fast check:.*$/, '').slice(0, 60); TL.push(k); if (TL.length > 200) { TL.shift(); } }
-        window.__gateStats = function () { var m = {}, ks; TL.forEach(function (k) { m[k] = (m[k] || 0) + 1; }); ks = Object.keys(m).sort(function (a, b) { return m[b] - m[a]; }); return { n: TL.length, top: ks.slice(0, 4).map(function (k) { return k + ' (' + m[k] + ')'; }) }; };
-        function run(sym, dir) {
-            var key = sym + (dir > 0 ? 'L' : 'S'); if (BUSY[key]) { return BUSY[key]; }
-            var tk = (typeof S !== 'undefined' && S.tick && S.tick[sym]) || {}, lp = +tk.p, pr;
-            try { pr = Promise.all([get(sym, '15m').catch(function () { return null; }), get(sym, '1h').catch(function () { return null; }), get(sym, '1m').catch(function () { return null; })]); } catch (e0) { pr = Promise.reject(e0); }
-            BUSY[key] = pr.then(function (a) {
-                if (!a[2]) { throw new Error('no1m'); }
-                /* indicators are read on CLOSED candles only (a forming candle makes the verdict wobble); the live price is used for the price checks */
-                var K15 = a[0] ? a[0].slice(0, -1) : null, KH = a[1] ? a[1].slice(0, -1) : null, K1 = a[2].slice(0, -1);
-                var ch = +tk.chg; if (!isFinite(ch) && KH && KH.length > 25) { var q = KH[KH.length - 25].c; ch = (KH[KH.length - 1].c - q) / q * 100; }
-                var r = (K15 && KH && K15.length > 40 && KH.length > 40) ? judge(K15, KH, ch, dir, lp) : { ok: false, pump: false, hard: ['new coin'], soft: 0, why: 'not enough 15-minute history yet (new coin)' }, f = null;
-                try { f = fastJudge(K1, K15 && K15.length > 20 ? K15 : null, ch, dir, lp); } catch (e) { }
-                r.mode = '15m';
-                /* TRACK RECORD (the app's own measure-first rule): how Baba's signals did on THIS coin's recent candles, after fees. A coin whose recent signals lost money is not recommended. */
-                try {
-                    if (K15 && K15.length >= 120 && window.__babaSig && window.__ut && window.__ut.sim) {
-                        var Rg = window.__babaSig(K15), sg9 = window.__ut.stats(window.__ut.sim(K15, Rg.pos)); r.track = { n: sg9.n, win: sg9.win, avg: sg9.avg };
-                        if (sg9.n >= 8 && sg9.avg <= 0) { r.trackBad = 'Baba signals on this coin lost money after fees on their last ' + sg9.n + ' trades (' + Math.round(sg9.win * 100) + '% winners, ' + (sg9.avg >= 0 ? '+' : '') + sg9.avg.toFixed(2) + '% each, past test)'; }
-                    }
-                } catch (et) { }
-                if (f && f.rev && r.ok) { r.ok = false; r.why = 'realtime reversal: the 1-minute trend just broke the other way with a real move'; r.mode = 'fast'; r.rev = 1; }
-                else if (!r.ok && f && f.ok) {
-                    /* the fast lane may replace "the 15-minute trend has not confirmed yet", never the pump cap, unless the move is fresh (most of today's move happened in the last 15 minutes) and not above 25% */
-                    var fresh = !r.pump || (ch * dir <= 25 && Math.abs(f.mv) >= 0.6 * Math.abs(ch));
-                    if (fresh) { r.ok = true; r.mode = 'fast'; r.fast = f; r.why = 'FAST entry: the 1-minute move is real (trend, volume, momentum) but the 15-minute trend has not confirmed yet. Higher risk, use a small size.'; }
-                    else { r.why += ' (fast lane also refuses: most of the move is old)'; }
-                }
-                else if (!r.ok && f) { r.why += ' (fast check: ' + f.why + ')'; }
-                /* hysteresis: a shown entry is kept through ONE failing read (not for a pump or a reversal) so the answer does not flicker */
-                if (r.trackBad && (r.ok || r.mode === 'fast')) { r.ok = false; r.why = r.trackBad; r.pump = r.pump; }
-                var prev = GC[key];
-                var hardNow = r.hard && r.hard.length;
-                /* build 392 commitment: an entry that passed in full stays valid for up to 15 minutes through SOFT dips (volume, ADX, momentum wobble). It ends at once on a hard reason: pump, reversal, trend or structure against, bad track record, Bitcoin shock or a stop break (those are checked live in __gate). */
-                if (prev && prev.ok && !prev.unknown && !r.ok && !r.pump && !r.rev && !r.trackBad && !hardNow && (Date.now() - (prev.since || prev.t)) < 900000) { var kp = {}; for (var kk in prev) { kp[kk] = prev[kk]; } kp.fails = (prev.fails || 0) + 1; kp.t = Date.now(); kp.since = prev.since || prev.t; GC[key] = kp; delete BUSY[key]; return kp; }
-                r.fails = 0; r.t = Date.now(); r.since = (prev && prev.ok && r.ok && prev.since) ? prev.since : r.t; GC[key] = r; delete BUSY[key]; try { tally(r); } catch (e) { } return r;
-            }).catch(function () { delete BUSY[key]; var r = { ok: false, unknown: 1, why: 'could not load the entry data yet (retrying)', t: Date.now() }; GC[key] = r; return r; });
-            return BUSY[key];
-        }
-        window.__gateJudge = judge; window.__gateFast = fastJudge;
-        window.__gate = function (sym, side) {
-            if (!isCr(sym)) { return null; } var dir = sd(side), key = sym + (dir > 0 ? 'L' : 'S'), c = GC[key];
-            if (!c || Date.now() - c.t > (c.unknown ? 30000 : 30000)) { run(sym, dir); }
-            if (!c) { return null; } if (c.unknown) { return c; }
-            /* Bitcoin shock: an alt LONG is not an entry while Bitcoin fell 1% or more in the last 15 minutes (mirror for SHORT) */
-            try {
-                if (sym !== 'BTCUSDT' && !isX(sym)) { var hb = H['BTCUSDT'], tb = (typeof S !== 'undefined' && S.tick) ? S.tick.BTCUSDT : null;
-                    var h0b = null, jb; if (hb) { for (jb = 0; jb < hb.length; jb++) { if (Date.now() - hb[jb].t <= 900000) { h0b = hb[jb]; break; } } }
-                    if (h0b && Date.now() - h0b.t >= 600000 && tb && +tb.p > 0) { var b15 = (+tb.p - h0b.p) / h0b.p * 100;
-                        if (dir > 0 && b15 <= -1) { return { ok: false, why: 'Bitcoin fell ' + Math.abs(b15).toFixed(1) + '% in the last 15 minutes, alt LONGs wait', live: 1, t: c.t }; }
-                        if (dir < 0 && b15 >= 1) { return { ok: false, why: 'Bitcoin rose ' + b15.toFixed(1) + '% in the last 15 minutes, alt SHORTs wait', live: 1, t: c.t }; } } }
-            } catch (e) { }
-            /* live check on top of the cached read: a price that just broke the 15-minute trend stop, or fell/jumped sharply since the read, is not an entry */
-            try {
-                var t = (typeof S !== 'undefined' && S.tick) ? S.tick[sym] : null, px = t ? +t.p : 0;
-                if (c.ok && c.mode !== 'fast' && px > 0 && c.px > 0) {
-                    if (dir > 0 && ((c.fl && px < c.fl) || px < c.px - 2.5 * c.a15)) { return { ok: false, why: 'price just fell below the level that would cancel this idea, or dropped sharply in the last minutes', live: 1, t: c.t }; }
-                    if (dir < 0 && ((c.fu && px > c.fu) || px > c.px + 2.5 * c.a15)) { return { ok: false, why: 'price just rose above the level that would cancel this idea, or jumped sharply in the last minutes', live: 1, t: c.t }; }
-                }
-            } catch (e) { }
-            return c;
+        var _ml = window.__mwLock;
+        window.__mwLock = function (cb, ok, msg) {
+            if (String(cb).indexOf('rg') === 0) {
+                var p = pend; if (!p || p.id !== cb) { return; } pend = null;
+                if (ok) { at = Date.now(); try { addLog('SECURITY', 'Phone lock confirmed before a real action'); } catch (e) { } p.go(); }
+                else { say('Not confirmed' + (msg ? ': ' + msg : '') + '. Nothing was sent. Real orders need your fingerprint, PIN or pattern. If your phone has no screen lock, set one in Android settings.'); try { addLog('SECURITY', 'Real action cancelled: phone lock not confirmed'); } catch (e) { } try { renderView(true); } catch (e) { } }
+                return;
+            }
+            return _ml && _ml.apply(this, arguments);
         };
-        window.__gateReady = function (sym, side) { if (!isCr(sym)) { return true; } return !!GC[sym + (sd(side) > 0 ? 'L' : 'S')]; };
-        window.__gateWait = function (sym, side) { if (!isCr(sym)) { return Promise.resolve(null); } var k0 = sym + (sd(side) > 0 ? 'L' : 'S'), c0 = GC[k0]; if (c0 && !c0.unknown && Date.now() - c0.t < 20000) { return Promise.resolve(window.__gate(sym, side)); } return run(sym, sd(side)); };
-        /* 1. Trade Ideas BEST needs the gate */
-        try { var _ic = idCalc; idCalc = function (c) { var R = _ic.apply(this, arguments); try { if (R && R.best && c && c.sym) { var g = window.__gate(c.sym, c.side); if (!g || !g.ok) { R.best = false; R.gate = g ? g.why : 'checking the trend…'; } } } catch (e) { } return R; }; } catch (e) { }
-        /* 2. chart bar */
-        try { var _tr = window.__recFull; if (_tr) { window.__recFull = function (sy) { var r = _tr(sy); try { if (r && r.side !== 'WAIT') { var g = window.__gate(sy, r.side); if (g && !g.ok) { r.late = 'Entry check: ' + g.why; r.side = 'WAIT'; r.gate = 1; } } } catch (e) { } return r; }; window.__recSide = function (sy) { return window.__recFull(sy).side; }; } } catch (e) { }
-        /* 3. alerts that say LONG/SHORT wait for the gate */
-        try { var _ap = alertPush; alertPush = function (sym, title, body) { var self = this, a = arguments; try { var m = typeof title === 'string' && /\b(LONG|SHORT)\b/.exec(title); if (m && isCr(sym) && !window.__gateNoWrap) { window.__gateWait(sym, m[1]).then(function (g) { if (g && !g.ok) { return; } var tries = 0; (function ask() { var ch = window.__chiefHead ? window.__chiefHead(sym, m[1]) : true; if (ch === undefined && tries++ < 6) { setTimeout(ask, 1500); return; } if (ch === false || ch === undefined) { return; } try { _ap.apply(self, a); } catch (e) { } })(); }); return; } } catch (e) { } return _ap.apply(this, arguments); }; } catch (e) { }
-
-        /* ---------- FAST MOVERS: realtime scan of live prices; a coin that moves fast gets the 1-minute check and, if it passes, shows in Do now ---------- */
-        var H = {}, FAST = {}, CD = {}, SENT = {}, BLK = [];
-        function base(s) { return String(s).replace(/USDT$/, ''); }
-        function scanTick() {
-            try {
-                if (typeof S === 'undefined' || !S.tick) { return; } var now = Date.now(), cand = [], k;
-                for (k in S.tick) { var t = S.tick[k]; if (!/USDT$/.test(k) || !t || !(+t.p > 0) || !((+t.q || 0) >= 5e6)) { continue; }
-                    var h = H[k] || (H[k] = []); if (!h.length || now - h[h.length - 1].t >= 3000) { h.push({ t: now, p: +t.p }); } while (h.length && now - h[0].t > 1200000) { h.shift(); }
-                    if (h.length < 4) { continue; } var p5 = null, p15 = h[0].p, j; for (j = h.length - 1; j >= 0; j--) { if (now - h[j].t >= 300000) { p5 = h[j].p; break; } } if (p5 === null) { p5 = h[0].p; if (now - h[0].t < 120000) { continue; } }
-                    var m5 = (+t.p - p5) / p5 * 100, m15 = (+t.p - p15) / p15 * 100; if (Math.abs(m5) >= 1.5 || Math.abs(m15) >= 3) { cand.push({ s: k, m5: m5, m15: m15, sc: Math.max(Math.abs(m5), Math.abs(m15) / 2) }); } }
-                cand.sort(function (a, b) { return b.sc - a.sc; });
-                var n = 0; cand.forEach(function (c) { if (n >= 4 || (CD[c.s] && now - CD[c.s] < 45000)) { return; } n++; CD[c.s] = now; var side = (Math.abs(c.m5) >= 1.5 ? c.m5 : c.m15) > 0 ? 'LONG' : 'SHORT';
-                    window.__gateWait(c.s, side).then(function (g) {
-                        var key = c.s + side; if (g && g.ok && !g.unknown && g.mode) { var chv = window.__chiefHead ? window.__chiefHead(c.s, side, g.mode === 'fast') : true; if (chv === undefined) { CD[c.s] = 0; return; } if (chv === false) { delete FAST[key]; BLK = BLK.filter(function (b) { return b.key !== key; }); BLK.unshift({ key: key, sym: c.s, side: side, m5: c.m5, why: 'the Baba advisers do not agree', t: Date.now() }); BLK = BLK.slice(0, 3); return; } var o = FAST[key], f = g.fast || {}; FAST[key] = { sym: c.s, side: side, t: o ? o.t : Date.now(), px: f.px || (S.tick[c.s] && +S.tick[c.s].p), stop: f.stop, tgt: f.tgt, m5: c.m5, mode: g.mode, why: g.why };
-                            if (!SENT[key] || Date.now() - SENT[key] > 1800000) { SENT[key] = Date.now(); try { window.__gateNoWrap = 1; alertPush(c.s, '⚡ Fast mover: ' + base(c.s) + ' ' + side, (g.mode === 'fast' ? 'Realtime move, 15-minute not confirmed yet (higher risk, small size). ' : 'Moving with the 15-minute trend. ') + (c.m5 >= 0 ? '+' : '') + c.m5.toFixed(1) + '% in 5 min. Tap for the chart.'); } catch (e) { } window.__gateNoWrap = 0; } }
-                        else { delete FAST[key]; if (g && !g.unknown) { BLK = BLK.filter(function (b) { return b.key !== key; }); BLK.unshift({ key: key, sym: c.s, side: side, m5: c.m5, why: String(g.why || '').slice(0, 90), t: Date.now() }); BLK = BLK.slice(0, 3); } } }); });
-                Object.keys(FAST).forEach(function (key) { var o = FAST[key], g = window.__gate(o.sym, o.side), lv = S.tick[o.sym], lpx = lv ? +lv.p : 0; if ((g && !g.ok) || (window.__chiefHead && window.__chiefHead(o.sym, o.side, o.mode === 'fast') === false) || now - o.t > 480000 || (lpx > 0 && o.stop && (o.side === 'LONG' ? lpx < o.stop : lpx > o.stop))) { delete FAST[key]; } });
-            } catch (e) { }
-        }
-        setInterval(scanTick, 4000);
-        function blkLine() { if (!BLK.length) { return ''; } return '<br><small>Moved but blocked: ' + BLK.map(function (b) { return base(b.sym) + ' ' + (b.m5 >= 0 ? '+' : '') + b.m5.toFixed(1) + '% (' + b.why.replace(/</g, '&lt;') + ')'; }).join('; ') + '</small>'; }
-        window.__fastGet = function (sym) { var r = null; Object.keys(FAST).forEach(function (k) { if (FAST[k].sym === sym && (!r || FAST[k].t > r.t)) { r = FAST[k]; } }); return r; };
-        window.__fastList = function () { return Object.keys(FAST).map(function (k) { return FAST[k]; }); };
-        window.__fastBox = function () {
-            var L = window.__fastList(), now = Date.now(); if (!L.length) { return '<div class="note" style="margin:0 0 8px;min-height:5.6em">⚡ <b>Fast movers</b>: watching live prices of Binance USDT coins (24h volume above 5M) every few seconds. Nothing is moving fast with a clean 1-minute setup right now.' + blkLine() + '</div>'; }
-            var h = '<div class="note" style="margin:0 0 4px">⚡ <b>Fast movers (realtime)</b>: coins moving now that passed the 1-minute check. Riskier than the 15-minute rule: use a small size and the stop shown.</div><div class="group">';
-            L.sort(function (a, b) { return b.t - a.t; }).forEach(function (o) { var L1 = o.side === 'LONG', fm = function (x) { return x ? (x >= 100 ? x.toFixed(2) : x >= 1 ? x.toFixed(4) : x.toPrecision(4)) : '?'; };
-                h += '<div class="row tap" data-act="chart:' + o.sym + '"><span><b>' + base(o.sym) + '</b> <span style="color:' + (L1 ? '#1a9d4a' : '#d1352b') + '">' + (L1 ? 'LONG' : 'SHORT') + '</span> <small class="mut">' + (o.mode === 'fast' ? '⚡ FAST' : '15m confirmed') + ' · ' + (o.m5 >= 0 ? '+' : '') + o.m5.toFixed(1) + '% in 5 min · ' + Math.max(0, Math.round((now - o.t) / 60000)) + ' min ago · valid ' + Math.max(0, Math.round((o.t + 480000 - now) / 60000)) + ' more min</small><br><small class="mut">now ' + fm(o.px) + ' · stop ' + fm(o.stop) + ' · target ' + fm(o.tgt) + '</small></span></div>'; });
-            return h + '</div><div class="note" style="margin:4px 0 8px">Seen a few minutes ago may already be late: compare the price now with the stop and target before you enter. These are possible levels, not promises.' + blkLine() + '</div>';
-        };
-        window.__fastScan = scanTick;
-    } catch (e) { }
+        var _tp = tpGo;
+        tpGo = function () { var self = this, a = arguments; try { if (live() && S.tp && String(S.tp.conf).trim().toUpperCase() === 'TRADE' && !S.tp.busy) { gate(function () { _tp.apply(self, a); }, 'a real order'); return; } } catch (e) { } return _tp.apply(this, arguments); };
+        var _nx = nxGo;
+        nxGo = function () { var self = this, a = arguments; try { var N = S.nx; if (N && N.ack && !N.busy && !(N.x === 'bitget' && N.mk === 'fut' && N.demo)) { gate(function () { _nx.apply(self, a); }, 'an order on ' + N.x); return; } } catch (e) { } return _nx.apply(this, arguments); };
+        var _ra = rbActivate;
+        rbActivate = function () { var self = this, a = arguments; try { var R = S.rb; if (live() && R && R.ack1 && R.ack2 && String(R.ph || '').trim().toUpperCase() === 'ACTIVATE REAL BOT') { gate(function () { _ra.apply(self, a); }, 'switching on the Real Bot'); return; } } catch (e) { } return _ra.apply(this, arguments); };
+        window.__realGate = gate;
+    } catch (e) { try { console.log('p9gate', e); } catch (er) { } }
 })();
 /* ===== p9look (build 379): Look & mode in the modern look. Four tabs (no re-render when you switch), a "Right now" card, Glass/Plain beside the looks, honest sentences, STOP preview. Nothing removed: same controls, same handlers. ===== */
 (function () {
@@ -28528,6 +28379,40 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         document.addEventListener('input', function (e) { var t = e.target; if (t && t.id === 'mkCity') { KX.mkcity = t.value; } }, true);
         document.addEventListener('change', function (e) { var t = e.target; if (t && t.id === 'mkCity') { KX.mkcity = t.value; renderView(true); } }, true);
     } catch (e) { try { console.log('p9mkt2', e); } catch (er) { } }
+})();
+/* ===== p9gate (build 478): second factor before real money. A real order, the Real Bot switch-on and an order on another exchange each ask for the phone's fingerprint / PIN / pattern (valid 3 minutes). Closing trades and Panic stop never ask. ===== */
+(function () {
+    try {
+        var OKMS = 3 * 60 * 1000, at = 0, pend = null;
+        function nat() { try { return typeof mwNat === 'function' ? mwNat() : null; } catch (e) { return null; } }
+        function say(t) { try { toast(t); } catch (e) { try { alert(t); } catch (er) { } } }
+        function live() { try { return trCfg().net === 'live'; } catch (e) { return false; } }
+        function gate(go, what) {
+            var n = nat(); if (!n || !n.lockAuth) { go(); return; }              /* web build: no phone lock to ask */
+            if (Date.now() - at < OKMS) { go(); return; }
+            if (pend) { return; }
+            var id = 'rg' + Date.now(); pend = { id: id, go: go };
+            try { n.lockAuth(window.__mwTok, id); } catch (e) { pend = null; say('Could not open the phone lock. Real orders need it: set a screen lock in Android settings.'); }
+            try { addLog('SECURITY', 'Asked for fingerprint/PIN before ' + what); } catch (e) { }
+        }
+        var _ml = window.__mwLock;
+        window.__mwLock = function (cb, ok, msg) {
+            if (String(cb).indexOf('rg') === 0) {
+                var p = pend; if (!p || p.id !== cb) { return; } pend = null;
+                if (ok) { at = Date.now(); try { addLog('SECURITY', 'Phone lock confirmed before a real action'); } catch (e) { } p.go(); }
+                else { say('Not confirmed' + (msg ? ': ' + msg : '') + '. Nothing was sent. Real orders need your fingerprint, PIN or pattern. If your phone has no screen lock, set one in Android settings.'); try { addLog('SECURITY', 'Real action cancelled: phone lock not confirmed'); } catch (e) { } try { renderView(true); } catch (e) { } }
+                return;
+            }
+            return _ml && _ml.apply(this, arguments);
+        };
+        var _tp = tpGo;
+        tpGo = function () { var self = this, a = arguments; try { if (live() && S.tp && String(S.tp.conf).trim().toUpperCase() === 'TRADE' && !S.tp.busy) { gate(function () { _tp.apply(self, a); }, 'a real order'); return; } } catch (e) { } return _tp.apply(this, arguments); };
+        var _nx = nxGo;
+        nxGo = function () { var self = this, a = arguments; try { var N = S.nx; if (N && N.ack && !N.busy && !(N.x === 'bitget' && N.mk === 'fut' && N.demo)) { gate(function () { _nx.apply(self, a); }, 'an order on ' + N.x); return; } } catch (e) { } return _nx.apply(this, arguments); };
+        var _ra = rbActivate;
+        rbActivate = function () { var self = this, a = arguments; try { var R = S.rb; if (live() && R && R.ack1 && R.ack2 && String(R.ph || '').trim().toUpperCase() === 'ACTIVATE REAL BOT') { gate(function () { _ra.apply(self, a); }, 'switching on the Real Bot'); return; } } catch (e) { } return _ra.apply(this, arguments); };
+        window.__realGate = gate;
+    } catch (e) { try { console.log('p9gate', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
