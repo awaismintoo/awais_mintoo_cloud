@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.483';
+var BUILD = '2026-11-12.491';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -2497,7 +2497,7 @@ morningCard = function (o) { return _mc103(o) + mwChartBtn(o && o.sym); };
 var mwHostEl = null, mwHostSig = '';
 function mwNewsFor(re, groups) { return (S.news || []).filter(function (n) { return n.title && (!n.t || nowMs() - n.t < 72 * 3600000) && (groups.indexOf(n.g) >= 0 || re.test(n.title)); }).slice(0, 14); }
 function mwTape(title, items) {
-    var txt = items.length ? items.map(function (i) { return '<span class="tap" data-act="win:news" data-nt="' + esc(i.title) + '"><b>' + esc(i.src || '') + '</b> ' + esc(i.title) + '</span>'; }).join('') : '<span>Loading headlines… (if this stays empty, open the News window and check the source list)</span>';
+    var txt = items.length ? items.map(function (i) { return '<span class="tap" data-act="win:news" data-ntt="' + esc(i.title) + '"><b>' + esc(i.src || '') + '</b> ' + esc(i.title) + '</span>'; }).join('') : '<span>Loading headlines… (if this stays empty, open the News window and check the source list)</span>';
     return '<div class="mwtape"><b class="mwtt">' + title + '</b><div class="mwtk"><div class="mwtm" style="animation-duration:' + Math.max(40, items.length * 9) + 's">' + txt + txt + '</div></div></div>';
 }
 function mwTile(label, sym) {
@@ -5756,7 +5756,7 @@ function pfPos() {
 function pfBuild() {
     if (document.getElementById('pfm')) { return; } pfCSS();
     var m = document.createElement('div'); m.id = 'pfm'; m.innerHTML = '<div class="pfbub"></div><div class="pfav">' + PF_AV + '</div>'; document.body.appendChild(m);
-    var p = document.createElement('div'); p.id = 'pfp'; p.innerHTML = '<div class="pfh"><div class="pfav2">' + PF_AV + '</div><div><b>Baba AI</b><small>Ask about the app, coins, trading, currencies</small></div><span class="pfx" data-pf="close">✕</span></div><div class="pfmsgs" id="pfmsgs"></div><div class="pfchips" id="pfchips"></div><div class="pfin"><input id="pfq" placeholder="Ask me anything…" autocomplete="off"><button data-pf="send">Ask</button></div>'; document.body.appendChild(p);
+    var p = document.createElement('div'); p.id = 'pfp'; p.innerHTML = '<div class="pfh"><div class="pfav2">' + PF_AV + '</div><div><b>Baba AI</b><small>Ask about trading, digital marketing, business, study, shopping, Pakistan and the world</small></div><span class="pfx" data-pf="close">✕</span></div><div class="pfmsgs" id="pfmsgs"></div><div class="pfchips" id="pfchips"></div><div class="pfin"><input id="pfq" placeholder="Ask me anything…" autocomplete="off"><button data-pf="send">Ask</button></div>'; document.body.appendChild(p);
     pfPos(); window.addEventListener('resize', pfPos); pfDrag(m);
     p.addEventListener('click', function (e) {
         var el = e.target.closest ? e.target.closest('[data-pf],[data-pfq],[data-pfgo]') : null; if (!el) { return; }
@@ -5777,7 +5777,7 @@ function pfDrag(m) {
 function pfToggle() { if (PF.open) { pfClose(); } else { pfOpen(); } }
 function pfOpen() {
     pfBuild(); var m = document.getElementById('pfm'), p = document.getElementById('pfp'); PF.open = true; p.classList.add('on'); m.classList.remove('tip'); m.classList.add('wave'); setTimeout(function () { m.classList.remove('wave'); }, 950);
-    if (!PF.msgs.length) { pfSay('Hello! I am <b>Baba AI</b>. I know this app, indicators, coins, currencies, gold and trading basics. Type a question, or tap a topic below. I am not a financial adviser and cannot promise profit, but I will always tell you honestly what I know.', 'Hi'); }
+    if (!PF.msgs.length) { pfSay('Hello! I am <b>Baba AI</b>. I can help with trading and this app, digital marketing, Pakistan and world business, study, shopping and everyday questions. Tap the keyboard to type, or the microphone to speak. I am not a financial adviser and cannot promise profit, but I will always tell you honestly what I know.', 'Hi'); }
     pfChips(); pfRender();
 }
 function pfClose() { var p = document.getElementById('pfp'); if (p) { p.classList.remove('on'); } PF.open = false; }
@@ -8943,8 +8943,8 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
 /* ===== v10.8 .30: Exchange layer: Binance / MEXC / Bitget data adapters, listing check, global exchange selector (S.xch) ===== */
 (function () {
     function nowv() { return Date.now(); }
-    var LIST = [['binance', 'Binance'], ['mexc', 'MEXC'], ['bitget', 'Bitget']];
-    S.xch = (function () { var v = ls('mintoosuite_xch', 'all'); return /^(all|binance|mexc|bitget)$/.test(v) ? v : 'all'; })();
+    var LIST = [['binance', 'Binance'], ['mexc', 'MEXC'], ['bitget', 'Bitget'], ['bybit', 'Bybit'], ['okx', 'OKX']];
+    S.xch = (function () { var v = ls('mintoosuite_xch', 'all'); return /^(all|binance|mexc|bitget|bybit|okx)$/.test(v) ? v : 'all'; })();
     var BG = { spot: null, fut: null, at: 0, busy: false, err: '' };
     function xget(url) { return nxReq('GET', url, {}).then(function (r) { if (!r.ok || !r.j) { throw new Error('HTTP ' + r.status); } return r.j; }); }
     function bgNorm(arr, fut) {
@@ -8991,7 +8991,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
         if (x === 'binance') { return binFut(b) ? 'f' : ''; }
         var o = info(b); if (x === 'mexc') { return o.mf && !o.bad.mf ? 'f' : o.ms && !o.bad.ms ? 's' : ''; } if (x === 'bitget') { return o.gf && !o.bad.gf ? 'f' : o.gs && !o.bad.gs ? 's' : ''; } return 'f';
     }
-    function where(b) { return LIST.filter(function (e) { return listed(e[0], b); }).map(function (e) { return e[1]; }); }
+    function where(b) { return LIST.filter(function (e) { return (window.XCH && window.XCH.listed ? window.XCH.listed : listed)(e[0], b); }).map(function (e) { return e[1]; }); }
     /* ----- candles ----- */
     function mxKl(c, tf, n) {
         if (c.fut) {
@@ -9045,7 +9045,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
     }
     var t;
     /* ----- selector bar ----- */
-    function set(x) { S.xch = x; lss('mintoosuite_xch', x); try { IDS.at = 0; } catch (e) { } if (x === 'bitget') { bgLoad(true); } if (x === 'mexc') { try { mxLoad(); } catch (e) { } } if (window.__botSelect) { window.__botSelect(); } try { renderView(true); } catch (e) { } }
+    function set(x) { S.xch = x; lss('mintoosuite_xch', x); try { IDS.at = 0; } catch (e) { } if (x === 'bitget') { bgLoad(true); } if (x === 'mexc') { try { mxLoad(); } catch (e) { } } if ((x === 'bybit' || x === 'okx') && window.__exLoad) { window.__exLoad(x === 'bybit' ? 'by' : 'ok'); } if (window.__botSelect) { window.__botSelect(); } try { renderView(true); } catch (e) { } }
     function bar(withAll) {
         var chips = (withAll === false ? [] : [['all', 'All']]).concat(LIST), cur = S.xch === 'all' && withAll === false ? 'binance' : S.xch;
         return '<div class="m7row xchb">' + chips.map(function (e) { return '<span class="' + (cur === e[0] ? 'on' : '') + '" data-xch="' + e[0] + '">' + e[1] + '</span>'; }).join('') + '</div>';
@@ -9136,6 +9136,7 @@ var MX2 = { res: {}, busy: false, cand: [], candAt: 0, on: ls('mintoosuite_mxsca
     function universe() {
         var M = S.mx || {}, B = XCH.bg, map = {}, a = [];
         function put(x, fut, ex) { if (!(x.q >= 300000) || !isFinite(x.c) || !(x.p > 0)) { return; } if (S.tick && S.tick[x.s + 'USDT']) { return; } var o = map[x.s]; if (o && (o.x === 'mexc' && ex === 'bitget') ) { return; } if (o && o.x === ex && !fut) { return; } map[x.s] = { s: x.s, sym: x.s + 'USDT', c: x.c, q: x.q, p: x.p, fut: fut, x: ex }; }
+        var XD = window.__exD || {}; (XD.by || []).forEach(function (x) { put(x, true, 'bybit'); }); (XD.ok || []).forEach(function (x) { put(x, true, 'okx'); });
         (B.spot || []).forEach(function (x) { put(x, false, 'bitget'); }); (B.fut || []).forEach(function (x) { put(x, true, 'bitget'); });
         (M.spot || []).forEach(function (x) { put(x, false, 'mexc'); }); (M.fut || []).forEach(function (x) { put(x, true, 'mexc'); });
         Object.keys(map).forEach(function (k) { a.push(map[k]); }); return a;
@@ -9149,7 +9150,7 @@ var MX2 = { res: {}, busy: false, cand: [], candAt: 0, on: ls('mintoosuite_mxsca
     function tick() {
         if (!MX2.on || document.hidden) { return; } var M = S.mx || {};
         if (nowv() - (M.at || 0) > 150000) { try { mxLoad(); } catch (e) { } }
-        try { XCH.bgLoad(); } catch (e) { }
+        try { XCH.bgLoad(); } catch (e) { } try { if (window.__exLoad) { window.__exLoad('by'); window.__exLoad('ok'); } } catch (e) { }
         if (MX2.busy && nowv() - busyAt < 40000) { return; }
         if (!M.spot && !M.fut && !XCH.bg.spot && !XCH.bg.fut) { return; }
         if (nowv() - MX2.candAt > 60000) { MX2.cand = pickCand(); MX2.candAt = nowv(); }
@@ -9168,7 +9169,7 @@ var MX2 = { res: {}, busy: false, cand: [], candAt: 0, on: ls('mintoosuite_mxsca
             var dir = r.side === 'LONG' ? 'up' : 'dn', ag = dir === 'up' ? r.up : r.dn, conf = clamp(Math.round(48 + ag * 10 + Math.min(10, Math.abs(r.ov) * 5)), 50, 96);
             [['fh', 'few hours', r.atr1 * 2], ['day', 'whole day', r.atr4 * 2.45]].forEach(function (h) {
                 var sig = h[2], tp = 0.8 * sig, sl = 0.8 * sig; if (!(sig > 0) || !(r.price > 0)) { return; }
-                rows.push({ src: (r.x === 'bitget' ? 'Bitget' : 'MEXC') + ' scan', hz: h[0], hzl: h[1], sym: r.sym, side: r.side, conf: conf, tpP: tp / r.price * 100, slP: sl / r.price * 100, from: r.at, to: r.at + 5 * 60000 + (h[0] === 'day' ? 3600000 : 900000), win: 'mexcd', anchor: 'mx-' + r.sym, fx: null });
+                rows.push({ src: ({ bitget: 'Bitget', bybit: 'Bybit', okx: 'OKX' }[r.x] || 'MEXC') + ' scan', hz: h[0], hzl: h[1], sym: r.sym, side: r.side, conf: conf, tpP: tp / r.price * 100, slP: sl / r.price * 100, from: r.at, to: r.at + 5 * 60000 + (h[0] === 'day' ? 3600000 : 900000), win: 'mexcd', anchor: 'mx-' + r.sym, fx: null });
             });
         });
         return rows;
@@ -9185,7 +9186,7 @@ var MX2 = { res: {}, busy: false, cand: [], candAt: 0, on: ls('mintoosuite_mxsca
         var F = _if(c), r = MX2.res[c.sym]; if (!r || r.err) { return F; }
         var dir = c.side === 'SHORT' ? -1 : 1, q = r.q || 0;
         F.push({ k: 'trd', ic: '🧭', name: 'Bigger trend', v: clamp(r.ov / 2 * dir, -1.5, 1), w: 0.8, note: '4 time frames: ' + (r.ov >= 0 ? 'up' : 'down') + ' (score ' + r.ov.toFixed(1) + ', ' + (dir > 0 ? r.up : r.dn) + ' of 4 agree)' });
-        F.push({ k: 'vol', ic: '💧', name: 'Volume', v: q >= 5e7 ? 0.6 : q >= 1e7 ? 0.1 : q >= 2e6 ? -0.5 : -0.9, w: 0.6, note: (r.x === 'bitget' ? 'Bitget' : 'MEXC') + ' 24h trading ' + m7vol(q) + ' USDT' + (q < 2e6 ? ' (thin)' : '') });
+        F.push({ k: 'vol', ic: '💧', name: 'Volume', v: q >= 5e7 ? 0.6 : q >= 1e7 ? 0.1 : q >= 2e6 ? -0.5 : -0.9, w: 0.6, note: ({ bitget: 'Bitget', bybit: 'Bybit', okx: 'OKX' }[r.x] || 'MEXC') + ' 24h trading ' + m7vol(q) + ' USDT' + (q < 2e6 ? ' (thin)' : '') });
         F.push({ k: 'vty', ic: '🌊', name: 'Volatility', v: r.stretch > 2.6 ? -0.8 : r.stretch > 1.8 ? -0.2 : 0.2, w: 0.5, note: 'price is ' + r.stretch.toFixed(1) + '× its normal swing from the average' + (r.stretch > 2.6 ? ' (stretched, may pull back)' : '') });
         F.push({ k: 'mxn', ic: '🟦', name: 'Not on Binance', v: Math.abs(r.chg) > 40 ? -0.8 : Math.abs(r.chg) > 20 ? -0.3 : 0, w: 0.4, note: '24h move ' + (r.chg >= 0 ? '+' : '') + r.chg.toFixed(0) + '%' + (Math.abs(r.chg) > 20 ? ' (big move: reversals are common)' : '') });
         return F;
@@ -9194,7 +9195,7 @@ var MX2 = { res: {}, busy: false, cand: [], candAt: 0, on: ls('mintoosuite_mxsca
     idRow = function (m) {
         var h = _irow(m), r = MX2.res[m.sym], b = base(m.sym), ex = XCH.where(b).join(' · ');
         if (!r) { return ex ? h.replace('</b> <span class="badge', '</b> <span class="mut" style="font-size:10px">' + ex + '</span> <span class="badge') : h; }
-        h = h.replace('</b> <span class="badge', '</b> <span class="badge wait" style="font-size:10px">' + (r.x === 'bitget' ? 'Bitget' : 'MEXC') + (r.fut ? ' perp' : ' spot') + '</span> <span class="badge');
+        h = h.replace('</b> <span class="badge', '</b> <span class="badge wait" style="font-size:10px">' + ({ bitget: 'Bitget', bybit: 'Bybit', okx: 'OKX' }[r.x] || 'MEXC') + (r.fut ? ' perp' : ' spot') + '</span> <span class="badge');
         return h.split('data-m25="chart:' + m.sym + '"').join('data-mx="det:' + b + '@' + r.x + (r.fut ? '' : 's') + '"').split('data-m25="win:mexcd"').join('data-mx="det:' + b + '@' + r.x + (r.fut ? '' : 's') + '"');
     };
 })();
@@ -9205,11 +9206,11 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     function ex(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/USDT$/, ''); }
     function find(s) {
         var M = S.mx || {}, B = XCH.bg, L = function (arr) { return (arr || []).filter(function (x) { return x.s === s; })[0]; };
-        return { mf: L(M.fut), ms: L(M.spot), bf: L(B.fut), bs: L(B.spot) };
+        var XD = window.__exD || {}; return { mf: L(M.fut), ms: L(M.spot), bf: L(B.fut), bs: L(B.spot), yf: L(XD.by), of: L(XD.ok) };
     }
     function num(x, d) { x = +x; return isFinite(x) ? x : (d || 0); }
     function fp(p) { return fmtP(p, MXD.s + 'USDT'); }
-    function xname() { return MXD.x === 'bitget' ? 'Bitget' : 'MEXC'; }
+    function xname() { return { bitget: 'Bitget', bybit: 'Bybit', okx: 'OKX' }[MXD.x] || 'MEXC'; }
     function load(force) {
         if (!MXD.s || MXD.busy && !force) { return; } MXD.busy = true; var s = MXD.s, tf = MXD.tf, fut = MXD.fut, x = MXD.x, c = { s: s, fut: fut, x: x };
         Promise.all([XCH.kl(c, tf, 160).catch(function (e) { return e; }), XCH.detail(c).catch(function () { return null; })]).then(function (r) {
@@ -9223,7 +9224,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     /* spec: "GTD", "GTD@mexc", "GTD@mexcs" (spot), "GTD@bitget", "GTD@bitgets" */
     function openCoin(spec) {
         var m = String(spec || '').split('@'), s = ex(m[0]); if (!s) { return; } var tag = (m[1] || '').toLowerCase(), f = find(s), x, fut;
-        if (tag) { x = /^bitget/.test(tag) ? 'bitget' : 'mexc'; fut = !/s$/.test(tag); }
+        if (tag) { x = /^bitget/.test(tag) ? 'bitget' : /^bybit/.test(tag) ? 'bybit' : /^okx/.test(tag) ? 'okx' : 'mexc'; fut = (x === 'bybit' || x === 'okx') ? true : !/s$/.test(tag); }
+        else if (S.xch === 'bybit' || S.xch === 'okx') { x = S.xch; fut = true; }
         else { x = S.xch === 'bitget' ? 'bitget' : S.xch === 'mexc' ? 'mexc' : (f.mf || f.ms ? 'mexc' : f.bf || f.bs ? 'bitget' : 'mexc'); fut = x === 'bitget' ? !!f.bf || !f.bs : !!f.mf || !f.ms; }
         window.__MXD = MXD; MXD.s = s; MXD.x = x; MXD.fut = fut; MXD.k = []; MXD.tk = null; MXD.book = null; MXD.fund = null; MXD.ana = null; MXD.err = ''; MXD.sel = -1;
         try { gotoWin('mexcd'); } catch (e) { } load(true);
@@ -9288,9 +9290,9 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
     }
     function vMexcd() {
         var h = '', f = find(MXD.s), t = MXD.tk, k = MXD.k, lastc = k.length ? k[k.length - 1] : null;
-        h += '<div class="m7q"><span>' + (MXD.x === 'bitget' ? '🟩' : '🟦') + '</span><input data-mxin="go" placeholder="Any MEXC / Bitget coin, e.g. GTD" value="' + esc(MXD.s) + '" autocomplete="off"><button class="btn" style="width:auto;margin:0;padding:8px 14px" data-mx="go">Open</button></div>';
+        h += '<div class="m7q"><span>' + ({ bitget: '🟩', bybit: '🟧', okx: '⬛' }[MXD.x] || '🟦') + '</span><input data-mxin="go" placeholder="Any MEXC / Bitget / Bybit / OKX coin" value="' + esc(MXD.s) + '" autocomplete="off"><button class="btn" style="width:auto;margin:0;padding:8px 14px" data-mx="go">Open</button></div>';
         if (!MXD.s) { return h + '<div class="group pad mut">Type a MEXC coin above, or tap a coin in the MEXC window or Trade Ideas.</div>'; }
-        var px = t ? t.p : (lastc ? lastc.c : 0), chg = t ? t.chg : 0, hasF = MXD.x === 'bitget' ? !!f.bf : !!f.mf, hasS = MXD.x === 'bitget' ? !!f.bs : !!f.ms;
+        var px = t ? t.p : (lastc ? lastc.c : 0), chg = t ? t.chg : 0, hasF = MXD.x === 'bitget' ? !!f.bf : MXD.x === 'bybit' ? !!f.yf : MXD.x === 'okx' ? !!f.of : !!f.mf, hasS = MXD.x === 'bitget' ? !!f.bs : (MXD.x === 'bybit' || MXD.x === 'okx') ? false : !!f.ms;
         h += '<div class="group pad"><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:20px">' + esc(MXD.s) + '</b> <span class="badge wait" style="font-size:10px">' + xname() + ' ' + (MXD.fut ? 'perp' : 'spot') + '</span>' + (S.tick[MXD.s + 'USDT'] ? ' <span class="badge" style="font-size:10px">also Binance</span>' : '') + '<div class="mut" style="font-size:12px">' + (MXD.at ? 'updated ' + Math.max(0, Math.round((nowv() - MXD.at) / 1000)) + 's ago · auto-refresh 12s' : 'loading…') + '</div></div><div style="text-align:right"><b style="font-size:20px;font-variant-numeric:tabular-nums">' + (px ? fp(px) : '—') + '</b><div class="' + (chg >= 0 ? 'up' : 'dn') + '" style="font-weight:700">' + (chg >= 0 ? '+' : '') + chg.toFixed(2) + '% 24h</div></div></div>';
         if (hasF && hasS) { h += '<div class="m7row" style="margin-top:8px"><span class="' + (MXD.fut ? 'on' : '') + '" data-mx="kind:fut">Perp (futures)</span><span class="' + (!MXD.fut ? 'on' : '') + '" data-mx="kind:spot">Spot</span></div>'; }
         if (t) { h += '<div class="row"><span>24h high / low</span><b>' + fp(t.hi) + ' / ' + fp(t.lo) + '</b></div><div class="row"><span>24h volume</span><b>' + m7vol(t.q) + ' USDT</b></div>' + (t.oi ? '<div class="row"><span>Open interest</span><b>' + m7vol(t.oi) + ' contracts</b></div>' : ''); }
@@ -9800,7 +9802,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         return /^(ur|ar|ps|sd|fa|hi|bn|pa|zh|ja|ko|ru)-/.test(c) ? 'en-US' : c;
     }
     function haveVoice(l) { try { var v = speechSynthesis.getVoices() || []; if (!v.length) { return true; } var p = l.slice(0, 2); for (var i = 0; i < v.length; i++) { if (String(v[i].lang).toLowerCase().replace('_', '-').indexOf(p) === 0) { return true; } } return false; } catch (e) { return true; } }
-    function speak(t) { try { if (!window.speechSynthesis) { return; } speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(String(t).slice(0, 1500)), l = pickVoiceLang(String(t)); if (!haveVoice(l)) { var fb = /^(ps|sd)-/.test(l) ? 'ur-PK' : 'en-US'; try { toast('No ' + vlOf(l)[2] + ' voice on this phone, using ' + vlOf(fb)[2] + '. Say "get voice" to install it.'); } catch (e2) { } l = fb; } u.lang = l; speechSynthesis.speak(u); } catch (e) { } }
+    function speak(t) { try { if (window.__nativeSpeak && window.__nativeSpeak(String(t), pickVoiceLang(String(t)))) { return; } if (!window.speechSynthesis) { return; } speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(String(t).slice(0, 1500)), l = pickVoiceLang(String(t)); if (!haveVoice(l)) { var fb = /^(ps|sd)-/.test(l) ? 'ur-PK' : 'en-US'; try { toast('No ' + vlOf(l)[2] + ' voice on this phone, using ' + vlOf(fb)[2] + '. Say "get voice" to install it.'); } catch (e2) { } l = fb; } u.lang = l; speechSynthesis.speak(u); } catch (e) { } }
     /* ----- attachments ----- */
     function readAs(f, how) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = function () { rej(new Error('Could not read ' + f.name)); }; r[how](f); }); }
     function shrink(url, max) { return new Promise(function (res) { var im = new Image(); im.onload = function () { var s = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.width * s)); c.height = Math.max(1, Math.round(im.height * s)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.82)); }; im.onerror = function () { res(url); }; im.src = url; }); }
@@ -9878,7 +9880,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var a = el.getAttribute('data-pb'), i = a.indexOf(':'), v = i < 0 ? a : a.slice(0, i), x = i < 0 ? '' : a.slice(i + 1);
         if (v === 'max') { pmax = !pmax; applyH(); } else if (v === 'mic') { listen(x); } else if (v === 'attach') { pick(x, false); } else if (v === 'cam') { pick(x, true); } else if (v === 'live') { if (window.__live) { window.__live.open(x); } }
         else if (v === 'lang') { var li = 0; VL.forEach(function (r, i) { if (r[0] === PB.lang) { li = i; } }); PB.lang = VL[(li + 1) % VL.length][0]; save(); try { toast('Voice and answers: ' + vlName()); } catch (e) { } [].forEach.call(document.querySelectorAll('[data-pb="lang"]'), function (b) { if (b.classList.contains('pbt')) { b.textContent = vlShort(); } else { b.textContent = vlName(); } }); if (S.win === 'pbrain') { renderView(true); } }
-        else if (v === 'auto') { PB.auto = !PB.auto; save(); [].forEach.call(document.querySelectorAll('.pbt[data-pb="auto"]'), function (b) { b.classList.toggle('on', PB.auto); }); if (S.win === 'pbrain') { renderView(true); } if (!PB.auto) { try { speechSynthesis.cancel(); } catch (er) { } } }
+        else if (v === 'auto') { PB.auto = !PB.auto; save(); [].forEach.call(document.querySelectorAll('.pbt[data-pb="auto"]'), function (b) { b.classList.toggle('on', PB.auto); }); if (S.win === 'pbrain') { renderView(true); } if (!PB.auto) { try { speechSynthesis.cancel(); } catch (er) { } try { window.__nativeStop && window.__nativeStop(); } catch (er) { } } }
         else if (v === 'set') { try { pfClose(); } catch (er) { } gotoWin('pbrain'); }
         else if (v === 'say') { speak(PB.say[+x] || ''); }
         else if (v === 'rm') { var p = x.split(':'); PB.pend[p[0]].splice(+p[1], 1); trayDraw(p[0]); }
@@ -10784,6 +10786,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             { t: 'Markets', b: 'Live prices for Binance, MEXC and Bitget. Tap any coin for its chart.', el: function () { return document.querySelector('.tab[data-act="win:market"]'); }, dir: 'up' },
             { t: 'Bots (practice money)', b: 'Baba Practice Bot trades with practice money only. Watch it for a while before you ever think of real money. It never trades real money on its own.', el: function () { return document.querySelector('.tab[data-act="win:botpro"]'); }, dir: 'up' },
             { t: 'More', b: 'All other windows live here: learning lessons, wallet, news, settings.', el: function () { return document.querySelector('.tab[data-act="openwin"]'); }, dir: 'up' },
+            { t: 'MintooSuiteVPN', b: 'More > Tools & settings > VPN: paste your own free WireGuard config, tap Connect, and test which exchanges your phone can reach. It warns you if the VPN drops while the Real Bot is on.' },
             { t: 'Buy & sell and Business', b: 'On Home, Business holds the marketing tools (posts, customers, invoices, links, ads, SEO). Buy & sell lets anyone browse listings with pictures, video and reviews, and post their own after the owner approves them.', el: function () { return document.querySelector('.mwqt[data-act="win:listings"]') || document.querySelector('.tab[data-act="openwin"]'); }, dir: 'down' },
             { t: 'Market view', b: 'The Market view box on Home shows one exchange at a time: Binance, MEXC, Bitget, Bybit or OKX. Swipe left or right on its heading to change; it remembers your choice.', el: function () { return document.querySelector('.mwxs') || document.querySelector('.tab[data-act="openwin"]'); }, dir: 'down' },
             { t: 'Menu', b: 'Menu has Look & mode (themes), Premium plans, Lock screen, Problem log and the Guided tour.', el: function () { return byText('header button, header .btn, header [data-act], header span', 'MENU'); }, dir: 'down' },
@@ -11054,7 +11057,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var _mt = mwTape;
         mwTape = function (title, items) {
             var lbl = String(title).replace(/^[^A-Za-z]+/, '').trim(), ic = /GOLD/i.test(lbl) ? ICON.gold : /WORLD/i.test(lbl) ? ICON.world : ICON.news;
-            var txt = items && items.length ? items.map(function (i) { return '<span class="mwit tap" data-act="win:news" data-nt="' + esc(i.title) + '"><em class="msrc">' + esc(i.src || 'NEWS') + '</em><i class="mttl">' + esc(i.title) + '.</i><span class="mgap">•</span></span>'; }).join('') : '<span class="mwit"><i class="mttl">Headlines loading…</i><span class="mgap">•</span></span>';
+            var txt = items && items.length ? items.map(function (i) { return '<span class="mwit tap" data-act="win:news" data-ntt="' + esc(i.title) + '"><em class="msrc">' + esc(i.src || 'NEWS') + '</em><i class="mttl">' + esc(i.title) + '.</i><span class="mgap">•</span></span>'; }).join('') : '<span class="mwit"><i class="mttl">Headlines loading…</i><span class="mgap">•</span></span>';
             return '<div class="mwtape"><b class="mwtt">' + ic + '<span>' + esc(lbl) + '</span></b><div class="mwtk"><div class="mwtm" style="animation-duration:' + Math.max(40, (items ? items.length : 3) * 11) + 's">' + txt + txt + '</div></div></div>';
         };
     } catch (e) { try { console.log('tape', e); } catch (er) { } }
@@ -16107,6 +16110,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
 ;(function () { try {
     var EX = { bn: { id: 'binance', n: 'Binance', ic: '🟨', c: '#f0b90b', sub: 'Binance Futures coins: gainers, volume, search, charts' }, by: { id: 'bybit', n: 'Bybit', ic: '🟧', c: '#f7a600', sub: 'Bybit perpetual coins and the order ticket' }, ok: { id: 'okx', n: 'OKX', ic: '⬛', c: '#555555', sub: 'OKX perpetual coins and the order ticket' } };
     var D = { by: null, ok: null, err: {}, at: {}, q: '' };
+    window.__exD = D;
     function jget(u) { try { if (typeof mxJSON === 'function') { return mxJSON(u); } } catch (e) { } return fetch(u).then(function (r) { return r.json(); }); }
     function load(k) { if (D.busy === k || Date.now() - (D.at[k] || 0) < 20000) { return; } D.busy = k; D.at[k] = Date.now();
         var u = k === 'by' ? 'https://api.bybit.com/v5/market/tickers?category=linear' : 'https://' + ['www.okx.com', 'aws.okx.com', 'okx.com'][(D.okn = ((D.okn || 0) + 1) % 3)] + '/api/v5/market/tickers?instType=SWAP';
@@ -16116,6 +16120,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             if (a.length) { D[k] = a; D.err[k] = ''; D['m' + k] = {}; a.forEach(function (x) { D['m' + k][x.s] = 1; }); } else { D.err[k] = EX[k].n + ' data could not be read. Check the internet and try again.'; }
         }).catch(function () { D.err[k] = EX[k].n + ' data could not be read. Check the internet and try again.'; }).then(function () { D.busy = 0; try { if (window.S && (S.win === EX[k].id || S.win === 'ideas' || S.win === 'morning')) { renderView(true); } } catch (e) { } });
     }
+    window.__exLoad = load;
     window.__exLoadAll = function () { load('by'); load('ok'); try { mxLoad(); } catch (e) { } try { XCH.bgLoad(); } catch (e) { } };
     try { if (window.XCH && !XCH.__ex) { var _l = XCH.listed; XCH.listed = function (x, b) { if (x === 'bybit' || x === 'okx') { var k = x === 'bybit' ? 'by' : 'ok', m = D['m' + k]; if (!m) { load(k); return ''; } return m[String(b || '').replace(/USDT$/, '')] ? 'f' : ''; } return _l.apply(this, arguments); }; XCH.__ex = 1; } } catch (e) { }
     function rows(arr, k) {
@@ -19959,6 +19964,7 @@ try {
             return L.map(function (x) { var ago = Math.max(0, Math.round((Date.now() - x.t) / 60000)), when = ago < 60 ? ago + ' min ago' : ago < 1440 ? Math.round(ago / 60) + ' h ago' : Math.round(ago / 1440) + ' d ago'; return '<div class="row tap" data-pump="logopen:' + (LOG.indexOf(x)) + '" style="display:block;cursor:pointer;scroll-snap-align:start"><b>' + (x.mega ? '🚨 ' : '') + e3(x.title) + '</b><div class="note" style="margin:2px 0 0">' + e3(x.body) + ' · ' + when + '</div></div>'; }).join('');
         }
         function homeCard() {
+            if (window.__pumpHome) { try { return window.__pumpHome(LOG); } catch (e) { } }
             var L = LOG.filter(function (x) { try { if (x.kind === 'new' && x.bn && S.fst && /Binance futures/.test(x.title || '')) { var f = S.fst[x.bn]; return !!(f && f.st === 'TRADING'); } } catch (e) { } return true; }).slice(0, 12), body;
             if (!L.length) { body = '<div class="note">No alerts yet. When a coin is newly listed on MEXC or Binance, or jumps fast, it appears here and stays until you clear it.</div>'; }
             else { body = '<div class="mwpst" data-noswipe="1">' + L.map(function (x) { var ago = Math.max(0, Math.round((Date.now() - x.t) / 60000)), when = ago < 60 ? ago + ' min' : ago < 1440 ? Math.round(ago / 60) + ' h' : Math.round(ago / 1440) + ' d'; return '<div class="mwpc tap" data-pump="logopen:' + (LOG.indexOf(x)) + '"><b>' + (x.mega ? '🚨 ' : '') + e3(String(x.title || '').slice(0, 70)) + '</b><small>' + e3(String(x.body || '').slice(0, 60)) + '</small><i>' + when + ' ago</i></div>'; }).join('') + '</div>' + (L.length > 1 ? '<div class="mut" style="font-size:11px;text-align:center;margin-top:2px">‹ swipe sideways to see all ' + L.length + ' ›</div>' : ''); }
@@ -26229,6 +26235,15 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['mexc coin window advisors|bitget coin window bots|other exchange bots advisors|bots and advisors box', 'Build 482: Open any coin from the MEXC or Bitget lists and the coin window now has a Bots and advisors box: the two signal bots for that coin (direction, STRONG when both agree, entry, stop, target, minutes left), the exchange numbers (24h change, volume, funding), and buttons to ask Baba AI buy, sell or wait, or explain the risks. Bybit and OKX coins open on their own exchange page; their bot scanning is not built yet.']); } catch (e) { } })();
 
 ;(function () { try { PF_APP.push(['doctor v2|repair engine|jump culprit|why does home jump|slowed background jobs', 'Doctor v2 (build 483)', 'Found the real cause of the Home jumping in your Logs: the Today box showed a New coins row for a moment after every redraw and another script then deleted it, so the page grew and shrank about 60 px every 5 seconds. That row is now hidden from the first paint. The Doctor also now compares every box before and after each redraw and writes “Jump culprit …” with the box name in Menu > Logs, slows heavy non-urgent timers by itself, and the scroll-fighting code I added in build 482 is removed. Still mock-tested only: please send a Logs screenshot after a few minutes.', 'win:log']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['vpn|mintoosuitevpn|wireguard|proton vpn|exchange blocked|binance blocked|mexc blocked', 'MintooSuiteVPN (build 483)', 'More > Tools & settings > VPN. It is a WireGuard tunnel inside the app: you paste your own free WireGuard config (for example from ProtonVPN Free), tap Connect and Android asks once for permission. The screen also tests which exchanges your phone can reach (run it with the VPN off, then on) and warns you if the VPN drops while the Real Bot is on. I cannot supply servers, so a config from a provider you trust is needed. Some exchanges do not allow certain countries; using a VPN to get around that can break their rules. This part is new native code and unverified until you try it on your phone.', 'win:vpn']); PF_APP.push(['ideas exchange|ideas mexc|ideas bitget|only here coins', 'Ideas now switch to the exchange you pick (build 483)', 'On Ideas, choosing MEXC or Bitget now adds a box with that exchange\'s own biggest movers (volume at least $300k, tagged “only here” if Binance does not list them) and its bot signals, above the idea list. Tap a coin for its page with bots and advisors.', 'win:ideas']); PF_APP.push(['trade pro bar|bottom bar covers|long short bar|dock too big', 'Slimmer Trade Pro bottom bar (build 483)', 'The Long / Short / Trade now bar with Recommended and Linked masters is now two slim rows (it was three tall ones) and the page has extra room at the bottom so nothing is hidden behind it.', 'win:tpro']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['new coins and pumps|pumps tile|new coins tile|swipe pumps', 'Pumps and New coins are now two swipe tiles (build 486)', 'On Home, “New coins and pumps” is now two colour-changing tiles: Pumps on the left and New coins on the right. Swipe sideways to change, or tap the names on the bar underneath (a small slider shows where you are). Each tile has its own scroll bar on the right edge for moving up and down through older alerts. The app remembers which tile you were on after Home redraws.', 'win:overview']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['professional advisor|advisor box|pakistan desk advisor|psx tab advisor|dropdown advisor', 'Professional advisor boxes in the Pakistan desk (build 487)', 'In the Pakistan Trading House, the advisor buttons (What looks strong, Explain this sector, Monthly plan, Avoid scams) now open a Professional advisor box right there, with a small arrow to fold it. Each PSX tab (Hot, Autos, Sectors, Real estate, All shares, More) opens its own advisor note when you tap it. Shop and property buttons answer in a box at the top instead of the chat when the app has the answer built in; Brokers and Local and offers have their own box. These are explanations and plans, never tips or promises of profit.', 'win:psx']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['law at school|subject not for class|subject does not fit|study level subject|law matric|medicine matric', 'Study: subject and level check (build 488)', 'In Study, if the subject does not exist at the level you picked in Pakistan (for example Law or Medicine before Inter and Bachelors, Economics before Inter, Physics, Chemistry or Biology before Class 9, Science at Inter and above) the app now shows an orange advice box: why it does not fit, what to study instead, and a button to switch to the right level. Teach me and the topic list wait until the level and subject fit.', 'win:study']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['shiny tiles|colour changing|color changing|mood colour logic|why do colours change', 'Why colours change (build 488)', 'The tile colours on Home and in the new Pakistan screens follow the market mood: the hue is set from how many coins are rising (green side when most are up, warmer when most are down) and it eases slowly, so it is information and not decoration. A soft shine passes over the advisor and guide boxes every few seconds; it pauses while you scroll and is off in Calm look (Menu > Look & mode).', 'win:overview']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['baba window clean|no text box|type a question|how to type to baba|baba keyboard|baba microphone', 'Cleaner Baba AI window (build 488)', 'The Baba AI window no longer shows the suggestion tabs, the tool row or a text box. At the bottom there are two round buttons: the microphone to speak, and the keyboard to type. The typing box appears only after you tap the keyboard and goes away after you ask. The third round button (⋯) shows the other tools: picture or file, camera, live camera, language and read-aloud.', 'win:baba']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['read aloud|baba not speaking|speaker button|speak aloud|baba voice|language button|hold language|baba language', 'Baba AI voice and language (build 489)', 'Read aloud now uses the phone\'s own voice through the app, and every Baba answer has a small speaker button. Switch on the speaker in the tool row (⋯) to have new answers read automatically. Press and hold the language button (⋯ then the language name) and a list pops up above it; the language you pick is for Baba AI only (voice and answers) and does not change the rest of the app. If the phone has no voice for that language it reads in English and tells you to install it in Android Settings > Text-to-speech. The Android part is new and unverified until you try it.', 'win:baba']); PF_APP.push(['what can baba do|what can you ask|baba topics|ask baba about', 'What you can ask Baba AI (build 489)', 'Trading and this app (coins, indicators, bots, risk), digital marketing and Business tools, Pakistan and world business, the Pakistan desk (PSX shares, property, cars, phones, shopping, clothing, glossary), study help for any level, and everyday questions. For things outside its built-in knowledge it says so and, if you added an AI key, asks the online AI.', 'win:baba']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -27119,15 +27134,16 @@ window.__pfAns = function (q) { return pfAnswer(q); };
     try {
         var gOk = 0; window.__kGate = function () { var n = Date.now(), ok = !document.hidden && n >= (window.__kNext || 0) && n - (window.__lagAt || 0) > 3000; if (ok && (S.win === 'chart' || S.win === 'tpro')) { if (n - gOk < 3500) { return false; } gOk = n; } return ok; };
         try { ['touchstart', 'touchmove', 'scroll', 'pointerdown'].forEach(function (ev) { document.addEventListener(ev, function () { window.__lastTouch = Date.now(); }, { passive: true, capture: true }); }); var lt0 = Date.now(); setInterval(function () { var n = Date.now(); if (n - lt0 > 1800) { window.__lagAt = n; } lt0 = n; }, 500); } catch (e) { }
-        var ALOG = [], BOOK = 1, SIG = {}, SEEN = {}, SENT = {}, RR = 0, TTL = 900000, ST = { seen: {}, total: 0, by: {} }, KC = {}, KRUN = 0, EXN = { binance: 'Binance', mexc: 'MEXC', bitget: 'Bitget' };
+        var ALOG = [], BOOK = 1, SIG = {}, SEEN = {}, SENT = {}, RR = 0, TTL = 900000, ST = { seen: {}, total: 0, by: {} }, KC = {}, KRUN = 0, EXN = { binance: 'Binance', mexc: 'MEXC', bitget: 'Bitget', bybit: 'Bybit', okx: 'OKX' };
         function base(s) { return String(s).replace(/USDT$/, ''); }
         function atr(K, n) { var i, s = 0, c = 0; for (i = K.length - n; i < K.length; i++) { var p = K[i - 1]; s += Math.max(K[i].h - K[i].l, Math.abs(K[i].h - p.c), Math.abs(K[i].l - p.c)); c++; } return s / c; }
         /* every coin worth watching, one source per coin: Binance first, then MEXC, then Bitget (futures lists, long and short) */
         function uni() {
-            var out = [], seen = {}, k, t, M = (S.mx && S.mx.fut) || [], G = (window.XCH && XCH.bg && XCH.bg.fut) || [];
+            var out = [], seen = {}, k, t, M = (S.mx && S.mx.fut) || [], G = (window.XCH && XCH.bg && XCH.bg.fut) || [], XD = window.__exD || {};
             for (k in S.tick) { t = S.tick[k]; if (/USDT$/.test(k) && k.indexOf(':') < 0 && t && +t.p > 0 && (+t.q || 0) >= 3e5) { out.push({ sym: k, x: 'binance', base: base(k), p: +t.p, q: +t.q, c: +t.chg }); seen[base(k).replace(/^(1000000|1000|1M)/, '')] = 1; } }
             M.forEach(function (r) { if (r && r.q >= 3e5 && r.p > 0 && !seen[r.s]) { seen[r.s] = 1; out.push({ sym: r.s + 'USDT', x: 'mexc', base: r.s, p: +r.p, q: +r.q, c: +r.c }); } });
             G.forEach(function (r) { if (r && r.q >= 3e5 && r.p > 0 && !seen[r.s]) { seen[r.s] = 1; out.push({ sym: r.s + 'USDT', x: 'bitget', base: r.s, p: +r.p, q: +r.q, c: +r.c }); } });
+            ['bybit', 'okx'].forEach(function (xk) { (XD[xk === 'bybit' ? 'by' : 'ok'] || []).forEach(function (r) { if (r && r.q >= 3e5 && r.p > 0 && !seen[r.s]) { seen[r.s] = 1; out.push({ sym: r.s + 'USDT', x: xk, base: r.s, p: +r.p, q: +r.q, c: +r.c }); } }); });
             out.sort(function (a, b) { return b.q - a.q; }); return out;
         }
         /* build 410: "VERIFIED" = the signal also passes the reviewer's strict checks: both bots agree, trend strength ADX(14)>=25, signal-candle volume >=1.5x its 20-candle average, not against a >15% day move, and the 1h and 4h trend (price vs EMA50) point the same way. Other signals still show, just without the badge. */
@@ -27272,10 +27288,10 @@ window.__pfAns = function (q) { return pfAnswer(q); };
                 if (document.hidden || S.win === 'tpro' || document.getElementById('mwtc') || document.querySelector('[data-xk^="cpTrade"]') && S.win === 'tpro') { return; }
                 var LITE = 0; try { LITE = JSON.parse(localStorage.getItem('mintoosuite_rst') || '[]').filter(function (t) { return now - t < 21600000; }).length >= 2 ? 1 : 0; var lm = localStorage.getItem('mintoosuite_lite'); if (lm === '0') { LITE = 0; } else if (lm === '1') { LITE = 1; } } catch (el) { }
                 window.__sigLite = LITE; if (LITE && ST.lt && now - ST.lt < 3000) { return; } ST.lt = now;
-                var L = uni(); try { L.forEach(function (x) { priceNote(x.sym, x.p); }); } catch (epn) { } try { var gx = { binance: [], mexc: [], bitget: [] }, mix = [], mxn = 0; L.forEach(function (e) { (gx[e.x] || (gx[e.x] = [])).push(e); }); Object.keys(gx).forEach(function (k) { mxn = Math.max(mxn, gx[k].length); }); for (var gi = 0; gi < mxn; gi++) { Object.keys(gx).forEach(function (k) { if (gx[k][gi]) { mix.push(gx[k][gi]); } }); } if (mix.length === L.length) { L = mix; } } catch (egx) { } if (LITE) { L = L.slice(0, 120); try { var ks = Object.keys(KC); if (ks.length > 40) { ks.sort(function (a, b) { return KC[a].at - KC[b].at; }).slice(0, ks.length - 40).forEach(function (k) { delete KC[k]; }); } } catch (ek) { } }
+                var L = uni(); try { L.forEach(function (x) { priceNote(x.sym, x.p); }); } catch (epn) { } try { var gx = { binance: [], mexc: [], bitget: [], bybit: [], okx: [] }, mix = [], mxn = 0; L.forEach(function (e) { (gx[e.x] || (gx[e.x] = [])).push(e); }); Object.keys(gx).forEach(function (k) { mxn = Math.max(mxn, gx[k].length); }); for (var gi = 0; gi < mxn; gi++) { Object.keys(gx).forEach(function (k) { if (gx[k][gi]) { mix.push(gx[k][gi]); } }); } if (mix.length === L.length) { L = mix; } } catch (egx) { } if (LITE) { L = L.slice(0, 120); try { var ks = Object.keys(KC); if (ks.length > 40) { ks.sort(function (a, b) { return KC[a].at - KC[b].at; }).slice(0, ks.length - 40).forEach(function (k) { delete KC[k]; }); } } catch (ek) { } }
                 var q15 = Math.floor(now / 900000); if (ST.q15 !== q15) { ST.q15 = q15; RR = 0; } /* a new 15-minute candle just closed: start a fresh round from the busiest coins */
                 try { var cs = S.chart && S.chart.sym; if (cs) { L = L.slice(); for (var ci = 0; ci < L.length; ci++) { if (L[ci].sym === cs) { L.unshift(L.splice(ci, 1)[0]); break; } } if (L[0] && L[0].sym === cs) { RR = Math.min(RR, 0); } } } catch (ec) { }
-                var cs = null; try { cs = S.chart && S.chart.sym; } catch (ecs) { } var n = 0, tries = 0; ST.total = L.length; ST.by = { binance: 0, mexc: 0, bitget: 0 }; L.forEach(function (e) { ST.by[e.x]++; });
+                var cs = null; try { cs = S.chart && S.chart.sym; } catch (ecs) { } var n = 0, tries = 0; ST.total = L.length; ST.by = { binance: 0, mexc: 0, bitget: 0, bybit: 0, okx: 0 }; L.forEach(function (e) { ST.by[e.x] = (ST.by[e.x] || 0) + 1; });
                 if (!ST.done || ST.dq !== q15) { ST.done = {}; ST.dq = q15; }
                 for (var li = 0; li < L.length && n < (LITE ? 4 : 14); li++) { var e = L[li], sym = e.sym; tries++;
                     if (ST.done[sym] && !(cs && sym === cs)) { continue; }
@@ -27306,7 +27322,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         window.__sigList = function (ex) { var n = Date.now(); return Object.keys(SIG).map(function (k) { return SIG[k]; }).filter(function (e) { if (n >= e.until) { return false; } if (BOOK && !window.__sigNoBook && e.ver !== 1) { return false; } if (ex && ex !== 'all') { try { return window.XCH ? XCH.listed(ex, e.sym) === 'f' : e.x === ex; } catch (er) { return e.x === ex; } } return true; }).sort(function (a, b) { return (b.ver === 1 ? 1 : 0) - (a.ver === 1 ? 1 : 0) || (b.strong ? 1 : 0) - (a.strong ? 1 : 0) || b.t - a.t; }); };
         window.__sigGet = function (sym) { var e = SIG[sym]; return e && Date.now() < e.until && (!BOOK || e.ver === 1) ? e : null; };
         function fmt(v) { return (+v).toPrecision(5).replace(/\.?0+$/, ''); }
-        function scanned() { var n = Date.now(), c = 0, k; for (k in ST.seen) { if (n - ST.seen[k] < 900000) { c++; } } return c + ' of ' + ST.total + ' (Binance ' + (ST.by.binance || 0) + ', MEXC ' + (ST.by.mexc || 0) + ', Bitget ' + (ST.by.bitget || 0) + ')'; }
+        function scanned() { var n = Date.now(), c = 0, k; for (k in ST.seen) { if (n - ST.seen[k] < 900000) { c++; } } return c + ' of ' + ST.total + ' (Binance ' + (ST.by.binance || 0) + ', MEXC ' + (ST.by.mexc || 0) + ', Bitget ' + (ST.by.bitget || 0) + ', Bybit ' + (ST.by.bybit || 0) + ', OKX ' + (ST.by.okx || 0) + ')'; }
         window.__sigBox = function (ex) {
             var L = window.__sigList(ex), nm = ex && ex !== 'all' ? ' on ' + (EXN[ex] || ex) : '';
             var hd = '<div class="note" style="margin:0 0 8px">📖 <b>Book-rule trades' + nm + '</b>: shown only when ALL checks pass: both bots agree, trend strength ADX(14) 25 or more, volume 1.5x its average, not against a big day move, and the 1h and 4h trend agree. Checked ' + scanned() + ' coins so far. Use a small size and the stop.</div>';
@@ -27699,6 +27715,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             });
             return h;
         };
+        window.__shQ = function (i) { return Q[i]; };
         X.on('shq', function (v) { var q = Q[+v]; if (q && window.__askBaba) { window.__askBaba(q); } });
         WINS.push({ id: 'shophub', ic: '🛍', c: '#ff9f0a', n: 'Property, cars, phones, shopping & food', t: 'Shop & property', sub: 'Real sellers, checklists and Baba AI help' }); LIVE.shophub = 0;
     } catch (e) { try { console.error('p9shop', e); } catch (e2) { } }
@@ -27850,6 +27867,21 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             'Research methods': [['asking good questions'], ['simple surveys', 'reading sources'], ['research problem and gap', 'literature review', 'qualitative vs quantitative', 'sampling', 'data analysis', 'writing a thesis']],
             'Other': [['ask any topic'], ['ask any topic'], ['ask any topic']]
         };
+        /* subject / level fit (Pakistan system): [first level index, last level index, what is true, what to do] */
+        var FIT = {
+            'Law': [5, 7, 'Law is not a school subject in Pakistan. It starts as a degree (LLB) after Intermediate (Inter 11-12).', 'For now learn the basics under Pakistan studies and Social studies (rights, duties, constitution, how courts work). After Inter, choose LLB at Bachelors level.'],
+            'Medicine': [4, 7, 'Medicine (MBBS) is a degree that starts after Inter pre-medical (FSc). It is not taught as a subject in school.', 'Build the base now with Biology, Chemistry and Physics, and English. At Inter choose pre-medical and prepare for the MDCAT entry test.'],
+            'Economics': [4, 7, 'Economics is taught from Inter (11-12) in Pakistan; before that it appears only inside Social studies and Pakistan studies.', 'At this level use Social studies and Maths (percentages, graphs, simple money questions).'],
+            'Business': [3, 7, 'Business studies starts at Matric (commerce group) and grows at Inter and Bachelors. Before Class 9 it is only simple money lessons inside Maths.', 'Use Maths (money, profit and loss) and Social studies for now.'],
+            'Physics': [3, 7, 'Physics is a separate subject from Class 9 (Matric). Before that it is part of General Science.', 'Choose Science for this level.'],
+            'Chemistry': [3, 7, 'Chemistry is a separate subject from Class 9 (Matric). Before that it is part of General Science.', 'Choose Science for this level.'],
+            'Biology': [3, 7, 'Biology is a separate subject from Class 9 (Matric). Before that it is part of General Science.', 'Choose Science for this level.'],
+            'Pakistan studies': [2, 7, 'Pakistan studies starts around Class 6. Before that the same ideas are in Social studies.', 'Choose Social studies for this level.'],
+            'Science': [0, 3, 'At Inter and above, science is split into Physics, Chemistry and Biology (and Computer or Maths).', 'Choose Physics, Chemistry or Biology.'],
+            'Social studies': [0, 3, 'Social studies is a school subject up to Matric. At Inter and above it becomes Pakistan studies, Economics, Law and other subjects.', 'Choose Pakistan studies, Economics or the subject you are studying.'],
+            'Research methods': [5, 7, 'Research methods is a Bachelors (final year project), Masters and PhD subject. Below that students learn to ask questions and read sources.', 'At this level use Science (simple experiments) or English (reading and summarising).']
+        };
+        function misfit() { var r = FIT[ST.sb], i = LV.indexOf(ST.lv); if (!r || (i >= r[0] && i <= r[1])) { return null; } return { why: r[2], todo: r[3], lo: r[0], hi: r[1] }; }
         function band(lv) { var i = LV.indexOf(lv); return i <= 1 ? 0 : i <= 3 ? 1 : 2; }
         function topicsFor() { var t = TP[ST.sb] || TP.Other; return t[band(ST.lv)] || []; }
 
@@ -27859,7 +27891,9 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             Q = [];
             var h = box('<b>🎓 Study: learn any subject, any level</b><div class="note" style="margin:6px 0 0">Pick your level and subject, type a topic and tap Teach me. Baba AI explains like a patient teacher: simple words, examples, a picture idea, practice questions with answers and a short test. Teaching on any topic needs internet (or your own AI key); the lessons below work with no internet. Check important facts with your textbook or teacher.</div>');
             h += '<div class="group pad" data-noswipe="1"><b>Level</b><div>' + chips(LV, ST.lv, 'stlv') + '</div><b>Subject</b><div>' + chips(SB, ST.sb, 'stsb') + '</div><input id="stTopic" value="' + e2(ST.tp || '') + '" placeholder="Topic, e.g. quadratic equations, Mughal history, DNA, contracts" style="width:100%;box-sizing:border-box;margin:8px 0;padding:10px;border-radius:12px;border:1px solid var(--line,#ddd);font-size:14px"><span class="btn" data-xk="stgo:teach" style="width:auto;padding:8px 14px;margin-right:6px;display:inline-block">🧑‍🏫 Teach me</span><span class="btn sec" data-xk="stgo:quiz" style="width:auto;padding:8px 14px;margin-right:6px;display:inline-block">📝 Quiz me</span><span class="btn sec" data-xk="stgo:notes" style="width:auto;padding:8px 14px;margin-right:6px;display:inline-block">🧠 Notes</span><span class="btn sec" data-xk="stgo:plan" style="width:auto;padding:8px 14px;display:inline-block">📅 Study plan</span></div>';
-            if (ST.panel && ST.tp) {
+            var mf = misfit();
+            if (mf) { h += '<div class="group pad" style="border-left:5px solid #f59e0b;background:rgba(245,158,11,.10)"><b>⚠️ ' + e2(ST.sb) + ' does not fit ' + e2(ST.lv) + '</b><div class="note" style="margin:5px 0">' + e2(mf.why) + '</div><div class="note" style="margin:5px 0"><b>Advice:</b> ' + e2(mf.todo) + '</div><div>' + (mf.lo > LV.indexOf(ST.lv) ? '<span class="btn sec tap" data-xk="stlv:' + e2(LV[mf.lo]) + '" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">Switch to ' + e2(LV[mf.lo]) + '</span>' : '') + '</div></div>'; }
+            if (ST.panel && ST.tp && !mf) {
                 var q = ST.tp + ' ' + ST.sb + ' ' + ST.lv, ur = ST.sb === 'Urdu' || ST.sb === 'Islamiat';
                 var L = function (ic, t, u) { return '<a class="btn sec tap" target="_blank" rel="noopener" href="' + e2(u) + '" style="display:block;text-decoration:none;margin:6px 0">' + ic + ' ' + t + '</a>'; };
                 h += '<div class="group pad" style="border-left:4px solid #0a84ff"><b>📖 ' + e2(ST.tp) + '</b><div class="note" style="margin:4px 0">' + e2(ST.sb) + ' · ' + e2(ST.lv) + '. Start with the lesson from Baba AI, then open an encyclopedia, a video or your textbook for more.</div>' +
@@ -27870,16 +27904,17 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
                     L('📕', 'Pakistan textbook (Google)', 'https://www.google.com/search?q=' + encodeURIComponent(ST.tp + ' ' + ST.sb + ' ' + ST.lv + ' Pakistan textbook board pdf')) +
                     '<div class="note">These open in your browser and need internet. Pictures and videos are not stored inside the app. Baba AI lessons you already opened stay available offline.</div><span class="btn sec tap" data-xk="stclose:" style="display:block;margin:6px 0">Close</span></div>';
             }
-            h += '<div class="group pad"><b>📚 ' + e2(ST.sb) + ' topics for ' + e2(ST.lv) + '</b><div class="note" style="margin:4px 0">Tap a topic and Baba AI teaches it. Or type your own topic above.</div><div>' + topicsFor().map(function (x, i) { return '<span class="btn sec tap" data-xk="sttp:' + i + '" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">' + e2(x) + '</span>'; }).join('') + '</div></div>';
+            h += '<div class="group pad" style="' + (misfit() ? 'display:none' : '') + '"><b>📚 ' + e2(ST.sb) + ' topics for ' + e2(ST.lv) + '</b><div class="note" style="margin:4px 0">Tap a topic and Baba AI teaches it. Or type your own topic above.</div><div>' + topicsFor().map(function (x, i) { return '<span class="btn sec tap" data-xk="sttp:' + i + '" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">' + e2(x) + '</span>'; }).join('') + '</div></div>';
             h += '<div class="group pad"><b>📴 Lessons that work offline</b><div style="margin-top:6px">' + OFF.map(function (x) { Q.push(x[1]); return '<span class="btn sec" data-xk="stoff:' + (Q.length - 1) + '" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">' + e2(x[0]) + '</span>'; }).join('') + '</div></div>';
             return h;
         };
         X.on('stlv', function (v) { ST.lv = v; X.again(); }); X.on('stsb', function (v) { ST.sb = v; X.again(); });
-        X.on('sttp', function (v) { var t = topicsFor()[+v]; if (t) { ST.tp = t; ST.panel = 1; X.again(); } });
+        X.on('sttp', function (v) { if (misfit()) { return; } var t = topicsFor()[+v]; if (t) { ST.tp = t; ST.panel = 1; X.again(); } });
         document.addEventListener('input', function (e) { var t = e.target; if (t && t.id === 'stTopic') { ST.tp = t.value; } }, true);
         X.on('stclose', function () { ST.panel = 0; X.again(); });
         X.on('stoff', function (v) { var q = Q[+v]; if (q && window.__askBaba) { window.__askBaba(q); } });
         X.on('stgo', function (m) {
+            if (misfit()) { try { toast('⚠ ' + ST.sb + ' does not fit ' + ST.lv + '. See the advice box.'); } catch (e) { } X.again(); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { } return; }
             var t = ((document.getElementById('stTopic') || {}).value || '').trim() || ST.sb; var base = 'Student level: ' + ST.lv + '. Subject: ' + ST.sb + '. Topic: ' + t + '. ';
             var P = { teach: base + 'Teach this like the best patient teacher. Start from what the student already knows, explain in simple words at this level, give 2 worked examples, a diagram described in words, common mistakes, 5 practice questions with answers, and a 3-line summary. Tell the student to check key facts with their textbook.', quiz: base + 'Give a 10 question quiz at this level (mix of easy and hard) with an answer key and a short explanation for each answer.', notes: base + 'Write clear exam-ready study notes: key definitions, formulas or dates, a table or list of the main points, and 5 likely exam questions with model answers.', plan: base + 'Make a 4-week study plan for this topic with daily 45-minute tasks, revision days and a final self-test.' };
             if (window.__askBaba) { window.__askBaba(P[m] || P.teach); }
@@ -28999,8 +29034,8 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
     try {
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = '.mwnhit{outline:3px solid hsl(var(--mw-h,210),80%,50%);border-radius:12px;background:hsla(var(--mw-h,210),80%,50%,.12)!important;transition:background 1s}'; document.head.appendChild(st);
         document.addEventListener('click', function (e) {
-            var t = e.target.closest ? e.target.closest('[data-nt]') : null; if (!t) { return; }
-            var q = (t.getAttribute('data-nt') || '').replace(/\s+/g, ' ').trim().slice(0, 40).toLowerCase(), n = 0;
+            var t = e.target.closest ? e.target.closest('[data-ntt]') : null; if (!t) { return; }
+            var q = (t.getAttribute('data-ntt') || '').replace(/\s+/g, ' ').trim().slice(0, 40).toLowerCase(), n = 0;
             var iv = setInterval(function () {
                 n++; if (n > 14) { clearInterval(iv); return; }
                 try {
@@ -29267,7 +29302,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             var rv = M.rev[l.id], h = btn('‹ Back to listings', 'mpback', 'sec');
             var ph = (l.photos || []).map(function (u) { return '<img data-pc="' + e2(u) + '" src="" alt="" style="flex:0 0 86%;scroll-snap-align:start;height:230px;object-fit:cover;border-radius:16px;background:rgba(127,127,127,.18)">'; }).join('');
             h += '<div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;touch-action:pan-x pan-y" data-noswipe="1">' + (ph || thumb(l, 1)) + '</div>';
-            h += '<div class="group pad"><b style="font-size:19px">' + e2(l.title) + '</b><div style="font-size:20px;font-weight:800;color:#16a34a;margin:4px 0">' + money(l.price) + (l.deal === 'Rent' ? ' / month' : '') + '</div><div class="note">' + e2(l.cat) + ' · ' + e2(l.deal || 'Sale') + ' · ' + e2(l.city) + ' · ' + stars(rv) + '</div><div style="margin:8px 0;white-space:pre-wrap">' + e2(l.desc) + '</div>' +
+            h += '<div class="group pad"><b style="font-size:19px">' + e2(l.title) + '</b><div style="font-size:20px;font-weight:800;color:#16a34a;margin:4px 0">' + money(l.price) + (l.deal === 'Rent' ? ' / month' : /^Hire/.test(l.deal || '') ? ' / job or day' : /^Instal/.test(l.deal || '') ? ' (agreed instalments)' : '') + '</div><div class="note">' + e2(l.cat) + ' · ' + e2(l.deal || 'Sale') + ' · ' + e2(l.city) + ' · ' + stars(rv) + '</div><div style="margin:8px 0;white-space:pre-wrap">' + e2(l.desc) + '</div>' +
                 (l.video ? '<a class="btn sec tap" target="_blank" rel="noopener" href="' + e2(l.video) + '" style="display:block;text-decoration:none">▶ Watch video</a>' : '') +
                 '<a class="btn tap" target="_blank" rel="noopener" href="' + e2(wa(l.phone, 'Hello, I saw "' + l.title + '" (' + money(l.price) + ') on MintooSuite. Is it still available?')) + '" style="display:block;text-decoration:none">💬 WhatsApp the seller</a><a class="btn sec tap" href="tel:' + e2(String(l.phone || '').replace(/[^\d+]/g, '')) + '" style="display:block;text-decoration:none">📞 Call</a></div>';
             h += '<div class="group pad"><b>🛡 Stay safe</b><div class="note">Meet in a public place and bring a friend. Never pay in advance or send an OTP. For property or vehicles check the owner\'s documents with the registry or excise office. This app does not hold money and cannot refund.</div>' + btn('🚩 Report this listing', 'mprep:' + l.id, 'sec') + '</div>';
@@ -29277,7 +29312,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         }
         function vSell() {
             var h = '<div class="group pad"><b>📣 Post a listing</b><div class="note" style="margin:3px 0 6px">Free. The owner checks it before it appears. Your phone number is shown to buyers. Real pictures sell faster.</div>' +
-                sel('mpCat', CATS, '') + sel('mpDeal', ['Sale', 'Rent'], 'Sale') + inp('mpTitle', 'Title (for example: 5 marla house, Bahria Town)') + inp('mpPrice', 'Price in Rs (rent: per month)', '', 'number') + inp('mpCity', 'City / area') + '<textarea id="mpDesc" placeholder="Details: size, condition, documents, anything buyers ask" style="' + IN + ';height:90px"></textarea>' + inp('mpPhone', 'Your WhatsApp / phone (03xx…)', M.cfg.phone, 'tel') + inp('mpVid', 'Video link (YouTube / Facebook / TikTok), optional') +
+                sel('mpCat', CATS, '') + sel('mpDeal', ['Sale', 'Rent', 'Hire (service or labour)', 'Instalments (hire purchase)'], 'Sale') + inp('mpTitle', 'Title (for example: 5 marla house, Bahria Town)') + inp('mpPrice', 'Price in Rs (rent: per month)', '', 'number') + inp('mpCity', 'City / area') + '<textarea id="mpDesc" placeholder="Details: size, condition, documents, anything buyers ask" style="' + IN + ';height:90px"></textarea>' + inp('mpPhone', 'Your WhatsApp / phone (03xx…)', M.cfg.phone, 'tel') + inp('mpVid', 'Video link (YouTube / Facebook / TikTok), optional') +
                 '<div class="note" style="margin:6px 0 2px">Pictures (up to 5):</div><input id="mpf" type="file" accept="image/*" multiple style="' + IN + '">' + (M.busy ? '<div class="note">' + e2(M.busy) + '</div>' : '') +
                 (M.photos.length ? '<div style="display:flex;gap:8px;overflow-x:auto;margin:6px 0">' + M.photos.map(function (p, i) { return '<div style="flex:0 0 90px;position:relative"><img src="' + p.prev + '" style="width:90px;height:90px;object-fit:cover;border-radius:12px"><span class="tap" data-xk="mprmp:' + i + '" style="position:absolute;top:2px;right:2px;background:#000a;color:#fff;border-radius:50%;width:26px;height:26px;text-align:center;line-height:26px">✕</span></div>'; }).join('') + '</div>' : '') +
                 btn(M.busy ? '…' : '📤 Submit for approval', 'mppost', '') + (M.err ? '<div class="warn">' + e2(M.err) + '</div>' : '') + '</div>';
@@ -29343,6 +29378,8 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         window.__mpOpen = function () { gotoWin('listings'); };
     } catch (e) { try { console.log('p9mp', e); } catch (er) { } }
 })();
+
+;(function () { try { PF_APP.push(['sell business|buy business|rent house|hire service|hire purchase|instalments|sell clothes|sell online pakistan|buy and sell how|classifieds', 'Buy, sell, rent, hire in the app (build 491)', 'Menu > Buy & sell is a listings board: sellers post pictures, price, city and phone, with the type Sale, Rent, Hire (service or labour) or Instalments (hire purchase); the owner approves each post first. The app does not take payments or deliver goods, so the deal happens between the two people. Safe steps: 1) meet in a public place or at the shop; 2) check the item or the papers (registry, fard, receipts) yourself; 3) pay only against handover and get a written receipt; 4) for business, property or instalments write the agreement and use a lawyer; 5) never send advance money to a stranger. The owner must set up Firebase once in Buy & sell > Setup for listings to appear.', 'win:listings']); } catch (e) { } })();
 /* ===== p9rbs (build 482): Real Bot stop-loss watchdog. Every 45 s, for every open bot trade that still has a position on the exchange, the app asks the exchange whether a stop-loss order really exists. If it is missing it is placed again at once; if that fails the position is closed for safety and you get an alert. This also covers a market order whose reply timed out. ===== */
 (function () {
     try {
@@ -29375,14 +29412,14 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         var _v = VIEWS.mexcd; if (typeof _v !== 'function') { return; }
         function e2(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
         window.__exaAsk = function (v) {
-            var D = window.__MXD || {}, nm = String(D.s || ''), t = D.tk || {}, ex = D.x === 'bitget' ? 'Bitget' : 'MEXC';
+            var D = window.__MXD || {}, nm = String(D.s || ''), t = D.tk || {}, ex = { bitget: 'Bitget', bybit: 'Bybit', okx: 'OKX' }[D.x] || 'MEXC';
             var q = v === 'risk' ? 'Explain the risks of trading ' + nm + ' on ' + ex + ' right now in plain words: size of the move today, volume, funding, and what could go wrong. Give a stop-loss rule for a small account. Not financial advice.'
                 : 'Look at ' + nm + ' on ' + ex + ' (24h change ' + (t.chg != null ? (+t.chg).toFixed(1) + '%' : 'unknown') + ', volume ' + (t.q ? Math.round(t.q / 1e6) + 'M USDT' : 'unknown') + '). In simple words: is it a buy, sell or wait right now, why, where to put the stop and target, and how much of a small account to use. Not financial advice.';
             if (window.__askBaba) { window.__askBaba(q); }
         };
         document.addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-exa]') : null; if (!b) { return; } e.preventDefault(); e.stopPropagation(); window.__exaAsk(b.getAttribute('data-exa')); }, true);
         VIEWS.mexcd = function () {
-            var h = _v.apply(this, arguments), D = window.__MXD || {}, sym = String(D.s || '') + 'USDT', ex = D.x === 'bitget' ? 'Bitget' : 'MEXC', box = '';
+            var h = _v.apply(this, arguments), D = window.__MXD || {}, sym = String(D.s || '') + 'USDT', ex = { bitget: 'Bitget', bybit: 'Bybit', okx: 'OKX' }[D.x] || 'MEXC', box = '';
             try {
                 var g = window.__sigGet ? window.__sigGet(sym) : null, t = D.tk || {}, f = D.fund;
                 box = '<div class="group pad"><b>🤖 Bots and advisors · ' + e2(D.s) + ' on ' + ex + '</b><div class="note" style="margin:3px 0 6px">The same two bots that scan Binance also scan ' + ex + ' coins with enough volume. One bot signal is a recommendation; both agreeing is STRONG.</div>';
@@ -29434,6 +29471,496 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         window.__doctor2 = { hist: function () { return hist; } };
     } catch (e) { try { console.log('p9doc2', e); } catch (er) { } }
 })();
+/* ===== p9ex2: (1) Ideas: choosing MEXC or Bitget now also shows THAT exchange's own coins (top movers, "only here" tag, bot signals). (2) Trade Pro bottom bar made compact so it no longer covers a third of the screen. ===== */
+(function () {
+    try {
+        var X = window.XCH; if (!X) { return; }
+        function esc3(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function box(ex) {
+            var nm = ex === 'mexc' ? 'MEXC' : 'Bitget', arr = ex === 'mexc' ? ((S.mx && S.mx.fut) || []).concat((S.mx && S.mx.spot) || []) : ((X.bg.fut || []).concat(X.bg.spot || []));
+            try { if (ex === 'bitget') { X.bgLoad(); } } catch (e) { }
+            var seen = {}, rows = [];
+            arr.filter(function (x) { return x && x.q >= 300000 && isFinite(x.c); }).sort(function (a, b) { return Math.abs(b.c) - Math.abs(a.c); }).forEach(function (x) { if (!seen[x.s] && rows.length < 12) { seen[x.s] = 1; rows.push(x); } });
+            var h = '<div class="group pad"><b>' + nm + ' coins · biggest moves now</b><div class="note" style="margin:3px 0 8px">Real ' + nm + ' prices (24h change, volume at least $300k). "only here" = not tradable on Binance. Tap a coin for its page with bots and advisors.</div>';
+            if (!rows.length) { h += '<div class="note">Loading ' + nm + ' coins… If this stays empty, ' + nm + ' may be blocked on your network.</div>'; }
+            else { h += '<div class="mwxr">' + rows.map(function (x) { var only = ''; try { only = X.binFut(x.s) ? '' : ' <small>only here</small>'; } catch (e) { } return '<span class="mwxc ' + (x.c >= 0 ? 'up' : 'dn') + ' tap" data-mx="det:' + esc3(x.s) + '@' + ex + '"><b>' + esc3(x.s) + '</b><small>' + (x.c >= 0 ? '+' : '') + x.c.toFixed(1) + '%' + only + '</small></span>'; }).join('') + '</div>'; }
+            h += '</div>';
+            try { if (window.__sigBox) { h += window.__sigBox(ex); } } catch (e) { }
+            return h;
+        }
+        var _vi = VIEWS.ideas;
+        VIEWS.ideas = function () {
+            var h = _vi.apply(this, arguments);
+            try {
+                if ((S.xch === 'mexc' || S.xch === 'bitget') && h.indexOf('One list for every idea') >= 0) {
+                    var j = h.indexOf('One list for every idea'), i = j >= 0 ? h.indexOf('</div>', j) : -1;
+                    if (i >= 0) { i += 6; h = h.slice(0, i) + box(S.xch) + h.slice(i); }
+                }
+            } catch (e) { }
+            return h;
+        };
+        /* Trade Pro bar: two slim rows instead of three tall ones */
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '#mwtb{padding:5px!important;gap:5px!important;border-radius:14px!important}' +
+            '#mwtb span{padding:8px 3px!important;font-size:13px!important;border-radius:11px!important}' +
+            '#mwtb .rc{flex:1 1 66%!important;padding:7px 6px!important;font-size:11px!important;line-height:1.15;max-height:34px;overflow:hidden}' +
+            '#mwtb .lk{flex:1 1 28%!important;padding:7px 4px!important;font-size:11px!important}' +
+            '#mwtb.ch .rc{flex:1 1 66%!important}#mwtb.ch .lk{flex:1 1 28%!important}' +
+            'html[data-win="tpro"] #view,html[data-win="analyst"] #view,html[data-win="story"] #view,html[data-win="mexcd"] #view{padding-bottom:150px}';
+        document.head.appendChild(st);
+        setInterval(function () { try { var b = document.querySelector('#mwtb .lk'); if (b && b.getAttribute('data-c') !== '1') { b.setAttribute('data-c', '1'); b.textContent = '🔗 Linked'; } } catch (e) { } }, 1500);
+    } catch (e) { try { console.log('p9ex2', e); } catch (er) { } }
+})();
+/* ===== p9vpn (build 483): MintooSuiteVPN. A WireGuard tunnel inside the app (open-source WireGuard library). You import your own free WireGuard config (for example from ProtonVPN Free); the app connects, shows the state, tests which exchanges are reachable, and warns you if the VPN drops while the Real Bot is on. The key stays on your phone. ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2;
+        var V = { st: { avail: false, has: false, state: 'off', err: '' }, test: null, busy: 0 };
+        function N() { try { return window.MintooNative; } catch (e) { return null; } }
+        function tk() { return window.__mwTok || ''; }
+        function tst(t) { try { toast(t); } catch (e) { } }
+        function refresh() { try { var n = N(); if (n && n.vpnState) { V.st = JSON.parse(String(n.vpnState(tk()) || '{}')) || V.st; } } catch (e) { } }
+        function ag() { try { if (S.win === 'vpn') { X.again(); } } catch (e) { } }
+        var HOSTS = [['Binance', 'https://fapi.binance.com/fapi/v1/ping'], ['MEXC', 'https://contract.mexc.com/api/v1/contract/ping'], ['Bitget', 'https://api.bitget.com/api/v2/public/time'], ['Bybit', 'https://api.bybit.com/v5/market/time'], ['OKX', 'https://www.okx.com/api/v5/public/time']];
+        function ping(u) { return new Promise(function (res) { var c = new AbortController(), t0 = Date.now(), to = setTimeout(function () { c.abort(); }, 6000); fetch(u, { signal: c.signal, cache: 'no-store' }).then(function (r) { clearTimeout(to); res(r.status < 500 ? Date.now() - t0 : -1); }).catch(function () { clearTimeout(to); res(-1); }); }); }
+        X.on('vpnsave', function () { var el = document.getElementById('vpnCfg'), n = N(); if (!n || !n.vpnSave) { tst('The VPN works inside the installed Android app only.'); return; } var t = el ? el.value : ''; var ok = false; try { ok = n.vpnSave(tk(), t); } catch (e) { } refresh(); if (ok && el) { el.value = ''; } tst(ok ? 'Config saved on this phone.' : (V.st.err || 'That config was not accepted.')); ag(); });
+        X.on('vpnclr', function () { var n = N(); try { n && n.vpnClear(tk()); } catch (e) { } refresh(); tst('Config removed.'); ag(); });
+        X.on('vpnup', function () { var n = N(); if (!n || !n.vpnUp) { tst('The VPN works inside the installed Android app only.'); return; } try { n.vpnUp(tk()); } catch (e) { } var k = 0, iv = setInterval(function () { refresh(); ag(); if (++k > 20 || V.st.state === 'on' || (V.st.state === 'off' && V.st.err)) { clearInterval(iv); } }, 1000); });
+        X.on('vpndn', function () { var n = N(); try { n && n.vpnDown(tk()); } catch (e) { } setTimeout(function () { refresh(); ag(); }, 1200); });
+        X.on('vpnwarn', function () { try { localStorage.setItem('mintoosuite_vpnwarn', localStorage.getItem('mintoosuite_vpnwarn') === '0' ? '1' : '0'); } catch (e) { } ag(); });
+        X.on('vpntest', function () { if (V.busy) { return; } V.busy = 1; V.test = null; ag(); Promise.all(HOSTS.map(function (h) { return ping(h[1]).then(function (ms) { return [h[0], ms]; }); })).then(function (r) { V.test = r; V.busy = 0; ag(); }); });
+        function warnOn() { try { return localStorage.getItem('mintoosuite_vpnwarn') !== '0'; } catch (e) { return true; } }
+        function stTxt() { var s = V.st.state; return s === 'on' ? ['🟢', 'Connected', '#16a34a'] : s === 'connecting' ? ['🟡', 'Connecting…', '#f59e0b'] : s === 'asking' ? ['🟡', 'Waiting for your OK in the Android popup', '#f59e0b'] : ['⚪', 'Off', '#8e8e93']; }
+        WINS.push({ id: 'vpn', ic: '🛡', c: '#0a84ff', n: 'MintooSuiteVPN', t: 'VPN', sub: 'Your own WireGuard VPN inside the app, with an exchange reachability test' }); LIVE.vpn = 0;
+        VIEWS.vpn = function () {
+            refresh(); var n = N(), s = stTxt(), st = V.st;
+            var h = '<div class="group pad"><b style="font-size:18px">🛡 MintooSuiteVPN</b><div class="note" style="margin:4px 0 0">A private tunnel for the whole phone, built on the open-source WireGuard engine. It does not give you servers: you add your own free WireGuard config (steps below).</div></div>';
+            if (!n || !n.vpnState) { return h + '<div class="group pad"><div class="note">The VPN switch works inside the installed Android app. You can still run the exchange test below to see what your network reaches now.</div></div>' + testBox(); }
+            if (!st.avail) { h += '<div class="group pad warn"><b>VPN engine not in this build</b><div class="note">The WireGuard library was not included when this app was built. Re-run the installer with internet on.</div></div>'; }
+            h += '<div class="group pad" style="border-left:5px solid ' + s[2] + '"><div style="font-size:20px;font-weight:800">' + s[0] + ' ' + s[1] + '</div>' + (st.err ? '<div class="note" style="color:#dc2626;margin:6px 0 0">' + e2(st.err) + '</div>' : '') +
+                '<div style="display:flex;gap:8px;margin-top:10px">' + (st.state === 'on' || st.state === 'connecting' ? '<span class="btn tap" data-xk="vpndn:" style="flex:1;text-align:center;background:#dc2626;color:#fff;padding:12px;border-radius:12px;font-weight:800">Disconnect</span>' : '<span class="btn tap" data-xk="vpnup:" style="flex:1;text-align:center;background:' + (st.has ? '#16a34a' : '#9ca3af') + ';color:#fff;padding:12px;border-radius:12px;font-weight:800">Connect</span>') + '</div>' +
+                (st.has ? '' : '<div class="note" style="margin:8px 0 0">Add a config first.</div>') + '</div>';
+            h += '<div class="group pad"><b>' + (st.has ? '✅ Config saved on this phone' : '1. Paste your WireGuard config') + '</b><div class="note" style="margin:4px 0 8px">Paste the whole text file (it starts with [Interface]). It is saved only in this app on your phone. Never paste it in a chat.</div>' +
+                '<textarea id="vpnCfg" rows="5" placeholder="[Interface]&#10;PrivateKey = …&#10;Address = …&#10;[Peer]&#10;PublicKey = …&#10;Endpoint = …" style="width:100%;box-sizing:border-box;border-radius:10px;border:1px solid var(--line,#ccc);padding:8px;font-size:12px"></textarea>' +
+                '<div style="display:flex;gap:8px;margin-top:8px"><span class="btn tap" data-xk="vpnsave:" style="flex:1;text-align:center;background:#0a84ff;color:#fff;padding:10px;border-radius:12px;font-weight:800">Save config</span>' + (st.has ? '<span class="btn tap" data-xk="vpnclr:" style="padding:10px 14px;border-radius:12px;border:1px solid var(--line,#ccc)">Remove</span>' : '') + '</div></div>';
+            h += '<div class="group pad"><div style="display:flex;justify-content:space-between;align-items:center"><b>Warn me if the VPN drops</b><span class="tap" data-xk="vpnwarn:" style="padding:6px 12px;border-radius:12px;background:' + (warnOn() ? '#16a34a' : '#9ca3af') + ';color:#fff;font-weight:700">' + (warnOn() ? 'On' : 'Off') + '</span></div><div class="note" style="margin:4px 0 0">If you connected this VPN and it drops while the Real Bot is on, you get a notice and a push alert. Your exchange stop-losses stay on the exchange either way.</div></div>';
+            return h + testBox() + howBox();
+        };
+        function testBox() {
+            var h = '<div class="group pad"><b>Which exchanges can this phone reach?</b><div class="note" style="margin:4px 0 8px">Tests each exchange\'s public time page. Run it with the VPN off, then on.</div>';
+            if (V.test) { h += V.test.map(function (r) { return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--line,#e5e5ea)"><span>' + e2(r[0]) + '</span><b style="color:' + (r[1] >= 0 ? '#16a34a' : '#dc2626') + '">' + (r[1] >= 0 ? 'reachable · ' + r[1] + ' ms' : 'blocked / no answer') + '</b></div>'; }).join(''); }
+            h += '<span class="btn tap" data-xk="vpntest:" style="display:block;text-align:center;margin-top:8px;background:#6e5bd8;color:#fff;padding:10px;border-radius:12px;font-weight:800">' + (V.busy ? 'Testing…' : 'Test exchanges now') + '</span></div>';
+            return h;
+        }
+        function howBox() {
+            return '<div class="group pad"><b>How to get a free config</b><div class="note" style="margin:4px 0 0">1. Make a free ProtonVPN account (proton.me/vpn). Its free plan offers WireGuard files: Downloads, then WireGuard configuration, pick a free server, download.<br>2. Open the file as text, copy everything, paste it above, Save, Connect.<br>3. Free plans can be slower and limited; check the provider\'s current terms.</div></div>' +
+                '<div class="group pad warn"><b>Please read</b><div class="note" style="margin:4px 0 0">• Some exchanges do not allow users from certain countries, and using a VPN to get around that can break their rules and freeze an account. Check each exchange\'s terms.<br>• A VPN adds delay and can drop. Do not rely on it for a live Real Bot without a stop-loss on the exchange.<br>• Free VPN providers can see your traffic. Never use a random free VPN app with your trading keys; use a provider you trust.</div></div>';
+        }
+        /* drop warning: only if the VPN was connected from this app and then went off while the Real Bot is on */
+        var wasOn = false, lastWarn = 0;
+        setInterval(function () {
+            try {
+                var n = N(); if (!n || !n.vpnState || document.hidden) { return; } refresh();
+                if (V.st.state === 'on') { wasOn = true; return; }
+                if (wasOn && V.st.state === 'off' && warnOn() && Date.now() - lastWarn > 600000) {
+                    wasOn = false; lastWarn = Date.now(); var rb = false; try { rb = !!(S.rb && (S.rb.running || S.rb.on)); } catch (e) { }
+                    tst('🛡 MintooSuiteVPN is off now.' + (rb ? ' The Real Bot is running: prices may stop if your network blocks the exchange.' : ''));
+                    try { if (rb && n.notify) { n.notify(tk(), 'VPN dropped', 'MintooSuiteVPN is off while the Real Bot is on. Open the app.'); } } catch (e) { }
+                }
+            } catch (e) { }
+        }, 15000);
+        function grp() { try { if (typeof MW_GROUPS === 'undefined') { return false; } var n = 0; MW_GROUPS.forEach(function (g) { if (g[0] === 'Tools & settings') { if (g[1].indexOf('vpn') < 0) { g[1].push('vpn'); } n++; } }); try { mwHostSig = ''; } catch (e) { } return n > 0; } catch (e) { return false; } }
+        var tr = 0, iv = setInterval(function () { if (grp() || ++tr > 40) { clearInterval(iv); } }, 300);
+        window.__vpn = { V: V, ping: ping };
+    } catch (e) { try { console.error('p9vpn', e); } catch (e2) { } }
+})();
+/* ===== p9pump2 (build 486): Home "New coins and pumps" is now TWO colour-changing tiles side by side: Pumps (left) and New coins (right). Swipe sideways to change; a swipe bar at the bottom shows which one you are on. Each tile has its own scroll bar on the right edge for up and down. ===== */
+(function () {
+    try {
+        var X = window.__kx, e3 = X.e2, pg = 0, touching = 0;
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '#mwpumpcard{padding:12px 0 8px!important;overflow:hidden}' +
+            '.mwpp{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;gap:0}.mwpp::-webkit-scrollbar{display:none}' +
+            '.mwpt{flex:0 0 100%;scroll-snap-align:center;box-sizing:border-box;padding:0 12px;position:relative}' +
+            '.mwpi{position:relative;height:250px;border-radius:20px;overflow:hidden;border:1px solid hsla(var(--mw-h,210),60%,50%,.28);background:linear-gradient(135deg,hsla(var(--mw-h,210),75%,52%,.20),hsla(calc(var(--mw-h,210) + 60),75%,55%,.12))}' +
+            '.mwpi:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,hsla(var(--mw-h,210),85%,55%,.22),hsla(calc(var(--mw-h,210) + 90),85%,60%,.18),hsla(calc(var(--mw-h,210) + 180),85%,55%,.20));background-size:300% 300%;animation:mwppg 9s ease-in-out infinite alternate;pointer-events:none}' +
+            '@keyframes mwppg{from{background-position:0% 50%}to{background-position:100% 50%}}html.mwcalm .mwpi:before{animation:none}' +
+            '.mwpi .hd{position:relative;display:flex;justify-content:space-between;align-items:center;padding:12px 16px 6px;font-weight:800;font-size:16px}.mwpi .hd small{font-weight:600;opacity:.65;font-size:12px}' +
+            '.mwpl{position:relative;height:190px;overflow-y:scroll;padding:0 6px 8px 12px;margin-right:2px;-webkit-overflow-scrolling:touch;touch-action:pan-y}' +
+            '.mwpl::-webkit-scrollbar{width:7px}.mwpl::-webkit-scrollbar-track{background:rgba(120,120,128,.12);border-radius:8px;margin:4px 0}.mwpl::-webkit-scrollbar-thumb{background:hsl(var(--mw-h,210),70%,50%);border-radius:8px}' +
+            '.mwpr{display:block;padding:9px 10px;margin:0 0 7px;border-radius:14px;background:rgba(255,255,255,.55);border:1px solid rgba(120,120,128,.14)}@media(prefers-color-scheme:dark){.mwpr{background:rgba(255,255,255,.07)}}' +
+            '.mwpr b{display:block;font-size:14px;line-height:1.3}.mwpr small{display:block;font-size:12px;opacity:.75;margin-top:2px}.mwpr i{font-style:normal;font-size:11px;opacity:.55}.mwpe{padding:14px 6px;font-size:13px;opacity:.7}' +
+            '.mwpb{display:flex;align-items:center;justify-content:center;gap:10px;margin:8px 16px 0;font-size:12px;font-weight:700}.mwpb span{opacity:.5}.mwpb span.on{opacity:1}.mwpb .tr{position:relative;flex:0 0 90px;height:6px;border-radius:6px;background:rgba(120,120,128,.25)}.mwpb .tr i{position:absolute;top:0;left:0;width:50%;height:100%;border-radius:6px;background:hsl(var(--mw-h,210),70%,50%);transition:left .12s}';
+        document.head.appendChild(st);
+        function ago(t) { var a = Math.max(0, Math.round((Date.now() - t) / 60000)); return a < 60 ? a + ' min ago' : a < 1440 ? Math.round(a / 60) + ' h ago' : Math.round(a / 1440) + ' d ago'; }
+        function tile(ic, title, hint, items, all, empty) {
+            var rows = items.length ? items.map(function (o) { var x = o.x; return '<div class="mwpr tap" data-pump="logopen:' + o.i + '"><b>' + (x.mega ? '🚨 ' : '') + e3(String(x.title || '').slice(0, 80)) + '</b><small>' + e3(String(x.body || '').slice(0, 90)) + '</small><i>' + ago(x.t) + '</i></div>'; }).join('') : '<div class="mwpe">' + empty + '</div>';
+            return '<div class="mwpt"><div class="mwpi"><div class="hd"><span>' + ic + ' ' + title + ' <small>' + items.length + '</small></span><span data-act="win:radar" style="font-size:12px;font-weight:600;opacity:.65;padding:4px">See all ›</span></div><div class="mwpl" data-noswipe="1">' + rows + '</div></div></div>';
+        }
+        window.__pumpHome = function (LOG) {
+            var seen = LOG.map(function (x, i) { return { x: x, i: i }; }).filter(function (o) { var x = o.x; try { if (x.kind === 'new' && x.bn && S.fst && /Binance futures/.test(x.title || '')) { var f = S.fst[x.bn]; return !!(f && f.st === 'TRADING'); } } catch (e) { } return true; });
+            var pumps = seen.filter(function (o) { return o.x.kind !== 'new'; }).slice(0, 30), news = seen.filter(function (o) { return o.x.kind === 'new'; }).slice(0, 30);
+            return '<div class="group pad" id="mwpumpcard"><div class="mwpp" data-noswipe="1">' + tile('🚀', 'Pumps', '', pumps, 1, 'No pumps yet. A coin that jumps fast shows here and stays until you clear it.') + tile('🆕', 'New coins', '', news, 1, 'No new listings yet. Newly listed coins on MEXC or Binance show here.') + '</div>' +
+                '<div class="mwpb"><span class="on" data-pg="0">🚀 Pumps</span><div class="tr"><i></i></div><span data-pg="1">🆕 New coins</span></div></div>';
+        };
+        function sync(sc) { try { var w = sc.clientWidth || 1, p = sc.scrollLeft / w; pg = p > 0.5 ? 1 : 0; var b = sc.parentNode.querySelector('.mwpb'); if (!b) { return; } b.querySelector('.tr i').style.left = Math.max(0, Math.min(50, p * 50)) + '%'; b.querySelectorAll('span').forEach(function (s, k) { s.classList.toggle('on', k === pg); }); } catch (e) { } }
+        document.addEventListener('scroll', function (e) { var t = e.target; if (t && t.classList && t.classList.contains('mwpp')) { sync(t); } }, true);
+        document.addEventListener('touchstart', function (e) { if (e.target.closest && e.target.closest('.mwpp')) { touching = 1; } }, { passive: true, capture: true });
+        document.addEventListener('touchend', function () { setTimeout(function () { touching = 0; }, 400); }, { passive: true, capture: true });
+        document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.mwpb [data-pg]'); if (!b) { return; } var sc = document.querySelector('.mwpp'); if (sc) { pg = +b.getAttribute('data-pg'); sc.scrollTo({ left: pg * sc.clientWidth, behavior: 'smooth' }); } }, false);
+        /* after Home redraws, go back to the tile you were on */
+        setInterval(function () { try { var sc = document.querySelector('.mwpp'); if (sc && !touching && pg === 1 && sc.scrollLeft < 4) { sc.scrollLeft = sc.clientWidth; sync(sc); } } catch (e) { } }, 500);
+    } catch (e) { try { console.log('p9pump2', e); } catch (er) { } }
+})();
+/* ===== p9adv2 (build 487): "Professional advisor" boxes inside the Pakistan desk. Buttons and section tabs now open a drop-down advisor note IN PLACE (small ▾ arrow to fold it), written into the app. They no longer open the Baba AI chat. Plain explanations and plans, never tips or promises. ===== */
+(function () {
+    try {
+        var X = window.__kx, e2 = X.e2, OPEN = {}, PS = { q: -1 }, SQ = null;
+        try { OPEN = JSON.parse(localStorage.getItem('mintoosuite_padv') || '{}') || {}; } catch (e) { }
+        function sv() { try { localStorage.setItem('mintoosuite_padv', JSON.stringify(OPEN)); } catch (e) { } }
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '.padv{margin:0 0 10px;border-radius:18px;border:1px solid hsla(var(--mw-h,210),55%,50%,.30);background:linear-gradient(135deg,hsla(var(--mw-h,210),70%,50%,.12),hsla(calc(var(--mw-h,210) + 60),70%,55%,.07));overflow:hidden}' +
+            '.padv .phd{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;font-size:14px}.padv .phd b{line-height:1.25}.padv .phd span{flex:none;width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;background:hsl(var(--mw-h,210),70%,46%);color:#fff;font-size:13px;transition:transform .2s}.padv.on .phd span{transform:rotate(180deg)}' +
+            '.padv .pbd{display:none;padding:0 14px 12px;font-size:13.5px;line-height:1.5}.padv.on .pbd{display:block}.padv .pbd p{margin:0 0 7px}.padv .pbd .pn{font-size:11.5px;opacity:.65;margin-top:8px}';
+        document.head.appendChild(st);
+        function box(key, title, body) { return '<div class="padv' + (OPEN[key] ? ' on' : '') + '" data-padv="' + key + '"><div class="phd" data-xk="padvt:' + key + '"><b>🧑‍💼 Professional advisor · ' + title + '</b><span>▾</span></div><div class="pbd">' + body + '<div class="pn">General education, not personal financial advice or a tip. No one can promise profit. Check anything important with a licensed professional.</div></div></div>'; }
+        X.on('padvt', function (k) { OPEN[k] = !OPEN[k]; sv(); var el = document.querySelector('.padv[data-padv="' + k + '"]'); if (el) { el.classList.toggle('on', !!OPEN[k]); } });
+        function P(a) { return a.map(function (t) { return '<p>' + t + '</p>'; }).join(''); }
+        /* ---- PSX tab notes ---- */
+        var TAB = {
+            opp: ['Hot shares', P(['<b>What it is:</b> shares with unusual volume or price movement today. Heavy volume means many people are trading it, not that it will keep rising.', '<b>How a professional reads it:</b> (1) is the move on news or only on rumours? (2) is the share liquid enough to sell when you want? (3) is it already up a lot today? Chasing a share after a big jump is the most common beginner loss.', '<b>Plan:</b> decide the amount you can lose before you buy, set the exit level first, and keep each position small.'])],
+            auto: ['Autos', P(['<b>What moves car makers:</b> car prices, interest rates (car loans), the rupee (imported parts), fuel prices and government policy on imports and taxes.', '<b>Risks:</b> demand falls when loans get expensive; costs rise when the rupee weakens; profits can swing a lot quarter to quarter.', '<b>How to read it:</b> compare a company with its own last year, not only with other companies. Read the latest quarterly result before you act.'])],
+            sect: ['Sectors', P(['<b>Why sectors:</b> shares in one sector often move together (banks with interest rates, cement with construction, fertilizer with gas and crop season, oil with global oil, power with circular debt news).', '<b>Simple rule:</b> do not put everything in one sector. Two or three sectors reduce the damage when one has bad news.', '<b>Tap a sector</b> to see its shares, then read what drives it before you decide.'])],
+            re: ['Real estate', P(['<b>Three ways in:</b> a REIT share on PSX (small amounts, easy to sell), a plot or house (large, slow to sell, paperwork heavy), or a housing-society file (highest scam risk).', '<b>Checks for property:</b> ownership record (registry or fard), the seller\'s CNIC matches the record, no loan or court case on it, society approval by the development authority, and payment by bank transfer only.', '<b>Never:</b> pay cash to a stranger, trust a verbal promise, or sign before a lawyer reads the papers.'])],
+            all: ['All shares', P(['<b>How to use this list:</b> search the share you already know about. Do not buy a name only because it is cheap per share; a low price does not mean good value.', '<b>Before buying:</b> check the company\'s profit trend, debt, and whether the share trades every day. Thinly traded shares are hard to sell.', '<b>Costs:</b> brokerage, taxes and exchange charges apply on every trade. Ask your broker for the current full list.'])],
+            more: ['Currencies and more', P(['<b>Money rates:</b> the rupee rate matters for import-heavy companies and for anyone sending or receiving money from abroad.', '<b>Compare, do not guess:</b> check the official or bank rate against the market rate before exchanging, and use only licensed exchange companies.'])]
+        };
+        /* ---- PSX buttons ---- */
+        var QA = [
+            ['What looks strong?', P(['<b>How a professional decides what looks strong:</b>', '1. <b>Trend</b>: price above its recent average with rising volume, not a single jump day.', '2. <b>Business</b>: profits growing for several quarters, manageable debt, regular dividends.', '3. <b>Liquidity</b>: it trades every day so you can exit.', '4. <b>Risk</b>: how much do you lose if you are wrong? Decide the stop level before you buy.', 'Open the <b>Hot</b> tab for what is moving today, then read the company result before acting. Beginners: start with a small amount in two or three different sectors.'])],
+            ['Explain this sector', P(['<b>Sectors in simple words:</b>', '• <b>Banks</b>: earn from the gap between lending and deposit rates; interest-rate news matters.', '• <b>Cement</b>: follows construction, coal and fuel costs and export demand.', '• <b>Fertilizer</b>: gas supply and price, crop season and government subsidy policy.', '• <b>Oil and gas</b>: global oil price, rupee, and payment delays from the government.', '• <b>Autos</b>: loan rates, the rupee and import rules.', '• <b>Power</b>: payment delays in the energy chain (circular debt) and tariff decisions.', 'Open the <b>Sectors</b> tab, pick one, and read what drives it.'])],
+            ['Monthly plan (PKR)', P(['<b>A simple monthly routine:</b>', '1. Keep 3 to 6 months of expenses in savings first. Invest only money you do not need soon.', '2. Pick a fixed amount each month you can afford to leave invested for years.', '3. Split it across two or three sectors rather than one share.', '4. Buy on the same date each month (this avoids guessing the best day).', '5. Write a rule for selling or stopping before you start, for example a loss limit per share.', '6. Ask your licensed broker for the current brokerage and tax costs and keep a record of every trade.', 'This is a routine, not a promise of profit.'])],
+            ['Avoid scams', P(['<b>Common scams:</b> "guaranteed profit" groups, WhatsApp or Telegram tips, fake brokers asking you to send money to a personal account, and "double your money" offers.', '<b>Safe checks:</b> a real broker is a licensed member of the Pakistan Stock Exchange and registered with SECP. Look them up on the official PSX and SECP websites yourself, not through a link they send.', '<b>Rules:</b> your shares are held in your own account at the central depository; money goes to the broker\'s <i>company</i> account only; never share your password, OTP or CNIC photo; if a tip sounds certain, walk away.'])]
+        ];
+        X.on('psxask', function (v) { var i = +v; PS.q = PS.q === i ? -1 : i; if (PS.q >= 0) { OPEN['psx:q'] = true; sv(); } try { renderView(true); } catch (e) { } });
+        var lastTab = '', _p = VIEWS.psx;
+        VIEWS.psx = function () {
+            var h = _p.apply(this, arguments), m = /class="on" data-pk="tab:([a-z]+)"/.exec(h), tab = m ? m[1] : 'opp';
+            /* the Baba-AI card buttons now fold open the advisor answer under the card */
+            h = h.replace(/Ask Baba AI about Pakistan shares\. These are explanations and plans, not promises or tips\./, 'Tap a question: the advisor answers right here. Explanations and plans, not promises or tips.');
+            if (PS.q >= 0 && QA[PS.q]) { var ix = h.indexOf('<div class="pkt">'); var ans = box('psx:q', QA[PS.q][0], QA[PS.q][1]); var cardEnd = h.lastIndexOf('</div></div>', ix); h = ix > 0 ? h.slice(0, ix) + ans + h.slice(ix) : ans + h; OPEN['psx:q'] = OPEN['psx:q'] !== false; }
+            if (tab !== lastTab) { lastTab = tab; OPEN['psx:t:' + tab] = true; sv(); }
+            var t = TAB[tab]; if (t) { var j = h.indexOf('</div>', h.indexOf('<div class="pkt">')); if (j > 0) { j += 6; h = h.slice(0, j) + box('psx:t:' + tab, t[0], t[1]) + h.slice(j); } }
+            return h;
+        };
+        /* ---- Shop & property: buttons answer in a box at the top ---- */
+        X.on('shq', function (v) {
+            var el = document.querySelector('[data-xk="shq:' + v + '"]'), lab = el ? el.textContent.replace(/^[^\w]*\s*/, '').trim() : 'Advisor', q = el ? el.getAttribute('data-q') : '', a = null;
+            try { q = (window.__shQ && window.__shQ(+v)) || q; if (q && typeof pfAnswer === 'function') { a = pfAnswer(q); } } catch (e) { }
+            if (!a || /not sure/i.test(a.title || '')) { if (q && window.__askBaba) { window.__askBaba(q); } return; }
+            SQ = { t: lab, h: a.html }; OPEN['shop:a'] = true; sv(); try { renderView(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { }
+        });
+        var _s = VIEWS.shophub;
+        if (_s) { VIEWS.shophub = function () { var h = _s.apply(this, arguments); if (SQ) { var j = h.indexOf('</div></div>'); if (j > 0) { j += 12; h = h.slice(0, j) + box('shop:a', e2(SQ.t), SQ.h) + h.slice(j); } } return h; }; }
+        try { PF_APP.push(['buy psx shares|sell psx shares|how to buy shares|psx account|open broker account|cdc account|trade psx|buy stocks pakistan|share trading pakistan', 'How to trade PSX shares', 'This app cannot place PSX orders: they go only through a licensed PSX broker. Steps: 1) pick a licensed, SECP-registered broker (Pakistan Trading House > Brokers has a checklist); 2) open the account with CNIC, own bank account, photo and signature; 3) a CDC sub-account or investor account holds your shares; 4) send money only to the broker company account; 5) place Limit orders in the broker app Monday to Friday, settlement T+2; 6) ask for fees and tax details in writing; 7) start small and ignore guaranteed-profit tips. Not personal financial advice.', 'win:brokers']); } catch (e) { }
+        /* ---- Brokers and Local & offers: one drop-down each ---- */
+        var _b = VIEWS.brokers;
+        if (_b) { VIEWS.brokers = function () { var h = _b.apply(this, arguments); return box('psxhow', 'How to buy and sell PSX shares, step by step', P(['<b>Can this app place PSX orders?</b> No. PSX orders go only through a licensed broker (a PSX member). This app helps you choose, learn and plan; you place the order in your broker\'s own app or website.', '<b>Step 1 · Choose a licensed broker.</b> Check the broker is a PSX member and SECP-registered on the official sites. Ask for the fee list, minimum balance and withdrawal process in writing.', '<b>Step 2 · Open the account.</b> Usually online or at a branch: CNIC (original, valid), a bank account in your own name, a photo, and your signature. Overseas Pakistanis can ask about Roshan Digital Account.', '<b>Step 3 · Your shares account.</b> Shares are held electronically at the central depository (CDC) either in a sub-account under the broker or in your own investor account. Ask the broker which is better for you.', '<b>Step 4 · Add money.</b> Send funds only to the broker\'s company bank account (never a personal account) and keep the receipt.', '<b>Step 5 · Place an order.</b> In the broker app choose the share, Buy or Sell, quantity, and Limit price (safer than Market). Orders run Monday to Friday during PSX hours; settlement is T+2 (two working days).', '<b>Step 6 · Know the costs.</b> Brokerage commission, taxes and fees apply, and tax on gains depends on how long you hold. Ask the broker for a sample bill and check the current tax rules with a professional.', '<b>Step 7 · Be safe.</b> Start small, never borrow to trade, spread money over several companies, and ignore guaranteed-profit tips on WhatsApp or Telegram.'])) + box('brk', 'Choosing a broker', P(['<b>Checklist:</b> licensed Pakistan Stock Exchange member and SECP-registered (verify on the official sites yourself); your own account at the central depository; money only to the broker\'s company account; written fee list; clear process to withdraw.', '<b>Compare:</b> brokerage rate, minimum balance, app quality, research quality, and support response time.', '<b>Red flags:</b> guaranteed returns, personal-account payments, pressure to deposit fast, no written terms.'])) + h; }; }
+        var _o = VIEWS.offers;
+        if (_o) { VIEWS.offers = function () { var h = _o.apply(this, arguments); return box('off', 'Local market and offers', P(['<b>Offers:</b> compare the final price with delivery, tax and return rules; a bank-card discount is only a saving if you would have bought it anyway.', '<b>Near me:</b> check recent reviews and opening hours, and pay on delivery or by a trusted app for first-time sellers.', '<b>Sites:</b> type the web address yourself; do not follow links from messages.'])) + h; }; }
+        window.__padv = { box: box };
+    } catch (e) { try { console.log('p9adv2', e); } catch (er) { } }
+})();
+/* ===== p9pkx (build 488): Pakistan group gets two offline windows: Clothing (garments, fabrics, sizes, buying checks) and Pakistan glossary (shopping, clothing, property and PSX words with Urdu). Pictures are drawn inside the app (work offline). Videos are links that open YouTube when you are online; the app does not store other people's videos. ===== */
+(function () {
+    try {
+        var X = window.__kx, e2 = X.e2;
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '.pkd{margin:0 0 10px;border-radius:18px;border:1px solid hsla(var(--mw-h,210),50%,50%,.22);background:var(--card,#fff);overflow:hidden}.pkd>summary{list-style:none;padding:13px 14px;font-weight:800;font-size:15px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}.pkd>summary::-webkit-details-marker{display:none}.pkd>summary:after{content:"▾";width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;background:hsl(var(--mw-h,210),70%,46%);color:#fff;font-size:13px;transition:transform .2s}.pkd[open]>summary:after{transform:rotate(180deg)}' +
+            '.pkd .bd{padding:0 14px 12px}.pke{display:flex;gap:12px;padding:10px 0;border-top:1px solid rgba(120,120,128,.18)}.pke svg{flex:none;width:64px;height:64px;border-radius:12px;background:rgba(120,120,128,.08)}.pke b{font-size:14.5px}.pke .ur{font-size:13px;opacity:.7;direction:rtl}.pke p{margin:3px 0;font-size:13px;line-height:1.45}.pke a{font-size:12.5px;font-weight:700;color:#0a84ff;text-decoration:none}' +
+            '#pkq{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:14px;border:1px solid rgba(120,120,128,.3);font-size:15px;margin:0 0 10px}';
+        st.textContent += '.pkd,.padv,.mwpi{position:relative;isolation:isolate}.pkd>summary,.padv .phd{background:linear-gradient(110deg,hsla(var(--mw-h,210),75%,52%,.16),hsla(calc(var(--mw-h,210) + 55),75%,58%,.10) 45%,hsla(calc(var(--mw-h,210) + 110),75%,55%,.14));background-size:220% 100%;animation:pkshine 8s ease-in-out infinite alternate}' +
+            '.pkd:after,.padv:after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.32),transparent);transform:skewX(-18deg);animation:pksweep 7s ease-in-out infinite;pointer-events:none;z-index:1}' +
+            '@keyframes pkshine{from{background-position:0 50%}to{background-position:100% 50%}}@keyframes pksweep{0%,60%{left:-60%}100%{left:130%}}' +
+            '.pkd[open]{border-color:hsla(var(--mw-h,210),70%,50%,.5);box-shadow:0 6px 22px hsla(var(--mw-h,210),70%,50%,.18)}' +
+            'html.mwcalm .pkd:after,html.mwcalm .padv:after,html.mwcalm .pkd>summary,html.mwcalm .padv .phd{animation:none}@media(prefers-reduced-motion:reduce){.pkd:after,.padv:after,.pkd>summary,.padv .phd{animation:none}}';
+        document.head.appendChild(st);
+        function yt(q) { return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q); }
+        /* ---------- pictures drawn here, no downloads ---------- */
+        var C1 = '#0a84ff', C2 = '#ff9f0a', C3 = '#34c759', C4 = '#af52de', C5 = '#ff375f';
+        function svg(inner) { return '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">' + inner + '</svg>'; }
+        var PIC = {
+            kameez: svg('<path d="M20 10l12 5 12-5 10 10-8 6v28H18V26l-8-6z" fill="' + C1 + '"/><path d="M26 10c2 6 10 6 12 0" fill="none" stroke="#fff" stroke-width="2"/>'),
+            shalwar: svg('<path d="M18 8h28l4 48H36l-4-30-4 30H14z" fill="' + C4 + '"/>'),
+            dupatta: svg('<path d="M8 20c10-10 18 10 28 0s14-6 20 2v14c-6-8-10-6-20 2s-18-10-28 0z" fill="' + C5 + '"/>'),
+            waistcoat: svg('<path d="M18 8l8 6 6 20 6-20 8-6 4 8-4 40H18L14 16z" fill="#1d3557"/><circle cx="32" cy="30" r="2" fill="#f1c40f"/><circle cx="32" cy="40" r="2" fill="#f1c40f"/>'),
+            sherwani: svg('<path d="M20 8l12 6 12-6 8 12-6 4v34H18V24l-6-4z" fill="#7a1f2b"/><path d="M32 14v42" stroke="#f1c40f" stroke-width="2"/><circle cx="32" cy="24" r="2" fill="#f1c40f"/><circle cx="32" cy="34" r="2" fill="#f1c40f"/><circle cx="32" cy="44" r="2" fill="#f1c40f"/>'),
+            frock: svg('<path d="M24 8h16l-2 14 14 34H12l14-34z" fill="' + C5 + '"/>'),
+            abaya: svg('<path d="M24 8h16l6 12v36H18V20z" fill="#222"/><path d="M26 8c2 5 10 5 12 0" fill="none" stroke="#888" stroke-width="2"/>'),
+            lawn: svg('<defs><pattern id="pl" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 3h6" stroke="#fff" stroke-width=".8" opacity=".7"/></pattern></defs><rect width="64" height="64" rx="10" fill="' + C3 + '"/><rect width="64" height="64" rx="10" fill="url(#pl)"/>'),
+            khaddar: svg('<defs><pattern id="pk" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.3" fill="#fff" opacity=".6"/><circle cx="5" cy="5" r="1" fill="#000" opacity=".25"/></pattern></defs><rect width="64" height="64" rx="10" fill="#a0522d"/><rect width="64" height="64" rx="10" fill="url(#pk)"/>'),
+            karandi: svg('<defs><pattern id="pc" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8L8 0" stroke="#fff" stroke-width="1.4" opacity=".6"/></pattern></defs><rect width="64" height="64" rx="10" fill="#6b4e9b"/><rect width="64" height="64" rx="10" fill="url(#pc)"/>'),
+            cotton: svg('<rect width="64" height="64" rx="10" fill="#e8e1d0"/><path d="M12 32c4-10 12-10 14 0s10 10 14 0 10-10 12 0" fill="none" stroke="#b9ad90" stroke-width="3"/>'),
+            silk: svg('<defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset=".5" stop-color="#ef476f"/><stop offset="1" stop-color="#7b2cbf"/></linearGradient></defs><rect width="64" height="64" rx="10" fill="url(#sg)"/>'),
+            thread: svg('<rect width="64" height="64" rx="10" fill="#fff3d6"/><path d="M10 50c10-30 14 10 22-20s16 10 22-14" fill="none" stroke="#d4a017" stroke-width="3"/><circle cx="52" cy="16" r="3" fill="#d4a017"/>'),
+            tape: svg('<rect width="64" height="64" rx="10" fill="#eef"/><rect x="6" y="26" width="52" height="12" rx="2" fill="#ffd54a"/><path d="M12 26v6M20 26v8M28 26v6M36 26v8M44 26v6M52 26v8" stroke="#333" stroke-width="1.5"/>'),
+            land: svg('<rect width="64" height="64" rx="10" fill="#e9f5e1"/><rect x="14" y="20" width="36" height="24" fill="#bfe3a8" stroke="#4c8c2b" stroke-width="2"/><path d="M14 32h36M32 20v24" stroke="#4c8c2b" stroke-width="1" stroke-dasharray="3 2"/>'),
+            stock: svg('<rect width="64" height="64" rx="10" fill="#0b1b2b"/><path d="M8 48l12-14 10 8 14-22 12 6" fill="none" stroke="#34c759" stroke-width="3"/><circle cx="56" cy="26" r="3" fill="#34c759"/>'),
+            shop: svg('<rect width="64" height="64" rx="10" fill="#fff0e0"/><path d="M10 24h44l-4-12H14z" fill="' + C2 + '"/><rect x="14" y="24" width="36" height="28" fill="#fff" stroke="' + C2 + '" stroke-width="2"/><rect x="26" y="34" width="12" height="18" fill="' + C2 + '"/>'),
+            phone: svg('<rect width="64" height="64" rx="10" fill="#e8eefc"/><rect x="21" y="8" width="22" height="48" rx="5" fill="#223" /><rect x="24" y="14" width="16" height="32" fill="#7aa7ff"/>'),
+            car: svg('<rect width="64" height="64" rx="10" fill="#eef7f7"/><path d="M8 40l6-14h30l8 14v8H8z" fill="#d9534f"/><circle cx="20" cy="48" r="5" fill="#222"/><circle cx="46" cy="48" r="5" fill="#222"/>')
+        };
+        function ent(pic, t, ur, body, vq) { return '<div class="pke" data-t="' + e2((t + ' ' + ur + ' ' + body).toLowerCase()) + '">' + (PIC[pic] || PIC.thread) + '<div><b>' + e2(t) + '</b> <span class="ur">' + e2(ur) + '</span><p>' + e2(body) + '</p>' + (vq ? '<a target="_blank" rel="noopener" href="' + yt(vq) + '">▶ Watch videos (needs internet)</a>' : '') + '</div></div>'; }
+        function det(open, title, inner) { return '<details class="pkd"' + (open ? ' open' : '') + '><summary>' + title + '</summary><div class="bd">' + inner + '</div></details>'; }
+        /* ---------- Clothing ---------- */
+        var CL = [
+            ['👔 Men', [['kameez', 'Shalwar kameez', 'شلوار قمیض', 'Long shirt (kameez) with loose trousers (shalwar) or straight trousers. Everyday and formal wear. Sizes are by chest, shoulder, sleeve and length.', 'how to wear shalwar kameez men'], ['waistcoat', 'Waistcoat', 'واسکٹ', 'Sleeveless jacket worn over kameez for weddings, offices and winter. Check that the armholes do not pull and the button line lies flat.', 'waistcoat men kameez style'], ['sherwani', 'Sherwani', 'شیروانی', 'Long formal coat for weddings. Buy or stitch it 3 to 4 weeks ahead; fit at the shoulder and chest matters most.', 'sherwani fitting guide']]],
+            ['👗 Women', [['kameez', 'Shalwar kameez, 2 and 3 piece', 'شلوار قمیض', 'Shirt, trouser and often a dupatta. "Unstitched" means cloth only (you stitch it); "ready-to-wear" means stitched in standard sizes.', 'unstitched vs ready to wear pakistan'], ['dupatta', 'Dupatta', 'دوپٹہ', 'Scarf worn with the suit. Chiffon and organza are light and dressy; cotton and lawn are daily wear.', 'dupatta styles'], ['frock', 'Frock and maxi', 'فراک', 'Long flared dress, popular for events. Check the length against your height before ordering online.', 'frock maxi style pakistan'], ['abaya', 'Abaya and shawl', 'عبایہ', 'Loose outer garment. Look for breathable fabric in summer and check sleeve length.', '']]],
+            ['🧒 Kids', [['frock', 'Kids sizes', 'بچوں کا ناپ', 'Buy by age and measure height and chest; kids grow fast, so choose one size up for stitched winter clothes and keep seams that can be let out.', 'kids clothes size guide'], ['cotton', 'Skin-safe fabric', 'نرم کپڑا', 'Choose soft cotton for babies. Wash new clothes once before wearing.', '']]]
+        ];
+        var FB = [
+            ['lawn', 'Lawn', 'لان', 'Light, thin cotton, cool in summer. Printed lawn is the classic summer suit. Can wrinkle and shrink; wash cold, iron on medium.', 'lawn fabric quality check'],
+            ['cotton', 'Cotton and wash & wear', 'کاٹن', 'Plain cotton for daily use. "Wash & wear" blends polyester with cotton and wrinkles less but is warmer.', ''],
+            ['khaddar', 'Khaddar', 'کھدر', 'Thicker, rough-textured cotton for cool weather. Good value for autumn.', 'khaddar fabric'],
+            ['karandi', 'Karandi', 'کرنڈی', 'Warm textured fabric for winter suits. Check the weave is even and the print is not fading.', ''],
+            ['silk', 'Silk, chiffon, organza', 'ریشم', 'Dressy and light. Dry clean, avoid rubbing, and check stitching on sleeves and hems.', 'chiffon organza silk fabric difference']
+        ];
+        function clothing() {
+            var h = '<div class="group pad"><b style="font-size:18px">👗 Clothing guide</b><div class="note" style="margin:4px 0 0">Offline guide for garments, fabrics, sizes and safe buying. Pictures are drawn inside the app and work without internet. Video buttons open YouTube and need internet; the app does not store other people\'s videos.</div></div>';
+            CL.forEach(function (g, i) { h += det(i === 0, g[0], g[1].map(function (x) { return ent(x[0], x[1], x[2], x[3], x[4]); }).join('')); });
+            h += det(0, '🧵 Fabrics', FB.map(function (x) { return ent(x[0], x[1], x[2], x[3], x[4]); }).join(''));
+            h += det(0, '📏 Measuring your size', '<svg viewBox="0 0 220 150" style="width:100%;max-width:340px;display:block;margin:6px auto;border-radius:12px;background:rgba(120,120,128,.08)"><path d="M70 14l20 8 20-8 16 16-12 10v80H66V40L54 30z" fill="' + C1 + '" opacity=".85"/><g stroke="#ff375f" stroke-width="2" fill="#ff375f" font-size="10" font-family="sans-serif"><line x1="66" y1="56" x2="114" y2="56"/><text x="124" y="59" stroke="none">Chest</text><line x1="66" y1="84" x2="114" y2="84"/><text x="124" y="87" stroke="none">Waist</text><line x1="130" y1="22" x2="130" y2="120" stroke="#34c759"/><text x="136" y="74" stroke="none" fill="#34c759">Length</text><line x1="54" y1="30" x2="40" y2="62" stroke="#ff9f0a"/><text x="6" y="72" stroke="none" fill="#ff9f0a">Sleeve</text></g></svg>' +
+                '<p style="font-size:13px;line-height:1.5;margin:6px 0">Use a soft tape (not a ruler). Measure over thin clothes: <b>chest</b> at the fullest part, <b>waist</b> at the natural waist, <b>length</b> from the shoulder to where you want the hem, <b>sleeve</b> from shoulder to wrist. Keep the tape snug but not tight. Compare with the brand\'s own size chart: sizes differ by brand. Cloth is often sold by the metre; a standard 3-piece suit needs about 7 to 9 metres (check the pack).</p>' + ent('tape', 'Taking measurements', 'ناپ لینا', 'Stand straight, relax your arms, and ask someone to help. Write the numbers down and check twice.', 'how to measure for shalwar kameez stitching'));
+            h += det(0, '✅ Buying checks (shop or online)', '<div style="font-size:13.5px;line-height:1.55"><p>• <b>Fabric:</b> hold it to the light (thin spots), rub a corner (colour should not come off), pull gently across the weave.</p><p>• <b>Stitching:</b> straight seams, no loose threads, buttons firm, hem even.</p><p>• <b>Colour:</b> online photos differ from real colour; read recent buyer reviews with photos.</p><p>• <b>Online:</b> check the return and exchange rule before paying; cash on delivery is safer for a first order; never pay a stranger by bank transfer in advance.</p><p>• <b>Sales:</b> compare the "old price" with the same item last week; some sales raise the price first.</p><p>• <b>Washing:</b> read the care label; wash dark colours separately the first time.</p></div>');
+            h += det(0, '🛍 Well-known Pakistani clothing sites', ['Khaadi|https://www.khaadi.com/', 'Gul Ahmed|https://www.gulahmedshop.com/', 'Sapphire|https://pk.sapphireonline.pk/', 'Alkaram Studio|https://www.alkaramstudio.com/', 'J. (Junaid Jamshed)|https://www.junaidjamshed.com/', 'Bonanza Satrangi|https://bonanzasatrangi.com/', 'Outfitters|https://outfitters.com.pk/', 'Breakout|https://breakout.com.pk/'].map(function (s) { var a = s.split('|'); return '<a class="btn sec tap" target="_blank" rel="noopener" href="' + a[1] + '" style="display:block;text-decoration:none;margin:5px 0">' + a[0] + '</a>'; }).join('') + '<div class="note">Opens the brand\'s own site (needs internet). Sites and offers change; check each brand\'s own terms.</div>');
+            return h;
+        }
+        /* ---------- Pakistan glossary ---------- */
+        var GL = [
+            ['👗 Clothing words', [
+                ['kameez', 'Unstitched', 'ان سلا', 'Cloth sold in a pack, not sewn. You take it to a tailor.', 'unstitched suit stitching'], ['kameez', 'Ready-to-wear (RTW)', 'تیار لباس', 'Stitched in standard sizes (S, M, L). Check the size chart.', ''], ['thread', 'Zari and gota', 'زری، گوٹا', 'Metallic-look thread and ribbon work for weddings and Eid wear.', 'zari gota work'], ['thread', 'Thaan', 'تھان', 'A full roll of cloth sold by wholesalers.', ''], ['tape', 'Gaz and metre', 'گز، میٹر', 'Cloth length units. A gaz is about 0.9 metre in common shop use; confirm with the shopkeeper.', ''], ['lawn', 'Lawn', 'لان', 'Light summer cotton.', ''], ['khaddar', 'Khaddar', 'کھدر', 'Thicker cotton for cool weather.', ''], ['karandi', 'Karandi', 'کرنڈی', 'Warm textured winter fabric.', ''], ['dupatta', 'Dupatta', 'دوپٹہ', 'Scarf worn with a suit.', ''], ['sherwani', 'Sherwani', 'شیروانی', 'Long formal coat for weddings.', '']]],
+            ['🏠 Property words', [
+                ['land', 'Marla', 'مرلہ', 'Land unit. Common rule: 1 marla = 272.25 sq ft (some housing societies use their own marla, so ask what size the plan says).', 'marla kanal explained'], ['land', 'Kanal', 'کنال', '1 kanal = 20 marla = 5,445 sq ft.', 'marla kanal explained'], ['land', 'Fard', 'فرد', 'Land record extract that shows the owner. Ask for a fresh copy.', 'fard registry intiqal explained'], ['land', 'Registry', 'رجسٹری', 'The registered sale deed that transfers ownership. A stamp paper agreement alone is weaker.', 'property registry pakistan'], ['land', 'Intiqal', 'انتقال', 'Mutation: updates the land record to the new owner after a sale.', 'fard registry intiqal explained'], ['land', 'Bayana / token', 'بیعانہ', 'Advance paid to hold a deal. Get a written receipt with names, date and amount.', ''], ['land', 'NOC', 'این او سی', 'No-objection certificate. A housing society or authority approval; check it is real with the authority itself.', '']]],
+            ['📈 PSX share words', [
+                ['stock', 'PSX', 'پی ایس ایکس', 'Pakistan Stock Exchange where company shares trade.', ''], ['stock', 'KSE-100', 'کے ایس ای 100', 'Index of 100 big shares, used as the market\'s temperature.', 'KSE 100 index explained'], ['stock', 'Circuit breaker / upper and lower lock', 'سرکٹ بریکر', 'A daily limit on how far a share can rise or fall. At the limit, trading can stop at that price.', 'circuit breaker psx'], ['stock', 'Dividend', 'منافع', 'Part of profit paid to shareholders.', ''], ['stock', 'Bonus share', 'بونس شیئر', 'Free extra shares for existing holders; the share price adjusts after.', ''], ['stock', 'Right shares', 'رائٹ شیئر', 'An offer to existing holders to buy more shares, usually at a set price. You may choose to take it or not.', ''], ['stock', 'Book closure', 'بک کلوژر', 'Dates when the company records who owns the share for dividends or bonus.', ''], ['stock', 'CDC account', 'سی ڈی سی', 'Central depository account that holds your shares in your name.', 'psx cdc account open'], ['stock', 'Broker (TREC holder)', 'بروکر', 'A licensed exchange member who places your orders. Verify on official PSX and SECP sites.', '']]],
+            ['🛍 Shopping words', [
+                ['shop', 'COD (cash on delivery)', 'کیش آن ڈیلیوری', 'Pay when the parcel arrives. Check the item before paying where the courier allows.', ''], ['shop', 'Return and exchange policy', 'واپسی', 'Rules on sending items back. Screenshot it before you buy.', ''], ['phone', 'PTA approved', 'پی ٹی اے', 'A phone registered to work on Pakistani networks. Check the IMEI on the official PTA service before buying a used or imported phone.', 'check phone pta approved imei'], ['phone', 'Non-PTA / JV', 'نان پی ٹی اے', 'Not registered; it can be blocked unless registered by paying the duty. Ask for the proof.', ''], ['car', 'Token tax', 'ٹوکن ٹیکس', 'Yearly vehicle tax. Ask for paid receipts when buying a used vehicle.', ''], ['car', 'Transfer letter', 'ٹرانسفر لیٹر', 'Paper showing the ownership transfer of a vehicle. Do the transfer at the registering office the same day.', 'used car checklist pakistan'], ['shop', 'Warranty / guarantee', 'وارنٹی', 'The seller\'s written promise to repair or replace. Keep the receipt and card.', '']]]
+        ];
+        function gloss() {
+            var h = '<div class="group pad"><b style="font-size:18px">📘 Pakistan glossary</b><div class="note" style="margin:4px 0 8px">Words you meet when you shop, buy property or look at PSX shares, with Urdu and a plain meaning. Works offline. Pictures are drawn in the app; video buttons need internet.</div><input id="pkq" type="search" placeholder="Search a word (e.g. marla, lawn, PTA)" autocomplete="off"></div>';
+            GL.forEach(function (g, i) { h += det(i === 0, g[0], g[1].map(function (x) { return ent(x[0], x[1], x[2], x[3], x[4]); }).join('')); });
+            h += '<div class="group pad"><b>📐 Marla and kanal picture</b><svg viewBox="0 0 240 110" style="width:100%;max-width:340px;display:block;margin:6px auto"><rect x="6" y="10" width="44" height="44" fill="#bfe3a8" stroke="#4c8c2b" stroke-width="2"/><text x="10" y="35" font-size="10" fill="#234">1 marla</text><rect x="70" y="10" width="164" height="90" fill="#cfe9ff" stroke="#0a84ff" stroke-width="2"/><text x="76" y="30" font-size="11" fill="#124">1 kanal = 20 marla</text><text x="76" y="46" font-size="10" fill="#124">5,445 sq ft</text></svg><div class="note">Drawing is not to exact scale. Always check the plan size in the file.</div></div>';
+            return h;
+        }
+        document.addEventListener('input', function (e) { var t = e.target; if (!t || t.id !== 'pkq') { return; } var q = t.value.trim().toLowerCase(), any = 0; document.querySelectorAll('#view .pke').forEach(function (r) { var m = !q || (r.getAttribute('data-t') || '').indexOf(q) >= 0; r.style.display = m ? '' : 'none'; if (m) { any++; } }); document.querySelectorAll('#view details.pkd').forEach(function (d) { var vis = d.querySelectorAll('.pke:not([style*="none"])').length; d.style.display = vis || !q ? '' : 'none'; if (q && vis) { d.open = true; } }); }, true);
+        WINS.push({ id: 'clothing', ic: '👗', c: '#ff375f', n: 'Clothing guide (Pakistan)', t: 'Clothing', sub: 'Garments, fabrics, sizes, safe buying. Works offline' }); LIVE.clothing = 0; VIEWS.clothing = clothing;
+        WINS.push({ id: 'pkgloss', ic: '📘', c: '#5e5ce6', n: 'Pakistan glossary', t: 'PK glossary', sub: 'Shopping, clothing, property and PSX words with Urdu. Works offline' }); LIVE.pkgloss = 0; VIEWS.pkgloss = gloss;
+        function grp() { try { if (typeof MW_GROUPS === 'undefined') { return false; } var n = 0; MW_GROUPS.forEach(function (g) { if (g[0] === 'Pakistan') { ['clothing', 'pkgloss'].forEach(function (id) { if (g[1].indexOf(id) < 0) { g[1].push(id); } }); n++; } }); try { mwHostSig = ''; } catch (e) { } return n > 0; } catch (e) { return false; } }
+        var tr = 0, iv = setInterval(function () { if (grp() || ++tr > 60) { clearInterval(iv); } }, 300);
+        PF_APP.push(['clothing guide|pakistan clothing|fabrics|lawn khaddar karandi|measure size|stitching size', 'Clothing guide (build 488)', 'Pakistan group > Clothing: garments for men, women and kids, fabrics (lawn, cotton, khaddar, karandi, silk), how to measure your size, buying checks and well-known brand sites. Pictures are drawn inside the app and everything works offline; the video buttons open YouTube and need internet.', 'win:clothing']);
+        PF_APP.push(['pakistan glossary|marla kanal|fard registry intiqal|psx words|pta approved|token tax|unstitched meaning', 'Pakistan glossary (build 488)', 'Pakistan group > PK glossary: shopping, clothing, property and PSX words with Urdu and a plain meaning (marla and kanal with a picture, fard, registry, intiqal, circuit breaker, dividend, PTA approved, token tax and more). Works offline; has a search box.', 'win:pkgloss']);
+    } catch (e) { try { console.log('p9pkx', e); } catch (er) { } }
+})();
+/* ===== p9pfclean (build 488): Baba AI window is clean: no suggestion tabs, no tool row and no text box on screen. Two round buttons: 🎤 speak and ⌨ type (the keyboard box only appears when you tap ⌨, and goes away after you ask). ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '#pfp #pfchips,#pfp #pftg{display:none!important}#pfp #pftools{display:none!important}#pfp.pftl #pftools{display:block!important}#pfp .pfin{display:none!important}#pfp.pfkb .pfin{display:flex!important}' +
+            '#pfdock{display:flex;justify-content:center;gap:18px;padding:8px 0 calc(10px + env(safe-area-inset-bottom,0px))}#pfp.pfkb #pfdock{display:none}' +
+            '#pfdock span{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;cursor:pointer;box-shadow:0 8px 20px hsla(var(--mw-h,210),70%,40%,.35),inset 0 2px 6px rgba(255,255,255,.45);background:linear-gradient(135deg,hsl(var(--mw-h,210),75%,52%),hsl(calc(var(--mw-h,210) + 55),75%,50%));background-size:200% 200%;animation:pfdg 7s ease-in-out infinite alternate;-webkit-tap-highlight-color:transparent}' +
+            '#pfdock span:active{transform:scale(.94)}@keyframes pfdg{from{background-position:0 0}to{background-position:100% 100%}}html.mwcalm #pfdock span{animation:none}';
+        st.textContent += '#pfp .pfh{background:linear-gradient(110deg,hsla(var(--mw-h,210),80%,60%,.20),hsla(calc(var(--mw-h,210) + 70),80%,62%,.14),hsla(calc(var(--mw-h,210) + 140),80%,60%,.18));background-size:220% 100%;animation:pfhg 9s ease-in-out infinite alternate}@keyframes pfhg{from{background-position:0 0}to{background-position:100% 0}}' +
+            '#pfp .pfm1.bot{border-radius:20px 20px 20px 6px;border:1px solid hsla(var(--mw-h,210),55%,55%,.25);box-shadow:0 4px 16px hsla(var(--mw-h,210),60%,45%,.10)}#pfp .pfm1.me{border-radius:20px 20px 6px 20px;background:linear-gradient(135deg,hsl(var(--mw-h,210),75%,52%),hsl(calc(var(--mw-h,210) + 55),75%,50%))!important;color:#fff!important}html.mwcalm #pfp .pfh{animation:none}';
+        document.head.appendChild(st);
+        function ensure() {
+            try {
+                var p = document.getElementById('pfp'); if (!p) { return; }
+                if (!document.getElementById('pfdock')) {
+                    var d = document.createElement('div'); d.id = 'pfdock'; d.setAttribute('data-noswipe', '1'); d.innerHTML = '<span data-pfc="mic" title="Speak">🎤</span><span data-pfc="kb" title="Type a question">⌨</span><span data-pfc="tl" title="Pictures, camera, language, read aloud">⋯</span>';
+                    var inn = p.querySelector('.pfin'); if (inn) { inn.parentNode.insertBefore(d, inn); } else { p.appendChild(d); }
+                }
+            } catch (e) { }
+        }
+        setInterval(ensure, 700);
+        document.addEventListener('click', function (e) {
+            var b = e.target.closest ? e.target.closest('[data-pfc]') : null;
+            var p = document.getElementById('pfp');
+            if (b) {
+                e.preventDefault(); e.stopPropagation(); var k = b.getAttribute('data-pfc');
+                if (k === 'mic') { var m = document.querySelector('[data-pb="mic:pf"]'); if (m) { m.click(); } }
+                else if (k === 'tl') { if (p) { p.classList.toggle('pftl'); } }
+                else if (p) { p.classList.add('pfkb'); setTimeout(function () { var i = document.getElementById('pfq'); if (i) { i.focus(); } }, 80); }
+                return;
+            }
+            /* after Ask is pressed the box goes away again */
+            var s = e.target.closest ? e.target.closest('[data-pf="send"]') : null;
+            if (s && p) { setTimeout(function () { p.classList.remove('pfkb'); var i = document.getElementById('pfq'); if (i) { i.blur(); } }, 200); }
+        }, true);
+        document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target && e.target.id === 'pfq') { setTimeout(function () { var p = document.getElementById('pfp'); if (p) { p.classList.remove('pfkb'); } try { e.target.blur(); } catch (er) { } }, 250); } }, true);
+        /* tapping the empty chat area also closes the keyboard box */
+        document.addEventListener('click', function (e) { var p = document.getElementById('pfp'); if (p && p.classList.contains('pfkb') && e.target.closest && e.target.closest('#pfmsgs') && !e.target.closest('a,button,[data-pf]')) { p.classList.remove('pfkb'); } }, false);
+    } catch (e) { try { console.log('pfclean', e); } catch (er) { } }
+})();
+/* ===== p9pfvoice (build 489): Baba AI reads aloud for real. (1) Uses the phone's own voice through the app (the web page's speech was silent on some phones). (2) Every Baba answer has a small 🔊 button, and if "Read answers aloud" is on, new answers are read automatically. (3) Press and HOLD the language button: a list of languages pops up above it. The language is for Baba AI only (voice and answers), not the app. ===== */
+(function () {
+    try {
+        function N() { try { return window.MintooNative; } catch (e) { return null; } }
+        function tk() { return window.__mwTok || ''; }
+        function tst(t) { try { toast(t); } catch (e) { } }
+        window.__nativeSpeak = function (text, lang) {
+            try {
+                var n = N(); if (!n || !n.ttsSpeak) { return false; }
+                var t = String(text || '').replace(/\s+/g, ' ').trim(); if (!t) { return true; }
+                var r = String(n.ttsSpeak(tk(), t, lang || 'en-US'));
+                if (r === 'ok' || r === 'wait') { return true; }
+                if (r === 'nolang') { tst('No ' + lang + ' voice on this phone: reading in English. Install it in Android Settings > Text-to-speech.'); r = String(n.ttsSpeak(tk(), t, 'en-US')); return r === 'ok' || r === 'wait'; }
+                return false;
+            } catch (e) { return false; }
+        };
+        window.__nativeStop = function () { try { var n = N(); if (n && n.ttsStop) { n.ttsStop(tk()); } } catch (e) { } };
+        function PBo() { try { return window.__pb && window.__pb.PB; } catch (e) { return null; } }
+        function plainOf(el) { var c = el.cloneNode(true); [].forEach.call(c.querySelectorAll('.pfsay,button,.pfdots,details,summary,[data-pf]'), function (x) { x.remove(); }); return (c.innerText || c.textContent || '').replace(/\s+/g, ' ').trim(); }
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '.pfsay{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;margin:6px 0 0;background:linear-gradient(135deg,hsl(var(--mw-h,210),75%,52%),hsl(calc(var(--mw-h,210) + 55),75%,50%));color:#fff;font-size:16px;cursor:pointer;box-shadow:0 3px 10px hsla(var(--mw-h,210),70%,40%,.35)}' +
+            '#pflp{position:fixed;z-index:2147483300;width:190px;max-height:46vh;overflow-y:auto;border-radius:18px;background:var(--card,#fff);box-shadow:0 12px 34px rgba(0,0,0,.35);border:1px solid hsla(var(--mw-h,210),60%,50%,.3);padding:6px}#pflp div{padding:11px 12px;border-radius:12px;font-size:15px;font-weight:700;display:flex;justify-content:space-between}#pflp div.on{background:hsl(var(--mw-h,210),70%,50%);color:#fff}#pflp small{opacity:.6;font-weight:500}';
+        document.head.appendChild(st);
+        var lastAuto = '';
+        var _r = pfRender;
+        pfRender = function () {
+            var r = _r.apply(this, arguments);
+            try {
+                var box = document.getElementById('pfmsgs'); if (!box) { return r; }
+                var bots = box.querySelectorAll('.pfm1.bot');
+                [].forEach.call(bots, function (m) { if (m.querySelector('.pfdots') || m.querySelector('.pfsay')) { return; } var b = document.createElement('span'); b.className = 'pfsay'; b.setAttribute('data-pfsay', '1'); b.textContent = '🔊'; m.appendChild(b); });
+                var last = bots[bots.length - 1], P = PBo();
+                if (last && !last.querySelector('.pfdots') && P && P.auto) { var t = plainOf(last); if (t && t !== lastAuto && PF.msgs.length > 1) { lastAuto = t; window.__pb && window.__pb.speak(t); } }
+            } catch (e) { }
+            return r;
+        };
+        /* tap the little speaker on an answer */
+        document.addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-pfsay]') : null; if (!b) { return; } e.preventDefault(); e.stopPropagation(); var m = b.closest('.pfm1'), t = m ? plainOf(m) : ''; if (t && window.__pb) { window.__pb.speak(t); } }, true);
+        /* press and hold the language button */
+        var hold = 0, held = 0, sx = 0, sy = 0;
+        function popup(btn) {
+            var old = document.getElementById('pflp'); if (old) { old.remove(); }
+            var VL = (window.__pb && window.__pb.VL) || [], cur = PBo() ? PBo().lang : 'en-US', d = document.createElement('div'); d.id = 'pflp';
+            d.innerHTML = VL.map(function (r) { return '<div data-pfl="' + r[0] + '" class="' + (r[0] === cur ? 'on' : '') + '"><span>' + r[2] + '</span><small>' + r[1] + '</small></div>'; }).join('');
+            document.body.appendChild(d);
+            var rc = btn.getBoundingClientRect(), h = d.offsetHeight, w = d.offsetWidth;
+            d.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, rc.left + rc.width / 2 - w / 2)) + 'px'; d.style.top = Math.max(8, rc.top - h - 10) + 'px';
+            var on = d.querySelector('.on'); if (on) { d.scrollTop = Math.max(0, on.offsetTop - 60); }
+        }
+        document.addEventListener('touchstart', function (e) { var b = e.target.closest ? e.target.closest('[data-pb="lang"].pbt') : null; if (!b) { return; } var t = e.touches[0]; sx = t.clientX; sy = t.clientY; held = 0; clearTimeout(hold); hold = setTimeout(function () { held = 1; try { navigator.vibrate && navigator.vibrate(18); } catch (er) { } popup(b); }, 450); }, { passive: true, capture: true });
+        document.addEventListener('touchmove', function (e) { var t = e.touches[0]; if (hold && (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10)) { clearTimeout(hold); hold = 0; } }, { passive: true, capture: true });
+        document.addEventListener('touchend', function () { clearTimeout(hold); hold = 0; }, { passive: true, capture: true });
+        document.addEventListener('contextmenu', function (e) { if (e.target.closest && e.target.closest('[data-pb="lang"].pbt')) { e.preventDefault(); } }, true);
+        document.addEventListener('click', function (e) {
+            var o = e.target.closest ? e.target.closest('[data-pfl]') : null;
+            if (o) { e.preventDefault(); e.stopPropagation(); var c = o.getAttribute('data-pfl'); try { window.__pb.setLang(c); } catch (er) { } var P = PBo(); if (P) { P.lang = c; } var VL = window.__pb.VL, nm = c, sh = c; VL.forEach(function (r) { if (r[0] === c) { nm = r[2]; sh = r[1]; } }); [].forEach.call(document.querySelectorAll('.pbt[data-pb="lang"]'), function (b) { b.textContent = sh; }); tst('Baba AI language: ' + nm + ' (the app stays as it is)'); var p = document.getElementById('pflp'); if (p) { p.remove(); } return; }
+            if (held && e.target.closest && e.target.closest('[data-pb="lang"]')) { held = 0; e.preventDefault(); e.stopPropagation(); return; }
+            var p2 = document.getElementById('pflp'); if (p2 && !e.target.closest('#pflp')) { p2.remove(); }
+        }, true);
+    } catch (e) { try { console.log('pfvoice', e); } catch (er) { } }
+})();
+/* ===== p9help2 (build 490): Help window brought up to date: new topics for everything added since, old wording corrected, topics whose window no longer exists removed. ===== */
+(function () {
+    try {
+        if (typeof MW_TOPICS === 'undefined') { return; }
+        function has(id) { try { return WINS.some(function (w) { return w.id === id; }); } catch (e) { return true; } }
+        function T(id, t, win, b, v) { return { id: id, t: t, win: win, b: b, l: [], v: v || '' }; }
+        var NEW = [
+            T('home', '🏠 Home tiles (new look)', 'overview', 'Home is a set of colour-changing tiles. Their colour follows the market mood (green side when most coins rise, warmer when most fall). Market view: pick Binance, MEXC, Bitget, Bybit or OKX and swipe left or right to change; the choice is remembered. Pumps and New coins are two tiles you swipe between, with a bar underneath. The scroll bar on the right edge lets you drag to move fast. After more than 15 seconds away the app returns to the top of Home.'),
+            T('baba', '🧓 Baba AI: voice, keyboard, language', 'baba', 'Baba AI helps with trading and this app, digital marketing, Pakistan and world business, the Pakistan desk, study and everyday questions. The window is clean: tap 🎤 to speak, ⌨ to type, ⋯ for picture, camera, language and read-aloud tools. Every answer has a small 🔊 button. Press and hold the language button to pick a language from a list; it changes Baba AI only, not the app. It is built-in knowledge plus an optional online AI; it never promises profit.'),
+            T('ideasx', '⭐ Ideas by exchange', 'ideas', 'On Ideas, pick Binance, MEXC, Bitget, Bybit or OKX. For MEXC and Bitget a box above the list shows that exchange\'s own biggest movers (volume at least $300k, tagged "only here" when Binance does not list them) and the bot signals. Tap a coin for its page with Bots and advisors. Strict rules are unchanged: only valid ideas with a timer are shown.'),
+            T('pkdesk', '🇵🇰 Pakistan desk and advisor', 'psx', 'Pakistan Trading House shows PSX shares (Hot, Autos, Sectors, Real estate, All shares, More). The advisor buttons and each tab open a Professional advisor box in place (tap the arrow to fold it). Brokers, Local and offers and Shop and property have their own advisor notes. They explain and plan; they never give tips or promise profit. Always use a licensed broker.'),
+            T('shopx', '🛍 Buy & sell, Business and Shop', 'listings', 'Buy & sell lets anyone browse approved listings with pictures, a video link and reviews, and lets sellers post (the owner approves first). It needs the owner\'s Firebase set-up in Buy & sell > Setup. Pictures you open are kept for offline viewing. Business holds the marketing tools. MintooSuite never holds payments: verify the seller and never pay a stranger in advance.'),
+            T('clothx', '👗 Clothing guide and 📘 PK glossary', 'clothing', 'Two offline guides in the Pakistan group. Clothing: garments, fabrics, measuring your size and buying checks, with pictures drawn in the app. PK glossary: shopping, clothing, property and PSX words with Urdu (marla, fard, registry, circuit breaker, PTA approved and more), with a search box. Video buttons open YouTube and need internet.'),
+            T('studyx', '🎓 Study', 'study', 'Pick a level and subject, then a topic. If the subject does not exist at that level in Pakistan (for example Law before Bachelors) an orange box explains why and what to study instead. Offline lessons are built in; teaching on any topic needs internet or your own AI key.'),
+            T('vpnx', '🛡 MintooSuiteVPN', 'vpn', 'More > Tools & settings > VPN. A WireGuard tunnel inside the app: paste your own free WireGuard config (for example from ProtonVPN Free), tap Connect and allow Android\'s popup. A test shows which exchanges your phone can reach. If the VPN drops while the Real Bot is on you get a warning. No servers are provided by the app, and some exchanges do not allow certain countries, so check their rules.'),
+            T('rbstop', '🤖 Real Bot stop-loss check', 'bot', 'Every 45 seconds the Real Bot checks that each open trade has its stop-loss on the exchange. If one is missing it places it again; if that fails it closes the trade and alerts you. Paper close, half-close and cancel now act on the exact trade you tapped.'),
+            T('exbo', '🟧 Bybit and ⬛ OKX coins', 'bybit', 'Bybit and OKX now have full coin pages like MEXC and Bitget: tap a coin for its chart (15m, 1h, 4h, 1d), plan, order book, funding rate and the Bots and advisors box. Both bots scan their coins too, and the Ideas exchange chips include them. Perpetuals only. OKX is blocked on some networks: turn on MintooSuiteVPN. Data only; real orders need your own key.'),
+            T('goldx', '🥇 Gold desk', 'exdesk', 'Home has a golden Gold desk card: Exness Desk (gold, silver and forex calls with entry, stop, targets and lots) and Gold practice (free paper trading with Exness-style costs). Gold can fall fast too: use a stop-loss, small lots and practise first. Nothing is guaranteed.'),
+            T('doc', '🩺 Logs and Doctor', 'log', 'Menu > Logs lists problems with their cause. The Doctor names the box that jumps ("Jump culprit"), slows heavy background jobs, repaints a frozen chart and restarts stale prices. If something still flickers or jumps, send a Logs screenshot.')
+        ];
+        var keep = MW_TOPICS.filter(function (t) { return !t.win || has(t.win); });
+        keep.forEach(function (t) {
+            if (t.id === 'start') { t.b = '1. Home shows the best ideas first and tiles for markets, pumps, new coins, business and shopping. 2. Read the card: entry, stop, target and the VALID time. 3. Choose your leverage on the 1× to 50× bar (swipe it left or right); the colour shows the risk. 4. Practise with the paper bot first. 5. Only trade money you can afford to lose.'; }
+            if (t.id === 'fix') { t.b = t.b + ' Menu > Logs shows what went wrong and the Doctor repairs common display problems. Exchanges blocked on your network? MintooSuiteVPN can help (check each exchange\'s rules).'; }
+        });
+        var i = 0; keep.forEach(function (t, k) { if (t.id === 'start') { i = k + 1; } });
+        var ids = {}; keep.forEach(function (t) { ids[t.id] = 1; });
+        NEW = NEW.filter(function (t) { return !ids[t.id] && (!t.win || has(t.win) || t.win === 'overview'); });
+        MW_TOPICS.length = 0; keep.slice(0, i).concat(NEW, keep.slice(i)).forEach(function (t) { MW_TOPICS.push(t); });
+        try { PF_APP.push(['help window|help topics|what is new|new features', 'Help window updated (build 490)', 'Menu > Help now has topics for Home tiles, Baba AI voice and keyboard, Ideas by exchange, the Pakistan desk and advisor, Buy & sell and Business, Clothing and PK glossary, Study, MintooSuiteVPN, the Real Bot stop-loss check, and Logs and Doctor.', 'win:help']); } catch (e) { }
+    } catch (e) { try { console.log('p9help2', e); } catch (er) { } }
+})();
+/* ===== p9byok (build 491): Bybit + OKX perpetual adapters for the shared exchange layer: candles, price, detail. Public data only. ===== */
+;(function () { try {
+    var X = window.XCH; if (!X || X.__byok) { return; } X.__byok = 1;
+    var OH = ['www.okx.com', 'aws.okx.com', 'okx.com'], oi = 0;
+    function okget(path) { var i = oi % OH.length; return X.xget('https://' + OH[i] + path).catch(function (e) { oi++; return X.xget('https://' + OH[oi % OH.length] + path); }); }
+    function by(path) { return X.xget('https://api.bybit.com' + path); }
+    function isBO(x) { return x === 'bybit' || x === 'okx'; }
+    function byKl(c, tf, n) {
+        var iv = { '15m': '15', '1h': '60', '4h': '240', '1d': 'D' }[tf];
+        return by('/v5/market/kline?category=linear&symbol=' + c.s + 'USDT&interval=' + iv + '&limit=' + Math.min(n, 1000)).then(function (j) {
+            var a = j && j.result && j.result.list; if (!Array.isArray(a) || a.length < 30) { throw new Error('no data'); }
+            return a.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5], q: +r[6] || (+r[5] * +r[4]) }; }).sort(function (p, q) { return p.t - q.t; });
+        });
+    }
+    function okKl(c, tf, n) {
+        var bar = { '15m': '15m', '1h': '1H', '4h': '4H', '1d': '1D' }[tf];
+        return okget('/api/v5/market/candles?instId=' + c.s + '-USDT-SWAP&bar=' + bar + '&limit=' + Math.min(n, 300)).then(function (j) {
+            var a = j && j.data; if (!Array.isArray(a) || a.length < 30) { throw new Error('no data'); }
+            return a.map(function (r) { return { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], v: +r[5], q: +r[7] || (+r[6] * +r[4]) || 0 }; }).sort(function (p, q) { return p.t - q.t; });
+        });
+    }
+    var _kl = X.kl, _pr = X.price, _dt = X.detail;
+    X.kl = function (c, tf, n) { if (!isBO(c.x)) { return _kl.apply(this, arguments); } if (!c.fut) { return Promise.reject(new Error('perp only')); } return c.x === 'bybit' ? byKl(c, tf, n) : okKl(c, tf, n); };
+    X.price = function (x, b, fut) {
+        if (x === 'bybit') { return by('/v5/market/tickers?category=linear&symbol=' + b + 'USDT').then(function (j) { var d = j && j.result && j.result.list && j.result.list[0]; return +(d && d.lastPrice); }); }
+        if (x === 'okx') { return okget('/api/v5/market/ticker?instId=' + b + '-USDT-SWAP').then(function (j) { var d = j && j.data && j.data[0]; return +(d && d.last); }); }
+        return _pr.apply(this, arguments);
+    };
+    function bk(a) { return (a || []).slice(0, 10).map(function (x) { return [+x[0], +x[1]]; }); }
+    X.detail = function (c) {
+        if (!isBO(c.x)) { return _dt.apply(this, arguments); }
+        var s = c.s, nul = function () { return null; };
+        if (c.x === 'bybit') {
+            return Promise.all([by('/v5/market/tickers?category=linear&symbol=' + s + 'USDT').catch(nul), by('/v5/market/orderbook?category=linear&symbol=' + s + 'USDT&limit=15').catch(nul)]).then(function (r) {
+                var o = { tk: null, book: null, fund: null }, d = r[0] && r[0].result && r[0].result.list && r[0].result.list[0];
+                if (d) { o.tk = { p: +d.lastPrice, hi: +d.highPrice24h, lo: +d.lowPrice24h, chg: (+d.price24hPcnt) * 100, q: +d.turnover24h, oi: +d.openInterest || 0, fr: +d.fundingRate || 0 }; if (d.fundingRate !== undefined && d.fundingRate !== '') { o.fund = { r: (+d.fundingRate) * 100 }; } }
+                var b = r[1] && r[1].result; if (b && b.b && b.a) { o.book = { bids: bk(b.b), asks: bk(b.a) }; } return o;
+            });
+        }
+        var id = s + '-USDT-SWAP';
+        return Promise.all([okget('/api/v5/market/ticker?instId=' + id).catch(nul), okget('/api/v5/market/books?instId=' + id + '&sz=15').catch(nul), okget('/api/v5/public/funding-rate?instId=' + id).catch(nul)]).then(function (r) {
+            var o = { tk: null, book: null, fund: null }, d = r[0] && r[0].data && r[0].data[0];
+            if (d) { var op = +d.open24h, px = +d.last; o.tk = { p: px, hi: +d.high24h, lo: +d.low24h, chg: op ? (px - op) / op * 100 : 0, q: (+d.volCcy24h) * px, oi: 0, fr: 0 }; }
+            var b = r[1] && r[1].data && r[1].data[0]; if (b && b.bids && b.asks) { o.book = { bids: bk(b.bids), asks: bk(b.asks) }; }
+            var f = r[2] && r[2].data && r[2].data[0]; if (f && f.fundingRate !== undefined) { o.fund = { r: (+f.fundingRate) * 100 }; o.tk && (o.tk.fr = +f.fundingRate); } return o;
+        });
+    };
+    try { PF_APP.push(['bybit coin|okx coin|bybit chart|okx chart|bybit bot|okx bot|bybit scan|okx scan|bybit page|okx page', 'Bybit and OKX coin pages (build 491)', 'Tap any Bybit or OKX coin (Bybit and OKX windows, Ideas with the Bybit or OKX chip, or the search box) to open its full page: chart, plan, order book, funding rate and the Bots and advisors box. Baba Signal and UT Bot now scan Bybit and OKX perpetual coins too. OKX is blocked on some networks, so use MintooSuiteVPN if it stays empty. These pages show data only; real orders need your own key.', 'win:bybit']); } catch (e) { }
+    X.LIST = X.LIST; /* LIST already holds all five exchanges (p9zw) */
+} catch (e) { try { console.log('p9byok', e); } catch (x) { } } })();
+/* ===== p9gold2 (build 491): Gold desk card on Home: Exness Desk + Gold Practice up front, live gold (PAXG) reference. No profit claims. ===== */
+;(function () { try {
+    var _ov = VIEWS.overview; if (typeof _ov !== 'function') { return; }
+    function card() {
+        var t = (window.S && S.tick && S.tick.PAXGUSDT) || null, px = t ? '<b style="font-size:18px;font-variant-numeric:tabular-nums">$' + (+t.p).toFixed(2) + '</b> <span style="font-weight:800;color:' + (t.chg >= 0 ? '#7CFFB2' : '#FF8A8A') + '">' + (t.chg >= 0 ? '+' : '') + (+t.chg).toFixed(2) + '%</span> <span style="opacity:.75;font-size:11px">gold (PAXG, 24h)</span>' : '<span style="opacity:.8;font-size:12px">Gold price loads with the market data</span>';
+        return '<div id="mwgold" style="border-radius:20px;padding:14px;margin:0 0 14px;color:#2b1a00;background:linear-gradient(120deg,#ffe27a,#ffb300,#ff8f00,#ffe27a);background-size:300% 300%;animation:mwgl 9s ease infinite;box-shadow:0 6px 18px rgba(255,160,0,.35)">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">🥇 Gold desk</b><span style="color:#fff;background:rgba(60,30,0,.75);border-radius:99px;padding:3px 10px;font-size:12px">' + px + '</span></div>' +
+            '<div style="font-size:12.5px;margin:6px 0 10px;font-weight:600">Gold and silver on Exness: calls with entry, stop and targets, lot size, and a free practice account. Practise here first; no result is guaranteed.</div>' +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="tap" data-act="win:exdesk" style="flex:1 1 140px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#2b1a00;color:#ffd24a;border-radius:14px;font-weight:800">🟢 Exness Desk</span><span class="tap" data-act="win:xgold" style="flex:1 1 140px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.65);color:#2b1a00;border-radius:14px;font-weight:800">🥇 Gold practice</span></div></div>';
+    }
+    VIEWS.overview = function () {
+        var h = _ov.apply(this, arguments), s = String(h), i = s.indexOf('<div class="mwxs">');
+        return i >= 0 ? s.slice(0, i) + card() + s.slice(i) : card() + s;
+    };
+    var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = '@keyframes mwgl{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}'; document.head.appendChild(st);
+    try { PF_APP.push(['gold|silver|xauusd|exness gold|gold desk|gold trading|why gold', 'Gold desk (build 491)', 'Home now has a golden Gold desk card near the top: Exness Desk (gold, silver, forex calls with entry, stop, targets and lots) and Gold practice (free paper trading with Exness-style costs). Gold is a big, liquid market and many people use it to diversify away from crypto, but it can also fall fast: use a stop-loss, small lots and practise first. Nobody can promise that any asset will rise or that another will disappear.', 'win:exdesk']); } catch (e) { }
+} catch (e) { try { console.log('p9gold2', e); } catch (x) { } } })();
 
 function renderView(keep) {
     var d = winDef(S.win), y = window.pageYOffset;

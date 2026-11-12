@@ -632,4 +632,32 @@ final class Bridge {
 
     @JavascriptInterface
     public void nlistHide(String tok) { if (ok(tok)) { NativeList.hide(); } }
+
+    /* ----- MintooSuiteVPN (WireGuard) ----- */
+    @JavascriptInterface
+    public String vpnState(String tok) { return ok(tok) ? VpnHelper.state(ctx) : "{}"; }
+
+    @JavascriptInterface
+    public boolean vpnSave(String tok, String text) { return ok(tok) && VpnHelper.save(ctx, text); }
+
+    @JavascriptInterface
+    public void vpnClear(String tok) { if (ok(tok)) { VpnHelper.clear(ctx); } }
+
+    @JavascriptInterface
+    public void vpnUp(String tok) {
+        if (!ok(tok)) { return; }
+        final MainActivity a = MainActivity.cur;
+        if (a == null) { return; }
+        a.runOnUiThread(new Runnable() { @Override public void run() { VpnHelper.up(a); } });
+    }
+
+    @JavascriptInterface
+    public void vpnDown(String tok) { if (ok(tok)) { VpnHelper.down(ctx); } }
+
+    /* ----- Baba AI reads aloud with the phone's own voice ----- */
+    @JavascriptInterface
+    public String ttsSpeak(String tok, String text, String lang) { return ok(tok) ? TtsHelper.speak(ctx, text, lang) : "no"; }
+
+    @JavascriptInterface
+    public void ttsStop(String tok) { if (ok(tok)) { TtsHelper.stop(); } }
 }

@@ -90,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Media.onResult(requestCode, resultCode, data);
+        if (requestCode == VpnHelper.REQ) { VpnHelper.afterPrepare(this, resultCode == RESULT_OK); }
     }
 
     @Override
