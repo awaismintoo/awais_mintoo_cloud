@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.506';
+var BUILD = '2026-11-12.507';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -31589,7 +31589,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
     X.on('aireport', function (k) {
         var why = ''; try { why = prompt('What is wrong with this AI result? (offensive, wrong, harmful, someone else\'s photo…)') || ''; } catch (e) { }
         var L = U.ls('mw_aireports', []); L.unshift({ k: k, why: why.slice(0, 300), t: Date.now(), w: S.win }); U.lset('mw_aireports', L.slice(0, 50));
-        var body = 'MintooSuite AI report (' + k + ')%0D%0AScreen: ' + encodeURIComponent(S.win) + '%0D%0AReason: ' + encodeURIComponent(why) + '%0D%0ABuild: 2026-11-12.506';
+        var body = 'MintooSuite AI report (' + k + ')%0D%0AScreen: ' + encodeURIComponent(S.win) + '%0D%0AReason: ' + encodeURIComponent(why) + '%0D%0ABuild: 2026-11-12.507';
         try { window.open('mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('AI content report') + '&body=' + body, '_blank'); } catch (e) { }
         U.tst('Thank you. The report is saved and an email to the developer is ready to send.');
     });
@@ -32604,6 +32604,94 @@ window.__srchIdx = [["MintooSuite Terminal","aboutapp",""],["Your all-in-one tra
     try { PF_APP.push(['look|design|theme|dark mode|light mode|night mode|colours|old look|classic', 'Design and dark mode', 'MintooSuite uses a clean design like top-rated apps. Menu › Look › Design: Clean (new) or Colourful classic; Light or dark: Auto (follows the phone), Light or Dark.', 'win:look']); } catch (e) { }
     try { if (typeof MW_TOPICS !== 'undefined') { MW_TOPICS.splice(1, 0, { id: 'clean506', t: '✨ New clean design', win: 'look', b: 'The whole app now uses one clean design: the same cards, buttons, tabs and spacing everywhere, calm colours with blue for actions and green/red only for up and down. It follows your phone\'s light or dark mode. Menu › Look lets you pick Light, Dark or Auto, or go back to the Colourful classic look.', l: [], v: '' }); } } catch (e) { }
 } catch (e) { try { console.log('p9clean', e); } catch (x) { } } })();
+
+/* ===== p9pro (builds 507+508, Clean design only): the professional details top apps have.
+   1) Line icons instead of emojis in tabs, section titles and buttons (Baba and the picture cards keep their pictures).
+   2) Numbers line up (tabular figures) like Binance.  3) The window's tab bar stays pinned under the header while you scroll.
+   4) Grey shimmering placeholders while something loads.  5) Prices flash green or red when they change.
+   6) Shopping windows (IT & tech, Fashion, Home & kitchen, Clothing, Grocery) show items as a 2-column card grid like Daraz.
+   Nothing is removed: the same buttons and text, only drawn differently; "Colourful classic" in Menu › Look turns all of this off. ===== */
+;(function () { try {
+    function on() { return document.documentElement.classList.contains('mwclean'); }
+    var P = {
+        home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10', search: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4', up: 'M3 17l6-6 4 4 8-8M15 7h6v6', down: 'M3 7l6 6 4-4 8 8M15 17h6v-6', bars: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+        star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z', money: 'M3 7h18v10H3zM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6 10v4M18 10v4', wallet: 'M3 7h16a2 2 0 0 1 2 2v9H5a2 2 0 0 1-2-2zM3 7l12-4v4M16 13h2', bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
+        gear: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1', user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0', medal: 'M12 13a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM8 14 5 3h4l3 6 3-6h4l-3 11',
+        cart: 'M3 4h2l2.5 11h11L21 7H6.5M9 20a1 1 0 1 0 0 .1M18 20a1 1 0 1 0 0 .1', bag: 'M5 8h14l-1 13H6zM9 8V6a3 3 0 0 1 6 0v2', shirt: 'M8 3 3 6l2 5 3-1v11h8V10l3 1 2-5-5-3a4 4 0 0 1-8 0z', laptop: 'M5 5h14v10H5zM2 19h20', monitor: 'M3 4h18v12H3zM8 21h8M12 16v5',
+        camera: 'M4 8h4l2-3h4l2 3h4v11H4zM12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z', house: 'M4 11 12 4l8 7v9H4zM10 20v-5h4v5', car: 'M4 16v-4l2-5h12l2 5v4zM4 16v3M20 16v3M7.5 13.5h.1M16.5 13.5h.1', food: 'M7 3v8a2 2 0 0 0 2 2v8M5 3v6M9 3v6M17 3c-2 2-2 6 0 8v10',
+        cup: 'M5 8h12v6a5 5 0 0 1-10 0zM17 10h2a2 2 0 0 1 0 4h-2M8 3v2M12 3v2', bed: 'M3 18V7M3 13h18v5M21 18v-3a3 3 0 0 0-3-3H10v1M7 11a1.5 1.5 0 1 0 0 .1', pin: 'M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11zM12 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4z',
+        cal: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4', sun: 'M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM12 1v2M12 21v2M3 12H1M23 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5', news: 'M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 13h7M7 16h4',
+        play: 'M7 4v16l13-8z', book: 'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5', moon: 'M20 14A8 8 0 1 1 10 4a6 6 0 0 0 10 10z', trophy: 'M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8',
+        mountain: 'M3 20 10 8l4 6 2-3 5 9z', spark: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6', save: 'M5 3h11l3 3v15H5zM8 3v5h7M8 21v-7h8v7', refresh: 'M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4',
+        receipt: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6', bot: 'M5 8h14v11H5zM12 4v4M9 13h.1M15 13h.1M9 16h6', flask: 'M9 3h6M10 3v6l-5 10h14L14 9V3', bulb: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z',
+        flame: 'M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-6 2 1 3 3 3 3s1-3 0-7z', rocket: 'M12 15l-3-3c2-6 6-9 11-9 0 5-3 9-9 11zM9 12l-4 1-2 3 4 1M12 15l-1 4 3-2 1-4', link: 'M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1', alert: 'M12 4 2 20h20zM12 10v4M12 17h.1',
+        check: 'M4 12l5 5L20 6', help: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.1', leaf: 'M5 19C5 9 11 4 20 4c0 9-5 15-15 15zM5 19l8-8', clip: 'M8 4h8v3H8zM6 5H5v16h14V5h-1', clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2',
+        globe: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18', shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z', phone: 'M8 3h8v18H8zM11 18h2', key: 'M15 8a4 4 0 1 1-3.5 6L5 20H3v-2l6.5-6.5A4 4 0 0 1 15 8zM16 7h.1', trash: 'M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14', head: 'M4 15v-3a8 8 0 0 1 16 0v3M4 15h3v5H4zM17 15h3v5h-3z', tag: 'M3 12V4h8l10 10-8 8zM7.5 7.5h.1', heart: 'M12 20s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z', truck: 'M3 6h11v10H3zM14 10h4l3 3v3h-7M7 18a1.5 1.5 0 1 0 0 .1M17 18a1.5 1.5 0 1 0 0 .1', chat: 'M4 5h16v11H9l-5 4z'
+    };
+    var M = { '🏠': 'home', '🏡': 'house', '🏘️': 'house', '🔎': 'search', '🔍': 'search', '📈': 'up', '📉': 'down', '📊': 'bars', '⭐': 'star', '💰': 'money', '💵': 'money', '👛': 'wallet', '🔔': 'bell', '⚙️': 'gear', '👤': 'user', '🥇': 'medal', '🛒': 'cart', '🛍️': 'bag', '🛍': 'bag', '👗': 'shirt', '👔': 'shirt', '👕': 'shirt', '💻': 'laptop', '🖥️': 'monitor', '📷': 'camera', '🚗': 'car', '🍽️': 'food', '☕': 'cup', '🛏️': 'bed', '📍': 'pin', '📅': 'cal', '🗓': 'cal', '🗓️': 'cal', '🌤': 'sun', '🌤️': 'sun', '☀️': 'sun', '📰': 'news', '▶': 'play', '📚': 'book', '📘': 'book', '🕌': 'moon', '📿': 'moon', '🏏': 'trophy', '🏆': 'trophy', '🏔️': 'mountain', '🎉': 'spark', '✨': 'spark', '💾': 'save', '🔄': 'refresh', '🧾': 'receipt', '🤖': 'bot', '🧪': 'flask', '💡': 'bulb', '🔥': 'flame', '🚀': 'rocket', '🔗': 'link', '⚠️': 'alert', '✅': 'check', '❓': 'help', '🥬': 'leaf', '🥕': 'leaf', '📋': 'clip', '🕒': 'clock', '⏱': 'clock', '🌐': 'globe', '🛡️': 'shield', '📱': 'phone', '🔑': 'key', '🗑': 'trash', '🗑️': 'trash', '🎧': 'head', '🏷️': 'tag', '❤️': 'heart', '🚚': 'truck', '💬': 'chat', '🧭': 'globe', '🔒': 'key', '📦': 'bag', '🎮': 'monitor', '🪙': 'money', '💳': 'wallet', '📞': 'phone', '🗺️': 'pin', '🏛️': 'house', '🏪': 'bag', '🧥': 'shirt', '👟': 'bag', '💍': 'medal', '💄': 'spark', '🍎': 'leaf', '🌾': 'leaf' };
+    function svg(n) { return '<svg class="mwi" viewBox="0 0 24 24" aria-hidden="true"><path d="' + P[n] + '"/></svg>'; }
+    var RX = /^\s*([\uD800-\uDBFF][\uDC00-\uDFFF](?:️)?|[☀-➿](?:️)?)\s*/;
+    function iconize(el) {
+        if (el.__mwi || el.querySelector('svg.mwi')) { return; } var tn = el.firstChild; while (tn && tn.nodeType === 1 && tn.tagName === 'B') { el = tn; tn = el.firstChild; }
+        if (!tn || tn.nodeType !== 3) { return; } var m = RX.exec(tn.nodeValue); if (!m) { return; } var k = m[1], n = M[k] || M[k.replace(/️$/, '')] || M[k + '️']; if (!n) { return; }
+        tn.nodeValue = tn.nodeValue.slice(m[0].length); var sp = document.createElement('span'); sp.innerHTML = svg(n); el.insertBefore(sp.firstChild, tn); el.__mwi = 1;
+    }
+    /* price flash: remember the last value per row and number position */
+    var LAST = {}, NUM = /^[$₨Rs\s]*-?[0-9][0-9,]*\.?[0-9]*$/;
+    function flash(v) {
+        var rows = v.querySelectorAll('[data-act^="chart:"], [data-m9^="chart"], .mwpr, #mwmk .c'), now = {};
+        for (var i = 0; i < rows.length && i < 300; i++) {
+            var r = rows[i], key = (r.getAttribute('data-act') || r.getAttribute('data-m9') || '') + '|' + i, leaves = r.querySelectorAll('b, span, div');
+            for (var j = 0, c = 0; j < leaves.length && c < 2; j++) {
+                var e = leaves[j]; if (e.children.length) { continue; } var t = (e.textContent || '').trim(); if (!NUM.test(t) || t.length > 14) { continue; }
+                var x = parseFloat(t.replace(/[^0-9.\-]/g, '')), k2 = key + '|' + c++; now[k2] = x; var o = LAST[k2];
+                if (o != null && o !== x && Math.abs(x / o - 1) < 0.2) { e.classList.remove('mwfu', 'mwfd'); void e.offsetWidth; e.classList.add(x > o ? 'mwfu' : 'mwfd'); }
+            }
+        }
+        LAST = now;
+    }
+    /* shopping windows: items become a 2-column card grid */
+    var GRIDW = { tech: 1, style: 1, homeg: 1, clothing: 1, grocery: 1 };
+    function grid(v) {
+        var w = ''; try { w = S.win; } catch (e) { } if (!GRIDW[w]) { return; }
+        v.querySelectorAll('.group').forEach(function (g) {
+            if (g.classList.contains('mwgrid')) { return; } var kids = [].filter.call(g.children, function (c) { var s = c.getAttribute('style') || ''; return (c.classList.contains('pke') || /display:flex/.test(s) && /border-top/.test(s)) && c.querySelector('b') && c.querySelector('div[style*="height"]'); });
+            if (kids.length < 3) { return; } g.classList.add('mwgrid'); kids.forEach(function (c) { c.classList.add('mwgc'); });
+        });
+    }
+    function sticky(v) { var nav = document.querySelector('header.nav'), h = nav ? Math.round(nav.getBoundingClientRect().height) : 0; document.documentElement.style.setProperty('--mwnavh', h + 'px'); var first = v.querySelector('.m7row, .pkt'); v.querySelectorAll('.mwstk').forEach(function (x) { if (x !== first) { x.classList.remove('mwstk'); } }); if (first && first.closest('#view') && !first.closest('.mwpp')) { first.classList.add('mwstk'); } }
+    function skel(v) { v.querySelectorAll('.note, div, span').forEach(function (e) { if (e.children.length || e.classList.contains('mwskel')) { return; } var t = (e.textContent || '').trim(); if (/^(Loading|Reading|Checking|Searching|Updating)[^.]{0,40}…$/.test(t)) { e.classList.add('mwskel'); } }); }
+    function pass() {
+        if (!on()) { return; } var v = document.getElementById('view'); if (!v) { return; }
+        try { v.querySelectorAll('.mwupd .tap, .m7row span, .pkt span, .group > b:first-child, .group > div > b:first-child, .btn, .mwmd-c, .stbtn, .padv .phd b').forEach(iconize); } catch (e) { }
+        try { grid(v); } catch (e) { } try { sticky(v); } catch (e) { } try { skel(v); } catch (e) { }
+    }
+    var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+    var C = 'html.mwclean';
+    st.textContent = [
+        C + ' body{font-variant-numeric:tabular-nums}',
+        C + ' body svg.mwi.mwi,' + C + ' body #view svg.mwi.mwi{color:inherit!important;stroke:currentColor!important;background:none!important;padding:0!important;width:1.05em!important;height:1.05em!important;border:0!important;filter:none!important;animation:none!important}' + C + ' svg.mwi,' + C + ' svg.mwi path{fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;opacity:1!important;visibility:visible!important;background:none!important;box-shadow:none!important;border-radius:0!important}' + C + ' svg.mwi{width:1.05em;height:1.05em;vertical-align:-0.16em;margin-right:6px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}',
+        C + ' .m7row.mwstk,' + C + ' .pkt.mwstk{position:sticky;top:var(--mwnavh,0px);z-index:25;background:var(--glass)!important;-webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px);padding-top:6px!important;margin-top:-6px;border-radius:0 0 14px 14px}',
+        C + ' .mwskel{color:transparent!important;position:relative;min-height:14px;border-radius:8px;background:linear-gradient(90deg,var(--fill) 25%,var(--line) 50%,var(--fill) 75%)!important;background-size:200% 100%!important;animation:mwsk 1.2s linear infinite}',
+        '@keyframes mwsk{from{background-position:200% 0}to{background-position:-200% 0}}',
+        C + ' .mwfu{animation:mwfu 1s ease}' + C + ' .mwfd{animation:mwfd 1s ease}',
+        '@keyframes mwfu{0%{background:rgba(31,168,85,.35);border-radius:4px}100%{background:transparent}}@keyframes mwfd{0%{background:rgba(229,56,59,.35);border-radius:4px}100%{background:transparent}}',
+        C + ' .group.mwgrid{display:grid!important;grid-template-columns:1fr 1fr;gap:10px;align-items:start}',
+        C + ' .group.mwgrid > *{grid-column:1/-1}',
+        C + ' .group.mwgrid > .mwgc{grid-column:auto!important;display:flex!important;flex-direction:column!important;gap:6px!important;border:1px solid var(--line)!important;border-top:1px solid var(--line)!important;border-radius:14px!important;padding:10px!important;margin:0!important;min-width:0;background:var(--card)}',
+        C + ' .group.mwgrid > .mwgc > div:first-child{width:100%!important;flex:none!important}',
+        C + ' .group.mwgrid > .mwgc > div:first-child > div{width:100%!important}',
+        C + ' .group.mwgrid > .mwgc > div:last-child{min-width:0}',
+        C + ' .group.mwgrid > .mwgc p,' + C + ' .group.mwgrid > .mwgc .note{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}',
+        C + ' .group.mwgrid > .mwgc .mwmd-c{font-size:11px!important;padding:4px 7px!important}',
+        C + ' .group.mwgrid > .mwgc .btn{min-height:36px!important;font-size:13px!important;padding:6px 8px!important}'
+    ].join('');
+    document.head.appendChild(st);
+    var tm = 0, mo = new MutationObserver(function () { pass(); clearTimeout(tm); tm = setTimeout(function () { try { if (on()) { var v = document.getElementById('view'); if (v) { flash(v); } } } catch (e) { } }, 120); });
+    function bind() { var v = document.getElementById('view'); if (v && !v.__mwpro) { v.__mwpro = 1; mo.observe(v, { childList: true, subtree: true }); pass(); } }
+    setInterval(bind, 1000); bind(); window.addEventListener('resize', function () { var v = document.getElementById('view'); if (v) { sticky(v); } });
+    try { PF_APP.push(['icons|grid|cards|layout|professional look|binance style|daraz style', 'Professional layout', 'In the Clean design: line icons in tabs and titles, numbers that line up, the tab bar stays pinned while you scroll, grey placeholders while loading, prices flash green or red when they change, and shopping windows show items as 2-column cards. Menu › Look › Colourful classic switches back to the old look.', 'win:look']); } catch (e) { }
+} catch (e) { try { console.log('p9pro', e); } catch (x) { } } })();
 
 
 function renderView(keep) {
