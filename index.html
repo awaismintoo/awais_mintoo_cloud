@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.472';
+var BUILD = '2026-11-12.473';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -8689,7 +8689,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
     })();
 
     /* ---------- Help centre + chat hooks ---------- */
-    var _hc = vHelpc; vHelpc = function () { var h = _hc.apply(this, arguments); return h.replace('<div class="note">Live human chat is not available yet', '<div class="group pad"><b>More help</b><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="win:support">🛟 Support desk</span><span class="btn sec tap" data-kp="win:videos">🎬 Video lessons</span><span class="btn sec tap" data-kp="win:verify">🪪 Get verified guide</span></div></div><div class="note">Live human chat is not available yet'); }; VIEWS.helpc = vHelpc;
+    var _hc = vHelpc; vHelpc = function () { var h = _hc.apply(this, arguments); return h.replace('<div class="note">Live human chat is not available yet', '<div class="group pad"><b>More help</b><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="win:videos">🎬 Video lessons</span><span class="btn sec tap" data-kp="win:verify">🪪 Get verified guide</span></div></div><div class="note">Live human chat is not available yet'); }; VIEWS.helpc = vHelpc;
     var _pb = pcBotHtml; pcBotHtml = function (q) { var h = _pb.apply(this, arguments), t; try { t = chTopic(q); } catch (e) { } if (t) { var m = { candle: 'candle', trend: 'trend', sr: 'sr', sltp: 'sltp', leverage: 'leverage', rsi: 'rsi', ma: 'ma', macd: 'macd', funding: 'funding', orderbook: 'orderbook', risk: 'risk', diversify: 'diversify' }[t[1]]; if (m && clipById(m)) { h = h.replace('<div class="note" style="margin:6px 0 0">Educational', '<span class="pfbtn" data-kp="open:' + m + '">🎬 Watch the clip</span><div class="note" style="margin:6px 0 0">Educational'); } } return h; };
 
     /* ---------- clicks + CSS ---------- */
@@ -8814,7 +8814,7 @@ function wtEnd() { var o = document.getElementById('wtour'); if (o) { o.remove()
             '21 animated video lessons with a built-in player, art for every lesson, support desk with WhatsApp and email.',
             'Optional banner ads and an Ads &amp; privacy page.'
         ]));
-        h += '<div class="group pad"><b style="font-size:16px">📞 Contact</b><div class="note">Muhammad Awais, Islamabad, Pakistan<br>Email: awaisrajpoot2@yahoo.com<br>WhatsApp: +92 312 2602811</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="win:support">🛟 Support desk</span><span class="btn sec tap" data-kp="win:helpc">🔎 Help centre</span><span class="btn sec tap" data-kp="win:legal">📜 Legal</span><span class="btn sec tap" data-kp="win:adsinfo">📢 Ads &amp; privacy</span></div></div>';
+        h += '<div class="group pad"><b style="font-size:16px">📞 Contact</b><div class="note">Muhammad Awais, Islamabad, Pakistan<br>Email: awaisrajpoot2@yahoo.com<br>WhatsApp: +92 312 2602811</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn tap" data-kp="win:helpc">🔎 Help centre</span><span class="btn sec tap" data-kp="win:legal">📜 Legal</span><span class="btn sec tap" data-kp="win:adsinfo">📢 Ads &amp; privacy</span></div></div>';
         h += '<div class="note" style="text-align:center">Version 10.8 · build ' + esc(b) + '<br>© MintooSuite. Educational information, not financial advice.</div>';
         return h;
     }
@@ -26184,6 +26184,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['build 471|duplicate buttons|contact us|email support|early movers in ideas|where is about|about page', 'Build 471: Contact now lives in one place (More > Help centre > Contact us: email, WhatsApp, report a problem); the other Help screen only links to it. The old Support desk and Problem log entries were merged (they open Help centre and Logs). Early movers is now also a tab under Ideas > Bot alerts. The About page is More > Other tools > About MintooSuite, and the Baba AI window has its own About tab.', 'win:helpc']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 472|early movers|movers stuck|scanning|mexc movers|bitget movers', 'Build 472: Early movers no longer sticks on "Scanning": every candle request has a time limit and a stuck scan frees itself, with a Retry button if Binance cannot be reached. It now covers Binance, MEXC and Bitget (chips: All exchanges, Binance, MEXC, Bitget) and the filters (Early, Running trend, Watch, Fading) work on every row. The old stand-alone Movers window now opens Ideas > Bot alerts > Early movers, so there is one place. Tap a MEXC or Bitget row to open its full chart.', 'win:ideas']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 472|bots notification|background run|stop bots|notification bar|running in background', 'Build 472: the "MintooSuite is running" notification now comes back every time you open the app (within about a second). Pressing Stop bots in the notification only stops it until the next time you open the app; the switch in Permissions (Background run) is the only thing that turns it off for good. If you still see nothing, check that Notifications are allowed for MintooSuite in Android settings.', 'win:perms']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['live chat|human chat|talk to a person|developer|who made this app|about the developer|owner', 'Live human chat and developer', 'Help centre now has 💬 Chat with a human (WhatsApp: the owner and team) and an About the developer card: Muhammad Awais, Islamabad, email and WhatsApp, with links to About MintooSuite and Legal. When nobody is online, Baba AI answers.', 'win:helpc']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -28371,6 +28372,22 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             return _gw2.apply(this, arguments);
         };
     } catch (e) { try { console.log('p9mv2', e); } catch (er) { } }
+})();
+/* ===== p9hc2 (build 472): Help centre = live human chat via WhatsApp + the developer card ===== */
+(function () {
+    try {
+        function wrap(key) { var _h = VIEWS[key]; if (!_h) { return; }
+        VIEWS[key] = function () {
+            var h = _h.apply(this, arguments);
+            var wa = 'https://wa.me/923122602811?text=' + encodeURIComponent('Hello MintooSuite team (build ' + BUILD + ')');
+            var live = '<div class="group pad"><b>💬 Live human chat</b><div class="note">Chat with the app owner and team on WhatsApp. When nobody is online, Baba AI answers instantly, day and night.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><a class="btn tap" href="' + wa + '" style="text-decoration:none">💬 Chat with a human (WhatsApp)</a><span class="btn sec tap" data-hc="win:pchat">🤖 Ask Baba AI</span></div></div>';
+            var dev = '<div class="group pad"><b>👤 About the developer</b><div class="note">MintooSuite Terminal is made by <b>Muhammad Awais</b><br>Broadway Street, Greens Avenue, Park Road, Islamabad, Pakistan<br>Email: awaisrajpoot2@yahoo.com<br>WhatsApp: +92 312 2602811</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><span class="btn sec tap" data-kp="win:prof">ℹ️ About MintooSuite</span><span class="btn sec tap" data-kp="win:legal">📜 Legal and privacy</span></div></div>';
+            h = h.replace(/<div class="note">Live human chat is not available yet[^<]*<\/div>/, live + dev);
+            if (h.indexOf('About the developer') < 0 && /More help|Contact us/.test(h)) { h += live + dev; }
+            return h;
+        }; }
+        wrap('helpc'); if (VIEWS.help !== VIEWS.helpc) { wrap('help'); }
+    } catch (e) { try { console.log('p9hc2', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
