@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.505';
+var BUILD = '2026-11-12.506';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -31589,7 +31589,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
     X.on('aireport', function (k) {
         var why = ''; try { why = prompt('What is wrong with this AI result? (offensive, wrong, harmful, someone else\'s photo…)') || ''; } catch (e) { }
         var L = U.ls('mw_aireports', []); L.unshift({ k: k, why: why.slice(0, 300), t: Date.now(), w: S.win }); U.lset('mw_aireports', L.slice(0, 50));
-        var body = 'MintooSuite AI report (' + k + ')%0D%0AScreen: ' + encodeURIComponent(S.win) + '%0D%0AReason: ' + encodeURIComponent(why) + '%0D%0ABuild: 2026-11-12.505';
+        var body = 'MintooSuite AI report (' + k + ')%0D%0AScreen: ' + encodeURIComponent(S.win) + '%0D%0AReason: ' + encodeURIComponent(why) + '%0D%0ABuild: 2026-11-12.506';
         try { window.open('mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('AI content report') + '&body=' + body, '_blank'); } catch (e) { }
         U.tst('Thank you. The report is saved and an email to the developer is ready to send.');
     });
@@ -32186,7 +32186,9 @@ window.__srchIdx = [["MintooSuite Terminal","aboutapp",""],["Your all-in-one tra
             var k = kind;
             if (w === 'psx') { var sym = /^[A-Z0-9-]{2,12}$/.test(t) ? t : ''; if (sym) { k = 'share'; var nm = ''; try { var d = S.px.dir && S.px.dir[sym]; nm = d && d.n || ''; } catch (e) { } var b = c.querySelector('b'); if (b && !(b.previousElementSibling && b.previousElementSibling.className === 'mwmd-em')) { var sec = (c.querySelector('.w') || {}).innerText || ''; b.insertAdjacentHTML('beforebegin', '<span class="mwmd-em" aria-hidden="true">' + secEm(sec + ' ' + nm) + '</span>'); } t = nm ? nm.replace(/\s+(limited|ltd\.?)$/i, '') + ' (' + sym + ')' : sym; } }
             if (has(c)) { continue; }
-            c.insertAdjacentHTML('beforeend', chips(t, k));
+            var host = c; try { var cs = getComputedStyle(c); if (cs.display.indexOf('flex') >= 0 && cs.flexDirection.indexOf('column') < 0) { var bb = c.querySelector('b'); var col = bb; while (col && col.parentElement !== c) { col = col.parentElement; } if (col && col !== bb) { host = col; } else if (bb && bb.parentElement) { host = bb.parentElement; } } } catch (er) { }
+            if (host.querySelector('.mwmd')) { continue; }
+            host.insertAdjacentHTML('beforeend', chips(t, k));
         }
     }
     /* ---- save to the phone (Downloads > MintooSuite) ---- */
@@ -32533,6 +32535,75 @@ window.__srchIdx = [["MintooSuite Terminal","aboutapp",""],["Your all-in-one tra
     try { PF_APP.push(['weather|forecast|mausam|barish|rain|temperature|weather widget', 'Weather and forecast', 'Home (bottom) shows your area\'s weather; tap Full forecast for the hourly forecast, 9 days, air quality, sunrise, prayer times and advice. Change or search any area (like a weather app) in City life › Weather and area.', 'win:citylife'], ['widget|home screen widget|hadith widget|add widget', 'Phone home-screen widget', 'Home › bottom › Add widget to home screen, or long-press the phone home screen › Widgets › MintooSuite. It shows weather, the date with Hijri date and holidays, and today\'s hadith.', 'win:overview'], ['events|expo|exhibition|car show|concert|festival|mela|pak china|lake view', 'Events near you', 'City life › Events › Live events and shows: expos, exhibitions, car shows, concerts and festivals for Islamabad and 11 more cities, Today / This week / This month, saved offline, with More details, pictures, videos and map.', 'win:citylife'], ['tourism|tourist|hunza|naran|swat|murree|skardu|picnic|sports|stadium|cricket ground|match', 'Tourism and sports', 'More › Tourism & sports: famous places of Pakistan offline (season, route, tips), places near your area, tourism news, sports venues and matches.', 'win:tourism']); } catch (e) { }
     try { if (typeof MW_TOPICS !== 'undefined') { MW_TOPICS.splice(1, 0, { id: 'life505', t: '🌤 Weather, events, tourism and widget', win: 'tourism', b: 'Home now ends with your area\'s weather, today\'s hadith and a button to add the MintooSuite widget to the phone home screen. City life › Events lists live expos, exhibitions, car shows, concerts and festivals per city (saved offline). The new Tourism & sports window has famous places of Pakistan offline, places near you, tourism news, sports venues and matches.', l: [], v: '' }); } } catch (e) { }
 } catch (e) { try { console.log('p9life', e); } catch (x) { } } })();
+
+/* ===== p9clean (build 506): one clean design system for the whole app, like top-rated apps.
+   One card style, one button style, calm colours (one blue accent; green and red only for up/down and warnings),
+   no animated colour gradients, consistent spacing and type. Light by day / dark by night by following the phone (Auto),
+   or choose Light or Dark. The old colourful look is kept as an option in Menu › Look ("Colourful classic"). ===== */
+;(function () { try {
+    var U = window.__u494, X = window.__kx;
+    function get(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
+    function set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    function mode() { return get('mw_theme_mode', 'auto'); }
+    function applyTheme() {
+        var m = mode(), dark = m === 'dark' || (m === 'auto' && mq && mq.matches);
+        try { document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light'); document.body && document.body.setAttribute('data-theme', dark ? 'dark' : 'light'); set('mintoosuite_theme', dark ? 'dark' : 'light'); } catch (e) { }
+        try { var mt = document.querySelector('meta[name=theme-color]'); if (mt) { mt.setAttribute('content', dark ? '#0b0b0f' : '#f2f2f7'); } } catch (e) { }
+    }
+    function clean() { return get('mw_design', 'clean') === 'clean'; }
+    function applyDesign() { document.documentElement.classList.toggle('mwclean', clean()); }
+    var C = 'html.mwclean';
+    var css = [
+        C + '{--mw-h:214!important}',
+        C + ' body{font-size:15px;letter-spacing:-.1px}',
+        /* cards */
+        C + ' .group,' + C + ' .padv,' + C + ' .mwpi,' + C + ' .pko,' + C + ' .mwip,' + C + ' #mwhomelife{background:var(--card)!important;background-image:none!important;border:1px solid var(--line)!important;border-radius:16px!important;box-shadow:0 1px 2px rgba(0,0,0,.04)!important}',
+        C + '[data-theme=dark] .group,' + C + '[data-theme=dark] .padv,' + C + '[data-theme=dark] .mwpi,' + C + '[data-theme=dark] .pko{box-shadow:none!important}',
+        C + ' .group{margin-bottom:12px!important}',
+        C + ' .mwpi:before{display:none!important}',
+        C + ' .group > b:first-child,' + C + ' .group.pad > b:first-child{font-size:16px;font-weight:700;letter-spacing:-.2px}',
+        C + ' .note{color:var(--mut)!important;font-size:13px}',
+        /* buttons: one primary and one secondary style; buttons that carry their own colour (red Close, green Connect) keep it */
+        C + ' .btn:not([style*="background"]){background:var(--blu)!important;background-image:none!important;color:#fff!important;border:0!important;border-radius:12px!important;box-shadow:none!important}',
+        C + ' .btn{min-height:44px!important;font-size:15px!important;font-weight:700!important;border-radius:12px!important;box-shadow:none!important}',
+        C + ' .btn.sec:not([style*="background"]){background:var(--fill)!important;color:var(--blu)!important;border:0!important}',
+        C + ' .btn[style*="gradient"],' + C + ' a.btn[style*="gradient"]{background:var(--blu)!important;color:#fff!important}',
+        /* tabs and chips */
+        C + ' .m7row span,' + C + ' .pkt span{border-radius:999px!important;font-weight:600!important;background:var(--fill)!important;color:var(--tx)!important}',
+        C + ' .m7row span.on,' + C + ' .pkt span.on{background:var(--blu)!important;color:#fff!important}',
+        C + ' .padv .phd span{background:var(--blu)!important}',
+        C + ' .mwmd-c{background:var(--fill)!important;color:var(--blu)!important}',
+        /* tiles on Home */
+        C + ' .mwpi .hd{font-size:15px!important}',
+        C + ' .mwpr{background:var(--fill)!important;border:0!important}',
+        C + ' .mwpb .tr i{background:var(--blu)!important}',
+        /* calmer pictures */
+        C + ' .mwmd-em{background:var(--fill)!important}',
+        /* old orange scroll bar stays hidden */
+        C + ' #mwsb{display:none!important}'
+    ].join('');
+    var st = document.createElement('style'); st.id = 'mwcleancss'; st.setAttribute('data-mwkeep', '1'); st.textContent = css;
+    function keepLast() { try { if (document.head.lastElementChild !== st) { document.head.appendChild(st); } } catch (e) { } }
+    keepLast(); setInterval(keepLast, 2000);
+    applyDesign(); applyTheme(); setTimeout(applyTheme, 600); setTimeout(applyTheme, 2500);
+    if (mq) { try { mq.addEventListener('change', function () { if (mode() === 'auto') { applyTheme(); } }); } catch (e) { try { mq.addListener(function () { if (mode() === 'auto') { applyTheme(); } }); } catch (er) { } } }
+    /* the choice, at the top of Menu › Look */
+    X.on('mwthm', function (v) { set('mw_theme_mode', v); applyTheme(); U.again(); });
+    X.on('mwdsg', function (v) { set('mw_design', v); applyDesign(); U.again(); });
+    try {
+        var _lk = VIEWS.look;
+        if (typeof _lk === 'function') {
+            VIEWS.look = function () {
+                var h = _lk.apply(this, arguments);
+                return '<div class="group pad"><b>🎨 Design</b><div class="note" style="margin:2px 0 6px">Clean is the new look used by top apps: one card and button style, calm colours. Colourful classic is the old colour-changing look.</div>' + U.chips(get('mw_design', 'clean'), [['clean', '✨ Clean (new)'], ['classic', '🌈 Colourful classic']], 'mwdsg') +
+                    '<div class="note" style="margin:8px 0 6px">Light or dark: Auto follows your phone (light by day, dark at night if the phone is set so).</div>' + U.chips(mode(), [['auto', '🌗 Auto'], ['light', '☀️ Light'], ['dark', '🌙 Dark']], 'mwthm') + '</div>' + h;
+            };
+        }
+    } catch (e) { }
+    try { PF_APP.push(['look|design|theme|dark mode|light mode|night mode|colours|old look|classic', 'Design and dark mode', 'MintooSuite uses a clean design like top-rated apps. Menu › Look › Design: Clean (new) or Colourful classic; Light or dark: Auto (follows the phone), Light or Dark.', 'win:look']); } catch (e) { }
+    try { if (typeof MW_TOPICS !== 'undefined') { MW_TOPICS.splice(1, 0, { id: 'clean506', t: '✨ New clean design', win: 'look', b: 'The whole app now uses one clean design: the same cards, buttons, tabs and spacing everywhere, calm colours with blue for actions and green/red only for up and down. It follows your phone\'s light or dark mode. Menu › Look lets you pick Light, Dark or Auto, or go back to the Colourful classic look.', l: [], v: '' }); } } catch (e) { }
+} catch (e) { try { console.log('p9clean', e); } catch (x) { } } })();
 
 
 function renderView(keep) {
