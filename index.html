@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.480';
+var BUILD = '2026-11-12.483';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -1095,7 +1095,7 @@ function plBox(side, price, sl, tp, sym) {
     return h;
 }
 function levBar() {
-    return '<div class="sh" style="margin-top:4px"><span>Profit boxes: leverage</span><span>' + (S.lev > 1 ? S.lev + '× (profit and loss both multiply)' : 'none (1×)') + '</span></div><div class="segc">' +
+    return '<div class="sh" style="margin-top:4px"><span>Profit boxes: leverage</span><span>' + '<b style="color:' + (S.lev <= 1 ? '#16a34a' : S.lev <= 3 ? '#22a55a' : S.lev <= 5 ? '#d98a00' : S.lev <= 10 ? '#ea580c' : S.lev <= 20 ? '#dc2626' : '#991b1b') + '">' + (S.lev > 1 ? S.lev + '× · ' : '1× · ') + (S.lev <= 1 ? 'safest zone' : S.lev <= 3 ? 'safer zone' : S.lev <= 5 ? 'careful zone' : S.lev <= 10 ? 'risky zone' : S.lev <= 20 ? 'very risky' : 'extreme risk') + '</b>' + (S.lev > 1 ? ' (profit and loss both multiply)' : '') + '</span></div><div class="segc">' +
         [1, 3, 5, 10, 20, 50].map(function (l) { return '<span class="' + (S.lev === l ? 'on' : '') + '" data-act="lev:' + l + '">' + l + '×</span>'; }).join('') + '</div>';
 }
 function px(sym, fallback) { var t = S.tick[sym]; return '<span data-px="' + sym + '">' + fmtP(t ? t.p : (fallback || 0), sym) + '</span>'; }
@@ -4473,7 +4473,7 @@ document.addEventListener('click', function (e) {
                         if (q > 0 && performance.now() - t0 > BUDGET && !jb.crit && now - jb.next < 2500) { continue; }
                         jb.next = Date.now() + jb.ms; var s0 = performance.now();
                         try { jb.f.apply(window, jb.args); } catch (e) { try { setTimeout(function () { throw e; }, 0); } catch (e2) { } }
-                        var d = performance.now() - s0; jb.rec.calls++; jb.rec.t += d;
+                        var d = performance.now() - s0; jb.rec.calls++; jb.rec.t += d; jb.rec.cc = (jb.rec.cc || 0) + 1; jb.rec.tt = (jb.rec.tt || 0) + d;
                     }
                 }
             } catch (e) { }
@@ -4488,7 +4488,7 @@ document.addEventListener('click', function (e) {
             schedule(); return id;
         };
         window.clearInterval = function (id) { if (JOBS[id]) { delete JOBS[id]; return; } return nativeCI.apply(window, arguments); };
-        window.__sched = { jobs: function () { return Object.keys(JOBS).length; }, crit: function () { var n = 0, k; for (k in JOBS) { n += JOBS[k].crit; } return n; } };
+        window.__sched = { stretch: function (minAvg, mult, maxMs) { var out = [], k; for (k in JOBS) { var j = JOBS[k], r = j.rec; if (!j.crit && r.cc >= 2 && r.tt / r.cc > minAvg && j.ms < maxMs && !j.stretched) { j.stretched = 1; j.ms = Math.min(maxMs, j.ms * mult); r.ms = j.ms; out.push(Math.round(r.tt / r.cc) + 'ms avg: ' + r.src.slice(0, 50)); } } return out; }, jobs: function () { return Object.keys(JOBS).length; }, crit: function () { var n = 0, k; for (k in JOBS) { n += JOBS[k].crit; } return n; } };
     } catch (e) { try { console.log('sched', e); } catch (er) { } }
 })();
 // ===== v10.8 · part A: link fix, show/hide password, nicer icons, paper-account reset =====
@@ -10784,6 +10784,8 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             { t: 'Markets', b: 'Live prices for Binance, MEXC and Bitget. Tap any coin for its chart.', el: function () { return document.querySelector('.tab[data-act="win:market"]'); }, dir: 'up' },
             { t: 'Bots (practice money)', b: 'Baba Practice Bot trades with practice money only. Watch it for a while before you ever think of real money. It never trades real money on its own.', el: function () { return document.querySelector('.tab[data-act="win:botpro"]'); }, dir: 'up' },
             { t: 'More', b: 'All other windows live here: learning lessons, wallet, news, settings.', el: function () { return document.querySelector('.tab[data-act="openwin"]'); }, dir: 'up' },
+            { t: 'Buy & sell and Business', b: 'On Home, Business holds the marketing tools (posts, customers, invoices, links, ads, SEO). Buy & sell lets anyone browse listings with pictures, video and reviews, and post their own after the owner approves them.', el: function () { return document.querySelector('.mwqt[data-act="win:listings"]') || document.querySelector('.tab[data-act="openwin"]'); }, dir: 'down' },
+            { t: 'Market view', b: 'The Market view box on Home shows one exchange at a time: Binance, MEXC, Bitget, Bybit or OKX. Swipe left or right on its heading to change; it remembers your choice.', el: function () { return document.querySelector('.mwxs') || document.querySelector('.tab[data-act="openwin"]'); }, dir: 'down' },
             { t: 'Menu', b: 'Menu has Look & mode (themes), Premium plans, Lock screen, Problem log and the Guided tour.', el: function () { return byText('header button, header .btn, header [data-act], header span', 'MENU'); }, dir: 'down' },
             { t: 'Your profile', b: 'Tap your picture to open your profile, change your avatar and save your exchange connections.', el: function () { var a = document.querySelector('.meav.hd'); return a ? (a.closest('button') || a) : null; }, dir: 'down' },
             { t: 'Ask the Baba AI', b: 'The round helper answers anything: how to make an API key on Binance, what a stop-loss is, why a trade lost.', el: function () { return document.getElementById('pfm'); }, dir: 'up' },
@@ -11052,7 +11054,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         var _mt = mwTape;
         mwTape = function (title, items) {
             var lbl = String(title).replace(/^[^A-Za-z]+/, '').trim(), ic = /GOLD/i.test(lbl) ? ICON.gold : /WORLD/i.test(lbl) ? ICON.world : ICON.news;
-            var txt = items && items.length ? items.map(function (i) { return '<span class="mwit"><em class="msrc">' + esc(i.src || 'NEWS') + '</em><i class="mttl">' + esc(i.title) + '.</i><span class="mgap">•</span></span>'; }).join('') : '<span class="mwit"><i class="mttl">Headlines loading…</i><span class="mgap">•</span></span>';
+            var txt = items && items.length ? items.map(function (i) { return '<span class="mwit tap" data-act="win:news" data-nt="' + esc(i.title) + '"><em class="msrc">' + esc(i.src || 'NEWS') + '</em><i class="mttl">' + esc(i.title) + '.</i><span class="mgap">•</span></span>'; }).join('') : '<span class="mwit"><i class="mttl">Headlines loading…</i><span class="mgap">•</span></span>';
             return '<div class="mwtape"><b class="mwtt">' + ic + '<span>' + esc(lbl) + '</span></b><div class="mwtk"><div class="mwtm" style="animation-duration:' + Math.max(40, (items ? items.length : 3) * 11) + 's">' + txt + txt + '</div></div></div>';
         };
     } catch (e) { try { console.log('tape', e); } catch (er) { } }
@@ -16168,7 +16170,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         }
         try { VIEWS.proof = vProof; LIVE.proof = 0; if (!winDef('proof') || winDef('proof').id !== 'proof') { WINS.push({ id: 'proof', ic: '🧾', c: '#34c759', n: 'Proof', t: 'Proof', sub: 'Honest practice scoreboard with a pass-mark' }); } } catch (e) { try { WINS.push({ id: 'proof', ic: '🧾', c: '#34c759', n: 'Proof', t: 'Proof', sub: 'Honest practice scoreboard' }); VIEWS.proof = vProof; LIVE.proof = 0; } catch (e2) { } }
         var FAM = [
-            ['Home', ['overview', 'ideas', 'radar', 'brief', 'movers', 'analyst', 'live']],
+            ['Home', ['overview', 'ideas', 'listings', 'biz', 'brief', 'movers', 'analyst', 'live']],
             ['Markets', ['find', 'chart', 'siglab', 'gold', 'rates', 'news', 'newc', 'split']],
             ['Exchanges', ['exchanges', 'binance', 'mexc', 'bitget', 'bybit', 'okx', 'exness', 'compare', 'exdesk']],
             ['Trade', ['hub', 'tpro', 'xtrade', 'trade', 'terminal', 'risk', 'hist', 'copy', 'signals']],
@@ -19956,7 +19958,12 @@ try {
             var L = LOG.filter(function (x) { try { if (x.kind === 'new' && x.bn && S.fst && /Binance futures/.test(x.title || '')) { var f = S.fst[x.bn]; return !!(f && f.st === 'TRADING'); } } catch (e) { } return true; }).slice(0, n || 8); if (!L.length) { return '<div class="note">No alerts yet. When a coin is newly listed on MEXC or Binance, or jumps fast, it appears here and stays until you clear it.</div>'; }
             return L.map(function (x) { var ago = Math.max(0, Math.round((Date.now() - x.t) / 60000)), when = ago < 60 ? ago + ' min ago' : ago < 1440 ? Math.round(ago / 60) + ' h ago' : Math.round(ago / 1440) + ' d ago'; return '<div class="row tap" data-pump="logopen:' + (LOG.indexOf(x)) + '" style="display:block;cursor:pointer;scroll-snap-align:start"><b>' + (x.mega ? '🚨 ' : '') + e3(x.title) + '</b><div class="note" style="margin:2px 0 0">' + e3(x.body) + ' · ' + when + '</div></div>'; }).join('');
         }
-        function homeCard() { var rows = logHtml(3), more = LOG.length > 3 ? '<div class="mut" data-act="win:radar" style="font-size:12.5px;text-align:center;margin-top:6px;padding:8px;min-height:36px;cursor:pointer">See all ' + LOG.length + ' alerts ›</div>' : ''; return '<div class="group pad" id="mwpumpcard"><div style="display:flex;justify-content:space-between;align-items:center"><b>🔔 New coins and pumps</b><span class="mut" style="font-size:12px;padding:6px 4px" data-act="win:radar">See all ›</span></div><div style="margin-top:6px">' + rows + more + '</div></div>'; }
+        function homeCard() {
+            var L = LOG.filter(function (x) { try { if (x.kind === 'new' && x.bn && S.fst && /Binance futures/.test(x.title || '')) { var f = S.fst[x.bn]; return !!(f && f.st === 'TRADING'); } } catch (e) { } return true; }).slice(0, 12), body;
+            if (!L.length) { body = '<div class="note">No alerts yet. When a coin is newly listed on MEXC or Binance, or jumps fast, it appears here and stays until you clear it.</div>'; }
+            else { body = '<div class="mwpst" data-noswipe="1">' + L.map(function (x) { var ago = Math.max(0, Math.round((Date.now() - x.t) / 60000)), when = ago < 60 ? ago + ' min' : ago < 1440 ? Math.round(ago / 60) + ' h' : Math.round(ago / 1440) + ' d'; return '<div class="mwpc tap" data-pump="logopen:' + (LOG.indexOf(x)) + '"><b>' + (x.mega ? '🚨 ' : '') + e3(String(x.title || '').slice(0, 70)) + '</b><small>' + e3(String(x.body || '').slice(0, 60)) + '</small><i>' + when + ' ago</i></div>'; }).join('') + '</div>' + (L.length > 1 ? '<div class="mut" style="font-size:11px;text-align:center;margin-top:2px">‹ swipe sideways to see all ' + L.length + ' ›</div>' : ''); }
+            return '<div class="group pad" id="mwpumpcard"><div style="display:flex;justify-content:space-between;align-items:center"><b>🔔 New coins and pumps</b><span class="mut" style="font-size:12px;padding:6px 4px" data-act="win:radar">See all ›</span></div><div style="margin-top:6px">' + body + '</div></div>';
+        }
         document.addEventListener('click', function (e) { var el = e.target.closest && e.target.closest('[data-pump^="logopen:"]'); if (!el) { return; } e.preventDefault(); e.stopPropagation(); var x = LOG[+el.getAttribute('data-pump').slice(9)]; if (x) { try { openA(x); } catch (er) { } } }, true);
         X.on('pumpclr', function () { LOG = []; try { localStorage.setItem(LK, '[]'); } catch (e) { } X.again(); });
         try {
@@ -20017,6 +20024,7 @@ try {
         function price(sym) { try { return +(window.__tplan && __tplan.priceOf(sym)) || 0; } catch (e) { return 0; } }
         function fp(v, sym) { try { return fmtP(+v, sym); } catch (e) { return (+v).toPrecision(6); } }
         function m2(v) { return (v < 0 ? '-' : '') + '$' + Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+        function pidx(id) { var j; for (j = 0; j < A.pos.length; j++) { if (A.pos[j].id === id) { return j; } } return -1; }
         function used() { return A.pos.reduce(function (a, p) { return a + p.margin; }, 0) + A.ord.reduce(function (a, o) { return a + o.margin; }, 0); }
         function upnl(p, px) { px = px || price(p.sym) || p.entry; return (p.side === 'LONG' ? px - p.entry : p.entry - px) * p.qty; }
         function equity() { return A.bal + A.pos.reduce(function (a, p) { return a + upnl(p); }, 0); }
@@ -20076,7 +20084,7 @@ try {
             if (L ? sl2 >= sl : sl2 <= sl) { sl2 = 0; }
             var o = { sym: sym, side: FS.side, lev: FS.lev, margin: margin, notional: margin * FS.lev, sl: sl, tp: tp, lp: lp, be: FS.be, sl2: sl2 };
             if (auto) { FS.sl = String(+sl.toPrecision(6)); }
-            if (FS.type === 'LIMIT') { A.ord.push(o); save(); FS.msg = '✅ Limit order placed.'; FS.tab = 'ord'; } else { var p = openPos(o, px); FS.msg = '✅ Paper ' + FS.side + ' opened at ' + fp(px, sym) + '.'; FS.tab = 'pos'; }
+            if (FS.type === 'LIMIT') { o.id = A.nid++; A.ord.push(o); save(); FS.msg = '✅ Limit order placed.'; FS.tab = 'ord'; } else { var p = openPos(o, px); FS.msg = '✅ Paper ' + FS.side + ' opened at ' + fp(px, sym) + '.'; FS.tab = 'pos'; }
         }
         function ticket() {
             var sym = nm(FS.sym), px = price(sym), L = FS.side === 'LONG', margin = Math.floor(avail() * FS.pct) / 100, nt = margin * FS.lev;
@@ -20113,10 +20121,10 @@ try {
             var h = '';
             if (FS.tab === 'pos') {
                 if (!A.pos.length) { return '<div class="note" style="padding:10px">No open positions. Use the ticket above to open one.</div>'; }
-                A.pos.forEach(function (p, i) { var px = price(p.sym) || p.entry, u = upnl(p, px), pc = u / p.margin * 100; h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + esc(bs(p.sym)) + ' <span style="color:' + (p.side === 'LONG' ? '#16a34a' : '#dc2626') + '">' + (p.side === 'LONG' ? 'Long' : 'Short') + ' ' + p.lev + '×</span></b><b style="color:' + (u >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(u) + ' (' + (pc >= 0 ? '+' : '') + pc.toFixed(1) + '%)</b></div><div class="note" style="margin:3px 0 0">Entry ' + fp(p.entry, p.sym) + ' · Now ' + fp(px, p.sym) + ' · Margin ' + m2(p.margin) + (p.sl ? ' · SL ' + fp(p.sl, p.sym) : '') + (p.tp ? ' · TP ' + fp(p.tp, p.sym) : '') + ' · Liq ' + fp(p.liq, p.sym) + '</div>' + proj(p, px) + (window.__glBtn ? window.__glBtn({ sym: p.sym, side: p.side, entry: p.entry, sl: p.sl, tp: p.tp, lev: p.lev, margin: p.margin, notional: p.notional, kind: '🧾 Paper by hand' }) : '') + '<div style="display:flex;gap:6px;margin-top:6px"><span class="ptc" data-pt="close:' + i + '">Close all</span><span class="ptc" data-pt="half:' + i + '">Close half</span>' + (p.sl !== p.entry ? '<span class="ptc" data-pt="pbe:' + i + '">Stop to break-even</span>' : '') + '</div></div>'; });
+                A.pos.forEach(function (p, i) { var px = price(p.sym) || p.entry, u = upnl(p, px), pc = u / p.margin * 100; h += '<div class="ptp"><div style="display:flex;justify-content:space-between"><b>' + esc(bs(p.sym)) + ' <span style="color:' + (p.side === 'LONG' ? '#16a34a' : '#dc2626') + '">' + (p.side === 'LONG' ? 'Long' : 'Short') + ' ' + p.lev + '×</span></b><b style="color:' + (u >= 0 ? '#16a34a' : '#dc2626') + '">' + m2(u) + ' (' + (pc >= 0 ? '+' : '') + pc.toFixed(1) + '%)</b></div><div class="note" style="margin:3px 0 0">Entry ' + fp(p.entry, p.sym) + ' · Now ' + fp(px, p.sym) + ' · Margin ' + m2(p.margin) + (p.sl ? ' · SL ' + fp(p.sl, p.sym) : '') + (p.tp ? ' · TP ' + fp(p.tp, p.sym) : '') + ' · Liq ' + fp(p.liq, p.sym) + '</div>' + proj(p, px) + (window.__glBtn ? window.__glBtn({ sym: p.sym, side: p.side, entry: p.entry, sl: p.sl, tp: p.tp, lev: p.lev, margin: p.margin, notional: p.notional, kind: '🧾 Paper by hand' }) : '') + '<div style="display:flex;gap:6px;margin-top:6px"><span class="ptc" data-pt="close:' + p.id + '">Close all</span><span class="ptc" data-pt="half:' + p.id + '">Close half</span>' + (p.sl !== p.entry ? '<span class="ptc" data-pt="pbe:' + p.id + '">Stop to break-even</span>' : '') + '</div></div>'; });
             } else if (FS.tab === 'ord') {
                 if (!A.ord.length) { return '<div class="note" style="padding:10px">No waiting orders.</div>'; }
-                A.ord.forEach(function (o, i) { h += '<div class="ptp"><b>' + esc(bs(o.sym)) + ' ' + o.side + ' limit ' + fp(o.lp, o.sym) + '</b><div class="note" style="margin:3px 0 0">Margin ' + m2(o.margin) + ' · ' + o.lev + '×</div><div style="margin-top:6px"><span class="ptc" data-pt="cancel:' + i + '">Cancel</span></div></div>'; });
+                A.ord.forEach(function (o, i) { if (o.id == null) { o.id = A.nid++; } h += '<div class="ptp"><b>' + esc(bs(o.sym)) + ' ' + o.side + ' limit ' + fp(o.lp, o.sym) + '</b><div class="note" style="margin:3px 0 0">Margin ' + m2(o.margin) + ' · ' + o.lev + '×</div><div style="margin-top:6px"><span class="ptc" data-pt="cancel:' + o.id + '">Cancel</span></div></div>'; });
             } else {
                 if (!A.hist.length) { return '<div class="note" style="padding:10px">No closed trades yet.</div>'; }
                 A.hist.slice(0, 30).forEach(function (x) {
@@ -20154,10 +20162,10 @@ try {
             if (k === 'side' || k === 'type' || k === 'tab') { FS[k] = a; if (k === 'side') { FS.sl = ''; FS.tp = ''; } }
             else if (k === 'usd') { var av9 = avail(), u9 = +a; if (av9 > 0 && u9 > 0) { FS.pct = Math.max(0.01, Math.min(100, u9 / av9 * 100)); FS.msg = u9 > av9 ? 'Only ' + m2(av9) + ' of paper money is free, so the size was reduced to all of it.' : ''; } } else if (k === 'pct' || k === 'lev') { FS[k] = +a; } else if (k === 'be') { FS.be = FS.be ? 0 : 1; }
             else if (k === 'go') { place(); }
-            else if (k === 'close') { closePos(+a, price(A.pos[+a].sym) || A.pos[+a].entry, 'Closed by you'); }
-            else if (k === 'half') { var p = A.pos[+a]; if (p) { var px = price(p.sym) || p.entry, h = p.qty / 2, pl = upnl({ side: p.side, entry: p.entry, qty: h }, px) - h * px * FEE; A.bal += pl; p.qty = h; p.margin = p.margin / 2; A.hist.unshift({ sym: p.sym, side: p.side, lev: p.lev, entry: p.entry, exit: px, pl: pl, why: 'Closed half', at: Date.now() }); save(); } }
-            else if (k === 'pbe') { var q = A.pos[+a]; if (q) { var pxq = price(q.sym) || q.entry, okq = q.side === 'LONG' ? pxq > q.entry : pxq < q.entry; if (okq) { q.sl = q.entry; q.sl0 = q.sl0 || q.sl; save(); FS.msg = 'Stop moved to your entry price.'; } else { FS.msg = 'The trade is not in profit yet, so the stop cannot move to break-even.'; } } }
-            else if (k === 'cancel') { A.ord.splice(+a, 1); save(); }
+            else if (k === 'close') { var ci = pidx(+a); if (ci >= 0) { closePos(ci, price(A.pos[ci].sym) || A.pos[ci].entry, 'Closed by you'); } else { FS.msg = 'That trade is already closed.'; } }
+            else if (k === 'half') { var p = A.pos[pidx(+a)]; if (p) { var px = price(p.sym) || p.entry, h = p.qty / 2, pl = upnl({ side: p.side, entry: p.entry, qty: h }, px) - h * px * FEE; A.bal += pl; p.qty = h; p.margin = p.margin / 2; A.hist.unshift({ sym: p.sym, side: p.side, lev: p.lev, entry: p.entry, exit: px, pl: pl, why: 'Closed half', at: Date.now() }); save(); } }
+            else if (k === 'pbe') { var q = A.pos[pidx(+a)]; if (q) { var pxq = price(q.sym) || q.entry, okq = q.side === 'LONG' ? pxq > q.entry : pxq < q.entry; if (okq) { q.sl = q.entry; q.sl0 = q.sl0 || q.sl; save(); FS.msg = 'Stop moved to your entry price.'; } else { FS.msg = 'The trade is not in profit yet, so the stop cannot move to break-even.'; } } }
+            else if (k === 'cancel') { var oi = -1; A.ord.forEach(function (o, j) { if (o.id === +a) { oi = j; } }); if (oi >= 0) { A.ord.splice(oi, 1); save(); } }
             else if (k === 'reset') { if (FS.confirm) { A = fresh(); save(); FS.confirm = 0; FS.msg = 'New paper account: $10,000.'; } else { FS.confirm = 1; } }
             again();
         }, true);
@@ -23078,7 +23086,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             [/\[guardian\] Heaviest repeating jobs/i, 'Slow background jobs', 'Some timers repeat every 0.5–1 s and each takes long (see the numbers in the line). On an old or busy phone this makes taps feel late.', 'Close other heavy apps. The Guardian lists the busiest job so it can be trimmed in a future update.', 'med'],
             [/\[stab\] shift (\d+)px of/i, 'Screen shifted', 'A box moved sideways or up/down by that many pixels while loading (usually when prices or pictures arrive late).', 'The Doctor pins a minimum height on boxes that keep jumping. Nothing needed from you.', 'low'],
             [/\[stab\] pinned/i, 'Box height was pinned', 'A box changed height again and again, so the app fixed its minimum height to stop the jumping.', 'Already repaired. If a screen still jumps, send a recording and tell me which screen.', 'low'],
-            [/\[jump\]/i, 'Screen jump recorded', 'The page layout moved after loading. The line names the part that moved and the pixel change.', 'The Doctor pins boxes that jump 3 times or more.', 'low'],
+            [/\[jump\]/i, 'Screen jump recorded', 'The page layout moved after loading. The line names the part that moved and the pixel change.', 'The Doctor now names the exact box that changes height on every redraw (look for "Jump culprit" in the log) and hides rows that other code removes a moment later. Send me that line if jumping continues.', 'low'],
             [/\[slow\] (\d+)ms after ([^\(]+)/i, 'Slow moment', 'A single action blocked the screen for more than 0.6 seconds. The line says which tap came just before.', 'Usually a big redraw. If it repeats for the same tap, tell me that tap so it can be made lighter.', 'med'],
             [/\[promise\]/i, 'Network request failed', 'A request to an exchange or data site did not finish (blocked site, no internet, or the site was busy).', 'The app retries by itself. A VPN or another network often helps with blocked sites.', 'med'],
             [/\[error\] (?!ResizeObserver)/i, 'Code error', 'A part of the app raised an error. The line ends with file:line:column so it can be found exactly.', 'Send me this line. The Doctor redraws the screen if the same error repeats 5 times.', 'high'],
@@ -23941,7 +23949,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
         function bd() { return +ls(BK, '7') || 7; }
         function dur(ms) { var m = Math.round(ms / 60000); return m < 60 ? m + ' min' : m < 1440 ? (m / 60).toFixed(1) + ' h' : (m / 1440).toFixed(1) + ' d'; }
         var QK = 'mintoosuite_thq', XK = 'mintoosuite_thx', PK = 'mintoosuite_thper', FRK = 'mintoosuite_thfrom', TOK = 'mintoosuite_thto', COK = 'mintoosuite_thcoin';
-        function range() { var p = ls(PK, 'all'), n = Date.now(), d0 = new Date(); d0.setHours(0, 0, 0, 0); if (p === '1') { return [d0.getTime(), 9e15]; } if (p === '7') { return [n - 7 * 864e5, 9e15]; } if (p === '30') { return [n - 30 * 864e5, 9e15]; } if (p === 'm') { var m0 = new Date(d0.getFullYear(), d0.getMonth(), 1); return [m0.getTime(), 9e15]; } if (p === 'c') { var f = Date.parse(ls(FRK, '')), t = Date.parse(ls(TOK, '')); return [isFinite(f) ? f : 0, isFinite(t) ? t + 864e5 : 9e15]; } return [0, 9e15]; }
+        function range() { var p = ls(PK, 'all'), n = Date.now(), d0 = new Date(); d0.setHours(0, 0, 0, 0); if (p === '1') { return [d0.getTime(), 9e15]; } if (p === '3') { return [n - 3 * 864e5, 9e15]; } if (p === '7') { return [n - 7 * 864e5, 9e15]; } if (p === '30') { return [n - 30 * 864e5, 9e15]; } if (p === 'm') { var m0 = new Date(d0.getFullYear(), d0.getMonth(), 1); return [m0.getTime(), 9e15]; } if (p === 'c') { var f = Date.parse(ls(FRK, '')), t = Date.parse(ls(TOK, '')); return [isFinite(f) ? f : 0, isFinite(t) ? t + 864e5 : 9e15]; } return [0, 9e15]; }
         function f2(x) { return (x >= 0 ? '+' : '-') + '$' + Math.abs(x).toFixed(2); }
         function col(x) { return x >= 0 ? '#16a34a' : '#dc2626'; }
         function base(s) { return String(s || '').replace(/USDT$/, ''); }
@@ -23974,7 +23982,8 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             s = sum(a2);
             var gp = 0, gl = 0, best = null, worst = null; a2.forEach(function (x) { if (x.pl >= 0) { gp += x.pl; } else { gl += x.pl; } if (!best || x.pl > best.pl) { best = x; } if (!worst || x.pl < worst.pl) { worst = x; } });
             var per = ls(PK, 'all');
-            h += '<div class="note" style="margin:6px 0 2px"><b>Profit / loss summary</b></div>' + chips(per, [['1', 'Today'], ['7', '7 days'], ['m', 'This month'], ['30', '30 days'], ['all', 'All till today'], ['c', 'From – to']], 'hp');
+            h += '<div class="note" style="margin:6px 0 2px"><b>Profit / loss summary</b></div>' + chips(per, [['1', 'Today'], ['3', '3 days'], ['7', '7 days'], ['m', 'This month'], ['30', '30 days'], ['all', 'All till today'], ['c', 'From – to']], 'hp');
+            try { var oldest = a0.reduce(function (m, x) { return x.t && x.t < m ? x.t : m; }, 9e15), fmt = function (t) { return new Date(t).toLocaleDateString([], { day: '2-digit', month: 'short' }) + ' ' + new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }; h += '<div class="note" style="margin:2px 0 4px">Showing ' + (rg[0] > 0 ? 'from <b>' + fmt(rg[0]) + '</b>' : 'everything') + ' to now · ' + a2.length + ' trades' + (oldest < 9e15 ? ' · oldest trade on record: <b>' + fmt(oldest) + '</b>' : '') + '. If the numbers look the same for several periods, all your trades are newer than the shortest of them.</div>'; } catch (e) { }
             if (per === 'c') { h += '<div style="display:flex;gap:8px;margin:4px 0"><input type="date" data-hdt="from" value="' + esc0(ls(FRK, '')) + '" style="flex:1;padding:8px;border-radius:8px"><input type="date" data-hdt="to" value="' + esc0(ls(TOK, '')) + '" style="flex:1;padding:8px;border-radius:8px"></div>'; }
             function inP(x) { return x.t >= c && x.t >= rg[0] && x.t < rg[1]; }
             function line(lb, z) { return '<div class="rw"><div style="flex:1"><b>' + lb + '</b><div style="font-size:11.5px;opacity:.7">' + z.n + ' trades · ' + z.w + ' won · ' + z.l + ' lost</div></div><b style="color:' + col(z.t) + '">' + f2(z.t) + '</b></div>'; }
@@ -26194,6 +26203,32 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['app opens on home|reopen app|opens where i left|resume position', 'Build 480: If you leave the app for more than 2 minutes, it opens on Home at the top when you come back, like other top apps. Under 2 minutes you return to the same place.']); } catch (e) { } })();
 
 ;(function () { try { PF_APP.push(['home tiles modern|quick buttons home|banner jump|bybit okx ideas|active and rising', 'Build 480: Home quick buttons, price tiles and chips have a rounder modern look, and the top banner keeps its space so Home no longer jumps at start. For Bybit and OKX the Market view also lists active, rising coins (star) first, then the top gainers. These are momentum views, not trade signals.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['new coins strip|swipe sideways new coins|market view colour|live market view', 'Build 480: The New coins and pumps card on Home is a sideways swipe strip of up to 12 alerts, so the page still scrolls up and down normally. The Market view tile changes colour with the market (red when most coins fall, green when most rise) and its Binance chips update live.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['leverage colour|leverage zone|1x 3x 5x 10x 20x 50x|safer zone|risky zone', 'Build 480: In Profit boxes, the leverage buttons are coloured by risk: green for 1x to 3x (safer), amber for 5x (careful), orange for 10x (risky), red for 20x and deep red for 50x (extreme). The chosen one fills with its colour and the title tells the zone. More leverage means profit and loss both multiply.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['pakistan trading house advisor|psx advisor|psx recommendations|psx bots', 'Build 480: Pakistan Trading House now has an Advisor card above its tabs: ask Baba AI what looks strong on PSX, to explain a sector, to plan a monthly PKR amount, or how to avoid scams; plus buttons for Smart Advisor and Brokers. The tabs still list Hot, Autos, Sectors, Real estate and All shares. There is no auto-trading bot for PSX: buying goes through your licensed broker.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['buy and sell listings|marketplace listings|sell my house|sell my car|post listing|firebase listings|reviews of listings|offline pictures', 'Build 481: Buy and sell listings (More, Business and Pakistan groups). Anyone can browse approved listings with pictures, a video link and reviews, and contact the seller by WhatsApp or call. To sell, open the Sell tab, add up to 5 pictures and submit; the owner approves it first. Pictures you open once, and the last list, stay on the phone for offline viewing. The owner connects a free Firebase project once in the Setup tab (paste apiKey, projectId, storageBucket in the app, never in chat). The app holds no money: no payments, no refunds. Meet in public places and never pay in advance.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['home round row|new coins button removed|buy and sell button home|business button home', 'Build 481: In the round row on Home, the New coins button is replaced by Buy and sell and Business. New coins is still one tap away from the New coins and pumps card and the More menu.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['history period|history today 3 days 7 days|history same numbers', 'Build 481: History period buttons are Today, 3 days, 7 days, This month, 30 days, All till today, From to. A line under them shows the exact start time, how many trades are in it, and the date of your oldest trade. Several periods show the same numbers when all your trades are newer than the shortest of them.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['paper trade closed wrong|paper close wrong trade|paper loss strange|close button paper', 'Build 481: Paper Close, Half, Break-even and Cancel now act on the exact trade you tapped (by its own number), not by its place in the list. Before, if another trade closed or moved just before your tap, a different trade could be closed, often at a loss. If a trade is already gone the app now says so. The extra round up and down scroll buttons were removed.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['more menu scroll top|more opens at top|menu remembers scroll', 'Build 481: Every time you open More it starts at the top, even if you had scrolled far down before closing it. Windows still return to your exact place when you come back with the Back arrow.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['scroll bar right|scrollbar drag|fast scroll bar|reopen app top', 'Build 481: A thin scroll bar sits at the right edge of long screens. It shows where you are; touch and drag it to jump up or down fast. If you leave the app for more than 15 seconds, it opens on Home at the top when you come back.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['welcome tour|guided tour|what is new|what changed|latest build', 'Build 481 in short: Home has a Market view for Binance, MEXC, Bitget, Bybit and OKX (swipe to change, remembered); the page no longer jumps; a scroll bar at the right edge; the app opens on Home at the top after you were away; More opens at the top; Buy and sell listings and Business tiles; History has a 3 days button and a range line; paper Close acts on the exact trade; leverage buttons are coloured by risk; the New coins card swipes sideways. The guided tour now includes Buy and sell, Business and Market view.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['real bot stop loss check|stop loss missing|real bot safety watchdog|market order timeout no stop', 'Build 482: The Real Bot now checks the exchange every 45 seconds that every open bot trade really has a stop-loss order. If one is missing it is placed again at once; if that fails the position is closed for safety and you get an alert. This also covers an entry order whose reply timed out. It cannot stop a loss between the trigger and the fill, and you should still use only money you can afford to lose.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['mexc coin window advisors|bitget coin window bots|other exchange bots advisors|bots and advisors box', 'Build 482: Open any coin from the MEXC or Bitget lists and the coin window now has a Bots and advisors box: the two signal bots for that coin (direction, STRONG when both agree, entry, stop, target, minutes left), the exchange numbers (24h change, volume, funding), and buttons to ask Baba AI buy, sell or wait, or explain the risks. Bybit and OKX coins open on their own exchange page; their bot scanning is not built yet.']); } catch (e) { } })();
+
+;(function () { try { PF_APP.push(['doctor v2|repair engine|jump culprit|why does home jump|slowed background jobs', 'Doctor v2 (build 483)', 'Found the real cause of the Home jumping in your Logs: the Today box showed a New coins row for a moment after every redraw and another script then deleted it, so the page grew and shrank about 60 px every 5 seconds. That row is now hidden from the first paint. The Doctor also now compares every box before and after each redraw and writes “Jump culprit …” with the box name in Menu > Logs, slows heavy non-urgent timers by itself, and the scroll-fighting code I added in build 482 is removed. Still mock-tested only: please send a Logs screenshot after a few minutes.', 'win:log']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26539,6 +26574,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         var P = {
             overview: ['#0060df', '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>'],
             ideas: ['#b45309', '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>'],
+            listings: ['#e11d48', '<path d="M4 9h16l-1.2 10.2a1 1 0 01-1 .8H6.2a1 1 0 01-1-.8z"/><path d="M8.5 9V7a3.5 3.5 0 017 0v2"/>'],
+            biz: ['#0a84ff', '<path d="M4 19V9M10 19V5M16 19v-7M21 19H3"/>'],
             radar: ['#e11d48', '<circle cx="12" cy="12" r="1.8"/><path d="M12 12L18.5 5.5M7.5 16.5a6.4 6.4 0 019-9M4.3 19.7a11 11 0 0115.4-15.4"/>'],
             brief: ['#4f46e5', '<rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9h8M8 13h8"/>'],
             live: ['#15803d', '<path d="M3 12h4l2-6 4 12 2-6h6"/>'],
@@ -28885,7 +28922,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
     try {
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
         st.textContent =
-            '.mwxs{margin:0 0 12px;padding:12px 12px 10px;border-radius:20px;background:linear-gradient(135deg,hsla(var(--mw-h,210),70%,50%,.14),hsla(calc(var(--mw-h,210) + 50),70%,55%,.10));border:1px solid hsla(var(--mw-h,210),60%,50%,.22);min-height:112px;box-sizing:border-box}' +
+            '.mwxs{margin:0 0 12px;padding:12px 12px 10px;border-radius:20px;background:linear-gradient(135deg,hsla(var(--mw-h,210),70%,50%,.14),hsla(calc(var(--mw-h,210) + 50),70%,55%,.10));border:1px solid hsla(var(--mw-h,210),60%,50%,.22);box-sizing:border-box}' +
             '.mwxh{display:flex;align-items:baseline;gap:8px;margin:0 2px 8px}.mwxh b{font-size:17px;letter-spacing:.2px}.mwxh span{font-size:11.5px;opacity:.65}' +
             '.mwxr{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}.mwxr::-webkit-scrollbar{display:none}' +
             '.mwxc{flex:0 0 auto;min-width:74px;min-height:58px;box-sizing:border-box;padding:9px 12px;border-radius:16px;background:var(--card,#fff);box-shadow:0 4px 14px rgba(0,0,0,.08);display:flex;flex-direction:column;justify-content:center;gap:2px;transition:transform .15s ease}.mwxc:active{transform:scale(.95)}' +
@@ -28943,7 +28980,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         };
         var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
         st.textContent = '.mwxp{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 10px}.mwxp::-webkit-scrollbar{display:none}.mwxp span{flex:0 0 auto;min-height:40px;box-sizing:border-box;padding:9px 14px;border-radius:99px;font-weight:800;font-size:13.5px;background:rgba(127,127,127,.14)}.mwxp span.on{color:#fff;background:linear-gradient(135deg,hsl(var(--mw-h,210),72%,44%),hsl(calc(var(--mw-h,210) + 38),74%,50%));box-shadow:0 4px 12px hsla(var(--mw-h,210),70%,40%,.4)}' +
-            '#mwscr{position:fixed;right:10px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:60;display:flex;flex-direction:column;gap:8px}#mwscr span{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;background:linear-gradient(135deg,hsl(var(--mw-h,210),72%,44%),hsl(calc(var(--mw-h,210) + 38),74%,50%));box-shadow:0 4px 14px rgba(0,0,0,.3);opacity:.85;user-select:none}#mwscr span:active{transform:scale(.92)}';
+            '#mwscr{position:fixed;right:4px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:60;display:flex;flex-direction:column;gap:8px}#mwscr span{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;background:linear-gradient(135deg,hsl(var(--mw-h,210),72%,44%),hsl(calc(var(--mw-h,210) + 38),74%,50%));box-shadow:0 3px 10px rgba(0,0,0,.25);opacity:.55;user-select:none}#mwscr span:active{transform:scale(.92)}';
         document.head.appendChild(st);
         document.addEventListener('click', function (e) {
             var tg = e.target.closest ? e.target.closest('[data-hxt]') : null;
@@ -28953,7 +28990,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         }, true);
         function sc(dir) { var se = document.scrollingElement || document.documentElement, v = document.getElementById('view'), d = Math.round(window.innerHeight * 0.8) * dir, b = se.scrollTop; window.scrollBy({ top: d, behavior: 'smooth' }); setTimeout(function () { if (se.scrollTop === b && v) { v.scrollTop += d; } }, 120); }
         function mk() { if (document.getElementById('mwscr')) { return; } var d = document.createElement('div'); d.id = 'mwscr'; d.setAttribute('data-noswipe', '1'); d.innerHTML = '<span data-sc="-1">▲</span><span data-sc="1">▼</span>'; d.addEventListener('click', function (e) { var t = e.target.closest('[data-sc]'); if (t) { e.stopPropagation(); sc(+t.getAttribute('data-sc')); } }); document.body.appendChild(d); }
-        setTimeout(mk, 1500);
+        /* scroll buttons removed on request */
     } catch (e) { try { console.log('home3b', e); } catch (er) { } }
 })();
 
@@ -28979,20 +29016,10 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
 /* ===== p9home3d: Home stays where you scrolled. No periodic full redraw while you are scrolled down (prices still update live); any redraw keeps the page height and scroll position. ===== */
 (function () {
     try {
-        var _rk = renderKey, _rv = renderView;
+        var _rk = renderKey;
         renderKey = function () {
             try { if (S.win === 'overview' && (window.pageYOffset || 0) > 40 && typeof lastKey === 'string') { return lastKey; } } catch (e) { }
             return _rk.apply(this, arguments);
-        };
-        renderView = function (keep) {
-            var v = document.getElementById('view'), y = window.pageYOffset || 0, h = v ? v.offsetHeight : 0;
-            if (keep && v && h) { v.style.minHeight = h + 'px'; }
-            var r = _rv.apply(this, arguments);
-            if (keep && y > 0) {
-                window.scrollTo(0, y);
-                var n = 0, iv = setInterval(function () { n++; if (Math.abs((window.pageYOffset || 0) - y) > 2 && n < 6) { window.scrollTo(0, y); } if (n >= 6) { clearInterval(iv); try { v.style.minHeight = ''; } catch (e) { } } }, 80);
-            } else if (v) { setTimeout(function () { try { v.style.minHeight = ''; } catch (e) { } }, 400); }
-            return r;
         };
     } catch (e) { try { console.log('home3d', e); } catch (er) { } }
 })();
@@ -29016,7 +29043,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
 /* ===== p9home3f: like top apps, coming back after the app was away for a couple of minutes opens Home at the top ===== */
 (function () {
     try {
-        var away = 0, LIM = 120000;
+        var away = 0, LIM = 15000;
         function home() { try { if (S.win !== 'overview') { gotoWin('overview'); } } catch (e) { } try { window.scrollTo(0, 0); } catch (e) { } }
         document.addEventListener('visibilitychange', function () {
             if (document.hidden) { away = Date.now(); return; }
@@ -29043,6 +29070,369 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
             'html[data-win="overview"] #view .btn{min-height:46px}';
         document.head.appendChild(st);
     } catch (e) { try { console.log('home3g', e); } catch (er) { } }
+})();
+
+/* ===== p9home3h: New-coins strip (sideways swipe, page still scrolls up/down) + live colour-changing Market view tile ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent =
+            '.mwpst{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 2px 6px}.mwpst::-webkit-scrollbar{display:none}' +
+            '.mwpc{flex:0 0 78%;scroll-snap-align:start;box-sizing:border-box;min-height:96px;padding:12px 14px;border-radius:18px;background:linear-gradient(135deg,hsla(var(--mw-h,210),70%,50%,.16),hsla(calc(var(--mw-h,210) + 50),70%,55%,.10));border:1px solid hsla(var(--mw-h,210),60%,50%,.25);display:flex;flex-direction:column;gap:4px}' +
+            '.mwpc b{font-size:14px;line-height:1.3}.mwpc small{font-size:12px;opacity:.75;line-height:1.3}.mwpc i{font-style:normal;font-size:11px;opacity:.6;margin-top:auto}' +
+            '.mwxs{background:linear-gradient(135deg,hsla(var(--mw-h,210),78%,48%,.30),hsla(calc(var(--mw-h,210) + 55),78%,52%,.20),hsla(calc(var(--mw-h,210) + 20),78%,48%,.30))!important;background-size:220% 220%!important;animation:mwxs 9s ease-in-out infinite;border:1px solid hsla(var(--mw-h,210),70%,50%,.38)!important;box-shadow:0 10px 26px hsla(var(--mw-h,210),70%,40%,.25)}' +
+            '@keyframes mwxs{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}' +
+            '@media (prefers-reduced-motion:reduce){.mwxs{animation:none}}';
+        document.head.appendChild(st);
+        /* live: update the Binance chips every 3 s without redrawing */
+        setInterval(function () {
+            try {
+                if (document.hidden || S.win !== 'overview') { return; }
+                var els = document.querySelectorAll('.mwxr .mwxc[data-act^="chart:"]'), i, e, s, t, v, sm;
+                for (i = 0; i < els.length; i++) {
+                    e = els[i]; s = e.getAttribute('data-act').slice(6); t = S.tick && S.tick[s]; if (!t || !isFinite(+t.chg) || localStorage.getItem('mintoosuite_hx') !== 'binance') { continue; }
+                    v = +t.chg; sm = e.querySelector('small'); if (sm) { var tx = (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; if (sm.textContent !== tx) { sm.textContent = tx; } }
+                    e.className = 'mwxc ' + (v >= 0 ? 'up' : 'dn') + ' tap';
+                }
+            } catch (er) { }
+        }, 3000);
+    } catch (e) { try { console.log('home3h', e); } catch (er) { } }
+})();
+
+/* ===== p9home3i: leverage buttons change colour by risk zone (green safest to deep red extreme) ===== */
+(function () {
+    try {
+        var C = { 1: '#16a34a', 2: '#22a55a', 3: '#22a55a', 5: '#d98a00', 10: '#ea580c', 20: '#dc2626', 50: '#991b1b' }, css = '';
+        Object.keys(C).forEach(function (k) {
+            css += '.segc span[data-act="lev:' + k + '"]{box-shadow:inset 0 -3px 0 ' + C[k] + '}' +
+                '.segc span.on[data-act="lev:' + k + '"]{background:' + C[k] + '!important;color:#fff!important;box-shadow:0 4px 12px ' + C[k] + '66!important}';
+        });
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1'); st.textContent = css; document.head.appendChild(st);
+    } catch (e) { try { console.log('home3i', e); } catch (er) { } }
+})();
+
+/* ===== p9home3j: Pakistan Trading House gets an advisor card on every tab (Baba AI questions, Smart Advisor, brokers) ===== */
+(function () {
+    try {
+        var X = window.__kx, Q = [
+            'I am in Pakistan. Using PSX shares, explain in simple words which kinds of shares are strongest right now and why, what the risks are, and how much a beginner should put in. Not financial advice, give a safe step by step plan with a stop-loss rule.',
+            'Explain the PSX sector I am looking at (banks, cement, fertilizer, oil, autos, power, REITs): what moves it, the main risks in Pakistan today, and how to read its news. Keep it simple.',
+            'I have a small monthly amount in PKR. Build me a simple PSX plan: how to split it, how often to buy, when to sell or stop, and what costs and taxes to expect through a licensed broker.',
+            'Tell me the common mistakes Pakistani beginners make buying PSX shares and how to avoid scams, tips and fake brokers. Include how to check a broker is SECP and PSX registered.'
+        ];
+        if (!X || !VIEWS.psx) { return; }
+        X.on('psxask', function (v) { var q = Q[+v]; if (q && window.__askBaba) { window.__askBaba(q); } });
+        var _p = VIEWS.psx;
+        VIEWS.psx = function () {
+            var h = _p.apply(this, arguments), btn = function (i, t) { return '<span class="btn sec" data-xk="psxask:' + i + '" style="width:auto;margin:0;padding:8px 12px;font-size:13px;min-height:40px">' + t + '</span>'; };
+            var card = '<div class="group pad"><b>🧭 Advisor for this desk</b><div class="note" style="margin:3px 0 8px">Ask Baba AI about Pakistan shares. These are explanations and plans, not promises or tips.</div><div style="display:flex;flex-wrap:wrap;gap:8px">' + btn(0, '📈 What looks strong?') + btn(1, '🏭 Explain this sector') + btn(2, '💰 Monthly plan (PKR)') + btn(3, '🛡 Avoid scams') + '<span class="btn sec" data-act="win:advisor" style="width:auto;margin:0;padding:8px 12px;font-size:13px;min-height:40px">🧭 Smart Advisor</span><span class="btn sec" data-act="win:brokers" style="width:auto;margin:0;padding:8px 12px;font-size:13px;min-height:40px">🏦 Brokers</span></div></div>';
+            var i = h.indexOf('<div class="pkt">'); return i > 0 ? h.slice(0, i) + card + h.slice(i) : card + h;
+        };
+    } catch (e) { try { console.log('home3j', e); } catch (er) { } }
+})();
+
+/* ===== p9home3k: opening More always starts at the top ===== */
+(function () {
+    try {
+        function top() { try { var s = document.getElementById('sheetWin'); if (!s) { return; } s.scrollTop = 0; var k = s.querySelectorAll('*'), i; for (i = 0; i < k.length; i++) { if (k[i].scrollTop > 0) { k[i].scrollTop = 0; } } } catch (e) { } }
+        document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-act="openwin"]') : null; if (!t) { return; } [0, 60, 200, 450].forEach(function (d) { setTimeout(top, d); }); }, true);
+    } catch (e) { try { console.log('home3k', e); } catch (er) { } }
+})();
+
+/* ===== p9home3m: scroll bar at the right edge. Shows where you are on long screens; touch and drag it to jump up or down fast ===== */
+(function () {
+    try {
+        var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
+        st.textContent = '#mwsb{position:fixed;right:0;top:118px;bottom:92px;width:30px;z-index:55;display:none;touch-action:none}#mwsb i{position:absolute;right:3px;width:6px;min-height:46px;border-radius:99px;background:linear-gradient(180deg,hsl(var(--mw-h,210),72%,44%),hsl(calc(var(--mw-h,210) + 40),74%,50%));opacity:.45;transition:width .15s ease,opacity .2s ease,right .15s ease;box-shadow:0 1px 4px rgba(0,0,0,.25)}#mwsb.on i{width:16px;right:4px;opacity:.95}';
+        document.head.appendChild(st);
+        var bar = document.createElement('div'), th = document.createElement('i'), drag = false, raf = 0, idle = 0;
+        bar.id = 'mwsb'; bar.setAttribute('data-noswipe', '1'); bar.appendChild(th); document.body.appendChild(bar);
+        function el() { return document.scrollingElement || document.documentElement; }
+        function geo() { var e = el(), max = Math.max(0, e.scrollHeight - window.innerHeight), h = bar.clientHeight, t = Math.max(46, Math.min(h, h * window.innerHeight / Math.max(1, e.scrollHeight))); return { max: max, h: h, t: t, y: e.scrollTop }; }
+        function paint() { raf = 0; try { var g = geo(); if (g.max < window.innerHeight * 0.6) { bar.style.display = 'none'; return; } bar.style.display = 'block'; th.style.height = g.t + 'px'; th.style.top = ((g.h - g.t) * (g.y / g.max)) + 'px'; } catch (e) { } }
+        function sched() { if (!raf) { raf = requestAnimationFrame(paint); } }
+        window.addEventListener('scroll', sched, { passive: true }); window.addEventListener('resize', sched); setInterval(sched, 1200);
+        function go(ev) { var t = ev.touches[0], r = bar.getBoundingClientRect(), g = geo(), f = (t.clientY - r.top - g.t / 2) / Math.max(1, r.height - g.t); window.scrollTo(0, Math.max(0, Math.min(1, f)) * g.max); sched(); }
+        bar.addEventListener('touchstart', function (ev) { drag = true; bar.classList.add('on'); go(ev); ev.preventDefault(); }, { passive: false });
+        bar.addEventListener('touchmove', function (ev) { if (drag) { go(ev); ev.preventDefault(); } }, { passive: false });
+        function end() { drag = false; bar.classList.remove('on'); }
+        bar.addEventListener('touchend', end); bar.addEventListener('touchcancel', end);
+        sched();
+    } catch (e) { try { console.log('home3m', e); } catch (er) { } }
+})();
+/* ===== p9mp (build 481): Buy & sell listings on the owner's own Firebase project (REST, no SDK). Anyone can browse approved listings with pictures, a video link and reviews; sellers post (photos are resized on the phone), the owner approves. Pictures opened once are kept on the phone (IndexedDB) and the last list is saved, so they show offline. No payments are handled: buyers contact the seller (WhatsApp or call). ===== */
+(function () {
+    try {
+        var X = window.__kx, KX = X.KX, e2 = X.e2, K = 'mintoosuite_mp', CK = 'mintoosuite_mp_cache';
+        var M = { cfg: {}, au: {}, tab: 'browse', cat: 'All', q: '', list: [], mine: [], pend: [], sel: null, rev: {}, photos: [], busy: '', err: '', at: 0, off: false, loading: 0 };
+        try { var s0 = JSON.parse(localStorage.getItem(K) || '{}') || {}; M.cfg = s0.cfg || {}; M.au = s0.au || {}; } catch (e) { }
+        try { var c0 = JSON.parse(localStorage.getItem(CK) || '{}') || {}; M.list = c0.list || []; M.at = c0.at || 0; } catch (e) { }
+        function sv() { try { localStorage.setItem(K, JSON.stringify({ cfg: M.cfg, au: M.au })); } catch (e) { } }
+        function svc() { try { localStorage.setItem(CK, JSON.stringify({ list: M.list.slice(0, 60), at: M.at })); } catch (e) { } }
+        function tst(m) { try { toast(m); } catch (e) { } }
+        function V(id) { var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
+        function again() { try { X.again(); } catch (e) { try { renderView(true); } catch (er) { } } }
+        var CATS = ['Property', 'Plot / land', 'Vehicle', 'Mobile / electronics', 'Shop / business', 'Fashion', 'Home / furniture', 'Services', 'Other'];
+        var IN = 'width:100%;box-sizing:border-box;padding:10px;margin:4px 0;border-radius:12px;border:1px solid rgba(128,128,128,.35);background:var(--fill,#f0f0f3);color:inherit;font-size:15px';
+        function inp(id, ph, val, type) { return '<input id="' + id + '" type="' + (type || 'text') + '" placeholder="' + e2(ph) + '" value="' + e2(val || '') + '" style="' + IN + '">'; }
+        function sel(id, opts, cur) { return '<select id="' + id + '" style="' + IN + '">' + opts.map(function (o) { return '<option' + (o === cur ? ' selected' : '') + '>' + e2(o) + '</option>'; }).join('') + '</select>'; }
+        function btn(l, act, cls) { if (act.indexOf(':') < 0) { act += ':'; } return '<span class="btn ' + (cls || '') + ' tap" data-xk="' + act + '" style="display:block;margin:6px 0">' + l + '</span>'; }
+        function money(n) { return 'Rs ' + Math.round(+n || 0).toLocaleString('en-US'); }
+        function ok() { return !!(M.cfg.key && M.cfg.pid && M.cfg.bucket); }
+        function wa(n, t) { var d = String(n || '').replace(/\D/g, ''); if (d.indexOf('0092') === 0) { d = d.slice(2); } else if (d.charAt(0) === '0') { d = '92' + d.slice(1); } else if (d.length === 10 && d.charAt(0) === '3') { d = '92' + d; } return 'https://wa.me/' + d + '?text=' + encodeURIComponent(t || ''); }
+
+        /* ---------- Firebase REST ---------- */
+        function jf(url, opt) { return fetch(url, opt).then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) { } if (!r.ok) { var m = (j && j.error && (j.error.message || j.error.status)) || ('HTTP ' + r.status); throw new Error(m); } return j; }); }); }
+        function token() {
+            var a = M.au || {};
+            if (a.idToken && a.exp && a.exp - Date.now() > 90000) { return Promise.resolve(a.idToken); }
+            var done = function (j, uid) { M.au = { idToken: j.idToken || j.id_token, refreshToken: j.refreshToken || j.refresh_token, uid: j.localId || j.user_id || uid, exp: Date.now() + (+(j.expiresIn || j.expires_in || 3600)) * 1000 }; sv(); return M.au.idToken; };
+            if (a.refreshToken) {
+                return jf('https://securetoken.googleapis.com/v1/token?key=' + encodeURIComponent(M.cfg.key), { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(a.refreshToken) }).then(function (j) { return done(j, a.uid); }, function () { M.au = {}; return token(); });
+            }
+            return jf('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + encodeURIComponent(M.cfg.key), { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"returnSecureToken":true}' }).then(function (j) { return done(j); });
+        }
+        function base() { return 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(M.cfg.pid) + '/databases/(default)/documents'; }
+        function fs(method, path, body) { return token().then(function (t) { return jf(base() + path, { method: method, headers: { 'content-type': 'application/json', authorization: 'Bearer ' + t }, body: body ? JSON.stringify(body) : undefined }); }); }
+        function enc(v) { if (Array.isArray(v)) { return { arrayValue: { values: v.map(enc) } }; } if (typeof v === 'number') { return { doubleValue: v }; } if (typeof v === 'boolean') { return { booleanValue: v }; } return { stringValue: String(v == null ? '' : v) }; }
+        function dec(f) { var o = {}; Object.keys(f || {}).forEach(function (k) { var v = f[k]; if ('stringValue' in v) { o[k] = v.stringValue; } else if ('doubleValue' in v) { o[k] = +v.doubleValue; } else if ('integerValue' in v) { o[k] = +v.integerValue; } else if ('booleanValue' in v) { o[k] = v.booleanValue; } else if (v.arrayValue) { o[k] = (v.arrayValue.values || []).map(function (x) { return x.stringValue != null ? x.stringValue : (x.doubleValue != null ? +x.doubleValue : +x.integerValue); }); } }); return o; }
+        function query(coll, field, val, limit) { return fs('POST', ':runQuery', { structuredQuery: { from: [{ collectionId: coll }], where: { fieldFilter: { field: { fieldPath: field }, op: 'EQUAL', value: { stringValue: val } } }, limit: limit || 80 } }).then(function (rows) { return (rows || []).filter(function (r) { return r.document; }).map(function (r) { var o = dec(r.document.fields); o.id = r.document.name.split('/').pop(); return o; }); }); }
+        function recent(a) { return a.sort(function (x, y) { return (+y.at || 0) - (+x.at || 0); }); }
+
+        /* ---------- pictures kept on the phone ---------- */
+        var DB = null;
+        function idb() { return new Promise(function (res, rej) { if (DB) { return res(DB); } try { var r = indexedDB.open('mintoosuite_pics', 1); r.onupgradeneeded = function () { r.result.createObjectStore('p'); }; r.onsuccess = function () { DB = r.result; res(DB); }; r.onerror = function () { rej(r.error); }; } catch (e) { rej(e); } }); }
+        function pget(k) { return idb().then(function (d) { return new Promise(function (res) { var q = d.transaction('p').objectStore('p').get(k); q.onsuccess = function () { res(q.result || null); }; q.onerror = function () { res(null); }; }); }).catch(function () { return null; }); }
+        function pput(k, blob) {
+            return idb().then(function (d) { return new Promise(function (res) { var t = d.transaction('p', 'readwrite'), s = t.objectStore('p'); s.put({ b: blob, t: Date.now() }, k); t.oncomplete = function () { res(1); }; t.onerror = function () { res(0); }; }); }).then(function () { return idb().then(function (d) { var s = d.transaction('p', 'readwrite').objectStore('p'), ks = s.getAllKeys(); ks.onsuccess = function () { if (ks.result.length > 160) { s.delete(ks.result[0]); } }; }); }).catch(function () { });
+        }
+        function hydrate() {
+            try {
+                if (S.win !== 'listings') { return; }
+                var im = document.querySelectorAll('img[data-pc]:not([data-pd])'), i;
+                for (i = 0; i < im.length; i++) { (function (el) { el.setAttribute('data-pd', '1'); var u = el.getAttribute('data-pc'); pget(u).then(function (r) { if (r && r.b) { el.src = URL.createObjectURL(r.b); return; } el.src = u; fetch(u).then(function (x) { return x.ok ? x.blob() : null; }).then(function (b) { if (b && b.size < 4e6) { pput(u, b); } }).catch(function () { }); }); })(im[i]); }
+            } catch (e) { }
+        }
+        setInterval(hydrate, 700);
+
+        /* ---------- loading ---------- */
+        function loadAll() {
+            if (!ok() || M.loading) { return; } M.loading = 1; M.err = '';
+            query('listings', 'status', 'approved', 100).then(function (a) { M.list = recent(a); M.at = Date.now(); M.off = false; svc(); }).catch(function (e) { M.off = true; M.err = String(e.message || e); }).then(function () {
+                M.loading = 0; again();
+                if (M.au.uid) { query('listings', 'seller', M.au.uid, 60).then(function (a) { M.mine = recent(a); again(); }).catch(function () { }); }
+                if (M.cfg.admin && M.au.uid === M.cfg.admin) { query('listings', 'status', 'pending', 60).then(function (a) { M.pend = recent(a); again(); }).catch(function () { }); }
+            });
+        }
+        function loadRev(id) { query('reviews', 'listing', id, 40).then(function (a) { M.rev[id] = recent(a); again(); }).catch(function () { M.rev[id] = M.rev[id] || []; }); }
+        function find(id) { var all = M.list.concat(M.mine, M.pend), i; for (i = 0; i < all.length; i++) { if (all[i].id === id) { return all[i]; } } return null; }
+
+        /* ---------- picture resize + upload ---------- */
+        function shrink(file, max, q) { return new Promise(function (res, rej) { var im = new Image(), u = URL.createObjectURL(file); im.onload = function () { var r = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.width * r)); c.height = Math.max(1, Math.round(im.height * r)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob(function (b) { b ? res({ blob: b, data: c.toDataURL('image/jpeg', q) }) : rej(new Error('picture')); }, 'image/jpeg', q); }; im.onerror = function () { rej(new Error('Could not read that picture')); }; im.src = u; }); }
+        document.addEventListener('change', function (e) {
+            var t = e.target; if (!t || t.id !== 'mpf' || !t.files) { return; }
+            var fl = Array.prototype.slice.call(t.files, 0, 5 - M.photos.length), n = fl.length; if (!n) { return; } M.busy = 'Preparing pictures…'; again();
+            Promise.all(fl.map(function (f) { return Promise.all([shrink(f, 1280, 0.8), shrink(f, 360, 0.55)]).then(function (r) { return { blob: r[0].blob, thumb: r[1].data, prev: r[0].data }; }); })).then(function (a) { M.photos = M.photos.concat(a).slice(0, 5); M.busy = ''; again(); }).catch(function (er) { M.busy = ''; tst(String(er.message || er)); again(); });
+        }, true);
+        function upload(p, i) {
+            return token().then(function (t) {
+                var name = 'listings/' + M.au.uid + '/' + Date.now() + '_' + i + '.jpg';
+                return fetch('https://firebasestorage.googleapis.com/v0/b/' + encodeURIComponent(M.cfg.bucket) + '/o?name=' + encodeURIComponent(name), { method: 'POST', headers: { authorization: 'Firebase ' + t, 'content-type': 'image/jpeg' }, body: p.blob }).then(function (r) { return r.json().then(function (j) { if (!r.ok) { throw new Error((j.error && j.error.message) || 'Upload failed (check Storage rules)'); } return 'https://firebasestorage.googleapis.com/v0/b/' + encodeURIComponent(M.cfg.bucket) + '/o/' + encodeURIComponent(name) + '?alt=media&token=' + (j.downloadTokens || ''); }); });
+            });
+        }
+
+        /* ---------- views ---------- */
+        var RULES_FS = "rules_version = '2';\nservice cloud.firestore { match /databases/{db}/documents {\n  function admin() { return request.auth != null && request.auth.uid == 'PASTE_YOUR_ID_HERE'; }\n  match /listings/{id} {\n    allow read: if resource.data.status == 'approved' || (request.auth != null && resource.data.seller == request.auth.uid) || admin();\n    allow create: if request.auth != null && request.resource.data.seller == request.auth.uid && request.resource.data.status == 'pending';\n    allow update: if (request.auth != null && resource.data.seller == request.auth.uid && request.resource.data.status in ['pending','sold']) || admin();\n    allow delete: if (request.auth != null && resource.data.seller == request.auth.uid) || admin();\n  }\n  match /reviews/{id} { allow read: if true; allow create: if request.auth != null && request.resource.data.uid == request.auth.uid && request.resource.data.stars >= 1 && request.resource.data.stars <= 5; }\n  match /reports/{id} { allow create: if request.auth != null; allow read: if admin(); }\n} }";
+        var RULES_ST = "rules_version = '2';\nservice firebase.storage { match /b/{b}/o {\n  match /listings/{uid}/{file} {\n    allow read: if true;\n    allow write: if request.auth != null && request.auth.uid == uid && request.resource.size < 3 * 1024 * 1024 && request.resource.contentType.matches('image/.*');\n  }\n} }";
+        function vSetup() {
+            var c = M.cfg, h = '<div class="group pad"><b>⚙️ Connect your Firebase (owner only, once)</b><div class="note" style="margin:4px 0 8px">Listings are stored in YOUR free Firebase project, so you own the data. Steps:<br>1. console.firebase.google.com → Add project.<br>2. Build → <b>Authentication</b> → Sign-in method → turn on <b>Anonymous</b>.<br>3. Build → <b>Firestore Database</b> → Create (production mode). Then Rules → paste the Firestore rules below.<br>4. Build → <b>Storage</b> → Get started → Rules → paste the Storage rules below.<br>5. Project settings → General → Your apps → Web app → copy <b>apiKey</b>, <b>projectId</b>, <b>storageBucket</b> into the boxes here. Never paste these in any chat.</div>' +
+                inp('mpKey', 'apiKey (starts with AIza…)', c.key) + inp('mpPid', 'projectId', c.pid) + inp('mpBkt', 'storageBucket (for example myapp.appspot.com)', c.bucket) + inp('mpAdm', 'Your owner ID (shown after Save and test, then paste it into the rules too)', c.admin) +
+                btn('💾 Save and test', 'mpsave', '') + (M.err ? '<div class="warn">' + e2(M.err) + '</div>' : '') + (M.au.uid ? '<div class="note">Your ID on this phone: <b style="word-break:break-all">' + e2(M.au.uid) + '</b><br>To be the owner (approve listings), copy this ID into the box above and into the Firestore rule where it says PASTE_YOUR_ID_HERE.</div>' : '') + '</div>';
+            h += '<div class="group pad"><b>Firestore rules (copy all)</b><textarea readonly style="' + IN + ';height:150px;font-size:11px">' + e2(RULES_FS) + '</textarea>' + btn('📋 Copy Firestore rules', 'mpcopy:fs', 'sec') + '<b>Storage rules (copy all)</b><textarea readonly style="' + IN + ';height:110px;font-size:11px">' + e2(RULES_ST) + '</textarea>' + btn('📋 Copy Storage rules', 'mpcopy:st', 'sec') + '</div>';
+            return h;
+        }
+        function thumb(l, big) { var u = (l.photos && l.photos[0]) || ''; return '<img ' + (u ? 'data-pc="' + e2(u) + '" ' : '') + 'src="' + e2(l.thumb || '') + '" alt="" style="width:100%;' + (big ? 'max-height:260px;' : 'height:140px;') + 'object-fit:cover;border-radius:14px;background:rgba(127,127,127,.18);display:block">'; }
+        function stars(a) { if (!a || !a.length) { return 'no reviews yet'; } var s = 0; a.forEach(function (r) { s += +r.stars || 0; }); return '★ ' + (s / a.length).toFixed(1) + ' (' + a.length + ')'; }
+        function card(l, own) {
+            return '<div class="tap" data-xk="mpopen:' + e2(l.id) + '" style="margin:0 0 12px;padding:10px;border-radius:20px;background:var(--card,#fff);box-shadow:0 8px 22px rgba(0,0,0,.08)">' + thumb(l) + '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:8px"><b style="font-size:16px">' + e2(l.title) + '</b><b style="color:#16a34a;white-space:nowrap">' + money(l.price) + (l.deal === 'Rent' ? '/mo' : '') + '</b></div><div class="note" style="margin:2px 0 0">' + e2(l.cat) + ' · ' + e2(l.city) + (l.status && l.status !== 'approved' ? ' · <b style="color:#d98a00">' + e2(l.status) + '</b>' : '') + '</div></div>';
+        }
+        function vBrowse() {
+            var q = (M.q || '').toLowerCase(), L = M.list.filter(function (l) { return (M.cat === 'All' || l.cat === M.cat) && (!q || (l.title + ' ' + l.city + ' ' + l.desc).toLowerCase().indexOf(q) >= 0); });
+            var h = '<div class="m7row" data-noswipe="1" style="overflow-x:auto;white-space:nowrap">' + ['All'].concat(CATS).map(function (c) { return '<span class="' + (M.cat === c ? 'on' : '') + '" data-xk="mpcat:' + e2(c) + '">' + e2(c) + '</span>'; }).join('') + '</div>' + '<input id="mpq" placeholder="🔎 Search title or city" value="' + e2(M.q) + '" style="' + IN + '">' + btn('Search', 'mpsearch', 'sec');
+            h += (M.off ? '<div class="warn">No connection' + (M.at ? ': showing the list saved ' + new Date(M.at).toLocaleString() : '') + '. Pictures you opened before still show.</div>' : '') + (M.loading ? '<div class="note">Loading…</div>' : '');
+            h += L.length ? L.map(function (l) { return card(l); }).join('') : '<div class="group pad"><b>No listings yet</b><div class="note">Be the first: open the Sell tab. Listings appear here after the owner approves them.</div></div>';
+            return h + btn('🔄 Refresh', 'mpload', 'sec');
+        }
+        function vDetail(l) {
+            var rv = M.rev[l.id], h = btn('‹ Back to listings', 'mpback', 'sec');
+            var ph = (l.photos || []).map(function (u) { return '<img data-pc="' + e2(u) + '" src="" alt="" style="flex:0 0 86%;scroll-snap-align:start;height:230px;object-fit:cover;border-radius:16px;background:rgba(127,127,127,.18)">'; }).join('');
+            h += '<div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;touch-action:pan-x pan-y" data-noswipe="1">' + (ph || thumb(l, 1)) + '</div>';
+            h += '<div class="group pad"><b style="font-size:19px">' + e2(l.title) + '</b><div style="font-size:20px;font-weight:800;color:#16a34a;margin:4px 0">' + money(l.price) + (l.deal === 'Rent' ? ' / month' : '') + '</div><div class="note">' + e2(l.cat) + ' · ' + e2(l.deal || 'Sale') + ' · ' + e2(l.city) + ' · ' + stars(rv) + '</div><div style="margin:8px 0;white-space:pre-wrap">' + e2(l.desc) + '</div>' +
+                (l.video ? '<a class="btn sec tap" target="_blank" rel="noopener" href="' + e2(l.video) + '" style="display:block;text-decoration:none">▶ Watch video</a>' : '') +
+                '<a class="btn tap" target="_blank" rel="noopener" href="' + e2(wa(l.phone, 'Hello, I saw "' + l.title + '" (' + money(l.price) + ') on MintooSuite. Is it still available?')) + '" style="display:block;text-decoration:none">💬 WhatsApp the seller</a><a class="btn sec tap" href="tel:' + e2(String(l.phone || '').replace(/[^\d+]/g, '')) + '" style="display:block;text-decoration:none">📞 Call</a></div>';
+            h += '<div class="group pad"><b>🛡 Stay safe</b><div class="note">Meet in a public place and bring a friend. Never pay in advance or send an OTP. For property or vehicles check the owner\'s documents with the registry or excise office. This app does not hold money and cannot refund.</div>' + btn('🚩 Report this listing', 'mprep:' + l.id, 'sec') + '</div>';
+            h += '<div class="group pad"><b>⭐ Reviews</b>' + (rv === undefined ? '<div class="note">Loading…</div>' : rv.length ? rv.map(function (r) { return '<div style="padding:6px 0;border-top:1px solid rgba(128,128,128,.2)"><b>' + '★'.repeat(Math.max(1, Math.min(5, +r.stars || 1))) + '</b> ' + e2(r.text) + '</div>'; }).join('') : '<div class="note">No reviews yet.</div>') +
+                sel('mpStar', ['5', '4', '3', '2', '1'], '5') + inp('mpRev', 'Your review (what was it like?)') + btn('Post review', 'mprev:' + l.id, 'sec') + '</div>';
+            return h;
+        }
+        function vSell() {
+            var h = '<div class="group pad"><b>📣 Post a listing</b><div class="note" style="margin:3px 0 6px">Free. The owner checks it before it appears. Your phone number is shown to buyers. Real pictures sell faster.</div>' +
+                sel('mpCat', CATS, '') + sel('mpDeal', ['Sale', 'Rent'], 'Sale') + inp('mpTitle', 'Title (for example: 5 marla house, Bahria Town)') + inp('mpPrice', 'Price in Rs (rent: per month)', '', 'number') + inp('mpCity', 'City / area') + '<textarea id="mpDesc" placeholder="Details: size, condition, documents, anything buyers ask" style="' + IN + ';height:90px"></textarea>' + inp('mpPhone', 'Your WhatsApp / phone (03xx…)', M.cfg.phone, 'tel') + inp('mpVid', 'Video link (YouTube / Facebook / TikTok), optional') +
+                '<div class="note" style="margin:6px 0 2px">Pictures (up to 5):</div><input id="mpf" type="file" accept="image/*" multiple style="' + IN + '">' + (M.busy ? '<div class="note">' + e2(M.busy) + '</div>' : '') +
+                (M.photos.length ? '<div style="display:flex;gap:8px;overflow-x:auto;margin:6px 0">' + M.photos.map(function (p, i) { return '<div style="flex:0 0 90px;position:relative"><img src="' + p.prev + '" style="width:90px;height:90px;object-fit:cover;border-radius:12px"><span class="tap" data-xk="mprmp:' + i + '" style="position:absolute;top:2px;right:2px;background:#000a;color:#fff;border-radius:50%;width:26px;height:26px;text-align:center;line-height:26px">✕</span></div>'; }).join('') + '</div>' : '') +
+                btn(M.busy ? '…' : '📤 Submit for approval', 'mppost', '') + (M.err ? '<div class="warn">' + e2(M.err) + '</div>' : '') + '</div>';
+            return h;
+        }
+        function vMine() { var h = '<div class="group pad"><b>My listings (' + M.mine.length + ')</b><div class="note">Pending ones wait for the owner. Mark sold or delete here.</div></div>'; return h + M.mine.map(function (l) { return card(l) + '<div style="display:flex;gap:8px;margin:-4px 0 12px"><span class="btn sec tap" data-xk="mpsold:' + e2(l.id) + '" style="flex:1;margin:0;text-align:center">✅ Mark sold</span><span class="btn sec tap" data-xk="mpdel:' + e2(l.id) + '" style="flex:1;margin:0;text-align:center;color:#dc2626">🗑 Delete</span></div>'; }).join(''); }
+        function vAdmin() { var h = '<div class="group pad"><b>🛂 Owner: waiting for approval (' + M.pend.length + ')</b></div>'; return h + M.pend.map(function (l) { return card(l) + '<div style="display:flex;gap:8px;margin:-4px 0 12px"><span class="btn tap" data-xk="mpok:' + e2(l.id) + '" style="flex:1;margin:0;text-align:center">✅ Approve</span><span class="btn sec tap" data-xk="mpdel:' + e2(l.id) + '" style="flex:1;margin:0;text-align:center;color:#dc2626">❌ Reject</span></div>'; }).join('') + btn('🔄 Refresh', 'mpload', 'sec'); }
+
+        WINS.push({ id: 'listings', ic: '🛍️', c: '#ff2d55', n: 'Buy and sell listings', t: 'Buy & sell', sub: 'Browse and post houses, plots, cars, phones, shop items with pictures, video and reviews' }); LIVE.listings = 0;
+        VIEWS.listings = function () {
+            var adm = !!(M.cfg.admin && M.au.uid === M.cfg.admin), tabs = [['browse', '🛍 Browse'], ['sell', '📣 Sell'], ['mine', '📋 My ads']].concat(adm ? [['admin', '🛂 Approve']] : []).concat([['setup', '⚙️ Setup']]);
+            var h = '<div class="m7row" data-noswipe="1">' + tabs.map(function (t) { return '<span class="' + (M.tab === t[0] ? 'on' : '') + '" data-xk="mptab:' + t[0] + '">' + t[1] + '</span>'; }).join('') + '</div>';
+            if (!ok() && M.tab !== 'setup') { return h + '<div class="group pad"><b>Listings are not connected yet</b><div class="note">The owner needs to connect a free Firebase project once (Setup tab). After that everyone can browse and post.</div>' + btn('Open Setup', 'mptab:setup', '') + '</div>'; }
+            if (M.tab === 'setup') { return h + vSetup(); }
+            if (M.sel) { var l = find(M.sel); if (l) { return h + vDetail(l); } }
+            if (M.tab === 'sell') { return h + vSell(); } if (M.tab === 'mine') { return h + vMine(); } if (M.tab === 'admin') { return h + vAdmin(); }
+            if (!M.at && !M.loading && !M.off) { setTimeout(loadAll, 50); }
+            return h + vBrowse();
+        };
+        X.on('mptab', function (v) { M.tab = v; M.sel = null; M.err = ''; if (v === 'browse' || v === 'mine' || v === 'admin') { loadAll(); } again(); });
+        X.on('mpcat', function (v) { M.cat = v; again(); }); X.on('mpsearch', function () { M.q = V('mpq'); again(); });
+        X.on('mpload', function () { M.loading = 0; loadAll(); }); X.on('mpback', function () { M.sel = null; again(); });
+        X.on('mpopen', function (v) { M.sel = v; again(); loadRev(v); try { window.scrollTo(0, 0); } catch (e) { } });
+        X.on('mprmp', function (v) { M.photos.splice(+v, 1); again(); });
+        X.on('mpcopy', function (v) { var t = v === 'fs' ? RULES_FS : RULES_ST; try { navigator.clipboard.writeText(t).then(function () { tst('Copied'); }, function () { tst('Could not copy'); }); } catch (e) { tst('Could not copy'); } });
+        X.on('mpsave', function () {
+            M.cfg = { key: V('mpKey'), pid: V('mpPid'), bucket: V('mpBkt'), admin: V('mpAdm'), phone: M.cfg.phone || '' }; M.err = ''; sv();
+            if (!ok()) { M.err = 'Fill apiKey, projectId and storageBucket.'; again(); return; }
+            M.au = {}; token().then(function () { tst('Connected. Your ID is shown below.'); M.at = 0; again(); }).catch(function (e) { M.err = 'Could not connect: ' + String(e.message || e) + (/ADMIN_ONLY|OPERATION_NOT_ALLOWED/.test(String(e.message)) ? ' (turn on Anonymous sign-in)' : ''); again(); });
+        });
+        X.on('mppost', function () {
+            if (M.busy) { return; }
+            var t = V('mpTitle'), pr = parseFloat(V('mpPrice')), ci = V('mpCity'), ph = V('mpPhone'); M.err = '';
+            if (!t || !(pr > 0) || !ci || ph.replace(/\D/g, '').length < 10) { M.err = 'Fill title, price, city and a valid phone number.'; again(); return; }
+            if (!M.photos.length) { M.err = 'Add at least one picture.'; again(); return; }
+            var vid = V('mpVid'); if (vid && !/^https?:\/\//i.test(vid)) { M.err = 'Video link must start with https://'; again(); return; }
+            var rec = { title: t.slice(0, 120), price: pr, city: ci.slice(0, 60), desc: V('mpDesc').slice(0, 2000), cat: V('mpCat') || CATS[0], deal: V('mpDeal') || 'Sale', phone: ph, video: vid, thumb: M.photos[0].thumb, status: 'pending', at: Date.now() };
+            M.cfg.phone = ph; sv(); M.busy = 'Uploading…'; again();
+            token().then(function () { rec.seller = M.au.uid; return Promise.all(M.photos.map(upload)); }).then(function (urls) {
+                rec.photos = urls; var f = {}; Object.keys(rec).forEach(function (k) { f[k] = enc(rec[k]); });
+                return fs('POST', '/listings', { fields: f });
+            }).then(function () { M.photos = []; M.busy = ''; M.tab = 'mine'; tst('Sent. It shows after the owner approves it.'); loadAll(); again(); }).catch(function (e) { M.busy = ''; M.err = 'Could not post: ' + String(e.message || e); again(); });
+        });
+        function patch(id, st) { return fs('PATCH', '/listings/' + encodeURIComponent(id) + '?updateMask.fieldPaths=status', { fields: { status: enc(st) } }); }
+        X.on('mpok', function (v) { patch(v, 'approved').then(function () { tst('Approved'); loadAll(); }).catch(function (e) { tst('Failed: ' + e.message); }); });
+        X.on('mpsold', function (v) { patch(v, 'sold').then(function () { tst('Marked sold'); loadAll(); }).catch(function (e) { tst('Failed: ' + e.message); }); });
+        X.on('mpdel', function (v) { var go = function () { fs('DELETE', '/listings/' + encodeURIComponent(v)).then(function () { tst('Removed'); loadAll(); }).catch(function (e) { tst('Failed: ' + e.message); }); }; try { window.__ask ? window.__ask('Remove this listing?', go) : go(); } catch (e) { go(); } });
+        X.on('mprev', function (v) { var tx = V('mpRev'), st = parseInt(V('mpStar'), 10) || 5; if (tx.length < 3) { tst('Write a few words'); return; } fs('POST', '/reviews', { fields: { listing: enc(v), uid: enc(M.au.uid || ''), stars: enc(st), text: enc(tx.slice(0, 400)), at: enc(Date.now()) } }).then(function () { tst('Thanks for your review'); loadRev(v); }).catch(function (e) { tst('Failed: ' + e.message); }); });
+        X.on('mprep', function (v) { fs('POST', '/reports', { fields: { listing: enc(v), at: enc(Date.now()), uid: enc(M.au.uid || '') } }).then(function () { tst('Reported. The owner will check it.'); }).catch(function (e) { tst('Failed: ' + e.message); }); });
+
+        function grp() { try { if (typeof MW_GROUPS === 'undefined' || !MW_GROUPS.__org) { return false; } var n = 0; MW_GROUPS.forEach(function (g) { if (g[1].indexOf('biz') >= 0 || g[0] === 'Pakistan') { if (g[1].indexOf('listings') < 0) { g[1].unshift('listings'); } n++; } }); try { mwHostSig = ''; } catch (e) { } return n > 0; } catch (e) { return false; } }
+        var tr = 0, iv = setInterval(function () { if (grp() || ++tr > 40) { clearInterval(iv); } }, 300);
+
+        /* Home tiles: Business (marketing suite) and Buy & sell */
+        try {
+            var _mq = MW_Q.map;
+            MW_Q.map = function () {
+                var h = _mq.apply(this, arguments), t = [['biz', '#0a84ff', '#0050c8'], ['listings', '#ff2d55', '#a3002a'], ['shophub', '#ff9f0a', '#c77700'], ['advisor', '#0a9d6b', '#06604a']];
+                return (Array.isArray(h) ? h : [h]).concat(['<div class="mwql">Business and shopping</div>' + t.map(function (q) { var w = winDef(q[0]); return w && w.id === q[0] ? '<div class="mwqt tap" style="--c1:' + q[1] + ';--c2:' + q[2] + '" data-act="win:' + w.id + '"><i>' + w.ic + '</i>' + esc(w.t || w.n) + '</div>' : ''; }).join('')]);
+            };
+            setTimeout(function () { try { mwHostSig = ''; mwHome(); } catch (e) { } }, 2500);
+        } catch (e) { }
+        window.__mpOpen = function () { gotoWin('listings'); };
+    } catch (e) { try { console.log('p9mp', e); } catch (er) { } }
+})();
+/* ===== p9rbs (build 482): Real Bot stop-loss watchdog. Every 45 s, for every open bot trade that still has a position on the exchange, the app asks the exchange whether a stop-loss order really exists. If it is missing it is placed again at once; if that fails the position is closed for safety and you get an alert. This also covers a market order whose reply timed out. ===== */
+(function () {
+    try {
+        var busy = 0;
+        function stopLike(o) { var t = String(o.orderType || o.type || ''); return /^STOP/.test(t) && !/TAKE/.test(t); }
+        function watch() {
+            var R = S.rb; if (busy || !R || !R.open || !R.open.length || R.busy) { return Promise.resolve('skip'); }
+            busy = 1; var did = [];
+            return Promise.all([trCall('GET', '/fapi/v2/positionRisk', {}), trCall('GET', '/fapi/v1/openAlgoOrders', {})]).then(function (r) {
+                var ps = Array.isArray(r[0]) ? r[0] : [], al = Array.isArray(r[1]) ? r[1] : ((r[1] && (r[1].orders || r[1].data)) || []), jobs = [];
+                R.open.forEach(function (rec) {
+                    if (rec.closing || nowMs() - (rec.t0 || 0) < 20000) { return; }
+                    var pos = ps.filter(function (x) { return x.symbol === rec.sym && +x.positionAmt !== 0; })[0]; if (!pos) { return; }
+                    if (al.some(function (o) { return o.symbol === rec.sym && stopLike(o); })) { return; }
+                    var amt = +pos.positionAmt, q = String(Math.abs(amt)), close = amt > 0 ? 'SELL' : 'BUY', nm = String(rec.sym || '').replace(/USDT$/, '');
+                    var shut = function (why) { return trCall('POST', '/fapi/v1/order', { symbol: rec.sym, side: close, type: 'MARKET', quantity: q, reduceOnly: 'true' }).then(function () { rec.closing = true; rec.why = 'stop-loss was missing'; rbLog('Safety close: ' + nm + ' had no stop-loss (' + why + '). Position closed.'); try { sendPush('Baba Real Bot', nm + ' had no stop-loss, so it was closed for safety.'); } catch (e) { } }, function (e2) { R.paused = true; R.danger = 1; R.note = 'DANGER: ' + nm + ' has no stop-loss and could not be closed (' + e2.message + '). Open Binance now. The bot is paused.'; rbLog(R.note); try { sendPush('REAL BOT DANGER', nm + ' has no stop-loss and could not be closed. Open Binance now!'); } catch (e) { } }); };
+                    if (!(+rec.sl > 0)) { jobs.push(shut('no stop price saved')); return; }
+                    jobs.push(trCall('POST', '/fapi/v1/algoOrder', { algoType: 'CONDITIONAL', symbol: rec.sym, side: close, type: 'STOP_MARKET', quantity: q, triggerPrice: rec.sl, reduceOnly: 'true', workingType: 'MARK_PRICE' }).then(function () { did.push(rec.sym); rbLog('Stop-loss was missing for ' + nm + ' and has been placed again at ' + rec.sl + '.'); }, function (e) { return shut(e.message); }));
+                });
+                return Promise.all(jobs);
+            }).catch(function () { }).then(function () { busy = 0; try { rbSave(); } catch (e) { } return did; });
+        }
+        window.__rbStopWatch = { run: watch, call: function (m, p, q) { return trCall(m, p, q); }, S: function () { return S; } };
+        setInterval(function () { try { if (!document.hidden || (S.rb && S.rb.running)) { watch(); } } catch (e) { } }, 45000);
+    } catch (e) { try { console.log('p9rbs', e); } catch (er) { } }
+})();
+/* ===== p9exa (build 482): MEXC / Bitget coin window gets the same "bots and advisors" box as the Binance chart page: the two signal bots (Baba Signal and UT Bot) for this exact coin with entry, stop and target, a plain-words Baba AI explanation, the exchange's own numbers (24h change, volume, funding), and the safety rules. ===== */
+(function () {
+    try {
+        var _v = VIEWS.mexcd; if (typeof _v !== 'function') { return; }
+        function e2(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        window.__exaAsk = function (v) {
+            var D = window.__MXD || {}, nm = String(D.s || ''), t = D.tk || {}, ex = D.x === 'bitget' ? 'Bitget' : 'MEXC';
+            var q = v === 'risk' ? 'Explain the risks of trading ' + nm + ' on ' + ex + ' right now in plain words: size of the move today, volume, funding, and what could go wrong. Give a stop-loss rule for a small account. Not financial advice.'
+                : 'Look at ' + nm + ' on ' + ex + ' (24h change ' + (t.chg != null ? (+t.chg).toFixed(1) + '%' : 'unknown') + ', volume ' + (t.q ? Math.round(t.q / 1e6) + 'M USDT' : 'unknown') + '). In simple words: is it a buy, sell or wait right now, why, where to put the stop and target, and how much of a small account to use. Not financial advice.';
+            if (window.__askBaba) { window.__askBaba(q); }
+        };
+        document.addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-exa]') : null; if (!b) { return; } e.preventDefault(); e.stopPropagation(); window.__exaAsk(b.getAttribute('data-exa')); }, true);
+        VIEWS.mexcd = function () {
+            var h = _v.apply(this, arguments), D = window.__MXD || {}, sym = String(D.s || '') + 'USDT', ex = D.x === 'bitget' ? 'Bitget' : 'MEXC', box = '';
+            try {
+                var g = window.__sigGet ? window.__sigGet(sym) : null, t = D.tk || {}, f = D.fund;
+                box = '<div class="group pad"><b>🤖 Bots and advisors · ' + e2(D.s) + ' on ' + ex + '</b><div class="note" style="margin:3px 0 6px">The same two bots that scan Binance also scan ' + ex + ' coins with enough volume. One bot signal is a recommendation; both agreeing is STRONG.</div>';
+                if (g) {
+                    var left = Math.max(0, Math.round((g.until - Date.now()) / 60000));
+                    box += '<div class="row"><span><b>' + (g.side === 'LONG' ? '▲ LONG' : '▼ SHORT') + (g.strong ? ' · STRONG' : '') + '</b> <span class="mut" style="font-size:12px">valid about ' + left + ' min</span></span></div>' +
+                        '<div class="note" style="margin:2px 0">Entry about <b>' + fmtP(g.px, sym) + '</b> · Stop <b>' + fmtP(g.stop, sym) + '</b> · Target <b>' + fmtP(g.tp, sym) + '</b></div>' + (g.warn ? '<div class="warn" style="margin:4px 0">' + e2(g.warn) + '</div>' : '');
+                } else { box += '<div class="note" style="margin:2px 0"><b>No bot signal for this coin right now.</b> Waiting is a valid choice: most coins have no valid signal most of the time.</div>'; }
+                box += '<div class="note" style="margin:6px 0 2px">Exchange numbers: 24h ' + (t.chg != null ? (+t.chg >= 0 ? '+' : '') + (+t.chg).toFixed(1) + '%' : 'n/a') + ' · volume ' + (t.q ? (typeof m7vol === 'function' ? m7vol(t.q) : Math.round(t.q)) + ' USDT' : 'n/a') + (f && f.r != null ? ' · funding ' + (+f.r).toFixed(3) + '%' : '') + '</div>' +
+                    '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"><span class="btn tap" data-exa="plan" style="width:auto;margin:0;padding:9px 14px;min-height:42px">🧓 Ask Baba AI: buy, sell or wait?</span><span class="btn sec tap" data-exa="risk" style="width:auto;margin:0;padding:9px 14px;min-height:42px">⚠️ Explain the risks</span><span class="btn sec tap" data-act="win:ideas" style="width:auto;margin:0;padding:9px 14px;min-height:42px">💡 Bot alerts</span></div>' +
+                    '<div class="note" style="margin:6px 0 0">Not financial advice. Use a stop-loss and a small size. Real orders on ' + ex + ' need your own key and a typed confirmation.</div></div>';
+            } catch (er) { box = ''; }
+            var i = h.indexOf('<div class="group'); return i > 0 ? h.slice(0, i) + box + h.slice(i) : box + h;
+        };
+    } catch (e) { try { console.log('p9exa', e); } catch (er) { } }
+})();
+/* ===== p9doc2: Doctor v2. Repairs that really act: (1) finds WHICH box makes the page jump on a redraw and writes its name in the log, (2) stretches heavy non-urgent timers, (3) hides rows that a later script removes, so they never flash in and out. ===== */
+(function () {
+    try {
+        var snap = null, hist = {}, hidden = {}, ds = document.createElement('style'); ds.setAttribute('data-mwkeep', '1'); document.head.appendChild(ds);
+        function note(t) { try { if (window.__mwRec) { window.__mwRec('doctor', t); } } catch (e) { } }
+        /* 0. rows another script deletes right after drawing: hide them from the first paint */
+        ds.textContent = 'html[data-win="overview"] #view .row[data-act="win:newc"]{display:none!important}';
+        /* 1. culprit finder: compare each direct box of the screen before and after a redraw */
+        function take() { var v = document.getElementById('view'); if (!v) { return null; } return { w: S.win, y: window.pageYOffset || 0, a: Array.prototype.map.call(v.children, function (c) { return [c.offsetHeight, (c.id ? '#' + c.id : '.' + String(c.className).split(' ')[0]), (c.innerText || '').slice(0, 28).replace(/\s+/g, ' ')]; }) }; }
+        function compare(a, b) {
+            try {
+                if (!a || !b || a.w !== b.w || a.a.length !== b.a.length) { return; }
+                for (var i = 0; i < a.a.length; i++) {
+                    var d = b.a[i][0] - a.a[i][0];
+                    if (Math.abs(d) >= 24 && a.a[i][1] === b.a[i][1]) {
+                        var k = a.w + ':' + b.a[i][1] + ':' + a.a[i][2]; hist[k] = (hist[k] || 0) + 1;
+                        if (hist[k] === 3) { note('Jump culprit on ' + a.w + ': box ' + b.a[i][1] + ' "' + a.a[i][2] + '" changes height by ' + d + 'px on every redraw (' + a.a[i][0] + ' to ' + b.a[i][0] + '). Slot ' + i + '.'); }
+                    }
+                }
+            } catch (e) { }
+        }
+        var _rv = renderView;
+        renderView = function () {
+            var before = null; try { before = take(); } catch (e) { }
+            var r = _rv.apply(this, arguments);
+            try { setTimeout(function () { var after = take(); compare(before, after); }, 1100); } catch (e) { }
+            return r;
+        };
+        /* 2. heavy timers that are not urgent are slowed down */
+        setInterval(function () {
+            try { if (document.hidden || !window.__sched || !window.__sched.stretch) { return; } var o = window.__sched.stretch(120, 3, 180000); if (o.length) { note('Slowed ' + o.length + ' heavy background job(s): ' + o.join(' | ')); } } catch (e) { }
+        }, 45000);
+        window.__doctor2 = { hist: function () { return hist; } };
+    } catch (e) { try { console.log('p9doc2', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
