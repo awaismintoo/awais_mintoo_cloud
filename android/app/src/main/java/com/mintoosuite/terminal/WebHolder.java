@@ -134,6 +134,7 @@ final class WebHolder {
             }
         });
         web = w;
+        watchNet();
         startWatchdog();
         w.loadUrl("https://" + HOST + "/assets/index.html");
         return w;
@@ -258,5 +259,34 @@ final class WebHolder {
                 if (web != null) { web.evaluateJavascript(code, null); }
             }
         });
+    }
+
+    /* build 499: Android sometimes leaves the page thinking it is offline after Wi-Fi / mobile data / VPN changes.
+       Listen to the phone's own network state and tell the page at once (this is what sets navigator.onLine). */
+    private static boolean netOn;
+    private static void tellNet(final boolean up) {
+        MAIN.post(new Runnable() { public void run() {
+            try { if (web != null) { web.setNetworkAvailable(up); web.evaluateJavascript("window.__mwNet&&window.__mwNet(" + (up ? 1 : 0) + ");", null); } } catch (Throwable ignored) { }
+        } });
+    }
+    private static void watchNet() {
+        if (netOn || app == null) { return; }
+        try {
+            final android.net.ConnectivityManager cm = (android.net.ConnectivityManager) app.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) { return; }
+            netOn = true;
+            cm.registerDefaultNetworkCallback(new android.net.ConnectivityManager.NetworkCallback() {
+                @Override public void onAvailable(android.net.Network n) { tellNet(true); }
+                @Override public void onCapabilitiesChanged(android.net.Network n, android.net.NetworkCapabilities c) {
+                    try { if (c.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)) { tellNet(true); } } catch (Throwable ignored) { }
+                }
+                @Override public void onLost(android.net.Network n) {
+                    MAIN.postDelayed(new Runnable() { public void run() {
+                        try { tellNet(cm.getActiveNetwork() != null); } catch (Throwable e) { tellNet(false); }
+                    } }, 1500);
+                }
+            });
+            tellNet(cm.getActiveNetwork() != null);
+        } catch (Throwable ignored) { }
     }
 }
