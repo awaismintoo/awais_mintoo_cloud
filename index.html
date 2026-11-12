@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.474';
+var BUILD = '2026-11-12.475';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -26186,6 +26186,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['build 472|bots notification|background run|stop bots|notification bar|running in background', 'Build 472: the "MintooSuite is running" notification now comes back every time you open the app (within about a second). Pressing Stop bots in the notification only stops it until the next time you open the app; the switch in Permissions (Background run) is the only thing that turns it off for good. If you still see nothing, check that Notifications are allowed for MintooSuite in Android settings.', 'win:perms']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['live chat|human chat|talk to a person|developer|who made this app|about the developer|owner', 'Live human chat and developer', 'Help centre now has 💬 Chat with a human (WhatsApp: the owner and team) and an About the developer card: Muhammad Awais, Islamabad, email and WhatsApp, with links to About MintooSuite and Legal. When nobody is online, Baba AI answers.', 'win:helpc']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 473|size usd|50 100 150|custom size|trade size|ticket size', 'Build 473/474: trade tickets have fixed USD sizes. Paper ticket: $50, $100, $150 chips plus a custom USD box (cannot exceed your free paper money). Real Pro ticket: $50, $100, $150 chips plus the margin box for any custom size; the ticket still shrinks the order to fit 95% of your free balance and shows the risk before you confirm.', 'win:tpro']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['build 475|exchange balance|mexc balance|bitget balance|live balance|refresh balance|live chat|tawk', 'Build 475: My Wallet shows live balances for every exchange whose API key you linked (Binance Futures, MEXC, Bitget, Bybit, OKX) with a Refresh button; it updates every 30 seconds while the screen is open. MEXC and Bitget coin charts now say MEXC/Bitget everywhere. Back returns to the exact spot in Ideas. Help has an in-app Live chat (Tawk.to) next to WhatsApp.', 'win:wallet']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -26578,8 +26579,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
         var tap = null;
         document.addEventListener('click', function (e) {
             try {
-                var t = e.target && e.target.closest ? e.target.closest('[data-act],[data-m13],[data-pk]') : null; tap = null; if (!t) { return; }
-                var at = t.hasAttribute('data-act') ? 'data-act' : (t.hasAttribute('data-m13') ? 'data-m13' : 'data-pk'), v = t.getAttribute(at), sel = '[' + at + '="' + String(v).replace(/"/g, '\\"') + '"]', all = document.querySelectorAll(sel), ix = Array.prototype.indexOf.call(all, t);
+                var t = e.target && e.target.closest ? e.target.closest('[data-act],[data-m13],[data-pk],[data-mx],[data-kp],[data-ci]') : null; tap = null; if (!t) { return; }
+                var at = t.hasAttribute('data-act') ? 'data-act' : (t.hasAttribute('data-m13') ? 'data-m13' : t.hasAttribute('data-pk') ? 'data-pk' : t.hasAttribute('data-mx') ? 'data-mx' : t.hasAttribute('data-kp') ? 'data-kp' : 'data-ci'), v = t.getAttribute(at), sel = '[' + at + '="' + String(v).replace(/"/g, '\\"') + '"]', all = document.querySelectorAll(sel), ix = Array.prototype.indexOf.call(all, t);
                 if (ix >= 0 && t.closest('#view')) { tap = { sel: sel, ix: ix, top: t.getBoundingClientRect().top, at: Date.now() }; }
             } catch (er) { tap = null; }
         }, true);
@@ -28393,17 +28394,73 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
 /* ===== p9chat (build 473): in-app live chat window (Tawk.to). Set CHAT_URL to the direct chat link once the owner has a free Tawk.to account. Until then Help shows WhatsApp only. ===== */
 (function () {
     try {
-        var CHAT_URL = ''; /* e.g. https://tawk.to/chat/PROPERTYID/WIDGETID */
+        var CHAT_URL = 'https://tawk.to/chat/6af5985196c35e3c44e8fd95/default'; /* e.g. https://tawk.to/chat/PROPERTYID/WIDGETID */
         window.__chatOn = !!CHAT_URL;
         WINS.push({ id: 'livechat', ic: '💬', c: '#34c759', n: 'Live chat', t: 'Chat', sub: 'Talk to the owner and team' }); LIVE.livechat = 0;
         VIEWS.livechat = function () {
             if (!CHAT_URL) { return '<div class="group pad"><b>Live chat</b><div class="note">Live chat is being set up. Use WhatsApp: +92 312 2602811.</div></div>'; }
-            return '<div class="group pad"><b>💬 Live chat</b><div class="note">Messages go to the owner and team. Please do not send passwords or keys.</div></div><iframe src="' + CHAT_URL + '" style="width:100%;height:70vh;border:0;border-radius:14px;background:#fff" allow="clipboard-write"></iframe>';
+            return '<div class="group pad"><b>💬 Live chat</b><div class="note">Messages go to the owner and team. Please do not send passwords or keys.</div></div><a class="btn sec" href="' + CHAT_URL + '" target="_blank" rel="noopener" style="text-decoration:none;margin:6px 0">↗ Open chat full screen</a><iframe src="' + CHAT_URL + '" style="width:100%;height:70vh;border:0;border-radius:14px;background:#fff" allow="clipboard-write"></iframe>';
         };
         var _h = VIEWS.helpc;
         function add(h) { return window.__chatOn ? h.replace('💬 Chat with a human (WhatsApp)</a>', '💬 Chat with a human (WhatsApp)</a><span class="btn tap" data-kp="win:livechat">💬 Live chat (in the app)</span>') : h; }
         ['helpc', 'help'].forEach(function (k) { var o = VIEWS[k]; if (!o) { return; } VIEWS[k] = function () { return add(o.apply(this, arguments)); }; });
     } catch (e) { try { console.log('p9chat', e); } catch (er) { } }
+})();
+/* ===== p9fxl (build 475): MEXC/Bitget coins in the chart window say MEXC/Bitget, not Binance ===== */
+(function () {
+    try {
+        var _c = VIEWS.chart; if (!_c) { return; }
+        VIEWS.chart = function () {
+            var h = _c.apply(this, arguments);
+            try {
+                var sym = String((S.chart && S.chart.sym) || '').toUpperCase(); if (!/USDT$/.test(sym)) { sym += 'USDT'; }
+                var f = window.__fxc && window.__fxc[sym]; if (!f || !(S.tick[sym] && S.tick[sym].fx)) { return h; }
+                var N = f.x === 'mexc' ? 'MEXC' : 'Bitget', K = f.x, M = f.fut ? 'Futures' : 'Spot';
+                h = h.replace(/(USDT\s*·\s*)Binance/g, '$1' + N + ' ' + M)
+                    .replace(/Live from Binance \(Futures\)/g, 'Live from ' + N + ' (' + M + ')')
+                    .replace(/Amounts follow your Binance free balance/g, 'Practice trades use your paper balance')
+                    .replace(/Trade this on Binance Futures/g, 'Trade this on ' + N + ' ' + M)
+                    .replace(/data-plan="binance\|/g, 'data-plan="' + K + '|')
+                    .replace(/>Binance Futures</g, '>' + N + ' ' + M + '<');
+            } catch (e) { }
+            return h;
+        };
+        setInterval(function () {
+            try {
+                if (S.win !== 'chart') { return; } var sym = String((S.chart && S.chart.sym) || '').toUpperCase(); if (!/USDT$/.test(sym)) { sym += 'USDT'; }
+                var f = window.__fxc && window.__fxc[sym]; if (!f || !(S.tick[sym] && S.tick[sym].fx)) { return; }
+                var N = f.x === 'mexc' ? 'MEXC' : 'Bitget';
+                [].forEach.call(document.querySelectorAll('#view .note'), function (e) { if (!e.children.length && /^Live from Binance/.test(e.textContent)) { e.textContent = e.textContent.replace(/^Live from Binance \((?:Futures|Spot|Coin-M)\)/, 'Live from ' + N + ' (' + (f.fut ? 'Futures' : 'Spot') + ')'); } });
+            } catch (e) { }
+        }, 250);
+    } catch (e) { try { console.log('p9fxl', e); } catch (er) { } }
+})();
+/* ===== p9bal (build 475): live exchange balances in My Wallet, with Refresh (Binance, MEXC, Bitget, Bybit, OKX when the API key is linked) ===== */
+(function () {
+    try {
+        var X = window.__kx, B = window.__bal = { d: {}, busy: false, at: 0 }, NAMES = { mexc: 'MEXC', bitget: 'Bitget', bybit: 'Bybit', okx: 'OKX' };
+        function linked(x) { try { var c = xcGet(x); return !!(c.key && c.sec); } catch (e) { return false; } }
+        function tmo(p, ms) { return new Promise(function (res, rej) { var t = setTimeout(function () { rej(new Error('timed out')); }, ms); p.then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); }); }); }
+        function load(force) {
+            if (B.busy || (!force && Date.now() - B.at < 25000)) { return; } B.busy = true; B.at = Date.now();
+            var jobs = Object.keys(NAMES).filter(linked).map(function (x) { return tmo(xcTest(x, xcGet(x)), 12000).then(function (t) { B.d[x] = { t: String(t), at: Date.now() }; }).catch(function (e) { B.d[x] = { err: String(e && e.message || e).slice(0, 160), at: Date.now() }; }); });
+            Promise.all(jobs).then(function () { B.busy = false; B.at = Date.now(); try { if (S.win === 'wallet') { renderView(true); } } catch (e) { } });
+            if (!jobs.length) { B.busy = false; }
+        }
+        window.__balLoad = load;
+        function card() {
+            var h = '<div class="group pad"><div style="display:flex;justify-content:space-between;align-items:center"><b>💰 Live exchange balances</b><span class="pfbtn" data-xk="balref:1" style="padding:7px 13px;border-radius:12px;cursor:pointer;font-weight:700;background:rgba(10,132,255,.14);color:#0a84ff">' + (B.busy ? 'Updating…' : '⟳ Refresh') + '</span></div>';
+            var a = null; try { a = window.__acct && window.__acct(); } catch (e) { }
+            h += '<div class="row"><span>Binance Futures</span><b>' + (a ? 'free $' + a.free.toFixed(2) + ' of $' + a.wallet.toFixed(2) : 'not linked or not loaded yet') + '</b></div>';
+            Object.keys(NAMES).forEach(function (x) { if (!linked(x)) { return; } var d = B.d[x]; h += '<div class="row"><span>' + NAMES[x] + '</span><b' + (d && d.err ? ' style="color:#d70015"' : '') + '>' + (d ? (d.err ? esc(d.err) : esc(d.t.replace(/^\w+ (spot )?/i, ''))) : 'loading…') + '</b></div>'; });
+            if (!Object.keys(NAMES).some(linked)) { h += '<div class="note">Link a MEXC, Bitget, Bybit or OKX key (read access is enough) in My exchanges and the balance shows here. Keys stay on this phone.</div>'; }
+            return h + '<div class="note">Updates every 30 seconds while this screen is open' + (B.at ? ' · last ' + new Date(B.at).toLocaleTimeString() : '') + '. Balances are read only: the app never moves money.</div></div>';
+        }
+        var _w = VIEWS.wallet; if (typeof _w !== 'function') { return; }
+        VIEWS.wallet = function () { var h = _w.apply(this, arguments); try { load(false); return card() + h; } catch (e) { return h; } };
+        X.on('balref', function () { load(true); try { renderView(true); } catch (e) { } });
+        setInterval(function () { try { if (S.win === 'wallet' && !document.hidden) { load(false); } } catch (e) { } }, 30000);
+    } catch (e) { try { console.log('p9bal', e); } catch (er) { } }
 })();
 
 function renderView(keep) {
