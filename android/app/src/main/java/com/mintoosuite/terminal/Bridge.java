@@ -79,6 +79,13 @@ final class Bridge {
         } catch (Throwable e) { }
     }
 
+    /* ----- build 494: "My city" widget (weather, date with Hijri, next event) ----- */
+    @JavascriptInterface
+    public void lifeSet(String tok, String l1, String l2, String l3) { if (ok(tok)) { LifeWidget.save(ctx, l1, l2, l3); } }
+
+    @JavascriptInterface
+    public String lifePin(String tok) { return ok(tok) ? LifeWidget.pin(ctx) : "no"; }
+
     /* ----- screenshot and screen-recording block: the page turns it on for wallet and other money screens ----- */
     @JavascriptInterface
     public void setSecure(String tok, boolean on) {
