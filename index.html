@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-09.468';
+var BUILD = '2026-11-09.471';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -8356,7 +8356,7 @@ function hcResults(q) {
 function vHelpc() {
     var h = '<div class="group pad">' + ill('shield') + '<div style="display:flex;flex-wrap:wrap;gap:8px"><span class="btn tap" data-hc="win:pchat">💬 Chat with Baba AI</span><span class="btn sec tap" data-hc="tour">🗺 Replay the welcome tour</span><span class="btn sec tap" data-hc="win:academy">🎓 Academy</span><span class="btn sec tap" data-hc="win:badges">🏅 Achievements</span></div></div>';
     h += '<div class="group pad"><input id="hcq" class="tin" placeholder="Search help: leverage, RSI, install, bot…" autocomplete="off"><div id="hcres" style="margin-top:8px">' + hcResults('') + '</div></div>';
-    h += '<div class="group pad"><b>Contact us</b><div class="note">Email goes to the app owner. Please do not send passwords or keys.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><a class="btn tap" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite question (build ' + BUILD + ')') + '" style="text-decoration:none">✉ Email support</a><a class="btn sec tap" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite problem report (build ' + BUILD + ')') + '&body=' + encodeURIComponent('What happened:\n\nWhich window:\n\nBuild: ' + BUILD) + '" style="text-decoration:none">🐞 Report a problem</a></div></div>';
+    h += '<div class="group pad"><b>Contact us</b><div class="note">Email goes to the app owner. Please do not send passwords or keys.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><a class="btn tap" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite question (build ' + BUILD + ')') + '" style="text-decoration:none">✉ Email support</a><a class="btn tap" href="https://wa.me/923122602811?text=' + encodeURIComponent('Hello MintooSuite support (build ' + BUILD + '), I need help with: ') + '" style="text-decoration:none">💬 WhatsApp support</a><a class="btn sec tap" href="mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('MintooSuite problem report (build ' + BUILD + ')') + '&body=' + encodeURIComponent('What happened:\n\nWhich window:\n\nBuild: ' + BUILD) + '" style="text-decoration:none">🐞 Report a problem</a></div></div>';
     return h + '<div class="note">Live human chat is not available yet; Baba AI answers instantly, day and night.</div>';
 }
 WINS.push({ id: 'helpc', ic: '🛟', c: '#0a84ff', n: 'Help centre', t: 'Help', sub: 'Search answers, replay the tour, chat, contact us' }); LIVE.helpc = 0; VIEWS.helpc = vHelpc;
@@ -13029,6 +13029,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         gotoWin = function (id, isBack) {
             var menuOpen = ''; try { menuOpen = document.getElementById('sheetMenu').classList.contains('open') ? 'sheetMenu' : (document.getElementById('sheetWin').classList.contains('open') ? 'sheetWin' : ''); } catch (e) { }
             var from = S.win;
+            if (id === 'support') { id = 'helpc'; } else if (id === 'errlog') { id = 'log'; } /* duplicates: one Contact place, one Logs window */
             if (REDIR[id] && window.__babaSet) { window.__babaSet(REDIR[id]); id = REDIR[id][0]; }
             if (isBack) { var wasVia = viaMenu[from]; delete viaMenu[from]; var r0 = _gw.call(this, id, true); if (wasVia) { try { if (wasVia === 'sheetWin') { buildNav(); } openSheet(wasVia === 'sheetWin' ? 'sheetWin' : 'sheetMenu'); } catch (e) { } } return r0; }
             if (swipe && S.hist.length) { return _gw.call(this, id, true); }
@@ -14806,7 +14807,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
                 return h;
             }
             if (tab === 'contact') {
-                h += box('<b>💬 Get help</b><div class="note" style="margin:6px 0">Fastest: ask Baba AI (works any time). For a person, use the Support desk; it opens WhatsApp or email with details filled in. Never send passwords, seed words or API secrets.</div>' + go('Ask Baba AI', 'baba') + X.lk('💬 WhatsApp support', 'https://wa.me/923122602811?text=' + encodeURIComponent('Hello MintooSuite support, I need help with: ')) + X.lk('✉️ Email support', 'mailto:awaisrajpoot2@yahoo.com?subject=MintooSuite%20support') + '<button class="btn sec" data-xk="tourgo:1" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">Replay welcome tour</button>');
+                h += box('<b>💬 Get help</b><div class="note" style="margin:6px 0">Fastest: ask Baba AI (works any time). For a person, tap Contact us: WhatsApp or email with details filled in. Never send passwords, seed words or API secrets.</div>' + go('Ask Baba AI', 'baba') + go('Contact us (WhatsApp, email)', 'helpc') + '<button class="btn sec" data-xk="tourgo:1" style="width:auto;margin:3px 4px 3px 0;padding:7px 12px;font-size:13px;display:inline-block">Replay welcome tour</button>');
                 return h;
             }
             if (tab === 'trust') {
@@ -16167,7 +16168,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
             ['Trade', ['hub', 'tpro', 'xtrade', 'trade', 'terminal', 'risk', 'hist', 'copy', 'signals']],
             ['Bots', ['bots', 'paper', 'rbot', 'proof', 'bsale']],
             ['Baba AI', ['baba']],
-            ['Pakistan & local', ['offers', 'shophub', 'mkplace', 'pstudio', 'study', 'psx', 'around', 'brokers']],
+            ['Pakistan & local', ['offers', 'shophub', 'mkplace', 'pstudio', 'study', 'advisor', 'psx', 'around', 'brokers']],
             ['Learn & play', ['academy', 'videos', 'quest', 'me', 'tips']],
             ['Account & tools', ['account', 'plans', 'alerts', 'timez', 'log', 'health', 'help', 'calib', 'perms', 'legal']]
         ];
@@ -16180,7 +16181,7 @@ var MXD = { s: '', x: 'mexc', tf: '1h', fut: true, k: [], tk: null, book: null, 
         if (rest.length) { ng.push(['Detail pages', rest]); }
         MW_GROUPS.length = 0; ng.forEach(function (g) { MW_GROUPS.push(g); });
         // menu shows only the main window of each family (the others are tabs inside it)
-        var HID2 = []; FAM.forEach(function (f) { f[1].slice(1).forEach(function (id) { HID2.push(id); }); }); var SHOWN = { study: 1, offers: 1, shophub: 1, mkplace: 1, pstudio: 1, psx: 1, exness: 1, exdesk: 1, gold: 1, split: 1, rates: 1, compare: 1, quest: 1, siglab: 1, news: 1, newc: 1 }; HID2 = HID2.filter(function (id) { return !SHOWN[id]; });
+        var HID2 = []; FAM.forEach(function (f) { f[1].slice(1).forEach(function (id) { HID2.push(id); }); }); var SHOWN = { advisor: 1, study: 1, offers: 1, shophub: 1, mkplace: 1, pstudio: 1, psx: 1, exness: 1, exdesk: 1, gold: 1, split: 1, rates: 1, compare: 1, quest: 1, siglab: 1, news: 1, newc: 1 }; HID2 = HID2.filter(function (id) { return !SHOWN[id]; });
         var _mt2 = mwTiles;
         mwTiles = function () { var h = _mt2.apply(this, arguments); HID2.forEach(function (id) { h = h.replace(new RegExp('<div class="tile[^"]*" data-act="win:' + id + '"><div class="ic"[^>]*>[^<]*</div>[^<]*</div>', 'g'), ''); }); return h; };
         function nm(id) { var w = null; try { w = winDef(id); } catch (e) { } var t = String((w && (w.t || w.n)) || id).replace(/[^\w &\/.\-+%]+/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 16 ? t.slice(0, 15) + '…' : t; }
@@ -18696,7 +18697,7 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
         var vB = VIEWS.best, vP = VIEWS.plan, vI = VIEWS.ideas;
         var TABS = [['live', '🤖 Bots recommended trades'], ['plan', '🧭 Live plan (gold + coins, updates every minute)'], ['all', '📋 All ideas']];
         function cur() { var t = KX.idT; if (t === 'best' || t === 'live') { return 'all'; } if (t === 'plan') { if (!KX.idS) { KX.idS = 'hourly'; } return 'alert'; } return t === 'all' || t === 'alert' ? t : 'all'; }
-        function curS() { var s = KX.idS; return s === 'hourly' || s === 'day' || s === 'custom' || s === 'pump' ? s : 'sig'; }
+        function curS() { var s = KX.idS; return s === 'hourly' || s === 'day' || s === 'custom' || s === 'pump' || s === 'move' ? s : 'sig'; }
         function vPump() {
             var ex = bxc(), now = new Date(), rows = [], seen = {}, h = '', fp = function (v) { return (+v).toPrecision(5).replace(/\.?0+$/, ''); };
             function row(sym, nm, px, chg, vol, act, tag) { var up = chg >= 0; return '<div class="row tap" ' + (/^det:/.test(act) ? 'data-mx' : 'data-act') + '="' + act + '" style="display:flex;justify-content:space-between;gap:8px"><span><b>' + nm + '</b> <span class="mut" style="font-size:12px">' + tag + (vol ? ' · ' + (vol >= 1e6 ? (vol / 1e6).toFixed(1) + 'M' : Math.round(vol / 1e3) + 'k') + ' USDT' : '') + '</span></span><span style="text-align:right"><b>' + fp(px) + '</b> <b style="color:' + (up ? '#1d8a3b' : '#d70015') + '">' + (up ? '+' : '') + chg.toFixed(1) + '%</b></span></div>'; }
@@ -18881,9 +18882,9 @@ window.__urduB64='d09GMgABAAAAAM28ABAAAAACXpQAAM1aAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA
             h = h.replace(/<span class="(on)?" data-xk="idT:all"/, function (m, a) { return '<span class="' + (a || '') + (nS + nA > 0 ? ' mwhas' : '') + '" data-xk="idT:all"'; });
             var EXPL = { live: '<b>BOTS RECOMMENDED TRADES</b>: the fresh BUY/SELL signals of Baba Signal and UT Bot, with a timer. This is the one to act on. If it is empty, wait.', best: '<b>All ideas</b>: the strongest coins of the day on Binance, MEXC and Bitget (they passed the strict check and the 20-day replay). Not an entry signal yet: watch them and wait for a DO NOW card.', plan: '<b>Live plan</b>: a fresh plan card for gold and the main Binance Futures coins, refreshed every minute (entry, stop, target fixed at plan time). The fixed daily plan at 05:15 PKT is in <b>New Plan</b> (More).', all: '<b>All ideas</b>: for browsing, not for entries. First the strongest coins of the day on Binance, MEXC and Bitget, then the strict list, fast movers and practice-bot record, then every idea ranked, including everything the Scanner finds. Trades to act on come only from the <b>Book-rule trades</b> at the top. <span class="pfbtn" data-act="win:scanner" style="margin-left:4px">Open raw Scanner</span>' };
             h += '<div class="note" style="margin:0 0 8px">' + (t === 'alert' ? '<b>BOT ALERTS</b>: every fresh BUY/SELL from Baba Signal or UT Bot, the moment it appears (you are notified too). They are <b>not verified</b> unless marked VERIFIED: a heads-up, not a promise. Use the stop. Held 15 minutes.' : EXPL[t]) + '</div>';
-            var sub = curS(), subBar = t === 'alert' ? X.seg('idS', [['sig', '🔔 Alerts now'], ['hourly', '⏱ Hourly plan'], ['day', '📅 Day plan'], ['custom', '⚙ Custom hours'], ['pump', '🚀 Pumping + gold']], sub) : '';
+            var sub = curS(), subBar = t === 'alert' ? X.seg('idS', [['sig', '🔔 Alerts now'], ['hourly', '⏱ Hourly plan'], ['day', '📅 Day plan'], ['custom', '⚙ Custom hours'], ['pump', '🚀 Pumping + gold'], ['move', '⚡ Early movers']], sub) : '';
             if (t === 'alert' && sub === 'custom' && IDS.hz !== 'custom') { try { IDS.hz = 'custom'; } catch (ec) { } }
-            var full = h + subBar + call(t === 'alert' ? (sub === 'pump' ? vPump : sub === 'hourly' ? vP : sub === 'day' ? (function () { var d = ''; try { d = VIEWS.morning(); } catch (e) { d = '<div class="group pad mut">The day plan is not ready yet. Try again in a moment.</div>'; } return String(d).replace(/<div class="m7row xtabs"[\s\S]*?<\/div>/, ''); }) : sub === 'custom' ? (function () { var iv2 = ''; try { window.__xf = 1; iv2 = call(vI); } catch (e) { } finally { window.__xf = 0; } return (window.__idcRow || '') + String(iv2).replace(/<div class="segc fmstrip[\s\S]*?<\/div>/, ''); }) : vAlerts) : t === 'live' ? vBots : t === 'best' ? (function () { try { return vBestX(); } catch (e) { return vB(); } }) : t === 'plan' ? vP : (function () { var w = ''; try { w = vBots() + '<!--MWSPLIT-->'; } catch (e0) { } try { w += vBestX(); } catch (e) { try { w = vB(); } catch (e3) { } } try { w += '<div class="note" style="margin:14px 0 4px"><b>More checks</b>: the strict list, fast movers and the practice-bot track record.</div>' + vLive(true); } catch (e2) { } var iv = '', sx0 = S.xch; try { S.xch = exn0(); window.__xf = 1; iv = call(vI); } finally { S.xch = sx0; window.__xf = 0; } var hd = '', body = iv; try { var dv = document.createElement('div'); dv.innerHTML = iv; var kids = [].slice.call(dv.children), keep = [], hdr = []; kids.forEach(function (k) { var c = k.className || ''; if (/fmstrip|xchb/.test(c)) { return; } if (/m7row/.test(c) && /Long/.test(k.textContent) && /Any time/.test(k.textContent)) { hdr.push(k.outerHTML); return; } if (/m7row/.test(c) && /Sort:/.test(k.textContent)) { hdr.push(k.outerHTML); return; } keep.push(k.outerHTML); }); hd = hdr.join(''); body = keep.join(''); } catch (eh) { }
+            var full = h + subBar + call(t === 'alert' ? (sub === 'move' ? function () { try { return VIEWS.movers(); } catch (e) { return '<div class="group pad mut">Early movers is not ready yet. Try again in a moment.</div>'; } } : sub === 'pump' ? vPump : sub === 'hourly' ? vP : sub === 'day' ? (function () { var d = ''; try { d = VIEWS.morning(); } catch (e) { d = '<div class="group pad mut">The day plan is not ready yet. Try again in a moment.</div>'; } return String(d).replace(/<div class="m7row xtabs"[\s\S]*?<\/div>/, ''); }) : sub === 'custom' ? (function () { var iv2 = ''; try { window.__xf = 1; iv2 = call(vI); } catch (e) { } finally { window.__xf = 0; } return (window.__idcRow || '') + String(iv2).replace(/<div class="segc fmstrip[\s\S]*?<\/div>/, ''); }) : vAlerts) : t === 'live' ? vBots : t === 'best' ? (function () { try { return vBestX(); } catch (e) { return vB(); } }) : t === 'plan' ? vP : (function () { var w = ''; try { w = vBots() + '<!--MWSPLIT-->'; } catch (e0) { } try { w += vBestX(); } catch (e) { try { w = vB(); } catch (e3) { } } try { w += '<div class="note" style="margin:14px 0 4px"><b>More checks</b>: the strict list, fast movers and the practice-bot track record.</div>' + vLive(true); } catch (e2) { } var iv = '', sx0 = S.xch; try { S.xch = exn0(); window.__xf = 1; iv = call(vI); } finally { S.xch = sx0; window.__xf = 0; } var hd = '', body = iv; try { var dv = document.createElement('div'); dv.innerHTML = iv; var kids = [].slice.call(dv.children), keep = [], hdr = []; kids.forEach(function (k) { var c = k.className || ''; if (/fmstrip|xchb/.test(c)) { return; } if (/m7row/.test(c) && /Long/.test(k.textContent) && /Any time/.test(k.textContent)) { hdr.push(k.outerHTML); return; } if (/m7row/.test(c) && /Sort:/.test(k.textContent)) { hdr.push(k.outerHTML); return; } keep.push(k.outerHTML); }); hd = hdr.join(''); body = keep.join(''); } catch (eh) { }
                     var idc = ''; idc = '';
                     var sc = ''; try { sc = window.__scanMore ? window.__scanMore(exn0()) : ''; sc += window.__exBlock ? window.__exBlock(exn0()) : ''; } catch (es) { }
                     var wp = String(w).split('<!--MWSPLIT-->'), wTop = wp.length > 1 ? wp[0] : '', wRest = wp.length > 1 ? wp.slice(1).join('') : w; return wTop + '<div class="note" style="margin:6px 0 4px"><b>Filters</b>: side, time and custom hours apply to the list below.</div>' + idc + hd + '<div class="note" style="margin:10px 0 4px"><b>Every idea, ranked</b> (' + (exn0() === 'all' ? 'all exchanges' : exn0()) + ')</div>' + body + sc + '<details style="margin:14px 0"><summary style="font-weight:700;padding:10px 0">More: strict list, top picks, fast movers, practice record (tap)</summary>' + wRest + '</details>'; }));
@@ -25074,7 +25075,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             ['Exchanges', ['exchanges', 'compare', 'mexc', 'mexcd', 'bitget']],
             ['Money and safety', ['wallet', 'moveit', 'hold', 'safety', 'ruletest', 'backup', 'devices', 'recovery', 'parent']],
             ['Learn and help', ['quest', 'baba', 'academy', 'videos', 'me', 'words', 'helpc', 'tips', 'story', 'agent']],
-            ['Pakistan', ['offers', 'shophub', 'mkplace', 'pstudio', 'study', 'around', 'psx', 'brokers']],
+            ['Pakistan', ['offers', 'shophub', 'mkplace', 'pstudio', 'study', 'advisor', 'around', 'psx', 'brokers']],
             ['Settings', ['langs', 'tsize', 'alerts', 'log']]
         ];
         function apply() {
@@ -25082,7 +25083,7 @@ window.__pfAns = function (q) { return pfAnswer(q); };
             if (MW_GROUPS.__org) { return; }
             var used = {}, ng = [];
             PLAN.forEach(function (p) { var ids = p[1].filter(function (id) { if (used[id] || typeof VIEWS[id] !== 'function') { return false; } used[id] = 1; return true; }); if (ids.length) { ng.push([p[0], ids]); } });
-            var rest = order.filter(function (id) { return id !== 'plans' && !used[id] && typeof VIEWS[id] === 'function'; }); if (rest.length) { ng.push(['Other tools', rest]); }
+            var rest = order.filter(function (id) { return id !== 'plans' && id !== 'support' && id !== 'errlog' && !used[id] && typeof VIEWS[id] === 'function'; }); if (rest.length) { ng.push(['Other tools', rest]); }
             MW_GROUPS.length = 0; ng.forEach(function (g) { MW_GROUPS.push(g); }); MW_GROUPS.__org = 1; try { mwHostSig = ''; } catch (e) { }
         }
         setTimeout(apply, 0);
@@ -26178,6 +26179,8 @@ window.__pfAns = function (q) { return pfAnswer(q); };
 ;(function () { try { PF_APP.push(['build 465|fashion advice|design help|sales and marketing|explain any topic|update now|more groups|pakistan group', 'Build 465: more Baba AI makers, Update now, More groups', 'Baba AI > Create has new makers: Fashion and style, Design (graphic, interior, app, logo) and Sales and marketing, besides Picture and Video storyboard for any topic. Every new window (Shop and property, Marketplace, Photo studio, Study) has an Update now button on top and sits in Menu > More under the Pakistan group. Home ends with editable My shortcuts and the app colour breathes with the market (green up, red down, blue mixed).', 'win:baba']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 467|stop loss|breakeven|trade history|profit and loss summary|backup stop', 'Build 467: paper trades now always get a protective stop (and a wider backup stop) if you set none; the stop can follow profit (breakeven at +1R, locks +1R at +2R). Trade history keeps all trades (the old 60 limit is gone) and has a Profit / loss summary by day, month, from-to dates and by coin, with duration, entry and exit.', 'win:proof']); } catch (e) { } })();
 ;(function () { try { PF_APP.push(['build 468|mexc coin|bitget coin|pumping gold tap|real order stop loss|other exchange chart', 'Build 468: tapping a MEXC or Bitget coin (including in Pumping + gold) now opens the same full chart window as Binance coins, with candles and live price from that exchange and the right badge. Real Binance manual orders now always get a protective stop plus a backup stop. Advisers, bots and one-click real trading on MEXC/Bitget are not finished yet; paper trade works.', 'win:chart']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['build 469|split maximize|maximize chart|full screen chart split|double tap chart', 'Build 469: in Split Charts each pane has a ⤢ button (and a double tap on the pane header) that opens that chart full screen inside the app with all TradingView tools; "Back to split" returns you.', 'win:split']); } catch (e) { } })();
+;(function () { try { PF_APP.push(['build 471|duplicate buttons|contact us|email support|early movers in ideas|where is about|about page', 'Build 471: Contact now lives in one place (More > Help centre > Contact us: email, WhatsApp, report a problem); the other Help screen only links to it. The old Support desk and Problem log entries were merged (they open Help centre and Logs). Early movers is now also a tab under Ideas > Bot alerts. The About page is More > Other tools > About MintooSuite, and the Baba AI window has its own About tab.', 'win:helpc']); } catch (e) { } })();
 /* Search picker fix: a touch tap can fire two clicks; the second one landed on the picker backdrop and closed it at once. Ignore backdrop taps for the first 600 ms. */
 (function () {
     try {
@@ -28104,6 +28107,188 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         document.addEventListener('click', grab, true);
         window.__fxIs = function (sym) { return !!(FX[sym] && S.tick[sym] && S.tick[sym].fx); };
     } catch (e) { try { console.log('p9fxc', e); } catch (er) { } }
+})();
+/* ===== p9spmax (build 469): Split Charts - maximize one chart inside the app (full TradingView tools), back returns to the split ===== */
+(function () {
+    try {
+        function relabel() {
+            try { if (S.win !== 'split') { return; } [].forEach.call(document.querySelectorAll('#view a[title="Open in browser"]'), function (a) { if (a.getAttribute('data-mxd')) { return; } a.setAttribute('data-mxd', '1'); a.setAttribute('title', 'Maximize this chart'); a.textContent = '⤢'; a.style.cssText += ';font-size:22px;font-weight:800;color:#0a84ff;cursor:pointer'; }); } catch (e) { }
+        }
+        setInterval(relabel, 1500);
+        function closeMax() { var o = document.getElementById('mwspmax'); if (o) { o.remove(); } }
+        function openMax(card) {
+            try {
+                var f = card && card.querySelector('iframe'); if (!f || !f.src) { return; } closeMax();
+                var o = document.createElement('div'); o.id = 'mwspmax'; o.setAttribute('data-noswipe', '1'); o.setAttribute('data-mwkeep', '1');
+                o.style.cssText = 'position:fixed;left:0;right:0;top:0;bottom:0;z-index:9600;background:var(--bg,#fff);display:flex;flex-direction:column';
+                var src = f.src.replace(/&withdateranges=\d/, '') + '&withdateranges=1';
+                o.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:var(--card,#fff);box-shadow:0 1px 6px rgba(0,0,0,.15)"><button type="button" id="mwspmaxb" style="border:0;border-radius:12px;padding:10px 14px;font-weight:800;background:#0a84ff;color:#fff">‹ Back to split</button><b style="flex:1;text-align:center">Full chart</b></div><iframe src="' + src.replace(/"/g, '&quot;') + '" style="flex:1;width:100%;border:0" allow="fullscreen"></iframe>';
+                document.body.appendChild(o);
+                o.querySelector('#mwspmaxb').addEventListener('click', closeMax);
+            } catch (e) { }
+        }
+        document.addEventListener('click', function (e) {
+            var a = e.target && e.target.closest ? e.target.closest('#view a[data-mxd]') : null; if (!a) { return; }
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            openMax(a.closest('div[style*="grid-column"]'));
+        }, true);
+        /* double tap on a pane's header strip also maximizes it (the chart itself is an iframe and cannot report taps) */
+        var lt = 0, lel = null;
+        document.addEventListener('click', function (e) {
+            try {
+                if (S.win !== 'split') { return; } var card = e.target && e.target.closest ? e.target.closest('div[style*="grid-column"]') : null; if (!card || !card.querySelector('iframe')) { return; }
+                if (e.target.closest('button,a,span.badge,input')) { lt = 0; return; }
+                var n = Date.now(); if (lel === card && n - lt < 450) { lt = 0; openMax(card); } else { lt = n; lel = card; }
+            } catch (er) { }
+        }, true);
+        window.addEventListener('popstate', closeMax);
+        setInterval(function () { try { if (S.win !== 'split') { closeMax(); } } catch (e) { } }, 1500);
+    } catch (e) { try { console.log('p9spmax', e); } catch (er) { } }
+})();
+/* ===== p9adv (470): Smart Advisor - book-rule checks, advisers, red flags and a Chief verdict for property, vehicles, shopping, shares, food, stays, travel, fun, study, business ===== */
+(function () {
+    try {
+        var X = window.__kx; if (!X || typeof PF_APP === 'undefined') { return; }
+        var KX = X.KX, e2 = X.e2, box = X.box;
+        /* each rule: [text, weight, critical(1 = must be true before going ahead)] */
+        var C = {
+            prop: ['🏠 Property: flat, plot, house, shop', [
+                ['Seller is the registered owner (matches the fard / registry copy and CNIC shown in person)', 5, 1],
+                ['Society / scheme is approved (CDA, LDA, RDA or the provincial authority) and the plot or flat number is on the approved map', 5, 1],
+                ['No loan, mortgage, court case or dispute on the property (checked at the registrar / revenue office)', 4, 1],
+                ['Possession is real and physical (you visited, it is not occupied by a tenant who will refuse to leave)', 4, 1],
+                ['Utility bills and taxes are paid up to date (electricity, gas, water, maintenance, property tax)', 3, 0],
+                ['Price compared with at least 3 recent similar deals nearby, not only the dealer\'s word', 4, 0],
+                ['Payment goes by bank cheque / transfer in the owner\'s name, never as a large cash bundle', 4, 1],
+                ['Written agreement reviewed by a lawyer; stamp paper and witnesses ready before any big payment', 4, 1],
+                ['Dealer is registered and has a track record (ask for 2 past clients)', 2, 0],
+                ['For rent: written tenancy deed, security deposit receipt, and the rules for repairs and notice are clear', 3, 0]],
+                ['Never pay a large token to someone who cannot show the original papers', 'Pressure to decide today', 'Price far below the area rate', 'Seller or dealer avoids the registry or a lawyer', 'Plot in a scheme with no approved map'],
+                ['What are the original ownership papers?', 'Is there any loan or court case?', 'What are the last 3 sale prices in this block?', 'Who pays transfer tax and fees?']],
+            veh: ['🚗 Cars and bikes', [
+                ['Registration book and token tax are original; the owner matches the registration', 5, 1],
+                ['Chassis and engine numbers match the papers (checked on the car yourself)', 5, 1],
+                ['Verified with the excise office (no theft, no outstanding challans or loan)', 4, 1],
+                ['Inspected by an independent mechanic or inspection company, not the seller\'s mechanic', 4, 0],
+                ['Accident history, paint and meter checked; test drive done on a rough road', 3, 0],
+                ['Price compared on 3 listings of the same year, model and mileage', 3, 0],
+                ['Transfer done at the excise office before you hand over the full payment', 4, 1],
+                ['Insurance and spare keys / service record received', 2, 0]],
+                ['Meter rolled back', 'Seller refuses an independent inspection', 'Papers are "in process"', 'Payment demanded before transfer'], ['When was it last serviced?', 'Has it ever been in an accident?', 'Is the token tax paid?']],
+            shop: ['🛍 Fashion, brands, phones, shopping', [
+                ['Official brand store or authorised seller (check the brand\'s own website list)', 4, 0],
+                ['Return and exchange policy is written on the receipt', 3, 0],
+                ['Warranty is brand or PTA registered (for phones: PTA approved, IMEI verified)', 4, 1],
+                ['Price compared in at least 3 places including the official price', 3, 0],
+                ['Material, size and stitching or build checked in person, or the seller offers free return', 3, 0],
+                ['Payment by card or cash on delivery, never advance money to an unknown page', 4, 1],
+                ['Seen real customer reviews with photos (not only the seller\'s page)', 2, 0]],
+                ['"Original" at half price', 'Seller will not give a receipt', 'Advance payment to a personal account'], ['Is this the official warranty?', 'Can I exchange it within 7 days?']],
+            shares: ['📈 Shares and investing (PSX)', [
+                ['You buy only through a licensed broker (SECP / PSX registered) with your own CDC account', 5, 1],
+                ['You read the last 2 years of results: profit, debt and dividend', 4, 0],
+                ['One share is at most 10% of your total investment money (spread across sectors)', 4, 0],
+                ['You only invest money you will not need for at least 12 months', 5, 1],
+                ['You know the exit rule before buying (a price or reason at which you sell)', 4, 0],
+                ['You ignore tips from chat groups and "guaranteed profit" calls', 4, 1],
+                ['Broker fees, taxes and spread are counted in your expected profit', 2, 0]],
+                ['Anyone promising fixed profit', 'Sending money to a person instead of a broker', 'Pressure to buy a small unknown share today'], ['What is the company\'s debt and profit trend?', 'What does the broker charge?']],
+            food: ['🍽 Restaurants and food', [
+                ['Recent photos and reviews from several sources (not only one platform)', 3, 0],
+                ['Kitchen and washrooms look clean; food is served hot and fresh', 4, 1],
+                ['Menu prices are shown, with tax and service charge explained before ordering', 2, 0],
+                ['Halal status and ingredients are clear if it matters to you', 3, 0],
+                ['Busy at normal meal times (a good sign) and staff are polite', 2, 0],
+                ['For delivery: the deal price matches the menu and the packaging is sealed', 2, 0]],
+                ['Stale smell', 'Raw and cooked food stored together', 'Very cheap "buffet" with no crowd'], ['Is tax included?', 'Is this fresh today?']],
+            stay: ['🏨 Hotels, hostels, guest houses', [
+                ['The place is registered and the owner or manager shows a licence or registration', 4, 1],
+                ['You saw the real room (video call or visit) before paying, not only the website photos', 4, 1],
+                ['Safety: lock, fire exit, CCTV at the entrance, reliable lighting, women-friendly if needed', 5, 1],
+                ['Price includes everything (tax, electricity, water, meals) in writing', 3, 0],
+                ['Cancellation and refund rules are written; you pay a small booking amount only', 3, 0],
+                ['Reviews on at least 2 sites and a recent one from the same month', 3, 0],
+                ['For a hostel stay: written rules, visitor policy, deposit receipt and a clear notice period', 3, 1]],
+                ['Asks the full amount in advance to a personal account', 'No signboard or registration', 'Refuses to show the room'], ['What is the exact total per night / month?', 'Is the refund written?']],
+            trip: ['🏞 Tourist places, parks, picnic spots', [
+                ['Weather, road and landslide status checked the same day (PMD / NHA / local police)', 5, 1],
+                ['Someone knows your route and return time; the phone is charged with an offline map saved', 4, 1],
+                ['Entry rules, fees, opening hours and parking checked on the official page', 2, 0],
+                ['Travel in daylight; avoid isolated places after dark', 4, 1],
+                ['Water, first-aid kit, cash and a power bank packed', 2, 0],
+                ['For children: life jackets near water and fenced rides only', 4, 1],
+                ['Waste is carried back; local rules and culture respected', 1, 0]],
+                ['Heavy rain forecast with hill roads', 'Swimming in unmarked water', 'Overcrowded rides without safety bars'], ['Is the road open today?', 'Where is the nearest hospital?']],
+            fun: ['🎮 Games, clubs, sports, amusement', [
+                ['Fees, membership terms and the refund policy are written', 3, 1],
+                ['Facility is clean and equipment is maintained; trainer or staff are qualified', 4, 0],
+                ['Age rules and safety equipment (helmets, harness, first-aid) are in place', 5, 1],
+                ['For online games: no real-money gambling; parental controls and spending limits set', 5, 1],
+                ['Hours and crowd levels suit you (visit once before taking a long membership)', 2, 0],
+                ['For clubs: legal registration and a clear code of conduct', 3, 0]],
+                ['Long non-refundable membership paid upfront', 'In-game purchases without a limit', 'No safety briefing for rides'], ['Can I try one session first?', 'What is the refund rule?']],
+            edu: ['🎓 Schools, courses, universities', [
+                ['Institution is recognised (HEC / board / TEVTA / NAVTTC) and the degree is accepted for your goal', 5, 1],
+                ['Fee structure is written with all extra charges, and refund rules are clear', 4, 1],
+                ['You spoke to current or past students, not only the admission officer', 3, 0],
+                ['Faculty qualifications, labs and library have been seen', 3, 0],
+                ['Job or next-step results are shown with real examples', 3, 0],
+                ['Online course: certificate is useful in your field and a free preview exists', 2, 0]],
+                ['"100% job guarantee"', 'Fee demanded in cash with no receipt', 'No recognition number'], ['Is this degree recognised by HEC?', 'What is the full fee for the whole programme?']],
+            biz: ['💼 Starting or buying a business', [
+                ['You wrote a simple plan: product, customers, startup cost, monthly cost, and break-even point', 5, 1],
+                ['You can survive 6 months of costs without any sales', 5, 1],
+                ['For buying: 12 months of real bank or sales records checked by an accountant', 5, 1],
+                ['Location and competitors checked at different times of day and in person', 3, 0],
+                ['Licences, tax registration (NTN / SECP / local) and lease terms are clear', 4, 1],
+                ['Partners agreement is written before you invest together', 4, 1],
+                ['You tested the idea small first (stall, online page or a pilot)', 3, 0]],
+                ['Seller refuses to show books', 'Partner asks for cash only', 'Lease ends soon with no renewal'], ['What are the monthly fixed costs?', 'What is my break-even?']]
+        };
+        var KEYS = Object.keys(C), ST = { c: 'prop', t: 'Flat', ask: '', mkt: '' }, CK = {};
+        try { CK = JSON.parse(localStorage.getItem('mintoosuite_adv') || '{}') || {}; } catch (e) { CK = {}; }
+        function save() { try { localStorage.setItem('mintoosuite_adv', JSON.stringify(CK)); } catch (e) { } }
+        function sc(k) { var R = C[k][1], tot = 0, got = 0, crit = [], st = CK[k] || {}; R.forEach(function (r, i) { tot += r[1]; if (st[i]) { got += r[1]; } else if (r[2]) { crit.push(r[0]); } }); return { p: tot ? Math.round(got / tot * 100) : 0, crit: crit, got: got, tot: tot }; }
+        function verdict(k) {
+            var s = sc(k), n = Object.keys(CK[k] || {}).length;
+            if (!n) { return { c: '#8e8e93', t: 'Tick what you have already checked. The Chief verdict appears here.' }; }
+            if (s.crit.length) { return { c: '#dc2626', t: '⛔ STOP for now: ' + s.crit.length + ' must-have check' + (s.crit.length > 1 ? 's are' : ' is') + ' still open. Do these before paying anything.' }; }
+            if (s.p >= 80) { return { c: '#16a34a', t: '✅ Looks reasonable (' + s.p + '%). Keep verifying and keep every receipt.' }; }
+            if (s.p >= 55) { return { c: '#f59e0b', t: '⚠️ Caution (' + s.p + '%). Finish the open checks first.' }; }
+            return { c: '#dc2626', t: '⛔ Not ready (' + s.p + '%).' };
+        }
+        function priceCheck() {
+            var a = +ST.ask, m = +ST.mkt; if (!(a > 0 && m > 0)) { return ''; } var d = (a - m) / m * 100, t, col;
+            if (d > 15) { t = 'Asking price is ' + d.toFixed(0) + '% above your market figure. Negotiate or walk away.'; col = '#dc2626'; } else if (d > 5) { t = 'About ' + d.toFixed(0) + '% above market. Room to negotiate.'; col = '#f59e0b'; } else if (d >= -10) { t = 'Close to market (' + (d >= 0 ? '+' : '') + d.toFixed(0) + '%). Fair.'; col = '#16a34a'; } else { t = d.toFixed(0) + '% BELOW market. Too good to be true: look hard for a hidden problem (papers, condition, dispute).'; col = '#dc2626'; }
+            return '<div class="note" style="margin:6px 0 0;color:' + col + ';font-weight:800">' + t + '</div>';
+        }
+        function chips(a, cur, k, lab) { return a.map(function (x) { var v = lab ? x[0] : x, l = lab ? x[1] : x; return '<span data-xk="' + k + ':' + e2(v) + '" style="display:inline-block;margin:3px 4px 3px 0;padding:6px 11px;border-radius:14px;font-size:13px;background:' + (v === cur ? '#0a84ff;color:#fff' : 'rgba(127,127,127,.18)') + '">' + e2(l) + '</span>'; }).join(''); }
+        VIEWS.advisor = function () {
+            var k = ST.c, d = C[k], v = verdict(k), s = sc(k), st = CK[k] || {};
+            var h = box('<b>🧭 Smart Advisor: check before you buy, rent, sell or visit</b><div class="note" style="margin:6px 0 0">Pick what you are doing. The Chief checks your answers against the standard rules professionals use. It works offline, it is guidance and not legal, financial or medical advice, and it never replaces the registry, a lawyer or a licensed broker.</div>');
+            h += '<div class="group pad" data-noswipe="1"><div>' + chips(KEYS.map(function (x) { return [x, C[x][0]]; }), k, 'adc', 1) + '</div></div>';
+            h += '<div class="group pad" style="border-left:5px solid ' + v.c + '"><b>👔 Chief verdict</b><div style="margin-top:4px;color:' + v.c + ';font-weight:800">' + e2(v.t) + '</div><div style="height:8px;border-radius:6px;background:rgba(127,127,127,.2);margin-top:8px"><div style="height:8px;border-radius:6px;width:' + s.p + '%;background:' + v.c + '"></div></div></div>';
+            h += '<div class="group pad"><b>📋 Book rules (tick what is done)</b>' + d[1].map(function (r, i) { return '<div data-xk="adt:' + i + '" style="display:flex;gap:8px;align-items:flex-start;margin-top:9px;cursor:pointer"><span style="flex:0 0 22px;height:22px;border-radius:6px;border:2px solid ' + (st[i] ? '#16a34a' : '#8e8e93') + ';background:' + (st[i] ? '#16a34a' : 'transparent') + ';color:#fff;text-align:center;line-height:20px">' + (st[i] ? '✓' : '') + '</span><span style="font-size:13.5px">' + e2(r[0]) + (r[2] ? ' <b style="color:#dc2626;font-size:11px">MUST</b>' : '') + '</span></div>'; }).join('') + '</div>';
+            if (k === 'prop' || k === 'veh' || k === 'shop' || k === 'biz') { h += '<div class="group pad"><b>💰 Price adviser</b><div class="note" style="margin:3px 0 6px">Type the asking price and the typical market price you found (same currency).</div><div style="display:flex;gap:8px"><input class="tin" id="adAsk" inputmode="decimal" placeholder="Asking price" value="' + e2(ST.ask) + '" style="flex:1;min-width:0"><input class="tin" id="adMkt" inputmode="decimal" placeholder="Market price" value="' + e2(ST.mkt) + '" style="flex:1;min-width:0"></div><span class="btn sec" data-xk="adp:1" style="width:auto;margin-top:8px;padding:8px 14px;display:inline-block">Check price</span>' + priceCheck() + '</div>'; }
+            h += '<div class="group pad"><b>🚩 Red flags</b><ul style="margin:6px 0 0;padding-left:18px">' + d[2].map(function (x) { return '<li style="margin:3px 0;font-size:13.5px">' + e2(x) + '</li>'; }).join('') + '</ul></div>';
+            h += '<div class="group pad"><b>❓ Ask these questions</b><ul style="margin:6px 0 0;padding-left:18px">' + d[3].map(function (x) { return '<li style="margin:3px 0;font-size:13.5px">' + e2(x) + '</li>'; }).join('') + '</ul></div>';
+            h += '<div class="group pad"><b>🤖 Ask Baba AI (advisers)</b><div style="margin-top:6px"><span class="btn sec" data-xk="adb:risk" style="width:auto;display:inline-block;margin:3px 4px 3px 0;padding:8px 12px">Risk adviser</span><span class="btn sec" data-xk="adb:value" style="width:auto;display:inline-block;margin:3px 4px 3px 0;padding:8px 12px">Value adviser</span><span class="btn sec" data-xk="adb:plan" style="width:auto;display:inline-block;margin:3px 4px 3px 0;padding:8px 12px">Step-by-step plan</span><span class="btn sec" data-xk="adb:local" style="width:auto;display:inline-block;margin:3px 4px 3px 0;padding:8px 12px">Best and worst areas</span></div></div>';
+            h += '<div class="group pad"><span class="btn sec" data-xk="adr:1" style="width:auto;display:inline-block;padding:8px 14px">↺ Clear my ticks for this topic</span></div>';
+            return h;
+        };
+        X.on('adc', function (v) { if (C[v]) { ST.c = v; X.again(); } });
+        X.on('adt', function (i) { var k = ST.c; CK[k] = CK[k] || {}; if (CK[k][i]) { delete CK[k][i]; } else { CK[k][i] = 1; } save(); X.again(); });
+        X.on('adr', function () { delete CK[ST.c]; save(); X.again(); });
+        X.on('adp', function () { ST.ask = ((document.getElementById('adAsk') || {}).value || '').replace(/[^0-9.]/g, ''); ST.mkt = ((document.getElementById('adMkt') || {}).value || '').replace(/[^0-9.]/g, ''); X.again(); });
+        X.on('adb', function (m) {
+            var k = ST.c, d = C[k], s = sc(k), done = d[1].filter(function (r, i) { return (CK[k] || {})[i]; }).map(function (r) { return r[0]; }), open = d[1].filter(function (r, i) { return !(CK[k] || {})[i]; }).map(function (r) { return r[0]; });
+            var ctx = 'Topic: ' + d[0] + '. Location: Pakistan (use my city if I tell you). Checked: ' + (done.join('; ') || 'nothing yet') + '. Still open: ' + (open.join('; ') || 'nothing') + '. ' + (ST.ask && ST.mkt ? 'Asking price ' + ST.ask + ', market price ' + ST.mkt + '. ' : '');
+            var P = { risk: 'Act as a careful risk adviser. Tell me the biggest risks, the first 3 things to verify, and exactly where in Pakistan to verify them (offices, websites, apps). Do not guarantee anything. ', value: 'Act as a value adviser. Tell me how to judge a fair price, how to negotiate, what hidden costs to expect, and give me a simple checklist to compare 3 options. ', plan: 'Give me a clear step-by-step plan from start to finish, with documents needed, who to meet, rough timeline and fees in Pakistan. ', local: 'Explain how to find good and risky areas or places for this in Pakistan using public information (official data, reviews, news): what makes a place good, what makes one risky, and what to look at before choosing. Do not name or accuse any specific person or business. ' };
+            if (window.__askBaba) { window.__askBaba(ctx + (P[m] || P.plan) + 'Be practical and kind, say when a lawyer, registry or licensed professional is needed, and add one line that this is guidance, not legal or financial advice.'); }
+        });
+        WINS.push({ id: 'advisor', ic: '🧭', c: '#0a9d6b', n: 'Smart Advisor: property, cars, shopping, shares, stays, travel', t: 'Advisor', sub: 'Book rules, red flags, Chief verdict. Works offline' }); LIVE.advisor = 0;
+        PF_APP.push(['smart advisor|advisor|book rules|buy property|sell property|rent shop|buy car|hostel safety|hotel check|share buying|restaurant check|tourist place|business plan check|chief verdict checklist', 'Smart Advisor (build 470)', 'More > Pakistan > Smart Advisor. Choose property, cars, shopping, shares, food, stays, travel, fun, study or business. Tick the book rules you have checked; the Chief shows STOP, Caution or Looks reasonable. Price adviser compares the asking price with the market. Red flags and questions are listed, and the Baba AI buttons give a risk view, value view, step-by-step plan and area guidance. It is offline guidance, not legal or financial advice, and it never buys or signs for you.', 'win:advisor']);
+    } catch (e) { try { console.error('p9adv', e); } catch (e2) { } }
 })();
 
 function renderView(keep) {
