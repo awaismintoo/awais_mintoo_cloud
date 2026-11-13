@@ -480,6 +480,60 @@ final class Bridge {
         }).start();
     }
 
+    /* build 514: open a web link in the phone's browser or app (YouTube, Maps, shops) */
+    @JavascriptInterface
+    public boolean openUrl(String tok, String url) {
+        if (!ok(tok) || url == null) { return false; }
+        try {
+            android.net.Uri u = android.net.Uri.parse(url);
+            String sch = u.getScheme();
+            if (!"https".equals(sch) && !"http".equals(sch)) { return false; }
+            Intent i = new Intent(Intent.ACTION_VIEW, u);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ctx.startActivity(i);
+            return true;
+        } catch (Exception e) { return false; }
+    }
+
+    /* build 514: fetch any public https resource (text or picture) through Android itself when the page's own fetch fails;
+       follows up to 4 https redirects, max 8 MB, returns the bytes as base64 and the content type */
+    @JavascriptInterface
+    public void httpB64(String tok, final String url, final String cb) {
+        if (!ok(tok)) { return; }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int code = 0; String out = ""; String type = "";
+                try {
+                    String cur = url;
+                    for (int hop = 0; hop < 5; hop++) {
+                        java.net.URL u = new java.net.URL(cur);
+                        if (!"https".equals(u.getProtocol())) { throw new Exception("https only"); }
+                        for (java.net.InetAddress ia : java.net.InetAddress.getAllByName(u.getHost())) {
+                            if (ia.isLoopbackAddress() || ia.isSiteLocalAddress() || ia.isLinkLocalAddress() || ia.isAnyLocalAddress() || ia.isMulticastAddress()) { throw new Exception("blocked address"); }
+                        }
+                        java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
+                        c.setInstanceFollowRedirects(false);
+                        c.setConnectTimeout(10000);
+                        c.setReadTimeout(20000);
+                        c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) MintooSuite/10.8 (github.com/awaismintoo/awais_mintoo_cloud)");
+                        code = c.getResponseCode();
+                        if (code >= 300 && code < 400 && c.getHeaderField("Location") != null) { cur = new java.net.URL(u, c.getHeaderField("Location")).toString(); continue; }
+                        type = c.getContentType() == null ? "" : c.getContentType();
+                        java.io.InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
+                        java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+                        byte[] buf = new byte[16384];
+                        int n, total = 0;
+                        while (in != null && (n = in.read(buf)) > 0 && total < 8000000) { bo.write(buf, 0, n); total += n; }
+                        out = android.util.Base64.encodeToString(bo.toByteArray(), android.util.Base64.NO_WRAP);
+                        break;
+                    }
+                } catch (Exception e) { code = 0; out = String.valueOf(e.getMessage()); }
+                WebHolder.js("window.__mwHttpB&&window.__mwHttpB(" + org.json.JSONObject.quote(cb) + "," + code + "," + org.json.JSONObject.quote(type) + "," + org.json.JSONObject.quote(out) + ");");
+            }
+        }).start();
+    }
+
     /* ----- network, alerts, notifications (unchanged from v10.4) ----- */
     @JavascriptInterface
     public void httpGet(String tok, final String url, final String cb) {
