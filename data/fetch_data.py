@@ -128,45 +128,107 @@ def spi_parse(text):
         if name in items: continue
         items[name] = {'n': name, 'p': float(m.group(2)), 'prev': float(m.group(3)), 'yago': float(m.group(4)), 'wow': float(m.group(5)), 'yoy': float(m.group(6))}
     return list(items.values())
-def spi_urls():
-    urls = []
-    for page in ('https://www.pbs.gov.pk/spi/', 'https://www.pbs.gov.pk/spi', 'https://www.pbs.gov.pk/weekly-spi/', 'https://www.pbs.gov.pk/price-statistics/'):
-        try:
-            h = requests.get(page, headers=UA, timeout=30).text
-            for u in re.findall(r'href="([^"]+\.pdf)"', h):
-                if 'SPI' in u.upper(): urls.append(requests.compat.urljoin(page, u))
-        except Exception as e:
-            print('page fail', page, e)
+def spi_weeks():
+    """Week-ended dates (newest first). PBS publishes the weekly SPI on Friday for the week ended Thursday."""
     today = dt.date.today()
-    for back in range(0, 15):
-        d = (today - dt.timedelta(days=back)).strftime('%d.%m.%Y')
-        for pat in ('Executive-Summary-SPI-Report_%s.pdf', 'Executive-SummarySPI-Report_%s.pdf', 'SPI-Executive-Summary-SPI-Report_-%s.pdf', 'SPI-Executive-Summary-SPI-Report_%s.pdf'):
-            urls.append('https://www.pbs.gov.pk/wp-content/uploads/2020/07/' + pat % d)
-    seen = []
-    for u in urls:
-        if u not in seen: seen.append(u)
-    def key(u):
-        m = re.search(r'(\d{2})\.(\d{2})\.(\d{4})', u)
-        return (m.group(3) + m.group(2) + m.group(1)) if m else '0'
-    return sorted(seen, key=key, reverse=True)
+    out = []
+    for back in range(0, 50):
+        d = today - dt.timedelta(days=back)
+        if d.weekday() == 3: out.append(d)
+        if len(out) >= 6: break
+    return out
+def spi_docs():
+    """(week, report_pdf_urls, annex_pdf_urls) newest first. Reads each week's PBS post for the real links,
+    then falls back to the known file-name patterns (PBS changed them in 2025-26)."""
+    res = []
+    for d in spi_weeks():
+        dm, dmy, dmy2 = d.strftime('%d.%m'), d.strftime('%d.%m.%Y'), d.strftime('%d-%m-%Y')
+        rep, ann = [], []
+        try:
+            h = requests.get('https://www.pbs.gov.pk/weekly-sensitive-price-indicator-spi-for-the-week-ended-on-%s/' % dmy2, headers=UA, timeout=30).text
+            for u in re.findall(r'href="([^"]+\.pdf)"', h):
+                u = requests.compat.urljoin('https://www.pbs.gov.pk/', u)
+                (ann if 'ANNEX' in u.upper() else rep).append(u)
+        except Exception as e:
+            print('post fail', dmy2, e)
+        base = 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/'
+        for pat in ('SPI-Executive-Summary-Report-%s.pdf', 'Executive-Summary-SPI-Report_%s.pdf', 'SPI-Executive-Summary-SPI-Report_%s.pdf', 'SPI-Executive-Summary-SPI-Report_-%s.pdf'):
+            rep.append(base + pat % dmy)
+        for x in (dm, dmy): ann.append(base + 'Annex_%s.pdf' % x)
+        res.append((dmy2, list(dict.fromkeys(rep)), list(dict.fromkeys(ann))))
+    return res
+CITY17 = ['Islamabad', 'Rawalpindi', 'Gujranwala', 'Sialkot', 'Lahore', 'Faisalabad', 'Sargodha', 'Multan', 'Bahawalpur', 'Karachi', 'Hyderabad', 'Sukkur', 'Larkana', 'Peshawar', 'Bannu', 'Quetta', 'Khuzdar']
+NUM = re.compile(r'^-?\d+(?:\.\d+)?$')
+def annex_parse(pages):
+    """City-wise prices. Each page has a header 'Islamabad (01) Rawalpindi (02) ...' and rows
+    'Sr Item Unit  min avg max  min avg max ...' (3 numbers per city; 1 number per city is also accepted)."""
+    out = {}
+    for t in pages:
+        cs = []
+        for m in re.finditer(r'([A-Z][A-Za-z\. ]{2,20}?)\s*\((\d{2})\)', t):
+            n = m.group(1).strip().split(' ')[-1]
+            for c in CITY17:
+                if c.lower() == n.lower() and c not in cs: cs.append(c)
+        if not cs: continue
+        nc = len(cs)
+        for line in t.splitlines():
+            m = re.match(r'^\s*\d{1,2}\s+(.+)$', line)
+            if not m: continue
+            tk = m.group(1).split(); i = len(tk)
+            while i > 0 and NUM.match(tk[i-1]): i -= 1
+            name, nums = ' '.join(tk[:i]).strip(), [float(x) for x in tk[i:]]
+            if len(name) < 3: continue
+            if len(nums) >= 3*nc: k, vals = 3, nums[-3*nc:]
+            elif len(nums) >= nc: k, vals = 1, nums[-nc:]
+            else: continue
+            row = out.setdefault(name, {})
+            for j, c in enumerate(cs):
+                v = vals[j*k:(j+1)*k]
+                avg = v[1] if k == 3 else v[0]
+                if avg > 0: row[c] = [round(v[0], 2), round(avg, 2), round(v[-1], 2)] if k == 3 else [round(avg, 2)]*3
+    return out
+def nkey(s):
+    return re.sub(r'[^a-z]', '', s.lower())
+def pdf_pages(u):
+    import pdfplumber, io
+    r = requests.get(u, headers=UA, timeout=40)
+    if r.status_code != 200 or b'%PDF' not in r.content[:1024]: return None
+    with pdfplumber.open(io.BytesIO(r.content)) as pdf:
+        return [(p.extract_text() or '') for p in pdf.pages]
 def prices():
     old = load_old('prices.json')
-    if old and time.time()*1000 - old.get('t', 0) < 12*3600*1000:
+    if old and old.get('items') and time.time()*1000 - old.get('t', 0) < 12*3600*1000:
         json.dump(old, open(os.path.join(OUT, 'prices.json'), 'w'), separators=(',', ':')); print('prices kept (fresh)'); return
-    import pdfplumber, io
-    for u in spi_urls()[:80]:
-        try:
-            r = requests.get(u, headers=UA, timeout=40)
-            if r.status_code != 200 or b'%PDF' not in r.content[:1024]: continue
-            with pdfplumber.open(io.BytesIO(r.content)) as pdf:
-                text = '\n'.join((p.extract_text() or '') for p in pdf.pages)
-            items = spi_parse(text)
-            m = re.search(r'week ended on (\d{2}[-.]\d{2}[-.]\d{4})', text, re.I)
-            if len(items) >= 30:
-                json.dump({'t': int(time.time()*1000), 'week': m.group(1) if m else '', 'src': u, 'items': items}, open(os.path.join(OUT, 'prices.json'), 'w'), separators=(',', ':'))
-                print('prices ok', len(items), u); return
-        except Exception as e:
-            print('pdf fail', u, e)
+    for week, reps, anns in spi_docs():
+        items, src = None, ''
+        for u in reps:
+            try:
+                pg = pdf_pages(u)
+                if not pg: continue
+                it = spi_parse('\n'.join(pg))
+                if len(it) >= 30: items, src = it, u; break
+            except Exception as e:
+                print('pdf fail', u, e)
+        if not items: continue
+        city = {}
+        for u in anns:
+            try:
+                pg = pdf_pages(u)
+                if pg:
+                    city = annex_parse(pg)
+                    if len(city) >= 20: break
+            except Exception as e:
+                print('annex fail', u, e)
+        ck = {nkey(k): v for k, v in city.items()}
+        hits = 0
+        for x in items:
+            k = nkey(x['n']); c = ck.get(k)
+            if c is None:
+                for kk, vv in ck.items():
+                    if kk[:14] == k[:14]: c = vv; break
+            if c: x['c'] = c; hits += 1
+        json.dump({'t': int(time.time()*1000), 'week': week, 'src': src, 'cities': CITY17, 'items': items}, open(os.path.join(OUT, 'prices.json'), 'w'), separators=(',', ':'))
+        print('prices ok', len(items), 'with city prices', hits, src); return
     if old:
         json.dump(old, open(os.path.join(OUT, 'prices.json'), 'w'), separators=(',', ':')); print('prices kept (old)')
 
