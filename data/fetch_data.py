@@ -324,9 +324,9 @@ EV_Q = {
     'sports': '{c} (match OR tournament OR PSL OR cricket OR hockey OR football OR marathon OR "sports gala" OR championship)',
     'tourism': '{c} (tourism OR tourists OR "tourist spot" OR park OR trek OR "hill station" OR heritage)',
 }
-def rss_items(q):
+def rss_items(q, when='30d'):
     import xml.etree.ElementTree as ET, email.utils as eu
-    u = 'https://news.google.com/rss/search?hl=en-PK&gl=PK&ceid=PK:en&q=' + requests.utils.quote(q + ' when:30d')
+    u = 'https://news.google.com/rss/search?hl=en-PK&gl=PK&ceid=PK:en&q=' + requests.utils.quote(q + ' when:' + when)
     r = requests.get(u, timeout=30, headers={'User-Agent': 'MintooSuite data job'})
     root = ET.fromstring(r.content); out = []
     for it in root.iter('item'):
@@ -361,8 +361,38 @@ def events():
     elif old:
         json.dump(old, open(os.path.join(OUT, 'events.json'), 'w'), separators=(',', ':'))
 
+TR_Q = {
+    'islamabad': 'Islamabad (road OR roads OR highway OR expressway OR avenue OR chowk) (closed OR closure OR blocked OR diversion OR "alternative route" OR containers OR "traffic plan" OR "traffic advisory")',
+    'rawalpindi': 'Rawalpindi (road OR "Murree Road" OR "GT Road" OR chowk) (closed OR closure OR blocked OR diversion OR "alternative route" OR "traffic plan")',
+    'motorway': '(motorway OR NHMP OR "M-1" OR "M-2" OR "M-4" OR "M-5" OR "M-9" OR "M-14" OR "M-11") (closed OR closure OR fog OR "traffic suspended" OR diversion OR "reopened")',
+    'lahore': 'Lahore (road OR roads OR chowk) (closed OR blocked OR diversion OR "alternative route" OR "traffic plan")',
+    'karachi': 'Karachi (road OR roads OR "Shahrah-e-Faisal" OR chowrangi) (closed OR blocked OR diversion OR "alternative route" OR "traffic plan")',
+    'peshawar': 'Peshawar (road OR roads OR "Ring Road" OR "GT Road") (closed OR blocked OR diversion OR "alternative route")',
+}
+def traffic():
+    """Road closures, diversions, motorway status and traffic plans from news headlines (last 2 days), refreshed every run.
+    Only headline, link, date and publisher are kept."""
+    old = load_old('traffic.json') or {}
+    out = {}
+    for k, q in TR_Q.items():
+        try:
+            L = rss_items(q, '2d'); seen = set(); L2 = []
+            for x in sorted(L, key=lambda x: -x['d']):
+                key = x['t'].lower()[:60]
+                if key in seen: continue
+                seen.add(key); L2.append(x)
+            out[k] = L2[:30]
+        except Exception as e:
+            print('traffic fail', k, e)
+            if old.get('c', {}).get(k): out[k] = old['c'][k]
+        time.sleep(1)
+    if out:
+        json.dump({'t': int(time.time()*1000), 'src': 'Headlines via Google News; official updates: NHMP 130, Islamabad Traffic Police 1915', 'c': out}, open(os.path.join(OUT, 'traffic.json'), 'w'), separators=(',', ':')); print('traffic ok', sum(len(v) for v in out.values()))
+    elif old:
+        json.dump(old, open(os.path.join(OUT, 'traffic.json'), 'w'), separators=(',', ':'))
+
 if __name__ == '__main__':
-    for f in (weather, prices, oil, events):
+    for f in (weather, prices, oil, events, traffic):
         try: f()
         except Exception as e: print('job fail', f.__name__, e); LOG.append(['job fail ' + f.__name__, 'ERR', str(e)[:200]])
     try: json.dump({'t': int(time.time()*1000), 'pbs': LOG[-80:], 'sample': SAMPLE, 'files': sorted(os.listdir(OUT))}, open(os.path.join(OUT, 'status.json'), 'w'))

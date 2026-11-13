@@ -480,6 +480,18 @@ final class Bridge {
         }).start();
     }
 
+    /* build 515: ask Android to place the prices widget on the home screen */
+    @JavascriptInterface
+    public String pricePin(String tok) {
+        if (!ok(tok)) { return "no"; }
+        try {
+            if (Build.VERSION.SDK_INT < 26) { return "old"; }
+            android.appwidget.AppWidgetManager m = ctx.getSystemService(android.appwidget.AppWidgetManager.class);
+            if (m == null || !m.isRequestPinAppWidgetSupported()) { return "old"; }
+            return m.requestPinAppWidget(new android.content.ComponentName(ctx, MwWidget.class), null, null) ? "ok" : "no";
+        } catch (Exception e) { return "no"; }
+    }
+
     /* build 514: open a web link in the phone's browser or app (YouTube, Maps, shops) */
     @JavascriptInterface
     public boolean openUrl(String tok, String url) {
@@ -487,7 +499,7 @@ final class Bridge {
         try {
             android.net.Uri u = android.net.Uri.parse(url);
             String sch = u.getScheme();
-            if (!"https".equals(sch) && !"http".equals(sch)) { return false; }
+            if (!"https".equals(sch) && !"http".equals(sch) && !"geo".equals(sch)) { return false; }
             Intent i = new Intent(Intent.ACTION_VIEW, u);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             ctx.startActivity(i);
