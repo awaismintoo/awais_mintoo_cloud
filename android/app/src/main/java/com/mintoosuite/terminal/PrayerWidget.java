@@ -27,8 +27,8 @@ import java.util.Locale;
    Azan on in the app, posts the Azan notification with the bundled public-domain (CC0) Azan sound. It never trades and never reads keys. */
 public class PrayerWidget extends AppWidgetProvider {
     static final String TICK = "com.mintoosuite.terminal.PRAYER_TICK";
-    static final String CH = "mw_azan_v1";
-    static final String CH_SILENT = "mw_namaz_v1";
+    static final String CH = "mw_azan_v2"; /* build 521: vibration and light for deaf and hard-of-hearing users */
+    static final String CH_SILENT = "mw_namaz_v2";
     static final String[] N = {"Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"};
 
     @Override
@@ -249,9 +249,10 @@ public class PrayerWidget extends AppWidgetProvider {
                 if (ch.equals(CH)) {
                     NotificationChannel nc = new NotificationChannel(CH, "Azan (prayer time)", NotificationManager.IMPORTANCE_HIGH);
                     nc.setSound(Uri.parse("android.resource://" + c.getPackageName() + "/" + raw), new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());
+                    nc.enableVibration(true); nc.setVibrationPattern(new long[]{0, 600, 300, 600, 300, 600, 300, 1200}); nc.enableLights(true); nc.setLightColor(0xFF22C55E);
                     nm.createNotificationChannel(nc);
                 } else {
-                    nm.createNotificationChannel(new NotificationChannel(CH_SILENT, "Namaz reminder", NotificationManager.IMPORTANCE_HIGH));
+                    NotificationChannel ns = new NotificationChannel(CH_SILENT, "Namaz reminder", NotificationManager.IMPORTANCE_HIGH); ns.enableVibration(true); ns.setVibrationPattern(new long[]{0, 600, 300, 600, 300, 1200}); ns.enableLights(true); ns.setLightColor(0xFF22C55E); nm.createNotificationChannel(ns);
                 }
             }
             Intent open = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);

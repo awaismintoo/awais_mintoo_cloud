@@ -110,6 +110,10 @@ final class Bridge {
 
     private static boolean okName(String n) { return n != null && n.matches("mintoosuite_[A-Za-z0-9_.\\-]{1,80}"); }
 
+    /* ----- build 521: which version is installed. "play" = from Google Play (no VPN, pay only through Google Play), "full" = the GitHub APK ----- */
+    @JavascriptInterface
+    public String store(String tok) { if (!ok(tok)) { return ""; } return VpnHelper.available() ? "full" : "play"; }
+
     /* ----- live navigation: keep the screen on while the full-screen map is open (build 520) ----- */
     @JavascriptInterface
     public void keepOn(String tok, boolean on) {

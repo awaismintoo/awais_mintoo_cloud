@@ -64,6 +64,12 @@ def city(bb):
 def main():
     out = os.path.join(sys.argv[1], 'places'); os.makedirs(out, exist_ok=True)
     for c, bb in CITIES.items():
+        fp = os.path.join(out, c + '.json')
+        try:  # build 521: the job now runs every 6 hours for photos; places are refreshed only once a week (OpenStreetMap fair use)
+            if os.path.exists(fp) and time.time() - json.load(open(fp, encoding='utf-8')).get('t', 0) / (1000 if json.load(open(fp, encoding='utf-8')).get('t', 0) > 1e11 else 1) < 6 * 86400:
+                print(c, 'fresh, skipped'); continue
+        except Exception:
+            pass
         try:
             d = city(bb)
             json.dump(d, open(os.path.join(out, c + '.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))

@@ -57,34 +57,72 @@ def openverse(q):
     return [{'u': x.get('thumbnail') or x.get('url'), 'page': x.get('foreign_landing_url'), 'a': (x.get('creator') or 'Openverse')[:80],
              'l': ((x.get('license') or '') + ' ' + (x.get('license_version') or '')).upper().strip()} for x in r.json().get('results', []) if (x.get('thumbnail') or x.get('url')) and not x.get('mature') and safe((x.get('title') or '') + ' ' + ' '.join((t or {}).get('name', '') for t in (x.get('tags') or []))) and relevant(q, (x.get('title') or '') + ' ' + ' '.join((t or {}).get('name', '') for t in (x.get('tags') or [])))]
 
+STOPV = STOP | set('chunky bold fine layered light heavy piece pieces style styles trend trends type types design designs modern classic simple fancy latest cheap premium local branded ready wear unstitched stitched daily formal casual one two three online offline guide tips how what which'.split())
+SKIPQ = re.compile(r'^(live events|this week|today|tomorrow|(january|february|march|april|may|june|july|august|september|october|november|december) \d{4}|(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b)', re.I)
+
+def variants(q):
+    """build 521: better searches for long names ("Chunky gold hoops and bold chains" -> "gold hoops chains", "gold hoops", "hoops chains"; "Abaya and shawl" -> "abaya", "shawl")"""
+    def clean(t):
+        return [w for w in norm(t).split(' ') if len(w) >= 3 and not w.isdigit() and w not in STOPV]
+    T = clean(q); V = [q]
+    if T:
+        V.append(' '.join(T))
+    for part in re.split(r'\band\b|&|,|/|\bor\b|\bwith\b|\bvs\b', norm(q)):
+        P = clean(part)
+        if len(P) >= 2 or (len(P) == 1 and len(T) <= 2 and len(P[0]) > 3):
+            V.append(' '.join(P))
+    if len(T) >= 3:
+        V += [' '.join(T[:2]), ' '.join(T[-2:])]
+    out = []
+    for v in V:
+        v = v.strip()
+        if v and v.lower() not in [o.lower() for o in out]:
+            out.append(v)
+    return out[:6]
+
 def main():
+    t0 = time.time(); budget = float(os.environ.get('TIME_BUDGET', '6000'))  # stop in time and publish what is done (job limit 150 min)
     qs = json.load(open(sys.argv[1], encoding='utf-8'))
     out = sys.argv[2]; os.makedirs(os.path.join(out, 'ph'), exist_ok=True)
     ip = os.path.join(out, 'ph', 'index.json')
     idx = json.load(open(ip, encoding='utf-8')) if os.path.exists(ip) else {}
-    if idx.get('_v') != 3:  # build 519: re-check every photo with the family-safe rules
-        for f in os.listdir(os.path.join(out, 'ph')):
-            if f != 'index.json':
-                os.remove(os.path.join(out, 'ph', f))
-        idx = {}
-    idx['_v'] = 3
-    new = 0
+    tried = idx.get('_t') if isinstance(idx.get('_t'), dict) else {}
+    if idx.get('_v') not in (3, 4):  # build 521: keep good photos, drop only those that fail the family-safe check
+        drop = 0
+        for k in list(idx.keys()):
+            if k.startswith('_') or not isinstance(idx[k], list):
+                continue
+            keep = []
+            for x in idx[k]:
+                if safe((x.get('page') or '').split('/')[-1]) and relevant(k, (x.get('page') or '').split('/')[-1]):
+                    keep.append(x)
+                else:
+                    drop += 1
+                    try: os.remove(os.path.join(out, x['f']))
+                    except Exception: pass
+            idx[k] = keep
+        print('re-checked old photos, removed', drop)
+    idx['_v'] = 4
+    now = time.time(); new = 0
+    todo = []
     for item in qs:
         q, kind = (item if isinstance(item, list) else [item, 'pk'])[:2]
         k = norm(q)
-        if not k or k in idx:
+        if not k or SKIPQ.search(k):
             continue
-        if new >= MAX_NEW:
-            break
+        if idx.get(k):
+            continue
+        if k in idx and now - tried.get(k, 0) < 3 * 86400:
+            continue
+        todo.append((0 if k not in idx else 1, q, kind, k))
+    todo.sort(key=lambda x: x[0])  # never-tried first, then empty ones again with the better searches
+    print('to do', len(todo))
+    for _, q, kind, k in todo:
+        if new >= MAX_NEW or time.time() - t0 > budget:
+            print('time or count limit reached; the next run continues'); break
         new += 1
         L = []
-        T = [w for w in norm(q).split(' ') if len(w) >= 3 and w not in STOP]
-        variants = [q]
-        if len(T) >= 3:
-            variants.append(' '.join(T[-2:]))
-        if len(T) >= 2:
-            variants.append(T[-1] if len(T[-1]) > 4 else ' '.join(T[-2:]))
-        for vq in variants:
+        for vq in variants(q):
             try:
                 L = commons(vq, kind) or openverse(vq)
             except Exception as e:
@@ -108,10 +146,13 @@ def main():
             except Exception as e:
                 print('download failed', q, e)
             time.sleep(0.3)
-        idx[k] = saved
+        idx[k] = saved; tried[k] = now
+        if new % 50 == 0:
+            idx['_t'] = tried; json.dump(idx, open(ip, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
         time.sleep(0.3)
+    idx['_t'] = tried
     json.dump(idx, open(ip, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-    print('items', len(idx), 'new', new, 'with photos', sum(1 for v in idx.values() if v))
+    print('items', sum(1 for k in idx if not k.startswith('_')), 'searched now', new, 'with photos', sum(1 for k, v in idx.items() if not k.startswith('_') and v))
 
 if __name__ == '__main__':
     main()

@@ -122,10 +122,11 @@ def weather():
     out = []
     for c in CITIES:
         try:
-            out.append(city_wx(*c)); time.sleep(0.3)
+            r = city_wx(*c); r['ft'] = int(time.time()*1000); out.append(r); time.sleep(0.3)  # build 521: each city keeps its own fetch time
         except Exception as e:
             print('weather fail', c[0], e)
-            if c[0] in oldc: out.append(oldc[c[0]])
+            if c[0] in oldc:
+                oc = oldc[c[0]]; oc['ft'] = oc.get('ft') or old.get('t', 0); out.append(oc)
     json.dump({'t': int(time.time()*1000), 'src': 'MET Norway (CC BY 4.0)', 'cities': out}, open(os.path.join(OUT, 'weather.json'), 'w'), separators=(',', ':'))
     print('weather ok', len(out))
 

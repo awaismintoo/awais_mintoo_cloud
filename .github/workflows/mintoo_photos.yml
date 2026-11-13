@@ -2,7 +2,7 @@ name: MintooSuite photos and offline places (for networks that block Wikimedia a
 
 on:
   schedule:
-    - cron: '41 2 * * 1'
+    - cron: '41 */6 * * *'   # build 521: every 6 hours; each run continues where the last stopped and finishes quickly when all is done
   workflow_dispatch:
 
 permissions:
@@ -29,8 +29,12 @@ jobs:
       - name: Offline places for the big cities (OpenStreetMap)
         run: python data/fetch_places.py media || true
       - name: Free photos for every item (Wikimedia Commons, then Openverse)
+        continue-on-error: true
+        env:
+          TIME_BUDGET: '6000'
         run: python data/fetch_photos.py data/photos_q.json media
       - name: Publish to the media branch (one commit, no history)
+        if: always()
         run: |
           cd media
           git init -q -b media
