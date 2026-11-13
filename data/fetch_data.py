@@ -130,15 +130,70 @@ def weather():
     print('weather ok', len(out))
 
 ROW = re.compile(r'^\s*\d{1,2}\s+(.+?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s*$')
-def spi_parse(text):
+NUMC = re.compile(r'^-?\(?[\d,]+(?:\.\d+)?\)?%?$')
+def numv(x):
+    x = str(x).strip().replace(',', '').replace('%', '')
+    neg = x.startswith('(') and x.endswith(')')
+    x = x.strip('()')
+    v = float(x)
+    return -v if neg else v
+def rows_parse(rows):
+    """Generic: each row = list of cells; the item name is the text cells, the first 5 numbers are
+    price now, last week, a year ago, % change on the week, % change on the year."""
     items = {}
-    for line in text.splitlines():
-        m = ROW.match(line)
-        if not m: continue
-        name = m.group(1).strip()
-        if name in items: continue
-        items[name] = {'n': name, 'p': float(m.group(2)), 'prev': float(m.group(3)), 'yago': float(m.group(4)), 'wow': float(m.group(5)), 'yoy': float(m.group(6))}
+    for row in rows:
+        cells = [str(c).strip() for c in row if c is not None and str(c).strip() != '']
+        if len(cells) < 6: continue
+        txt, nums = [], []
+        for i, c in enumerate(cells):
+            if NUMC.match(c) and not (i == 0 and re.match(r'^\d{1,2}$', c)):
+                try: nums.append(numv(c)); continue
+                except Exception: pass
+            if not nums: txt.append(c)
+        if len(nums) < 5 or not txt: continue
+        name = re.sub(r'^\d{1,2}\s+', '', ' '.join(txt)).strip()
+        if len(name) < 3 or re.search(r'items|units|prices in|weight|impact|%change', name, re.I): continue
+        p, prev, yago, wow, yoy = nums[:5]
+        if p <= 0 or abs(wow) > 300: continue
+        if name not in items: items[name] = {'n': name, 'p': p, 'prev': prev, 'yago': yago, 'wow': wow, 'yoy': yoy}
     return list(items.values())
+def spi_parse(text):
+    rows = []
+    for line in text.splitlines():
+        tk = line.split()
+        if not tk: continue
+        # keep numbers with commas together; the name is everything before the trailing run of numbers
+        i = len(tk)
+        while i > 0 and NUMC.match(tk[i-1]): i -= 1
+        if len(tk) - i < 5: continue
+        rows.append([' '.join(tk[:i])] + tk[i:])
+    return rows_parse(rows)
+SAMPLE = []
+def pdf_items(u):
+    import pdfplumber, io
+    r = pbs_get(u, 40)
+    if r.status_code != 200 or b'%PDF' not in r.content[:1024]: return None, ''
+    with pdfplumber.open(io.BytesIO(r.content)) as pdf:
+        text = '\n'.join((p.extract_text() or '') for p in pdf.pages)
+        items = spi_parse(text)
+        if len(items) < 30:
+            rows = []
+            for pg in pdf.pages:
+                for t in (pg.extract_tables() or []): rows.extend(t)
+            it2 = rows_parse(rows)
+            if len(it2) > len(items): items = it2
+    if len(items) < 30 and len(SAMPLE) < 2: SAMPLE.append(text[:2500])
+    m = re.search(r'week ended on (\d{2}[-.]\d{2}[-.]\d{4})', text, re.I)
+    return items, (m.group(1) if m else '')
+def xlsx_items(u):
+    import openpyxl, io
+    r = pbs_get(u, 40)
+    if r.status_code != 200 or r.content[:2] != b'PK': return None
+    wb = openpyxl.load_workbook(io.BytesIO(r.content), data_only=True, read_only=True)
+    rows = []
+    for ws in wb.worksheets:
+        for row in ws.iter_rows(values_only=True): rows.append(list(row))
+    return rows_parse(rows)
 def spi_weeks():
     """Week-ended dates (newest first). PBS publishes the weekly SPI on Friday for the week ended Thursday."""
     today = dt.date.today()
@@ -157,12 +212,13 @@ def spi_docs():
         rep, ann = [], []
         try:
             h = pbs_get('https://www.pbs.gov.pk/weekly-sensitive-price-indicator-spi-for-the-week-ended-on-%s/' % dmy2, 30).text
-            for u in re.findall(r'href="([^"]+\.pdf)"', h):
+            for u in re.findall(r'href="([^"]+\.(?:pdf|xlsx))"', h):
                 u = requests.compat.urljoin('https://www.pbs.gov.pk/', u)
                 (ann if 'ANNEX' in u.upper() else rep).append(u)
         except Exception as e:
             print('post fail', dmy2, e)
         base = 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/'
+        rep.append(base + 'SPI-Report-%s.xlsx' % dmy)
         for pat in ('SPI-Executive-Summary-Report-%s.pdf', 'Executive-Summary-SPI-Report_%s.pdf', 'SPI-Executive-Summary-SPI-Report_%s.pdf', 'SPI-Executive-Summary-SPI-Report_-%s.pdf'):
             rep.append(base + pat % dmy)
         for x in (dm, dmy): ann.append(base + 'Annex_%s.pdf' % x)
@@ -212,14 +268,15 @@ def prices():
         json.dump(old, open(os.path.join(OUT, 'prices.json'), 'w'), separators=(',', ':')); print('prices kept (fresh)'); return
     for week, reps, anns in spi_docs():
         items, src = None, ''
-        for u in reps:
+        wk = ''
+        for u in sorted(reps, key=lambda x: 0 if x.endswith('.xlsx') else 1):
             try:
-                pg = pdf_pages(u)
-                if not pg: continue
-                it = spi_parse('\n'.join(pg))
-                if len(it) >= 30: items, src = it, u; break
+                if u.endswith('.xlsx'): it = xlsx_items(u)
+                else: it, wk = pdf_items(u)
+                if it and len(it) >= 30: items, src = it, u; break
+                LOG.append(['parsed ' + u[-40:], 'items', len(it or [])])
             except Exception as e:
-                print('pdf fail', u, e)
+                print('doc fail', u, e); LOG.append(['parse fail ' + u[-40:], 'ERR', str(e)[:150]])
         if not items: continue
         city = {}
         for u in anns:
@@ -308,5 +365,5 @@ if __name__ == '__main__':
     for f in (weather, prices, oil, events):
         try: f()
         except Exception as e: print('job fail', f.__name__, e); LOG.append(['job fail ' + f.__name__, 'ERR', str(e)[:200]])
-    try: json.dump({'t': int(time.time()*1000), 'pbs': LOG[-80:], 'files': sorted(os.listdir(OUT))}, open(os.path.join(OUT, 'status.json'), 'w'))
+    try: json.dump({'t': int(time.time()*1000), 'pbs': LOG[-80:], 'sample': SAMPLE, 'files': sorted(os.listdir(OUT))}, open(os.path.join(OUT, 'status.json'), 'w'))
     except Exception as e: print('status fail', e)
