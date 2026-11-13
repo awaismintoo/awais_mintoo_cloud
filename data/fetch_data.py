@@ -7,6 +7,17 @@ import json, math, os, re, sys, time, datetime as dt
 import requests
 
 UA = {'User-Agent': 'MintooSuite/10.8 github.com/awaismintoo/awais_mintoo_cloud'}
+# PBS's site may refuse unknown clients: use ordinary browser headers there, and log every try to status.json
+BUA = {'User-Agent': 'Mozilla/5.0 (Linux; Android 14; SM-G986B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36',
+       'Accept': 'text/html,application/xhtml+xml,application/pdf,*/*;q=0.8', 'Accept-Language': 'en-PK,en;q=0.9', 'Referer': 'https://www.pbs.gov.pk/'}
+LOG = []
+def pbs_get(u, timeout=40):
+    try:
+        r = requests.get(u, headers=BUA, timeout=timeout)
+        LOG.append([u[-90:], r.status_code, len(r.content)])
+        return r
+    except Exception as e:
+        LOG.append([u[-90:], 'ERR', str(e)[:120]]); raise
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'out'
 OLD = sys.argv[2] if len(sys.argv) > 2 else 'old'
 os.makedirs(OUT, exist_ok=True)
@@ -145,7 +156,7 @@ def spi_docs():
         dm, dmy, dmy2 = d.strftime('%d.%m'), d.strftime('%d.%m.%Y'), d.strftime('%d-%m-%Y')
         rep, ann = [], []
         try:
-            h = requests.get('https://www.pbs.gov.pk/weekly-sensitive-price-indicator-spi-for-the-week-ended-on-%s/' % dmy2, headers=UA, timeout=30).text
+            h = pbs_get('https://www.pbs.gov.pk/weekly-sensitive-price-indicator-spi-for-the-week-ended-on-%s/' % dmy2, 30).text
             for u in re.findall(r'href="([^"]+\.pdf)"', h):
                 u = requests.compat.urljoin('https://www.pbs.gov.pk/', u)
                 (ann if 'ANNEX' in u.upper() else rep).append(u)
@@ -191,7 +202,7 @@ def nkey(s):
     return re.sub(r'[^a-z]', '', s.lower())
 def pdf_pages(u):
     import pdfplumber, io
-    r = requests.get(u, headers=UA, timeout=40)
+    r = pbs_get(u, 40)
     if r.status_code != 200 or b'%PDF' not in r.content[:1024]: return None
     with pdfplumber.open(io.BytesIO(r.content)) as pdf:
         return [(p.extract_text() or '') for p in pdf.pages]
@@ -296,4 +307,6 @@ def events():
 if __name__ == '__main__':
     for f in (weather, prices, oil, events):
         try: f()
-        except Exception as e: print('job fail', f.__name__, e)
+        except Exception as e: print('job fail', f.__name__, e); LOG.append(['job fail ' + f.__name__, 'ERR', str(e)[:200]])
+    try: json.dump({'t': int(time.time()*1000), 'pbs': LOG[-80:], 'files': sorted(os.listdir(OUT))}, open(os.path.join(OUT, 'status.json'), 'w'))
+    except Exception as e: print('status fail', e)
