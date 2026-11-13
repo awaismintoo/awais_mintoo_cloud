@@ -1,0 +1,41 @@
+name: MintooSuite photos and offline places (for networks that block Wikimedia and map servers)
+
+on:
+  schedule:
+    - cron: '41 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mintoo-photos
+  cancel-in-progress: false
+
+jobs:
+  photos:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Get what is already mirrored
+        run: |
+          git clone -q --depth 1 -b media "https://github.com/${{ github.repository }}.git" media || (mkdir -p media && cd media && git init -q -b media)
+          rm -rf media/.git
+      - name: Offline places for the big cities (OpenStreetMap)
+        run: python data/fetch_places.py media || true
+      - name: Free photos for every item (Wikimedia Commons, then Openverse)
+        run: python data/fetch_photos.py data/photos_q.json media
+      - name: Publish to the media branch (one commit, no history)
+        run: |
+          cd media
+          git init -q -b media
+          git config user.name "MintooSuite media"
+          git config user.email "mintoosuite@users.noreply.github.com"
+          git add -A
+          git commit -q -m "media $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" media

@@ -86,6 +86,19 @@ final class Bridge {
     @JavascriptInterface
     public String lifePin(String tok) { return ok(tok) ? LifeWidget.pin(ctx) : "no"; }
 
+    /* ----- build 518: 🕌 Namaz widget + Azan alarm (times worked out on the phone from the saved place and settings) ----- */
+    @JavascriptInterface
+    public void prayerSet(String tok, String json) { if (ok(tok)) { PrayerWidget.save(ctx, json); } }
+
+    @JavascriptInterface
+    public String prayerPin(String tok) { return ok(tok) ? PrayerWidget.pin(ctx) : "no"; }
+
+    @JavascriptInterface
+    public String prayerExact(String tok) { return ok(tok) ? PrayerWidget.exactState(ctx) : "no"; }
+
+    @JavascriptInterface
+    public void prayerExactAsk(String tok) { if (ok(tok)) { PrayerWidget.exactAsk(ctx); } }
+
     /* ----- screenshot and screen-recording block: the page turns it on for wallet and other money screens ----- */
     @JavascriptInterface
     public void setSecure(String tok, boolean on) {

@@ -48,6 +48,12 @@ jobs:
           mkdir -p android/app/src/main/assets
           cp index.html android/app/src/main/assets/
           cp srchidx.json android/app/src/main/assets/ 2>/dev/null || true
+          # build 518: public-domain (CC0) Azan recording "Beautiful adhan.ogg" by Adam-synagda, Wikimedia Commons
+          mkdir -p android/app/src/main/res/raw
+          if [ -f media/mw_azan.ogg ]; then cp media/mw_azan.ogg android/app/src/main/res/raw/mw_azan.ogg; else curl -sSL -A "MintooSuiteBuild/1.0 (https://github.com/awaismintoo/awais_mintoo_cloud)" -o android/app/src/main/res/raw/mw_azan.ogg https://upload.wikimedia.org/wikipedia/commons/b/b0/Beautiful_adhan.ogg || rm -f android/app/src/main/res/raw/mw_azan.ogg; fi
+          if [ -f android/app/src/main/res/raw/mw_azan.ogg ] && [ $(stat -c %s android/app/src/main/res/raw/mw_azan.ogg) -lt 200000 ]; then echo "azan download looks wrong, skipping"; rm -f android/app/src/main/res/raw/mw_azan.ogg; fi
+          [ -f android/app/src/main/res/raw/mw_azan.ogg ] && cp android/app/src/main/res/raw/mw_azan.ogg android/app/src/main/assets/mw_azan.ogg || true
+          ls -la android/app/src/main/res/raw/ || true
           cp privacy.html manifest.json icon.svg icon-192.png icon-512.png android/app/src/main/assets/ 2>/dev/null || true
 
       - name: Decode signing key
