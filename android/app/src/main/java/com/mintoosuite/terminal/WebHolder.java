@@ -47,6 +47,8 @@ final class WebHolder {
         s.setJavaScriptEnabled(true);
         s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false); s.setUseWideViewPort(true);
         s.setDomStorageEnabled(true);
+        /* build 508: smoother scrolling: draw the parts just outside the screen in advance (like native lists) */
+        try { if (android.os.Build.VERSION.SDK_INT >= 23) { s.setOffscreenPreRaster(true); } } catch (Throwable ignored) { }
         try { s.setUserAgentString(s.getUserAgentString() + " MintooSuite/10.8 (Android app)"); } catch (Exception ignored) { }
         try { if (android.os.Build.VERSION.SDK_INT >= 26) { w.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false); } } catch (Exception ignored) { }
         s.setAllowFileAccess(false);

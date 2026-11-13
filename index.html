@@ -452,7 +452,7 @@ function lss(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 var SYM_OK = /^[A-Z0-9]{2,20}USDT$/, GOLD = 'XAUUSDT', HOUR = 3600000, NW = 5, CONC = 5;
 
-var BUILD = '2026-11-12.507';
+var BUILD = '2026-11-12.508';
 var S = { anchor: (function () { var a = ls('mintoosuite_anchor', 'roll'); return a !== 'roll' && +a >= 0 && +a < 24 ? Math.floor(+a) : 'roll'; })(), filt: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_filt') || '{}') || {}; } catch (e) { return {}; } })(), prec: (function () { try { return JSON.parse(localStorage.getItem('mintoosuite_prec') || '{}') || {}; } catch (e) { return {}; } })(), dayOpen: {}, dayOpenTried: 0, lev: Math.max(1, Math.min(125, +ls('mintoosuite_lev', '1') || 1)), tradfi: {}, skew: 0, feed: { mode: 'none', variant: 0, err: '' }, fx: { eur: null, gbp: null, at: 0 }, newsSrc: [], tick: {}, wsAt: 0, restAt: 0, threads: 'workers', zero: 0,
     scan: { res: {}, at: 0, ms: 0, n: 0, running: false, pause: 0, first: true, maxw: 0, err: 0, next: 0, total: 0 },
     plan: { items: [], at: 0 }, morning: { items: [], at: 0, D: 0, goldClosed: false }, newc: { list: [], res: {}, at: 0, listAt: 0, err: '' }, candles: [], seen: {}, notified: {}, news: [], newsAt: 0, newsTried: false,
@@ -21380,7 +21380,7 @@ setInterval(function () { try { var m = document.getElementById('sheetMenu'), r 
             try {
                 var win = S.win, on = !!TW[win];
                 if (win !== lastWin) { lastWin = win; if (minim) { minim = false; document.documentElement.classList.remove('mwtmin'); } }
-                var fs = S.fsKey || ''; document.documentElement.setAttribute('data-fs', fs);
+                var fs = S.fsKey || ''; if (document.documentElement.getAttribute('data-fs') !== fs) { document.documentElement.setAttribute('data-fs', fs); }
                 var cv = document.getElementById('cv'); if (cv) { var g = cv.closest('.group'); if (g && !g.classList.contains('mwhascv')) { g.classList.add('mwhascv'); } }
                 var tabs = document.getElementById('tabs'); if (!tabs) return;
                 var t = tabs.querySelector('.mwTradeTab') || [].slice.call(tabs.querySelectorAll('.tab')).filter(function (x) { return x.getAttribute('data-act') === 'win:botpro' || x.getAttribute('data-act') === 'win:bot' || /^\s*(Bots|Auto Bot)\s*$/.test(x.innerText || ''); })[0];
@@ -30452,7 +30452,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
         var t = LO[id] || 0, kept = 0; if (id === 'psx') { try { kept = S.px && S.px.kept; } catch (e) { } }
         var on = U.online(), w = kept || t;
         var txt = w ? 'Last updated: ' + U.when(w) + (on ? '' : ' (offline)') : (on ? 'Updating…' : 'Offline: nothing saved yet');
-        return '<div class="mwupd" data-noswipe="1" style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin:-2px 2px 4px;padding:0;font-size:11.5px;line-height:1.3;color:var(--mut,#8e8e93);background:none!important;border:0;box-shadow:none"><span>' + txt + '</span><span class="tap" title="Update now" data-xk="mwupd:' + e2(id) + '" style="font-size:13px;padding:2px 4px;cursor:pointer">🔄</span></div>';
+        return '<div class="mwupd" data-noswipe="1" style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin:-2px 2px 4px;padding:0;font-size:11.5px;line-height:1.3;color:var(--mut,#8e8e93);background:none!important;border:0;box-shadow:none"><span>' + txt + '</span><span class="tap" title="Update now" data-xk="mwupd:' + e2(id) + '" style="font-size:13px;padding:2px 4px;cursor:pointer"><span class="mwrfe">🔄</span><svg class="mwi mwrfi" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></svg></span></div>';
     }
     U.strip = strip;
     function wrapAll() {
@@ -31589,7 +31589,7 @@ window.__alogPush = function (a) { ALOG.unshift(a); };
     X.on('aireport', function (k) {
         var why = ''; try { why = prompt('What is wrong with this AI result? (offensive, wrong, harmful, someone else\'s photo…)') || ''; } catch (e) { }
         var L = U.ls('mw_aireports', []); L.unshift({ k: k, why: why.slice(0, 300), t: Date.now(), w: S.win }); U.lset('mw_aireports', L.slice(0, 50));
-        var body = 'MintooSuite AI report (' + k + ')%0D%0AScreen: ' + encodeURIComponent(S.win) + '%0D%0AReason: ' + encodeURIComponent(why) + '%0D%0ABuild: 2026-11-12.507';
+        var body = 'MintooSuite AI report (' + k + ')%0D%0AScreen: ' + encodeURIComponent(S.win) + '%0D%0AReason: ' + encodeURIComponent(why) + '%0D%0ABuild: 2026-11-12.508';
         try { window.open('mailto:awaisrajpoot2@yahoo.com?subject=' + encodeURIComponent('AI content report') + '&body=' + body, '_blank'); } catch (e) { }
         U.tst('Thank you. The report is saved and an email to the developer is ready to send.');
     });
@@ -31965,7 +31965,7 @@ window.__srchIdx = [["MintooSuite Terminal","aboutapp",""],["Your all-in-one tra
     /* entry points: 🔎 in the title bar of every window, and a search box at the top of More */
     function ensure() {
         try {
-            var tb = document.getElementById('mwtitlebar'); if (tb && !document.getElementById('mwsbtn')) { var b = document.createElement('span'); b.id = 'mwsbtn'; b.title = 'Search'; b.textContent = '🔎'; b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); open(''); }, true); tb.appendChild(b); }
+            var tb = document.getElementById('mwtitlebar'); if (tb && !document.getElementById('mwsbtn')) { var b = document.createElement('span'); b.id = 'mwsbtn'; b.title = 'Search'; b.innerHTML = '<span class="mwrfe">🔎</span><svg class="mwi mwrfi" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"/></svg>'; b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); open(''); }, true); tb.appendChild(b); }
             var s = document.querySelector('#sheetWin .sheet-in'); if (s && s.innerText.length > 30 && !s.querySelector('.mwsmore')) { var d = document.createElement('div'); d.className = 'mwsmore'; d.setAttribute('data-mwkeep', '1'); d.innerHTML = '🔎 <span>Search the whole app and the web…</span>'; d.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); open(''); }, true); s.insertBefore(d, s.firstChild); }
         } catch (e) { }
     }
@@ -32219,7 +32219,7 @@ window.__srchIdx = [["MintooSuite Terminal","aboutapp",""],["Your all-in-one tra
         save(safe(t) + '_' + stamp() + '.png', 'image/png', picPng(t, em, ''), true);
     }, true);
     window.__mwSaveView = function () { var w = ''; try { w = S.win; } catch (e) { } save('MintooSuite_' + safe(w) + '_' + stamp() + '.html', 'text/html', viewHtml(), false); };
-    setInterval(function () { try { var tb = document.getElementById('mwtitlebar'), sb = document.getElementById('mwsbtn'); if (tb && sb && !document.getElementById('mwsvbtn')) { var x = document.createElement('span'); x.id = 'mwsvbtn'; x.title = 'Save this window on the phone'; x.textContent = '💾'; x.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;font-size:17px;cursor:pointer;margin-left:6px;background:var(--fill,rgba(127,127,127,.12))'; x.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); window.__mwSaveView(); }, true); sb.parentNode.insertBefore(x, sb.nextSibling); } } catch (e) { } }, 900);
+    setInterval(function () { try { var tb = document.getElementById('mwtitlebar'), sb = document.getElementById('mwsbtn'); if (tb && sb && !document.getElementById('mwsvbtn')) { var x = document.createElement('span'); x.id = 'mwsvbtn'; x.title = 'Save this window on the phone'; x.innerHTML = '<span class="mwrfe">💾</span><svg class="mwi mwrfi" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l3 3v15H5zM8 3v5h7M8 21v-7h8v7"/></svg>'; x.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;font-size:17px;cursor:pointer;margin-left:6px;background:var(--fill,rgba(127,127,127,.12))'; x.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); window.__mwSaveView(); }, true); sb.parentNode.insertBefore(x, sb.nextSibling); } } catch (e) { } }, 900);
     var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
     st.textContent = '.mwmd{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}.mwmd-c{font-size:12px;font-weight:700;padding:5px 9px;border-radius:99px;background:var(--fill,rgba(127,127,127,.13));color:var(--mbc,#0a84ff)!important;text-decoration:none}.mwmd-em{display:inline-flex;width:28px;height:28px;border-radius:9px;align-items:center;justify-content:center;margin-right:6px;font-size:16px;background:linear-gradient(135deg,#d1fae5,#bfdbfe);vertical-align:middle}';
     document.head.appendChild(st);
@@ -32580,6 +32580,9 @@ window.__srchIdx = [["MintooSuite Terminal","aboutapp",""],["Your all-in-one tra
         C + ' .mwpb .tr i{background:var(--blu)!important}',
         /* calmer pictures */
         C + ' .mwmd-em{background:var(--fill)!important}',
+        /* calm and light on the battery: no endless decorative animations (the colourful look keeps them) */
+        C + ' body::before{animation:none!important;opacity:.6}',
+        C + ' .pfav,' + C + ' .meav,' + C + ' .meav.hd{animation:none!important}',
         /* old orange scroll bar stays hidden */
         C + ' #mwsb{display:none!important}'
     ].join('');
@@ -32601,7 +32604,7 @@ window.__srchIdx = [["MintooSuite Terminal","aboutapp",""],["Your all-in-one tra
             };
         }
     } catch (e) { }
-    try { PF_APP.push(['look|design|theme|dark mode|light mode|night mode|colours|old look|classic', 'Design and dark mode', 'MintooSuite uses a clean design like top-rated apps. Menu › Look › Design: Clean (new) or Colourful classic; Light or dark: Auto (follows the phone), Light or Dark.', 'win:look']); } catch (e) { }
+    try { PF_APP.push(['look|design|theme|dark mode|light mode|night mode|colours|old look|classic', 'Design and dark mode', 'MintooSuite uses a clean design like top-rated apps (calm, no endless decorative animations, smoother scrolling). Menu › Look › Design: Clean (new) or Colourful classic; Light or dark: Auto (follows the phone), Light or Dark.', 'win:look']); } catch (e) { }
     try { if (typeof MW_TOPICS !== 'undefined') { MW_TOPICS.splice(1, 0, { id: 'clean506', t: '✨ New clean design', win: 'look', b: 'The whole app now uses one clean design: the same cards, buttons, tabs and spacing everywhere, calm colours with blue for actions and green/red only for up and down. It follows your phone\'s light or dark mode. Menu › Look lets you pick Light, Dark or Auto, or go back to the Colourful classic look.', l: [], v: '' }); } } catch (e) { }
 } catch (e) { try { console.log('p9clean', e); } catch (x) { } } })();
 
@@ -32669,8 +32672,9 @@ window.__srchIdx = [["MintooSuite Terminal","aboutapp",""],["Your all-in-one tra
     var st = document.createElement('style'); st.setAttribute('data-mwkeep', '1');
     var C = 'html.mwclean';
     st.textContent = [
+        '.mwrfi{display:none}' + C + ' #mwsbtn svg.mwi,' + C + ' #mwsvbtn svg.mwi{margin:0!important;width:19px!important;height:19px!important}' + C + ' .mwrfe{display:none}' + C + ' .mwrfi{display:inline-block!important}',
         C + ' body{font-variant-numeric:tabular-nums}',
-        C + ' body svg.mwi.mwi,' + C + ' body #view svg.mwi.mwi{color:inherit!important;stroke:currentColor!important;background:none!important;padding:0!important;width:1.05em!important;height:1.05em!important;border:0!important;filter:none!important;animation:none!important}' + C + ' svg.mwi,' + C + ' svg.mwi path{fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;opacity:1!important;visibility:visible!important;background:none!important;box-shadow:none!important;border-radius:0!important}' + C + ' svg.mwi{width:1.05em;height:1.05em;vertical-align:-0.16em;margin-right:6px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}',
+        C + ' body svg.mwi.mwi,' + C + ' body #view svg.mwi.mwi,' + C + ' #mwsbtn svg.mwi,' + C + ' #mwsvbtn svg.mwi{color:inherit!important;stroke:currentColor!important;background:none!important;padding:0!important;width:1.05em!important;height:1.05em!important;border:0!important;filter:none!important;animation:none!important}' + C + ' svg.mwi,' + C + ' svg.mwi path{fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;opacity:1!important;visibility:visible!important;background:none!important;box-shadow:none!important;border-radius:0!important}' + C + ' svg.mwi{width:1.05em;height:1.05em;vertical-align:-0.16em;margin-right:6px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}',
         C + ' .m7row.mwstk,' + C + ' .pkt.mwstk{position:sticky;top:var(--mwnavh,0px);z-index:25;background:var(--glass)!important;-webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px);padding-top:6px!important;margin-top:-6px;border-radius:0 0 14px 14px}',
         C + ' .mwskel{color:transparent!important;position:relative;min-height:14px;border-radius:8px;background:linear-gradient(90deg,var(--fill) 25%,var(--line) 50%,var(--fill) 75%)!important;background-size:200% 100%!important;animation:mwsk 1.2s linear infinite}',
         '@keyframes mwsk{from{background-position:200% 0}to{background-position:-200% 0}}',
