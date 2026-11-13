@@ -110,6 +110,15 @@ final class Bridge {
 
     private static boolean okName(String n) { return n != null && n.matches("mintoosuite_[A-Za-z0-9_.\\-]{1,80}"); }
 
+    /* ----- live navigation: keep the screen on while the full-screen map is open (build 520) ----- */
+    @JavascriptInterface
+    public void keepOn(String tok, boolean on) {
+        if (!ok(tok)) { return; }
+        final MainActivity a = MainActivity.cur; if (a == null) { return; }
+        final boolean s = on;
+        a.runOnUiThread(new Runnable() { public void run() { try { if (s) { a.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); } else { a.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); } } catch (Exception e) { } } });
+    }
+
     /* ----- chart rotation: the page asks to lock landscape / portrait, or go back to automatic ----- */
     @JavascriptInterface
     public void orient(String tok, String mode) {
