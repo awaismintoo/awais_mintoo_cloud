@@ -86,6 +86,43 @@ final class Bridge {
     @JavascriptInterface
     public String lifePin(String tok) { return ok(tok) ? LifeWidget.pin(ctx) : "no"; }
 
+    /* ----- build 525: 🕋 Qibla and 📍 Location & altitude widgets, and the air-pressure sensor for the altimeter ----- */
+    @JavascriptInterface
+    public void toolSet(String tok, String which, String l1, String l2, String l3) { if (ok(tok)) { ToolWidget.save(ctx, which, l1, l2, l3); } }
+
+    @JavascriptInterface
+    public String toolPin(String tok, String which) { return ok(tok) ? ToolWidget.pin(ctx, which) : "no"; }
+
+    private android.hardware.SensorManager mwSm;
+    private android.hardware.SensorEventListener mwSl;
+    private volatile float mwHpa = 0f;
+    private volatile long mwHAt = 0L;
+
+    @JavascriptInterface
+    public String pressure(String tok) {
+        if (!ok(tok)) { return ""; }
+        try {
+            if (mwSm == null) {
+                mwSm = (android.hardware.SensorManager) ctx.getSystemService(Context.SENSOR_SERVICE);
+                android.hardware.Sensor s = mwSm == null ? null : mwSm.getDefaultSensor(android.hardware.Sensor.TYPE_PRESSURE);
+                if (s == null) { mwSm = null; return "none"; }
+                mwSl = new android.hardware.SensorEventListener() {
+                    @Override public void onSensorChanged(android.hardware.SensorEvent e) { if (e != null && e.values != null && e.values.length > 0) { mwHpa = e.values[0]; mwHAt = System.currentTimeMillis(); } }
+                    @Override public void onAccuracyChanged(android.hardware.Sensor x, int a) { }
+                };
+                mwSm.registerListener(mwSl, s, android.hardware.SensorManager.SENSOR_DELAY_UI, new android.os.Handler(android.os.Looper.getMainLooper()));
+            }
+            return mwHAt == 0L ? "wait" : (mwHpa + "," + mwHAt);
+        } catch (Exception e) { return ""; }
+    }
+
+    @JavascriptInterface
+    public void pressureStop(String tok) {
+        if (!ok(tok)) { return; }
+        try { if (mwSm != null && mwSl != null) { mwSm.unregisterListener(mwSl); } } catch (Exception e) { }
+        mwSm = null; mwSl = null; mwHAt = 0L;
+    }
+
     /* ----- build 518: 🕌 Namaz widget + Azan alarm (times worked out on the phone from the saved place and settings) ----- */
     @JavascriptInterface
     public void prayerSet(String tok, String json) { if (ok(tok)) { PrayerWidget.save(ctx, json); } }

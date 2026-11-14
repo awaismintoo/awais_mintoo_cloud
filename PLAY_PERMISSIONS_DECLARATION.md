@@ -16,3 +16,9 @@
 Foreground-service "special use" description to type in Play (must match the manifest): "User-switched background run with a visible notification: live price monitoring, price alerts and user-authorised automated trading on the user's own exchange account." Record a short video: open Auto Bot > switch on background run > notification appears > switch off.
 
 No contacts, SMS, call log, all-files storage, overlay or battery-optimisation-exemption permissions are declared. Photos are picked through the system picker (no media permission).
+
+
+## Build 525 additions
+- **Location (foreground only)**: also used by the Compass & Qibla window (Qibla bearing, altimeter, "My location") and Explore around me / Where I parked. No background location is requested; nothing is uploaded.
+- **Sensors**: magnetic/orientation sensor (compass) and air-pressure sensor (barometric altimeter) are read only while the Compass window is open. These sensors need no Android permission.
+- **Home-screen widgets**: two more widgets (Qibla, Location & altitude) showing values saved by the app; no new permission.
