@@ -47,18 +47,28 @@ def commons(q, kind):
         ii = (x.get('imageinfo') or [{}])[0]; m = ii.get('extmetadata') or {}
         u = ii.get('thumburl') or ii.get('url')
         lic = strip((m.get('LicenseShortName') or {}).get('value'))
-        if not u or not lic or not relevant(q, x.get('title', '')) or not safe(x.get('title', '')):
+        if not u or not lic or not relevant(q, x.get('title', '')) or not safe(x.get('title', '')) or (OLDPIC.search(x.get('title', '')) and not HIST.search(norm(q))):
             continue
         out.append({'u': u, 'page': ii.get('descriptionurl'), 'a': strip((m.get('Artist') or {}).get('value')) or 'Wikimedia Commons', 'l': lic})
     return out
 
+OV = {'off': False}
+
 def openverse(q):
+    if OV['off']:
+        return []
     r = requests.get('https://api.openverse.org/v1/images/', params={'q': q, 'page_size': 6, 'mature': 'false'}, headers=UA, timeout=30)
+    if r.status_code == 429:
+        OV['off'] = True; print('Openverse daily limit reached; Commons only for the rest of this run'); return []
     return [{'u': x.get('thumbnail') or x.get('url'), 'page': x.get('foreign_landing_url'), 'a': (x.get('creator') or 'Openverse')[:80],
              'l': ((x.get('license') or '') + ' ' + (x.get('license_version') or '')).upper().strip()} for x in r.json().get('results', []) if (x.get('thumbnail') or x.get('url')) and not x.get('mature') and safe((x.get('title') or '') + ' ' + ' '.join((t or {}).get('name', '') for t in (x.get('tags') or []))) and relevant(q, (x.get('title') or '') + ' ' + ' '.join((t or {}).get('name', '') for t in (x.get('tags') or [])))]
 
 STOPV = STOP | set('chunky bold fine layered light heavy piece pieces style styles trend trends type types design designs modern classic simple fancy latest cheap premium local branded ready wear unstitched stitched daily formal casual one two three online offline guide tips how what which'.split())
 SKIPQ = re.compile(r'^(live events|this week|today|tomorrow|(january|february|march|april|may|june|july|august|september|october|november|december) \d{4}|(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b)', re.I)
+
+CONCEPT = [(r'\b(phone|phones|mobile|smartphone)\b', 'smartphone'), (r'\b(used car|car check|cars|car|bikes|motorcycle)\b', 'car showroom'), (r'\b(property|plot|plots|real estate|house|houses|flat|flats)\b', 'residential house'), (r'\b(local market|bazaar|market|offers|deals|sale)\b', 'bazaar market stalls'), (r'\b(hostel|hostels|guest house|room|rooms)\b', 'hostel room'), (r'\b(food|restaurant|dish|eat)\b', 'pakistani food'), (r'\b(business|software|shop|store)\b', 'small shop counter'), (r'\b(student|students|study|project|school|college)\b', 'students studying'), (r'\b(shopping|clothes|clothing)\b', 'clothing store'), (r'\b(grocery|vegetable|vegetables|fruit|fruits)\b', 'vegetable market'), (r'\b(gold|jewellery|jewelry|necklace|earrings|bangles)\b', 'gold jewellery'), (r'\b(laptop|computer|pc|tech)\b', 'laptop computer')]
+OLDPIC = re.compile(r'(?<![0-9])(1[5-8][0-9][0-9]|19[0-8][0-9])(?![0-9])')
+HIST = re.compile(r'\b(history|historic|heritage|old|tomb|fort|mosque|museum|monument|ancient|classic)\b')
 
 def variants(q):
     """build 521: better searches for long names ("Chunky gold hoops and bold chains" -> "gold hoops chains", "gold hoops", "hoops chains"; "Abaya and shawl" -> "abaya", "shawl")"""
@@ -73,12 +83,16 @@ def variants(q):
             V.append(' '.join(P))
     if len(T) >= 3:
         V += [' '.join(T[:2]), ' '.join(T[-2:])]
+    nq = norm(q)
+    for rx, cq in CONCEPT:
+        if re.search(rx, nq):
+            V.append(cq)
     out = []
     for v in V:
         v = v.strip()
         if v and v.lower() not in [o.lower() for o in out]:
             out.append(v)
-    return out[:6]
+    return out[:8]
 
 def main():
     t0 = time.time(); budget = float(os.environ.get('TIME_BUDGET', '6000'))  # stop in time and publish what is done (job limit 150 min)
@@ -87,7 +101,22 @@ def main():
     ip = os.path.join(out, 'ph', 'index.json')
     idx = json.load(open(ip, encoding='utf-8')) if os.path.exists(ip) else {}
     tried = idx.get('_t') if isinstance(idx.get('_t'), dict) else {}
-    if idx.get('_v') not in (3, 4):  # build 521: keep good photos, drop only those that fail the family-safe check
+    if idx.get('_v') in (3, 4):  # build 522: drop very old photos for modern things (a 1920s photo for "hostel"), then retry every empty item with the better searches
+        for k in list(idx.keys()):
+            if k.startswith('_') or not isinstance(idx[k], list):
+                continue
+            if not HIST.search(k):
+                keep = []
+                for x in idx[k]:
+                    if OLDPIC.search(x.get('page') or ''):
+                        try: os.remove(os.path.join(out, x['f']))
+                        except Exception: pass
+                    else:
+                        keep.append(x)
+                idx[k] = keep
+            if not idx[k]:
+                del idx[k]
+    if idx.get('_v') not in (3, 4, 5):  # build 521: keep good photos, drop only those that fail the family-safe check
         drop = 0
         for k in list(idx.keys()):
             if k.startswith('_') or not isinstance(idx[k], list):
@@ -102,7 +131,7 @@ def main():
                     except Exception: pass
             idx[k] = keep
         print('re-checked old photos, removed', drop)
-    idx['_v'] = 4
+    idx['_v'] = 5
     now = time.time(); new = 0
     todo = []
     for item in qs:
@@ -112,7 +141,7 @@ def main():
             continue
         if idx.get(k):
             continue
-        if k in idx and now - tried.get(k, 0) < 3 * 86400:
+        if k in idx and now - tried.get(k, 0) < 86400:
             continue
         todo.append((0 if k not in idx else 1, q, kind, k))
     todo.sort(key=lambda x: x[0])  # never-tried first, then empty ones again with the better searches
@@ -121,12 +150,17 @@ def main():
         if new >= MAX_NEW or time.time() - t0 > budget:
             print('time or count limit reached; the next run continues'); break
         new += 1
-        L = []
+        L = []; failed = False
         for vq in variants(q):
             try:
-                L = commons(vq, kind) or openverse(vq)
+                L = commons(vq, kind)
             except Exception as e:
-                print('search failed', vq, e); L = []
+                print('commons failed', vq, e); L = []; failed = True
+            if not L:
+                try:
+                    L = openverse(vq)
+                except Exception as e:
+                    print('openverse failed', vq, e); L = []; failed = True
             if L:
                 break
             time.sleep(0.3)
@@ -146,6 +180,8 @@ def main():
             except Exception as e:
                 print('download failed', q, e)
             time.sleep(0.3)
+        if not saved and failed:
+            continue  # a network error is not a real 'no photos': try again next run
         idx[k] = saved; tried[k] = now
         if new % 50 == 0:
             idx['_t'] = tried; json.dump(idx, open(ip, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
