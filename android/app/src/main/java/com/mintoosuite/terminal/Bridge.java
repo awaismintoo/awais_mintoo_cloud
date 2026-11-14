@@ -750,6 +750,40 @@ final class Bridge {
         } catch (Exception ignored) { }
     }
 
+    /* ----- build 528: share a picture card (gold rate, signal, deal, prayer times, hadith) with text to WhatsApp or any app ----- */
+    @JavascriptInterface
+    public boolean shareImage(String tok, String name, String b64, String text) {
+        if (!ok(tok)) { return false; }
+        try {
+            byte[] data = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+            android.net.Uri u = null;
+            if (Build.VERSION.SDK_INT >= 29) {
+                android.content.ContentValues v = new android.content.ContentValues();
+                v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, name);
+                v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "image/png");
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/MintooSuite");
+                u = ctx.getContentResolver().insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
+                if (u != null) {
+                    java.io.OutputStream o = ctx.getContentResolver().openOutputStream(u);
+                    if (o != null) { o.write(data); o.close(); } else { u = null; }
+                }
+            }
+            Intent i = new Intent(Intent.ACTION_SEND);
+            if (u != null) {
+                i.setType("image/png");
+                i.putExtra(Intent.EXTRA_STREAM, u);
+                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } else {
+                i.setType("text/plain");
+            }
+            i.putExtra(Intent.EXTRA_TEXT, text == null ? "" : text);
+            Intent c = Intent.createChooser(i, "Share");
+            c.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            ctx.startActivity(c);
+            return u != null;
+        } catch (Exception e) { return false; }
+    }
+
     /* native background alerts: settings from the web part, and "did the native part already alert this coin?" */
     @JavascriptInterface
     public void nalCfg(String tok, boolean on, boolean hi) { if (ok(tok)) { NativeAlerts.setCfg(ctx, on, hi); } }
