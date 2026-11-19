@@ -19,7 +19,7 @@ import androidx.core.app.NotificationCompat;
    This guard runs on its own thread: if the main thread does not answer for 8 s (was 20 s before build 426) while the app is on screen, it posts a notification,
    schedules a re-launch and ends the process (the foreground bot service restarts by itself). At most 2 restarts in 10 minutes. */
 final class Guard {
-    private static volatile long beat = SystemClock.uptimeMillis(); /* build 532: uptime does not count deep sleep, so a locked phone never looks frozen */
+    private static volatile long beat = SystemClock.uptimeMillis(); /* build 533: uptime does not count deep sleep, so a locked phone never looks frozen */
     private static volatile boolean pending = false;
     private static boolean on = false;
     private static boolean wasFg = false;
@@ -42,7 +42,7 @@ final class Guard {
                         long now = SystemClock.uptimeMillis();
                         boolean awake = pm == null || pm.isInteractive();
                         if (!WebHolder.isFg() || !awake) { beat = now; wasFg = false; continue; }
-                        /* build 532: after unlocking or coming back, the page needs a moment to catch up; that is not a freeze */
+                        /* build 533: after unlocking or coming back, the page needs a moment to catch up; that is not a freeze */
                         if (!wasFg) { wasFg = true; grace = now + 20000; beat = now; }
                         if (now < grace) { beat = Math.max(beat, now - 3000); }
                         else if (now - beat > 15000) { misses++; beat = now; if (misses >= 2) { misses = 0; recover(app); } }

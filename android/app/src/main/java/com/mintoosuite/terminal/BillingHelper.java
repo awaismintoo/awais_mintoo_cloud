@@ -137,7 +137,7 @@ final class BillingHelper {
             q = q.getClass().getMethod("build").invoke(q);
             Object l = proxy("ProductDetailsResponseListener", new InvocationHandler() {
                 @Override public Object invoke(Object p, Method m, Object[] a) {
-                    try { if ("onProductDetailsResponse".equals(m.getName()) && code(a[0]) == 0) { readOffers((List<?>) a[1]); } } catch (Throwable ignored) { }
+                    try { if ("onProductDetailsResponse".equals(m.getName()) && code(a[0]) == 0) { Object r1 = a[1]; if (!(r1 instanceof List)) { r1 = r1.getClass().getMethod("getProductDetailsList").invoke(r1); } /* Billing 8 passes QueryProductDetailsResult */ readOffers((List<?>) r1); } } catch (Throwable ignored) { }
                     return null;
                 }
             });

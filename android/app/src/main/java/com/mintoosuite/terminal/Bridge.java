@@ -86,6 +86,56 @@ final class Bridge {
     @JavascriptInterface
     public String lifePin(String tok) { return ok(tok) ? LifeWidget.pin(ctx) : "no"; }
 
+    /* ----- build 525: 🕋 Qibla and 📍 Location & altitude widgets, and the air-pressure sensor for the altimeter ----- */
+    @JavascriptInterface
+    public void toolSet(String tok, String which, String l1, String l2, String l3) { if (ok(tok)) { ToolWidget.save(ctx, which, l1, l2, l3); } }
+
+    @JavascriptInterface
+    public String toolPin(String tok, String which) { return ok(tok) ? ToolWidget.pin(ctx, which) : "no"; }
+
+    private android.hardware.SensorManager mwSm;
+    private android.hardware.SensorEventListener mwSl;
+    private volatile float mwHpa = 0f;
+    private volatile long mwHAt = 0L;
+
+    @JavascriptInterface
+    public String pressure(String tok) {
+        if (!ok(tok)) { return ""; }
+        try {
+            if (mwSm == null) {
+                mwSm = (android.hardware.SensorManager) ctx.getSystemService(Context.SENSOR_SERVICE);
+                android.hardware.Sensor s = mwSm == null ? null : mwSm.getDefaultSensor(android.hardware.Sensor.TYPE_PRESSURE);
+                if (s == null) { mwSm = null; return "none"; }
+                mwSl = new android.hardware.SensorEventListener() {
+                    @Override public void onSensorChanged(android.hardware.SensorEvent e) { if (e != null && e.values != null && e.values.length > 0) { mwHpa = e.values[0]; mwHAt = System.currentTimeMillis(); } }
+                    @Override public void onAccuracyChanged(android.hardware.Sensor x, int a) { }
+                };
+                mwSm.registerListener(mwSl, s, android.hardware.SensorManager.SENSOR_DELAY_UI, new android.os.Handler(android.os.Looper.getMainLooper()));
+            }
+            return mwHAt == 0L ? "wait" : (mwHpa + "," + mwHAt);
+        } catch (Exception e) { return ""; }
+    }
+
+    @JavascriptInterface
+    public void pressureStop(String tok) {
+        if (!ok(tok)) { return; }
+        try { if (mwSm != null && mwSl != null) { mwSm.unregisterListener(mwSl); } } catch (Exception e) { }
+        mwSm = null; mwSl = null; mwHAt = 0L;
+    }
+
+    /* ----- build 518: 🕌 Namaz widget + Azan alarm (times worked out on the phone from the saved place and settings) ----- */
+    @JavascriptInterface
+    public void prayerSet(String tok, String json) { if (ok(tok)) { PrayerWidget.save(ctx, json); } }
+
+    @JavascriptInterface
+    public String prayerPin(String tok) { return ok(tok) ? PrayerWidget.pin(ctx) : "no"; }
+
+    @JavascriptInterface
+    public String prayerExact(String tok) { return ok(tok) ? PrayerWidget.exactState(ctx) : "no"; }
+
+    @JavascriptInterface
+    public void prayerExactAsk(String tok) { if (ok(tok)) { PrayerWidget.exactAsk(ctx); } }
+
     /* ----- screenshot and screen-recording block: the page turns it on for wallet and other money screens ----- */
     @JavascriptInterface
     public void setSecure(String tok, boolean on) {
@@ -96,6 +146,19 @@ final class Bridge {
     }
 
     private static boolean okName(String n) { return n != null && n.matches("mintoosuite_[A-Za-z0-9_.\\-]{1,80}"); }
+
+    /* ----- build 521: which version is installed. "play" = from Google Play (no VPN, pay only through Google Play), "full" = the GitHub APK ----- */
+    @JavascriptInterface
+    public String store(String tok) { if (!ok(tok)) { return ""; } return VpnHelper.available() ? "full" : "play"; }
+
+    /* ----- live navigation: keep the screen on while the full-screen map is open (build 520) ----- */
+    @JavascriptInterface
+    public void keepOn(String tok, boolean on) {
+        if (!ok(tok)) { return; }
+        final MainActivity a = MainActivity.cur; if (a == null) { return; }
+        final boolean s = on;
+        a.runOnUiThread(new Runnable() { public void run() { try { if (s) { a.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); } else { a.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); } } catch (Exception e) { } } });
+    }
 
     /* ----- chart rotation: the page asks to lock landscape / portrait, or go back to automatic ----- */
     @JavascriptInterface
@@ -480,6 +543,72 @@ final class Bridge {
         }).start();
     }
 
+    /* build 515: ask Android to place the prices widget on the home screen */
+    @JavascriptInterface
+    public String pricePin(String tok) {
+        if (!ok(tok)) { return "no"; }
+        try {
+            if (Build.VERSION.SDK_INT < 26) { return "old"; }
+            android.appwidget.AppWidgetManager m = ctx.getSystemService(android.appwidget.AppWidgetManager.class);
+            if (m == null || !m.isRequestPinAppWidgetSupported()) { return "old"; }
+            return m.requestPinAppWidget(new android.content.ComponentName(ctx, MwWidget.class), null, null) ? "ok" : "no";
+        } catch (Exception e) { return "no"; }
+    }
+
+    /* build 514: open a web link in the phone's browser or app (YouTube, Maps, shops) */
+    @JavascriptInterface
+    public boolean openUrl(String tok, String url) {
+        if (!ok(tok) || url == null) { return false; }
+        try {
+            android.net.Uri u = android.net.Uri.parse(url);
+            String sch = u.getScheme();
+            if (!"https".equals(sch) && !"http".equals(sch) && !"geo".equals(sch)) { return false; }
+            Intent i = new Intent(Intent.ACTION_VIEW, u);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ctx.startActivity(i);
+            return true;
+        } catch (Exception e) { return false; }
+    }
+
+    /* build 514: fetch any public https resource (text or picture) through Android itself when the page's own fetch fails;
+       follows up to 4 https redirects, max 8 MB, returns the bytes as base64 and the content type */
+    @JavascriptInterface
+    public void httpB64(String tok, final String url, final String cb) {
+        if (!ok(tok)) { return; }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int code = 0; String out = ""; String type = "";
+                try {
+                    String cur = url;
+                    for (int hop = 0; hop < 5; hop++) {
+                        java.net.URL u = new java.net.URL(cur);
+                        if (!"https".equals(u.getProtocol())) { throw new Exception("https only"); }
+                        for (java.net.InetAddress ia : java.net.InetAddress.getAllByName(u.getHost())) {
+                            if (ia.isLoopbackAddress() || ia.isSiteLocalAddress() || ia.isLinkLocalAddress() || ia.isAnyLocalAddress() || ia.isMulticastAddress()) { throw new Exception("blocked address"); }
+                        }
+                        java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
+                        c.setInstanceFollowRedirects(false);
+                        c.setConnectTimeout(10000);
+                        c.setReadTimeout(20000);
+                        c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) MintooSuite/10.8 (github.com/awaismintoo/awais_mintoo_cloud)");
+                        code = c.getResponseCode();
+                        if (code >= 300 && code < 400 && c.getHeaderField("Location") != null) { cur = new java.net.URL(u, c.getHeaderField("Location")).toString(); continue; }
+                        type = c.getContentType() == null ? "" : c.getContentType();
+                        java.io.InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
+                        java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+                        byte[] buf = new byte[16384];
+                        int n, total = 0;
+                        while (in != null && (n = in.read(buf)) > 0 && total < 8000000) { bo.write(buf, 0, n); total += n; }
+                        out = android.util.Base64.encodeToString(bo.toByteArray(), android.util.Base64.NO_WRAP);
+                        break;
+                    }
+                } catch (Exception e) { code = 0; out = String.valueOf(e.getMessage()); }
+                WebHolder.js("window.__mwHttpB&&window.__mwHttpB(" + org.json.JSONObject.quote(cb) + "," + code + "," + org.json.JSONObject.quote(type) + "," + org.json.JSONObject.quote(out) + ");");
+            }
+        }).start();
+    }
+
     /* ----- network, alerts, notifications (unchanged from v10.4) ----- */
     @JavascriptInterface
     public void httpGet(String tok, final String url, final String cb) {
@@ -619,6 +748,40 @@ final class Bridge {
             c.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             ctx.startActivity(c);
         } catch (Exception ignored) { }
+    }
+
+    /* ----- build 528: share a picture card (gold rate, signal, deal, prayer times, hadith) with text to WhatsApp or any app ----- */
+    @JavascriptInterface
+    public boolean shareImage(String tok, String name, String b64, String text) {
+        if (!ok(tok)) { return false; }
+        try {
+            byte[] data = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+            android.net.Uri u = null;
+            if (Build.VERSION.SDK_INT >= 29) {
+                android.content.ContentValues v = new android.content.ContentValues();
+                v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, name);
+                v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "image/png");
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/MintooSuite");
+                u = ctx.getContentResolver().insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
+                if (u != null) {
+                    java.io.OutputStream o = ctx.getContentResolver().openOutputStream(u);
+                    if (o != null) { o.write(data); o.close(); } else { u = null; }
+                }
+            }
+            Intent i = new Intent(Intent.ACTION_SEND);
+            if (u != null) {
+                i.setType("image/png");
+                i.putExtra(Intent.EXTRA_STREAM, u);
+                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } else {
+                i.setType("text/plain");
+            }
+            i.putExtra(Intent.EXTRA_TEXT, text == null ? "" : text);
+            Intent c = Intent.createChooser(i, "Share");
+            c.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            ctx.startActivity(c);
+            return u != null;
+        } catch (Exception e) { return false; }
     }
 
     /* native background alerts: settings from the web part, and "did the native part already alert this coin?" */
