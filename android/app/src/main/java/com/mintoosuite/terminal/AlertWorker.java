@@ -94,7 +94,7 @@ public class AlertWorker extends Worker {
                 .setContentText(body)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
+                .setAutoCancel(true).setGroup("mw_alerts")
                 .setContentIntent(pi);
         ctx.getSystemService(NotificationManager.class).notify(100 + (int) (System.currentTimeMillis() % 800) + n, b.build());
     }

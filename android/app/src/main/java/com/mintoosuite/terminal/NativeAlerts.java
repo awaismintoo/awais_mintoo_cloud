@@ -139,7 +139,7 @@ final class NativeAlerts {
         open.putExtra("mw_t", title == null ? "" : title).putExtra("mw_b", body == null ? "" : body);
         PendingIntent pi = PendingIntent.getActivity(c, 3000 + (base.hashCode() & 0x3ff), open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder b = new NotificationCompat.Builder(c, MainActivity.CHANNEL).setSmallIcon(R.drawable.ic_stat).setContentTitle(title).setContentText(body)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(body)).setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setShowWhen(true).setWhen(System.currentTimeMillis()).setTimeoutAfter(60L * 60L * 1000L).setContentIntent(pi);
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(body)).setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setGroup("mw_alerts").setShowWhen(true).setWhen(System.currentTimeMillis()).setTimeoutAfter(60L * 60L * 1000L).setContentIntent(pi);
         ((NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE)).notify("nal_" + base, 500, b.build());
         try { Overlay.show(c, title, body); } catch (Exception ignored) { }
         return true;

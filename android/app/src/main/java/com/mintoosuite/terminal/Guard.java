@@ -10,32 +10,43 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.os.Process;
+import android.os.SystemClock;
 import androidx.core.app.NotificationCompat;
 
 /* Freeze guard (build 356). The page runs on the Android main thread, so a watchdog that also runs there cannot help when the page is stuck.
    This guard runs on its own thread: if the main thread does not answer for 8 s (was 20 s before build 426) while the app is on screen, it posts a notification,
    schedules a re-launch and ends the process (the foreground bot service restarts by itself). At most 2 restarts in 10 minutes. */
 final class Guard {
-    private static volatile long beat = System.currentTimeMillis();
+    private static volatile long beat = SystemClock.uptimeMillis(); /* build 532: uptime does not count deep sleep, so a locked phone never looks frozen */
     private static volatile boolean pending = false;
     private static boolean on = false;
+    private static boolean wasFg = false;
+    private static long grace = 0;
+    private static int misses = 0;
 
     static synchronized void start(Context c) {
         if (on) { return; }
         on = true;
         final Context app = c.getApplicationContext();
         final Handler main = new Handler(Looper.getMainLooper());
-        final Runnable ping = new Runnable() { @Override public void run() { beat = System.currentTimeMillis(); pending = false; } };
+        final Runnable ping = new Runnable() { @Override public void run() { beat = SystemClock.uptimeMillis(); pending = false; } };
+        final PowerManager pm = (PowerManager) app.getSystemService(Context.POWER_SERVICE);
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
                 while (true) {
                     try { Thread.sleep(3000); } catch (Exception e) { return; }
                     try {
-                        long now = System.currentTimeMillis();
-                        if (!WebHolder.isFg()) { beat = now; continue; }
-                        if (now - beat > 8000) { beat = now; recover(app); }
+                        long now = SystemClock.uptimeMillis();
+                        boolean awake = pm == null || pm.isInteractive();
+                        if (!WebHolder.isFg() || !awake) { beat = now; wasFg = false; continue; }
+                        /* build 532: after unlocking or coming back, the page needs a moment to catch up; that is not a freeze */
+                        if (!wasFg) { wasFg = true; grace = now + 20000; beat = now; }
+                        if (now < grace) { beat = Math.max(beat, now - 3000); }
+                        else if (now - beat > 15000) { misses++; beat = now; if (misses >= 2) { misses = 0; recover(app); } }
+                        else if (now - beat < 6000) { misses = 0; }
                         if (!pending) { pending = true; main.post(ping); }
                     } catch (Throwable ignored) { }
                 }
@@ -63,7 +74,7 @@ final class Guard {
                             .setSmallIcon(R.drawable.ic_stat)
                             .setContentTitle("MintooSuite restarted itself")
                             .setContentText("The app froze, so it was restarted. Tap to open it in safe mode.")
-                            .setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setContentIntent(pi);
+                            .setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setGroup("mw_alerts").setContentIntent(pi);
                     ((NotificationManager) app.getSystemService(Context.NOTIFICATION_SERVICE)).notify(777, b.build());
                 }
             } catch (Throwable ignored) { }

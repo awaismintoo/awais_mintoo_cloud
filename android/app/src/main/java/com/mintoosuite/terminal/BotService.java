@@ -83,6 +83,7 @@ public class BotService extends Service {
                 .setContentText(text)
                 .setStyle(new Notification.BigTextStyle().bigText(text))
                 .setOngoing(true)
+                .setGroup("mw_running") /* build 532: own group, so Android never folds the alerts under this fixed notice (that greyed out "Clear") */
                 .setOnlyAlertOnce(true)
                 .setShowWhen(false)
                 .setCategory(Notification.CATEGORY_SERVICE)
