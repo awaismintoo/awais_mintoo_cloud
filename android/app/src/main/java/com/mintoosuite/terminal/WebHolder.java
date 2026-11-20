@@ -44,7 +44,7 @@ final class WebHolder {
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(app))
                 .build();
         WebSettings s = w.getSettings();
-        try { float fsc = w.getContext().getResources().getConfiguration().fontScale; s.setTextZoom(Math.max(85, Math.min(200, Math.round(fsc * 100)))); } catch (Throwable ignored) { } /* follow the phone's own font size (accessibility), up to 200% */
+        try { float fsc = w.getContext().getResources().getConfiguration().fontScale; s.setTextZoom(Math.max(85, Math.min(130, Math.round(fsc * 100)))); } catch (Throwable ignored) { } /* follow the phone's own font size up to 130%; the app's Text size setting goes to 200% on top, without breaking fixed tiles */
         s.setJavaScriptEnabled(true);
         s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false); s.setUseWideViewPort(true);
         s.setDomStorageEnabled(true);

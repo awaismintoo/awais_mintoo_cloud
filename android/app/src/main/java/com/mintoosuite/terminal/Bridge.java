@@ -925,16 +925,22 @@ final class Bridge {
         if (a == null) { return false; }
         final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
         final boolean[] yes = { false };
+        final android.app.AlertDialog[] dlg = { null };
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) { return false; } /* never block the UI thread */
+        WebHolder.fg(false); /* final review: the page waits for this answer, so the freeze watchdog must not rebuild it meanwhile */
         a.runOnUiThread(new Runnable() { @Override public void run() {
             try {
-                new android.app.AlertDialog.Builder(a).setTitle(title).setMessage(msg).setCancelable(true)
+                dlg[0] = new android.app.AlertDialog.Builder(a).setTitle(title).setMessage(msg).setCancelable(true)
                     .setPositiveButton("Allow", new android.content.DialogInterface.OnClickListener() { @Override public void onClick(android.content.DialogInterface d, int w) { yes[0] = true; } })
                     .setNegativeButton("Cancel", null)
                     .setOnDismissListener(new android.content.DialogInterface.OnDismissListener() { @Override public void onDismiss(android.content.DialogInterface d) { done.countDown(); } })
                     .show();
             } catch (Throwable e) { done.countDown(); }
         } });
-        try { done.await(120, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException e) { return false; }
+        boolean ok = false;
+        try { ok = done.await(120, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException e) { ok = false; }
+        if (!ok) { a.runOnUiThread(new Runnable() { @Override public void run() { try { if (dlg[0] != null) { dlg[0].dismiss(); } } catch (Throwable ignored) { } } }); yes[0] = false; }
+        WebHolder.fg(true);
         return yes[0];
     }
 

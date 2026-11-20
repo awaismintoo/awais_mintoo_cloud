@@ -128,7 +128,7 @@ final class BillingHelper {
     private static void loadOffers() {
         try {
             List<Object> list = new ArrayList<Object>();
-            for (String id : new String[]{ PRODUCT, ELITE }) {
+            for (String id : new String[]{ PRODUCT }) { /* final review: one paid plan (Pro). Elite is only recognised for old purchases, never sold. */
                 Object pr = k("QueryProductDetailsParams$Product").getMethod("newBuilder").invoke(null);
                 pr = pr.getClass().getMethod("setProductId", String.class).invoke(pr, id);
                 pr = pr.getClass().getMethod("setProductType", String.class).invoke(pr, "subs");
