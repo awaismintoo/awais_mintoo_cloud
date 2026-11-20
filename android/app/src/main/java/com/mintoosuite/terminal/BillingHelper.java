@@ -15,7 +15,7 @@ import org.json.JSONObject;
    Written with reflection so the app always compiles; if the billing library or Play is not there, everything just says "not available". */
 final class BillingHelper {
     private BillingHelper() { }
-    static final String PRODUCT = "mintoo_pro";
+    static final String PRODUCT = "mintoo_pro", ELITE = "mintoo_elite";   /* two subscriptions in Play Console: Pro and Elite */
     private static final String PK = "com.android.billingclient.api.";
     private static Object client;
     private static boolean ready = false, connecting = false;
@@ -101,18 +101,18 @@ final class BillingHelper {
             for (Object p : purchases) {
                 @SuppressWarnings("unchecked") List<String> ids = (List<String>) p.getClass().getMethod("getProducts").invoke(p);
                 int st = ((Integer) p.getClass().getMethod("getPurchaseState").invoke(p)).intValue();
-                if (ids == null || !ids.contains(PRODUCT) || st != 1) { continue; }
+                if (ids == null || !(ids.contains(PRODUCT) || ids.contains(ELITE)) || st != 1) { continue; }
                 active = true;
                 token = (String) p.getClass().getMethod("getPurchaseToken").invoke(p);
                 when = ((Long) p.getClass().getMethod("getPurchaseTime").invoke(p)).longValue();
                 auto = ((Boolean) p.getClass().getMethod("isAutoRenewing").invoke(p)).booleanValue();
-                product = PRODUCT;
+                if (ids.contains(ELITE) || !"mintoo_elite".equals(product)) { product = ids.contains(ELITE) ? ELITE : PRODUCT; }
                 boolean acked = ((Boolean) p.getClass().getMethod("isAcknowledged").invoke(p)).booleanValue();
                 if (!acked) { ack(token); }
             }
         }
         sp(app).edit().putBoolean("active", active).putString("token", token).putString("product", product).putLong("buyAt", when).putBoolean("auto", auto).putLong("checkedAt", System.currentTimeMillis()).apply();
-        if (active) { msg = "Pro is active through Google Play."; }
+        if (active) { msg = (ELITE.equals(product) ? "Elite" : "Pro") + " is active through Google Play."; }
     }
 
     private static void ack(String token) {
@@ -127,11 +127,14 @@ final class BillingHelper {
 
     private static void loadOffers() {
         try {
-            Object pr = k("QueryProductDetailsParams$Product").getMethod("newBuilder").invoke(null);
-            pr = pr.getClass().getMethod("setProductId", String.class).invoke(pr, PRODUCT);
-            pr = pr.getClass().getMethod("setProductType", String.class).invoke(pr, "subs");
-            pr = pr.getClass().getMethod("build").invoke(pr);
-            List<Object> list = new ArrayList<Object>(); list.add(pr);
+            List<Object> list = new ArrayList<Object>();
+            for (String id : new String[]{ PRODUCT, ELITE }) {
+                Object pr = k("QueryProductDetailsParams$Product").getMethod("newBuilder").invoke(null);
+                pr = pr.getClass().getMethod("setProductId", String.class).invoke(pr, id);
+                pr = pr.getClass().getMethod("setProductType", String.class).invoke(pr, "subs");
+                pr = pr.getClass().getMethod("build").invoke(pr);
+                list.add(pr);
+            }
             Object q = k("QueryProductDetailsParams").getMethod("newBuilder").invoke(null);
             q = q.getClass().getMethod("setProductList", List.class).invoke(q, list);
             q = q.getClass().getMethod("build").invoke(q);
@@ -158,7 +161,7 @@ final class BillingHelper {
                 List<?> pl = (List<?>) phases.getClass().getMethod("getPricingPhaseList").invoke(phases);
                 Object ph = pl.get(pl.size() - 1);
                 JSONObject j = new JSONObject();
-                j.put("i", offers.size()); j.put("base", base);
+                j.put("i", offers.size()); j.put("base", base); j.put("product", pd.getClass().getMethod("getProductId").invoke(pd));
                 j.put("price", ph.getClass().getMethod("getFormattedPrice").invoke(ph));
                 j.put("period", ph.getClass().getMethod("getBillingPeriod").invoke(ph));
                 offers.add(j); offerObj.add(pd); offerObj.add(tok);
@@ -187,7 +190,7 @@ final class BillingHelper {
             SharedPreferences s = sp(c);
             JSONObject j = new JSONObject();
             j.put("lib", available()); j.put("ready", ready); j.put("msg", msg);
-            j.put("active", s.getBoolean("active", false)); j.put("checkedAt", s.getLong("checkedAt", 0));
+            j.put("active", s.getBoolean("active", false)); j.put("product", s.getString("product", "")); j.put("checkedAt", s.getLong("checkedAt", 0));
             j.put("buyAt", s.getLong("buyAt", 0)); j.put("auto", s.getBoolean("auto", false)); j.put("token", s.getString("token", ""));
             JSONArray arr = new JSONArray(); synchronized (BillingHelper.class) { for (JSONObject o : offers) { arr.put(o); } }
             j.put("offers", arr);

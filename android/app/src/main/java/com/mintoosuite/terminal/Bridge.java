@@ -898,6 +898,14 @@ final class Bridge {
     @JavascriptInterface
     public void nlistHide(String tok) { if (ok(tok)) { NativeList.hide(); } }
 
+    /* Play review: the app knows when it was installed from Google Play, so the Play version shows only Google Play payment */
+    @JavascriptInterface
+    @SuppressWarnings("deprecation")
+    public String installer(String tok) {
+        if (!ok(tok)) { return ""; }
+        try { String p = ctx.getPackageManager().getInstallerPackageName(ctx.getPackageName()); return p == null ? "" : p; } catch (Throwable e) { return ""; }
+    }
+
     /* ----- MintooSuiteVPN (WireGuard) ----- */
     @JavascriptInterface
     public String vpnState(String tok) { return ok(tok) ? VpnHelper.state(ctx) : "{}"; }

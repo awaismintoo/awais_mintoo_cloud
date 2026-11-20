@@ -44,6 +44,7 @@ final class WebHolder {
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(app))
                 .build();
         WebSettings s = w.getSettings();
+        try { float fsc = w.getContext().getResources().getConfiguration().fontScale; s.setTextZoom(Math.max(85, Math.min(200, Math.round(fsc * 100)))); } catch (Throwable ignored) { } /* follow the phone's own font size (accessibility), up to 200% */
         s.setJavaScriptEnabled(true);
         s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false); s.setUseWideViewPort(true);
         s.setDomStorageEnabled(true);
