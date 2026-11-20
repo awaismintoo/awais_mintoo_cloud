@@ -14,9 +14,20 @@ import android.widget.RemoteViews;
 final class ToolWidget {
     private ToolWidget() { }
 
-    static String pref(String which) { return "place".equals(which) ? "mw_tw_place" : "mw_tw_qibla"; }
+    static String pref(String which) { return "place".equals(which) ? "mw_tw_place" : "qibla".equals(which) ? "mw_tw_qibla" : "mw_tw_" + which; }
 
-    static Class<?> cls(String which) { return "place".equals(which) ? PlaceWidget.class : QiblaWidget.class; }
+    static Class<?> cls(String which) {
+        if ("place".equals(which)) { return PlaceWidget.class; }
+        if ("gold".equals(which)) { return GoldWidget.class; }
+        if ("bot".equals(which)) { return BotWidget.class; }
+        if ("remind".equals(which)) { return RemindWidget.class; }
+        return QiblaWidget.class;
+    }
+    /* build 535: title, first line before the app has saved anything, and the window a tap opens */
+    static String title(String w) { return "place".equals(w) ? "MintooSuite · My location & altitude" : "gold".equals(w) ? "MintooSuite · Gold & dollar" : "bot".equals(w) ? "MintooSuite · Auto Bot" : "remind".equals(w) ? "MintooSuite · Bills & reminders" : "MintooSuite · Qibla"; }
+    static String first(String w) { return "place".equals(w) || "qibla".equals(w) ? ("place".equals(w) ? "📍 Open MintooSuite › Compass & Qibla" : "🕋 Open MintooSuite › Compass & Qibla") : "Open MintooSuite once to fill this widget"; }
+    static String target(String w) { return "gold".equals(w) ? "__open__gold" : "bot".equals(w) ? "__open__autobot" : "remind".equals(w) ? "__open__remind" : "__open__compass"; }
+    static int code(String w) { return "place".equals(w) ? 3 : "gold".equals(w) ? 4 : "bot".equals(w) ? 5 : "remind".equals(w) ? 6 : 2; }
 
     static void drawAll(Context c, AppWidgetManager m, int[] ids, String which) {
         for (int i = 0; i < ids.length; i++) { draw(c, m, ids[i], which); }
@@ -27,16 +38,16 @@ final class ToolWidget {
             SharedPreferences sp = c.getSharedPreferences(pref(which), Context.MODE_PRIVATE);
             boolean place = "place".equals(which);
             RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.mw_tool_widget);
-            v.setTextViewText(R.id.mw_t0, place ? "MintooSuite · My location & altitude" : "MintooSuite · Qibla");
-            v.setTextViewText(R.id.mw_t1, sp.getString("l1", place ? "📍 Open MintooSuite › Compass & Qibla" : "🕋 Open MintooSuite › Compass & Qibla"));
-            v.setTextViewText(R.id.mw_t2, sp.getString("l2", "to set your place"));
+            v.setTextViewText(R.id.mw_t0, title(which));
+            v.setTextViewText(R.id.mw_t1, sp.getString("l1", first(which)));
+            v.setTextViewText(R.id.mw_t2, sp.getString("l2", place || "qibla".equals(which) ? "to set your place" : ""));
             v.setTextViewText(R.id.mw_t3, sp.getString("l3", ""));
             Intent in = new Intent(c, MainActivity.class);
             in.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            in.putExtra("mw_t", "__open__compass"); in.putExtra("mw_b", "");
+            in.putExtra("mw_t", target(which)); in.putExtra("mw_b", "");
             int fl = PendingIntent.FLAG_UPDATE_CURRENT;
             if (Build.VERSION.SDK_INT >= 23) { fl |= PendingIntent.FLAG_IMMUTABLE; }
-            v.setOnClickPendingIntent(R.id.mw_tool_root, PendingIntent.getActivity(c, place ? 3 : 2, in, fl));
+            v.setOnClickPendingIntent(R.id.mw_tool_root, PendingIntent.getActivity(c, code(which), in, fl));
             m.updateAppWidget(id, v);
         } catch (Exception e) { }
     }
