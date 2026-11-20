@@ -717,7 +717,55 @@ final class Bridge {
         try { return writeDownload(name, mime, android.util.Base64.decode(b64, android.util.Base64.DEFAULT)); } catch (Exception e) { return false; }
     }
 
+    /* build 535: the owner can choose where the MintooSuite folder lives (internal storage or SD card) with Android's own folder picker */
+    @JavascriptInterface
+    public boolean pickFolder(String tok) {
+        if (!ok(tok)) { return false; }
+        final MainActivity a = MainActivity.cur;
+        if (a == null) { return false; }
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+                    a.startActivityForResult(i, 7531);
+                } catch (Exception ignored) { }
+            }
+        });
+        return true;
+    }
+
+    @JavascriptInterface
+    public String saveFolder(String tok) {
+        if (!ok(tok)) { return ""; }
+        try { return ctx.getSharedPreferences("mw_store", 0).getString("tree", ""); } catch (Exception e) { return ""; }
+    }
+
+    @JavascriptInterface
+    public void resetFolder(String tok) {
+        if (!ok(tok)) { return; }
+        try { ctx.getSharedPreferences("mw_store", 0).edit().remove("tree").apply(); } catch (Exception ignored) { }
+    }
+
+    private boolean writeTree(String name, String mime, byte[] data) {
+        try {
+            String t = ctx.getSharedPreferences("mw_store", 0).getString("tree", "");
+            if (t == null || t.length() == 0) { return false; }
+            android.net.Uri tree = android.net.Uri.parse(t);
+            android.net.Uri dir = android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, android.provider.DocumentsContract.getTreeDocumentId(tree));
+            android.net.Uri f = android.provider.DocumentsContract.createDocument(ctx.getContentResolver(), dir, mime, name);
+            if (f == null) { return false; }
+            java.io.OutputStream o = ctx.getContentResolver().openOutputStream(f);
+            if (o == null) { return false; }
+            o.write(data);
+            o.close();
+            return true;
+        } catch (Exception e) { return false; }
+    }
+
     private boolean writeDownload(String name, String mime, byte[] data) {
+        if (writeTree(name, mime, data)) { return true; }
         try {
             if (Build.VERSION.SDK_INT >= 29) {
                 android.content.ContentValues v = new android.content.ContentValues();

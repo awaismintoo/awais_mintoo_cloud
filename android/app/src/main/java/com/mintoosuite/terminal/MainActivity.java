@@ -92,6 +92,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Media.onResult(requestCode, resultCode, data);
+        if (requestCode == 7531 && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            try {
+                android.net.Uri u = data.getData();
+                getContentResolver().takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                getSharedPreferences("mw_store", 0).edit().putString("tree", u.toString()).apply();
+            } catch (Exception ignored) { }
+        }
         if (requestCode == VpnHelper.REQ) { VpnHelper.afterPrepare(this, resultCode == RESULT_OK); }
     }
 
