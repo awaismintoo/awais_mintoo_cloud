@@ -454,10 +454,39 @@ final class Bridge {
         return (javax.crypto.SecretKey) ks.getKey("mw_secret_key", null);
     }
 
+    /* review fix (build 535): exchange API secrets never leave this class. secGet hands the page a handle ("@k:name:field") instead of
+       the secret, and secMac signs requests here with HMAC-SHA256. A secret typed by the user is stored; a handle written back by the
+       page (for example after editing other fields) keeps the stored secret. */
+    private String rawGet(String name) {
+        try {
+            String v = ctx.getSharedPreferences("mw_sec", Context.MODE_PRIVATE).getString(name, null);
+            if (v == null) { return ""; }
+            int i = v.indexOf(':');
+            byte[] iv = android.util.Base64.decode(v.substring(0, i), android.util.Base64.NO_WRAP);
+            byte[] ct = android.util.Base64.decode(v.substring(i + 1), android.util.Base64.NO_WRAP);
+            javax.crypto.Cipher c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+            c.init(javax.crypto.Cipher.DECRYPT_MODE, ksKey(), new javax.crypto.spec.GCMParameterSpec(128, iv));
+            return new String(c.doFinal(ct), "UTF-8");
+        } catch (Throwable e) { return ""; }
+    }
+
+    private static boolean isKeyBox(String name) { return name.startsWith("mintoosuite_x_") && !name.equals("mintoosuite_x_bkpw") && !name.equals("mintoosuite_x_bkrt"); }
+
     @JavascriptInterface
     public boolean secSet(String tok, String name, String val) {
         if (!ok(tok) || !okName(name) || val == null) { return false; }
         try {
+            if (val.startsWith("@k:")) { return true; }
+            if (isKeyBox(name) && val.trim().startsWith("{")) {
+                org.json.JSONObject o = new org.json.JSONObject(val);
+                String sv = o.optString("sec", "");
+                if (sv.startsWith("@k:")) {
+                    String old = rawGet(name), real = "";
+                    try { real = old.length() > 0 ? new org.json.JSONObject(old).optString("sec", "") : ""; } catch (Throwable e2) { real = ""; }
+                    if (real.length() > 0 && !real.startsWith("@k:")) { o.put("sec", real); } else { o.remove("sec"); }
+                    val = o.toString();
+                }
+            }
             javax.crypto.Cipher c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
             c.init(javax.crypto.Cipher.ENCRYPT_MODE, ksKey());
             byte[] ct = c.doFinal(val.getBytes("UTF-8"));
@@ -469,15 +498,32 @@ final class Bridge {
     @JavascriptInterface
     public String secGet(String tok, String name) {
         if (!ok(tok) || !okName(name)) { return ""; }
+        String v = rawGet(name);
+        if (v.length() == 0) { return ""; }
+        if (name.equals("mintoosuite_ts")) { return "@k:mintoosuite_ts:"; }
+        if (isKeyBox(name) && v.trim().startsWith("{")) {
+            try {
+                org.json.JSONObject o = new org.json.JSONObject(v);
+                if (o.optString("sec", "").length() > 0) { o.put("sec", "@k:" + name + ":sec"); }
+                return o.toString();
+            } catch (Throwable e) { return v; }
+        }
+        return v;
+    }
+
+    @JavascriptInterface
+    public String secMac(String tok, String name, String field, String msg, boolean b64) {
+        if (!ok(tok) || !okName(name) || msg == null) { return ""; }
         try {
-            String v = ctx.getSharedPreferences("mw_sec", Context.MODE_PRIVATE).getString(name, null);
-            if (v == null) { return ""; }
-            int i = v.indexOf(':');
-            byte[] iv = android.util.Base64.decode(v.substring(0, i), android.util.Base64.NO_WRAP);
-            byte[] ct = android.util.Base64.decode(v.substring(i + 1), android.util.Base64.NO_WRAP);
-            javax.crypto.Cipher c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
-            c.init(javax.crypto.Cipher.DECRYPT_MODE, ksKey(), new javax.crypto.spec.GCMParameterSpec(128, iv));
-            return new String(c.doFinal(ct), "UTF-8");
+            String raw = rawGet(name), key = (field == null || field.length() == 0) ? raw : new org.json.JSONObject(raw).optString(field, "");
+            if (key.length() == 0 || key.startsWith("@k:")) { return ""; }
+            javax.crypto.Mac m = javax.crypto.Mac.getInstance("HmacSHA256");
+            m.init(new javax.crypto.spec.SecretKeySpec(key.getBytes("UTF-8"), "HmacSHA256"));
+            byte[] d = m.doFinal(msg.getBytes("UTF-8"));
+            if (b64) { return android.util.Base64.encodeToString(d, android.util.Base64.NO_WRAP); }
+            StringBuilder sb = new StringBuilder(d.length * 2);
+            for (byte x : d) { sb.append(String.format(java.util.Locale.US, "%02x", x & 0xff)); }
+            return sb.toString();
         } catch (Throwable e) { return ""; }
     }
 
