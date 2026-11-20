@@ -903,7 +903,32 @@ final class Bridge {
     public String vpnState(String tok) { return ok(tok) ? VpnHelper.state(ctx) : "{}"; }
 
     @JavascriptInterface
-    public boolean vpnSave(String tok, String text) { return ok(tok) && VpnHelper.save(ctx, text); }
+    public boolean vpnSave(String tok, String text) {
+        if (!ok(tok) || text == null) { return false; }
+        String host = "unknown server";
+        for (String ln : text.split("\n")) { String t = ln.trim(); if (t.toLowerCase(java.util.Locale.US).startsWith("endpoint")) { int i = t.indexOf('='); if (i > 0) { host = t.substring(i + 1).trim(); } } }
+        if (!askUser("Use this VPN server?", "All of this phone's internet traffic will go through:\n\n" + host + "\n\nOnly allow a server you set up or trust.")) { return false; }
+        return VpnHelper.save(ctx, text);
+    }
+
+    /* security review: a native Yes/No the page cannot fake or skip (the page's JavaScript thread waits; the dialog runs on the UI thread) */
+    private boolean askUser(final String title, final String msg) {
+        final MainActivity a = MainActivity.cur;
+        if (a == null) { return false; }
+        final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        final boolean[] yes = { false };
+        a.runOnUiThread(new Runnable() { @Override public void run() {
+            try {
+                new android.app.AlertDialog.Builder(a).setTitle(title).setMessage(msg).setCancelable(true)
+                    .setPositiveButton("Allow", new android.content.DialogInterface.OnClickListener() { @Override public void onClick(android.content.DialogInterface d, int w) { yes[0] = true; } })
+                    .setNegativeButton("Cancel", null)
+                    .setOnDismissListener(new android.content.DialogInterface.OnDismissListener() { @Override public void onDismiss(android.content.DialogInterface d) { done.countDown(); } })
+                    .show();
+            } catch (Throwable e) { done.countDown(); }
+        } });
+        try { done.await(120, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException e) { return false; }
+        return yes[0];
+    }
 
     @JavascriptInterface
     public void vpnClear(String tok) { if (ok(tok)) { VpnHelper.clear(ctx); } }
