@@ -4,7 +4,7 @@ MSAATB engine (MintooSuite Auto AI Trading Bot) - standalone package
 =====================================================================
 The same rules as the MSAATB inside the MintooSuite app, for your own computer or server.
 
-Exchanges: Binance, OKX, Bitget and Bybit USDT perpetual futures (through the free `ccxt` library).
+Exchanges: Binance, OKX, Bitget, Bybit and MEXC USDT perpetual futures (through the free `ccxt` library).
 Modes:     paper (default, no orders are sent) and live (needs your API key, trading permission only,
            NEVER withdrawal permission, plus the --live flag and typing YES once).
 
@@ -149,9 +149,9 @@ class Market:
         except ImportError:
             sys.exit("Please install ccxt first:  pip install ccxt")
         import ccxt
-        ids = {"binance": "binanceusdm", "okx": "okx", "bitget": "bitget", "bybit": "bybit"}
+        ids = {"binance": "binanceusdm", "okx": "okx", "bitget": "bitget", "bybit": "bybit", "mexc": "mexc"}
         if ex not in ids:
-            sys.exit("Exchange must be one of: binance, okx, bitget, bybit")
+            sys.exit("Exchange must be one of: binance, okx, bitget, bybit, mexc")
         cfg = {"enableRateLimit": True, "options": {"defaultType": "swap"}}
         if key:
             cfg.update({"apiKey": key, "secret": secret})
@@ -388,7 +388,7 @@ class MSAATB:
 
 def main():
     ap = argparse.ArgumentParser(description="MSAATB standalone engine (paper by default)")
-    ap.add_argument("--exchange", default="binance", help="binance | okx | bitget | bybit")
+    ap.add_argument("--exchange", default="binance", help="binance | okx | bitget | bybit | mexc  (MEXC futures API needs a KYC-verified account with futures API permission)")
     ap.add_argument("--risk", type=float, default=0.5, help="risk per trade in %% (0.25-1)")
     ap.add_argument("--lev", type=int, default=3, help="leverage (1-5)")
     ap.add_argument("--start", type=float, default=1000.0, help="paper starting balance in USDT")

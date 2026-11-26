@@ -5,7 +5,7 @@ The same trading rules as the MSAATB inside the MintooSuite app, as three parts 
 | File | Use it for | Markets |
 |---|---|---|
 | `MSAATB_EA.mq5` | MetaTrader 5 Expert Advisor; sizes in **lots** | Exness and any MT5 broker: gold (XAUUSD), forex, indices, crypto CFDs |
-| `msaatb_engine.py` | Runs on a PC, server or Termux; paper by default | Binance, OKX, Bitget, Bybit USDT futures |
+| `msaatb_engine.py` | Runs on a PC, server or Termux; paper by default | Binance, OKX, Bitget, Bybit, MEXC USDT futures |
 | `msaatb_core.js` | Library: put MSAATB's decisions into **any** trading app (Node.js or browser) | Any market where you have candles |
 
 ## The rules (same everywhere)
@@ -30,13 +30,18 @@ python msaatb_engine.py --exchange binance            # paper money, no orders
 python msaatb_engine.py --exchange bybit --testnet --live
 export MSAATB_KEY=... MSAATB_SECRET=... [MSAATB_PASS=... for OKX/Bitget]
 python msaatb_engine.py --exchange okx --live --manage-manual
+python msaatb_engine.py --exchange mexc --live --manage-manual   # MEXC: KYC + futures API permission needed
 ```
 API keys: **trading permission only, never withdrawals**, IP-restricted if the exchange allows it. Live mode asks you to type YES.
+
+MEXC reopened its futures trading API on 31 March 2026 for KYC-verified accounts (Innovation Zone pairs excluded). Full control of your own MEXC, Bitget, Bybit and OKX trades runs here with `--manage-manual`.
 
 ## 3) Other trading apps (library)
 `msaatb_core.js` gives `analyse()`, `ladder()`, `size()`, `timeStop()` and `cooldown()`. Your app supplies candles and sends orders with its own broker connection.
 
 ## What it does NOT do (honest limits)
+- **Pakistan Stock Exchange brokers:** there is no public trading API for retail PSX accounts, so no bot can place or close PSX orders for you. The app gives alerts and advice for PSX instead.
+- **Copy trading chosen by the bot:** exchanges let you follow lead traders by hand; MSAATB recommends using its scorecard but never puts your money behind another trader automatically.
 - **Quotex and other binary-option platforms are not supported.** They have no official trading API, and binary options pay a fixed amount whatever the move, so a stop-loss/profit-lock bot cannot work there; many regulators also warn against them.
 - No bot can promise to beat Pionex, 3Commas or any other bot, or to make a profit. MSAATB's rules are strict and tested, but only your own paper/demo record shows how it does in today's market. Compare it fairly: same coins, same period, same risk, after fees.
 - This is software, not a licensed adviser or a registered financial product. Use small amounts you can afford to lose.

@@ -725,6 +725,10 @@ final class Bridge {
         return a == null ? "" : a.takeNotif();
     }
 
+    /* build 538: calendar events and reminders ring at the exact minute even when the app is closed */
+    @JavascriptInterface
+    public void alarmSet(String tok, String json) { if (ok(tok)) { RemAlarm.save(ctx, json); } }
+
     @JavascriptInterface
     public void notify(String tok, String title, String body) {
         if (!ok(tok)) { return; }

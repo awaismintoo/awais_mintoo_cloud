@@ -11,5 +11,6 @@ public class BootReceiver extends BroadcastReceiver {
         try {
             if (BotService.isOn(ctx)) { BotService.start(ctx); }
         } catch (Exception ignored) { }
+        try { RemAlarm.schedule(ctx); } catch (Exception ignored) { }
     }
 }
