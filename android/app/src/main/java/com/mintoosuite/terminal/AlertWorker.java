@@ -85,6 +85,7 @@ public class AlertWorker extends Worker {
     }
 
     private static void notifyUser(Context ctx, String title, String body, int n) {
+        if (ctx.getSharedPreferences("mw_mode538", Context.MODE_PRIVATE).getBoolean("tradeOff", false)) { return; } /* build 538: no trading alerts in Life & Business / Kids mode */
         if (Build.VERSION.SDK_INT >= 33 && ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { return; }
         Intent open = new Intent(ctx, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pi = PendingIntent.getActivity(ctx, 0, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);

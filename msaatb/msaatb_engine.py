@@ -404,7 +404,8 @@ def main():
     if a.live:
         if not (key and sec):
             sys.exit("Live mode needs MSAATB_KEY and MSAATB_SECRET in the environment (trading permission only, never withdrawals).")
-        if input("Type YES to trade REAL money on %s: " % a.exchange).strip() != "YES":
+        ok = os.environ.get("MSAATB_CONFIRM", "") == "YES" if not sys.stdin.isatty() else input("Type YES to trade REAL money on %s: " % a.exchange).strip() == "YES"  # on a cloud server there is no keyboard: set MSAATB_CONFIRM=YES yourself
+        if not ok:
             sys.exit("Cancelled.")
     MSAATB(Market(a.exchange, key, sec, pw, a.testnet), a).run()
 

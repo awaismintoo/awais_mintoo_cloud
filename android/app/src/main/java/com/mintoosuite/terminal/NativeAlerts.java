@@ -133,6 +133,7 @@ final class NativeAlerts {
     static String trim(double p) { return p >= 1 ? String.format(java.util.Locale.US, "%.4f", p) : String.format(java.util.Locale.US, "%.6f", p); }
 
     private static boolean post(Context c, String base, String title, String body) {
+        if (c.getSharedPreferences("mw_mode538", Context.MODE_PRIVATE).getBoolean("tradeOff", false)) { return false; } /* build 538: mode without trading */
         if (Build.VERSION.SDK_INT >= 33 && c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) { return false; }
         MainActivity.alertChannel(c);
         Intent open = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);

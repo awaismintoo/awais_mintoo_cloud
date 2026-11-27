@@ -91,7 +91,7 @@ public class RemAlarm extends BroadcastReceiver {
                 Uri u = null; int usage = AudioAttributes.USAGE_NOTIFICATION_EVENT;
                 if ("alarm".equals(tone)) { u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM); usage = AudioAttributes.USAGE_ALARM; }
                 else if ("ring".equals(tone)) { u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE); usage = AudioAttributes.USAGE_NOTIFICATION_RINGTONE; }
-                else if ("azan".equals(tone)) { int raw = c.getResources().getIdentifier("mw_azan", "raw", c.getPackageName()); if (raw != 0) { u = Uri.parse("android.resource://" + c.getPackageName() + "/" + raw); usage = AudioAttributes.USAGE_ALARM; } }
+                else if ("azan".equals(tone)) { int raw = c.getResources().getIdentifier("mw_azan", "raw", c.getPackageName()); if (raw != 0) { u = Uri.parse("android.resource://" + c.getPackageName() + "/" + raw); } else { u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM); } usage = AudioAttributes.USAGE_ALARM; }
                 else if ("notif".equals(tone)) { u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION); }
                 if (u != null) { nc.setSound(u, new AudioAttributes.Builder().setUsage(usage).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()); } else { nc.setSound(null, null); }
                 nc.enableVibration(!"silent".equals(tone)); if (!"silent".equals(tone)) { nc.setVibrationPattern(new long[]{0, 500, 250, 500, 250, 800}); }

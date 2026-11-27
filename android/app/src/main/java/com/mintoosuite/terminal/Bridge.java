@@ -725,6 +725,10 @@ final class Bridge {
         return a == null ? "" : a.takeNotif();
     }
 
+    /* build 538: Life & Business and Kids modes switch off every trading notification, also when the app is closed */
+    @JavascriptInterface
+    public void tradeNotifOff(String tok, boolean off) { if (ok(tok)) { ctx.getSharedPreferences("mw_mode538", Context.MODE_PRIVATE).edit().putBoolean("tradeOff", off).apply(); } }
+
     /* build 538: calendar events and reminders ring at the exact minute even when the app is closed */
     @JavascriptInterface
     public void alarmSet(String tok, String json) { if (ok(tok)) { RemAlarm.save(ctx, json); } }
