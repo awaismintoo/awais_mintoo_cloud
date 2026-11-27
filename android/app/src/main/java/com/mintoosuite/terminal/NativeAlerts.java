@@ -92,9 +92,9 @@ final class NativeAlerts {
     private static double rise(ArrayDeque<double[]> r, long win, long now, double p) {
         double ref = -1; double[] first = null;
         for (double[] x : r) { if (now - x[0] <= win) { first = x; break; } }
-        if (first == null || r.peekFirst() == null) { return -1; }
-        if (now - r.peekFirst()[0] < win * 0.6) { return -1; } /* not enough history yet */
-        ref = first[1]; if (!(ref > 0)) { return -1; }
+        if (first == null || r.peekFirst() == null) { return Double.NaN; }
+        if (now - r.peekFirst()[0] < win * 0.6) { return Double.NaN; } /* not enough history yet */
+        ref = first[1]; if (!(ref > 0)) { return Double.NaN; }
         return (p / ref - 1) * 100;
     }
 
@@ -110,15 +110,24 @@ final class NativeAlerts {
         SharedPreferences ps = PumpAlert.sp(c);
         if (vol < ps.getFloat("minVol", 3e6f)) { return; }
         double d1 = rise(r, 60000L, now, p), d3 = rise(r, 180000L, now, p), d5 = rise(r, 300000L, now, p);
-        double t1 = ps.getFloat("p1", 1.5f), t3 = ps.getFloat("p3", 3f), t5 = ps.getFloat("p5", 4.5f);
+        double t1 = ps.getFloat("p1", 2.5f), t3 = ps.getFloat("p3", 4f), t5 = ps.getFloat("p5", 6f);
         int tier = 0; String why = ""; boolean up = true; double mv = 0;
         double[][] W = {{d1, t1, 1}, {d3, t3, 3}, {d5, t5, 5}};
         for (double[] w : W) {
-            if (w[0] == -1) { continue; }
+            if (Double.isNaN(w[0])) { continue; }
             if (w[0] >= w[1]) { int tt = w[0] >= w[1] * 2 ? 2 : 1; if (tt > tier) { tier = tt; up = true; mv = Math.abs(w[0]); why = "+" + String.format(java.util.Locale.US, "%.1f", w[0]) + "% in " + (int) w[2] + " min"; } }
             else if (w[0] <= -w[1]) { int tt = w[0] <= -w[1] * 2 ? 2 : 1; if (tt > tier) { tier = tt; up = false; mv = Math.abs(w[0]); why = String.format(java.util.Locale.US, "%.1f", w[0]) + "% in " + (int) w[2] + " min"; } }
         }
-        if (tier == 0) { if (d1 != -1 && Math.abs(d1) < t1 / 3) { PumpAlert.moveOver(k); } return; }
+        /* 550 owner: alerts came late / against the move. Keep only fresh moves: the 3-minute move must agree with the
+           direction, the last minute must still be going that way, and a move already far stretched (5-min move over
+           3x its trigger) is called exhausted and skipped. */
+        if (tier > 0) {
+            double sg = up ? 1 : -1;
+            if (!Double.isNaN(d3) && d3 * sg < 0) { tier = 0; }
+            if (!Double.isNaN(d1) && d1 * sg < t1 * 0.25) { tier = 0; }
+            if (!Double.isNaN(d5) && Math.abs(d5) > t5 * 3) { tier = 0; }
+        }
+        if (tier == 0) { if (!Double.isNaN(d1) && Math.abs(d1) < t1 / 3) { PumpAlert.moveOver(k); } return; }
         if (up && !ps.getBoolean("pump", true)) { return; } if (!up && !ps.getBoolean("dump", true)) { return; }
         String fk = k + (up ? "+" : "-"); Long ft = FIRED.get(fk); Integer fti = FTIER.get(fk);
         if (ft != null && now - ft < 15 * 60000L && (fti == null || tier <= fti)) { return; }
