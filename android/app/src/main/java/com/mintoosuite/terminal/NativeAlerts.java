@@ -127,6 +127,9 @@ final class NativeAlerts {
             if (!Double.isNaN(d3) && d3 * sg < 0) { tier = 0; }
             if (!Double.isNaN(d1) && d1 * sg < t1 * 0.25) { tier = 0; }
             if (!Double.isNaN(d5) && Math.abs(d5) > t5 * 3) { tier = 0; }
+            /* 556 owner (INTER came at the top): skip if the coin has already given back over 40% of its 3-minute move */
+            double mx = 0, mn = Double.MAX_VALUE; for (double[] q : r) { if (now - q[0] <= 180000L) { mx = Math.max(mx, q[1]); mn = Math.min(mn, q[1]); } }
+            if (mx > mn && mn > 0) { double back = up ? (mx - p) / (mx - mn) : (p - mn) / (mx - mn); if (back > 0.4) { tier = 0; } }
         }
         if (tier == 0) { if (!Double.isNaN(d1) && Math.abs(d1) < t1 / 3) { PumpAlert.moveOver(k); } return; }
         if (up && !ps.getBoolean("pump", true)) { return; } if (!up && !ps.getBoolean("dump", true)) { return; }

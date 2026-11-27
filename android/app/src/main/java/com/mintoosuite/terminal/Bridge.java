@@ -902,7 +902,7 @@ final class Bridge {
                 android.content.ContentValues v = new android.content.ContentValues();
                 v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, name);
                 v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "image/png");
-                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/MintooSuite");
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS + "/MintooSuite/Pictures");
                 u = ctx.getContentResolver().insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
                 if (u != null) {
                     java.io.OutputStream o = ctx.getContentResolver().openOutputStream(u);
