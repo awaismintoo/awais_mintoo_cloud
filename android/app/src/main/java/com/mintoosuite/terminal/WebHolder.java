@@ -255,6 +255,34 @@ final class WebHolder {
         web = null;
     }
 
+    /* build 544: print or "Save as PDF" a page the app made (a saved bill, a shop poster) with Android's own print screen */
+    private static WebView printer;
+    static void print(final String html, final String title) {
+        MAIN.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final Context a = wrap != null ? wrap.getBaseContext() : null;
+                    if (!(a instanceof android.app.Activity)) { return; }
+                    final WebView pv = new WebView(a);
+                    printer = pv;
+                    pv.getSettings().setJavaScriptEnabled(false);
+                    pv.setWebViewClient(new WebViewClient() {
+                        @Override
+                        public void onPageFinished(WebView view, String url) {
+                            try {
+                                android.print.PrintManager pm = (android.print.PrintManager) a.getSystemService(Context.PRINT_SERVICE);
+                                String t = title == null || title.length() == 0 ? "MintooSuite" : title;
+                                if (pm != null) { pm.print(t, view.createPrintDocumentAdapter(t), new android.print.PrintAttributes.Builder().build()); }
+                            } catch (Throwable ignored) { }
+                        }
+                    });
+                    pv.loadDataWithBaseURL("https://" + HOST + "/", html == null ? "" : html, "text/html", "UTF-8", null);
+                } catch (Throwable ignored) { }
+            }
+        });
+    }
+
     static void js(final String code) {
         MAIN.post(new Runnable() {
             @Override

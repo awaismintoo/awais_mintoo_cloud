@@ -1,6 +1,23 @@
+# Render.com blueprint: New > Blueprint > pick this repo. A "Background Worker" runs 24/7.
 services:
-  - type: web
-    name: awais-mintoo-suite
-    env: python
-    buildCommand: pip install flask gunicorn
-    startCommand: gunicorn app:app
+  - type: worker
+    name: msaatb-engine
+    runtime: docker
+    dockerfilePath: ./msaatb/cloud/Dockerfile
+    dockerContext: ./msaatb
+    plan: starter
+    disk:
+      name: msaatb-state
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: MSAATB_ARGS
+        value: "--exchange binance --risk 0.5 --lev 3"
+      - key: MSAATB_KEY
+        sync: false
+      - key: MSAATB_SECRET
+        sync: false
+      - key: MSAATB_PASS
+        sync: false
+      - key: MSAATB_CONFIRM
+        sync: false

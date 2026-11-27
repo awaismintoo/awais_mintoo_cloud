@@ -557,7 +557,7 @@ final class Bridge {
                 try {
                     java.net.URL u = new java.net.URL(url);
                     String h = u.getHost();
-                    boolean allowed = "https".equals(u.getProtocol()) && ("api.bitget.com".equals(h) || "api.mexc.com".equals(h) || "api.bybit.com".equals(h) || "www.okx.com".equals(h) || "www.binance.com".equals(h) || "fapi.binance.com".equals(h) || "api.binance.com".equals(h) || "testnet.binancefuture.com".equals(h));
+                    boolean allowed = "https".equals(u.getProtocol()) && ("api.bitget.com".equals(h) || "api.mexc.com".equals(h) || "api.bybit.com".equals(h) || "www.okx.com".equals(h) || "www.binance.com".equals(h) || "fapi.binance.com".equals(h) || "api.binance.com".equals(h) || "testnet.binancefuture.com".equals(h) || "places.googleapis.com".equals(h));
                     if (!allowed) { throw new Exception("host not allowed"); }
                     if (java.util.regex.Pattern.compile("withdraw|/transfer|sub-?account/(universal|transfer)|capital/deposit/subAddress|asset/(transfer|withdraw)|wallet/withdraw|sapi/v1/(capital/withdraw|asset/transfer|sub-account)", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(u.getPath() == null ? "" : u.getPath()).find()) { throw new Exception("withdrawals and transfers are blocked by MintooSuite"); }
                     String m = "POST".equals(method) ? "POST" : ("DELETE".equals(method) ? "DELETE" : "GET");
@@ -600,6 +600,10 @@ final class Bridge {
             return m.requestPinAppWidget(new android.content.ComponentName(ctx, MwWidget.class), null, null) ? "ok" : "no";
         } catch (Exception e) { return "no"; }
     }
+
+    /* build 544: Android print screen (print or Save as PDF) for a saved bill or a poster */
+    @JavascriptInterface
+    public void printHtml(String tok, String html, String title) { if (ok(tok)) { WebHolder.print(html, title); } }
 
     /* build 514: open a web link in the phone's browser or app (YouTube, Maps, shops) */
     @JavascriptInterface
@@ -969,6 +973,9 @@ final class Bridge {
     /* ----- Baba AI reads aloud with the phone's own voice ----- */
     @JavascriptInterface
     public String ttsSpeak(String tok, String text, String lang) { return ok(tok) ? TtsHelper.speak(ctx, text, lang) : "no"; }
+
+    @JavascriptInterface
+    public boolean ttsBusy(String tok) { return ok(tok) && TtsHelper.busy(); }
 
     @JavascriptInterface
     public void ttsStop(String tok) { if (ok(tok)) { TtsHelper.stop(); } }

@@ -45,5 +45,7 @@ final class TtsHelper {
         } catch (Throwable e) { return "fail"; }
     }
 
+    /* build 543: the Listen button shows Stop while reading */
+    static boolean busy() { try { return tts != null && tts.isSpeaking(); } catch (Throwable t) { return false; } }
     static synchronized void stop() { try { if (tts != null) { tts.stop(); } } catch (Throwable ignored) { } }
 }

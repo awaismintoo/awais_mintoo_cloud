@@ -24,7 +24,16 @@ final class ToolWidget {
         return QiblaWidget.class;
     }
     /* build 535: title, first line before the app has saved anything, and the window a tap opens */
-    static String title(String w) { return "place".equals(w) ? "MintooSuite · My location & altitude" : "gold".equals(w) ? "MintooSuite · Gold & dollar" : "bot".equals(w) ? "MintooSuite · Auto Bot" : "remind".equals(w) ? "MintooSuite · Bills & reminders" : "MintooSuite · Qibla"; }
+    static String title(String w) { return "place".equals(w) ? "📍 My location & altitude" : "gold".equals(w) ? "🥇 Gold, dollar & Bitcoin" : "bot".equals(w) ? "🤖 MSAATB · Command centre" : "remind".equals(w) ? "⏰ Bills & reminders" : "🕋 Qibla"; }
+    /* build 544: colour card per widget and three action buttons (label, window to open) */
+    static int bg(String w) { return "bot".equals(w) ? R.drawable.mw_wbg_bot : "gold".equals(w) ? R.drawable.mw_wbg_gold : "remind".equals(w) ? R.drawable.mw_wbg_remind : "place".equals(w) ? R.drawable.mw_wbg_place : R.drawable.mw_wbg_qibla; }
+    static String[][] acts(String w) {
+        if ("bot".equals(w)) { return new String[][] { { "📊 Centre", "__open__autobot" }, { "📈 Trades", "__open__abpos" }, { "⛔ Kill switch", "__open__abkill" } }; }
+        if ("gold".equals(w)) { return new String[][] { { "🥇 Gold", "__open__gold" }, { "📊 Compare", "__open__compare" }, { "💡 Ideas", "__open__ideas" } }; }
+        if ("remind".equals(w)) { return new String[][] { { "🧾 Bills", "__open__remind" }, { "📅 Calendar", "__open__hcal" }, { "🕌 Prayer", "__open__prayer" } }; }
+        if ("place".equals(w)) { return new String[][] { { "🧭 Compass", "__open__compass" }, { "🗺️ Map", "__open__traffic" }, { "⛅ Weather", "__open__weather" } }; }
+        return new String[][] { { "🧭 Compass", "__open__compass" }, { "🕌 Prayer", "__open__prayer" }, { "📅 Calendar", "__open__hcal" } };
+    }
     static String first(String w) { return "place".equals(w) || "qibla".equals(w) ? ("place".equals(w) ? "📍 Open MintooSuite › Compass & Qibla" : "🕋 Open MintooSuite › Compass & Qibla") : "Open MintooSuite once to fill this widget"; }
     static String target(String w) { return "gold".equals(w) ? "__open__gold" : "bot".equals(w) ? "__open__autobot" : "remind".equals(w) ? "__open__remind" : "__open__compass"; }
     static int code(String w) { return "place".equals(w) ? 3 : "gold".equals(w) ? 4 : "bot".equals(w) ? 5 : "remind".equals(w) ? 6 : 2; }
@@ -42,6 +51,21 @@ final class ToolWidget {
             v.setTextViewText(R.id.mw_t1, sp.getString("l1", first(which)));
             v.setTextViewText(R.id.mw_t2, sp.getString("l2", place || "qibla".equals(which) ? "to set your place" : ""));
             v.setTextViewText(R.id.mw_t3, sp.getString("l3", ""));
+            v.setInt(R.id.mw_tool_root, "setBackgroundResource", bg(which));
+            long at = sp.getLong("at", 0);
+            v.setTextViewText(R.id.mw_tt, at > 0 ? new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(new java.util.Date(at)) : "");
+            String[][] A = acts(which);
+            int[] ids = { R.id.mw_a1, R.id.mw_a2, R.id.mw_a3 };
+            for (int k = 0; k < 3; k++) {
+                v.setTextViewText(ids[k], A[k][0]);
+                Intent ai = new Intent(c, MainActivity.class);
+                ai.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                ai.setAction("mw_w_" + which + "_" + k);
+                ai.putExtra("mw_t", A[k][1]); ai.putExtra("mw_b", "");
+                int fl2 = PendingIntent.FLAG_UPDATE_CURRENT;
+                if (Build.VERSION.SDK_INT >= 23) { fl2 |= PendingIntent.FLAG_IMMUTABLE; }
+                v.setOnClickPendingIntent(ids[k], PendingIntent.getActivity(c, 100 + code(which) * 10 + k, ai, fl2));
+            }
             Intent in = new Intent(c, MainActivity.class);
             in.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             in.putExtra("mw_t", target(which)); in.putExtra("mw_b", "");
@@ -54,7 +78,7 @@ final class ToolWidget {
 
     static void save(Context c, String which, String l1, String l2, String l3) {
         try {
-            c.getSharedPreferences(pref(which), Context.MODE_PRIVATE).edit().putString("l1", cut(l1)).putString("l2", cut(l2)).putString("l3", cut(l3)).apply();
+            c.getSharedPreferences(pref(which), Context.MODE_PRIVATE).edit().putString("l1", cut(l1)).putString("l2", cut(l2)).putString("l3", cut(l3)).putLong("at", System.currentTimeMillis()).apply();
             AppWidgetManager m = AppWidgetManager.getInstance(c);
             int[] ids = m.getAppWidgetIds(new ComponentName(c, cls(which)));
             drawAll(c, m, ids, which);
