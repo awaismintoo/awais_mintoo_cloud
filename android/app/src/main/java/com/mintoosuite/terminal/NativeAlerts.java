@@ -66,7 +66,7 @@ final class NativeAlerts {
                 try {
                     if (true) { tick(c); sp(c).edit().remove("err").apply(); }
                 } catch (Throwable e) { String m = String.valueOf(e); if (!m.equals(sp(c).getString("err", ""))) { sp(c).edit().putString("err", m).apply(); } }
-                try { if (running && hh == h) { hh.postDelayed(this, 15000L); } } catch (Throwable ignored) { }
+                try { if (running && hh == h) { hh.postDelayed(this, 10000L); } } catch (Throwable ignored) { }
             }
         }, 8000L);
     }
@@ -110,7 +110,7 @@ final class NativeAlerts {
         SharedPreferences ps = PumpAlert.sp(c);
         if (vol < ps.getFloat("minVol", 3e6f)) { return; }
         double d1 = rise(r, 60000L, now, p), d3 = rise(r, 180000L, now, p), d5 = rise(r, 300000L, now, p);
-        double t1 = ps.getFloat("p1", 2.5f), t3 = ps.getFloat("p3", 4f), t5 = ps.getFloat("p5", 6f);
+        double t1 = ps.getFloat("p1", 1.5f), t3 = ps.getFloat("p3", 3f), t5 = ps.getFloat("p5", 4.5f);
         int tier = 0; String why = ""; boolean up = true; double mv = 0;
         double[][] W = {{d1, t1, 1}, {d3, t3, 3}, {d5, t5, 5}};
         for (double[] w : W) {
