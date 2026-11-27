@@ -601,6 +601,12 @@ final class Bridge {
         } catch (Exception e) { return "no"; }
     }
 
+    /* build 546: storage — open this app's Android page (Storage › Change, on phones that support SD cards) or the phone's storage settings */
+    @JavascriptInterface
+    public void openAppInfo(String tok) { if (!ok(tok)) { return; } try { Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + ctx.getPackageName())); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); ctx.startActivity(i); } catch (Exception ignored) { } }
+    @JavascriptInterface
+    public void openStorage(String tok) { if (!ok(tok)) { return; } try { Intent i = new Intent(android.provider.Settings.ACTION_INTERNAL_STORAGE_SETTINGS); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); ctx.startActivity(i); } catch (Exception ignored) { } }
+
     /* build 545: Alert centre settings for the background pump / dump scanner and the lock-screen alert */
     @JavascriptInterface
     public void pumpCfg(String tok, String json) {
@@ -609,7 +615,7 @@ final class Bridge {
             org.json.JSONObject o = new org.json.JSONObject(json == null ? "{}" : json);
             android.content.SharedPreferences.Editor e = PumpAlert.sp(ctx).edit();
             e.putBoolean("on", o.optBoolean("on", true)).putBoolean("pump", o.optBoolean("pump", true)).putBoolean("dump", o.optBoolean("dump", true))
-             .putBoolean("beep", o.optBoolean("beep", true)).putBoolean("loop", o.optBoolean("loop", true)).putBoolean("loud", o.optBoolean("loud", true)).putBoolean("full", o.optBoolean("full", true))
+             .putBoolean("beep", o.optBoolean("beep", true)).putBoolean("loop", o.optBoolean("loop", true)).putBoolean("loud", o.optBoolean("loud", true)).putBoolean("full", o.optBoolean("full", true)).putString("tone", o.optString("tone", "beep"))
              .putString("ex", o.optString("ex", "bmygo")).putFloat("p1", (float) o.optDouble("p1", 2.5)).putFloat("p3", (float) o.optDouble("p3", 4)).putFloat("p5", (float) o.optDouble("p5", 6))
              .putFloat("minVol", (float) o.optDouble("minVol", 3e6)).putInt("qs", o.optInt("qs", -1)).putInt("qe", o.optInt("qe", -1)).apply();
         } catch (Exception ignored) { }

@@ -34,6 +34,8 @@ import androidx.core.app.NotificationCompat;
 public class PumpAlert extends BroadcastReceiver {
     static final String P = "mw_pump545", CH = "mw_pump545", STOP = "com.mintoosuite.terminal.PUMP_STOP";
     private static MediaPlayer mp;
+    private static android.media.ToneGenerator tg;
+    private static Runnable beepTask;
     private static String ringKey = "";
     private static final Handler H = new Handler(Looper.getMainLooper());
 
@@ -76,8 +78,19 @@ public class PumpAlert extends BroadcastReceiver {
     static synchronized void ring(final Context c, String key) {
         try {
             ringKey = key;
-            if (mp != null) { return; }
-            Uri u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+            if (mp != null || tg != null) { return; }
+            String tone = sp(c).getString("tone", "beep");
+            if ("beep".equals(tone) || "siren".equals(tone)) {
+                /* build 546: a real loud beep (or siren) on the alarm volume, repeating, instead of a ringtone */
+                final boolean siren = "siren".equals(tone);
+                tg = new android.media.ToneGenerator(sp(c).getBoolean("loud", true) ? android.media.AudioManager.STREAM_ALARM : android.media.AudioManager.STREAM_NOTIFICATION, 100);
+                final boolean loop = sp(c).getBoolean("loop", true);
+                beepTask = new Runnable() { int n = 0; @Override public void run() { try { if (tg == null) { return; } tg.startTone(siren ? android.media.ToneGenerator.TONE_CDMA_HIGH_L : android.media.ToneGenerator.TONE_PROP_BEEP2, siren ? 900 : 400); n++; if (loop || n < 3) { H.postDelayed(this, siren ? 1100 : 900); } else { stopRing(); } } catch (Throwable e) { } } };
+                H.post(beepTask);
+                H.postDelayed(new Runnable() { @Override public void run() { stopRing(); } }, 10L * 60000L);
+                return;
+            }
+            Uri u = RingtoneManager.getDefaultUri("notif".equals(sp(c).getString("tone", "beep")) ? RingtoneManager.TYPE_NOTIFICATION : RingtoneManager.TYPE_ALARM);
             if (u == null) { u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION); }
             mp = new MediaPlayer();
             mp.setAudioAttributes(new AudioAttributes.Builder().setUsage(sp(c).getBoolean("loud", true) ? AudioAttributes.USAGE_ALARM : AudioAttributes.USAGE_NOTIFICATION).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
@@ -90,7 +103,8 @@ public class PumpAlert extends BroadcastReceiver {
 
     static synchronized void stopRing() {
         try { if (mp != null) { mp.stop(); mp.release(); } } catch (Throwable ignored) { }
-        mp = null; ringKey = "";
+        try { if (beepTask != null) { H.removeCallbacks(beepTask); } if (tg != null) { tg.stopTone(); tg.release(); } } catch (Throwable ignored) { }
+        mp = null; tg = null; beepTask = null; ringKey = "";
     }
 
     /* the scanner calls this when a coin's move has faded, so the beep stops by itself */
