@@ -64,9 +64,9 @@ final class NativeAlerts {
         hh.postDelayed(new Runnable() {
             @Override public void run() {
                 try {
-                    if (sp(c).getBoolean("on", true) && System.currentTimeMillis() >= pauseUntil && !WebHolder.isFg()) { tick(c); sp(c).edit().remove("err").apply(); }
+                    if (true) { tick(c); sp(c).edit().remove("err").apply(); }
                 } catch (Throwable e) { String m = String.valueOf(e); if (!m.equals(sp(c).getString("err", ""))) { sp(c).edit().putString("err", m).apply(); } }
-                try { if (running && hh == h) { hh.postDelayed(this, 30000L); } } catch (Throwable ignored) { }
+                try { if (running && hh == h) { hh.postDelayed(this, 15000L); } } catch (Throwable ignored) { }
             }
         }, 8000L);
     }
@@ -98,35 +98,56 @@ final class NativeAlerts {
         return (p / ref - 1) * 100;
     }
 
+    /* build 545: every exchange, pumps AND dumps, 1 / 3 / 5-minute moves (much earlier than the old 5 / 15-minute check).
+       Settings from the Alert centre (PumpAlert prefs). Volume filter keeps out thin coins. */
+    private static final HashMap<String, Long> FIRED = new HashMap<>();
+    private static final HashMap<String, Integer> FTIER = new HashMap<>();
+    private static void feed(Context c, String ex, String sym, double p, double vol, long now, java.util.ArrayList<String[]> out) {
+        if (!(p > 0)) { return; }
+        String k = ex + ":" + sym; ArrayDeque<double[]> r = RING.get(k); if (r == null) { r = new ArrayDeque<>(); RING.put(k, r); }
+        double[] last = r.peekLast(); if (last != null && (p / last[1] > 6 || p / last[1] < 1.0 / 6)) { r.clear(); }
+        r.addLast(new double[]{now, p}); while (!r.isEmpty() && now - r.peekFirst()[0] > 6 * 60000L) { r.pollFirst(); }
+        SharedPreferences ps = PumpAlert.sp(c);
+        if (vol < ps.getFloat("minVol", 3e6f)) { return; }
+        double d1 = rise(r, 60000L, now, p), d3 = rise(r, 180000L, now, p), d5 = rise(r, 300000L, now, p);
+        double t1 = ps.getFloat("p1", 2.5f), t3 = ps.getFloat("p3", 4f), t5 = ps.getFloat("p5", 6f);
+        int tier = 0; String why = ""; boolean up = true; double mv = 0;
+        double[][] W = {{d1, t1, 1}, {d3, t3, 3}, {d5, t5, 5}};
+        for (double[] w : W) {
+            if (w[0] == -1) { continue; }
+            if (w[0] >= w[1]) { int tt = w[0] >= w[1] * 2 ? 2 : 1; if (tt > tier) { tier = tt; up = true; mv = Math.abs(w[0]); why = "+" + String.format(java.util.Locale.US, "%.1f", w[0]) + "% in " + (int) w[2] + " min"; } }
+            else if (w[0] <= -w[1]) { int tt = w[0] <= -w[1] * 2 ? 2 : 1; if (tt > tier) { tier = tt; up = false; mv = Math.abs(w[0]); why = String.format(java.util.Locale.US, "%.1f", w[0]) + "% in " + (int) w[2] + " min"; } }
+        }
+        if (tier == 0) { if (d1 != -1 && Math.abs(d1) < t1 / 3) { PumpAlert.moveOver(k); } return; }
+        if (up && !ps.getBoolean("pump", true)) { return; } if (!up && !ps.getBoolean("dump", true)) { return; }
+        String fk = k + (up ? "+" : "-"); Long ft = FIRED.get(fk); Integer fti = FTIER.get(fk);
+        if (ft != null && now - ft < 15 * 60000L && (fti == null || tier <= fti)) { return; }
+        FIRED.put(fk, now); FTIER.put(fk, tier);
+        out.add(new String[]{up ? "1" : "0", ex, sym, why, trim(p), String.valueOf(Math.round(vol)), String.valueOf(mv)});
+    }
+    private static boolean quiet(Context c) {
+        SharedPreferences ps = PumpAlert.sp(c); int a = ps.getInt("qs", -1), b = ps.getInt("qe", -1); if (a < 0 || b < 0 || a == b) { return false; }
+        java.util.Calendar k = java.util.Calendar.getInstance(); int m = k.get(java.util.Calendar.HOUR_OF_DAY) * 60 + k.get(java.util.Calendar.MINUTE);
+        return a < b ? (m >= a && m < b) : (m >= a || m < b);
+    }
     private static void tick(Context c) throws Exception {
-        JSONArray a = new JSONArray(get("https://fapi.binance.com/fapi/v1/ticker/price"));
-        long now = System.currentTimeMillis(); boolean hi = sp(c).getBoolean("hi", false);
-        double t5 = hi ? 6 : 10, t15 = hi ? 12 : 20; int cand = 0;
-        for (int i = 0; i < a.length(); i++) {
-            JSONObject o = a.getJSONObject(i); String s = o.optString("symbol"); if (!s.endsWith("USDT") || s.contains("_")) { continue; }
-            double p = o.optDouble("price", 0); if (!(p > 0)) { continue; }
-            ArrayDeque<double[]> r = RING.get(s); if (r == null) { r = new ArrayDeque<>(); RING.put(s, r); }
-            double[] last = r.peekLast();
-            if (last != null && (p / last[1] > 6 || p / last[1] < 1.0 / 6)) { r.clear(); }
-            r.addLast(new double[]{now, p});
-            while (!r.isEmpty() && now - r.peekFirst()[0] > 16 * 60000L) { r.pollFirst(); }
-            double d5 = rise(r, 5 * 60000L, now, p), d15 = rise(r, 15 * 60000L, now, p);
-            int tier = 0; String why = "";
-            if (d5 >= t5 * 2) { tier = 2; why = "+" + Math.round(d5) + "% in 5 minutes"; } else if (d5 >= t5) { tier = 1; why = "+" + Math.round(d5) + "% in 5 minutes"; }
-            else if (d15 >= t15 * 2) { tier = 2; why = "+" + Math.round(d15) + "% in 15 minutes"; } else if (d15 >= t15) { tier = 1; why = "+" + Math.round(d15) + "% in 15 minutes"; }
-            if (tier == 0 || cand >= 3 || System.currentTimeMillis() < pauseUntil) { continue; }
-            Long lv = LASTV.get(s); if (lv != null && now - lv < 10 * 60000L) { continue; }
-            String base = s.substring(0, s.length() - 4);
-            if (System.currentTimeMillis() - sp(c).getLong("js_" + base, 0) < 60 * 60000L) { continue; }
-            int fired = sp(c).getInt("t_" + base, 0); long ft = sp(c).getLong("f_" + base, 0);
-            if (tier <= fired && now - ft < 60 * 60000L) { continue; }
-            /* volume check only for the few candidates (1 light request each) */
-            double vol = 0; try { vol = new JSONObject(get("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=" + s)).optDouble("quoteVolume", 0); } catch (Exception e) { continue; }
-            cand++;
-            if (vol < (hi ? 15000 : 40000)) { LASTV.put(s, now); continue; }
-            if (System.currentTimeMillis() - sp(c).getLong("js_" + base, 0) < 60 * 60000L) { continue; }
-            if (!post(c, base, "🚀 " + base + " is pumping on Binance", why + " (measured by the app, now " + trim(p) + "). Very risky: do not chase the jump. Use a stop-loss and only money you can lose.")) { continue; }
-            sp(c).edit().putInt("t_" + base, tier).putLong("f_" + base, now).putLong("nat_" + base, now).apply();
+        SharedPreferences ps = PumpAlert.sp(c); if (!ps.getBoolean("on", true)) { return; }
+        String ex = ps.getString("ex", "bmygo"); long now = System.currentTimeMillis(); java.util.ArrayList<String[]> out = new java.util.ArrayList<>();
+        if (ex.indexOf('b') >= 0) { try { JSONArray a = new JSONArray(get("https://fapi.binance.com/fapi/v1/ticker/24hr")); for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); String s = o.optString("symbol"); if (s.endsWith("USDT") && !s.contains("_")) { feed(c, "Binance", s.substring(0, s.length() - 4), o.optDouble("lastPrice", 0), o.optDouble("quoteVolume", 0), now, out); } } } catch (Exception ignored) { } }
+        if (ex.indexOf('m') >= 0) { try { JSONArray a = new JSONObject(get("https://contract.mexc.com/api/v1/contract/ticker")).optJSONArray("data"); for (int i = 0; a != null && i < a.length(); i++) { JSONObject o = a.getJSONObject(i); String s = o.optString("symbol"); if (s.endsWith("_USDT")) { feed(c, "MEXC", s.substring(0, s.length() - 5), o.optDouble("lastPrice", 0), o.optDouble("amount24", 0), now, out); } } } catch (Exception ignored) { } }
+        if (ex.indexOf('y') >= 0) { try { JSONArray a = new JSONObject(get("https://api.bybit.com/v5/market/tickers?category=linear")).getJSONObject("result").optJSONArray("list"); for (int i = 0; a != null && i < a.length(); i++) { JSONObject o = a.getJSONObject(i); String s = o.optString("symbol"); if (s.endsWith("USDT")) { feed(c, "Bybit", s.substring(0, s.length() - 4), o.optDouble("lastPrice", 0), o.optDouble("turnover24h", 0), now, out); } } } catch (Exception ignored) { } }
+        if (ex.indexOf('g') >= 0) { try { JSONArray a = new JSONObject(get("https://api.bitget.com/api/v2/mix/market/tickers?productType=USDT-FUTURES")).optJSONArray("data"); for (int i = 0; a != null && i < a.length(); i++) { JSONObject o = a.getJSONObject(i); String s = o.optString("symbol"); if (s.endsWith("USDT")) { feed(c, "Bitget", s.substring(0, s.length() - 4), o.optDouble("lastPr", 0), o.optDouble("usdtVolume", o.optDouble("quoteVolume", 0)), now, out); } } } catch (Exception ignored) { } }
+        if (ex.indexOf('o') >= 0) { try { JSONArray a = new JSONObject(get("https://www.okx.com/api/v5/market/tickers?instType=SWAP")).optJSONArray("data"); for (int i = 0; a != null && i < a.length(); i++) { JSONObject o = a.getJSONObject(i); String s = o.optString("instId"); if (s.endsWith("-USDT-SWAP")) { double l = o.optDouble("last", 0); feed(c, "OKX", s.substring(0, s.length() - 10), l, o.optDouble("volCcy24h", 0) * l, now, out); } } } catch (Exception ignored) { } }
+        if (out.isEmpty() || quiet(c)) { return; }
+        if (c.getSharedPreferences("mw_mode538", Context.MODE_PRIVATE).getBoolean("tradeOff", false)) { return; }
+        java.util.Collections.sort(out, (x, y) -> Double.compare(Double.parseDouble(y[6]), Double.parseDouble(x[6])));
+        int n = 0;
+        for (String[] a : out) {
+            if (n++ >= 3) { break; }
+            boolean up = "1".equals(a[0]); String title = (up ? "🟢 " : "🔴 ") + a[2] + (up ? " pumping" : " dumping") + " · " + a[1];
+            String body = a[3] + " · now " + a[4] + " · 24h volume $" + String.format(java.util.Locale.US, "%,d", Long.parseLong(a[5])) + ". Fast moves reverse fast: use a stop.";
+            if (WebHolder.isFg()) { WebHolder.js("window.__pump545&&window.__pump545(" + new JSONArray(java.util.Arrays.asList(a)).toString() + ");"); }
+            else { PumpAlert.fire(c, up, a[1] + ":" + a[2], title, body); }
         }
     }
 

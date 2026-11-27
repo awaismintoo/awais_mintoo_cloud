@@ -601,6 +601,35 @@ final class Bridge {
         } catch (Exception e) { return "no"; }
     }
 
+    /* build 545: Alert centre settings for the background pump / dump scanner and the lock-screen alert */
+    @JavascriptInterface
+    public void pumpCfg(String tok, String json) {
+        if (!ok(tok)) { return; }
+        try {
+            org.json.JSONObject o = new org.json.JSONObject(json == null ? "{}" : json);
+            android.content.SharedPreferences.Editor e = PumpAlert.sp(ctx).edit();
+            e.putBoolean("on", o.optBoolean("on", true)).putBoolean("pump", o.optBoolean("pump", true)).putBoolean("dump", o.optBoolean("dump", true))
+             .putBoolean("beep", o.optBoolean("beep", true)).putBoolean("loop", o.optBoolean("loop", true)).putBoolean("loud", o.optBoolean("loud", true)).putBoolean("full", o.optBoolean("full", true))
+             .putString("ex", o.optString("ex", "bmygo")).putFloat("p1", (float) o.optDouble("p1", 2.5)).putFloat("p3", (float) o.optDouble("p3", 4)).putFloat("p5", (float) o.optDouble("p5", 6))
+             .putFloat("minVol", (float) o.optDouble("minVol", 3e6)).putInt("qs", o.optInt("qs", -1)).putInt("qe", o.optInt("qe", -1)).apply();
+        } catch (Exception ignored) { }
+    }
+    @JavascriptInterface
+    public void pumpTest(String tok, boolean up) { if (ok(tok)) { PumpAlert.fire(ctx, up, "TEST:" + (up ? "UP" : "DN"), (up ? "🟢 TEST pumping" : "🔴 TEST dumping") + " · MintooSuite", "This is a test of the lock-screen alert. Tap Dismiss to stop the sound."); } }
+    @JavascriptInterface
+    public void pumpStop(String tok) { if (ok(tok)) { PumpAlert.stopRing(); } }
+    @JavascriptInterface
+    public String pumpFsState(String tok) {
+        if (!ok(tok)) { return "no"; }
+        try { if (Build.VERSION.SDK_INT >= 34) { return ((NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE)).canUseFullScreenIntent() ? "yes" : "ask"; } } catch (Exception ignored) { }
+        return "yes";
+    }
+    @JavascriptInterface
+    public void pumpFsAsk(String tok) {
+        if (!ok(tok)) { return; }
+        try { if (Build.VERSION.SDK_INT >= 34) { Intent i = new Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, android.net.Uri.parse("package:" + ctx.getPackageName())); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); ctx.startActivity(i); } } catch (Exception ignored) { }
+    }
+
     /* build 544: Android print screen (print or Save as PDF) for a saved bill or a poster */
     @JavascriptInterface
     public void printHtml(String tok, String html, String title) { if (ok(tok)) { WebHolder.print(html, title); } }
