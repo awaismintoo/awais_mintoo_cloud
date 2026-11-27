@@ -622,6 +622,9 @@ final class Bridge {
     }
     @JavascriptInterface
     public void pumpTest(String tok, boolean up) { if (ok(tok)) { PumpAlert.fire(ctx, up, "TEST:" + (up ? "UP" : "DN"), (up ? "🟢 TEST pumping" : "🔴 TEST dumping") + " · MintooSuite", "This is a test of the lock-screen alert. Tap Dismiss to stop the sound."); } }
+    /* 563: alerts fired while the app was closed, for the honest Alert scoreboard (read once, then cleared) */
+    @JavascriptInterface
+    public String pumpLog(String tok) { if (!ok(tok)) { return "[]"; } try { android.content.SharedPreferences ps = PumpAlert.sp(ctx); String v = ps.getString("log563", "[]"); ps.edit().putString("log563", "[]").apply(); return v; } catch (Exception e) { return "[]"; } }
     @JavascriptInterface
     public void pumpStop(String tok) { if (ok(tok)) { PumpAlert.stopRing(); } }
     @JavascriptInterface

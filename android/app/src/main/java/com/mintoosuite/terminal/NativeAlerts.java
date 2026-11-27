@@ -138,6 +138,7 @@ final class NativeAlerts {
         Double lp = FPX.get(fk); boolean further = lp != null && lp > 0 && (up ? (p / lp - 1) * 100 >= t1 : (1 - p / lp) * 100 >= t1) && ft != null && now - ft >= 2 * 60000L;
         if (ft != null && now - ft < 15 * 60000L && (fti == null || tier <= fti) && !further) { return; }
         FIRED.put(fk, now); FTIER.put(fk, tier); FPX.put(fk, p);
+        try { org.json.JSONArray lg = new org.json.JSONArray(ps.getString("log563", "[]")); lg.put(new org.json.JSONObject().put("s", sym).put("u", up ? 1 : 0).put("t", now).put("p", p)); while (lg.length() > 200) { lg.remove(0); } ps.edit().putString("log563", lg.toString()).apply(); } catch (Exception ignore) { }
         out.add(new String[]{up ? "1" : "0", ex, sym, why, trim(p), String.valueOf(Math.round(vol)), String.valueOf(mv)});
     }
     private static boolean quiet(Context c) {
