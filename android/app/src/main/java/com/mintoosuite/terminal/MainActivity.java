@@ -118,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        try { PumpAlert.stopRing(); } catch (Throwable ignored) { } /* 552: opening the app (e.g. tapping the pump/dump notification) silences the alarm */
         WebHolder.fg(true);
         AdsHelper.resume();
     }

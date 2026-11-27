@@ -102,6 +102,7 @@ final class NativeAlerts {
        Settings from the Alert centre (PumpAlert prefs). Volume filter keeps out thin coins. */
     private static final HashMap<String, Long> FIRED = new HashMap<>();
     private static final HashMap<String, Integer> FTIER = new HashMap<>();
+    private static final HashMap<String, Double> FPX = new HashMap<>();
     private static void feed(Context c, String ex, String sym, double p, double vol, long now, java.util.ArrayList<String[]> out) {
         if (!(p > 0)) { return; }
         String k = ex + ":" + sym; ArrayDeque<double[]> r = RING.get(k); if (r == null) { r = new ArrayDeque<>(); RING.put(k, r); }
@@ -130,8 +131,10 @@ final class NativeAlerts {
         if (tier == 0) { if (!Double.isNaN(d1) && Math.abs(d1) < t1 / 3) { PumpAlert.moveOver(k); } return; }
         if (up && !ps.getBoolean("pump", true)) { return; } if (!up && !ps.getBoolean("dump", true)) { return; }
         String fk = k + (up ? "+" : "-"); Long ft = FIRED.get(fk); Integer fti = FTIER.get(fk);
-        if (ft != null && now - ft < 15 * 60000L && (fti == null || tier <= fti)) { return; }
-        FIRED.put(fk, now); FTIER.put(fk, tier);
+        /* 554 owner: a coin that keeps pumping / dumping alerts again once it has moved one more trigger step beyond the last alert (at most every 2 min) */
+        Double lp = FPX.get(fk); boolean further = lp != null && lp > 0 && (up ? (p / lp - 1) * 100 >= t1 : (1 - p / lp) * 100 >= t1) && ft != null && now - ft >= 2 * 60000L;
+        if (ft != null && now - ft < 15 * 60000L && (fti == null || tier <= fti) && !further) { return; }
+        FIRED.put(fk, now); FTIER.put(fk, tier); FPX.put(fk, p);
         out.add(new String[]{up ? "1" : "0", ex, sym, why, trim(p), String.valueOf(Math.round(vol)), String.valueOf(mv)});
     }
     private static boolean quiet(Context c) {
