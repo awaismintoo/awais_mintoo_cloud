@@ -63,7 +63,7 @@ public class PumpAlert extends BroadcastReceiver {
             Intent stop = new Intent(c, PumpAlert.class).setAction(STOP).putExtra("k", key);
             PendingIntent ps = PendingIntent.getBroadcast(c, id + 1, stop, fl());
             Intent open = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .putExtra("mw_t", title).putExtra("mw_b", body);
+                    .putExtra("mw_t", title).putExtra("mw_b", body).putExtra("mw_k", key);
             PendingIntent po = PendingIntent.getActivity(c, id + 2, open, fl());
             NotificationCompat.Builder b = new NotificationCompat.Builder(c, CH).setSmallIcon(R.drawable.ic_stat).setContentTitle(title).setContentText(body)
                     .setStyle(new NotificationCompat.BigTextStyle().bigText(body)).setPriority(NotificationCompat.PRIORITY_MAX).setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -145,7 +145,7 @@ public class PumpAlert extends BroadcastReceiver {
             root.addView(box, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
             setContentView(root);
             dis.setOnClickListener(v -> { stopRing(); cancel(k); finish(); });
-            op.setOnClickListener(v -> { stopRing(); cancel(k); Intent o = new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra("mw_t", in.getStringExtra("t")).putExtra("mw_b", in.getStringExtra("b")); startActivity(o); finish(); });
+            op.setOnClickListener(v -> { stopRing(); cancel(k); Intent o = new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra("mw_t", in.getStringExtra("t")).putExtra("mw_b", in.getStringExtra("b")).putExtra("mw_k", in.getStringExtra("k")); startActivity(o); finish(); });
         }
         void cancel(String k) { try { ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel("pump545", 7000 + ((k == null ? "" : k).hashCode() & 0x3ff)); } catch (Throwable ignored) { } }
         TextView tv(String s, int sz, boolean bold, int col) { TextView v = new TextView(this); v.setText(s); v.setTextSize(sz); v.setTextColor(col); if (bold) { v.setTypeface(Typeface.DEFAULT_BOLD); } v.setPadding(0, 6, 0, 6); return v; }

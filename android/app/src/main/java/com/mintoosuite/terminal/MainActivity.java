@@ -133,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
             org.json.JSONObject o = new org.json.JSONObject();
             o.put("t", t == null ? "" : t);
             o.put("b", b == null ? "" : b);
+            String k = in.getStringExtra("mw_k"); if (k != null) { o.put("k", k); in.removeExtra("mw_k"); } /* 625: the exact exchange and coin of a pump / dump alert (names like "O" were too short to find in the text) */
             notifJson = o.toString();
             in.removeExtra("mw_t");
             in.removeExtra("mw_b");
