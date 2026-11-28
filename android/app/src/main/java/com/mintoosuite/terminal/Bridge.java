@@ -627,6 +627,10 @@ final class Bridge {
     public String pumpLog(String tok) { if (!ok(tok)) { return "[]"; } try { android.content.SharedPreferences ps = PumpAlert.sp(ctx); String v = ps.getString("log563", "[]"); ps.edit().putString("log563", "[]").apply(); return v; } catch (Exception e) { return "[]"; } }
     @JavascriptInterface
     public void pumpStop(String tok) { if (ok(tok)) { PumpAlert.stopRing(); } }
+
+    /* build 589: in-app pump card rings through Android's alarm sound too (the page's own beep is silent until you have touched the screen, and on a muted phone) */
+    @JavascriptInterface
+    public void pumpRing(String tok, String key) { if (ok(tok)) { try { PumpAlert.ring(ctx, key == null ? "fg" : key); } catch (Throwable ignored) { } } }
     @JavascriptInterface
     public String pumpFsState(String tok) {
         if (!ok(tok)) { return "no"; }
